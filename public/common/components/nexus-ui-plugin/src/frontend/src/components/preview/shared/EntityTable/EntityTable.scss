@@ -22,7 +22,7 @@
  * - position: sticky on thead th ensures each header cell remains fully opaque
  * - background-color on both thead and th prevents content from bleeding through
  * - Parent must NOT have overflow: hidden (breaks sticky positioning)
- * - Scroll container is provided by parent page (e.g., .capabilities-page__content)
+ * - Scroll container is provided by an ancestor (e.g., .settings-layout-radix__content)
  * - z-index: 1 ensures header stacks above tbody cells
  * - Dark theme uses var(--gray-2) for header background (see dark mode section below)
  */

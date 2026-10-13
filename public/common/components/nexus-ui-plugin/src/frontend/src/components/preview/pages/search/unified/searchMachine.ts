@@ -30,7 +30,7 @@
 
 import { createMachine, assign } from 'xstate';
 import type { SearchFormat, FilterValues, SearchResult, FilterDefinition } from './unified.types';
-import { FORMAT_FILTERS, FORMATS, buildQueryParams, } from './searchFilters';
+import { FORMAT_FILTERS, FORMATS, GENERIC_FILTERS, buildQueryParams, } from './searchFilters';
 import { parseApiError } from '../../../../../interface/api/error-handler';
 
 // =============================================================================
@@ -46,8 +46,15 @@ export interface SearchMachineContext {
   filters: FilterValues;
   /** Search results */
   results: SearchResult[];
-  /** Total result count */
+  /** Count of results loaded into `results` so far (grows on load-more) */
   totalCount: number;
+  /**
+   * True server-side match count for the current query, from the search
+   * response. Stays stable across load-more (paging never shrinks it to the
+   * loaded subset) and is `undefined` until the first response, or when the
+   * backend supplies no total (e.g. mock mode).
+   */
+  total: number | undefined;
   /** Error message from last operation */
   error: string | undefined;
   /** Pagination continuation token */
@@ -152,6 +159,25 @@ const FORMAT_GUARDS = buildFormatGuards();
 const FORMAT_TRANSITIONS = buildFormatTransitions();
 
 // =============================================================================
+// FILTER PRESERVATION
+// =============================================================================
+
+/**
+ * Filter keys that survive a SELECT_FORMAT event.
+ *
+ * Generic values the user typed (group / name / version / nameOrVersion) are
+ * format-agnostic and should not vanish when they switch format.  Repository
+ * is deliberately NOT preserved: repositories are format-scoped, so keeping a
+ * stale repository name across a format switch produces a request the backend
+ * silently returns zero hits for (repository does not exist under the new
+ * format).  RESET still clears everything regardless of this set.
+ */
+const PRESERVED_ON_FORMAT_SWITCH: ReadonlySet<string> = new Set([
+  'nameOrVersion',
+  ...GENERIC_FILTERS.map((f) => f.id),
+]);
+
+// =============================================================================
 // SEARCH MACHINE FACTORY
 // =============================================================================
 
@@ -177,6 +203,7 @@ export function createSearchMachine() {
         filters: {},
         results: [],
         totalCount: 0,
+        total: undefined,
         error: undefined,
         continuationToken: undefined,
         sortField: 'lastUpdated',
@@ -321,17 +348,29 @@ export function createSearchMachine() {
           };
         }),
 
-        changeFormat: assign((_ctx, event) => {
+        changeFormat: assign((ctx, event) => {
           const e = event as { type: 'SELECT_FORMAT'; format?: SearchFormat } | { type: 'RESET' };
+          const isReset = e.type === 'RESET';
+          if (isReset) {
+            return { format: 'all' as SearchFormat, filters: {} as FilterValues };
+          }
+          const preserved: FilterValues = {};
+          for (const key of PRESERVED_ON_FORMAT_SWITCH) {
+            const value = ctx.filters[key];
+            if (value !== undefined) {
+              preserved[key] = value;
+            }
+          }
           return {
-            format: e.type === 'RESET' ? 'all' as SearchFormat : (e as { format: SearchFormat }).format,
-            filters: {} as FilterValues,
+            format: (e as { format: SearchFormat }).format,
+            filters: preserved,
           };
         }),
 
         clearResults: assign({
           results: [] as SearchResult[],
           totalCount: 0,
+          total: undefined as number | undefined,
           error: undefined as string | undefined,
           continuationToken: undefined as string | undefined,
         }),
@@ -345,6 +384,7 @@ export function createSearchMachine() {
         prepareSearch: assign({
           results: [] as SearchResult[],
           totalCount: 0,
+          total: undefined as number | undefined,
           error: undefined as string | undefined,
           continuationToken: undefined as string | undefined,
         }),
@@ -354,6 +394,7 @@ export function createSearchMachine() {
           return {
             results: data.results as SearchResult[],
             totalCount: data.results.length as number,
+            total: data.total as number | undefined,
             continuationToken: data.continuationToken as string | undefined,
             error: undefined as string | undefined,
           };
@@ -364,6 +405,9 @@ export function createSearchMachine() {
           return {
             results: [...ctx.results, ...data.results] as SearchResult[],
             totalCount: ctx.totalCount + data.results.length,
+            // The server-side total describes the whole query, so it does not
+            // change as pages load; keep the established value when a page omits it.
+            total: (data.total ?? ctx.total) as number | undefined,
             continuationToken: data.continuationToken as string | undefined,
           };
         }),
@@ -396,6 +440,7 @@ export function createSearchMachine() {
             .then((res) => res.json())
             .then((data) => ({
               results: (data.items || []).map(transformResult),
+              total: data.total,
               continuationToken: data.continuationToken,
             }));
         },
@@ -408,6 +453,7 @@ export function createSearchMachine() {
             .then((res) => res.json())
             .then((data) => ({
               results: (data.items || []).map(transformResult),
+              total: data.total,
               continuationToken: data.continuationToken,
             }));
         },
@@ -455,17 +501,27 @@ export function getActiveFormatMeta(state: any): FormatStateMeta | undefined {
 export const ALL_FORMATS: SearchFormat[] = Object.keys(FORMATS) as SearchFormat[];
 
 /**
- * Formats that have custom filters (beyond just repository).
+ * Filter ids that are baseline for every format (generic group/name/version).
+ * A format is "simple" if it has only these plus repository.
+ */
+const GENERIC_FILTER_IDS: ReadonlySet<string> = new Set(GENERIC_FILTERS.map((f) => f.id));
+
+function isBaselineFilter(filter: FilterDefinition): boolean {
+  return filter.global || GENERIC_FILTER_IDS.has(filter.id);
+}
+
+/**
+ * Formats that have distinct format-specific filters beyond the generic baseline.
  */
 export const FORMATS_WITH_CUSTOM_FILTERS: SearchFormat[] = ALL_FORMATS.filter((f) => {
   const config = FORMAT_FILTERS[f];
-  return config.filters.some((filter: FilterDefinition) => !filter.global);
+  return config.filters.some((filter: FilterDefinition) => !isBaselineFilter(filter));
 });
 
 /**
- * Formats with only global filters (repository only).
+ * Formats with only the generic baseline (repository + generic group/name/version).
  */
 export const SIMPLE_FORMATS: SearchFormat[] = ALL_FORMATS.filter((f) => {
   const config = FORMAT_FILTERS[f];
-  return config.filters.every((filter: FilterDefinition) => filter.global || filter.id === 'repository');
+  return config.filters.every(isBaselineFilter);
 });

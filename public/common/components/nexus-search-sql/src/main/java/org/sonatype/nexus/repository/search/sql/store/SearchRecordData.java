@@ -34,8 +34,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.unmodifiableCollection;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.sonatype.nexus.repository.search.sql.index.SearchTokenizer.tsEscape;
 
@@ -520,7 +520,7 @@ public class SearchRecordData
 
   @Override
   public void setAttributes(final NestedAttributesMap attributes) {
-    this.attributes = checkNotNull(attributes);
+    this.attributes = requireNonNull(attributes);
   }
 
   @Override

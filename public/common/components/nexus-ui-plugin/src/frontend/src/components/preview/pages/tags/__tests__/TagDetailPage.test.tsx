@@ -698,11 +698,13 @@ describe('TagDetailPage', () => {
       fireEvent.click(row);
 
       // Navigate to component detail route with gaId passed plain (format:group:name);
-      // the route's `type: 'path'` param encodes/decodes it symmetrically (NEXUS-54201)
+      // the route's `type: 'path'` param encodes/decodes it symmetrically (NEXUS-54201).
+      // repository is carried so the detail page deep-links to that exact repository (NEXUS-54428).
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'my-package',
         gaId: 'npm:my-group:my-package',
         version: '1.0.0',
+        repository: 'my-repo',
       });
     });
 
@@ -731,6 +733,7 @@ describe('TagDetailPage', () => {
         keyword: 'acpi',
         gaId: 'alpine:1.0.0/main:acpi',
         version: '1.7-r7',
+        repository: 'alpine-repo',
       });
     });
 
@@ -759,6 +762,7 @@ describe('TagDetailPage', () => {
         keyword: 'ungrouped-pkg',
         gaId: 'npm:ungrouped-pkg',
         version: '2.0.0',
+        repository: 'my-repo',
       });
     });
 
@@ -786,6 +790,7 @@ describe('TagDetailPage', () => {
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'no-version-pkg',
         gaId: 'npm:my-group:no-version-pkg',
+        repository: 'my-repo',
       });
     });
 
@@ -814,6 +819,7 @@ describe('TagDetailPage', () => {
         keyword: 'no-assets-pkg',
         gaId: 'npm:no-assets-pkg',
         version: '1.0.0',
+        repository: 'my-repo',
       });
     });
 
@@ -841,6 +847,7 @@ describe('TagDetailPage', () => {
         keyword: 'row-click-pkg',
         gaId: 'npm:row-click-pkg',
         version: '1.0.0',
+        repository: 'my-repo',
       });
     });
 
@@ -867,6 +874,7 @@ describe('TagDetailPage', () => {
         keyword: 'enter-key-pkg',
         gaId: 'npm:enter-key-pkg',
         version: '1.0.0',
+        repository: 'my-repo',
       });
     });
 
@@ -893,6 +901,7 @@ describe('TagDetailPage', () => {
         keyword: 'space-key-pkg',
         gaId: 'npm:space-key-pkg',
         version: '1.0.0',
+        repository: 'my-repo',
       });
     });
 

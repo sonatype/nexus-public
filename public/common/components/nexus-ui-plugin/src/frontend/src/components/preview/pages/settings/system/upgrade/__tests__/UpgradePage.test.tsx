@@ -22,6 +22,8 @@ jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     useStatus: jest.fn(),
     useLicense: jest.fn(),
+    useState: jest.fn((getValue) => getValue()),
+    isLicensedEdition: jest.fn(),
   },
 }));
 
@@ -44,6 +46,7 @@ describe('UpgradePage', () => {
     ExtJS.useLicense.mockReturnValue({
       daysToExpiry: 30,
     });
+    ExtJS.isLicensedEdition.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -75,6 +78,7 @@ describe('UpgradePage', () => {
       version: '3.88.0-01',
       edition: 'OSS',
     });
+    ExtJS.isLicensedEdition.mockReturnValue(false);
 
     render(<UpgradePage />, { wrapper: TestWrapper });
 
@@ -125,6 +129,7 @@ describe('UpgradePage', () => {
       version: '3.88.0-01',
       edition: 'OSS',
     });
+    ExtJS.isLicensedEdition.mockReturnValue(false);
 
     render(<UpgradePage />, { wrapper: TestWrapper });
 

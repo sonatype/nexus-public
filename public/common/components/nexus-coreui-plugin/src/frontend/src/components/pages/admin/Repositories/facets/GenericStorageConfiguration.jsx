@@ -12,7 +12,7 @@
  */
 import React, {useEffect} from 'react';
 
-import {ExtAPIUtils, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtAPIUtils, ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import {
   NxFormGroup,
@@ -37,6 +37,7 @@ export default function GenericStorageConfiguration({parentMachine}) {
 
   const {name} = currentParent.context.pristineData;
   const isEdit = !!name;
+  const hasEnterprise = ExtJS.state()?.getValue('hasEnterprise', false);
 
   useEffect(() => {
     loadBlobStores();
@@ -79,6 +80,20 @@ export default function GenericStorageConfiguration({parentMachine}) {
               onChange={FormUtils.handleUpdate('storage.strictContentTypeValidation', sendParent)}
             >
               {EDITOR.ENABLED_CHECKBOX_DESCR}
+            </NxCheckbox>
+          </NxFieldset>
+        )}
+
+        {hasEnterprise && (
+          <NxFieldset
+            label={EDITOR.GLOBAL_DISTRIBUTION_LABEL}
+            className="nxrm-form-group-global-distribution"
+          >
+            <NxCheckbox
+              {...FormUtils.checkboxProps('storage.globalDistribution', currentParent)}
+              onChange={FormUtils.handleUpdate('storage.globalDistribution', sendParent)}
+            >
+              {EDITOR.GLOBAL_DISTRIBUTION_DESCR}
             </NxCheckbox>
           </NxFieldset>
         )}

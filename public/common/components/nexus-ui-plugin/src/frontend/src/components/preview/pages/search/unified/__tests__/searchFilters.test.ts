@@ -14,8 +14,11 @@
 import {
   FORMATS,
   FORMAT_FILTERS,
+  GENERIC_FILTERS,
   getFormatOptions,
   getFiltersForFormat,
+  getAliasLabelsForFormat,
+  getAliasPlaceholdersForFormat,
   getPlaceholderForFormat,
   getApiFormat,
   buildQueryParams,
@@ -100,51 +103,66 @@ const PLACEHOLDER_PATTERNS: Record<string, RegExp> = {
 };
 
 // Expected filters per format (filter IDs)
-// NOTE: Global filters (name, version) are handled by the UI above search results
-// Format-specific filters in the sidebar contain ONLY custom attributes unique to each format
+// All formats now have the generic group/name/version filters prepended after repository.
+// Formats with alias-only rows (Maven groupId/artifactId, npm scope, Docker/OCI
+// imageName/imageTag, Composer vendor/package, Raw name) have those rows deleted;
+// the generic inputs relabeled via aliasLabels replace them.
 const EXPECTED_FILTERS: Record<string, string[]> = {
-  // Formats with NO custom filters - only repository
-  all: ['repository'],
-  alpine: ['repository'],
-  ansiblegalaxy: ['repository', 'namespace', 'name'],
-  apt: ['repository'],
-  cargo: ['repository'],
-  cocoapods: ['repository'],
-  conda: ['repository'],
-  go: ['repository'],
-  helm: ['repository'],
-  huggingface: ['repository'],
-  pub: ['repository'],
-  r: ['repository'],
-  raw: ['repository'],
+  // Formats with only generic filters (repository + group + name + version)
+  all: ['repository', 'group', 'name', 'version'],
+  alpine: ['repository', 'group', 'name', 'version'],
+  apt: ['repository', 'group', 'name', 'version'],
+  cargo: ['repository', 'group', 'name', 'version'],
+  cocoapods: ['repository', 'group', 'name', 'version'],
+  conda: ['repository', 'group', 'name', 'version'],
+  go: ['repository', 'group', 'name', 'version'],
+  helm: ['repository', 'group', 'name', 'version'],
+  huggingface: ['repository', 'group', 'name', 'version'],
+  pub: ['repository', 'group', 'name', 'version'],
+  r: ['repository', 'group', 'name', 'version'],
+  raw: ['repository', 'group', 'name', 'version'],
 
-  // Formats with custom filters
-  composer: ['repository', 'vendor', 'package', 'description', 'keywords'],
-  conan: ['repository', 'baseVersion', 'channel', 'revision', 'packageId', 'packageRevision'],
-  docker: ['repository', 'imageName', 'imageTag', 'layerId', 'contentDigest'],
-  gitlfs: ['repository', 'sha256'],
-  maven: ['repository', 'groupId', 'artifactId', 'baseVersion', 'classifier', 'extension'],
-  npm: ['repository', 'scope', 'author', 'description', 'keywords', 'license'],
-  nuget: ['repository', 'nugetId', 'tags', 'title', 'authors', 'description', 'summary'],
-  oci: ['repository', 'imageName', 'imageTag', 'contentDigest'],
-  p2: ['repository', 'pluginName'],
-  pypi: ['repository', 'classifiers', 'description', 'keywords', 'summary'],
-  rubygems: ['repository', 'description', 'platform', 'summary'],
-  swift: ['repository', 'scope'],
-  terraform: ['repository', 'provider', 'namespace'],
-  yum: ['repository', 'yumName', 'architecture'],
+  // Ansible Galaxy: distinct namespace/collectionName alongside generics
+  // ('name' id renamed to 'collectionName' to avoid collision with generic NAME_FILTER)
+  ansiblegalaxy: ['repository', 'group', 'name', 'version', 'namespace', 'collectionName'],
+
+  // Formats with alias-only rows deleted + distinct fields kept
+  // Composer: vendor/package/version alias group/name/version (deleted); description/keywords kept
+  composer: ['repository', 'group', 'name', 'version', 'description', 'keywords'],
+  // Docker: imageName/imageTag alias name/version (deleted); layerId/contentDigest kept
+  docker: ['repository', 'group', 'name', 'version', 'layerId', 'contentDigest'],
+  // Maven: groupId/artifactId alias group/name (deleted); baseVersion/classifier/extension kept
+  maven: ['repository', 'group', 'name', 'version', 'baseVersion', 'classifier', 'extension'],
+  // npm: scope aliases group (deleted); author/description/keywords/license kept
+  npm: ['repository', 'group', 'name', 'version', 'author', 'description', 'keywords', 'license'],
+  // OCI: imageName/imageTag alias name/version (deleted); contentDigest kept
+  oci: ['repository', 'group', 'name', 'version', 'contentDigest'],
+
+  // Formats with generics + distinct fields (no alias deletions needed)
+  conan: ['repository', 'group', 'name', 'version', 'baseVersion', 'channel', 'revision', 'packageId', 'packageRevision'],
+  gitlfs: ['repository', 'group', 'name', 'version', 'sha256'],
+  nuget: ['repository', 'group', 'name', 'version', 'nugetId', 'tags', 'title', 'authors', 'description', 'summary'],
+  p2: ['repository', 'group', 'name', 'version', 'pluginName'],
+  pypi: ['repository', 'group', 'name', 'version', 'classifiers', 'description', 'keywords', 'summary'],
+  rubygems: ['repository', 'group', 'name', 'version', 'description', 'platform', 'summary'],
+  swift: ['repository', 'group', 'name', 'version', 'scope'],
+  terraform: ['repository', 'group', 'name', 'version', 'provider', 'namespace'],
+  yum: ['repository', 'group', 'name', 'version', 'yumName', 'architecture'],
 };
 
-// Expected API params for format-specific filters
-// These MUST match backend SearchMappings (e.g., MavenSearchMappings.java)
+// Expected API params for format-specific (non-generic) filters.
+// These MUST match backend SearchMappings (e.g., MavenSearchMappings.java).
+// NOTE: generic group/name/version filters (apiParams 'group'/'name'/'version') are
+// verified separately in the GENERIC_FILTERS tests below.
 const FORMAT_SPECIFIC_API_PARAMS: Record<string, Record<string, string>> = {
+  // Ansible Galaxy: distinct FORMAT_FIELD_* filters.
+  // 'name' id renamed to 'collectionName' to avoid collision with generic NAME_FILTER.
   ansiblegalaxy: {
     namespace: 'ansible-galaxy.namespace',
-    name: 'ansible-galaxy.name',
+    collectionName: 'ansible-galaxy.name',
   },
+  // Composer: vendor/package alias rows deleted; only distinct fields remain
   composer: {
-    vendor: 'composer.vendor',
-    package: 'composer.package',
     description: 'composer.description',
     keywords: 'composer.keywords',
   },
@@ -155,24 +173,22 @@ const FORMAT_SPECIFIC_API_PARAMS: Record<string, Record<string, string>> = {
     packageId: 'conan.packageId',
     packageRevision: 'conan.packageRevision',
   },
+  // Docker: imageName/imageTag alias rows deleted; only distinct fields remain
   docker: {
-    imageName: 'docker.imageName',
-    imageTag: 'docker.imageTag',
     layerId: 'docker.layerId',
     contentDigest: 'docker.contentDigest',
   },
   gitlfs: {
     sha256: 'sha256',
   },
+  // Maven: groupId/artifactId alias rows deleted; only distinct fields remain
   maven: {
-    groupId: 'maven.groupId',
-    artifactId: 'maven.artifactId',
     baseVersion: 'maven.baseVersion',
     classifier: 'maven.classifier',
     extension: 'maven.extension',
   },
+  // npm: scope alias row deleted; only distinct fields remain
   npm: {
-    scope: 'group', // npm scope maps to 'group' API param
     author: 'npm.author',
     description: 'npm.description',
     keywords: 'npm.keywords',
@@ -186,9 +202,8 @@ const FORMAT_SPECIFIC_API_PARAMS: Record<string, Record<string, string>> = {
     description: 'nuget.description',
     summary: 'nuget.summary',
   },
+  // OCI: imageName/imageTag alias rows deleted; only distinct fields remain
   oci: {
-    imageName: 'oci.imageName',
-    imageTag: 'oci.imageTag',
     contentDigest: 'oci.contentDigest',
   },
   p2: {
@@ -279,8 +294,8 @@ describe('searchFilters', () => {
           expect(FORMAT_FILTERS[format].filters).toBeInstanceOf(Array);
         });
 
-        it('has at least one filter (repository)', () => {
-          expect(FORMAT_FILTERS[format].filters.length).toBeGreaterThan(0);
+        it('has at least four filters (repository + group + name + version)', () => {
+          expect(FORMAT_FILTERS[format].filters.length).toBeGreaterThanOrEqual(4);
         });
 
         it('includes repository filter', () => {
@@ -340,18 +355,166 @@ describe('searchFilters', () => {
       });
     });
 
-    // Test that formats with no custom filters only have repository
-    describe('Formats with no custom filters', () => {
-      const formatsWithOnlyRepository = ['all', 'alpine', 'apt', 'cargo', 'cocoapods', 'conda', 'go', 'helm', 'huggingface', 'pub', 'r', 'raw'];
+    // Test that formats with only generic filters have exactly repository + group + name + version
+    describe('Formats with only generic filters (no format-specific rows)', () => {
+      const genericOnlyFormats = ['all', 'alpine', 'apt', 'cargo', 'cocoapods', 'conda', 'go', 'helm', 'huggingface', 'pub', 'r', 'raw'];
 
-      formatsWithOnlyRepository.forEach(format => {
-        it(`${format} only has repository filter (no redundant name/version)`, () => {
+      genericOnlyFormats.forEach(format => {
+        it(`${format} has exactly repository + group + name + version`, () => {
           const filterIds = FORMAT_FILTERS[format as keyof typeof FORMAT_FILTERS].filters.map(f => f.id);
-          expect(filterIds).toEqual(['repository']);
-          expect(filterIds).not.toContain('name');
-          expect(filterIds).not.toContain('version');
+          expect(filterIds).toEqual(['repository', 'group', 'name', 'version']);
         });
       });
+    });
+  });
+
+  // =============================================================================
+  // TESTS: GENERIC_FILTERS (Task 2 — plan §Task 2 step 7)
+  // =============================================================================
+
+  describe('GENERIC_FILTERS', () => {
+    it('contains exactly group, name, version in that order', () => {
+      const ids = GENERIC_FILTERS.map(f => f.id);
+      expect(ids).toEqual(['group', 'name', 'version']);
+    });
+
+    it('GENERIC_FILTERS is prepended after repository on every format including "all"', () => {
+      ALL_FORMATS.forEach(format => {
+        const filterIds = FORMAT_FILTERS[format].filters.map(f => f.id);
+        expect(filterIds[0]).toBe('repository');
+        expect(filterIds[1]).toBe('group');
+        expect(filterIds[2]).toBe('name');
+        expect(filterIds[3]).toBe('version');
+      });
+    });
+
+    it('aliasLabels populated only for the six alias formats', () => {
+      const aliasFormats = ['maven', 'npm', 'docker', 'oci', 'composer', 'raw'] as const;
+      aliasFormats.forEach(format => {
+        expect(FORMAT_FILTERS[format].aliasLabels).toBeDefined();
+      });
+
+      // All other formats must NOT have aliasLabels
+      ALL_FORMATS.filter(f => !(aliasFormats as readonly string[]).includes(f)).forEach(format => {
+        expect(FORMAT_FILTERS[format].aliasLabels).toBeUndefined();
+      });
+    });
+
+    it('NuGet Package ID stays as its own distinct filter with id nugetId (regression guard)', () => {
+      const nugetFilters = FORMAT_FILTERS.nuget.filters;
+      const nugetIdFilter = nugetFilters.find(f => f.id === 'nugetId');
+      expect(nugetIdFilter).toBeDefined();
+      expect(nugetIdFilter?.apiParam).toBe('nuget.id');
+      expect(nugetIdFilter?.label).toBe('Package ID');
+      // generic name is also present and separate
+      const nameFilter = nugetFilters.find(f => f.id === 'name');
+      expect(nameFilter).toBeDefined();
+      expect(nameFilter?.apiParam).toBe('name');
+    });
+
+    // Prepending GENERIC_FILTERS to every format means any format-specific row
+    // reusing id 'group', 'name', or 'version' would collide silently (duplicate
+    // sidebar rows, one wins in filter state and buildQueryParams). Distinct rows
+    // that would have collided are renamed — collectionName (ansiblegalaxy),
+    // nugetId (nuget), yumName (yum) — so this guard catches a future format
+    // declaring a colliding id.
+    it.each(ALL_FORMATS)('has unique filter IDs for %s', (format) => {
+      const ids = getFiltersForFormat(format).map(f => f.id);
+      expect(ids.length).toBe(new Set(ids).size);
+    });
+  });
+
+  // =============================================================================
+  // TESTS: getAliasLabelsForFormat
+  // =============================================================================
+
+  describe('getAliasLabelsForFormat', () => {
+    it('returns Group ID / Artifact ID aliases for maven', () => {
+      const labels = getAliasLabelsForFormat('maven');
+      expect(labels).toEqual({ group: 'Group ID', name: 'Artifact ID' });
+    });
+
+    it('returns Scope alias for npm', () => {
+      const labels = getAliasLabelsForFormat('npm');
+      expect(labels).toEqual({ group: 'Scope' });
+    });
+
+    it('returns Image Name / Image Tag aliases for docker', () => {
+      const labels = getAliasLabelsForFormat('docker');
+      expect(labels).toEqual({ name: 'Image Name', version: 'Image Tag' });
+    });
+
+    it('returns Image Name / Image Tag aliases for oci', () => {
+      const labels = getAliasLabelsForFormat('oci');
+      expect(labels).toEqual({ name: 'Image Name', version: 'Image Tag' });
+    });
+
+    it('returns Vendor / Package aliases for composer (version stays generic)', () => {
+      const labels = getAliasLabelsForFormat('composer');
+      expect(labels).toEqual({ group: 'Vendor', name: 'Package' });
+    });
+
+    it('returns Filename alias for raw', () => {
+      const labels = getAliasLabelsForFormat('raw');
+      expect(labels).toEqual({ name: 'Filename' });
+    });
+
+    it('returns undefined for formats without aliases (all, alpine, nuget, pypi)', () => {
+      expect(getAliasLabelsForFormat('all')).toBeUndefined();
+      expect(getAliasLabelsForFormat('alpine')).toBeUndefined();
+      expect(getAliasLabelsForFormat('nuget')).toBeUndefined();
+      expect(getAliasLabelsForFormat('pypi')).toBeUndefined();
+    });
+  });
+
+  // =============================================================================
+  // TESTS: getAliasPlaceholdersForFormat
+  //
+  // Formats whose aliasLabels change the vocabulary (Scope, Image Name/Tag,
+  // Vendor/Package, Filename) must ship matching placeholder overrides so the
+  // input hint does not contradict the label.  Maven keeps the generic
+  // placeholders because they are already Maven-flavored.
+  // =============================================================================
+
+  describe('getAliasPlaceholdersForFormat', () => {
+    it('supplies scope-flavored placeholder for npm', () => {
+      expect(getAliasPlaceholdersForFormat('npm')).toEqual({ group: 'e.g., @angular' });
+    });
+
+    it('supplies image name/tag placeholders for docker', () => {
+      expect(getAliasPlaceholdersForFormat('docker')).toEqual({
+        name: 'e.g., nginx',
+        version: 'e.g., latest',
+      });
+    });
+
+    it('supplies image name/tag placeholders for oci', () => {
+      expect(getAliasPlaceholdersForFormat('oci')).toEqual({
+        name: 'e.g., nginx',
+        version: 'e.g., latest',
+      });
+    });
+
+    it('supplies vendor/package placeholders for composer', () => {
+      expect(getAliasPlaceholdersForFormat('composer')).toEqual({
+        group: 'e.g., symfony',
+        name: 'e.g., console',
+      });
+    });
+
+    it('supplies filename placeholder for raw', () => {
+      expect(getAliasPlaceholdersForFormat('raw')).toEqual({ name: 'e.g., README.md' });
+    });
+
+    it('returns undefined for maven (generic placeholders already Maven-flavored)', () => {
+      expect(getAliasPlaceholdersForFormat('maven')).toBeUndefined();
+    });
+
+    it('returns undefined for formats without label aliases', () => {
+      expect(getAliasPlaceholdersForFormat('all')).toBeUndefined();
+      expect(getAliasPlaceholdersForFormat('alpine')).toBeUndefined();
+      expect(getAliasPlaceholdersForFormat('nuget')).toBeUndefined();
+      expect(getAliasPlaceholdersForFormat('pypi')).toBeUndefined();
     });
   });
 
@@ -395,12 +558,14 @@ describe('searchFilters', () => {
       });
     });
 
-    it('returns a copy, not the original array', () => {
+    it('returns the same readonly reference across calls', () => {
+      // Contract: callers only read. Returning the module-level array avoids
+      // per-render allocations on every SearchSidebar render / buildQueryParams /
+      // URL round-trip. A caller that needs a mutable list must copy explicitly.
       const filters1 = getFiltersForFormat('maven');
       const filters2 = getFiltersForFormat('maven');
 
-      expect(filters1).not.toBe(filters2);
-      expect(filters1).toEqual(filters2);
+      expect(filters1).toBe(filters2);
     });
   });
 
@@ -469,49 +634,49 @@ describe('searchFilters', () => {
     });
 
     describe('Filter values', () => {
-      it('includes non-empty filter values', () => {
+      it('includes non-empty filter values (generic group/name keys)', () => {
         const params = buildQueryParams('maven', '', {
-          groupId: 'org.apache',
-          artifactId: 'commons-lang3',
+          group: 'org.apache',
+          name: 'commons-lang3',
         });
 
-        expect(params.get('maven.groupId')).toBe('org.apache');
-        expect(params.get('maven.artifactId')).toBe('commons-lang3');
+        expect(params.get('group')).toBe('org.apache');
+        expect(params.get('name')).toBe('commons-lang3');
       });
 
       it('excludes empty filter values', () => {
         const params = buildQueryParams('maven', '', {
-          groupId: 'org.apache',
-          artifactId: '',
+          group: 'org.apache',
+          name: '',
         });
 
-        expect(params.get('maven.groupId')).toBe('org.apache');
-        expect(params.has('maven.artifactId')).toBe(false);
+        expect(params.get('group')).toBe('org.apache');
+        expect(params.has('name')).toBe(false);
       });
 
       it('excludes whitespace-only filter values', () => {
         const params = buildQueryParams('maven', '', {
-          groupId: '   ',
+          group: '   ',
         });
 
-        expect(params.has('maven.groupId')).toBe(false);
+        expect(params.has('group')).toBe(false);
       });
 
       it('trims filter value whitespace', () => {
         const params = buildQueryParams('maven', '', {
-          groupId: '  org.apache  ',
+          group: '  org.apache  ',
         });
 
-        expect(params.get('maven.groupId')).toBe('org.apache');
+        expect(params.get('group')).toBe('org.apache');
       });
     });
 
     // Test buildQueryParams for each format with their specific filters
     describe('Format-specific filter building', () => {
-      it('builds correct params for maven', () => {
+      it('builds correct params for maven (generic group/name, not maven.groupId/artifactId)', () => {
         const params = buildQueryParams('maven', 'spring', {
-          groupId: 'org.springframework',
-          artifactId: 'spring-core',
+          group: 'org.springframework',
+          name: 'spring-core',
           baseVersion: '6.0.0',
           classifier: 'sources',
           extension: 'jar',
@@ -519,16 +684,20 @@ describe('searchFilters', () => {
 
         expect(params.get('q')).toBe('spring');
         expect(params.get('format')).toBe('maven2');
-        expect(params.get('maven.groupId')).toBe('org.springframework');
-        expect(params.get('maven.artifactId')).toBe('spring-core');
+        // generic group/name params emitted through GENERIC_FILTERS in the loop
+        expect(params.get('group')).toBe('org.springframework');
+        expect(params.get('name')).toBe('spring-core');
+        // old alias params must not appear
+        expect(params.has('maven.groupId')).toBe(false);
+        expect(params.has('maven.artifactId')).toBe(false);
         expect(params.get('maven.baseVersion')).toBe('6.0.0');
         expect(params.get('maven.classifier')).toBe('sources');
         expect(params.get('maven.extension')).toBe('jar');
       });
 
-      it('builds correct params for npm', () => {
+      it('builds correct params for npm (generic group for scope, not old scope filter)', () => {
         const params = buildQueryParams('npm', 'angular', {
-          scope: '@angular',
+          group: '@angular',
           author: 'Google',
           description: 'Web framework',
           keywords: 'framework',
@@ -537,25 +706,30 @@ describe('searchFilters', () => {
 
         expect(params.get('q')).toBe('angular');
         expect(params.get('format')).toBe('npm');
-        expect(params.get('group')).toBe('@angular'); // npm scope uses 'group'
+        // generic group emitted via GENERIC_FILTERS
+        expect(params.get('group')).toBe('@angular');
         expect(params.get('npm.author')).toBe('Google');
         expect(params.get('npm.description')).toBe('Web framework');
         expect(params.get('npm.keywords')).toBe('framework');
         expect(params.get('npm.license')).toBe('MIT');
       });
 
-      it('builds correct params for docker', () => {
+      it('builds correct params for docker (generic name/version, not docker.imageName/imageTag)', () => {
         const params = buildQueryParams('docker', 'nginx', {
-          imageName: 'nginx',
-          imageTag: 'latest',
+          name: 'nginx',
+          version: 'latest',
           layerId: 'sha256:abc123',
           contentDigest: 'sha256:def456',
         });
 
         expect(params.get('q')).toBe('nginx');
         expect(params.get('format')).toBe('docker');
-        expect(params.get('docker.imageName')).toBe('nginx');
-        expect(params.get('docker.imageTag')).toBe('latest');
+        // generic name/version emitted via GENERIC_FILTERS
+        expect(params.get('name')).toBe('nginx');
+        expect(params.get('version')).toBe('latest');
+        // old alias params must not appear
+        expect(params.has('docker.imageName')).toBe(false);
+        expect(params.has('docker.imageTag')).toBe(false);
         expect(params.get('docker.layerId')).toBe('sha256:abc123');
         expect(params.get('docker.contentDigest')).toBe('sha256:def456');
       });
@@ -594,15 +768,19 @@ describe('searchFilters', () => {
         expect(params.get('nuget.summary')).toBe('Popular JSON library');
       });
 
-      it('builds correct params for composer', () => {
+      it('builds correct params for composer (generic group/name, not composer.vendor/package)', () => {
         const params = buildQueryParams('composer', 'symfony', {
-          vendor: 'symfony',
-          package: 'console',
+          group: 'symfony',
+          name: 'console',
         });
 
         expect(params.get('format')).toBe('composer');
-        expect(params.get('composer.vendor')).toBe('symfony');
-        expect(params.get('composer.package')).toBe('console');
+        // generic group/name emitted via GENERIC_FILTERS
+        expect(params.get('group')).toBe('symfony');
+        expect(params.get('name')).toBe('console');
+        // old alias params must not appear
+        expect(params.has('composer.vendor')).toBe(false);
+        expect(params.has('composer.package')).toBe(false);
       });
 
       it('builds correct params for conan with all filters', () => {
@@ -697,6 +875,24 @@ describe('searchFilters', () => {
       });
     });
 
+    describe('Generic group / name / version params (Task 2 assertions)', () => {
+      it('emits group / name / version params for format=all', () => {
+        const params = buildQueryParams('all', '', { group: 'g1', name: 'n1', version: 'v1' });
+        expect(params.get('group')).toBe('g1');
+        expect(params.get('name')).toBe('n1');
+        expect(params.get('version')).toBe('v1');
+      });
+
+      it('emits group / name / version params for maven via generic path (not maven.groupId/artifactId)', () => {
+        const params = buildQueryParams('maven', '', { group: 'com.example', name: 'my-lib', version: '1.0.0' });
+        expect(params.get('group')).toBe('com.example');
+        expect(params.get('name')).toBe('my-lib');
+        expect(params.get('version')).toBe('1.0.0');
+        expect(params.has('maven.groupId')).toBe(false);
+        expect(params.has('maven.artifactId')).toBe(false);
+      });
+    });
+
     describe('nameOrVersion combined filter (from UI above results)', () => {
       it('sends version-like values to version param', () => {
         const params = buildQueryParams('all', '', {
@@ -726,6 +922,27 @@ describe('searchFilters', () => {
           nameOrVersion: 'lodash',
         });
         expect(params.get('q')).toBe('search-term lodash');
+      });
+
+      it('preserves version set by nameOrVersion over a stale sidebar version filter', () => {
+        // Regression: with the pre-refactor `!params.has('version')` gate the
+        // header nameOrVersion (visible near the results) wins over any sidebar
+        // version that has been left set from a previous search.  Without the
+        // gate the generic-filters loop would silently overwrite it.
+        const params = buildQueryParams('maven', '', {
+          nameOrVersion: '1.2.3',
+          version: '2.0.0',
+        });
+        expect(params.get('version')).toBe('1.2.3');
+      });
+
+      it('emits sidebar version when nameOrVersion is not version-like', () => {
+        const params = buildQueryParams('maven', '', {
+          nameOrVersion: 'lodash',
+          version: '2.0.0',
+        });
+        expect(params.get('version')).toBe('2.0.0');
+        expect(params.get('q')).toBe('lodash');
       });
     });
   });

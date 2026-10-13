@@ -12,20 +12,20 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.core.Response;
-
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailConfiguration;
+import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailValidation;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailValidation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Swagger documentation for {@link EmailConfigurationApiResource}
@@ -71,7 +71,7 @@ public interface EmailConfigurationApiResourceDoc
   })
   Response testEmailConfiguration(
       @Parameter(required = true,
-          description = "An email address to send a test email to") @NotNull String validationEmail);
+          description = "An email address to send a test email to") @Valid @NotNull @Email String validationEmail);
 
   @Operation(summary = "Disable and clear the email configuration")
   @ApiResponses(value = {

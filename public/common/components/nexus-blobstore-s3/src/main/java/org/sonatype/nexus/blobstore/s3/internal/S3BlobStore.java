@@ -17,20 +17,26 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -42,6 +48,7 @@ import org.sonatype.nexus.blobstore.DateBasedHelper.DateInterval;
 import org.sonatype.nexus.blobstore.MetricsInputStream;
 import org.sonatype.nexus.blobstore.StreamMetrics;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobScanConcurrency;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
@@ -61,6 +68,7 @@ import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobIndex;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -78,6 +86,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.hash.HashCode;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.joda.time.DateTime;
@@ -98,11 +107,11 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.cache.CacheLoader.from;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
@@ -169,6 +178,15 @@ public class S3BlobStore
 
   private static final String FILE_V1 = "file/1";
 
+  /** Size of the existing async-ops thread pool used by {@link #asyncDelete} and (when sized to match) by compact. */
+  private static final int S3_ASYNC_OPS_POOL_SIZE = 8;
+
+  // S3's DeleteObjects cap is 1000 keys; with at most 3 keys per blob, 333 blobs/batch stays under the limit.
+  // Must be <= SoftDeletedBlobsStoreImpl.DELETE_RECORDS_MAX_BATCH (1000) — keep the two in sync.
+  private static final int MAX_COMPACT_DELETE_BATCH_SIZE = 333;
+
+  private static final int MAX_COMPACT_WORKER_POOL_SIZE = 64;
+
   private final AmazonS3Factory amazonS3Factory;
 
   private final BucketManager bucketManager;
@@ -188,6 +206,15 @@ public class S3BlobStore
   private EncryptingS3Client s3;
 
   private ExecutorService executorService;
+
+  // nexus.s3.compact.batchEnabled — off by default; set true to enable batched compact.
+  private final boolean compactBatchEnabled;
+
+  // nexus.s3.compact.deleteBatchSize — blobs per DeleteObjects call; max 333 (333×3 keys = 999 < S3 limit of 1000).
+  private final int compactDeleteBatchSize;
+
+  // nexus.s3.compact.workerPoolSize — parallel workers per blobstore in Phase 3.
+  private final int compactWorkerPoolSize;
 
   /**
    * Tracks the timestamp (in milliseconds) when warmup failed after all retry attempts.
@@ -219,23 +246,47 @@ public class S3BlobStore
       final BucketManager bucketManager,
       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
       @Value("${nexus.s3.loadFromDb:true}") final boolean loadFromDb,
-      @Nullable final BlobStoreMigrationStateProvider migrationStateProvider)
+      @Nullable final BlobStoreMigrationStateProvider migrationStateProvider,
+      @Value(FeatureFlags.S3_COMPACT_BATCH_ENABLED_NAMED_VALUE) final boolean compactBatchEnabled,
+      @Value(FeatureFlags.S3_COMPACT_DELETE_BATCH_SIZE_NAMED_VALUE) final int compactDeleteBatchSize,
+      @Value(FeatureFlags.S3_COMPACT_WORKER_POOL_SIZE_NAMED_VALUE) final int compactWorkerPoolSize)
   {
     super(blobIdLocationResolver, dryRunPrefix, loadFromDb, migrationStateProvider);
-    this.amazonS3Factory = checkNotNull(amazonS3Factory);
-    this.copier = checkNotNull(copier);
-    this.uploader = checkNotNull(uploader);
-    this.metricsService = checkNotNull(metricsService);
-    this.deletedBlobIndex = checkNotNull(deletedBlobIndex);
-    this.blobStoreQuotaUsageChecker = checkNotNull(blobStoreQuotaUsageChecker);
-    this.bucketManager = checkNotNull(bucketManager);
+    this.amazonS3Factory = requireNonNull(amazonS3Factory);
+    this.copier = requireNonNull(copier);
+    this.uploader = requireNonNull(uploader);
+    this.metricsService = requireNonNull(metricsService);
+    this.deletedBlobIndex = requireNonNull(deletedBlobIndex);
+    this.blobStoreQuotaUsageChecker = requireNonNull(blobStoreQuotaUsageChecker);
+    this.bucketManager = requireNonNull(bucketManager);
     this.preferAsyncCleanup = preferAsyncCleanup;
+    this.compactBatchEnabled = compactBatchEnabled;
+    this.compactDeleteBatchSize = checkBatchSize(compactDeleteBatchSize);
+    this.compactWorkerPoolSize = checkWorkerPoolSize(compactWorkerPoolSize);
 
     MetricRegistry registry = SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
 
     existsTimer = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "exists"));
     expireTimer = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "expire"));
     hardDeleteTimer = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "hardDelete"));
+  }
+
+  private int checkBatchSize(final int n) {
+    if (n <= 0 || n > MAX_COMPACT_DELETE_BATCH_SIZE) {
+      log.warn("nexus.s3.compact.deleteBatchSize={} out of range (0, {}]; clamping to {}",
+          n, MAX_COMPACT_DELETE_BATCH_SIZE, MAX_COMPACT_DELETE_BATCH_SIZE);
+      return MAX_COMPACT_DELETE_BATCH_SIZE;
+    }
+    return n;
+  }
+
+  private int checkWorkerPoolSize(final int n) {
+    if (n <= 0 || n > MAX_COMPACT_WORKER_POOL_SIZE) {
+      log.warn("nexus.s3.compact.workerPoolSize={} out of range (0, {}]; clamping to {}",
+          n, MAX_COMPACT_WORKER_POOL_SIZE, MAX_COMPACT_WORKER_POOL_SIZE);
+      return MAX_COMPACT_WORKER_POOL_SIZE;
+    }
+    return n;
   }
 
   @Override
@@ -260,7 +311,7 @@ public class S3BlobStore
     blobStoreQuotaUsageChecker.start();
 
     if (this.preferAsyncCleanup && executorService == null) {
-      this.executorService = newFixedThreadPool(8,
+      this.executorService = newFixedThreadPool(S3_ASYNC_OPS_POOL_SIZE,
           new NexusThreadFactory("s3-blobstore", "async-ops"));
     }
   }
@@ -597,7 +648,7 @@ public class S3BlobStore
   @Guarded(by = STARTED)
   @Timed
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
-    Blob sourceBlob = checkNotNull(get(blobId));
+    Blob sourceBlob = requireNonNull(get(blobId));
     String sourcePath = contentPath(sourceBlob.getId());
     BlobId copyBlobId = createCopyBlobId(sourceBlob.getId());
     String destinationPath = contentPath(copyBlobId);
@@ -650,7 +701,7 @@ public class S3BlobStore
   @Timed
   public Blob writeBlobProperties(final BlobId blobId, final Map<String, String> headers) {
     checkWarmupStatus();
-    S3Blob blob = (S3Blob) checkNotNull(get(blobId));
+    S3Blob blob = (S3Blob) requireNonNull(get(blobId));
     String blobPath = contentPath(blob.getId());
     String attributePath = attributePath(blobId);
     BlobMetrics metrics = blob.getMetrics();
@@ -861,16 +912,30 @@ public class S3BlobStore
       @Nullable final BlobStoreUsageChecker inUseChecker,
       final Duration blobsOlderThan)
   {
+    if (compactBatchEnabled) {
+      doCompactWithDeletedBlobIndexBatched(inUseChecker, blobsOlderThan);
+    }
+    else {
+      doCompactWithDeletedBlobIndexSequential(inUseChecker, blobsOlderThan);
+    }
+  }
+
+  /**
+   * Sequential per-blob compact; batched path is opt-in, enable via
+   * {@code nexus.s3.compact.batchEnabled=true}.
+   */
+  void doCompactWithDeletedBlobIndexSequential(
+      @Nullable final BlobStoreUsageChecker inUseChecker,
+      final Duration blobsOlderThan)
+  {
     OffsetDateTime date = OffsetDateTime.now().minus(blobsOlderThan);
     String blobStoreName = blobStoreConfiguration.getName();
     log.info("Begin deleted blobs processing for blob store '{}' before {}", blobStoreName, date);
-    // only process each blob once (in-use blobs may be re-added to the index)
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
       int numBlobs = deletedBlobIndex.count(date);
       AtomicInteger counter = new AtomicInteger();
       deletedBlobIndex.getRecordsBefore(date).forEach(blobId -> {
         CancelableHelper.checkCancellation();
-
         BlobSupport blob = liveBlobs.getIfPresent(blobId);
         log.debug("Next available record for compaction: {}", blobId);
         if (Objects.isNull(blob) || blob.isStale()) {
@@ -890,11 +955,175 @@ public class S3BlobStore
         else {
           log.debug("Still in use to deferring");
         }
-
         progressLogger.info("Blob store '{}' - Elapsed time: {}, processed: {}/{}", blobStoreName,
             progressLogger.getElapsed(), counter.incrementAndGet(), numBlobs);
       });
     }
+  }
+
+  void doCompactWithDeletedBlobIndexBatched(
+      @Nullable final BlobStoreUsageChecker inUseChecker,
+      final Duration blobsOlderThan)
+  {
+    OffsetDateTime date = OffsetDateTime.now().minus(blobsOlderThan);
+    String blobStoreName = blobStoreConfiguration.getName();
+    log.info("Begin deleted blobs processing for blob store '{}' before {} (batched, batchSize={}, workers={})",
+        blobStoreName, date, compactDeleteBatchSize, compactWorkerPoolSize);
+
+    // Dedicated bounded pool; CallerRunsPolicy gives Phase 1 backpressure and isolates asyncDelete from compact.
+    // Queue sized 4× worker count to absorb latency spikes before CallerRunsPolicy kicks in.
+    // Skewed input (many blobs sharing one hour-prefix) will serialize all those blobs in that group before
+    // the pool moves on — throughput degrades but hot-partition safety is preserved.
+    // Stop is not prompt: batches in flight complete before shutdownNow drains the pool, since the AWS SDK
+    // Apache HTTP client only honours thread interrupt at limited I/O points (same limitation as sequential path).
+    ThreadPoolExecutor localPool = new ThreadPoolExecutor(
+        compactWorkerPoolSize, compactWorkerPoolSize,
+        60L, TimeUnit.SECONDS,
+        new LinkedBlockingQueue<>(compactWorkerPoolSize * 4),
+        new NexusThreadFactory("s3-blobstore", "compact-batch"),
+        new ThreadPoolExecutor.CallerRunsPolicy());
+    String bucket = getConfiguredBucket();
+
+    // Declared here so the finally can Future.cancel(true) — worker threads don't inherit CancelableHelper's
+    // ThreadLocal.
+    List<Future<S3CompactBatcher.BlobKey>> classifications = new ArrayList<>();
+    List<Future<?>> deletes = new ArrayList<>();
+
+    try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
+      int numBlobs = deletedBlobIndex.count(date);
+      AtomicInteger counter = new AtomicInteger();
+
+      // Materialize up-front so the JDBC cursor closes before the multi-minute parallel pipeline runs.
+      List<BlobId> blobIds;
+      try (Stream<BlobId> stream = deletedBlobIndex.getRecordsBefore(date)) {
+        blobIds = stream.collect(Collectors.toList());
+      }
+      // Phase 1: classify every eligible blob in parallel.
+      for (BlobId blobId : blobIds) {
+        CancelableHelper.checkCancellation();
+        BlobSupport blob = liveBlobs.getIfPresent(blobId);
+        if (Objects.isNull(blob) || blob.isStale()) {
+          classifications.add(localPool.submit(() -> {
+            CancelableHelper.checkCancellation();
+            return classifyForCompact(inUseChecker, blobId);
+          }));
+        }
+        progressLogger.info("Blob store '{}' - Elapsed time: {}, processed: {}/{}", blobStoreName,
+            progressLogger.getElapsed(), counter.incrementAndGet(), numBlobs);
+      }
+
+      // Phase 2: collect eligible blobs; drop nulls and failed classifications.
+      List<S3CompactBatcher.BlobKey> eligible = new ArrayList<>();
+      int classifyFailures = 0;
+      Throwable firstClassifyFailure = null;
+      for (Future<S3CompactBatcher.BlobKey> f : classifications) {
+        try {
+          S3CompactBatcher.BlobKey key = f.get();
+          if (key != null) {
+            eligible.add(key);
+          }
+        }
+        catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new TaskInterruptedException("Compact interrupted for blob store " + blobStoreName, true);
+        }
+        catch (ExecutionException e) {
+          Throwable cause = e.getCause() != null ? e.getCause() : e;
+          classifyFailures++;
+          if (firstClassifyFailure == null) {
+            firstClassifyFailure = cause;
+          }
+          log.debug("Compact: classifier failed for blob in '{}': {}", blobStoreName, cause.toString(), cause);
+        }
+      }
+      if (classifyFailures > 0) {
+        log.warn("Compact: '{}' classifier failed for {} blob(s); first cause: {}",
+            blobStoreName, classifyFailures,
+            firstClassifyFailure != null ? firstClassifyFailure.toString() : "unknown");
+      }
+      log.info("Compact: '{}' Phase 2 done — {} classified, {} eligible for delete",
+          blobStoreName, classifications.size(), eligible.size());
+
+      // Phase 3: group by S3 hour prefix, then batch-delete in parallel within each group.
+      // Sequential across groups reduces cross-partition SlowDown; within-group SlowDown retried by S3CompactBatcher.
+      Map<String, List<S3CompactBatcher.BlobKey>> byHourPrefix = new LinkedHashMap<>();
+      for (S3CompactBatcher.BlobKey bk : eligible) {
+        byHourPrefix.computeIfAbsent(S3CompactBatcher.hourPrefix(bk.content()), k -> new ArrayList<>()).add(bk);
+      }
+      int batchCount = (int) Math.ceil((double) eligible.size() / compactDeleteBatchSize);
+      log.info(
+          "Compact: '{}' Phase 3 starting — {} eligible blobs across ~{} batches (batchSize={}), {} hour-prefix group(s)",
+          blobStoreName, eligible.size(), batchCount, compactDeleteBatchSize, byHourPrefix.size());
+      log.debug("Compact: '{}' Phase 3 bucket: '{}'", blobStoreName, bucket);
+      for (Map.Entry<String, List<S3CompactBatcher.BlobKey>> prefixEntry : byHourPrefix.entrySet()) {
+        List<Future<?>> prefixFutures = new ArrayList<>();
+        for (List<S3CompactBatcher.BlobKey> chunk : Iterables.partition(prefixEntry.getValue(),
+            compactDeleteBatchSize)) {
+          CancelableHelper.checkCancellation();
+          List<S3CompactBatcher.BlobKey> snapshot = List.copyOf(chunk);
+          Future<?> f = localPool.submit(() -> S3CompactBatcher.flushBatch(s3, bucket, deletedBlobIndex, snapshot,
+              metricsService::recordDeletion, liveBlobs::invalidate));
+          prefixFutures.add(f);
+          deletes.add(f);
+        }
+        for (Future<?> f : prefixFutures) {
+          try {
+            f.get();
+          }
+          catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TaskInterruptedException("Compact interrupted for blob store " + blobStoreName, true);
+          }
+          catch (ExecutionException e) {
+            // flushBatch wraps S3 + DB calls in try/catch, so an exception here is unexpected — log defensively.
+            Throwable cause = e.getCause();
+            log.warn("Compact: bulk-delete task threw unexpectedly for blob store '{}': {}",
+                blobStoreName, cause != null ? cause.toString() : e.getMessage(), cause);
+          }
+        }
+      }
+      log.info("Compact finished for blob store '{}': iterated={}, eligible={}, batches={}",
+          blobStoreName, counter.get(), eligible.size(), deletes.size());
+    }
+    finally {
+      // Interrupt workers directly — the cancellation ThreadLocal does not propagate to them.
+      classifications.forEach(f -> f.cancel(true));
+      deletes.forEach(f -> f.cancel(true));
+      localPool.shutdownNow();
+    }
+  }
+
+  /** Runs GET_ATTRIBUTES + UNDELETE checks; returns the key when safe to hard-delete, else {@code null}. */
+  private S3CompactBatcher.BlobKey classifyForCompact(
+      @Nullable final BlobStoreUsageChecker inUseChecker,
+      final BlobId blobId)
+  {
+    // Re-check liveBlobs at worker time; submit-time check can be minutes stale once Phase 1 is queued.
+    BlobSupport live = liveBlobs.getIfPresent(blobId);
+    if (live != null && !live.isStale()) {
+      return null;
+    }
+
+    Optional<S3BlobAttributes> attrs = ofNullable((S3BlobAttributes) getBlobAttributes(blobId));
+
+    if (attrs.isPresent()) {
+      boolean stillInUse = undelete(inUseChecker, blobId, attrs.get(), false);
+      if (stillInUse) {
+        return null;
+      }
+    }
+
+    String content = contentPath(blobId);
+    String attr = attributePath(blobId);
+    String softDel = attrs.flatMap(a -> a.getSoftDeletedLocation())
+        .map(loc -> attributePath(createBlobIdForTimePath(blobId, loc)))
+        .orElse(null);
+    // Captured from already-loaded attrs — flushBatch decrements the metric without a second S3 GET.
+    long contentSize = attrs
+        .map(a -> a.getMetrics() != null ? a.getMetrics().getContentSize() : 0L)
+        .orElse(0L);
+    // If attrs is missing (prior partial run), flushBatch gets NoSuchKey and treats it as success.
+    return new S3CompactBatcher.BlobKey(blobId, content, attr, softDel, contentSize);
   }
 
   private boolean maybeCompactBlob(@Nullable final BlobStoreUsageChecker inUseChecker, final BlobId blobId) {
@@ -1094,34 +1323,45 @@ public class S3BlobStore
       final OffsetDateTime fromDateTime,
       final OffsetDateTime toDateTime)
   {
+    return getBlobIdUpdatedSinceStream(prefix, fromDateTime, toDateTime, null);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(
+      final String prefix,
+      final OffsetDateTime fromDateTime,
+      final OffsetDateTime toDateTime,
+      @Nullable final BlobScanConcurrency concurrency)
+  {
     String fullPrefix = getContentPrefix() + prefix;
 
     DateInterval interval = new DateInterval(fromDateTime, toDateTime);
-    Predicate<Blob> blobMatches = !VOLUME_PREFIX.equals(prefix)
-        ? this::isNonTempBlob
-        : ((Predicate<Blob>) this::isNonTempBlob).and(blob -> isBlobCreatedInRange(blob, interval));
 
-    return s3.listObjectsWithPrefix(fullPrefix)
-        // Restrict to bytes & properties files
-        .filter(object -> isBlobStoreContent(object.key()))
+    Stream<BlobId> candidates = uniqueBlobEntries(s3.listObjectsWithPrefix(fullPrefix), S3Object::key)
         // Create a location and parse it into a BlobId
         .map(S3AttributesLocation::new)
         .map(this::getBlobIdFromAttributeFilePath)
         .filter(Objects::nonNull)
         // Check that if the blobId has a date, its in the expected range
-        .filter(blobId -> blobIdInRange(blobId, interval))
-        // Read the blob attributes and ensure its not a temp blob
-        // vol- paths are also checked for creation date
-        .filter(blobId -> {
-          try {
-            return Optional.ofNullable(get(blobId, true))
-                .map(blobMatches::test)
-                .orElse(true);
-          }
-          catch (Exception e) {
-            return true;
-          }
-        });
+        .filter(blobId -> blobIdInRange(blobId, interval));
+
+    return excludeTemporaryAndOutOfRangeBlobs(candidates, prefix, interval, concurrency);
+  }
+
+  /**
+   * S3 {@code ListObjectsV2} returns keys in ascending UTF-8 binary order, and the paginator concatenates those pages
+   * in order, so a blob's {@code .bytes} and {@code .properties} arrive next to each other. Verified against the S3
+   * API contract and the request this store issues, which sets no delimiter and so lists a flat namespace.
+   *
+   * <p>
+   * Every other blob store type has to make the same check for itself before overriding this - the guarantee is not
+   * common to all object stores, and a hierarchical listing would order within a level only. Getting it wrong costs a
+   * redundant attribute read per blob rather than a wrong result, so the pairing it enables is best effort.
+   */
+  @Override
+  protected boolean listingIsOrderedByPath() {
+    return true;
   }
 
   @Override
@@ -1235,7 +1475,7 @@ public class S3BlobStore
   @Override
   @Timed
   public boolean exists(final BlobId blobId) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
     S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
     try (final Timer.Context existsContext = existsTimer.time()) {
       return blobAttributes.load();
@@ -1249,7 +1489,7 @@ public class S3BlobStore
   @Override
   @Timed
   public boolean bytesExists(final BlobId blobId) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
     try (final Timer.Context existsContext = existsTimer.time()) {
       return s3.doesObjectExist(getConfiguredBucket(), contentPath(blobId));
     }

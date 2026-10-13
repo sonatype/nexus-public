@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.view.Payload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Bytes payload.
@@ -35,7 +35,7 @@ public class BytesPayload
   private final String contentType;
 
   public BytesPayload(final byte[] content, @Nullable final String contentType) {
-    this.content = checkNotNull(content);
+    this.content = requireNonNull(content);
     this.contentType = contentType;
   }
 

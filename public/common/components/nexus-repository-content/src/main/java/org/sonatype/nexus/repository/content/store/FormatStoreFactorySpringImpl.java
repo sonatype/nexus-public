@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import jakarta.inject.Provider;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Factory that creates content stores for a format-specific DAO.
@@ -28,7 +28,7 @@ class FormatStoreFactorySpringImpl<STORE extends ContentStoreSupport<?>>
   FormatStoreFactorySpringImpl(
       final Provider<STORE> factoryProvider)
   {
-    this.factoryProvider = checkNotNull(factoryProvider);
+    this.factoryProvider = requireNonNull(factoryProvider);
   }
 
   @Override

@@ -18,7 +18,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Holds controllers for the various standard or format specific cache types.
@@ -32,7 +32,7 @@ public class CacheControllerHolder
     private final String typeName;
 
     public CacheType(final String typeName) {
-      this.typeName = checkNotNull(typeName);
+      this.typeName = requireNonNull(typeName);
     }
 
     public String value() {
@@ -78,32 +78,32 @@ public class CacheControllerHolder
       final CacheController metadataCacheController)
   {
     controllers = new HashMap<>();
-    controllers.put(CONTENT, checkNotNull(contentCacheController));
-    controllers.put(METADATA, checkNotNull(metadataCacheController));
+    controllers.put(CONTENT, requireNonNull(contentCacheController));
+    controllers.put(METADATA, requireNonNull(metadataCacheController));
   }
 
   @Nonnull
   public CacheController getContentCacheController() {
-    return checkNotNull(controllers.get(CONTENT));
+    return requireNonNull(controllers.get(CONTENT));
   }
 
   @Nonnull
   public CacheController getMetadataCacheController() {
-    return checkNotNull(controllers.get(METADATA));
+    return requireNonNull(controllers.get(METADATA));
   }
 
   @Nullable
   public CacheController get(final CacheType cacheType) {
-    return controllers.get(checkNotNull(cacheType));
+    return controllers.get(requireNonNull(cacheType));
   }
 
   public CacheController require(final CacheType cacheType) {
-    return checkNotNull(get(cacheType), "Unexpected cache type: " + cacheType);
+    return requireNonNull(get(cacheType), "Unexpected cache type: " + cacheType);
   }
 
   @Nullable
   public CacheController set(final CacheType cacheType, @Nullable final CacheController cacheController) {
-    checkNotNull(cacheType);
+    requireNonNull(cacheType);
     if (cacheController == null) {
       return controllers.remove(cacheType);
     }

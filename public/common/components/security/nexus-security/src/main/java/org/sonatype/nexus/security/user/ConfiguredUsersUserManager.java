@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * This allows you to easily search for users that have added roles.
@@ -56,8 +56,8 @@ public class ConfiguredUsersUserManager
       @Lazy final SecurityConfigurationManager configuration)
   {
     super(eventManager);
-    this.securitySystem = checkNotNull(securitySystem);
-    this.configuration = checkNotNull(configuration);
+    this.securitySystem = requireNonNull(securitySystem);
+    this.configuration = requireNonNull(configuration);
   }
 
   @Override

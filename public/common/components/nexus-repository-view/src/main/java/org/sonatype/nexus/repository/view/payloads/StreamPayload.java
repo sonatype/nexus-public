@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.view.Payload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Stream payload.
@@ -38,7 +38,7 @@ public class StreamPayload
   private final String contentType;
 
   public StreamPayload(final InputStreamSupplier stream, final long size, @Nullable final String contentType) {
-    this.stream = checkNotNull(stream);
+    this.stream = requireNonNull(stream);
     this.size = size;
     this.contentType = contentType;
   }

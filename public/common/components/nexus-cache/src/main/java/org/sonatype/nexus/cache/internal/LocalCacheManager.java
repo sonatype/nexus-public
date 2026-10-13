@@ -19,7 +19,7 @@ import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.cache.CacheManager;
 import org.sonatype.nexus.cache.NexusCache;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -37,7 +37,7 @@ public class LocalCacheManager<K, V>
 
   @Autowired
   public LocalCacheManager(final CacheHelper cacheHelper) {
-    this.cacheHelper = checkNotNull(cacheHelper);
+    this.cacheHelper = requireNonNull(cacheHelper);
   }
 
   /**

@@ -33,7 +33,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -82,12 +82,12 @@ public class ComponentNormalizationIntegrityChecker
       final GlobalKeyValueStore globalKeyValueStore,
       final DatabaseMigrationUtility databaseMigrationUtility)
   {
-    this.formats = checkNotNull(formats);
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.startupScheduler = checkNotNull(startupScheduler);
-    this.managersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(managersByFormatList));
-    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
-    this.databaseMigrationUtility = checkNotNull(databaseMigrationUtility);
+    this.formats = requireNonNull(formats);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.startupScheduler = requireNonNull(startupScheduler);
+    this.managersByFormat = QualifierUtil.buildQualifierBeanMap(requireNonNull(managersByFormatList));
+    this.globalKeyValueStore = requireNonNull(globalKeyValueStore);
+    this.databaseMigrationUtility = requireNonNull(databaseMigrationUtility);
   }
 
   @Override
@@ -150,7 +150,7 @@ public class ComponentNormalizationIntegrityChecker
       log.info("adding missing column '{}' to {} format", COLUMN_NAME, formatName);
       alterStatement.execute(format(ADD_COLUMN_STATEMENT, formatName));
 
-      if (!databaseMigrationUtility.indexExists(connection, format(INDEX_NAME, formatName))) {
+      if (!databaseMigrationUtility.indexExists(connection, tableName, format(INDEX_NAME, formatName))) {
         log.info("adding missing index '{}' to {} format", format(INDEX_NAME, formatName), formatName);
         alterStatement.execute(format(ADD_INDEX_STATEMENT, format(INDEX_NAME, formatName), tableName));
       }

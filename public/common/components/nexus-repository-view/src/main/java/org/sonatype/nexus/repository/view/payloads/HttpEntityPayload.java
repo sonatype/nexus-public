@@ -24,7 +24,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Adapts {@link HttpEntity} to {@link Payload}.
@@ -39,8 +39,8 @@ public class HttpEntityPayload
   private final HttpEntity entity;
 
   public HttpEntityPayload(final HttpResponse response, final HttpEntity entity) {
-    this.response = checkNotNull(response);
-    this.entity = checkNotNull(entity);
+    this.response = requireNonNull(response);
+    this.entity = requireNonNull(entity);
   }
 
   @Override

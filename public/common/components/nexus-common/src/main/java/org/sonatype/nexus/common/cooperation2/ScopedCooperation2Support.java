@@ -24,7 +24,7 @@ import org.sonatype.nexus.common.cooperation2.internal.Cooperation2Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -44,8 +44,8 @@ public abstract class ScopedCooperation2Support
   protected final String scope;
 
   protected ScopedCooperation2Support(final String scope, final Config config) {
-    this.config = checkNotNull(config);
-    this.scope = checkNotNull(scope);
+    this.config = requireNonNull(config);
+    this.scope = requireNonNull(scope);
   }
 
   @SuppressWarnings("unchecked")

@@ -12,7 +12,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { restClient } from '../../../../interface/api';
+import { fetchRepositoryMetricsDetail } from './fetchRepositoryMetricsDetail';
 
 export interface RepositoryMetrics {
   componentCount: number;
@@ -26,19 +26,9 @@ export interface UseRepositoryMetricsResult {
   error: string | null;
 }
 
-interface RepositoryDetail {
-  name: string;
-  componentCount?: number;
-  assetCount?: number;
-  size?: number;
-}
-
-// TODO: /details returns every repo the user can read; the ?name= param is ignored
-// server-side. Add a per-name backend endpoint or reuse a parent-fetched list for large installs.
 async function fetchMetrics(repositoryName: string): Promise<RepositoryMetrics> {
   try {
-    const details = await restClient.get<RepositoryDetail[]>('/service/rest/internal/ui/repositories/details');
-    const detail = Array.isArray(details) ? details.find((r) => r.name === repositoryName) : null;
+    const detail = await fetchRepositoryMetricsDetail(repositoryName);
 
     return {
       componentCount: detail?.componentCount || 0,
@@ -51,6 +41,11 @@ async function fetchMetrics(repositoryName: string): Promise<RepositoryMetrics> 
   }
 }
 
+/**
+ * Note: unlike repositoryUsageMachine.ts, this hook coerces missing metric
+ * fields to 0 rather than preserving `undefined`. Callers cannot distinguish
+ * "not yet calculated" from a genuine zero through this hook.
+ */
 export function useRepositoryMetrics(repositoryName: string): UseRepositoryMetricsResult {
   const [data, setData] = useState<RepositoryMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);

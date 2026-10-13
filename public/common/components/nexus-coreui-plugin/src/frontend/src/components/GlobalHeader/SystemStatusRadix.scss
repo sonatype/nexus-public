@@ -13,12 +13,13 @@
 
 .nxrm-system-status-radix {
   position: relative;
+  display: inline-flex;
 }
 
 .nxrm-system-status-radix__badge {
   position: absolute;
-  top: 6px;
-  right: 4px;
+  top: 5px;
+  right: 5px;
   width: 6px;
   height: 6px;
   border-radius: 50%;

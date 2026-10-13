@@ -18,6 +18,11 @@ import { RepositoryStructureTree } from '../RepositoryStructureTree';
 import { useRepositoryTree } from '../useRepositoryTree';
 import { useStructureComponentSearch } from '../useStructureComponentSearch';
 
+const mockGo = jest.fn();
+jest.mock('@uirouter/react', () => ({
+  useRouter: () => ({ stateService: { go: mockGo } }),
+}));
+
 // Mock the hooks
 jest.mock('../useRepositoryTree');
 jest.mock('../useStructureComponentSearch');
@@ -96,6 +101,7 @@ describe('RepositoryStructureTree', () => {
       loading: false,
       error: null,
     });
+    mockGo.mockClear();
   });
 
   it('renders the root node and its children', () => {
@@ -284,5 +290,24 @@ describe('RepositoryStructureTree', () => {
     render(wrap(<RepositoryStructureTree repositoryName="group1" />));
     // AlertTriangle should be present
     expect(screen.getByTestId('circular-warning')).toBeInTheDocument();
+  });
+
+  it('navigates to Settings for a repository when its View Settings icon is clicked', async () => {
+    render(wrap(<RepositoryStructureTree repositoryName="group1" />));
+
+    const actionButtons = document.querySelectorAll('.repository-tree-node__action-btn');
+    expect(actionButtons.length).toBeGreaterThan(0);
+
+    const viewSettingsContainers = Array.from(document.querySelectorAll('div[title="View Settings"]'));
+    expect(viewSettingsContainers.length).toBeGreaterThan(0);
+
+    const button = viewSettingsContainers[0].querySelector('button');
+    expect(button).not.toBeNull();
+    fireEvent.click(button!);
+
+    expect(mockGo).toHaveBeenCalledWith(
+      'preview.admin.repository.repositories.detail',
+      { repositoryName: 'group1' },
+    );
   });
 });

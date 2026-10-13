@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.FILTER_CONDITION_FIELD_ID;
 import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.TYPE_ID;
 
@@ -53,8 +53,8 @@ public class ReIndexSearchRecordsWithUnderscoreMigrationStep_2_105
       @Value(FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE) final boolean haEnabled)
   {
     this.haEnabled = haEnabled;
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.upgradeTaskScheduler = requireNonNull(upgradeTaskScheduler);
   }
 
   @Override

@@ -27,7 +27,7 @@ import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of {@link KeyStoreStorage} backed by local filesystem.
@@ -42,7 +42,7 @@ public class FileKeyStoreStorage
   private long lastRead;
 
   public FileKeyStoreStorage(final File keyStoreFile) {
-    this.keyStoreFile = checkNotNull(keyStoreFile);
+    this.keyStoreFile = requireNonNull(keyStoreFile);
   }
 
   @VisibleForTesting

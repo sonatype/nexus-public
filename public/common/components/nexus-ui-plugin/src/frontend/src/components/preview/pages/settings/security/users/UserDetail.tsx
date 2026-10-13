@@ -14,7 +14,7 @@
 import React, { useState } from 'react';
 import { Box, Flex, Text, Separator } from '@radix-ui/themes';
 import { Loader2, Key, RefreshCw, AlertTriangle } from 'lucide-react';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { ExtJS, useIsLicensedEdition } from '@sonatype/nexus-ui-plugin';
 
 import { MetadataGrid, StatusBadge, type StatusType } from '../../../../shared';
 
@@ -60,7 +60,7 @@ export function UserDetail({
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [resetTokenDialogOpen, setResetTokenDialogOpen] = useState(false);
 
-  const isPro = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const isAdmin = ExtJS.checkPermission('nexus:*');
   const state = ExtJS.state();
   const isAnonymous = user?.userId === state?.getValue?.('anonymousUsername');
@@ -70,7 +70,7 @@ export function UserDetail({
   const canResetUserToken = ExtJS.checkPermission('nexus:usertoken-user:delete');
 
   const showChangePasswordButton = canEdit && !isExternal && !isAnonymous && isAdmin;
-  const showResetTokenButton = isPro && !isExternal && isUserTokenCapabilityActive && canResetUserToken;
+  const showResetTokenButton = isLicensedEdition && !isExternal && isUserTokenCapabilityActive && canResetUserToken;
 
   // Loading state
   if (loading) {

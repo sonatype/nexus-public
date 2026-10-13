@@ -35,7 +35,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
@@ -79,7 +79,7 @@ public class DatastoreBlobReconciliationLogMigrator_1_11
 
   @Autowired
   public DatastoreBlobReconciliationLogMigrator_1_11(final ApplicationDirectories applicationDirectories) {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
   }
 
   @Override

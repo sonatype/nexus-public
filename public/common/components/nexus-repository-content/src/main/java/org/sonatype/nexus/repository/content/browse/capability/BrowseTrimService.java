@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Component
 public class BrowseTrimService
@@ -37,7 +37,7 @@ public class BrowseTrimService
 
   @Autowired
   public BrowseTrimService(final DatabaseCheck databaseCheck) {
-    this.databaseCheck = checkNotNull(databaseCheck);
+    this.databaseCheck = requireNonNull(databaseCheck);
   }
 
   public boolean isPostgresqlTrimEnabled() {

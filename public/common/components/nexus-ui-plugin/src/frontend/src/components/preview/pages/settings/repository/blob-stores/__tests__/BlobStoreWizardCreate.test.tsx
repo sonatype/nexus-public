@@ -128,7 +128,7 @@ jest.mock('../useBlobStores', () => ({
 
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
-    isProEdition: () => false,
+    isLicensedEdition: () => false,
     useState: (fn) => fn(),
     state: () => ({
       getValue: (key) => {

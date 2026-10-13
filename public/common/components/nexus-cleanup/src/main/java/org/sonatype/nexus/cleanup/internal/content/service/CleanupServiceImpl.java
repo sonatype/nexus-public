@@ -42,8 +42,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SORT_BY_KEY;
 import org.springframework.stereotype.Component;
@@ -89,12 +89,12 @@ public class CleanupServiceImpl
       final CleanupBrowseServiceFactory browseServiceFactory,
       @Nullable final CleanupFeatureCheck cleanupFeatureCheck)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.cleanupMethod = checkNotNull(cleanupMethod);
-    this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
-    this.groupType = checkNotNull(groupType);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.cleanupMethod = requireNonNull(cleanupMethod);
+    this.cleanupPolicyStorage = requireNonNull(cleanupPolicyStorage);
+    this.groupType = requireNonNull(groupType);
     this.cleanupRetryLimit = cleanupRetryLimit;
-    this.browseServiceFactory = checkNotNull(browseServiceFactory);
+    this.browseServiceFactory = requireNonNull(browseServiceFactory);
     this.cleanupFeatureCheck = cleanupFeatureCheck;
   }
 

@@ -53,7 +53,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_PASSWORD_CACHE_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_PASSWORD_CACHE_EXPIRE_SECONDS_NAMED_VALUE;
@@ -150,7 +150,7 @@ public class DefaultSecurityPasswordService
       final long verifiedCredentialsCacheExpireSeconds,
       final Ticker cacheTicker)
   {
-    this.legacyNexusPasswordService = checkNotNull(legacyPasswordService);
+    this.legacyNexusPasswordService = requireNonNull(legacyPasswordService);
 
     this.defaultShiroPasswordService = new DefaultPasswordService();
     // Create and set a hash service according to our hashing policies.
@@ -166,7 +166,7 @@ public class DefaultSecurityPasswordService
     // and reconstituting the legacy $shiro1$ hashes already stored for existing users.
     this.defaultShiroPasswordService.setHashFormat(new Shiro1CryptFormat());
 
-    this.nexusPasswordAlgorithm = checkNotNull(nexusPasswordAlgorithm);
+    this.nexusPasswordAlgorithm = requireNonNull(nexusPasswordAlgorithm);
     this.hashingHandlerFactory = hashingHandlerFactory;
     this.configuredPasswordIterations = configuredPasswordIterations;
 

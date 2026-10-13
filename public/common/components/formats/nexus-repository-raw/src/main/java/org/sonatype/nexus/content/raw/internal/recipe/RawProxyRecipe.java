@@ -38,7 +38,7 @@ import org.sonatype.nexus.repository.view.matchers.SuffixMatcher;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 import static org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers.and;
 import org.springframework.stereotype.Component;
@@ -85,13 +85,13 @@ public class RawProxyRecipe
       final RoutingRuleHandler routingRuleHandler)
   {
     super(type, format);
-    this.httpClientFacet = checkNotNull(httpClientFacet);
-    this.negativeCacheFacet = checkNotNull(negativeCacheFacet);
-    this.proxyFacet = checkNotNull(proxyFacet);
-    this.purgeUnusedFacet = checkNotNull(purgeUnusedFacet);
-    this.negativeCacheHandler = checkNotNull(negativeCacheHandler);
-    this.proxyHandler = checkNotNull(proxyHandler);
-    this.routingRuleHandler = checkNotNull(routingRuleHandler);
+    this.httpClientFacet = requireNonNull(httpClientFacet);
+    this.negativeCacheFacet = requireNonNull(negativeCacheFacet);
+    this.proxyFacet = requireNonNull(proxyFacet);
+    this.purgeUnusedFacet = requireNonNull(purgeUnusedFacet);
+    this.negativeCacheHandler = requireNonNull(negativeCacheHandler);
+    this.proxyHandler = requireNonNull(proxyHandler);
+    this.routingRuleHandler = requireNonNull(routingRuleHandler);
   }
 
   @Override

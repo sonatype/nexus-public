@@ -43,6 +43,10 @@
     SELECT * FROM capability_storage_item;
   </select>
 
+  <select id="browseByType" resultMap="CapabilityStorageItemData">
+    SELECT * FROM capability_storage_item WHERE type = #{type};
+  </select>
+
   <insert id="create" parameterType="CapabilityStorageItemData">
     INSERT INTO capability_storage_item (id, version, type, enabled, notes, properties)
         values(#{id}, #{version}, #{type}, #{enabled}, #{notes},

@@ -44,7 +44,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -59,6 +58,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
+import org.sonatype.nexus.blobstore.api.BlobScanConcurrency;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
@@ -102,11 +102,11 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.util.Arrays.stream;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.io.FileUtils.forceDelete;
 import static org.apache.commons.io.FileUtils.iterateFiles;
@@ -219,17 +219,17 @@ public class FileBlobStore
       final FileBlobDeletionIndex blobDeletionIndex)
   {
     super(blobIdLocationResolver, dryRunPrefix);
-    this.fileOperations = checkNotNull(fileOperations);
-    this.applicationDirectories = checkNotNull(applicationDirectories);
-    this.directoryHelper = checkNotNull(directoryHelper);
-    this.metricsService = checkNotNull(metricsService);
-    this.nodeAccess = checkNotNull(nodeAccess);
+    this.fileOperations = requireNonNull(fileOperations);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
+    this.directoryHelper = requireNonNull(directoryHelper);
+    this.metricsService = requireNonNull(metricsService);
+    this.nodeAccess = requireNonNull(nodeAccess);
     this.supportsHardLinkCopy = true;
     this.supportsAtomicMove = true;
-    this.reconciliationLogger = checkNotNull(reconciliationLogger);
+    this.reconciliationLogger = requireNonNull(reconciliationLogger);
     this.pruneEmptyDirectoryAge = pruneEmptyDirectoryAge;
-    this.blobStoreQuotaUsageChecker = checkNotNull(blobStoreQuotaUsageChecker);
-    this.blobDeletionIndex = checkNotNull(blobDeletionIndex);
+    this.blobStoreQuotaUsageChecker = requireNonNull(blobStoreQuotaUsageChecker);
+    this.blobDeletionIndex = requireNonNull(blobDeletionIndex);
   }
 
   @VisibleForTesting
@@ -251,8 +251,8 @@ public class FileBlobStore
   {
     this(blobIdLocationResolver, fileOperations, directories, directoryHelper, metricsService, nodeAccess, dryRunPrefix,
         reconciliationLogger, pruneEmptyDirectoryAge, blobStoreQuotaUsageChecker, blobDeletionIndex);
-    this.contentDir = checkNotNull(contentDir);
-    this.blobStoreConfiguration = checkNotNull(configuration);
+    this.contentDir = requireNonNull(contentDir);
+    this.blobStoreConfiguration = requireNonNull(configuration);
   }
 
   @Override
@@ -322,7 +322,7 @@ public class FileBlobStore
   @Timed
   @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
   public Blob get(final BlobId blobId, final boolean includeDeleted) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
 
     Path blobPath = contentPath(blobId);
     if (!Files.exists(blobPath)) {
@@ -386,8 +386,8 @@ public class FileBlobStore
   @Guarded(by = STARTED)
   @MonitoringBlobStoreMetrics(operationType = UPLOAD)
   public Blob create(final Path sourceFile, final Map<String, String> headers, final long size, final HashCode sha1) {
-    checkNotNull(sourceFile);
-    checkNotNull(sha1);
+    requireNonNull(sourceFile);
+    requireNonNull(sha1);
     checkArgument(Files.exists(sourceFile));
 
     return create(headers, destination -> {
@@ -533,7 +533,7 @@ public class FileBlobStore
   @Guarded(by = STARTED)
   @Timed
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
-    Blob sourceBlob = checkNotNull(get(blobId));
+    Blob sourceBlob = requireNonNull(get(blobId));
     Path sourcePath = contentPath(sourceBlob.getId());
     BlobId copyBlobId = createCopyBlobId(sourceBlob.getId());
     if (supportsHardLinkCopy) {
@@ -842,7 +842,7 @@ public class FileBlobStore
    */
   @Override
   public boolean exists(final BlobId blobId) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
     if (!fileOperations.exists(attributePath(blobId))) {
       log.debug("Blob {} was not found during existence check", blobId);
       return false;
@@ -852,7 +852,7 @@ public class FileBlobStore
 
   @Override
   public boolean bytesExists(final BlobId blobId) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
     try {
       if (!fileOperations.exists(contentPath(blobId))) {
         log.debug("Blob {} content (.bytes) was not found during existence check", blobId);
@@ -1367,12 +1367,20 @@ public class FileBlobStore
       final OffsetDateTime fromDateTime,
       final OffsetDateTime toDateTime)
   {
+    return getBlobIdUpdatedSinceStream(prefix, fromDateTime, toDateTime, null);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(
+      final String prefix,
+      final OffsetDateTime fromDateTime,
+      final OffsetDateTime toDateTime,
+      @Nullable final BlobScanConcurrency concurrency)
+  {
     boolean isVolumePrefix = VOLUME_PREFIX.equals(prefix);
 
     DateInterval interval = new DateInterval(fromDateTime, toDateTime);
-    Predicate<Blob> blobMatches = !isVolumePrefix
-        ? this::isNonTempBlob
-        : ((Predicate<Blob>) this::isNonTempBlob).and(blob -> isBlobCreatedInRange(blob, interval));
 
     Stream<Path> paths;
     if (isVolumePrefix) {
@@ -1398,26 +1406,15 @@ public class FileBlobStore
       paths = listContentFiles(prefix);
     }
 
-    // Restrict to bytes & properties files
-    return paths.filter(path -> isBlobStoreContent(path.toString()))
+    Stream<BlobId> candidates = uniqueBlobEntries(paths, Path::toString)
         // Create a location and parse it into a BlobId
         .map(FileAttributesLocation::new)
         .map(this::getBlobIdFromAttributeFilePath)
         .filter(Objects::nonNull)
         // Check that if the blobId has a date, its in the expected range
-        .filter(blobId -> blobIdInRange(blobId, interval))
-        // Read the blob attributes and ensure its not a temp blob
-        // vol- paths are also checked for creation date
-        .filter(blobId -> {
-          try {
-            return Optional.ofNullable(get(blobId, true))
-                .map(blobMatches::test)
-                .orElse(true);
-          }
-          catch (Exception e) {
-            return true;
-          }
-        });
+        .filter(blobId -> blobIdInRange(blobId, interval));
+
+    return excludeTemporaryAndOutOfRangeBlobs(candidates, prefix, interval, concurrency);
   }
 
   @Override

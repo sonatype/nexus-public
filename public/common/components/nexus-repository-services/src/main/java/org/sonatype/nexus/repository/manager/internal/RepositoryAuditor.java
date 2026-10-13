@@ -45,7 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Repository auditor.
@@ -77,7 +77,7 @@ public class RepositoryAuditor
   {
     this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(convertersByFormatList);
     this.defaultAdapter = defaultAdapter;
-    this.mapper = checkNotNull(mapper);
+    this.mapper = requireNonNull(mapper);
 
     registerType(RepositoryCacheInvalidationEvent.class, "cacheInvalidated");
     registerType(RepositoryCreatedEvent.class, CREATED_TYPE);

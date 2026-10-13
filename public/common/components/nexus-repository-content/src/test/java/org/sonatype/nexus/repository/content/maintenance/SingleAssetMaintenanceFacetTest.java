@@ -136,4 +136,13 @@ public class SingleAssetMaintenanceFacetTest
 
     assertThat(deletedPaths, is(empty()));
   }
+
+  @Test
+  public void cascadeSoftDeleteToComponent_alwaysCascades() {
+    // Component maps one-to-one to its asset, so soft-deleting the asset always cascades to the
+    // component, regardless of whether it was reported as the last remaining asset.
+    Asset asset = mock(Asset.class);
+    assertThat(underTest.cascadeSoftDeleteToComponent(asset, false), is(true));
+    assertThat(underTest.cascadeSoftDeleteToComponent(asset, true), is(true));
+  }
 }

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.selfhosted.components</groupId>
     <artifactId>nexus-selfhosted-components-api-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-api-extdirect-selfhosted</artifactId>
@@ -58,6 +58,10 @@
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-test-common</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-api-extdirect-common</artifactId>
     </dependency>
   </dependencies>
 

@@ -20,6 +20,15 @@ public final class NexusEditionPriority
   // Cloud edition will always take priority and be checked first
   public static final int CLOUD_PRIORITY = Integer.MIN_VALUE;
 
+  // Enterprise and Pro+ must resolve AHEAD of Pro (lower value = evaluated first = wins). The
+  // licenses we issue deliberately carry the older editions' features for backwards compatibility,
+  // so an Enterprise/Pro+ license also matches Pro; placing them at or after Pro would silently
+  // resolve such a license to Pro with nothing logged (BDD-001/002). The invariant is the ordering
+  // ENTERPRISE < PRO_PLUS < PRO, not these exact numbers (D9) — NexusEditionPriorityTest guards it.
+  public static final int ENTERPRISE_PRIORITY = CLOUD_PRIORITY + 25;
+
+  public static final int PRO_PLUS_PRIORITY = CLOUD_PRIORITY + 50;
+
   public static final int PRO_PRIORITY = CLOUD_PRIORITY + 100;
 
   public static final int COMMUNITY_PRIORITY = PRO_PRIORITY + 100;

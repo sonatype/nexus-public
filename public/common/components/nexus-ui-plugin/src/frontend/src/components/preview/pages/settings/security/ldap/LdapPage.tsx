@@ -385,31 +385,27 @@ export function LdapPage({ className }: LdapPageProps) {
       )}
 
       {/* Content */}
-      <Box className="ldap-page__content">
+      <Box>
         {viewMode === 'list' && (
           <>
-            <div className="ldap-page__main">
-              <LdapList
-                key={refreshKey}
-                servers={servers}
-                onSelect={handleEdit}
-                onCreate={handleCreate}
-                onReorder={handleReorder}
-                onDelete={handleDelete}
-                onClearCache={handleClearCache}
-                loading={loading}
-              />
-            </div>
-            <aside className="ldap-page__sidebar">
-              <HelpSection
-                title="About LDAP"
-                content="LDAP (Lightweight Directory Access Protocol) allows you to integrate Nexus Repository with external user directories for authentication. You can configure multiple LDAP servers and they will be queried in order until a user is found."
-                docLink={{
-                  label: 'View Documentation',
-                  href: 'https://help.sonatype.com/en/ldap.html',
-                }}
-              />
-            </aside>
+            <LdapList
+              key={refreshKey}
+              servers={servers}
+              onSelect={handleEdit}
+              onCreate={handleCreate}
+              onReorder={handleReorder}
+              onDelete={handleDelete}
+              onClearCache={handleClearCache}
+              loading={loading}
+            />
+            <HelpSection
+              title="About LDAP"
+              content="LDAP (Lightweight Directory Access Protocol) allows you to integrate Nexus Repository with external user directories for authentication. You can configure multiple LDAP servers and they will be queried in order until a user is found."
+              docLink={{
+                label: 'View Documentation',
+                href: 'https://help.sonatype.com/en/ldap.html',
+              }}
+            />
           </>
         )}
 

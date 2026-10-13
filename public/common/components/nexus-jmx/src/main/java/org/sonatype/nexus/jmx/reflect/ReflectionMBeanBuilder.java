@@ -23,7 +23,7 @@ import org.sonatype.nexus.jmx.MBeanBuilder;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Reflection {@link MBeanBuilder}.
@@ -55,12 +55,12 @@ public class ReflectionMBeanBuilder
    * Target must have been previously configured.
    */
   public ReflectionMBeanBuilder discover() throws Exception {
-    checkNotNull(target);
+    requireNonNull(target);
 
     log.debug("Discovering managed members of type: {}", type);
 
     ManagedObject managedDescriptor = type.getAnnotation(ManagedObject.class);
-    checkNotNull(managedDescriptor);
+    requireNonNull(managedDescriptor);
 
     // track attribute builders for getter/setter correlation
     Map<String, ReflectionMBeanAttribute.Builder> attributeBuilders = Maps.newHashMap();

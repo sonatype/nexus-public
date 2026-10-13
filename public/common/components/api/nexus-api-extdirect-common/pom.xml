@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-api-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-api-extdirect-common</artifactId>
@@ -33,13 +33,48 @@
     </dependency>
 
     <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-annotation</artifactId>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-api-common-shared</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-rapture</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-security</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-scheduling</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-repository-view</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-repository-services</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-selector</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-webhooks</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-annotation</artifactId>
     </dependency>
 
     <dependency>

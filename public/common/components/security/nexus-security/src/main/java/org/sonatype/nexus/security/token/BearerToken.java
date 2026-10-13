@@ -22,7 +22,7 @@ import org.sonatype.nexus.security.authc.apikey.ApiKeyExtractor;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 
 /**
@@ -36,7 +36,7 @@ public class BearerToken
   private final String format;
 
   public BearerToken(final String format) {
-    this.format = checkNotNull(format);
+    this.format = requireNonNull(format);
   }
 
   @Nullable

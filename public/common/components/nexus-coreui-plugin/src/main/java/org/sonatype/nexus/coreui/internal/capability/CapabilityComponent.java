@@ -36,7 +36,7 @@ import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.internal.scheduling.SchedulerCapabilityDescriptor;
 import org.sonatype.nexus.repository.capability.StorageSettingsCapabilityDescriptor;
 import org.sonatype.nexus.capability.Taggable;
-import org.sonatype.nexus.coreui.FormFieldXO;
+import org.sonatype.nexus.api.extdirect.common.FormFieldXO;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
@@ -53,7 +53,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -90,8 +90,8 @@ public class CapabilityComponent
       final CapabilityDescriptorRegistry capabilityDescriptorRegistry,
       final CapabilityRegistry capabilityRegistry)
   {
-    this.capabilityDescriptorRegistry = checkNotNull(capabilityDescriptorRegistry);
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
+    this.capabilityDescriptorRegistry = requireNonNull(capabilityDescriptorRegistry);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
   }
 
   /**

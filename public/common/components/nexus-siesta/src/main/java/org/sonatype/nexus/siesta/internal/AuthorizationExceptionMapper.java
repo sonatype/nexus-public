@@ -27,7 +27,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.subject.Subject;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -53,7 +53,7 @@ public class AuthorizationExceptionMapper
 
   @Autowired
   public AuthorizationExceptionMapper(final Provider<HttpServletRequest> httpRequestProvider) {
-    this.httpRequestProvider = checkNotNull(httpRequestProvider);
+    this.httpRequestProvider = requireNonNull(httpRequestProvider);
   }
 
   @Override

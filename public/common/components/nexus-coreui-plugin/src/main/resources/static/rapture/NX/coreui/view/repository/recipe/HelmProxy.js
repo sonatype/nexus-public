@@ -30,7 +30,8 @@ Ext.define('NX.coreui.view.repository.recipe.HelmProxy', {
         'NX.coreui.view.repository.facet.RoutingRuleFacet',
         'NX.coreui.view.repository.facet.HttpClientFacet',
         'NX.coreui.view.repository.facet.NegativeCacheFacet',
-        'NX.coreui.view.repository.facet.CleanupPolicyFacet'
+        'NX.coreui.view.repository.facet.CleanupPolicyFacet',
+        'NX.coreui.view.repository.facet.FirewallFacet'
     ],
 
     /**
@@ -47,6 +48,12 @@ Ext.define('NX.coreui.view.repository.recipe.HelmProxy', {
             {xtype: 'nx-coreui-repository-httpclient-facet'},
             {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
         ];
+
+        // FIRE-956: helm is outside FirewallSupportedFormat, so the Firewall facet is only offered
+        // when the limited-support override is enabled. Mirrors PubProxy.js.
+        if (NX.State.getValue('firewallLimitedSupportFormatsEnabled')) {
+            me.items.unshift({xtype: 'nx-coreui-repository-firewall-facet'});
+        }
 
         me.callParent();
     }

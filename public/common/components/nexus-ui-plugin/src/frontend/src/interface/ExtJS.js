@@ -15,6 +15,10 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {useEffect, useState, useRef} from 'react';
+import {
+  PRO_FAMILY_EDITIONS,
+  resolveEditionId,
+} from './editionUtils';
 
 /** Default time to wait for the first state poll to answer who the user is. */
 const AUTH_STATE_TIMEOUT_MS = 2000;
@@ -346,10 +350,16 @@ export default class ExtJS {
   }
 
   /**
-   * @returns {boolean} true if the edition is PRO
+   * @deprecated In React code, use `useIsLicensedEdition()` instead — this reads state reactively, which matters for
+   * Test Hub edition simulation. This method remains the intentional bridge for non-React (classic ExtJS) callers and
+   * is not going away.
+   * @returns {boolean} true if the edition is any Pro-family tier (Pro, Pro+, Enterprise, or Cloud).
+   * Compares against the stable {@code editionId} state key so all Pro-family editionIds are recognised
+   * (Cloud reports 'PRO' as short name but resolves to a distinct editionId). Falls back to the short-name
+   * mapping when the backend has not published editionId, matching {@link meetsEditionRequirement}.
    */
-  static isProEdition() {
-    return ExtJS.state().getEdition() === 'PRO';
+  static isLicensedEdition() {
+    return PRO_FAMILY_EDITIONS.includes(resolveEditionId(ExtJS.state()));
   }
 
   /**

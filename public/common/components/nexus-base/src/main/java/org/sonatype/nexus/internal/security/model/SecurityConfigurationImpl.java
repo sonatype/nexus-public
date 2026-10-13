@@ -43,7 +43,7 @@ import org.apache.shiro.util.CollectionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
@@ -76,11 +76,11 @@ public class SecurityConfigurationImpl
       final CUserRoleMappingStore userRoleMappingStore,
       final CUserStore userStore)
   {
-    this.sessionSupplier = checkNotNull(sessionSupplier);
-    this.privilegeStore = checkNotNull(privilegeStore);
-    this.roleStore = checkNotNull(roleStore);
-    this.userRoleMappingStore = checkNotNull(userRoleMappingStore);
-    this.userStore = checkNotNull(userStore);
+    this.sessionSupplier = requireNonNull(sessionSupplier);
+    this.privilegeStore = requireNonNull(privilegeStore);
+    this.roleStore = requireNonNull(roleStore);
+    this.userRoleMappingStore = requireNonNull(userRoleMappingStore);
+    this.userStore = requireNonNull(userStore);
   }
 
   @Override
@@ -96,7 +96,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public CPrivilege getPrivilege(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
 
     return privilegeStore.read(id).orElse(null);
   }
@@ -125,7 +125,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public CPrivilege addPrivilege(final CPrivilege privilege) {
-    checkNotNull(privilege);
+    requireNonNull(privilege);
     try {
       privilegeStore.create(convert(privilege));
       return privilege;
@@ -137,7 +137,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public void updatePrivilege(final CPrivilege privilege) {
-    checkNotNull(privilege);
+    requireNonNull(privilege);
 
     privilege.setVersion(privilege.getVersion() + 1);
     if (!privilegeStore.update(convert(privilege))) {
@@ -158,7 +158,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public boolean removePrivilege(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
 
     if (!privilegeStore.delete(id)) {
       throw new NoSuchPrivilegeException(id);
@@ -182,14 +182,14 @@ public class SecurityConfigurationImpl
 
   @Override
   public CRole getRole(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
 
     return roleStore.read(id).orElse(null);
   }
 
   @Override
   public List<CRole> getRoles(final java.util.Collection<String> ids) {
-    checkNotNull(ids);
+    requireNonNull(ids);
 
     if (ids.isEmpty()) {
       return ImmutableList.of();
@@ -215,7 +215,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public void updateRole(final CRole role) {
-    checkNotNull(role);
+    requireNonNull(role);
 
     role.setVersion(role.getVersion() + 1);
     if (!roleStore.update(convert(role))) {
@@ -225,7 +225,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public boolean removeRole(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
 
     if (!roleStore.delete(id)) {
       throw new NoSuchRoleException(id);
@@ -241,7 +241,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public CUser getUser(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
 
     return userStore.read(id).orElse(null);
   }
@@ -252,7 +252,7 @@ public class SecurityConfigurationImpl
   }
 
   public void addUser(final CUser user) {
-    checkNotNull(user);
+    requireNonNull(user);
     try {
       userStore.create(convert(user));
     }
@@ -264,8 +264,8 @@ public class SecurityConfigurationImpl
   @Transactional
   @Override
   public void addUser(final CUser user, final Set<String> roles) {
-    checkNotNull(user);
-    checkNotNull(roles);
+    requireNonNull(user);
+    requireNonNull(roles);
     addUser(user);
     addRoleMapping(user.getId(), roles, DEFAULT_SOURCE);
   }
@@ -281,7 +281,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public void updateUser(final CUser user) throws UserNotFoundException {
-    checkNotNull(user);
+    requireNonNull(user);
 
     user.setVersion(user.getVersion() + 1);
     if (!userStore.update(convert(user))) {
@@ -292,8 +292,8 @@ public class SecurityConfigurationImpl
   @Transactional
   @Override
   public void updateUser(final CUser user, final Set<String> roles) throws UserNotFoundException {
-    checkNotNull(user);
-    checkNotNull(roles);
+    requireNonNull(user);
+    requireNonNull(roles);
 
     updateUser(user);
 
@@ -314,7 +314,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public boolean removeUser(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
 
     if (userStore.delete(id)) {
       removeUserRoleMapping(id, DEFAULT_SOURCE);
@@ -331,8 +331,8 @@ public class SecurityConfigurationImpl
 
   @Override
   public CUserRoleMapping getUserRoleMapping(final String userId, final String source) {
-    checkNotNull(userId);
-    checkNotNull(source);
+    requireNonNull(userId);
+    requireNonNull(source);
 
     return userRoleMappingStore.read(userId, source).orElse(null);
   }
@@ -344,14 +344,14 @@ public class SecurityConfigurationImpl
 
   @Override
   public void addUserRoleMapping(final CUserRoleMapping mapping) {
-    checkNotNull(mapping);
+    requireNonNull(mapping);
 
     userRoleMappingStore.create(convert(mapping));
   }
 
   @Override
   public void updateUserRoleMapping(final CUserRoleMapping mapping) throws NoSuchRoleMappingException {
-    checkNotNull(mapping);
+    requireNonNull(mapping);
 
     if (!userRoleMappingStore.update(convert(mapping))) {
       throw new NoSuchRoleMappingException(mapping.getUserId());
@@ -360,8 +360,8 @@ public class SecurityConfigurationImpl
 
   @Override
   public boolean removeUserRoleMapping(final String userId, final String source) {
-    checkNotNull(userId);
-    checkNotNull(source);
+    requireNonNull(userId);
+    requireNonNull(source);
 
     return userRoleMappingStore.delete(userId, source);
   }

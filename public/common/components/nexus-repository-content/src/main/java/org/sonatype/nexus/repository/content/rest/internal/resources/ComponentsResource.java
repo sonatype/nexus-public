@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.RedeployDisabledException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.rest.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.content.rest.internal.resources.doc.ComponentsResourceDoc;
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
@@ -64,7 +64,7 @@ import org.apache.shiro.authz.annotation.RequiresUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
@@ -92,7 +92,7 @@ public class ComponentsResource
 
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
-  private final MaintenanceService maintenanceService;
+  private final ContentDeletionService contentDeletionService;
 
   private final UploadManager uploadManager;
 
@@ -105,7 +105,7 @@ public class ComponentsResource
   @Autowired
   public ComponentsResource(
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
-      final MaintenanceService maintenanceService,
+      final ContentDeletionService contentDeletionService,
       final UploadManager uploadManager,
       final ComponentXOFactory componentXOFactory,
       final ContentAuthHelper contentAuthHelper,
@@ -113,11 +113,11 @@ public class ComponentsResource
       @Nullable final List<AssetXODescriptor> assetDescriptorsList)
   {
     super(contentAuthHelper, repositoryManagerRESTAdapter);
-    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
-    this.maintenanceService = checkNotNull(maintenanceService);
-    this.uploadManager = checkNotNull(uploadManager);
-    this.componentXOFactory = checkNotNull(componentXOFactory);
-    this.componentsResourceExtensions = checkNotNull(componentsResourceExtensions);
+    this.repositoryManagerRESTAdapter = requireNonNull(repositoryManagerRESTAdapter);
+    this.contentDeletionService = requireNonNull(contentDeletionService);
+    this.uploadManager = requireNonNull(uploadManager);
+    this.componentXOFactory = requireNonNull(componentXOFactory);
+    this.componentsResourceExtensions = requireNonNull(componentsResourceExtensions);
     this.assetDescriptors = QualifierUtil.buildQualifierBeanMap(assetDescriptorsList);
   }
 
@@ -177,9 +177,19 @@ public class ComponentsResource
     RepositoryItemIDXO repositoryItemIdXO = fromString(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIdXO.getRepositoryId());
 
+    // The soft-delete-vs-hard-delete decision and the content DELETE authorization are owned by
+    // ContentDeletionService (NEXUS-49147). getComponent resolves (and read-authorizes) the component;
+    // soft-delete identifier/not-found errors map to 404, preserving this endpoint's contract.
     ofNullable(repository)
         .map(r -> getComponent(repositoryItemIdXO, r))
-        .ifPresent(c -> maintenanceService.deleteComponent(repository, c));
+        .ifPresent(c -> {
+          try {
+            contentDeletionService.deleteComponent(repository, c);
+          }
+          catch (IllegalArgumentException | IllegalStateException e) {
+            throw new NotFoundException("Unable to locate component with id " + id);
+          }
+        });
   }
 
   @RequiresUser

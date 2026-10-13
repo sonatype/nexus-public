@@ -12,41 +12,46 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Button, Card, Code, Flex, Grid, Heading, Select, Table, Text, Tooltip } from '@radix-ui/themes';
-import { Copy } from 'lucide-react';
+import { Badge, Box, Button, Card, Code, Flex, Grid, Heading, Select, Table, Text, Tooltip } from '@radix-ui/themes';
+import { Check, Copy } from 'lucide-react';
 
 import type { GADetail } from '../core';
+import { formatDateTime } from '../../../shared';
 import { parseGaCoordinates } from './detailHelpers';
+import type { RepoRow } from './gaRepositoriesMachine';
 import { getDependencySnippets } from './dependencySnippets/registry';
 import { getFormatLabel } from './dependencySnippets/formatLabel';
 import { trackSnippetCopy } from './dependencySnippets/trackSnippetCopy';
 import type { SnippetComponentModel } from './dependencySnippets/types';
+import { useComponentIntelligence } from './useComponentIntelligence';
+import {
+  buildIntelligenceRows,
+  renderIntelligenceValue,
+  type IntelligenceDetailRow,
+} from './intelligenceRows';
 
 interface GAOverviewTabProps {
   detail: GADetail;
   selectedVersion: string | null;
   /**
-   * Repository names holding the selected version.
-   *
-   * Passed in rather than read off `detail.repositories`, which is now always empty: it used to be
-   * aggregated by walking every page of /v1/search, and that walk is gone (NEXUS-54201 /
-   * NEXUS-54220). The caller sources this from the same per-version endpoint the Repositories tab
-   * uses, so the "Repository" row and the snippet's registry URL agree with that tab.
+   * The repository currently selected in the header. The Overview never triggers the aggregate
+   * repository walk, so detail.repositories is usually empty here; this is the reliable source for
+   * the Component Details "Repository" row.
    */
-  repositories?: readonly string[];
-  /** The selected version's most recent asset timestamp, or null if none carries one. */
-  lastUpdated?: string | null;
-}
-
-function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) return '—';
-  try {
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return '—';
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  } catch {
-    return '—';
-  }
+  selectedRepository?: string | null;
+  /**
+   * Every repository serving the selected version, as resolved for the header's Repository facet.
+   * When present, the Component Details "Repository" row lists all member repositories (the current
+   * one first and flagged) instead of a single value. The list is informational only — the header
+   * dropdown remains the sole control that switches the active repository.
+   */
+  repoRows?: readonly RepoRow[];
+  /**
+   * The selected version's most recent asset timestamp, from the per-version detail source. The
+   * aggregate walk that once populated detail.versions was removed, so that array is always empty
+   * here and cannot supply "Last Updated" — this prop is its only reliable source.
+   */
+  versionLastUpdated?: string | null;
 }
 
 /**
@@ -56,13 +61,8 @@ function formatDate(dateString: string | null | undefined): string {
  * summary. The snippet set is chosen by repository format, so an npm component shows npm/Yarn
  * commands rather than a Maven pom.xml fragment. Formats with no generator show no snippet section.
  */
-export function GAOverviewTab({
-  detail,
-  selectedVersion,
-  repositories = [],
-  lastUpdated = null,
-}: GAOverviewTabProps) {
-  const { gaId, format } = detail;
+export function GAOverviewTab({ detail, selectedVersion, selectedRepository, repoRows, versionLastUpdated }: GAOverviewTabProps) {
+  const { gaId, format, repositories } = detail;
   const [copied, setCopied] = useState(false);
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -89,13 +89,43 @@ export function GAOverviewTab({
 
   const { group, name: parsedName } = parseGaCoordinates(gaId);
   const name = parsedName || detail.displayName;
-  // `??`, not `||`: '' is the valid selected version of a versionless format (raw), and there is
-  // no `detail.versions[0]` to fall back to any more regardless.
-  const ver = selectedVersion ?? '';
+  // `??`, not `||`: '' is the valid selected version of a versionless format (raw) and is falsy,
+  // so `||` would fall through to detail.versions[0] and render the Version row / snippets for the
+  // wrong version. Matches the guarded pattern documented in GADetailPage.tsx.
+  const ver = selectedVersion ?? detail.versions[0]?.version ?? '';
 
+  // Prefer the per-version timestamp threaded from useGADetail: detail.versions is always empty on
+  // this page (its aggregate source was removed), so the object lookup below only ever supplies a
+  // value on the other format detail pages that still populate it.
+  const selectedVersionObj = detail.versions.find((v) => v.version === ver);
+  const lastUpdated =
+    versionLastUpdated ?? selectedVersionObj?.lastUpdated ?? detail.versions[0]?.lastUpdated;
   const formatLabel = getFormatLabel(format);
-  const repositoryName = repositories[0];
-  const repositoryNames = repositories.join(', ');
+  // Feeds the dependency snippets (e.g. the npm/PyPI registry hint). detail.repositories is empty
+  // here, so derive from the header's selected repository, then the first non-group member repo,
+  // before falling back to the (usually empty) aggregate list.
+  const repositoryName =
+    selectedRepository ??
+    repoRows?.find((r) => r.type !== 'group')?.repositoryName ??
+    repositories?.[0]?.name;
+  const repositoryNames = repositories?.map((r) => r.name).join(', ') || '';
+  // Always show a Repository row. Prefer the header's selected repository (the only value reliably
+  // available on Overview), fall back to the aggregate list if it happens to be loaded, then to an
+  // em dash so the row is never silently dropped.
+  const repositoryValue = selectedRepository || repositoryNames || '—';
+
+  // When the header has resolved the repositories serving this version, list every member repo in
+  // the Repository row (the selected one first and flagged) instead of the single string value.
+  // Group repositories are surfaced by the header's Group facet, so exclude them here. Read-only:
+  // the header dropdown remains the control that switches the active repository.
+  const memberRepoRows = useMemo(() => {
+    const members = (repoRows ?? []).filter((r) => r.type !== 'group');
+    return [...members].sort((a, b) => {
+      if (a.repositoryName === selectedRepository) return -1;
+      if (b.repositoryName === selectedRepository) return 1;
+      return 0;
+    });
+  }, [repoRows, selectedRepository]);
 
   const snippets = useMemo(() => {
     const component: SnippetComponentModel = { format, group, name, version: ver, repositoryName };
@@ -132,13 +162,22 @@ export function GAOverviewTab({
     [format],
   );
 
-  const detailRows: Array<{ label: string; value: string; mono?: boolean }> = [
-    { label: 'Last Updated', value: formatDate(lastUpdated) },
+  // Repository Health Check intelligence, from the same Ext.Direct source the Classic component
+  // details panel uses. See useComponentIntelligence for the transport and entitlement notes.
+  const {
+    data: intelligence,
+    status: intelligenceStatus,
+    alertsStatus,
+  } = useComponentIntelligence({ gaId, format, version: ver });
+
+  const detailRows: IntelligenceDetailRow[] = [
+    { label: 'Last Updated', value: formatDateTime(lastUpdated) },
     { label: 'Format', value: formatLabel },
     ...(group ? [{ label: 'Group', value: group }] : []),
     ...(name ? [{ label: 'Name', value: name }] : []),
     ...(ver ? [{ label: 'Version', value: ver }] : []),
-    ...(repositoryNames ? [{ label: 'Repository', value: repositoryNames, mono: true }] : []),
+    { label: 'Repository', value: repositoryValue, mono: true },
+    ...buildIntelligenceRows(intelligenceStatus, intelligence, alertsStatus),
   ];
 
   return (
@@ -211,13 +250,41 @@ export function GAOverviewTab({
                       </Text>
                     </Table.Cell>
                     <Table.Cell>
-                      <Text
-                        size="2"
-                        weight="medium"
-                        style={row.mono ? { fontFamily: 'monospace', fontSize: '11px' } : undefined}
-                      >
-                        {row.value}
-                      </Text>
+                      {row.label === 'Repository' && memberRepoRows.length > 0 ? (
+                        <Flex asChild gap="2" wrap="wrap" align="center" role="list" aria-label="Repositories serving this version">
+                          <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                            {memberRepoRows.map((repo) => {
+                              const isCurrent = repo.repositoryName === selectedRepository;
+                              return (
+                                // Selected repo: subdued gray (soft), not solid accent blue — the
+                                // blue-on-black label was hard to read, and gray reads clearly and
+                                // stays visually distinct from the colored type badges. The Check
+                                // icon carries the "current" cue; unselected repos sit back as
+                                // outline so the selected one still stands out.
+                                <Badge
+                                  key={repo.repositoryName}
+                                  asChild
+                                  variant={isCurrent ? 'soft' : 'outline'}
+                                  color="gray"
+                                  highContrast={isCurrent}
+                                >
+                                  <li aria-current={isCurrent ? 'true' : undefined}>
+                                    {isCurrent && <Check size={12} aria-hidden="true" />}
+                                    <Text as="span" size="1">
+                                      {repo.repositoryName}
+                                    </Text>
+                                    <Text as="span" size="1" style={{ opacity: 0.75 }}>
+                                      · {repo.type}
+                                    </Text>
+                                  </li>
+                                </Badge>
+                              );
+                            })}
+                          </ul>
+                        </Flex>
+                      ) : (
+                        renderIntelligenceValue(row)
+                      )}
                     </Table.Cell>
                   </Table.Row>
                 ))}

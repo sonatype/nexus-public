@@ -1146,6 +1146,69 @@ public class ProxyFacetSupportTest
     assertThat(request.getConfig().getSocketTimeout(), is(clientSocketTimeout));
   }
 
+  // NEXUS-55428: an upstream Nexus serves different relative links for "simple/pkg/" and "simple/pkg",
+  // so dropping the trailing slash makes a chained PyPI proxy cache links that resolve to 404s.
+  @Test
+  public void fetch_preservesTrailingSlash_whenEncodingHelperIsSet() throws Exception {
+    URI uri = fetchAndCaptureUri("simple/tqdm/", new EncodingHelper(new EscapeHelper()));
+
+    assertThat(uri.toString(), is("https://upstream.example.com/repository/pypi-all/simple/tqdm/"));
+  }
+
+  @Test
+  public void fetch_preservesTrailingSlash_whenEncodingHelperIsNotSet() throws Exception {
+    URI uri = fetchAndCaptureUri("simple/tqdm/", null);
+
+    assertThat(uri.toString(), is("https://upstream.example.com/repository/pypi-all/simple/tqdm/"));
+  }
+
+  @Test
+  public void fetch_stillEncodesSegments_whenEncodingHelperIsSetAndPathHasTrailingSlash() throws Exception {
+    URI uri = fetchAndCaptureUri("simple/pkg 1.0+local/", new EncodingHelper(new EscapeHelper()));
+
+    assertThat(uri.toString(), is("https://upstream.example.com/repository/pypi-all/simple/pkg%201.0%2Blocal/"));
+  }
+
+  @Test
+  public void fetch_resolvesRootSlashTheSame_whetherEncodingHelperIsSetOrNot() throws Exception {
+    URI withEncoding = fetchAndCaptureUri("/", new EncodingHelper(new EscapeHelper()));
+    URI withoutEncoding = fetchAndCaptureUri("/", null);
+
+    assertThat(withEncoding, is(withoutEncoding));
+  }
+
+  @Test
+  public void encodePathForRemote_preservesTrailingSlash_whenEncodingHelperIsSet() throws Exception {
+    setField(underTest, "encodingHelper", new EncodingHelper(new EscapeHelper()));
+
+    assertThat(underTest.encodePathForRemote("index/pkg/"), is("index/pkg/"));
+  }
+
+  private URI fetchAndCaptureUri(final String url, @Nullable final EncodingHelper encodingHelper) throws Exception {
+    ProxyFacetSupport.ProxyConfig proxyConfig = new ProxyFacetSupport.ProxyConfig();
+    proxyConfig.remoteUrl = new URI("https://upstream.example.com/repository/pypi-all/");
+    setField(underTest, "config", proxyConfig);
+    HttpClientFacet httpClientFacet = mock(HttpClientFacet.class);
+    when(httpClientFacet.getHttpClient()).thenReturn(mock(HttpClient.class));
+    setField(underTest, "httpClient", httpClientFacet);
+    setField(underTest, "antiSsrfService", antiSsrfService);
+    setField(underTest, "encodingHelper", encodingHelper);
+
+    ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+    doThrow(new IllegalStateException("stop after building the request"))
+        .when(underTest)
+        .buildFetchHttpRequest(uriCaptor.capture(), any(), any());
+
+    try {
+      underTest.fetch(url, cachedContext, null);
+      fail("Expected fetch to stop at buildFetchHttpRequest");
+    }
+    catch (IllegalStateException expected) {
+      // the outbound URI has been captured
+    }
+    return uriCaptor.getValue();
+  }
+
   // NEXUS-53338: replication requests must bypass the staleness short-circuit so
   // modified assets are re-fetched regardless of the proxy content max-age setting.
   @Test

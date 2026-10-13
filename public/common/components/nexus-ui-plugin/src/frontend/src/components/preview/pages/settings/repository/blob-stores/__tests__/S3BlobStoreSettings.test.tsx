@@ -23,10 +23,11 @@ jest.mock('../useBlobStores', () => ({
 // Mock ExtJS at the path the source uses
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
-    isProEdition: () => true,
+    isLicensedEdition: () => true,
     state: () => ({
       getValue: () => false
-    })
+    }),
+    useState: (getValue) => getValue(),
   }
 }));
 

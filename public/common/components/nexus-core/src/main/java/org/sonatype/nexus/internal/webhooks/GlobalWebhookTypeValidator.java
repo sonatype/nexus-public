@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
 /**
@@ -52,7 +52,7 @@ public class GlobalWebhookTypeValidator
 
   @Autowired
   public GlobalWebhookTypeValidator(final List<GlobalWebhook> globalWebhooks) {
-    this.globalWebhooks = checkNotNull(globalWebhooks);
+    this.globalWebhooks = requireNonNull(globalWebhooks);
   }
 
   @Override

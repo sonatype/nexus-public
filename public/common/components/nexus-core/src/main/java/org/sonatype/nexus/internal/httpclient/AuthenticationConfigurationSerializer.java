@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder.BEARER_TOKEN_MIGRATION_STARTED;
 
 /**
@@ -43,7 +43,7 @@ public class AuthenticationConfigurationSerializer
 
   public AuthenticationConfigurationSerializer(final KeyValueStore keyValueStore) {
     super(AuthenticationConfiguration.class);
-    this.keyValueStore = checkNotNull(keyValueStore);
+    this.keyValueStore = requireNonNull(keyValueStore);
   }
 
   private boolean isMigrationStarted() {

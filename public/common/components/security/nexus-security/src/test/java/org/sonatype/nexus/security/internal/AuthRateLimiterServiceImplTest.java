@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.security.internal;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Arrays;
 
 import org.sonatype.nexus.security.authc.RateLimitResult;
@@ -106,11 +109,16 @@ public class AuthRateLimiterServiceImplTest
 
   @Test
   public void testCheck_returnsResultWhenBlocked() {
+    // check() reports the time actually remaining on the block, not the nominal backoff, so it
+    // needs a frozen clock: under a real clock any millisecond elapsed between the blocking
+    // checkAndRecord() and this check() truncates 30s down to 29s.
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
     for (int i = 0; i <= 5; i++) {
-      service.checkAndRecord("alice");
+      clockedService.checkAndRecord("alice");
     }
     // alice is now blocked; check should reflect that without incrementing
-    RateLimitResult result = service.check("alice");
+    RateLimitResult result = clockedService.check("alice");
     assertThat(result, is(notNullValue()));
     assertThat(result.retryAfterSeconds(), is(30L));
   }
@@ -179,14 +187,36 @@ public class AuthRateLimiterServiceImplTest
 
   @Test
   public void testCheckAndRecord_overflowSafeAtHighAttemptCount() {
-    for (int i = 0; i < 5 + 65; i++) {
-      service.checkAndRecord("overflow-user");
+    // With baseDelaySeconds=30, baseDelaySeconds*(1L<<shift) overflows a long at shift=59
+    // (failureCount=65 for maxAttempts=5), producing a negative retryAfter that placed
+    // blockedUntilMs in the past, transiently disabling blocking for shifts 59-62.
+    // MutableClock stays at EPOCH so blockedUntilMs in the future is verifiable via check().
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+
+    // Drive to failureCount=64 (shift=58, safely below the overflow window)
+    for (int i = 0; i < 64; i++) {
+      clockedService.checkAndRecord("overflow-user");
     }
 
-    RateLimitResult result = service.checkAndRecord("overflow-user");
+    // Shifts 59-62 (failureCount 65-68): the range where the old guard overflowed
+    for (int expectedShift = 59; expectedShift <= 62; expectedShift++) {
+      RateLimitResult result = clockedService.checkAndRecord("overflow-user");
+      assertThat("must be blocked at shift " + expectedShift, result, is(notNullValue()));
+      assertThat("retryAfter must be capped at maxDelay (not a negative overflow) at shift " + expectedShift,
+          result.retryAfterSeconds(), is(3600L));
+      // Clock still at EPOCH so blockedUntilMs must be in the future — check() must stay non-null
+      assertThat("check() must report blocked at shift " + expectedShift,
+          clockedService.check("overflow-user"), is(notNullValue()));
+    }
 
-    assertThat(result, is(notNullValue()));
-    assertThat(result.retryAfterSeconds(), is(3600L));
+    // Shifts 63+ still return maxDelay via the explicit >= 63 guard
+    for (int i = 0; i < 6; i++) {
+      clockedService.checkAndRecord("overflow-user");
+    }
+    RateLimitResult highResult = clockedService.checkAndRecord("overflow-user");
+    assertThat("must be blocked past the overflow window", highResult, is(notNullValue()));
+    assertThat(highResult.retryAfterSeconds(), is(3600L));
   }
 
   // Token-based rate limiting tests
@@ -196,7 +226,7 @@ public class AuthRateLimiterServiceImplTest
     String tokenHash = "abc123def456";
     for (int i = 0; i < 5; i++) {
       assertThat("attempt " + (i + 1) + " should be allowed",
-          service.checkByToken(tokenHash), is(nullValue()));
+          service.checkAndRecordByToken(tokenHash), is(nullValue()));
     }
   }
 
@@ -236,12 +266,16 @@ public class AuthRateLimiterServiceImplTest
 
   @Test
   public void testCheckByToken_returnsResultWhenBlocked() {
+    // Frozen clock for the same reason as testCheck_returnsResultWhenBlocked: checkByToken()
+    // returns remaining time, which a real clock erodes below the nominal 30s.
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
     String tokenHash = "abc123def456";
     for (int i = 0; i <= 5; i++) {
-      service.checkAndRecordByToken(tokenHash);
+      clockedService.checkAndRecordByToken(tokenHash);
     }
 
-    RateLimitResult result = service.checkByToken(tokenHash);
+    RateLimitResult result = clockedService.checkByToken(tokenHash);
     assertThat(result, is(notNullValue()));
     assertThat(result.retryAfterSeconds(), is(30L));
   }
@@ -319,5 +353,213 @@ public class AuthRateLimiterServiceImplTest
     assertThat(result, is(notNullValue()));
     assertThat(result.retryAfterSeconds(), is(60L));
     assertThat(result.attemptCount(), is(7));
+  }
+
+  // =====================
+  // Time-bounded block tests (TC-T01 through TC-T04, TC-TK01, TC-TK02)
+  // =====================
+
+  @Test
+  public void testCheck_stillBlockedBeforeDeadline() {
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecord("alice");
+    }
+    clock.advanceSeconds(29); // still within the 30s window
+
+    assertThat("block must remain before deadline elapses",
+        clockedService.check("alice"), is(notNullValue()));
+  }
+
+  @Test
+  public void testCheck_releasedAfterBlockDeadline() {
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecord("alice");
+    }
+    clock.advanceSeconds(31); // past the 30s deadline
+
+    assertThat("block must release after the advertised Retry-After elapses",
+        clockedService.check("alice"), is(nullValue()));
+  }
+
+  @Test
+  public void testCheck_retryAfterReflectsRemainingTime() {
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecord("alice");
+    }
+    clock.advanceSeconds(15); // half of the 30s window
+
+    RateLimitResult result = clockedService.check("alice");
+    assertThat(result, is(notNullValue()));
+    assertThat("Retry-After must reflect remaining time, not the original full window",
+        result.retryAfterSeconds(), is(15L));
+  }
+
+  @Test
+  public void testCheck_repeatedCallsDoNotExtendBlockDeadline() {
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecord("alice");
+    }
+    // Simulate a client honoring Retry-After: poll once per second for 29s
+    for (int i = 0; i < 29; i++) {
+      clock.advanceSeconds(1);
+      clockedService.check("alice");
+    }
+    assertThat("still blocked at 29s", clockedService.check("alice"), is(notNullValue()));
+
+    clock.advanceSeconds(2); // now 31s total — past the 30s deadline
+    assertThat("polling must not extend the block deadline",
+        clockedService.check("alice"), is(nullValue()));
+  }
+
+  @Test
+  public void testCheckAndRecord_failureCountPreservedAfterDeadline() {
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecord("alice"); // 6 failures; attempt 6 → retryAfter=30s
+    }
+    clock.advanceSeconds(31); // deadline elapsed; check() now returns null
+
+    // Wrong password again after block expires — counter must NOT reset, backoff must escalate
+    RateLimitResult result = clockedService.checkAndRecord("alice");
+    assertThat(result, is(notNullValue()));
+    assertThat("backoff must escalate from prior count (attempt 7 → 60s), not restart at 30s",
+        result.retryAfterSeconds(), is(60L));
+    assertThat(result.attemptCount(), is(7));
+  }
+
+  @Test
+  public void testRecordSuccess_afterDeadline_resetsToCleanState() {
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+
+    // Drive to first block (6 failures → 30s deadline)
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecord("alice");
+    }
+    clock.advanceSeconds(31); // deadline elapsed
+    assertThat("block released after deadline", clockedService.check("alice"), is(nullValue()));
+
+    // Successful authentication clears the record
+    clockedService.recordSuccess("alice");
+
+    // First new failure after success must be allowed
+    assertThat("first attempt after success must be allowed",
+        clockedService.checkAndRecord("alice"), is(nullValue()));
+
+    // Drive to a new block — backoff must start fresh at base delay, not escalated
+    for (int i = 0; i < 4; i++) {
+      clockedService.checkAndRecord("alice"); // attempts 2-5
+    }
+    RateLimitResult result = clockedService.checkAndRecord("alice"); // attempt 6 → 30s
+    assertThat(result, is(notNullValue()));
+    assertThat("backoff must restart at base delay after success clears the record",
+        result.retryAfterSeconds(), is(30L));
+    assertThat(result.attemptCount(), is(6));
+  }
+
+  @Test
+  public void testCheckByToken_releasedAfterBlockDeadline() {
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+    String tokenHash = "abc123def456";
+
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecordByToken(tokenHash);
+    }
+    clock.advanceSeconds(31);
+
+    assertThat("token block must release after deadline",
+        clockedService.checkByToken(tokenHash), is(nullValue()));
+  }
+
+  @Test
+  public void testCheckByToken_repeatedCallsDoNotExtendBlockDeadline() {
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+    String tokenHash = "abc123def456";
+
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecordByToken(tokenHash);
+    }
+    for (int i = 0; i < 29; i++) {
+      clock.advanceSeconds(1);
+      clockedService.checkByToken(tokenHash);
+    }
+    clock.advanceSeconds(2); // 31s total
+
+    assertThat("polling must not extend the token block deadline",
+        clockedService.checkByToken(tokenHash), is(nullValue()));
+  }
+
+  @Test
+  public void testCheck_releasedAtExactDeadlineBoundary() {
+    // The release condition is (now >= blockedUntilMs), so at exactly t=30s the block must release.
+    // MutableClock starts at Instant.EPOCH (millis=0), so blockedUntilMs = 30_000 after the first block.
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecord("alice");
+    }
+    clock.advanceSeconds(30); // exactly at the deadline
+
+    assertThat("block must release at exactly the deadline (>= condition)",
+        clockedService.check("alice"), is(nullValue()));
+  }
+
+  @Test
+  public void testCheckByToken_releasedAtExactDeadlineBoundary() {
+    MutableClock clock = new MutableClock();
+    AuthRateLimiterServiceImpl clockedService = new AuthRateLimiterServiceImpl(5, 30L, 3600L, 10000, clock);
+    String tokenHash = "abc123def456";
+
+    for (int i = 0; i <= 5; i++) {
+      clockedService.checkAndRecordByToken(tokenHash);
+    }
+    clock.advanceSeconds(30);
+
+    assertThat("token block must release at exactly the deadline (>= condition)",
+        clockedService.checkByToken(tokenHash), is(nullValue()));
+  }
+
+  // MutableClock starts at Instant.EPOCH so millis() == 0 at t=0; this makes deadline arithmetic
+  // exact in tests (blockedUntilMs = retryAfterSeconds * 1000, no sub-second remainder).
+  private static final class MutableClock
+      extends Clock
+  {
+    private Instant now = Instant.EPOCH;
+
+    void advanceSeconds(long seconds) {
+      now = now.plusSeconds(seconds);
+    }
+
+    @Override
+    public ZoneId getZone() {
+      return ZoneId.of("UTC");
+    }
+
+    @Override
+    public Clock withZone(final ZoneId zone) {
+      throw new UnsupportedOperationException("MutableClock does not support withZone");
+    }
+
+    @Override
+    public Instant instant() {
+      return now;
+    }
   }
 }

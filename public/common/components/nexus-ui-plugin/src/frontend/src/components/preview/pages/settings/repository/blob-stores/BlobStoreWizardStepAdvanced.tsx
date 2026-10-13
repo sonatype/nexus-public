@@ -21,6 +21,7 @@ import {
   SettingsCheckbox,
   SettingsButton,
 } from '../../../../shared/form';
+import { useIsLicensedEdition } from '../../../../shared/hooks';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import type { BlobStoreFormData, S3BlobStoreConfig, S3FailoverBucket } from './types';
 import { BLOB_STORE_TYPE_IDS } from './blobStoreFormMachine';
@@ -46,7 +47,7 @@ export function BlobStoreWizardStepAdvanced({
   quotaTypes,
   validationErrors,
 }: BlobStoreWizardStepAdvancedProps) {
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const isFailoverAvailable = ExtJS.state().getValue('S3FailoverEnabled', false);
 
   const config = (data.bucketConfiguration || {}) as S3BlobStoreConfig;
@@ -108,7 +109,7 @@ export function BlobStoreWizardStepAdvanced({
             checked={adv.forcePathStyle}
             onChange={(v) => onChange('bucketConfiguration.advancedBucketConnection.forcePathStyle', v)}
           />
-          {isFailoverAvailable && isProEdition && (
+          {isFailoverAvailable && isLicensedEdition && (
             <>
               <Text weight="medium" size="2" mb="2" as="p">
                 Replication Buckets

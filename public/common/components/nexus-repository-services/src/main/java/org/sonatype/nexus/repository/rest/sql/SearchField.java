@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.rest.sql;
 
 import org.sonatype.nexus.repository.search.SortDirection;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Fields available for search when using an SQL backend for search
@@ -100,7 +100,7 @@ public enum SearchField
   }
 
   SearchField(final SortDirection direction) {
-    this.direction = checkNotNull(direction);
+    this.direction = requireNonNull(direction);
   }
 
   public SortDirection direction() {

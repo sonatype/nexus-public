@@ -18,7 +18,7 @@ import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -45,7 +45,7 @@ public class UserAgentGenerator
 
   @Autowired
   public UserAgentGenerator(final ApplicationVersion applicationVersion) {
-    this.applicationVersion = checkNotNull(applicationVersion);
+    this.applicationVersion = requireNonNull(applicationVersion);
   }
 
   public String generate() {

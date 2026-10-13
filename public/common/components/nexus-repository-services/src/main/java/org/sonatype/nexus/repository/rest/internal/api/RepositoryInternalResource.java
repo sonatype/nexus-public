@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -37,6 +36,7 @@ import java.util.HashMap;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Format;
@@ -59,7 +59,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -142,16 +142,16 @@ public class RepositoryInternalResource
       @Nullable final RepositoryMetricsService repositoryMetricsService,
       final GlobalComponentLookupHelper componentLookupHelper)
   {
-    this.formats = checkNotNull(formats);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
-    this.proxyType = checkNotNull(proxyType);
-    this.recipes = checkNotNull(recipes);
-    this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
-    this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(convertersByFormatList));
-    this.defaultAdapter = checkNotNull(defaultAdapter);
+    this.formats = requireNonNull(formats);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
+    this.proxyType = requireNonNull(proxyType);
+    this.recipes = requireNonNull(recipes);
+    this.authorizingRepositoryManager = requireNonNull(authorizingRepositoryManager);
+    this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(requireNonNull(convertersByFormatList));
+    this.defaultAdapter = requireNonNull(defaultAdapter);
     this.repositoryMetricsService = Optional.ofNullable(repositoryMetricsService);
-    this.componentLookupHelper = checkNotNull(componentLookupHelper);
+    this.componentLookupHelper = requireNonNull(componentLookupHelper);
   }
 
   @GET
@@ -306,7 +306,7 @@ public class RepositoryInternalResource
   @Path("/details")
   public List<RepositoryDetailXO> getRepositoryDetails() {
     Map<String, RepositoryMetricsDTO> metricsByName = repositoryMetricsService
-        .map(svc -> svc.list().stream().collect(Collectors.toMap(RepositoryMetricsDTO::getName, m -> m)))
+        .map(RepositoryMetricsService::listByName)
         .orElseGet(Map::of);
 
     return stream(repositoryManager.browse())
@@ -347,7 +347,7 @@ public class RepositoryInternalResource
     List<String> statusList = parseCommaSeparated(statuses);
 
     Map<String, RepositoryMetricsDTO> metricsByName = repositoryMetricsService
-        .map(svc -> svc.list().stream().collect(Collectors.toMap(RepositoryMetricsDTO::getName, m -> m)))
+        .map(RepositoryMetricsService::listByName)
         .orElseGet(Map::of);
 
     // Build filtered stream - use userCanBrowseRepositories to allow anonymous access
@@ -597,26 +597,28 @@ public class RepositoryInternalResource
     return repository.facet(HttpClientFacet.class).getStatus();
   }
 
-  private String getStatusDescription(final Repository repository) {
-    String description = null;
-    if (proxyType.equals(repository.getType())) {
-      description = getStatus(repository).getDescription();
-    }
-    return description;
-  }
-
-  private String getStatusReason(final Repository repository) {
-    String reason = null;
-    if (proxyType.equals(repository.getType())) {
-      reason = getStatus(repository).getReason();
-    }
-    return reason;
-  }
-
   private RepositoryStatusXO getStatusXO(final Repository repository) {
     boolean online = repository.getConfiguration().isOnline();
-    String description = getStatusDescription(repository);
-    String reason = getStatusReason(repository);
+    String description = null;
+    String reason = null;
+    // Only proxies have a remote connection status. Guard the facet call the same way the classic UI
+    // (RepositoryUiService#buildStatus) does: a repository may be mid-transition (e.g., being deleted)
+    // and not in STARTED state, in which case we skip the remote status instead of failing the whole
+    // response with a 500 (InvalidStateException). Missing HttpClientFacet is likewise tolerated.
+    if (proxyType.equals(repository.getType())) {
+      try {
+        RemoteConnectionStatus remoteStatus = getStatus(repository);
+        description = remoteStatus.getDescription();
+        reason = remoteStatus.getReason();
+      }
+      catch (MissingFacetException e) {
+        // no http client facet, no remote status
+      }
+      catch (InvalidStateException e) {
+        // repository is not in STARTED state (e.g., being deleted), skip status query
+        log.debug("Cannot get status for repository {} - invalid state: {}", repository.getName(), e.getMessage());
+      }
+    }
     return new RepositoryStatusXO(online, description, reason);
   }
 }

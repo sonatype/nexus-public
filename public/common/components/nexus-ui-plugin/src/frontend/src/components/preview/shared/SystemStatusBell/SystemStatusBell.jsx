@@ -58,13 +58,15 @@ export default function SystemStatusBell({className, dataAnalyticsId}) {
   return (
     <Box className={className}>
       <IconButton
-        variant="ghost"
+        variant="outline"
+        size="2"
+        color="gray"
         onClick={onClick}
         title="System Status"
         aria-label={showDot ? 'System status -- unhealthy' : 'System Status'}
         {...(dataAnalyticsId ? {'data-analytics-id': dataAnalyticsId} : {})}
       >
-        <Bell size={18} />
+        <Bell size={16} />
       </IconButton>
       {showDot && <Box className={`${className}__badge`} aria-hidden="true" />}
     </Box>

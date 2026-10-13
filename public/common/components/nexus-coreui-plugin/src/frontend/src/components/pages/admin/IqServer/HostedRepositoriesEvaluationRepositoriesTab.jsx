@@ -13,7 +13,15 @@
 import React, {useState, useRef, useEffect, useCallback, useMemo} from 'react';
 import {useMachine} from '@xstate/react';
 import {useRouter} from '@uirouter/react';
-import {SectionToolbar, HumanReadableUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
+import {
+  SectionToolbar,
+  HumanReadableUtils,
+  ExtJS,
+  HRS_SUPPORTED_FORMAT_NAMES,
+  hostedRepoEvaluationFormatLabel as formatLabel,
+  hostedRepoEvaluationUnsupportedMessage,
+  isHostedRepoEvaluationSupportedFormat
+} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxCheckbox,
@@ -44,6 +52,16 @@ import {ROUTE_NAMES} from '../../../../routerConfig/routeNames/routeNames';
 import './HostedRepositoriesEvaluationRepositoriesTab.scss';
 
 const {HOSTED_REPOSITORIES_EVALUATION} = UIStrings.SONATYPE_LIFECYCLE;
+
+/**
+ * Monitoring can't be turned on for a repository whose format HRS doesn't support. Such rows stay selectable,
+ * but Enable/Save is refused (all-or-nothing) while any of them is in the selection, matching the Preview UI.
+ * Repositories that are already monitored aren't blocked, so they can still be disabled.
+ */
+const isEnableBlocked = (repo) => !repo.isSelected && !isHostedRepoEvaluationSupportedFormat(repo.format);
+
+/** How many blocked repositories the Enable error names before summarising the rest. */
+const MAX_LISTED_UNSUPPORTED = 5;
 
 /**
  * Repository selection tab for hosted repositories evaluation configuration.
@@ -86,6 +104,7 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
   // fresh instance that fetches the latest repository list with correct sort order.
   const [current, send] = useMachine(HostedRepositoriesEvaluationMachine, {devTools: true});
   const [incompleteSelectionError, setIncompleteSelectionError] = useState(false);
+  const [unsupportedSelectionError, setUnsupportedSelectionError] = useState(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -104,6 +123,8 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
   // Tracks the baseline monitoring status (isSelected) for every repo we've seen,
   // across all filters/pages. Updated whenever repositories loads new data.
   const [repoStatusMap, setRepoStatusMap] = useState({});
+  // Name and format of every repo we've seen, so a selection spanning pages can be checked before enabling.
+  const [repoDetailsMap, setRepoDetailsMap] = useState({});
 
   // Compute net effective changes — enable/disable same repo = zero net change
   const {netRepositoriesToAdd, netRepositoriesToRemove} = useMemo(() => ({
@@ -152,6 +173,13 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
         });
         return updated;
       });
+      setRepoDetailsMap(prev => {
+        const updated = {...prev};
+        repositories.forEach(repo => {
+          updated[repo.id] = {name: repo.name, format: repo.format};
+        });
+        return updated;
+      });
     }
   }, [repositories]);
 
@@ -168,6 +196,35 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
 
     send({type: 'UPDATE', data: {selectedRepositories}});
   }, [selectionString, selectedRepositories, onSelectionChange, send]);
+
+  // An unsupported-format error describes the selection it was raised for, so drop it when the selection changes.
+  useEffect(() => {
+    setUnsupportedSelectionError(null);
+  }, [selectionString]);
+
+  /**
+   * Returns the inline error to show when the selection would newly enable monitoring for a repository in an
+   * unsupported format, or null when it's fine. Enabling is all-or-nothing: one such repository blocks the request.
+   */
+  const findUnsupportedSelectionError = useCallback((repositoryIds) => {
+    const pagedById = Object.fromEntries((repositories || []).map(repo => [repo.id, repo]));
+    const blocked = repositoryIds
+      .map(id => {
+        const details = repoDetailsMap[id] || pagedById[id];
+        const isMonitored = id in repoStatusMap ? repoStatusMap[id] : (pagedById[id]?.isSelected || false);
+        return details ? {...details, isSelected: isMonitored} : null;
+      })
+      .filter(repo => repo && isEnableBlocked(repo));
+    if (blocked.length === 0) {
+      return null;
+    }
+    const listed = blocked.slice(0, MAX_LISTED_UNSUPPORTED)
+      .map(repo => `${repo.name} (${formatLabel(repo.format)})`)
+      .join(', ');
+    const more = blocked.length - MAX_LISTED_UNSUPPORTED;
+    const names = more > 0 ? `${listed} and ${more} more` : listed;
+    return HOSTED_REPOSITORIES_EVALUATION.UNSUPPORTED_FORMAT.ENABLE_BLOCKED(names, HRS_SUPPORTED_FORMAT_NAMES);
+  }, [repositories, repoDetailsMap, repoStatusMap]);
 
   useEffect(() => {
     return () => {
@@ -234,10 +291,17 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
         return;
       }
 
+      const unsupportedError = findUnsupportedSelectionError(selectedRepositories);
+      if (unsupportedError) {
+        setUnsupportedSelectionError(unsupportedError);
+        return;
+      }
+
       send({type: 'UPDATE', data: {selectedRepositories, settings: settingsData}});
       send('SAVE');
     }
-  }, [settingsData, selectedRepositories, send, hasSelections, hasNetMonitoringChanges, netRepositoriesToAdd, netRepositoriesToRemove]);
+  }, [settingsData, selectedRepositories, send, hasSelections, hasNetMonitoringChanges, netRepositoriesToAdd,
+    netRepositoriesToRemove, findUnsupportedSelectionError]);
 
   const handleCloseErrorModal = useCallback(() => {
     setShowErrorModal(false);
@@ -256,11 +320,14 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
 
   const handleSelectAll = useCallback(() => {
     const currentPagedRepos = repositories || [];
+    // Select all skips rows that can't be enabled, so a page-wide Enable isn't blocked by them.
+    const selectableRepos = currentPagedRepos.filter(repo => !isEnableBlocked(repo));
     setSelectedRepositories(currentSelection => {
-      const allSelected = currentPagedRepos.every(repo => currentSelection.includes(repo.id));
+      const allSelected = selectableRepos.length > 0 &&
+          selectableRepos.every(repo => currentSelection.includes(repo.id));
       const newSelection = allSelected
         ? currentSelection.filter(id => !currentPagedRepos.find(repo => repo.id === id))
-        : [...new Set([...currentSelection, ...currentPagedRepos.map(repo => repo.id)])];
+        : [...new Set([...currentSelection, ...selectableRepos.map(repo => repo.id)])];
       return newSelection;
     });
   }, [repositories]);
@@ -319,6 +386,11 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
   }, []);
 
   const handleEnableMonitoring = useCallback(() => {
+    const unsupportedError = findUnsupportedSelectionError(selectedRepositories);
+    if (unsupportedError) {
+      setUnsupportedSelectionError(unsupportedError);
+      return;
+    }
     setPendingMonitoringChanges(prev => {
       const updated = {...prev};
       selectedRepositories.forEach(id => {
@@ -329,7 +401,7 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
       });
       return updated;
     });
-  }, [selectedRepositories, repoStatusMap]);
+  }, [selectedRepositories, repoStatusMap, findUnsupportedSelectionError]);
 
   const handleDisableMonitoring = useCallback(() => {
     setPendingMonitoringChanges(prev => {
@@ -373,7 +445,9 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
   const currentPage = offsetPage || 0;
   const formats = useMemo(() => current.context.formats || ['all'], [current.context.formats]);
 
-  const allPagedSelected = pagedRepositories.length > 0 && pagedRepositories.every(repo => selectedRepositories.includes(repo.id));
+  const selectablePagedRepositories = pagedRepositories.filter(repo => !isEnableBlocked(repo));
+  const allPagedSelected = selectablePagedRepositories.length > 0 &&
+      selectablePagedRepositories.every(repo => selectedRepositories.includes(repo.id));
 
   return (
     <>
@@ -428,6 +502,12 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
             )}
           </div>
 
+          {hasSelections && unsupportedSelectionError && (
+            <NxErrorAlert onClose={() => setUnsupportedSelectionError(null)}>
+              {unsupportedSelectionError}
+            </NxErrorAlert>
+          )}
+
           <NxTable>
             <NxTableHead>
               <NxTableRow>
@@ -473,43 +553,60 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
               </NxTableRow>
             </NxTableHead>
             <NxTableBody emptyMessage="No hosted repositories available">
-              {pagedRepositories.map(repo => (
-                <NxTableRow key={repo.id}>
-                  <NxTableCell className="nx-cell-select">
-                    <NxCheckbox
-                      checkboxId={`select-repo-${repo.id}`}
-                      isChecked={selectedRepositories.includes(repo.id)}
-                      onChange={() => handleRepositorySelect(repo.id)}
-                      aria-label={`Select repository ${repo.name}`}
-                    />
-                  </NxTableCell>
-                  <NxTableCell>
-                    {hasSelections ? (
-                      <div className="repository-name-cell">
-                        <NxTextLink
-                          href={`#admin/repository/repositories:${encodeURIComponent(repo.name)}`}
-                          onClick={handleRepositoryLinkClick}
-                        >
-                          {repo.name}
-                        </NxTextLink>
-                        {repo.hasCustomConfig && pendingMonitoringChanges[repo.id] !== false && (
-                          <NxSmallTag className="custom-config-tag">
-                            Custom
+              {pagedRepositories.map(repo => {
+                const enableBlocked = isEnableBlocked(repo);
+                return (
+                  <NxTableRow key={repo.id}>
+                    <NxTableCell className="nx-cell-select">
+                      <NxCheckbox
+                        checkboxId={`select-repo-${repo.id}`}
+                        isChecked={selectedRepositories.includes(repo.id)}
+                        onChange={() => handleRepositorySelect(repo.id)}
+                        aria-label={`Select repository ${repo.name}`}
+                      />
+                    </NxTableCell>
+                    <NxTableCell>
+                      {hasSelections ? (
+                        <div className="repository-name-cell">
+                          <NxTextLink
+                            href={`#admin/repository/repositories:${encodeURIComponent(repo.name)}`}
+                            onClick={handleRepositoryLinkClick}
+                          >
+                            {repo.name}
+                          </NxTextLink>
+                          {repo.hasCustomConfig && pendingMonitoringChanges[repo.id] !== false && (
+                            <NxSmallTag className="custom-config-tag">
+                              Custom
+                            </NxSmallTag>
+                          )}
+                        </div>
+                      ) : (
+                        repo.name
+                      )}
+                    </NxTableCell>
+                    <NxTableCell>
+                      {enableBlocked ? (
+                        <div className="repository-format-cell">
+                          {repo.format}
+                          <NxSmallTag
+                            className="unsupported-format-tag"
+                            title={hostedRepoEvaluationUnsupportedMessage(formatLabel(repo.format))}
+                          >
+                            {HOSTED_REPOSITORIES_EVALUATION.UNSUPPORTED_FORMAT.TAG}
                           </NxSmallTag>
-                        )}
-                      </div>
-                    ) : (
-                      repo.name
+                        </div>
+                      ) : (
+                        repo.format
+                      )}
+                    </NxTableCell>
+                    <NxTableCell>{repo.size ? HumanReadableUtils.bytesToString(repo.size) : '-'}</NxTableCell>
+                    <NxTableCell>{repo.artifactCount || '-'}</NxTableCell>
+                    {hasSelections && (
+                      <NxTableCell>{getEffectiveMonitoringStatus(repo)}</NxTableCell>
                     )}
-                  </NxTableCell>
-                  <NxTableCell>{repo.format}</NxTableCell>
-                  <NxTableCell>{repo.size ? HumanReadableUtils.bytesToString(repo.size) : '-'}</NxTableCell>
-                  <NxTableCell>{repo.artifactCount || '-'}</NxTableCell>
-                  {hasSelections && (
-                    <NxTableCell>{getEffectiveMonitoringStatus(repo)}</NxTableCell>
-                  )}
-                </NxTableRow>
-              ))}
+                  </NxTableRow>
+                );
+              })}
             </NxTableBody>
           </NxTable>
 
@@ -524,6 +621,11 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
           {incompleteSelectionError && (
             <NxErrorAlert onClose={() => setIncompleteSelectionError(false)}>
               {HOSTED_REPOSITORIES_EVALUATION.INCOMPLETE_MODAL.MESSAGE}
+            </NxErrorAlert>
+          )}
+          {!hasSelections && unsupportedSelectionError && (
+            <NxErrorAlert onClose={() => setUnsupportedSelectionError(null)}>
+              {unsupportedSelectionError}
             </NxErrorAlert>
           )}
           <div className="nx-btn-bar">

@@ -14,6 +14,7 @@ import React from 'react';
 import {Card, Flex, Heading, Text, Progress, Box, Grid} from '@radix-ui/themes';
 import {AlertCircle, AlertTriangle, Info} from 'lucide-react';
 import { ExtJS } from '../../../../interface/ExtJS';
+import { useIsLicensedEdition } from '../../shared/hooks';
 import {Tooltip} from '../../shared/Tooltip';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -298,7 +299,7 @@ export default function UsageCenter() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const isCommunityEdition = ExtJS.state().getEdition() === COMMUNITY;
   const usage = ExtJS.state().getValue('contentUsageEvaluationResult', []);
   const componentCountLimitDateLastExceeded = ExtJS.state().getValue('nexus.community.componentCountLimitDateLastExceeded');
@@ -330,7 +331,7 @@ export default function UsageCenter() {
       
       {/* Full-width metric cards */}
       <Grid columns={{initial: '1', md: '3'}} gap="4" style={{width: '100%'}}>
-        {isProEdition && (
+        {isLicensedEdition && (
           <>
             <StatCard card={TOTAL_COMPONENTS} usage={usage} />
             <StatCard card={REQUESTS_PER_DAY} usage={usage} />

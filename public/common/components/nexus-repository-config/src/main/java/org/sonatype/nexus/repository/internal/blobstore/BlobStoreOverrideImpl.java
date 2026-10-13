@@ -40,7 +40,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 
 /**
@@ -88,9 +88,9 @@ public class BlobStoreOverrideImpl
       final SecretsService secretsService,
       final Provider<List<BlobStoreDescriptor>> blobStoreDescriptorsProvider)
   {
-    this.blobStoreConfigurationStore = checkNotNull(blobStoreConfigurationStore);
-    this.secretsService = checkNotNull(secretsService);
-    this.blobStoreDescriptorsProvider = checkNotNull(blobStoreDescriptorsProvider);
+    this.blobStoreConfigurationStore = requireNonNull(blobStoreConfigurationStore);
+    this.secretsService = requireNonNull(secretsService);
+    this.blobStoreDescriptorsProvider = requireNonNull(blobStoreDescriptorsProvider);
   }
 
   @Override
@@ -237,8 +237,11 @@ public class BlobStoreOverrideImpl
 
   /**
    * Apply a single sensitive-field override. Returns {@code true} if the attribute was updated.
-   * Encrypts a plaintext {@code newValue} unless it is genuinely the same credential the config
-   * already stores (idempotent no-op) or is itself already an {@code _<id>} reference.
+   * Encrypts a plaintext {@code newValue} unless it is itself already an {@code _<id>} reference,
+   * or the config already stores an {@code _<id>} that decrypts to the same credential (the
+   * idempotent no-op that keeps a permanently-set override from churning secrets rows on every
+   * restart). A {@code newValue} equal to a stored <em>plaintext</em> value is still encrypted —
+   * that is the case where the credential is not yet protected at all.
    */
   private boolean applySensitiveOverride(
       final BlobStoreConfiguration config,
@@ -296,14 +299,17 @@ public class BlobStoreOverrideImpl
       return true;
     }
 
-    // Case C: override supplied plaintext, current is plaintext (or absent). Encrypt unless the
-    // two plaintexts are identical — encryption is not needed to "upgrade" the shape here since
-    // the BaseBlobStoreManager startup sweep will heal any remaining pre-existing plaintext on
-    // next boot. But to satisfy the PR's own goal (credentials never persisted as plaintext), we
-    // always encrypt when the override supplies a new plaintext value.
-    if (currentValue instanceof String && newValue.equals(currentValue)) {
-      return false;
-    }
+    // Case C: override supplied plaintext, current is plaintext (or absent). Always encrypt, even
+    // when the two plaintexts are byte-for-byte identical. That equality means the stored value is
+    // still an unencrypted credential, which is exactly the condition this class exists to fix —
+    // short-circuiting on it would leave the credential in plaintext indefinitely, since nothing
+    // else will come back for it: there is no per-boot sweep, only the version-gated
+    // BlobStoreCredentialEncryptionMigrationStep_2_16x, which by its own javadoc never re-runs once
+    // its version is recorded.
+    //
+    // This does not churn on restart. Encrypting here moves the stored value to an _<id>, so the
+    // next boot with the same override lands in Case B, decrypts, compares equal, and returns
+    // false. One conversion, then idempotent.
     Secret newSecret = secretsService.encryptMaven(BLOBSTORE_CONFIG, newValue.toCharArray(), null);
     section.put(field, newSecret.getId());
     newlyCreated.add(newSecret);

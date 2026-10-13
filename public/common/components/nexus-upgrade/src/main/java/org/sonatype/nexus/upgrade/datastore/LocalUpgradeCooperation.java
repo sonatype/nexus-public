@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link UpgradeCooperation} providing single-JVM cooperation via the injected
@@ -38,7 +38,7 @@ public class LocalUpgradeCooperation
 
   @Autowired
   public LocalUpgradeCooperation(final Cooperation2Factory cooperationFactory) {
-    this.cooperationFactory = checkNotNull(cooperationFactory);
+    this.cooperationFactory = requireNonNull(cooperationFactory);
   }
 
   @Override

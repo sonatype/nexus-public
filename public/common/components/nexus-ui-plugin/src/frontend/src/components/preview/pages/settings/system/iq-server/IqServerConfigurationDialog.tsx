@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   Box,
   Button,
@@ -30,6 +30,7 @@ import {
 import { ChevronDown, ChevronRight, CircleCheck, CircleAlert, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 import {
+  disableIqServer,
   fetchIqSettings,
   putIqSettings,
   toUpdatePayload,
@@ -43,17 +44,30 @@ import {
   DEFAULT_IQ_CONFIGURATION,
   PASSWORD_PLACEHOLDER,
 } from './types';
-// PASSWORD_PLACEHOLDER masks the stored password; passed back on Test/Save so backend resolves it.
 
 import './IqServerConfigurationDialog.scss';
+
+/**
+ * What the Password field shows while it still holds the stored credential.
+ *
+ * PASSWORD_PLACEHOLDER is a protocol value shared with the backend, not user data: it means "reuse
+ * the persisted secret". The Classic UI keeps it in form state and simply never offers a way to
+ * reveal it (IqServerForm.jsx renders type="password" with no visibility toggle), so it stays
+ * internal. This dialog does offer a visibility toggle, so the sentinel needs a display value of
+ * its own — these bullets — and the toggle is withheld while the sentinel is what is being held.
+ */
+const STORED_PASSWORD_MASK = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
 
 export interface IqServerConfigurationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Called after a successful Save with the new server-acknowledged configuration. */
   onSaved: (settings: IqServerConfiguration) => void;
-  /** Called after a successful Disconnect (Save with enabled=false) with the response. */
-  onDisconnected: (disconnectedConfig: IqServerConfiguration) => void;
+  /**
+   * Called after a successful Disconnect. The dedicated disable endpoint returns
+   * no body, so no configuration is passed.
+   */
+  onDisconnected: (disconnectedConfig?: IqServerConfiguration) => void;
   /** Parent hint: if true, render Disconnect on first paint without waiting for the /iq fetch. */
   initiallyConnected?: boolean;
 }
@@ -122,7 +136,31 @@ export function IqServerConfigurationDialog({
     setVerifyMsg(null);
   }, []);
 
+  // Classic UI parity (IqServerMachine.updateUrl): the stored credential belongs to the stored
+  // URL, and the backend refuses the placeholder once the URL changes, so drop the mask and make
+  // the user supply a password for the server they just pointed at.
+  const updateUrl = useCallback((url: string) => {
+    setSettings(prev => ({
+      ...prev,
+      url,
+      ...(prev.password === PASSWORD_PLACEHOLDER ? { password: '' } : {}),
+    }));
+    setTouched(true);
+    setVerifyMsg(null);
+  }, []);
+
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
   const isUserAuth = !settings.authenticationType || settings.authenticationType === 'USER';
+
+  /**
+   * True while the Password field still stands for the persisted credential rather than something
+   * the user typed. Derived from the value itself so there is one source of truth: `settings.password`
+   * remains exactly what buildPayload sends, and the three states the UI must tell apart fall out of
+   * it — sentinel (stored, untouched), '' (explicitly cleared, or never configured), anything else
+   * (a new password).
+   */
+  const storedPasswordRetained = isUserAuth && settings.password === PASSWORD_PLACEHOLDER;
 
   // First-time state — no config ever saved; drives onboarding copy.
   const isFirstTime = !settings.enabled && !settings.url && !settings.username;
@@ -137,33 +175,55 @@ export function IqServerConfigurationDialog({
     return true;
   }, [verifying, settings.url, settings.username, settings.password, isUserAuth]);
 
-  // Save/Disconnect: backend accepts PASSWORD_PLACEHOLDER as "reuse stored password".
-  // Test Connection: backend rejects the placeholder — user must retype password.
-  const passwordIsPlaceholder = settings.password === PASSWORD_PLACEHOLDER;
+  // Reconnecting a configured-but-disabled instance needs no field edit: the URL, username and
+  // (via the placeholder) the stored credential are all loaded already, so Save must not require
+  // the user to touch something just to re-enable IQ Server.
+  /**
+   * Discards the stored-credential representation so the user can type a replacement. Deliberate and
+   * explicit: an empty field afterwards means "no password supplied", never "fall back to the stored
+   * one", which is why the sentinel is not something a stray keystroke or focus can erode.
+   */
+  const clearStoredPassword = useCallback(() => {
+    update('password', '');
+    setShowPassword(false);
+    // Ref may be absent for one paint while the editable field replaces the read-only one.
+    requestAnimationFrame(() => passwordInputRef.current?.focus());
+  }, [update]);
+
+  const isReconnect = settingsLoaded && !settings.enabled && !isFirstTime;
 
   // Build payload explicitly to avoid dropping password via spread.
+  // failOpenModeEnabled has no UI control, but PUT /v1/iq re-derives the
+  // stored flag from the payload, so it must be echoed back or a stored `true` is reset
+  // to `false`. Only sent when the GET actually returned it (self-hosted); cloud never
+  // does, so the key is omitted there rather than sending `false`.
   const buildPayload = useCallback((enabled: boolean): IqServerConfiguration => ({
     enabled,
     url: settings.url,
-    authenticationType: settings.authenticationType,
+    // The dropdown renders `settings.authenticationType || 'USER'`, so an absent value still
+    // displays User Authentication. Send what is displayed: the API rejects a null/blank
+    // authenticationType, and a failed load leaves the '' default in state.
+    authenticationType: settings.authenticationType || 'USER',
     username: isUserAuth ? settings.username : '',
+    // May be PASSWORD_PLACEHOLDER, which stands for the persisted credential: the backend resolves
+    // it to the stored secret for both Test Connection and Save (IqUiResource.getPassword,
+    // IqApiResource.getPassword / updateConfiguration), so the clear-text password never has to
+    // reach the browser and the user never has to retype a password we already hold. It is refused
+    // in exactly one case — the submitted URL differs from the stored one — which updateUrl
+    // prevents at its source by clearing the field whenever the URL is edited.
     password: isUserAuth ? settings.password : '',
     useTrustStoreForUrl: settings.useTrustStoreForUrl,
     timeoutSeconds: settings.timeoutSeconds,
     properties: settings.properties,
     showLink: settings.showLink,
+    ...(settings.failOpenModeEnabled === undefined
+      ? {}
+      : { failOpenModeEnabled: settings.failOpenModeEnabled }),
   }), [settings, isUserAuth]);
 
   const handleTest = useCallback(async () => {
     setVerifyMsg(null);
     setError(null);
-    if (isUserAuth && passwordIsPlaceholder) {
-      setVerifyMsg({
-        ok: false,
-        text: 'Type your password again to test the connection.',
-      });
-      return;
-    }
     setVerifying(true);
     try {
       const result = await verifyIqConnection(buildPayload(true));
@@ -174,19 +234,12 @@ export function IqServerConfigurationDialog({
     } finally {
       setVerifying(false);
     }
-  }, [isUserAuth, passwordIsPlaceholder, buildPayload]);
+  }, [buildPayload]);
 
   const handleSave = useCallback(async () => {
     setError(null);
     setVerifyMsg(null);
     // Pre-verify so auth failures surface inline instead of after the dialog closes.
-    if (isUserAuth && passwordIsPlaceholder) {
-      setVerifyMsg({
-        ok: false,
-        text: 'Type your password again to save.',
-      });
-      return;
-    }
     setVerifying(true);
     let verify;
     try {
@@ -210,20 +263,24 @@ export function IqServerConfigurationDialog({
     } finally {
       setLoading(false);
     }
-  }, [onSaved, isUserAuth, passwordIsPlaceholder, buildPayload]);
+  }, [onSaved, buildPayload]);
 
+  // Disconnect through POST /v1/iq/disable rather than a rebuilt PUT
+  // payload. The backend reuses the stored configuration, so settings the GET never
+  // exposes (failOpenModeEnabled) are preserved, and no remote IQ Server call is
+  // made — disconnecting works while the server is unreachable.
   const handleDisconnect = useCallback(async () => {
     setError(null);
     setLoading(true);
     try {
-      const disconnectedConfig = await putIqSettings(buildPayload(false));
-      onDisconnected(disconnectedConfig);
+      await disableIqServer();
+      onDisconnected();
     } catch (err: any) {
       setError(formatErrorMessage(err, 'Failed to disconnect from IQ Server'));
     } finally {
       setLoading(false);
     }
-  }, [onDisconnected, buildPayload]);
+  }, [onDisconnected]);
 
   // Once initiallyConnected=true the Disconnect button must stay visible even if
   // fetchIqSettings races and returns enabled:false before the page has committed
@@ -274,7 +331,7 @@ export function IqServerConfigurationDialog({
             <TextField.Root
               id="iq-dlg-url"
               value={settings.url}
-              onChange={e => update('url', e.target.value)}
+              onChange={e => updateUrl(e.target.value)}
               required
               disabled={isCloud}
               readOnly={isCloud}
@@ -323,28 +380,66 @@ export function IqServerConfigurationDialog({
               </Box>
               <Box>
                 <Text as="label" htmlFor="iq-dlg-pw" size="2" weight="medium">Password<RequiredMark /></Text>
-                <Text size="1" color="gray" as="div" mb="1">Credentials for the IQ Server user</Text>
-                <TextField.Root
-                  id="iq-dlg-pw"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your IQ Server password"
-                  value={settings.password}
-                  onChange={e => update('password', e.target.value)}
-                  autoComplete="new-password"
-                  required
-                >
-                  <TextField.Slot side="right">
-                    <IconButton
+                <Text size="1" color="gray" as="div" mb="1">
+                  {storedPasswordRetained
+                    ? 'A password is already saved for this IQ Server. Change it to use a different one.'
+                    : 'Credentials for the IQ Server user'}
+                </Text>
+                {storedPasswordRetained ? (
+                  /* Stored credential: a status display, not an editable secret. Read-only, always
+                     masked, and with no visibility toggle, because the value behind it is the
+                     sentinel and the browser has no password to reveal in the first place. */
+                  <Flex align="center" gap="2">
+                    <Box flexGrow="1">
+                      <TextField.Root
+                        id="iq-dlg-pw"
+                        type="password"
+                        value={STORED_PASSWORD_MASK}
+                        readOnly
+                        aria-readonly
+                        onChange={() => {}}
+                        autoComplete="off"
+                        data-testid="iq-dlg-pw-stored"
+                      />
+                    </Box>
+                    <Button
                       type="button"
-                      variant="ghost"
-                      size="1"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      onClick={() => setShowPassword(v => !v)}
+                      variant="soft"
+                      color="gray"
+                      onClick={clearStoredPassword}
+                      data-testid="iq-dlg-pw-change"
                     >
-                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </IconButton>
-                  </TextField.Slot>
-                </TextField.Root>
+                      Change
+                    </Button>
+                  </Flex>
+                ) : (
+                  <TextField.Root
+                    id="iq-dlg-pw"
+                    ref={passwordInputRef}
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your IQ Server password"
+                    value={settings.password}
+                    onChange={e => update('password', e.target.value)}
+                    autoComplete="new-password"
+                    required
+                  >
+                    {/* Toggle only once there is a typed value to reveal, matching
+                        SettingsPasswordInput (`showToggle && value`). */}
+                    {settings.password && (
+                      <TextField.Slot side="right">
+                        <IconButton
+                          type="button"
+                          variant="ghost"
+                          size="1"
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          onClick={() => setShowPassword(v => !v)}
+                        >
+                          {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </IconButton>
+                      </TextField.Slot>
+                    )}
+                  </TextField.Root>
+                )}
               </Box>
             </>
           )}
@@ -463,7 +558,7 @@ export function IqServerConfigurationDialog({
               type="button"
               color="blue"
               onClick={handleSave}
-              disabled={loading || verifying || !touched}
+              disabled={loading || verifying || !canTest || (!touched && !isReconnect)}
               data-testid="iq-dlg-save"
             >
               {verifying ? 'Verifying...' : loading ? 'Saving...' : 'Save'}

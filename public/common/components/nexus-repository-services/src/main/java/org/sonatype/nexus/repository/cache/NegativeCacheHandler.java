@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.MISSING_BLOB_SKIP_NEGATIVE_CACHE;
 import static org.sonatype.nexus.repository.replication.PullReplicationSupport.IS_REPLICATION_REQUEST;
 
@@ -73,7 +73,7 @@ public class NegativeCacheHandler
 
   @Autowired
   public NegativeCacheHandler(final NodeAccess nodeAccess) {
-    this.nodeAccess = checkNotNull(nodeAccess);
+    this.nodeAccess = requireNonNull(nodeAccess);
   }
 
   @Nonnull

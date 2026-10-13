@@ -44,7 +44,7 @@ public class CommunityEulaOnboardingItemTest
 
   @Before
   public void setUp() {
-    when(mockApplicationVersion.getEdition()).thenReturn("COMMUNITY");
+    when(mockApplicationVersion.isCommunityEdition()).thenReturn(true);
   }
 
   @Test
@@ -63,7 +63,7 @@ public class CommunityEulaOnboardingItemTest
 
   @Test
   public void testAppliesWhenNotCommunity() {
-    when(mockApplicationVersion.getEdition()).thenReturn("PRO");
+    when(mockApplicationVersion.isCommunityEdition()).thenReturn(false);
     assertFalse(underTest.applies());
   }
 }

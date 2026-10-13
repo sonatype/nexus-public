@@ -19,7 +19,7 @@ import java.sql.SQLException;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
@@ -47,7 +47,7 @@ public abstract class UpgradeConfigStoreSupport
   protected final DataSessionSupplier sessionSupplier;
 
   protected UpgradeConfigStoreSupport(final DataSessionSupplier sessionSupplier) {
-    this.sessionSupplier = checkNotNull(sessionSupplier);
+    this.sessionSupplier = requireNonNull(sessionSupplier);
   }
 
   /**

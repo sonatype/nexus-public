@@ -30,7 +30,7 @@ import java.util.stream.StreamSupport;
 import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptyMap;
 import org.springframework.stereotype.Component;
 
@@ -55,8 +55,8 @@ public class RepositoryApiImpl
 
   @Autowired
   public RepositoryApiImpl(final RepositoryManager repositoryManager, final BlobStoreManager blobStoreManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
   }
 
   /**
@@ -70,7 +70,7 @@ public class RepositoryApiImpl
       final WritePolicy writePolicy,
       final boolean strictContentTypeValidation)
   {
-    checkNotNull(name);
+    requireNonNull(name);
     checkArgument(recipeName != null && recipeName.endsWith("-hosted"));
 
     Map<String, Object> storageAttributes = new HashMap<>();
@@ -95,7 +95,7 @@ public class RepositoryApiImpl
       final String blobStoreName,
       final boolean strictContentTypeValidation)
   {
-    checkNotNull(name);
+    requireNonNull(name);
     checkArgument(recipeName != null && recipeName.endsWith("-proxy"));
     Map<String, Map<String, Object>> attributes = new HashMap<>();
 
@@ -131,7 +131,7 @@ public class RepositoryApiImpl
       final String blobStoreName,
       final String... members)
   {
-    checkNotNull(name);
+    requireNonNull(name);
     checkArgument(recipeName != null && recipeName.endsWith("-group"));
 
     Map<String, Object> groupAttributes = new HashMap<>();

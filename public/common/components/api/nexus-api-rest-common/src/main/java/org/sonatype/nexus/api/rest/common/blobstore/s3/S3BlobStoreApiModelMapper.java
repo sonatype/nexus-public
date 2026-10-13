@@ -12,24 +12,32 @@
  */
 package org.sonatype.nexus.api.rest.common.blobstore.s3;
 
+import java.security.InvalidKeyException;
 import java.util.List;
+import java.util.Objects;
 
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiSoftQuota;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiAdvancedBucketConnection;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketSecurity;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiCloudFront;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiEncryption;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiFailoverBucket;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiGlobalDistributionType.S3BlobStoreApiGlobalDistribution;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiTransferAcceleration;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.app.ApplicationVersion;
+import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.ssl.CertificateUtil;
 
-import com.google.common.base.Preconditions;
+import jakarta.ws.rs.BadRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Transforms a {@link S3BlobStoreApiModel} to an {@link BlobStoreConfiguration}.
@@ -38,21 +46,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class S3BlobStoreApiModelMapper
 {
-  public static final String PRO = "PRO";
+  private static final Logger log = LoggerFactory.getLogger(S3BlobStoreApiModelMapper.class);
 
   public static BlobStoreConfiguration map(
       final BlobStoreConfiguration blobStoreConfiguration,
       final S3BlobStoreApiModel request,
       final ApplicationVersion applicationVersion)
   {
-    checkNotNull(blobStoreConfiguration);
-    checkNotNull(request);
-    final S3BlobStoreApiBucketConfiguration bucketConfiguration = checkNotNull(request.getBucketConfiguration());
+    requireNonNull(blobStoreConfiguration);
+    requireNonNull(request);
+    final S3BlobStoreApiBucketConfiguration bucketConfiguration = requireNonNull(request.getBucketConfiguration());
     S3BlobStoreApiBucket bucket =
-        Preconditions.checkNotNull(bucketConfiguration.getBucket(), "Missing bucket configuration");
+        Objects.requireNonNull(bucketConfiguration.getBucket(), "Missing bucket configuration");
 
     final Boolean preSignedUrlEnabled = bucketConfiguration.getPreSignedUrlEnabled();
-    if (Boolean.TRUE.equals(preSignedUrlEnabled) && !PRO.equals(applicationVersion.getEdition())) {
+    if (Boolean.TRUE.equals(preSignedUrlEnabled) && !applicationVersion.isAnyProEdition()) {
       throw new PreSignedUrlNotAllowedException(
           "Pre-signed URL feature is only available in Nexus Repository Manager Pro");
     }
@@ -93,7 +101,27 @@ public final class S3BlobStoreApiModelMapper
 
     BlobStoreApiSoftQuota softQuota = request.getSoftQuota();
     if (softQuota != null) {
-      builder.quotaConfig(softQuota.getType(), checkNotNull(softQuota.getLimit(), "Missing quota limit"));
+      builder.quotaConfig(softQuota.getType(), requireNonNull(softQuota.getLimit(), "Missing quota limit"));
+    }
+
+    S3BlobStoreApiGlobalDistribution globalDistribution = request.getGlobalDistribution();
+
+    if (globalDistribution instanceof S3BlobStoreApiTransferAcceleration) {
+      builder.transferAccelerationEnabled();
+    }
+    else if (globalDistribution instanceof S3BlobStoreApiCloudFront cloudFront) {
+      String privateKey = cloudFront.privateKey();
+      String privateKeyPassword = cloudFront.privateKeyPassword();
+      if (!Strings2.isBlank(privateKeyPassword)) {
+        try {
+          privateKey = CertificateUtil.removePemPassphrase(privateKey, privateKeyPassword);
+        }
+        catch (InvalidKeyException e) {
+          log.debug("Failed to decrypt certificate", e);
+          throw new BadRequestException("Unable to decrypt certificate");
+        }
+      }
+      builder.cloudFrontEnabled(cloudFront.distributionUrl(), cloudFront.keyId(), privateKey);
     }
 
     return builder.build();

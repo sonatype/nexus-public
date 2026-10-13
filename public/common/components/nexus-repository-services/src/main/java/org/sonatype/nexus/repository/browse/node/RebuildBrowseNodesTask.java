@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -53,8 +53,8 @@ public class RebuildBrowseNodesTask
       final RebuildBrowseNodeService rebuildBrowseNodeService,
       final TaskResultStateStore taskResultStateStore)
   {
-    this.rebuildBrowseNodeService = checkNotNull(rebuildBrowseNodeService);
-    this.taskResultStateStore = checkNotNull(taskResultStateStore);
+    this.rebuildBrowseNodeService = requireNonNull(rebuildBrowseNodeService);
+    this.taskResultStateStore = requireNonNull(taskResultStateStore);
   }
 
   @Override

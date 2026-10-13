@@ -15,13 +15,15 @@ package org.sonatype.nexus.audit;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.text.Strings2;
 
-import com.google.common.base.Joiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,11 +68,6 @@ public abstract class AuditorSupport
    * Common type for changed events.
    */
   protected static final String CHANGED_TYPE = "changed";
-
-  /**
-   * Helper to join a list into a string for attributes.
-   */
-  private static final Joiner LIST_JOINER = Joiner.on(", ").skipNulls();
 
   private AuditRecorder auditRecorder;
 
@@ -146,6 +143,9 @@ public abstract class AuditorSupport
     if (value == null) {
       return null;
     }
-    return LIST_JOINER.join(value);
+    return StreamSupport.stream(((Iterable<?>) value).spliterator(), false)
+        .filter(Objects::nonNull)
+        .map(String::valueOf)
+        .collect(Collectors.joining(", "));
   }
 }

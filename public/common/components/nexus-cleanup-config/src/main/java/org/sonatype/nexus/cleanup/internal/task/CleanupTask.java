@@ -22,7 +22,7 @@ import org.sonatype.nexus.scheduling.CancelableByRecoveryMode;
 import org.sonatype.nexus.scheduling.RecoveryModeService;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -47,7 +47,7 @@ public class CleanupTask
       final CleanupService cleanupService,
       @Nullable final RecoveryModeService recoveryModeService)
   {
-    this.cleanupService = checkNotNull(cleanupService);
+    this.cleanupService = requireNonNull(cleanupService);
     this.recoveryModeService = recoveryModeService;
   }
 

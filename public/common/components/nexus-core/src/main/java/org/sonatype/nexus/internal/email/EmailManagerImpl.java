@@ -49,7 +49,7 @@ import org.springframework.context.annotation.Lazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -93,12 +93,12 @@ public class EmailManagerImpl
       final Provider<CapabilityRegistry> capabilityRegistryProvider,
       final SecretsService secretsService)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.store = checkNotNull(store);
-    this.trustStore = checkNotNull(trustStore);
-    this.defaults = checkNotNull(defaults);
+    this.eventManager = requireNonNull(eventManager);
+    this.store = requireNonNull(store);
+    this.trustStore = requireNonNull(trustStore);
+    this.defaults = requireNonNull(defaults);
     this.capabilityRegistryProvider = capabilityRegistryProvider;
-    this.secretsService = checkNotNull(secretsService);
+    this.secretsService = requireNonNull(secretsService);
   }
 
   /**
@@ -112,7 +112,7 @@ public class EmailManagerImpl
       model = defaults.apply(store.newConfiguration());
 
       // default config must not be null
-      checkNotNull(model);
+      requireNonNull(model);
 
       log.info("Using default configuration: {}", model);
     }
@@ -144,7 +144,7 @@ public class EmailManagerImpl
 
   @Override
   public void setConfiguration(final EmailConfiguration configuration, final String password) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     EmailConfiguration model = configuration.copy();
 
@@ -240,7 +240,7 @@ public class EmailManagerImpl
 
   @Override
   public void send(final Email mail) throws EmailException {
-    checkNotNull(mail);
+    requireNonNull(mail);
 
     EmailConfiguration model = getConfigurationInternal();
     if (model.isEnabled()) {
@@ -258,7 +258,7 @@ public class EmailManagerImpl
       final String password,
       final String address) throws EmailException
   {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
     Email mail = createVerificationEmail(address);
     if (PASSWORD_PLACEHOLDER.equals(password)) {
       mail = apply(configuration, mail, getPassword(getConfigurationInternal()));
@@ -271,14 +271,14 @@ public class EmailManagerImpl
 
   @Override
   public void sendVerification(final EmailConfiguration configuration, final String address) throws EmailException {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
     Email mail = createVerificationEmail(address);
     mail = apply(configuration, mail, getPassword(configuration));
     sendMail(mail);
   }
 
   private Email createVerificationEmail(final String address) throws EmailException {
-    checkNotNull(address);
+    requireNonNull(address);
     Email mail = new SimpleEmail();
     mail.setSubject("Email configuration verification");
     mail.addTo(address);

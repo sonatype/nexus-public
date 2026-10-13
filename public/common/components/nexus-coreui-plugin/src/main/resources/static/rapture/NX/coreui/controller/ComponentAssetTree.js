@@ -736,6 +736,42 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
   /**
    * @private
+   * Show the folder-delete confirmation, then invoke the callback on confirm.
+   *
+   * When soft-delete is active for the current (hosted) repository the copy reflects that the folder's
+   * contents are moved to Trash and can be restored for the retention window; otherwise the permanent
+   * hard-delete warning is shown. Soft-delete is hosted-only server-side and the enabled flag is only
+   * contributed to state in Pro/Cloud editions, so a truthy flag here already implies an eligible edition.
+   */
+  askFolderDeleteConfirmation: function(folderName, onConfirm) {
+    var me = this,
+        repository = me.getCurrentRepository(),
+        repoData = repository ? repository.getData() : null,
+        isHosted = !!repoData && repoData.type === 'hosted',
+        softDeleteEnabled = NX.State.getValue('nexus.softDelete.enabled', false) === true,
+        softDeleteFormats = NX.State.getValue('softDeleteFormats', []),
+        repoFormat = repoData ? repoData.format : null,
+        formatEligible = Ext.isArray(softDeleteFormats)
+            && (softDeleteFormats.indexOf('*') !== -1
+                || (!!repoFormat && softDeleteFormats.indexOf(String(repoFormat).toLowerCase()) !== -1)),
+        encodedName = Ext.htmlEncode(folderName),
+        text;
+
+    if (softDeleteEnabled && isHosted && formatEligible) {
+      var retentionDays = NX.State.getValue('softDeleteRetentionDays');
+      text = (typeof retentionDays === 'number')
+          ? NX.I18n.format('FolderInfo_Delete_SoftDelete_Text', encodedName, retentionDays)
+          : NX.I18n.format('FolderInfo_Delete_SoftDelete_Text_NoRetention', encodedName);
+    }
+    else {
+      text = NX.I18n.format('FolderInfo_Delete_Text', encodedName);
+    }
+
+    NX.Dialogs.askConfirmation(NX.I18n.get('FolderInfo_Delete_Title'), text, onConfirm);
+  },
+
+  /**
+   * @private
    * Remove selected Folder.
    */
   deleteFolder: function() {
@@ -744,17 +780,14 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
     if (componentFolderInfo) {
       var model = componentFolderInfo.folderModel;
-      NX.Dialogs.askConfirmation(
-          NX.I18n.get('FolderInfo_Delete_Title'),
-          NX.I18n.format('FolderInfo_Delete_Text', Ext.htmlEncode(model.folderName)),
-          function() {
-            NX.direct.coreui_Component.deleteFolder(decodeURIComponent(model.path.replace(/\+/g, ' ')), model.repositoryName,
-                function(response) {
-                  if (Ext.isObject(response) && response.success) {
-                    NX.Messages.success(NX.I18n.format('FolderInfo_Delete_Success'));
-                  }
-                });
-          });
+      me.askFolderDeleteConfirmation(model.folderName, function() {
+        NX.direct.coreui_Component.deleteFolder(decodeURIComponent(model.path.replace(/\+/g, ' ')), model.repositoryName,
+            function(response) {
+              if (Ext.isObject(response) && response.success) {
+                NX.Messages.success(NX.I18n.format('FolderInfo_Delete_Success'));
+              }
+            });
+      });
     }
   },
 
@@ -763,21 +796,19 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
    * Remove selected Folder.
    */
   deleteAssetFolder: function() {
-    var componentAssetInfo = this.getComponentAssetInfo();
+    var me = this,
+        componentAssetInfo = me.getComponentAssetInfo();
 
     if (componentAssetInfo) {
       var asset = componentAssetInfo.assetModel;
-      NX.Dialogs.askConfirmation(
-          NX.I18n.get('FolderInfo_Delete_Title'),
-          NX.I18n.format('FolderInfo_Delete_Text', Ext.htmlEncode(asset.get('name'))),
-          function() {
-            NX.direct.coreui_Component.deleteFolder(asset.get('name'), asset.get('repositoryName'),
-                function(response) {
-                  if (Ext.isObject(response) && response.success) {
-                    NX.Messages.success(NX.I18n.format('FolderInfo_Delete_Success'));
-                  }
-                });
-          });
+      me.askFolderDeleteConfirmation(asset.get('name'), function() {
+        NX.direct.coreui_Component.deleteFolder(asset.get('name'), asset.get('repositoryName'),
+            function(response) {
+              if (Ext.isObject(response) && response.success) {
+                NX.Messages.success(NX.I18n.format('FolderInfo_Delete_Success'));
+              }
+            });
+      });
     }
   },
 

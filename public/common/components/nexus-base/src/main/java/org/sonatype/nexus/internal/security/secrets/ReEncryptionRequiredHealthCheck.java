@@ -19,7 +19,7 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import com.codahale.metrics.health.HealthCheck;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -45,8 +45,8 @@ public class ReEncryptionRequiredHealthCheck
 
   @Autowired
   public ReEncryptionRequiredHealthCheck(final SecretsService secretsService, final TaskScheduler taskScheduler) {
-    this.secretsService = checkNotNull(secretsService);
-    this.taskScheduler = checkNotNull(taskScheduler);
+    this.secretsService = requireNonNull(secretsService);
+    this.taskScheduler = requireNonNull(taskScheduler);
   }
 
   @Override

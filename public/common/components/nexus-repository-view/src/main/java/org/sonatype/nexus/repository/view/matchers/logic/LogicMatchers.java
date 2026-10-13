@@ -17,7 +17,7 @@ import java.util.Arrays;
 import org.sonatype.nexus.repository.view.Matcher;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Logic matcher factory.
@@ -31,13 +31,13 @@ public class LogicMatchers
   }
 
   public static Matcher and(final Matcher... matchers) {
-    checkNotNull(matchers);
+    requireNonNull(matchers);
     checkArgument(matchers.length > 1, "AND requires 2 or more matchers");
     return new AndMatcher(Arrays.asList(matchers));
   }
 
   public static Matcher or(final Matcher... matchers) {
-    checkNotNull(matchers);
+    requireNonNull(matchers);
     checkArgument(matchers.length > 1, "OR requires 2 or more matchers");
     return new OrMatcher(Arrays.asList(matchers));
   }

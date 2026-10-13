@@ -49,9 +49,9 @@ export function mapCreateError(event) {
   return MESSAGES.CREATE_ERROR_GENERIC;
 }
 
-export function mapRevokeError(event) {
+export function mapRevokeError(event, tokenName) {
   const status = event.data?.response?.status;
-  if (status === 404) return MESSAGES.REVOKE_ERROR_NOT_FOUND;
+  if (status === 404) return MESSAGES.REVOKE_ERROR_NOT_FOUND(tokenName);
   if (status === 403) return MESSAGES.REVOKE_ERROR_FORBIDDEN;
   return MESSAGES.REVOKE_ERROR_GENERIC;
 }

@@ -13,7 +13,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { restClient, parseApiError } from '../../../../../../interface/api';
-import type { TaskInfo, CapabilityInfo } from '../profile/types';
+import type { TaskInfo, CapabilityInfo } from './profileTypes';
 
 const TASKS_URL = '/service/rest/v1/tasks';
 const CAPABILITIES_URL = '/service/rest/v1/capabilities';

@@ -15,6 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { UIView } from '@uirouter/react';
+import { PRO_FAMILY_EDITIONS } from '@sonatype/nexus-ui-plugin';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
 import { lazyLoad } from './lazyLoad';
 
@@ -84,7 +85,7 @@ export const userRoutes = [
           },
         ],
         permissions: ['nexus:usertoken-current:read'],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
       title: USER.TITLE,
     },

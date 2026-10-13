@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
@@ -40,9 +41,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertFalse;
@@ -54,6 +53,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -91,12 +91,14 @@ public class DeleteFolderServiceTest
   @Mock
   private BrowseFacet browseFacet;
 
-  @Spy
-  @InjectMocks
   private DeleteFolderServiceImpl deleteFolderService;
 
   @Before
   public void setUp() {
+    deleteFolderService = spy(new DeleteFolderServiceImpl(
+        browseNodeQueryService, configuration, contentPermissionChecker,
+        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(false, "")));
+
     BrowseNodeData node = mock(BrowseNodeData.class);
     when(node.getNodeId()).thenReturn(1L);
 
@@ -178,7 +180,7 @@ public class DeleteFolderServiceTest
     verify(browseNodeQueryService, times(6)).getByPath(any(), any(), anyInt());
     verify(browseFacet, times(7)).deleteByNodeId(any());
     verify(deleteFolderService, never()).deleteFolders(any(), any(), any(), any(), any(), anyInt(), anyBoolean());
-    verify(deleteFolderService, times(4)).checkDeleteComponent(any(), any(), any(), anyBoolean(), any());
+    verify(deleteFolderService, times(4)).checkDeleteComponent(any(), any(), any(), any(), anyBoolean(), any());
     verify(deleteFolderService, times(4)).checkDeleteAsset(any(), any(), any(), any(), any());
   }
 
@@ -233,7 +235,8 @@ public class DeleteFolderServiceTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.of(component));
     when(component.lastUpdated()).thenReturn(lastUpdated);
 
-    boolean result = deleteFolderService.checkDeleteComponent(timestamp, contentFacet, contentMaintenance, true, node);
+    boolean result =
+        deleteFolderService.checkDeleteComponent(repository, timestamp, contentFacet, contentMaintenance, true, node);
 
     assertTrue(result);
     verify(contentMaintenance).deleteComponent(component);
@@ -255,7 +258,8 @@ public class DeleteFolderServiceTest
     when(component.lastUpdated()).thenReturn(lastUpdated);
     doThrow(new RuntimeException("Delete failed")).when(contentMaintenance).deleteComponent(component);
 
-    boolean result = deleteFolderService.checkDeleteComponent(timestamp, contentFacet, contentMaintenance, true, node);
+    boolean result =
+        deleteFolderService.checkDeleteComponent(repository, timestamp, contentFacet, contentMaintenance, true, node);
 
     assertFalse(result);
     verify(contentMaintenance).deleteComponent(component);
@@ -273,7 +277,8 @@ public class DeleteFolderServiceTest
     when(contentFacet.components()).thenReturn(fluentComponents);
     when(fluentComponents.find(componentId)).thenReturn(Optional.empty());
 
-    boolean result = deleteFolderService.checkDeleteComponent(timestamp, contentFacet, contentMaintenance, true, node);
+    boolean result =
+        deleteFolderService.checkDeleteComponent(repository, timestamp, contentFacet, contentMaintenance, true, node);
 
     assertTrue(result);
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -288,7 +293,8 @@ public class DeleteFolderServiceTest
     when(node.getComponentId()).thenReturn(null);
     when(node.getAssetId()).thenReturn(assetId);
 
-    boolean result = deleteFolderService.checkDeleteComponent(timestamp, contentFacet, contentMaintenance, true, node);
+    boolean result =
+        deleteFolderService.checkDeleteComponent(repository, timestamp, contentFacet, contentMaintenance, true, node);
 
     assertTrue(result);
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -309,7 +315,8 @@ public class DeleteFolderServiceTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.of(component));
     when(component.lastUpdated()).thenReturn(lastUpdated);
 
-    boolean result = deleteFolderService.checkDeleteComponent(timestamp, contentFacet, contentMaintenance, true, node);
+    boolean result =
+        deleteFolderService.checkDeleteComponent(repository, timestamp, contentFacet, contentMaintenance, true, node);
 
     assertFalse(result);
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -382,7 +389,7 @@ public class DeleteFolderServiceTest
 
     // Component deletion should be checked FIRST and fail
     boolean componentDeleted =
-        deleteFolderService.checkDeleteComponent(timestamp, contentFacet, contentMaintenance, true, node);
+        deleteFolderService.checkDeleteComponent(repository, timestamp, contentFacet, contentMaintenance, true, node);
 
     // Verify component deletion failed
     assertFalse(componentDeleted);
@@ -411,7 +418,7 @@ public class DeleteFolderServiceTest
     when(component.assets()).thenReturn(Collections.emptyList());
 
     boolean result = deleteFolderService.checkDeleteComponentWithAssets(
-        timestamp, contentFacet, contentMaintenance, node);
+        repository, timestamp, contentFacet, contentMaintenance, node);
 
     assertTrue(result);
     verify(contentMaintenance, times(1)).deleteComponent(component);
@@ -433,7 +440,7 @@ public class DeleteFolderServiceTest
         .thenReturn(Arrays.asList(mock(org.sonatype.nexus.repository.content.fluent.FluentAsset.class)));
 
     boolean result = deleteFolderService.checkDeleteComponentWithAssets(
-        timestamp, contentFacet, contentMaintenance, node);
+        repository, timestamp, contentFacet, contentMaintenance, node);
 
     assertTrue(result); // Should return true to allow browse node deletion
     verify(contentMaintenance, never()).deleteComponent(component);
@@ -452,7 +459,7 @@ public class DeleteFolderServiceTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.empty());
 
     boolean result = deleteFolderService.checkDeleteComponentWithAssets(
-        timestamp, contentFacet, contentMaintenance, node);
+        repository, timestamp, contentFacet, contentMaintenance, node);
 
     assertTrue(result);
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -476,7 +483,7 @@ public class DeleteFolderServiceTest
     doThrow(new RuntimeException("Component deletion failed")).when(contentMaintenance).deleteComponent(component);
 
     boolean result = deleteFolderService.checkDeleteComponentWithAssets(
-        timestamp, contentFacet, contentMaintenance, node);
+        repository, timestamp, contentFacet, contentMaintenance, node);
 
     assertFalse(result);
   }
@@ -520,7 +527,8 @@ public class DeleteFolderServiceTest
     verify(deleteFolderService, times(1)).checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance,
         node);
     // Verify component check happened after asset deletion
-    verify(deleteFolderService, times(1)).checkDeleteComponentWithAssets(timestamp, contentFacet, contentMaintenance,
+    verify(deleteFolderService, times(1)).checkDeleteComponentWithAssets(repository, timestamp, contentFacet,
+        contentMaintenance,
         node);
     // Verify browse node deleted
     verify(browseFacet, times(1)).deleteByNodeId(1L);
@@ -552,7 +560,7 @@ public class DeleteFolderServiceTest
     verify(deleteFolderService, times(1)).checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance,
         node);
     // Verify component check was NOT called
-    verify(deleteFolderService, never()).checkDeleteComponentWithAssets(any(), any(), any(), any());
+    verify(deleteFolderService, never()).checkDeleteComponentWithAssets(any(), any(), any(), any(), any());
     // Verify browse node deleted
     verify(browseFacet, times(1)).deleteByNodeId(1L);
   }
@@ -583,7 +591,7 @@ public class DeleteFolderServiceTest
     verify(deleteFolderService, times(1)).checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance,
         node);
     // Verify component check was NOT called (because asset deletion failed)
-    verify(deleteFolderService, never()).checkDeleteComponentWithAssets(any(), any(), any(), any());
+    verify(deleteFolderService, never()).checkDeleteComponentWithAssets(any(), any(), any(), any(), any());
     // Verify browse node was NOT deleted
     verify(browseFacet, never()).deleteByNodeId(any());
   }
@@ -627,7 +635,7 @@ public class DeleteFolderServiceTest
     org.mockito.InOrder inOrder = org.mockito.Mockito.inOrder(deleteFolderService, browseFacet);
     inOrder.verify(deleteFolderService).checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
     inOrder.verify(deleteFolderService)
-        .checkDeleteComponentWithAssets(timestamp, contentFacet, contentMaintenance, node);
+        .checkDeleteComponentWithAssets(repository, timestamp, contentFacet, contentMaintenance, node);
     inOrder.verify(browseFacet).deleteByNodeId(1L);
   }
 }

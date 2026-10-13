@@ -17,10 +17,10 @@ import java.util.Map;
 
 import org.sonatype.nexus.coreui.RepositoryXO;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Repository / Cleanup Util that provide utilities for the the cleanup attributes.
@@ -44,9 +44,9 @@ public class RepositoryCleanupAttributesUtil
    * @param repositoryXO - {@link RepositoryXO}
    */
   public static void initializeCleanupAttributes(final RepositoryXO repositoryXO) {
-    checkNotNull(repositoryXO);
+    requireNonNull(repositoryXO);
 
-    Map<String, Map<String, Object>> attributes = checkNotNull(repositoryXO.getAttributes());
+    Map<String, Map<String, Object>> attributes = requireNonNull(repositoryXO.getAttributes());
     Map<String, Object> cleanup = attributes.get(CLEANUP_ATTRIBUTES_KEY);
     if (nonNull(cleanup)) {
 

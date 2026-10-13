@@ -537,7 +537,7 @@ Ext.define('NX.coreui.controller.Search', {
    * @returns {boolean} whether tagging feature is available
    */
   isTaggingEnabled: function() {
-    return NX.State.getUser() && NX.Permissions.check('nexus:tags:read') && ('PRO' === NX.State.getEdition());
+    return NX.State.getUser() && NX.Permissions.check('nexus:tags:read') && NX.State.isLicensedEdition();
   },
 
   /**

@@ -37,7 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 
 /**
@@ -114,8 +114,8 @@ public class UpgradeCapabilityStorage
    * Updates the stored capability identified by {@code id}.
    */
   public boolean update(final CapabilityIdentity id, final CapabilityStorageItem item) {
-    checkNotNull(id, "id");
-    checkNotNull(item, "item");
+    requireNonNull(id, "id");
+    requireNonNull(item, "item");
     // Reconcile the item's in-memory id with the parameter id, as CapabilityStorageImpl.update does, so a
     // caller that passes an item whose id differs from (or is unset relative to) id stays consistent.
     ((HasEntityId) item).setId(new EntityUUID(UUID.fromString(id.toString())));
@@ -155,7 +155,7 @@ public class UpgradeCapabilityStorage
    * Removes the stored capability identified by {@code id}.
    */
   public boolean remove(final CapabilityIdentity id) {
-    checkNotNull(id, "id");
+    requireNonNull(id, "id");
     try (Connection conn = openConnection()) {
       try {
         boolean removed;
@@ -185,7 +185,7 @@ public class UpgradeCapabilityStorage
    * loop, which turns a large duplicate cleanup into N durable commits during the UPGRADE hot path.
    */
   public int removeAll(final Collection<CapabilityIdentity> ids) {
-    checkNotNull(ids, "ids");
+    requireNonNull(ids, "ids");
     if (ids.isEmpty()) {
       return 0;
     }

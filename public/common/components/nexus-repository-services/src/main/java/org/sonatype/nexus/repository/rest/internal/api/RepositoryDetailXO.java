@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.internal.api;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.30
@@ -44,11 +44,11 @@ public class RepositoryDetailXO
       final String url,
       final RepositoryStatusXO status)
   {
-    this.name = checkNotNull(name);
-    this.type = checkNotNull(type);
-    this.format = checkNotNull(format);
-    this.url = checkNotNull(url);
-    this.status = checkNotNull(status);
+    this.name = requireNonNull(name);
+    this.type = requireNonNull(type);
+    this.format = requireNonNull(format);
+    this.url = requireNonNull(url);
+    this.status = requireNonNull(status);
   }
 
   public String getName() {

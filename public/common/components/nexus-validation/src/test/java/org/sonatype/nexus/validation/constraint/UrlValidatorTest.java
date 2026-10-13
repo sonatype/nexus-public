@@ -107,6 +107,8 @@ public class UrlValidatorTest
         {"ftps://example.com/", false},
         {"mailto:example.com/", false},
         {"mailto:example@example.com/", false},
+        {"oci://ghcr.io", false},
+        {"oci+http://localhost:5000", false},
         // other reasons
         {"", false},
         {"http://foo.bar?q=Spaces should be encoded", false},

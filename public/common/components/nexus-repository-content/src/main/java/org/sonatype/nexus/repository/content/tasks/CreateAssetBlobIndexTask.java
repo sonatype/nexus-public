@@ -20,8 +20,9 @@ import java.util.List;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.scheduling.TaskSupport;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -48,13 +49,17 @@ public class CreateAssetBlobIndexTask
 
   private final DataSessionSupplier dataSessionSupplier;
 
+  private final DatabaseMigrationUtility databaseMigrationUtility;
+
   @Autowired
   public CreateAssetBlobIndexTask(
       final List<Format> formats,
-      final DataSessionSupplier dataSessionSupplier)
+      final DataSessionSupplier dataSessionSupplier,
+      final DatabaseMigrationUtility databaseMigrationUtility)
   {
-    this.formats = checkNotNull(formats);
-    this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
+    this.formats = requireNonNull(formats);
+    this.dataSessionSupplier = requireNonNull(dataSessionSupplier);
+    this.databaseMigrationUtility = requireNonNull(databaseMigrationUtility);
   }
 
   @Override
@@ -68,7 +73,7 @@ public class CreateAssetBlobIndexTask
     List<Exception> collectedExceptions = new java.util.ArrayList<>();
 
     try (Connection connection = dataSessionSupplier.openConnection("nexus")) {
-      boolean isH2 = isH2(connection);
+      boolean isH2 = databaseMigrationUtility.isH2(connection);
       String createIndexClause = isH2 ? CREATE_INDEX_H2 : CREATE_INDEX_PG;
 
       for (Format format : formats) {
@@ -76,7 +81,8 @@ public class CreateAssetBlobIndexTask
         String indexName = INDEX_NAME_PATTERN.formatted(format.getValue());
 
         try {
-          if (tableExists(connection, tableName) && !indexExists(connection, tableName, indexName)) {
+          if (databaseMigrationUtility.tableExists(connection, tableName)
+              && !databaseMigrationUtility.indexExists(connection, tableName, indexName)) {
             String indexDefinition = INDEX_NAME_PATTERN.formatted(format.getValue()) +
                 INDEX_DEF_PATTERN.formatted(format.getValue());
 
@@ -153,63 +159,6 @@ public class CreateAssetBlobIndexTask
     catch (SQLException e) {
       log.warn("Failed to drop invalid index '{}', it may need manual cleanup", indexName, e);
       // Don't throw - this is best-effort cleanup
-    }
-  }
-
-  private boolean isH2(final Connection conn) throws SQLException {
-    return "H2".equals(conn.getMetaData().getDatabaseProductName());
-  }
-
-  private boolean tableExists(final Connection conn, final String tableName) throws SQLException {
-    if (isH2(conn)) {
-      try (PreparedStatement statement =
-          conn.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?")) {
-        statement.setString(1, tableName.toUpperCase());
-        try (java.sql.ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
-    }
-    else {
-      try (PreparedStatement statement = conn.prepareStatement("SELECT to_regclass(?);")) {
-        statement.setString(1, tableName);
-        try (java.sql.ResultSet results = statement.executeQuery()) {
-          if (!results.next()) {
-            return false;
-          }
-          Object oid = results.getObject(1);
-          return oid != null;
-        }
-      }
-    }
-  }
-
-  private boolean indexExists(
-      final Connection conn,
-      final String tableName,
-      final String indexName) throws SQLException
-  {
-    if (!isH2(conn)) {
-      String sql = "SELECT * FROM pg_indexes WHERE UPPER(tablename) = ? AND UPPER(indexname) = ?";
-
-      try (PreparedStatement statement = conn.prepareStatement(sql)) {
-        statement.setString(1, tableName.toUpperCase(java.util.Locale.ENGLISH));
-        statement.setString(2, indexName.toUpperCase(java.util.Locale.ENGLISH));
-        try (java.sql.ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
-    }
-    else {
-      String sql =
-          "SELECT * FROM information_schema.indexes WHERE REGEXP_LIKE(UPPER(index_name), ?) AND UPPER(TABLE_NAME) = ?";
-      try (PreparedStatement statement = conn.prepareStatement(sql)) {
-        statement.setString(1, (indexName.toUpperCase(java.util.Locale.ENGLISH) + "[_[0-9]*]?"));
-        statement.setString(2, tableName.toUpperCase(java.util.Locale.ENGLISH));
-        try (java.sql.ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
     }
   }
 }

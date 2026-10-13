@@ -18,8 +18,8 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.selector.VariableSource;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 import static org.sonatype.nexus.security.BreadActions.READ;
 import org.springframework.stereotype.Component;
@@ -41,8 +41,8 @@ public class ContentAuthHelper
       final VariableResolverAdapterManager variableResolverAdapterManager,
       final ContentPermissionChecker contentPermissionChecker)
   {
-    this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
-    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
+    this.variableResolverAdapterManager = requireNonNull(variableResolverAdapterManager);
+    this.contentPermissionChecker = requireNonNull(contentPermissionChecker);
   }
 
   public boolean checkPathPermissions(final String path, final String format, final String... repositoryNames) {

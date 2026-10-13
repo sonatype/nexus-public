@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.repository.manager.internal;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -28,6 +32,8 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.cooperation2.Cooperation2;
+import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
@@ -39,6 +45,8 @@ import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -53,6 +61,7 @@ import org.sonatype.nexus.repository.manager.RepositoryLoadedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.manager.RepositoryRestoredEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
+import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -66,9 +75,10 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toSet;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -127,6 +137,28 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
    */
   private final Map<String, Object> retryLocks = new ConcurrentHashMap<>();
 
+  /**
+   * Deduplicates concurrent materialization of the same repository: an origin {@link #create}, a replicated
+   * create replayed by the configuration event handler, and a {@link #get} read-miss all funnel through
+   * {@link #create}. The lead thread builds, starts and tracks the repository once; cooperating threads receive
+   * its result instead of racing to materialize (and then tear down) a duplicate copy. Local (single-node)
+   * concurrency controls only -- cross-node convergence is handled by the shared configuration store.
+   */
+  private final Cooperation2 configureCooperation = new DefaultCooperation2Factory().configure()
+      .majorTimeout(Duration.ofSeconds(60))
+      .minorTimeout(Duration.ofSeconds(30))
+      .threadsPerKey(100)
+      .build(BaseRepositoryManager.class);
+
+  /**
+   * Repositories currently being configured on the calling thread, mapped to their in-progress instance (null
+   * until built). A facet/subscriber that fires while a repository is being built/started (before it is tracked)
+   * can resolve {@link #get} for that same repository on this thread; the read-miss returns the in-progress
+   * instance rather than re-entering {@link #create}, which would make the thread wait on its own in-flight
+   * {@link #configureCooperation} future. Guards {@link #loadFromStoreIfPresent} against that self-wait.
+   */
+  private final ThreadLocal<Map<String, Repository>> configuringOnThread = ThreadLocal.withInitial(HashMap::new);
+
   @Nullable
   private final SecretEncoder ecrSecretEncoder;
 
@@ -166,20 +198,33 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
       final FailedRepositoryTracker failedRepositoryTracker,
       @Nullable final SecretEncoder ecrSecretEncoder)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.store = checkNotNull(store);
-    this.factory = checkNotNull(factory);
-    this.configFacet = checkNotNull(configFacet);
-    this.recipes = QualifierUtil.buildQualifierBeanMap(checkNotNull(recipesList));
-    this.securityContributor = checkNotNull(securityContributor);
-    this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
+    this.eventManager = requireNonNull(eventManager);
+    this.store = requireNonNull(store);
+    this.factory = requireNonNull(factory);
+    this.configFacet = requireNonNull(configFacet);
+    this.recipes = QualifierUtil.buildQualifierBeanMap(requireNonNull(recipesList));
+    this.securityContributor = requireNonNull(securityContributor);
+    this.defaultRepositoriesContributors = requireNonNull(defaultRepositoriesContributors);
     this.skipDefaultRepositories = skipDefaultRepositories;
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.groupMemberMappingCache = checkNotNull(groupMemberMappingCache);
-    this.configurationValidators = checkNotNull(configurationValidators);
-    this.httpAuthenticationSecretEncoder = checkNotNull(httpAuthenticationSecretEncoder);
-    this.failedRepositoryTracker = checkNotNull(failedRepositoryTracker);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.groupMemberMappingCache = requireNonNull(groupMemberMappingCache);
+    this.configurationValidators = requireNonNull(configurationValidators);
+    this.httpAuthenticationSecretEncoder = requireNonNull(httpAuthenticationSecretEncoder);
+    this.failedRepositoryTracker = requireNonNull(failedRepositoryTracker);
     this.ecrSecretEncoder = ecrSecretEncoder;
+  }
+
+  // Setter-injected (post-construction) and non-null once Spring has wired it; the null-tolerant check in
+  // isClustered() is pure defense for any call that could occur before wiring completes.
+  private NodeAccess nodeAccess;
+
+  /**
+   * Setter-injected (like other post-construction dependencies) so the concrete subclasses' constructors do
+   * not need to change. Used to gate {@link #get}'s read-through materialization to clustered nodes only.
+   */
+  @Autowired
+  public void setNodeAccess(final NodeAccess nodeAccess) {
+    this.nodeAccess = requireNonNull(nodeAccess);
   }
 
   /**
@@ -343,8 +388,25 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   private void provisionDefaultRepositories() {
     for (DefaultRepositoriesContributor contributor : defaultRepositoriesContributors) {
       for (Configuration configuration : contributor.getRepositoryConfigurations()) {
+        String repositoryName = configuration.getRepositoryName();
         log.debug("Provisioning default repository: {}", configuration);
-        store.create(configuration);
+        try {
+          // Run ConfigurationValidators on the contributor-supplied config so
+          // edition-specific guards (e.g. OciCloudEditionConfigurationValidator)
+          // apply to default-repo seeding, not just the REST API write paths.
+          // Per-repo failures are tracked rather than aborting the whole
+          // provisioning loop — a single misconfigured contributor must not
+          // prevent other defaults (and the rest of the manager) from booting.
+          validateConfiguration(configuration);
+          store.create(configuration);
+          failedRepositoryTracker.clearFailure(repositoryName);
+        }
+        catch (Exception e) {
+          log.error("Failed to provision default repository '{}' from contributor '{}'. "
+              + "Repository will not be available; other defaults will continue to provision.",
+              repositoryName, contributor.getClass().getSimpleName(), e);
+          failedRepositoryTracker.recordFailure(repositoryName, e);
+        }
       }
     }
   }
@@ -361,6 +423,12 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
               configuration.getRepositoryName(), recipeName);
           continue;
         }
+        // Re-run ConfigurationValidators on restore so a backup taken on a
+        // self-hosted node cannot smuggle a now-illegal config (e.g. an OCI
+        // repo with forceBasicAuth=false) onto a cloud node. Per-repo
+        // failures are caught below and tracked, so other repositories still
+        // start up.
+        validateConfiguration(configuration);
         Repository repository = newRepository(configuration);
         track(repository);
         failedRepositoryTracker.clearFailure(configuration.getRepositoryName());
@@ -452,18 +520,93 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   @Override
   @Guarded(by = STARTED)
   public Repository get(final String name) {
-    checkNotNull(name);
-    return repositories.get(name.toLowerCase());
+    requireNonNull(name);
+    String lcName = name.toLowerCase();
+    Repository repository = repositories.get(lcName);
+    if (repository == null && isClustered()) {
+      // Read-through on a cache miss (clustered nodes only): the repository's configuration may be committed
+      // to the shared store but not yet materialized on this node (e.g. it was just created on another node --
+      // the create->use window). Materialize it from the store on demand and cache it so the miss self-heals.
+      // Heals *creates* only; updates and deletes to an already-cached repository are propagated separately.
+      // On a single node a miss is authoritative, so we skip the store round-trip entirely.
+      repository = loadFromStoreIfPresent(lcName).orElse(null);
+    }
+    return repository;
+  }
+
+  private boolean isClustered() {
+    // nodeAccess is setter-injected after construction; get() is @Guarded(by = STARTED) so it is always set by
+    // the time this is reached, but guard defensively regardless.
+    return nodeAccess != null && nodeAccess.isClustered();
   }
 
   @Nullable
   @Override
   @Guarded(by = STARTED)
   public Repository softGet(final String name) {
-    checkNotNull(name);
+    requireNonNull(name);
 
     String lcName = name.toLowerCase();
     return repositories.get(lcName);
+  }
+
+  /**
+   * Materializes a repository from the shared configuration store on a {@link #get(String)} read-miss, so a
+   * repository created on another node becomes usable here without waiting for the change to be replicated.
+   * Delegates to {@link #create} under a replicating context -- exactly what the configuration event handler
+   * does -- so the repository is built, started and tracked and its {@link RepositoryCreatedEvent} fires for
+   * local subscribers, while the store write and the re-published distributed event are both suppressed. The
+   * shared cooperation point in {@link #create} guarantees that a concurrent replicated create for the same
+   * name materializes it exactly once. A single exact-match {@link ConfigurationStore#readByName} lookup keeps a
+   * miss for a genuinely absent name (e.g. a 404) off the materialization path -- an empty result is
+   * authoritative. Never throws.
+   */
+  private Optional<Repository> loadFromStoreIfPresent(final String lcName) {
+    Map<String, Repository> configuring = configuringOnThread.get();
+    if (configuring.containsKey(lcName)) {
+      // Re-entrant read-miss for a repository already being configured on this thread (e.g. a facet/subscriber
+      // resolving get(self) while the repository is starting, before it is tracked). Return the in-progress
+      // instance rather than re-entering create() -- cooperation would make this thread wait on its own
+      // in-flight materialization future (a self-wait that times out after ~60s+30s). The value is null only
+      // during early validation, before the instance is built, where an empty result (a plain miss) is correct.
+      return Optional.ofNullable(configuring.get(lcName));
+    }
+    // Read the persisted configuration directly; an empty result is an authoritative miss (a genuinely absent
+    // repository, or one deleted between the map miss and here). Repository names are stored lowercased, so the
+    // already-lowercased lcName matches.
+    Optional<Configuration> config = store.readByName(lcName);
+    if (config.isEmpty()) {
+      return Optional.empty();
+    }
+    try {
+      log.info("Materializing repository '{}' from store on read-miss", lcName);
+      Supplier<Repository> materialize = () -> {
+        try {
+          return create(config.get());
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      };
+      // A read-miss is a local, non-authoritative materialization of an already-persisted repository: run it as
+      // a replication so create() skips the store write and does not re-publish the create back over DES, but
+      // still builds, starts and tracks the repository and fires its event for local subscribers.
+      Repository repository =
+          EventHelper.isReplicating() ? materialize.get() : EventHelper.asReplicating(materialize);
+      // The row can be deleted on a peer while we materialize (the delete event has not drained locally yet).
+      // If it vanished, treat this as a miss rather than handing back a repository that no longer exists; the
+      // tracked instance is reaped when the replicated delete event arrives (imminent under immediate
+      // consistency). See NEXUS-54229.
+      if (repository != null && store.readByName(lcName).isEmpty()) {
+        log.debug("Repository '{}' was deleted during read-miss materialization; treating as a miss", lcName);
+        return Optional.empty();
+      }
+      return Optional.ofNullable(repository);
+    }
+    catch (RuntimeException e) {
+      log.error("Failed to materialize repository '{}' from store on read-miss: {}", lcName, e.getMessage(), e);
+      return Optional.empty();
+    }
   }
 
   /**
@@ -475,7 +618,7 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
    */
   @Guarded(by = STARTED)
   public Optional<Repository> retryFailedRepository(final String name) {
-    checkNotNull(name);
+    requireNonNull(name);
     String lcName = name.toLowerCase();
 
     // If already loaded, just return it
@@ -540,13 +683,65 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   @Override
   @Guarded(by = STARTED)
   public Repository create(final Configuration configuration) throws Exception {
-    checkNotNull(configuration);
-    String repositoryName = checkNotNull(configuration.getRepositoryName());
+    requireNonNull(configuration);
+    String repositoryName = requireNonNull(configuration.getRepositoryName());
+    String lcName = repositoryName.toLowerCase();
 
     log.info("Creating repository: {} -> {}", repositoryName, configuration);
 
-    Repository repository;
+    // Origin creates, replicated creates (replayed by the configuration event handler) and get() read-miss
+    // materializations all funnel through this one cooperation point keyed by name, so the repository is
+    // built/started/tracked exactly once even when two of those paths fire concurrently on the same node.
+    Map<String, Repository> configuring = configuringOnThread.get();
+    if (configuring.containsKey(lcName)) {
+      // Re-entrant create for a repository already being configured on this thread (e.g. a facet/subscriber
+      // that resolves this same repository during its own construction/start). Never re-enter the cooperation
+      // point -- that would make this thread wait on its own in-flight materialization future (a ~60s+30s
+      // self-wait). Return the in-progress instance; it is null only before newRepository() has built it, in
+      // which case the caller sees a plain miss rather than a stall.
+      return configuring.get(lcName);
+    }
+    configuring.put(lcName, null);
+    try {
+      return configureCooperation.on(() -> doCreate(configuration))
+          .checkFunction(() -> Optional.ofNullable(repositories.get(lcName)))
+          .cooperate("create", lcName);
+    }
+    catch (IOException e) {
+      // doCreate wraps a non-IO checked failure as IOException; restore the original cause for callers.
+      Throwable cause = e.getCause();
+      if (cause instanceof Exception) {
+        throw (Exception) cause;
+      }
+      throw e;
+    }
+    finally {
+      configuring.remove(lcName);
+    }
+  }
 
+  /**
+   * Builds, persists (origin only), starts and tracks a repository, then fires {@link RepositoryCreatedEvent}.
+   * This is the single "configure a repository" path shared by an origin {@link #create}, a replicated create
+   * replayed by the configuration event handler, and a {@link #get} read-miss. Under a replicating context (the
+   * latter two) the store write is skipped -- the configuration already exists -- and re-publishing the create
+   * back over DES is suppressed, but the repository is still materialized locally and {@link RepositoryCreatedEvent}
+   * still fires for local subscribers. Invoked as the {@link #configureCooperation} work function, so checked
+   * non-IO failures are wrapped as {@link IOException} (unwrapped by {@link #create}); unchecked failures
+   * propagate unchanged.
+   */
+  private Repository doCreate(final Configuration configuration) throws IOException {
+    if (EventHelper.isReplicating()) {
+      // A replicated create or read-miss materialization is idempotent: if the repository was already
+      // materialized (e.g. by the event handler between a read-miss check and here) adopt it instead of
+      // building a duplicate that would leak and, for path-routed formats, deregister the live instance.
+      Repository existing = repositories.get(configuration.getRepositoryName().toLowerCase());
+      if (existing != null) {
+        return existing;
+      }
+    }
+
+    Repository repository;
     try {
       if (!EventHelper.isReplicating()) {
         httpAuthenticationSecretEncoder.encodeHttpAuthPassword(configuration.getAttributes());
@@ -555,17 +750,38 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
       validateConfiguration(configuration);
 
       repository = newRepository(configuration);
+      // Publish the in-progress instance so a re-entrant get(self) on this thread (a facet/subscriber resolving
+      // the repository while it starts) returns it instead of re-entering create() and self-waiting.
+      configuringOnThread.get().put(configuration.getRepositoryName().toLowerCase(), repository);
 
       if (!EventHelper.isReplicating()) {
         store.create(configuration);
       }
     }
-    catch (Exception e) {
+    catch (RuntimeException e) {
       httpAuthenticationSecretEncoder.removeSecret(configuration.getAttributes());
       removeEcrSecretsIfNeeded(configuration.getAttributes());
       throw e;
     }
-    repository.start();
+    catch (Exception e) {
+      httpAuthenticationSecretEncoder.removeSecret(configuration.getAttributes());
+      removeEcrSecretsIfNeeded(configuration.getAttributes());
+      throw new IOException(e);
+    }
+
+    try {
+      repository.start();
+    }
+    // No secret cleanup on a start() failure: on the origin path store.create() has already committed the
+    // configuration row (secrets included), so the repository exists and is tended by normal lifecycle / delete;
+    // on the replicating path no secrets were encoded here. Secret cleanup applies only to a pre-persist failure
+    // in the block above.
+    catch (RuntimeException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new IOException(e);
+    }
 
     track(repository);
 
@@ -577,8 +793,8 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   @Override
   @Guarded(by = STARTED)
   public Repository update(final Configuration configuration) throws Exception {
-    checkNotNull(configuration);
-    String repositoryName = checkNotNull(configuration.getRepositoryName());
+    requireNonNull(configuration);
+    String repositoryName = requireNonNull(configuration.getRepositoryName());
 
     log.info("Updating repository: {} -> {}", repositoryName, configuration);
 
@@ -683,18 +899,28 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
       return;
     }
     Map<String, Object> existingFirewall = existingAttrs.get(FIREWALL);
-    if (existingFirewall == null || existingFirewall.isEmpty()) {
+    if (existingFirewall == null || existingFirewall.isEmpty()
+        || existingFirewall.values().stream().allMatch(Objects::isNull)) {
       // Common case for repositories that have never had firewall configured: the existing
-      // firewall map is either absent or an empty map planted by Configuration.attributes(key)
-      // lazy-init via FirewallConfigurationHelper.getFirewallMode(...) /
-      // FirewallAttributes.fromConfiguration(...). Either way there is nothing meaningful to
-      // carry forward, so leave target alone (don't synthesise an empty firewall block).
+      // firewall map is either absent, empty, or contains only null-valued entries (e.g.
+      // {mode=null} planted by the UI before a firewall mode is assigned). ConcurrentHashMap
+      // (which backs target's attribute sub-maps) does not allow null values and would NPE on
+      // putAll; a null-only map carries no actionable configuration (NEXUS-48685). Either way
+      // there is nothing meaningful to carry forward, so leave target alone.
       return;
     }
     log.debug(
         "Preserving existing firewall configuration on '{}' update because the request did not redefine it: {}",
         repositoryName, existingFirewall);
-    target.attributes(FIREWALL).backing().putAll(existingFirewall);
+    // ConcurrentHashMap (backing the target attribute sub-map) does not permit null values.
+    // Filter them before copying so that a mixed map like {mode=QUARANTINE, someKey=null}
+    // still preserves its non-null entries (NEXUS-48685).
+    Map<String, Object> firewallBacking = target.attributes(FIREWALL).backing();
+    existingFirewall.forEach((k, v) -> {
+      if (v != null) {
+        firewallBacking.put(k, v);
+      }
+    });
   }
 
   protected void validateConfiguration(final Configuration configuration) {
@@ -708,7 +934,7 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   @Override
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
-    checkNotNull(name);
+    requireNonNull(name);
 
     log.info("Deleting repository: {}", name);
 
@@ -760,6 +986,117 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     eventManager.post(new RepositoryDeletedEvent(repository));
 
     log.info("Deleted repository: {}", name);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void softDelete(final String name, final String deletedBy) throws Exception {
+    requireNonNull(name);
+    requireNonNull(deletedBy);
+
+    log.info("Soft-deleting repository: {}", name);
+
+    Repository repository = repositories.get(name.toLowerCase());
+    if (repository == null) {
+      throw new MissingRepositoryException(name);
+    }
+
+    if (!EventHelper.isReplicating()) {
+      removeRepositoryFromAllGroups(repository);
+    }
+
+    repository.stopSafe();
+
+    repository.optionalFacet(SearchIndexFacet.class).ifPresent(searchFacet -> {
+      try {
+        log.debug("Cleaning search index for soft-deleted repository: {}", name);
+        searchFacet.deleteIndex();
+      }
+      catch (Exception e) {
+        log.warn("Failed to clean search index for soft-deleted repository: {}", name, e);
+      }
+    });
+
+    repository.destroy();
+
+    untrack(repository);
+
+    if (!EventHelper.isReplicating()) {
+      store.softDelete(name, deletedBy);
+    }
+
+    eventManager.post(new RepositoryDeletedEvent(repository));
+
+    log.info("Soft-deleted repository: {}", name);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public Repository restoreFromSoftDelete(final String name) throws Exception {
+    requireNonNull(name);
+
+    log.info("Restoring soft-deleted repository: {}", name);
+
+    store.undoSoftDelete(name);
+
+    Configuration configuration = store.readByNames(Collections.singleton(name))
+        .stream()
+        .findFirst()
+        .orElseThrow(() -> new MissingRepositoryException(name));
+
+    Repository repository = newRepository(configuration);
+    track(repository);
+    repository.start();
+
+    repository.optionalFacet(SearchIndexFacet.class).ifPresent(searchFacet -> {
+      try {
+        log.debug("Rebuilding search index for restored repository: {}", name);
+        searchFacet.rebuildIndex();
+      }
+      catch (Exception e) {
+        log.warn("Failed to rebuild search index for restored repository: {}", name, e);
+      }
+    });
+
+    eventManager.post(new RepositoryCreatedEvent(repository));
+
+    log.info("Restored soft-deleted repository: {}", name);
+    return repository;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void hardDelete(final String name) throws Exception {
+    requireNonNull(name);
+
+    log.info("Hard-deleting soft-deleted repository: {}", name);
+
+    Configuration configuration = store.readDeleted(name);
+    if (configuration == null) {
+      throw new IllegalStateException("Repository '" + name + "' is not in soft-deleted state");
+    }
+
+    // Re-instantiate temporarily to run facet content cleanup
+    Repository repository = newRepository(configuration);
+    try {
+      repository.start();
+      repository.stop();
+      repository.delete();
+      repository.destroy();
+    }
+    catch (Exception e) {
+      log.warn("Error during content cleanup for hard-delete of '{}'; proceeding with config removal", name, e);
+      try {
+        repository.destroy();
+      }
+      catch (Exception ignored) { // NOSONAR
+      }
+    }
+
+    store.hardDelete(name);
+    httpAuthenticationSecretEncoder.removeSecret(configuration.getAttributes());
+
+    log.info("Hard-deleted repository: {}", name);
   }
 
   /**
@@ -823,8 +1160,32 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
 
   @Override
   public boolean isBlobstoreUsed(final String blobStoreName) {
-    return blobstoreUsageStream(blobStoreName).findAny().isPresent() ||
+    // Query the shared configuration store rather than this node's in-memory repository cache: under HA the
+    // cache can lag a peer node's repository create/delete, producing a false "in use" (blocking a legitimate
+    // blob store delete -- the S3BlobStoreIT teardown 400) or a false "not used" (allowing deletion of a blob
+    // store still referenced by a not-yet-materialized repository). The store reflects the committed cross-node
+    // truth. See NEXUS-54229. The second clause still covers group blob stores that embed this member.
+    return store.countByBlobStore(blobStoreName) > 0 ||
         blobStoreManager.blobStoreUsageCount(blobStoreName) > 0;
+  }
+
+  @Override
+  public Set<String> blobstoresInUse() {
+    // Reads all repository configurations from the shared store in one query (store.list() -> full rows) and
+    // extracts the distinct storage.blobStoreName values in memory -- one round-trip for the whole blob store
+    // list UI instead of an isBlobstoreUsed() query per blob store. The repository table is small, so the full
+    // read is cheap; the countByBlobStore expression index backs the per-name isBlobstoreUsed() path instead.
+    // See NEXUS-54229.
+    return store.list()
+        .stream()
+        .map(Configuration::getAttributes)
+        .filter(Objects::nonNull)
+        .map(attributes -> attributes.get(STORAGE))
+        .filter(Objects::nonNull)
+        .map(storage -> storage.get(BLOB_STORE_NAME))
+        .filter(Objects::nonNull)
+        .map(String.class::cast)
+        .collect(toSet());
   }
 
   @Override

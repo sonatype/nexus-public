@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
@@ -69,8 +69,8 @@ public class SearchUtils
       final RepositoryManagerRESTAdapter repoAdapter,
       final List<SearchMappings> searchMappingsList)
   {
-    this.repoAdapter = checkNotNull(repoAdapter);
-    this.searchParams = QualifierUtil.buildQualifierBeanMap(checkNotNull(searchMappingsList))
+    this.repoAdapter = requireNonNull(repoAdapter);
+    this.searchParams = QualifierUtil.buildQualifierBeanMap(requireNonNull(searchMappingsList))
         .entrySet()
         .stream()
         .flatMap(e -> stream(e.getValue().get().spliterator(), true))

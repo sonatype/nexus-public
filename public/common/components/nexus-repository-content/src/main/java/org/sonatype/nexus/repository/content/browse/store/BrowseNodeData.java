@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -132,14 +132,21 @@ public class BrowseNodeData
    * Sets the request path.
    */
   public void setRequestPath(final String requestPath) {
-    this.requestPath = checkNotNull(requestPath);
+    this.requestPath = requireNonNull(requestPath);
   }
 
   /**
    * Sets the display name.
    */
   public void setDisplayName(final String displayName) {
-    this.displayName = checkNotNull(displayName);
+    this.displayName = requireNonNull(displayName);
+  }
+
+  /**
+   * Returns the internal parent node id (0 for root nodes).
+   */
+  public long getParentId() {
+    return parentId;
   }
 
   /**

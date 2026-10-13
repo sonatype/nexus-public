@@ -30,7 +30,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Throwables.propagateIfPossible;
 import static java.lang.Boolean.TRUE;
 
@@ -57,8 +57,8 @@ public class CooperatingFuture<T>
   private final Config config;
 
   public CooperatingFuture(final String requestKey, final Config config) {
-    this.requestKey = checkNotNull(requestKey);
-    this.config = checkNotNull(config);
+    this.requestKey = requireNonNull(requestKey);
+    this.config = requireNonNull(config);
   }
 
   /**

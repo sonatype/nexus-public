@@ -52,27 +52,29 @@ const DEFAULT_DURATIONS: Record<ToastType, number> = {
 };
 
 /**
- * Toast component that renders a single toast message
+ * Toast component that renders a single toast message.
+ * Uses `nui-toast` prefix to avoid CSS class collisions with the coreui Toast
+ * module which uses the unprefixed `.toast` class names.
  */
 function Toast({ toast, onOpenChange }: { toast: ToastMessage; onOpenChange: (open: boolean) => void }) {
   return (
     <ToastPrimitive.Root
-      className={`toast toast--${toast.type}`}
+      className={`nui-toast nui-toast--${toast.type}`}
       open={true}
       onOpenChange={onOpenChange}
       duration={toast.duration || DEFAULT_DURATIONS[toast.type]}
       data-testid={`toast-${toast.type}`}
     >
-      <div className="toast__icon">{TOAST_ICONS[toast.type]}</div>
-      <div className="toast__content">
-        <ToastPrimitive.Title className="toast__title">{toast.title}</ToastPrimitive.Title>
+      <div className="nui-toast__icon">{TOAST_ICONS[toast.type]}</div>
+      <div className="nui-toast__content">
+        <ToastPrimitive.Title className="nui-toast__title">{toast.title}</ToastPrimitive.Title>
         {toast.description && (
-          <ToastPrimitive.Description className="toast__description">
+          <ToastPrimitive.Description className="nui-toast__description">
             {toast.description}
           </ToastPrimitive.Description>
         )}
       </div>
-      <ToastPrimitive.Close className="toast__close" aria-label="Close">
+      <ToastPrimitive.Close className="nui-toast__close" aria-label="Close">
         <X size={16} />
       </ToastPrimitive.Close>
     </ToastPrimitive.Root>
@@ -155,7 +157,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           />
         ))}
         {typeof document !== 'undefined' && createPortal(
-          <ToastPrimitive.Viewport className="toast-viewport" />,
+          <ToastPrimitive.Viewport className="nui-toast-viewport" />,
           document.body
         )}
       </ToastPrimitive.Provider>

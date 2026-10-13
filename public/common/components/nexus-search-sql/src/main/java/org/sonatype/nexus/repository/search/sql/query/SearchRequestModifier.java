@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContribution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +36,7 @@ public class SearchRequestModifier
 
   @Autowired
   public SearchRequestModifier(final List<SqlSearchQueryContribution> handlersList) {
-    this.handlers = QualifierUtil.buildQualifierBeanMap(checkNotNull(handlersList));
+    this.handlers = QualifierUtil.buildQualifierBeanMap(requireNonNull(handlersList));
   }
 
   /**

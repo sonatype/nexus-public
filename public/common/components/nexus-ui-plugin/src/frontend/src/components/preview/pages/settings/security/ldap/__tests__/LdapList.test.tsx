@@ -94,6 +94,14 @@ describe('LdapList', () => {
     expect(screen.queryByText('Actions')).not.toBeInTheDocument();
   });
 
+  it('does not render its own help block (help now lives on LdapPage per NEXUS-54308)', () => {
+    const { container } = render(<LdapList {...defaultProps} />, { wrapper: TestWrapper });
+
+    expect(container.querySelector('.ldap-list__help')).not.toBeInTheDocument();
+    expect(screen.queryByText('About LDAP Servers')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('help-section')).not.toBeInTheDocument();
+  });
+
   it('renders all servers', () => {
     render(<LdapList {...defaultProps} />, { wrapper: TestWrapper });
 

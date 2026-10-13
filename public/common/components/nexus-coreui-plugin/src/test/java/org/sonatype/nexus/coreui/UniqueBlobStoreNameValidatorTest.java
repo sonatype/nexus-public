@@ -41,6 +41,11 @@ public class UniqueBlobStoreNameValidatorTest
   }
 
   @Test
+  public void testValidation_nullName() {
+    assertTrue(underTest.isValid(null, null));
+  }
+
+  @Test
   public void testValidation() {
     when(blobStoreManager.exists("test")).thenReturn(true);
     when(blobStoreManager.exists("DEFAULT")).thenReturn(false);

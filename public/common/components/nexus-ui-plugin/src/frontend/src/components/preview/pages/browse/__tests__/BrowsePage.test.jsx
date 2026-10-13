@@ -98,6 +98,11 @@ jest.mock('../repository-list/RepositoryListTable', () => ({
 
 // Mock browse API
 jest.mock('../browse.api', () => ({
+  // Repository list backs useRepositoryType, which gates delete availability by
+  // repository type. 'maven-central' is the repository these tests browse.
+  fetchBrowsableRepositories: jest.fn().mockResolvedValue([
+    { id: 'maven-central', name: 'maven-central', format: 'maven2', type: 'hosted' },
+  ]),
   fetchAsset: jest.fn().mockResolvedValue({
     id: 'asset-123',
     name: 'test-asset',
@@ -107,9 +112,13 @@ jest.mock('../browse.api', () => ({
     repositoryName: 'maven-central',
     path: '/org/apache/maven/pom.xml',
     downloadUrl: 'https://server.example.com/custom-context/repository/maven-central/org/apache/maven/pom.xml',
+    // ExtDirect readAsset carries the owning component's RAW internal id. This is the only place
+    // an asset selection can learn it — asset browse nodes have componentId: null (NEXUS-54501).
+    componentId: '7e8fcfcb',
   }),
   fetchComponent: jest.fn().mockResolvedValue({
-    id: 'comp-123',
+    // REST v1 ids are the base64 RepositoryItemIDXO form, i.e. base64('maven-central:7e8fcfcb').
+    id: 'bWF2ZW4tY2VudHJhbDo3ZThmY2ZjYg',
     name: 'maven',
     format: 'maven2',
     repositoryName: 'maven-central',
@@ -147,6 +156,16 @@ jest.mock('../../search/unified/MobileFilterDrawer', () => ({
 }));
 
 jest.mock('../tree/BrowseTree', () => ({
+  // BrowsePage imports safeDecodeURI from this module to decode the path param; keep the real
+  // (safe) behavior so the initialPath assertions below exercise the actual decode.
+  safeDecodeURI: (value) => {
+    if (!value) return value;
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  },
   BrowseTree: ({ repositoryName, initialPath, onSelect }) => (
     <div data-testid="mock-browse-tree">
       <span data-testid="tree-repo-name">{repositoryName}</span>
@@ -197,13 +216,15 @@ jest.mock('../tree/BrowseTree', () => ({
 }));
 
 jest.mock('../detail/DetailPanel', () => ({
-  DetailPanel: ({ node, repositoryName, onDeleted }) => (
+  DetailPanel: ({ node, repositoryName, assetData, componentData, onDeleted }) => (
     <div data-testid="mock-detail-panel">
       {node ? (
         <>
           <span data-testid="detail-node-text">{node.text}</span>
           <span data-testid="detail-node-type">{node.type}</span>
           <span data-testid="detail-repo-name">{repositoryName}</span>
+          <span data-testid="detail-asset-component-id">{assetData?.componentId ?? ''}</span>
+          <span data-testid="detail-component-name">{componentData?.name ?? ''}</span>
           <button data-testid="detail-delete-btn" onClick={onDeleted}>
             Delete
           </button>
@@ -410,6 +431,40 @@ describe('BrowsePage', () => {
     });
   });
 
+  describe('HTML View link', () => {
+    it('renders an HTML View link for the selected repository', async () => {
+      mockParams = { repoName: 'maven-central' };
+      renderWithProviders(<BrowsePage />);
+
+      const link = await screen.findByRole('link', { name: /html view/i });
+
+      expect(link).toHaveAttribute(
+        'href',
+        expect.stringContaining('/service/rest/repository/browse/maven-central')
+      );
+    });
+
+    it('opens in a new tab without leaking the opener', async () => {
+      mockParams = { repoName: 'maven-central' };
+      renderWithProviders(<BrowsePage />);
+
+      const link = await screen.findByRole('link', { name: /html view/i });
+
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
+      expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'));
+    });
+
+    it('does not render an Advanced Search link — explicitly out of scope for this ticket', async () => {
+      mockParams = { repoName: 'maven-central' };
+      renderWithProviders(<BrowsePage />);
+
+      await screen.findByRole('link', { name: /html view/i });
+
+      expect(screen.queryByText(/advanced search/i)).not.toBeInTheDocument();
+    });
+  });
+
   describe('Multiple repositories', () => {
     it('switches between repositories via Browse breadcrumb', async () => {
       mockParams = { repoName: 'maven-central' };
@@ -431,6 +486,55 @@ describe('BrowsePage', () => {
 
       await userEvent.click(screen.getByTestId('tree-node-component'));
       expect(screen.getByTestId('detail-repo-name')).toHaveTextContent('maven-central');
+    });
+  });
+
+  describe('asset → component lookup (NEXUS-54501)', () => {
+    beforeEach(() => {
+      mockParams = { repoName: 'maven-central' };
+    });
+
+    it('resolves the component from the asset response when the browse node has no componentId', async () => {
+      // Production contract, verified against a live instance: an asset browse node is
+      //   { type: 'asset', assetId: '52f7b1db', componentId: null }
+      // and only ExtDirect readAsset carries componentId. Classic does the same two-step
+      // (ComponentAssetTree.setInfoPanelModel reads asset.get('componentId')); gating the
+      // component fetch on the node's id leaves componentData null for every asset, which is
+      // what broke Tags, dependency snippets, and the Lifecycle tab.
+      const { fetchAsset, fetchComponent } = require('../browse.api');
+      renderWithProviders(<BrowsePage />);
+
+      await userEvent.click(screen.getByTestId('tree-node-asset'));
+
+      expect(fetchAsset).toHaveBeenCalledWith('asset-456', 'maven-central');
+      expect(fetchComponent).toHaveBeenCalledWith('7e8fcfcb', 'maven-central');
+
+      // The raw id must also reach the panel: the tag lookup and the Lifecycle gate both need it,
+      // and componentData.id is the encoded REST form, which the ExtDirect methods reject.
+      await screen.findByText('maven');
+      expect(screen.getByTestId('detail-asset-component-id')).toHaveTextContent('7e8fcfcb');
+      expect(screen.getByTestId('detail-component-name')).toHaveTextContent('maven');
+    });
+
+    it('leaves componentData null for a genuinely component-less asset', async () => {
+      const { fetchAsset, fetchComponent } = require('../browse.api');
+      fetchAsset.mockResolvedValueOnce({
+        id: 'asset-123',
+        name: 'index.json',
+        format: 'nuget',
+        repositoryName: 'maven-central',
+        path: '/index.json',
+        componentId: null,
+      });
+
+      renderWithProviders(<BrowsePage />);
+
+      await userEvent.click(screen.getByTestId('tree-node-asset'));
+
+      await screen.findByTestId('detail-node-text');
+      expect(fetchComponent).not.toHaveBeenCalled();
+      expect(screen.getByTestId('detail-asset-component-id')).toHaveTextContent('');
+      expect(screen.getByTestId('detail-component-name')).toHaveTextContent('');
     });
   });
 

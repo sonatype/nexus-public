@@ -34,7 +34,7 @@ import org.sonatype.nexus.webhooks.WebhookPayload;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -49,8 +49,8 @@ public class RepositoryAssetWebhook
 
   @Autowired
   public RepositoryAssetWebhook(final NodeAccess nodeAccess, final InitiatorProvider initiatorProvider) {
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.initiatorProvider = checkNotNull(initiatorProvider);
+    this.nodeAccess = requireNonNull(nodeAccess);
+    this.initiatorProvider = requireNonNull(initiatorProvider);
   }
 
   @Override

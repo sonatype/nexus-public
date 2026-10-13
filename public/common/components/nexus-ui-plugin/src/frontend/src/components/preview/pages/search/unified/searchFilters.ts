@@ -26,7 +26,21 @@
  * - MavenSearchMappings.java, NpmSearchMappings.java, etc. (format-specific)
  */
 
-import type { SearchFormat, FormatInfo, FilterDefinition, FormatFilterConfig } from './unified.types';
+import type { SearchFormat, FormatInfo, FilterDefinition, FormatFilterConfig, GenericAliasLabels } from './unified.types';
+import { FILTER_FIELD_OPTIONS } from '../custom/custom.types';
+
+/**
+ * Read the placeholder text for a shared filter field from the custom-query
+ * builder's canonical option list.  Kept in a helper so the group/name/version
+ * placeholders below stay in sync with `FILTER_FIELD_OPTIONS` and cannot drift
+ * from the vocabulary the custom-query builder uses.
+ */
+function genericPlaceholder(field: 'group' | 'name' | 'version'): string {
+  const option = FILTER_FIELD_OPTIONS.find((o) => o.value === field);
+  // The custom-query builder always defines these three entries; fall back only
+  // as a type-narrowing safeguard.
+  return option?.placeholder ?? '';
+}
 
 // =============================================================================
 // GLOBAL FILTER (Repository - shown in sidebar for all formats)
@@ -40,6 +54,44 @@ const REPOSITORY_FILTER: FilterDefinition = {
   global: true,
   placeholder: 'All repositories',
 };
+
+// =============================================================================
+// GENERIC GNV FILTERS
+//
+// These three filters are prepended to every format's filter list (after
+// REPOSITORY_FILTER).  Formats that use format-specific vocabulary for the
+// group / name / version concepts set `aliasLabels` on their entry so the
+// sidebar can relabel these inputs without adding duplicate rows.
+//
+// Placeholders are read from `FILTER_FIELD_OPTIONS` (the custom-query
+// builder's canonical option list) so the two search surfaces cannot drift.
+// =============================================================================
+
+const GROUP_FILTER: FilterDefinition = {
+  id: 'group',
+  label: 'Group',
+  type: 'text',
+  apiParam: 'group',
+  placeholder: genericPlaceholder('group'),
+};
+
+const NAME_FILTER: FilterDefinition = {
+  id: 'name',
+  label: 'Name',
+  type: 'text',
+  apiParam: 'name',
+  placeholder: genericPlaceholder('name'),
+};
+
+const VERSION_FILTER: FilterDefinition = {
+  id: 'version',
+  label: 'Version',
+  type: 'text',
+  apiParam: 'version',
+  placeholder: genericPlaceholder('version'),
+};
+
+export const GENERIC_FILTERS = [GROUP_FILTER, NAME_FILTER, VERSION_FILTER] as const;
 
 // =============================================================================
 // FORMAT DEFINITIONS
@@ -218,21 +270,27 @@ export const FORMATS: Record<SearchFormat, FormatInfo> = {
 // =============================================================================
 
 export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
-  // All Formats - repository only (global name/version handled above results)
+  // All Formats - repository + generic group/name/version
   all: {
     format: FORMATS.all,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
-  // Alpine - no custom filters (uses global name/version)
+
+  // Alpine - generic group/name/version only (no format-specific aliases)
   alpine: {
     format: FORMATS.alpine,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
-  // Ansible Galaxy - namespace and collection name filters
+
+  // Ansible Galaxy - namespace and collection name are distinct FORMAT_FIELD_*
+  // (not aliases of NAMESPACE/NAME/VERSION), so both generic and distinct rows render.
+  // The distinct "Collection Name" filter uses id 'collectionName' to avoid collision
+  // with the generic NAME_FILTER (id 'name').
   ansiblegalaxy: {
     format: FORMATS.ansiblegalaxy,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'namespace',
         label: 'Namespace',
@@ -241,7 +299,7 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         placeholder: 'e.g., community',
       },
       {
-        id: 'name',
+        id: 'collectionName',
         label: 'Collection Name',
         type: 'text',
         apiParam: 'ansible-galaxy.name',
@@ -250,43 +308,32 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // Apt - no custom filters (uses global name/version)
+  // Apt - generic group/name/version only
   apt: {
     format: FORMATS.apt,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
 
-  // Cargo - no custom filters (uses global name/version)
+  // Cargo - generic group/name/version only
   cargo: {
     format: FORMATS.cargo,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
 
-  // CocoaPods - no custom filters (uses global name/version)
+  // CocoaPods - generic group/name/version only
   cocoapods: {
     format: FORMATS.cocoapods,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
 
-  // Composer (PHP) - has vendor/package instead of name
+  // Composer (PHP) - vendor/package/version alias generic group/name/version.
+  // The old vendor/package/version rows are deleted; aliasLabels relabels the
+  // generic inputs in the sidebar.  Distinct fields (description, keywords) remain.
   composer: {
     format: FORMATS.composer,
     filters: [
       REPOSITORY_FILTER,
-      {
-        id: 'vendor',
-        label: 'Vendor',
-        type: 'text',
-        apiParam: 'composer.vendor',
-        placeholder: 'e.g., symfony',
-      },
-      {
-        id: 'package',
-        label: 'Package',
-        type: 'text',
-        apiParam: 'composer.package',
-        placeholder: 'e.g., console',
-      },
+      ...GENERIC_FILTERS,
       {
         id: 'description',
         label: 'Description',
@@ -302,13 +349,16 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         placeholder: 'Package keywords',
       },
     ],
+    aliasLabels: { group: 'Vendor', name: 'Package' },
+    aliasPlaceholders: { group: 'e.g., symfony', name: 'e.g., console' },
   },
 
-  // Conan (C/C++) - full filter set from ConanSearchMappings.java
+  // Conan (C/C++) - generic group/name/version + distinct Conan fields
   conan: {
     format: FORMATS.conan,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'baseVersion',
         label: 'Base Version',
@@ -347,31 +397,20 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // Conda - no custom filters (uses global name/version)
+  // Conda - generic group/name/version only
   conda: {
     format: FORMATS.conda,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
 
-  // Docker - uses imageName/imageTag instead of name/version
+  // Docker - imageName/imageTag alias generic name/version.
+  // The old imageName/imageTag rows are deleted; aliasLabels relabels the
+  // generic inputs.  Distinct fields (layerId, contentDigest) remain.
   docker: {
     format: FORMATS.docker,
     filters: [
       REPOSITORY_FILTER,
-      {
-        id: 'imageName',
-        label: 'Image Name',
-        type: 'text',
-        apiParam: 'docker.imageName',
-        placeholder: 'e.g., nginx',
-      },
-      {
-        id: 'imageTag',
-        label: 'Image Tag',
-        type: 'text',
-        apiParam: 'docker.imageTag',
-        placeholder: 'e.g., latest',
-      },
+      ...GENERIC_FILTERS,
       {
         id: 'layerId',
         label: 'Layer ID',
@@ -387,13 +426,16 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         placeholder: 'sha256:...',
       },
     ],
+    aliasLabels: { name: 'Image Name', version: 'Image Tag' },
+    aliasPlaceholders: { name: 'e.g., nginx', version: 'e.g., latest' },
   },
 
-  // Git LFS - sha256 filter
+  // Git LFS - generic group/name/version + sha256 distinct field
   gitlfs: {
     format: FORMATS.gitlfs,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'sha256',
         label: 'SHA-256',
@@ -404,43 +446,32 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // Go - no custom filters (uses global name/version)
+  // Go - generic group/name/version only
   go: {
     format: FORMATS.go,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
 
-  // Helm - no custom filters (uses global name/version)
+  // Helm - generic group/name/version only
   helm: {
     format: FORMATS.helm,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
 
-  // Hugging Face - no custom filters (uses global name/version)
+  // Hugging Face - generic group/name/version only
   huggingface: {
     format: FORMATS.huggingface,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
 
-  // Maven - uses groupId/artifactId instead of group/name
+  // Maven - groupId/artifactId alias generic group/name.
+  // The old groupId/artifactId rows are deleted; aliasLabels relabels the
+  // generic inputs.  Distinct fields (baseVersion, classifier, extension) remain.
   maven: {
     format: FORMATS.maven,
     filters: [
       REPOSITORY_FILTER,
-      {
-        id: 'groupId',
-        label: 'Group ID',
-        type: 'text',
-        apiParam: 'maven.groupId',
-        placeholder: 'e.g., org.apache.commons',
-      },
-      {
-        id: 'artifactId',
-        label: 'Artifact ID',
-        type: 'text',
-        apiParam: 'maven.artifactId',
-        placeholder: 'e.g., commons-lang3',
-      },
+      ...GENERIC_FILTERS,
       {
         id: 'baseVersion',
         label: 'Base Version',
@@ -463,20 +494,18 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         placeholder: 'e.g., jar',
       },
     ],
+    aliasLabels: { group: 'Group ID', name: 'Artifact ID' },
   },
 
-  // npm - full filter set from NpmSearchMappings.java
+  // npm - scope aliases generic group (NpmSearchMappings maps npm.scope → NAMESPACE,
+  // same as DefaultSearchMappings group → NAMESPACE).
+  // The old scope row is deleted; aliasLabels relabels the generic Group input.
+  // Distinct fields (author, description, keywords, license) remain.
   npm: {
     format: FORMATS.npm,
     filters: [
       REPOSITORY_FILTER,
-      {
-        id: 'scope',
-        label: 'Scope',
-        type: 'text',
-        apiParam: 'group',
-        placeholder: 'e.g., @angular',
-      },
+      ...GENERIC_FILTERS,
       {
         id: 'author',
         label: 'Author',
@@ -506,13 +535,17 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         placeholder: 'e.g., MIT',
       },
     ],
+    aliasLabels: { group: 'Scope' },
+    aliasPlaceholders: { group: 'e.g., @angular' },
   },
 
-  // NuGet - full filter set from NugetSearchMappings.java
+  // NuGet - nuget.id is FORMAT_FIELD_1, NOT a NAME alias (ticket-confirmed).
+  // Generic name/version render alongside the distinct nugetId row.
   nuget: {
     format: FORMATS.nuget,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'nugetId',
         label: 'Package ID',
@@ -558,26 +591,14 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // OCI - uses imageName/imageTag from OciSearchMappings.java (oci.* namespace).
-  // Reuses Docker's content facet internally but must not be aliased to Docker.
+  // OCI - imageName/imageTag alias generic name/version (oci.* namespace).
+  // The old imageName/imageTag rows are deleted; aliasLabels relabels the
+  // generic inputs.  Distinct fields (contentDigest) remain.
   oci: {
     format: FORMATS.oci,
     filters: [
       REPOSITORY_FILTER,
-      {
-        id: 'imageName',
-        label: 'Image Name',
-        type: 'text',
-        apiParam: 'oci.imageName',
-        placeholder: 'e.g., nginx',
-      },
-      {
-        id: 'imageTag',
-        label: 'Image Tag',
-        type: 'text',
-        apiParam: 'oci.imageTag',
-        placeholder: 'e.g., latest',
-      },
+      ...GENERIC_FILTERS,
       {
         id: 'contentDigest',
         label: 'Content Digest',
@@ -586,13 +607,16 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         placeholder: 'sha256:...',
       },
     ],
+    aliasLabels: { name: 'Image Name', version: 'Image Tag' },
+    aliasPlaceholders: { name: 'e.g., nginx', version: 'e.g., latest' },
   },
 
-  // P2 (Eclipse)
+  // P2 (Eclipse) - generic group/name/version + distinct pluginName
   p2: {
     format: FORMATS.p2,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'pluginName',
         label: 'Plugin Name',
@@ -603,11 +627,12 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // PyPI - full filter set from PyPiSearchMappings.java
+  // PyPI - generic group/name/version + distinct PyPI fields
   pypi: {
     format: FORMATS.pypi,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'classifiers',
         label: 'Classifiers',
@@ -639,29 +664,33 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // Pub (Dart) - no custom filters (uses global name/version)
+  // Pub (Dart) - generic group/name/version only
   pub: {
     format: FORMATS.pub,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
 
-  // R - no custom filters (uses global name/version)
+  // R - generic group/name/version only
   r: {
     format: FORMATS.r,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
   },
 
-  // Raw - no custom filters (uses global name)
+  // Raw - raw.name aliases generic name (→NAME, lenient/fulltext via
+  // RawSearchMappings).  aliasLabels relabels the generic Name input.
   raw: {
     format: FORMATS.raw,
-    filters: [REPOSITORY_FILTER],
+    filters: [REPOSITORY_FILTER, ...GENERIC_FILTERS],
+    aliasLabels: { name: 'Filename' },
+    aliasPlaceholders: { name: 'e.g., README.md' },
   },
 
-  // RubyGems - full filter set from RubygemsSearchMappings.java
+  // RubyGems - generic group/name/version + distinct gem fields
   rubygems: {
     format: FORMATS.rubygems,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'description',
         label: 'Description',
@@ -686,11 +715,13 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // Swift - filters from SwiftSearchMappings.java
+  // Swift - swift.scope is FORMAT_FIELD_1 (not a NAMESPACE alias), so it renders
+  // as a distinct row alongside the generic group input.
   swift: {
     format: FORMATS.swift,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'scope',
         label: 'Scope',
@@ -701,11 +732,12 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // Terraform - filters from TerraformSearchMappings.java
+  // Terraform - generic group/name/version + distinct provider/namespace
   terraform: {
     format: FORMATS.terraform,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'provider',
         label: 'Provider',
@@ -723,11 +755,13 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // Yum (RPM) - uses yum.name instead of global name
+  // Yum (RPM) - yum.name is FORMAT_FIELD_2 (not a NAME alias), so it renders as
+  // a distinct row alongside the generic name input.
   yum: {
     format: FORMATS.yum,
     filters: [
       REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
       {
         id: 'yumName',
         label: 'Package Name',
@@ -770,9 +804,36 @@ export function getFormatOptions(): FormatInfo[] {
 
 /**
  * Get filters for a specific format.
+ *
+ * Returns the module-level readonly array directly.  Callers only read; the
+ * one caller that needs a mutable list (the sidebar's `filtersToRender`)
+ * derives its own array via `.filter(...)`, which already yields a fresh one.
+ * Returning the shared reference avoids per-render allocations on every
+ * sidebar render / buildQueryParams / URL round-trip.
  */
-export function getFiltersForFormat(format: SearchFormat): FilterDefinition[] {
-  return [...FORMAT_FILTERS[format].filters];
+export function getFiltersForFormat(format: SearchFormat): readonly FilterDefinition[] {
+  return FORMAT_FILTERS[format].filters;
+}
+
+/**
+ * Get alias labels for a specific format.
+ * Returns the format's aliasLabels map, or undefined if the format uses
+ * default generic labels (Group / Name / Version).
+ */
+export function getAliasLabelsForFormat(format: SearchFormat): GenericAliasLabels | undefined {
+  return FORMAT_FILTERS[format].aliasLabels;
+}
+
+/**
+ * Get alias placeholder overrides for a specific format.
+ * Returns the format's aliasPlaceholders map, or undefined when the generic
+ * placeholder text already matches the aliased label (e.g. Maven's
+ * "e.g., org.apache.commons" reads correctly under "Group ID").
+ */
+export function getAliasPlaceholdersForFormat(
+  format: SearchFormat,
+): GenericAliasLabels | undefined {
+  return FORMAT_FILTERS[format].aliasPlaceholders;
 }
 
 /**
@@ -843,24 +904,24 @@ export function buildQueryParams(
     params.set('repository', repository.trim());
   }
 
-  // Handle generic 'name' filter (universal API parameter across all formats)
-  const name = filters.name;
-  if (name?.trim()) {
-    params.set('name', name.trim());
-  }
-
-  // Handle generic 'version' filter (universal API parameter across all formats)
-  // Only add if not already set by nameOrVersion handling
-  const version = filters.version;
-  if (version?.trim() && !params.has('version')) {
-    params.set('version', version.trim());
-  }
-
-  // Add other filter values from format-specific filters
+  // Add filter values from the format's filter list.
+  // Group, Name, and Version are registered as GENERIC_FILTERS on every format
+  // (including 'all'), so they are emitted here via the per-format loop rather
+  // than through a separate special-case block.
+  //
+  // If the header nameOrVersion input parsed as a version, it has already set
+  // `version` above.  Preserve that value against a stale sidebar `version`
+  // that was set for a previous session: the header input is the more recent,
+  // visible signal, and the pre-refactor code applied the same precedence via
+  // a `!params.has('version')` gate on the version handling.
   const filterDefs = getFiltersForFormat(format);
   for (const filter of filterDefs) {
     // Skip nameOrVersion and repository as they're handled above
     if (filter.id === 'nameOrVersion' || filter.id === 'repository') {
+      continue;
+    }
+    // Do not overwrite version if nameOrVersion already set it above.
+    if (filter.apiParam === 'version' && params.has('version')) {
       continue;
     }
     const value = filters[filter.id];

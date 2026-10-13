@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class BlobStoreUIResponse
 {
@@ -60,11 +60,11 @@ public class BlobStoreUIResponse
       unlimited = false;
     }
 
-    name = checkNotNull(configuration.getName());
+    name = requireNonNull(configuration.getName());
 
-    this.typeId = checkNotNull(typeId);
+    this.typeId = requireNonNull(typeId);
     typeName = configuration.getType();
-    this.path = checkNotNull(path);
+    this.path = requireNonNull(path);
   }
 
   public String getName() {

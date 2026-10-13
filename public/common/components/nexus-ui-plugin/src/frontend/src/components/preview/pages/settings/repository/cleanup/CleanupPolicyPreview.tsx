@@ -21,7 +21,6 @@ import {
   CleanupPolicyFormData,
   RepositoryOption,
   PreviewComponent,
-  isRepositoriesFieldSupportedFormat,
 } from './types';
 
 import './CleanupPolicyPreview.scss';
@@ -69,16 +68,8 @@ export function CleanupPolicyPreview({ policyData, selectedRepositories = [] }: 
       setTotalCount(0);
       setRepoError(null);
       setIsLoadingRepos(false);
-    } else if (isRepositoriesFieldSupportedFormat(policyData.format)) {
-      // Format supports per-repository application but none are applied yet —
-      // show an empty dropdown instead of listing every repo.
-      setRepositories([]);
-      setSelectedRepository('');
-      setPreviewResults([]);
-      setTotalCount(0);
-      setRepoError(null);
-      setIsLoadingRepos(false);
     } else {
+      let cancelled = false;
       setIsLoadingRepos(true);
       setRepoError(null);
       setSelectedRepository('');
@@ -86,9 +77,11 @@ export function CleanupPolicyPreview({ policyData, selectedRepositories = [] }: 
       setTotalCount(0);
 
       fetchRepositories(policyData.format)
-        .then(setRepositories)
-        .catch((err) => setRepoError(err.message))
-        .finally(() => setIsLoadingRepos(false));
+        .then((repos) => { if (!cancelled) setRepositories(repos); })
+        .catch((err) => { if (!cancelled) setRepoError(err.message); })
+        .finally(() => { if (!cancelled) setIsLoadingRepos(false); });
+
+      return () => { cancelled = true; };
     }
   }, [policyData.format, fetchRepositories, _selectedReposKey]);
 

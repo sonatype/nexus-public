@@ -19,8 +19,6 @@ import {
   Pencil,
   Search,
   Loader2,
-  Info,
-  ExternalLink,
   Trash2,
   RefreshCw,
   ArrowUpDown,
@@ -342,31 +340,6 @@ export function LdapList({
           <Text size="2">No servers match your filter</Text>
         </Box>
       )}
-
-      {/* Help Section */}
-      <Box className="ldap-list__help">
-        <Flex align="center" gap="2" className="ldap-list__help-header">
-          <Info size={16} aria-hidden="true" />
-          <Text size="2" weight="medium">About LDAP Servers</Text>
-        </Flex>
-        <Text size="2" className="ldap-list__help-text">
-          LDAP servers are used for user authentication and authorization. The order determines
-          which server is tried first. Drag servers to reorder them.
-        </Text>
-        <Text size="2" className="ldap-list__help-text">
-          See our{' '}
-          <a
-            href="http://links.sonatype.com/products/nxrm3/docs/ldap"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ldap-list__help-link"
-          >
-            documentation
-            <ExternalLink size={12} aria-hidden="true" />
-          </a>
-          {' '}for more information.
-        </Text>
-      </Box>
 
       {/* Delete Confirmation Modal */}
       <ConfirmDialog

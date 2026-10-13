@@ -66,7 +66,7 @@ function makeVm(overrides: Partial<UseUsersFormResult> = {}): UseUsersFormResult
     isExternal: false,
     isDirty: false,
     rolesDirty: false,
-    isPro: true,
+    isLicensedEdition: true,
     isUserTokenCapabilityActive: true,
     canResetUserToken: true,
     showsUserTokenReset: true,

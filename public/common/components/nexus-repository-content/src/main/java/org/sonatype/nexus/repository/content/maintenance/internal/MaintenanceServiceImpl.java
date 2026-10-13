@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import javax.annotation.Nullable;
 import jakarta.inject.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -45,7 +46,7 @@ import org.apache.shiro.authz.AuthorizationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.lang.Thread.MIN_PRIORITY;
 import static java.time.OffsetDateTime.now;
@@ -83,11 +84,11 @@ public class MaintenanceServiceImpl
       @Named("org.sonatype.nexus.thread.DatabaseStatusDelayedExecutor") final ExecutorService executorService,
       final DatabaseCheck databaseCheck)
   {
-    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
-    this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
-    this.deleteFolderService = checkNotNull(deleteFolderService);
-    this.databaseCheck = checkNotNull(databaseCheck);
+    this.contentPermissionChecker = requireNonNull(contentPermissionChecker);
+    this.variableResolverAdapterManager = requireNonNull(variableResolverAdapterManager);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
+    this.deleteFolderService = requireNonNull(deleteFolderService);
+    this.databaseCheck = requireNonNull(databaseCheck);
 
     this.executorService = forCurrentSubject(newSingleThreadExecutor(
         new NexusThreadFactory("delete-path", "Delete path in Tree Browse View", MIN_PRIORITY)));
@@ -95,40 +96,71 @@ public class MaintenanceServiceImpl
 
   @Override
   public Set<String> deleteAsset(final Repository repository, final Asset asset) {
-    checkNotNull(repository);
-    checkNotNull(asset);
+    requireNonNull(repository);
+    requireNonNull(asset);
 
     if (!canDeleteAsset(repository, asset)) {
       throw new AuthorizationException();
     }
 
-    // Check for maintenance facet BEFORE deleting browse node to prevent orphaned browse nodes
     ContentMaintenanceFacet facet = maintenanceFacet(repository);
-    deleteBrowseNode(repository, asset);
 
-    return facet.deleteAsset(asset);
+    // Pre-capture the browse node id before deleting the asset. The DB has an ON DELETE SET NULL
+    // constraint on browse_node.asset_id, so once the asset row is deleted, the browse node's
+    // asset_id becomes NULL and cannot be used to find the node. We look it up now while it is
+    // still set.
+    Long browseNodeId = prefetchBrowseNodeId(repository, asset);
+
+    // Delete the asset first; if the format facet rejects the deletion (e.g. 409 referential-
+    // integrity guard), the browse node must not be removed — otherwise it becomes orphaned.
+    Set<String> deleted = facet.deleteAsset(asset);
+
+    // Asset deletion succeeded; delete the browse node using the pre-captured node id.
+    deleteBrowseNodeById(repository, browseNodeId);
+
+    return deleted;
+  }
+
+  @Nullable
+  private Long prefetchBrowseNodeId(final Repository repository, final Asset asset) {
+    if (!isPostgresql()) {
+      return null;
+    }
+    if (isNpmRepository(repository) && shouldPreserveBrowseNode(asset)) {
+      return null;
+    }
+    Integer internalAssetId = InternalIds.internalAssetId(asset);
+    return repository.optionalFacet(BrowseFacet.class)
+        .map(facet -> facet.getNodeIdForAsset(internalAssetId))
+        .orElse(null);
+  }
+
+  private void deleteBrowseNodeById(final Repository repository, @Nullable final Long nodeId) {
+    if (nodeId != null) {
+      repository.optionalFacet(BrowseFacet.class)
+          .ifPresent(facet -> facet.deleteByNodeIdAndCleanParents(nodeId));
+    }
   }
 
   @Override
   public Set<String> deleteComponent(final Repository repository, final Component component) {
-    checkNotNull(repository);
-    checkNotNull(component);
+    requireNonNull(repository);
+    requireNonNull(component);
 
     if (!canDeleteComponent(repository, component)) {
       throw new AuthorizationException();
     }
 
-    // Check for maintenance facet BEFORE deleting browse node to prevent orphaned browse nodes
     ContentMaintenanceFacet facet = maintenanceFacet(repository);
+    Set<String> deleted = facet.deleteComponent(component);
     deleteBrowseNode(repository, component);
-
-    return facet.deleteComponent(component);
+    return deleted;
   }
 
   @Override
   public void deleteFolder(final Repository repository, final String path) {
-    checkNotNull(repository);
-    checkNotNull(path);
+    requireNonNull(repository);
+    requireNonNull(path);
 
     if (!canDeleteFolder(repository, path)) {
       throw new AuthorizationException();
@@ -187,8 +219,8 @@ public class MaintenanceServiceImpl
 
   @Override
   public Set<String> deleteAssets(final Repository repository, final List<Integer> assetIds) {
-    checkNotNull(repository);
-    checkNotNull(assetIds);
+    requireNonNull(repository);
+    requireNonNull(assetIds);
     if (assetIds.isEmpty()) {
       return Set.of();
     }

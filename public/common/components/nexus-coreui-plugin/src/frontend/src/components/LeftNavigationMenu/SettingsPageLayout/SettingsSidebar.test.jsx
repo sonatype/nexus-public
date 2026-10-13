@@ -371,31 +371,15 @@ describe('SettingsSidebar', () => {
       });
 
       describe('service account tokens link', () => {
-        it('should render if serviceAccountEnabled flag is true', async () => {
+        it('should render based on permission only', async () => {
           givenUserLoggedIn();
           givenPermissions({ 'nexus:service-accounts:read': true });
-          givenStateValues({
-            ...getDefaultStateValues(),
-            serviceAccountEnabled: true,
-          });
           renderComponent();
           await assertLinkVisible('Service Account Tokens', '/#admin/security/satokens', 'Security');
         });
 
-        it('should not render if serviceAccountEnabled flag is false', async () => {
+        it('should not render if user has no service-accounts read permission', async () => {
           givenUserLoggedIn();
-          givenPermissions({ 'nexus:service-accounts:read': true });
-          givenStateValues({
-            ...getDefaultStateValues(),
-            serviceAccountEnabled: false,
-          });
-          renderComponent();
-          await assertLinkNotVisible('Service Account Tokens', 'Security');
-        });
-
-        it('should not render if serviceAccountEnabled flag is not set', async () => {
-          givenUserLoggedIn();
-          givenPermissions({ 'nexus:service-accounts:read': true });
           renderComponent();
           await assertLinkNotVisible('Service Account Tokens', 'Security');
         });

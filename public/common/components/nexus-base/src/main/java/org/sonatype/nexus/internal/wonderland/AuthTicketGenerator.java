@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,7 +47,7 @@ public class AuthTicketGenerator
       final RandomBytesGenerator randomBytes,
       @Value(CPREFIX + ".defaultSize:66}") final int defaultSize)
   {
-    this.randomBytes = checkNotNull(randomBytes);
+    this.randomBytes = requireNonNull(randomBytes);
     this.defaultSize = defaultSize;
     log.debug("Default size: {}", defaultSize);
   }

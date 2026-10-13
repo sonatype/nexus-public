@@ -33,7 +33,7 @@ import jakarta.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
@@ -58,7 +58,7 @@ public abstract class AssetsResourceSupport
   private final ContentAuthHelper contentAuthHelper;
 
   public AssetsResourceSupport(final ContentAuthHelper contentAuthHelper) {
-    this.contentAuthHelper = checkNotNull(contentAuthHelper);
+    this.contentAuthHelper = requireNonNull(contentAuthHelper);
   }
 
   @VisibleForTesting

@@ -22,7 +22,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Component(BrowseTrimCapabilityDescriptor.TYPE_ID)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -33,7 +33,7 @@ public class BrowseTrimCapability
 
   @Autowired
   public BrowseTrimCapability(final BrowseTrimService browseTrimService) {
-    this.browseTrimService = checkNotNull(browseTrimService);
+    this.browseTrimService = requireNonNull(browseTrimService);
   }
 
   @Override

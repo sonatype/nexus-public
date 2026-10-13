@@ -32,8 +32,8 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import org.apache.maven.artifact.repository.metadata.Metadata;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.26
@@ -127,8 +127,8 @@ public class DatastoreMetadataUpdater
 
   @Override
   protected void delete(final MavenPath mavenPath) {
-    checkNotNull(repository);
-    checkNotNull(mavenPath);
+    requireNonNull(repository);
+    requireNonNull(mavenPath);
     try {
       repository.facet(MavenContentFacet.class).deleteWithHashes(mavenPath);
     }

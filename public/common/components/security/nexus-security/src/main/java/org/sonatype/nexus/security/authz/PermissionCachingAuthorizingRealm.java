@@ -24,7 +24,7 @@ import org.apache.shiro.authz.permission.RolePermissionResolver;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Abstract {@link AuthorizingRealm} base that resolves a subject's permissions <em>once</em> per principal and caches
@@ -63,11 +63,12 @@ public abstract class PermissionCachingAuthorizingRealm
     super();
     // Set a stable/deterministic realm name here rather than relying on each subclass to call setName(...) after
     // super(...) (NEXUS-53719).
-    setName(checkNotNull(realmName, "realmName"));
+    setName(requireNonNull(realmName, "realmName"));
     setAuthorizationCachingEnabled(true);
     // Each realm owns its own permission cache instance (sized per realm); realms never share entries or invalidation.
-    this.principalPermissionsCache = checkNotNull(principalPermissionsCacheFactory, "principalPermissionsCacheFactory")
-        .create(realmName);
+    this.principalPermissionsCache =
+        requireNonNull(principalPermissionsCacheFactory, "principalPermissionsCacheFactory")
+            .create(realmName);
   }
 
   /**

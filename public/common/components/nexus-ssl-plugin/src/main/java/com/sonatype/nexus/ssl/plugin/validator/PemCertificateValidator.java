@@ -29,6 +29,9 @@ public class PemCertificateValidator
 {
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
     try {
       CertificateUtil.decodePEMFormattedCertificate(value);
       return true;

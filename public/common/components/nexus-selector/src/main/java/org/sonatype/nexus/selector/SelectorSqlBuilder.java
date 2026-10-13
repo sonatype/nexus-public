@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isAlphanumeric;
 
 /**
@@ -44,7 +44,7 @@ public class SelectorSqlBuilder
    * Aliases the given property name to a specific record field.
    */
   public SelectorSqlBuilder propertyAlias(final String name, final String alias) {
-    propertyAliases.put(checkNotNull(name), checkNotNull(alias));
+    propertyAliases.put(requireNonNull(name), requireNonNull(alias));
     return this;
   }
 
@@ -52,7 +52,7 @@ public class SelectorSqlBuilder
    * Sets the record field prefix to use for non-aliased property names.
    */
   public SelectorSqlBuilder propertyPrefix(final String prefix) {
-    propertyPrefix = checkNotNull(prefix);
+    propertyPrefix = requireNonNull(prefix);
     return this;
   }
 
@@ -60,7 +60,7 @@ public class SelectorSqlBuilder
    * Sets the unique prefix to use for generated parameter names.
    */
   public SelectorSqlBuilder parameterPrefix(final String prefix) {
-    parameterPrefix = checkNotNull(prefix);
+    parameterPrefix = requireNonNull(prefix);
     return this;
   }
 
@@ -68,7 +68,7 @@ public class SelectorSqlBuilder
    * Sets the unique prefix to use for generated parameter names.
    */
   public SelectorSqlBuilder parameterNamePrefix(final String namePrefix) {
-    parameterNamePrefix = checkNotNull(namePrefix);
+    parameterNamePrefix = requireNonNull(namePrefix);
     return this;
   }
 
@@ -76,7 +76,7 @@ public class SelectorSqlBuilder
    * Sets the unique suffix to use for generated parameter names.
    */
   public SelectorSqlBuilder parameterSuffix(final String suffix) {
-    parameterSuffix = checkNotNull(suffix);
+    parameterSuffix = requireNonNull(suffix);
     return this;
   }
 

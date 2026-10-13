@@ -88,7 +88,6 @@ jest.mock('../../../interface/ExtJS', () => ({
 }));
 
 describe('LoginPage', () => {
-  const mockLogoConfig = { url: 'test-logo.png' };
   const mockState = jest.fn();
 
   beforeEach(() => {
@@ -141,7 +140,7 @@ describe('LoginPage', () => {
     it('renders login form when no SSO is enabled', () => {
       setupStates(false, false, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('login-tile')).toBeInTheDocument();
       expect(screen.getByText(UIStrings.LOGIN_TITLE)).toBeInTheDocument();
@@ -154,7 +153,7 @@ describe('LoginPage', () => {
     it('renders both SSO button and login form with divider when SAML is enabled', () => {
       setupStates(true, false, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
@@ -165,7 +164,7 @@ describe('LoginPage', () => {
     it('renders both SSO button and login form with divider when OAuth2 is enabled', () => {
       setupStates(false, true, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
@@ -176,7 +175,7 @@ describe('LoginPage', () => {
     it('sets LocalLogin primaryButton to false when SSO is enabled', () => {
       setupStates(true, false, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       const loginForm = screen.getByTestId('login-form');
       expect(loginForm).toHaveAttribute('data-primary-button', 'false');
@@ -185,7 +184,7 @@ describe('LoginPage', () => {
     it('sets LocalLogin primaryButton to true when SSO is not enabled', () => {
       setupStates(false, false, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       const loginForm = screen.getByTestId('login-form');
       expect(loginForm).toHaveAttribute('data-primary-button', 'true');
@@ -210,7 +209,7 @@ describe('LoginPage', () => {
     it('does not render login form in cloud environment without SSO', () => {
       setupStates(false, false, true);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('login-tile')).toBeInTheDocument();
       expect(screen.getByText(UIStrings.LOGIN_TITLE)).toBeInTheDocument();
@@ -223,7 +222,7 @@ describe('LoginPage', () => {
     it('renders only SSO button without divider in cloud environment with OAuth2 enabled', () => {
       setupStates(false, true, true);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
@@ -234,7 +233,7 @@ describe('LoginPage', () => {
     it('renders only SSO button without divider in cloud environment with SAML enabled', () => {
       setupStates(true, false, true);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
@@ -245,7 +244,7 @@ describe('LoginPage', () => {
     it('renders only SSO button without divider in cloud environment with both SAML and OAuth2 enabled', () => {
       setupStates(true, true, true);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
@@ -254,22 +253,11 @@ describe('LoginPage', () => {
     });
   });
 
-  describe('logo configuration', () => {
-    it('passes logoConfig to LoginLayout', () => {
-      setupStates(false, false, false);
-      const customLogoConfig = { url: 'custom-logo.png', alt: 'Custom Logo' };
-
-      renderComponent({ logoConfig: customLogoConfig });
-
-      expect(screen.getByTestId('login-layout')).toBeInTheDocument();
-    });
-  });
-
   describe('general error handling', () => {
     it('does not display error alert initially', () => {
       setupStates(false, false, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
@@ -277,7 +265,7 @@ describe('LoginPage', () => {
     it('displays general errors received from LocalLogin', () => {
       setupStates(false, false, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       act(() => {
         mockOnErrorCallbacks.local('Server unavailable');
@@ -290,7 +278,7 @@ describe('LoginPage', () => {
     it('allows user to dismiss the error alert', () => {
       setupStates(false, false, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       act(() => {
         mockOnErrorCallbacks.local('Connection failed. Please check your network connection.');
@@ -307,7 +295,7 @@ describe('LoginPage', () => {
     it('replaces previous error when new error is received', () => {
       setupStates(false, false, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       act(() => {
         mockOnErrorCallbacks.local('First error');
@@ -334,7 +322,7 @@ describe('LoginPage', () => {
     it('does not render anonymous access button when anonymous username is not configured', () => {
       setupStates(false, false, false, null);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
       expect(screen.queryByTestId('continue-without-login-button')).not.toBeInTheDocument();
@@ -343,7 +331,7 @@ describe('LoginPage', () => {
     it('renders anonymous access button when anonymous username is configured', () => {
       setupStates(false, false, false, 'anonymous');
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
       expect(screen.getByTestId('continue-without-login-button')).toBeInTheDocument();
@@ -352,7 +340,7 @@ describe('LoginPage', () => {
     it('renders anonymous access button with SSO enabled', () => {
       setupStates(true, false, false, 'anonymous');
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
@@ -362,7 +350,7 @@ describe('LoginPage', () => {
     it('does not render anonymous access button when anonymous username is empty string', () => {
       setupStates(false, false, false, '');
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.queryByTestId('continue-without-login-button')).not.toBeInTheDocument();
     });
@@ -370,7 +358,7 @@ describe('LoginPage', () => {
     it('does not render anonymous access button when anonymous username is undefined', () => {
       setupStates(false, false, false, undefined);
 
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      render(<LoginPage />);
 
       expect(screen.queryByTestId('continue-without-login-button')).not.toBeInTheDocument();
     });
@@ -380,7 +368,7 @@ describe('LoginPage', () => {
       const returnToUrl = '#browse/browse:maven-snapshots';
       mockRouterParams.returnTo = btoa(returnToUrl);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       const button = screen.getByTestId('continue-without-login-button');
       button.click();
@@ -392,7 +380,7 @@ describe('LoginPage', () => {
     it('redirects to welcome page when no returnTo is provided and continuing without login', () => {
       setupStates(false, false, false, 'anonymous');
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       const button = screen.getByTestId('continue-without-login-button');
       button.click();
@@ -407,7 +395,7 @@ describe('LoginPage', () => {
       const passwordFilePath = '/path/to/admin.password';
       setupStates(false, false, false, null, passwordFilePath, true, true, true, false, true);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('initial-password-info')).toBeInTheDocument();
       expect(screen.getByText(passwordFilePath)).toBeInTheDocument();
@@ -416,7 +404,7 @@ describe('LoginPage', () => {
     it('does not display initial password info when admin password file path is not provided', () => {
       setupStates(false, false, false, null, null);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.queryByTestId('initial-password-info')).not.toBeInTheDocument();
     });
@@ -424,7 +412,7 @@ describe('LoginPage', () => {
     it('does not display initial password info when admin password file path is empty string', () => {
       setupStates(false, false, false, null, '');
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.queryByTestId('initial-password-info')).not.toBeInTheDocument();
     });
@@ -432,7 +420,7 @@ describe('LoginPage', () => {
     it('does not display initial password info when admin password file path is undefined', () => {
       setupStates(false, false, false, null, undefined);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.queryByTestId('initial-password-info')).not.toBeInTheDocument();
     });
@@ -441,7 +429,7 @@ describe('LoginPage', () => {
       const passwordFilePath = '/path/to/admin.password';
       setupStates(true, false, false, null, passwordFilePath, true, true, true, false, true);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('initial-password-info')).toBeInTheDocument();
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
@@ -453,7 +441,7 @@ describe('LoginPage', () => {
 
       setupStates(false, false, true, null, passwordFilePath);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.queryByTestId('initial-password-info')).not.toBeInTheDocument();
     });
@@ -463,7 +451,7 @@ describe('LoginPage', () => {
 
       setupStates(false, false, false, null, passwordFilePath, true, true, true, false, false);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.queryByTestId('initial-password-info')).not.toBeInTheDocument();
     });
@@ -473,7 +461,7 @@ describe('LoginPage', () => {
 
       setupStates(false, false, false, null, passwordFilePath, true, true, true, false, true);
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       expect(screen.getByTestId('initial-password-info')).toBeInTheDocument();
       expect(screen.getByText(passwordFilePath)).toBeInTheDocument();
@@ -486,13 +474,13 @@ describe('LoginPage', () => {
         getValue: jest.fn().mockReturnValue(undefined)
       });
 
-      renderComponent({ logoConfig: mockLogoConfig });
+      renderComponent();
 
       // When all states are undefined (all false by default), no realms are enabled, so no login form
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
     });
 
-    it('handles missing logoConfig gracefully', () => {
+    it('renders the login tile even when no extra props are supplied', () => {
       setupStates(false, false, false, null);
 
       renderComponent({});
@@ -506,7 +494,7 @@ describe('LoginPage', () => {
       it('shows local login when at least one realm is enabled', () => {
         setupStates(false, false, false, null, true, false, false); // only LDAP enabled
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.getByTestId('login-form')).toBeInTheDocument();
       });
@@ -514,7 +502,7 @@ describe('LoginPage', () => {
       it('shows local login when userToken realm is enabled', () => {
         setupStates(false, false, false, null, false, true, false); // only UserToken enabled
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.getByTestId('login-form')).toBeInTheDocument();
       });
@@ -522,7 +510,7 @@ describe('LoginPage', () => {
       it('shows local login when localAuth realm is enabled', () => {
         setupStates(false, false, false, null, false, false, true); // only LocalAuth enabled
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.getByTestId('login-form')).toBeInTheDocument();
       });
@@ -530,7 +518,7 @@ describe('LoginPage', () => {
       it('shows local login when multiple realms are enabled', () => {
         setupStates(false, false, false, null, true, true, false); // LDAP and UserToken enabled
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.getByTestId('login-form')).toBeInTheDocument();
       });
@@ -538,7 +526,7 @@ describe('LoginPage', () => {
       it('shows local login when all realms are enabled', () => {
         setupStates(false, false, false, null, true, true, true); // all realms enabled
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.getByTestId('login-form')).toBeInTheDocument();
       });
@@ -546,7 +534,7 @@ describe('LoginPage', () => {
       it('hides local login when no realms are enabled', () => {
         setupStates(false, false, false, null, null, false, false, false); // no realms enabled
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
       });
@@ -554,7 +542,7 @@ describe('LoginPage', () => {
       it('shows SSO but hides local login when SSO is enabled but no realms are enabled', () => {
         setupStates(true, false, false, null, null, false, false, false); // SAML enabled, no realms
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
         expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
@@ -564,7 +552,7 @@ describe('LoginPage', () => {
       it('shows both SSO and local login with divider when SSO and at least one realm are enabled', () => {
         setupStates(true, false, false, null, true, false, false); // SAML and LDAP realm enabled
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
         expect(screen.getByTestId('login-form')).toBeInTheDocument();
@@ -590,7 +578,7 @@ describe('LoginPage', () => {
       it('hides local login in cloud even when all realms are enabled', () => {
         setupStates(false, false, true, null, true, true, true); // cloud, all realms enabled
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
       });
@@ -598,7 +586,7 @@ describe('LoginPage', () => {
       it('hides local login in cloud when no realms are enabled', () => {
         setupStates(false, false, true, null, false, false, false); // cloud, no realms
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
       });
@@ -606,7 +594,7 @@ describe('LoginPage', () => {
       it('shows only SSO in cloud when SSO is enabled regardless of realm status', () => {
         setupStates(false, true, true, null, true, true, true); // cloud, OAuth2, all realms enabled
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
         expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
@@ -618,7 +606,7 @@ describe('LoginPage', () => {
       it('shows anonymous access button even when no realms are enabled', () => {
         setupStates(false, false, false, 'anonymous', null, false, false, false); // anonymous, no realms
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
         expect(screen.getByTestId('continue-without-login-button')).toBeInTheDocument();
@@ -627,7 +615,7 @@ describe('LoginPage', () => {
       it('shows both local login and anonymous access when realms are enabled', () => {
         setupStates(false, false, false, 'anonymous', null, true, false, false); // anonymous, LDAP realm
 
-        renderComponent({ logoConfig: mockLogoConfig });
+        renderComponent();
 
         expect(screen.getByTestId('login-form')).toBeInTheDocument();
         expect(screen.getByTestId('continue-without-login-button')).toBeInTheDocument();

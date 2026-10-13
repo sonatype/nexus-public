@@ -55,6 +55,7 @@ jest.mock('../../routerConfig/routeNames/routeNames', () => ({
         CUSTOM: 'browse.search.custom',
       },
       BROWSE: { ROOT: 'browse.browse' },
+      TRASH: { ROOT: 'browse.trash' },
       UPLOAD: { ROOT: 'browse.upload', LIST: 'browse.upload.list' },
       TAGS: { ROOT: 'browse.tags' },
       MALWARERISK: { ROOT: 'browse.malwarerisk' },
@@ -80,6 +81,7 @@ jest.mock('lucide-react', () => {
     FolderOpen: Icon,
     HardDriveUpload: Icon,
     Tags: Icon,
+    Trash2: Icon,
     Settings: Icon,
     ShieldAlert: Icon,
     FileCode: Icon,
@@ -108,7 +110,7 @@ const menuResult = (overrides: Partial<UseLeftNavigationMenuResult> = {}): UseLe
   isPreviewUI: false,
   adminInitialRouteName: 'admin.system.api',
   isSettingsVisible: true,
-  isProEdition: true,
+  isLicensedEdition: true,
   ...overrides,
 });
 
@@ -194,7 +196,7 @@ describe('LeftNavigationMenuRadix', () => {
   });
 
   it('shouldNotShowTagsNavItemInCEMode', () => {
-    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isProEdition: false }));
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isLicensedEdition: false }));
 
     render(<LeftNavigationMenuRadix />);
 
@@ -202,11 +204,28 @@ describe('LeftNavigationMenuRadix', () => {
   });
 
   it('shouldShowTagsNavItemInProEdition', () => {
-    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isProEdition: true }));
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isLicensedEdition: true }));
 
     render(<LeftNavigationMenuRadix />);
 
     expect(screen.getByTestId('nav-item-browse.tags')).toBeInTheDocument();
     expect(screen.getByText('Tags')).toBeInTheDocument();
+  });
+
+  it('shouldShowTrashNavItemInClassicUI', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isPreviewUI: false }));
+
+    render(<LeftNavigationMenuRadix />);
+
+    expect(screen.getByTestId('nav-item-browse.trash')).toBeInTheDocument();
+    expect(screen.getByText('Trash')).toBeInTheDocument();
+  });
+
+  it('shouldShowTrashNavItemInPreviewUI', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isPreviewUI: true }));
+
+    render(<LeftNavigationMenuRadix />);
+
+    expect(screen.getByTestId('nav-item-preview.browse.trash')).toBeInTheDocument();
   });
 });

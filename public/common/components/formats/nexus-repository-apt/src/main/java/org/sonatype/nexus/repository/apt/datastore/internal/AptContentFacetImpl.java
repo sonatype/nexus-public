@@ -60,7 +60,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -270,13 +270,13 @@ public class AptContentFacetImpl
 
   @Override
   public TempBlob getTempBlob(final Payload payload) {
-    checkNotNull(payload);
+    requireNonNull(payload);
     return blobs().ingest(payload, AptFacetHelper.hashAlgorithms);
   }
 
   @Override
   public TempBlob getTempBlob(final InputStream in, @Nullable final String contentType) {
-    checkNotNull(in);
+    requireNonNull(in);
     return blobs().ingest(in, contentType, AptFacetHelper.hashAlgorithms);
   }
 

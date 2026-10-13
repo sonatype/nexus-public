@@ -17,6 +17,7 @@ import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -48,9 +49,9 @@ import com.google.common.base.Stopwatch;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Math.max;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
@@ -94,9 +95,9 @@ public class BrowseFacetImpl
       @Value("${nexus.browse.rebuild.pageSize:1000}") final int pageSize)
   {
     this.formatStoreManagersByFormat =
-        QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersByFormatList));
+        QualifierUtil.buildQualifierBeanMap(requireNonNull(formatStoreManagersByFormatList));
     this.browseNodeGeneratorsByFormat =
-        QualifierUtil.buildQualifierBeanMap(checkNotNull(browseNodeGeneratorsByFormatList));
+        QualifierUtil.buildQualifierBeanMap(requireNonNull(browseNodeGeneratorsByFormatList));
     this.pageSize = max(pageSize, 1);
   }
 
@@ -179,6 +180,18 @@ public class BrowseFacetImpl
           break;
         }
 
+        // Do not delete a node that directly represents an asset. For example, npm metadata
+        // (packument) assets share a browse node path with the parent directory of tarballs.
+        // Deleting all tarballs under /es5-ext must not remove the /es5-ext metadata node,
+        // since that node still points to a live asset in the database (NEXUS-54552).
+        // Note: assetCount (above) counts direct-child asset links; this check is for the
+        // node's own asset link. The assetCount guard fires first when siblings still exist.
+        if (parentNode.getAssetId() != null) {
+          break;
+        }
+
+        // Cast after the interface-level guards to avoid an unchecked cast for the
+        // getNodeId() call, which is only available on BrowseNodeData.
         BrowseNodeData nodeToDelete = (BrowseNodeData) parentNode;
 
         // If the node has no assets, check if it has children with assets or components
@@ -202,6 +215,37 @@ public class BrowseFacetImpl
   @Override
   public Optional<BrowseNode> getByRequestPath(final String requestPath) {
     return Optional.ofNullable(browseNodeManager.getByRequestPath(requestPath));
+  }
+
+  @Override
+  @Nullable
+  public Long getNodeIdForAsset(final Integer assetId) {
+    return browseNodeManager.getNodeIdForAsset(assetId);
+  }
+
+  @Override
+  public void deleteByNodeIdAndCleanParents(final Long nodeId) {
+    Long parentNodeId = browseNodeManager.deleteByNodeIdReturningParentId(nodeId);
+
+    if (parentNodeId != null) {
+      List<BrowseNode> parentNodes = browseNodeManager.getNodeParents(parentNodeId);
+      for (BrowseNode parentNode : parentNodes) {
+        if (parentNode == null) {
+          continue;
+        }
+        long assetCount = parentNode.getAssetCount() == null ? 0L : parentNode.getAssetCount();
+        if (assetCount > 0) {
+          break;
+        }
+        BrowseNodeData nodeToDelete = (BrowseNodeData) parentNode;
+        boolean hasChildren = browseNodeManager.hasAnyAssetOrComponentChildren(nodeToDelete.getNodeId());
+        if (hasChildren) {
+          break;
+        }
+        log.debug("Deleting node with id = {} and path = '{}'", nodeToDelete.getNodeId(), nodeToDelete.getPath());
+        deleteByNodeId(nodeToDelete.getNodeId());
+      }
+    }
   }
 
   /**

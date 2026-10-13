@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.cleanup.internal.rest;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -19,14 +20,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import java.io.ByteArrayOutputStream;
-
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.StreamingOutput;
-
-import org.sonatype.nexus.extdirect.model.PagedResponse;
-import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.config.DefaultCleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.internal.preview.CsvCleanupPreviewContentWriter;
@@ -35,36 +28,46 @@ import org.sonatype.nexus.cleanup.rest.CleanupPolicyRequestValidator;
 import org.sonatype.nexus.cleanup.rest.CleanupPolicyXO;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
+import org.sonatype.nexus.cleanup.storage.config.UniqueCleanupPolicyNameValidator;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension.RegisterValidator;
 
+import com.google.common.collect.Iterables;
 import jakarta.inject.Provider;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.util.Collections.singleton;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringEndsWith.endsWith;
 import static org.hamcrest.core.StringStartsWith.startsWith;
-import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -80,10 +83,14 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SORT_BY_KEY;
 
-@ExtendWith({ValidationExtension.class, AuthenticationExtension.class, MockitoExtension.class})
+@ExtendWith({AuthenticationExtension.class, MockitoExtension.class, ValidationExtension.class})
 @WithUser
 class CleanupPolicyResourceTest
 {
+  @RegisterValidator
+  @Mock
+  UniqueCleanupPolicyNameValidator validator;
+
   @Mock
   private CleanupPolicyStorage cleanupPolicyStorage;
 
@@ -123,6 +130,7 @@ class CleanupPolicyResourceTest
 
   @BeforeEach
   void setUp() throws Exception {
+    lenient().when(validator.isValid(any(), any())).thenReturn(true);
     mockedStatic = mockStatic(QualifierUtil.class);
     cleanupFormatConfigurationMap =
         Map.of(DefaultCleanupPolicyConfiguration.NAME, mock(CleanupPolicyConfiguration.class));
@@ -161,7 +169,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     String contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     String expectedPrefix = "attachment; filename=\"CleanupPreview-" + repositoryName;
     assertThat(contentDisposition, startsWith(expectedPrefix));
     assertThat(contentDisposition, endsWith(".csv\""));
@@ -170,7 +178,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     expectedPrefix = "attachment; filename=\"policy-name-" + repositoryName;
     assertThat(contentDisposition, startsWith(expectedPrefix));
     assertThat(contentDisposition, endsWith(".csv\""));
@@ -205,7 +213,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     String contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     assertThat(contentDisposition, startsWith("attachment; filename=\"test-policy-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv\""));
 
@@ -222,7 +230,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     assertThat(contentDisposition, startsWith("attachment; filename=\"special-chars-policy-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv\""));
 
@@ -239,7 +247,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     assertThat(contentDisposition, startsWith("attachment; filename=\"complex-regex-policy-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv\""));
   }
@@ -274,7 +282,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     String contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     assertThat(contentDisposition, startsWith("attachment; filename=\"url-encoded-policy-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv\""));
 
@@ -292,7 +300,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     assertThat(contentDisposition, startsWith("attachment; filename=\"encoded-parentheses-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv\""));
 
@@ -310,7 +318,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     assertThat(contentDisposition, startsWith("attachment; filename=\"mixed-encoding-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv\""));
   }
@@ -540,19 +548,14 @@ class CleanupPolicyResourceTest
     Map<String, Boolean> configMap = new HashMap<>();
     configMap.put(REGEX_KEY, true);
     CleanupPolicyConfiguration mockConfig = mock(CleanupPolicyConfiguration.class);
-    when(mockConfig.getConfiguration()).thenReturn(configMap);
 
     CleanupPolicyConfiguration defaultConfig = mock(CleanupPolicyConfiguration.class);
-    lenient().when(defaultConfig.getConfiguration()).thenReturn(configMap);
 
     cleanupFormatConfigurationMap = Map.of(
         "docker", mockConfig,
         DefaultCleanupPolicyConfiguration.NAME, defaultConfig);
     when(QualifierUtil.buildQualifierBeanMap(Mockito.<List<CleanupPolicyConfiguration>>any()))
         .thenReturn(cleanupFormatConfigurationMap);
-
-    CleanupPolicy mockPolicy = mock(CleanupPolicy.class);
-    when(cleanupPolicyStorage.newCleanupPolicy()).thenReturn(mockPolicy);
 
     List<Format> mockFormats = List.of(mockFormat);
     when(mockFormat.getValue()).thenReturn("docker");
@@ -577,10 +580,11 @@ class CleanupPolicyResourceTest
     policyXO.setCriteriaAssetRegex("[0-9"); // Invalid: unclosed bracket
 
     // Execute and verify exception
-    ValidationErrorsException exception = assertThrows(
-        ValidationErrorsException.class,
-        () -> underTest.add(policyXO));
-    assertThat(exception.getMessage(), containsString("Invalid regex pattern"));
+    ConstraintViolationException exception =
+        assertThrows(ConstraintViolationException.class, () -> underTest.add(policyXO));
+    ConstraintViolation<?> violation = Iterables.getOnlyElement(exception.getConstraintViolations());
+    assertThat(violation.getPropertyPath().toString(), containsString("criteriaAssetRegex"));
+    assertThat(violation.getMessage(), containsString("Invalid regular expression pattern"));
   }
 
   @Test
@@ -672,7 +676,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     String contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     // Semicolon should be removed, resulting in "setup.batignore"
     assertThat(contentDisposition, startsWith("attachment; filename=\"setup.batignore-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv\""));
@@ -693,7 +697,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     // Quote should be removed
     assertThat(contentDisposition, startsWith("attachment; filename=\"testfile-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv\""));
@@ -711,7 +715,7 @@ class CleanupPolicyResourceTest
 
     assertThat(response.getStatus(), is(200));
     contentDisposition = response.getHeaderString("Content-Disposition");
-    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, not(emptyOrNullString()));
     // Backslash should be removed
     assertThat(contentDisposition, startsWith("attachment; filename=\"testfile-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv\""));
@@ -1217,7 +1221,8 @@ class CleanupPolicyResourceTest
   void testUpdateRepositoriesForPolicyNotFound() {
     underTest = newResource(formats, true, true);
     when(cleanupPolicyStorage.get("missing")).thenReturn(null);
-    CleanupPolicyRepositoriesRequestXO req = mock(CleanupPolicyRepositoriesRequestXO.class);
+    CleanupPolicyRepositoriesRequestXO req = new CleanupPolicyRepositoriesRequestXO();
+    req.setRepositories(List.of("r1", "r2"));
 
     assertThrows(NotFoundException.class, () -> underTest.updateRepositoriesForPolicy("missing", req));
   }
@@ -1227,25 +1232,12 @@ class CleanupPolicyResourceTest
     underTest = newResource(formats, true, true);
     CleanupPolicy p = policyMock("p", "npm");
     when(cleanupPolicyStorage.get("p")).thenReturn(p);
-    CleanupPolicyRepositoriesRequestXO req = mock(CleanupPolicyRepositoriesRequestXO.class);
-    when(req.getRepositories()).thenReturn(List.of("r1", "r2"));
+    CleanupPolicyRepositoriesRequestXO req = new CleanupPolicyRepositoriesRequestXO();
+    req.setRepositories(List.of("r1", "r2"));
 
     underTest.updateRepositoriesForPolicy("p", req);
 
     verify(repositoryAssociator).updateRepositoriesForPolicy("p", "npm", Set.of("r1", "r2"));
-  }
-
-  @Test
-  void testUpdateRepositoriesForPolicyNullRepositoriesUsesEmptySet() {
-    underTest = newResource(formats, true, true);
-    CleanupPolicy p = policyMock("p", "npm");
-    when(cleanupPolicyStorage.get("p")).thenReturn(p);
-    CleanupPolicyRepositoriesRequestXO req = mock(CleanupPolicyRepositoriesRequestXO.class);
-    when(req.getRepositories()).thenReturn(null);
-
-    underTest.updateRepositoriesForPolicy("p", req);
-
-    verify(repositoryAssociator).updateRepositoriesForPolicy("p", "npm", Set.of());
   }
 
   @Test

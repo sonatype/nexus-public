@@ -53,7 +53,7 @@ public interface ApiKeyStore
   int count(String domain);
 
   /**
-   * Deletes the API-Key associated with the given principals in given domain.
+   * Deletes every API-Key associated with the given principals in the given domain.
    */
   int deleteApiKey(String domain, PrincipalCollection principals);
 

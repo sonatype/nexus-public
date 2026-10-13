@@ -28,7 +28,7 @@ import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.internal.AuthorizationManagerImpl;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -60,7 +60,7 @@ public class RoleNotContainSelfValidator
 
   @Autowired
   public RoleNotContainSelfValidator(final SecuritySystem securitySystem) throws NoSuchAuthorizationManagerException {
-    this.authorizationManager = checkNotNull(securitySystem).getAuthorizationManager(AuthorizationManagerImpl.SOURCE);
+    this.authorizationManager = requireNonNull(securitySystem).getAuthorizationManager(AuthorizationManagerImpl.SOURCE);
   }
 
   @Override

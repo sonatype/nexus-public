@@ -12,14 +12,14 @@
  */
 package org.sonatype.nexus.repository.routing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class RoutingRuleEvent
 {
   private final RoutingRule routingRule;
 
   public RoutingRuleEvent(final RoutingRule routingRule) {
-    this.routingRule = checkNotNull(routingRule);
+    this.routingRule = requireNonNull(routingRule);
   }
 
   public RoutingRule getRoutingRule() {

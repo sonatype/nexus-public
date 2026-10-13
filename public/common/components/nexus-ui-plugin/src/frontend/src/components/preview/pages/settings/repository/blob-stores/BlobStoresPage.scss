@@ -36,22 +36,6 @@
     width: 300px;
   }
 
-  &__content {
-    flex: 1;
-    gap: var(--space-4);
-    min-height: 0;
-  }
-
-  &__main {
-    flex: 1;
-    min-width: 0;
-  }
-
-  &__sidebar {
-    width: 300px;
-    flex-shrink: 0;
-  }
-
   &__type-icon {
     color: var(--gray-11);
 
@@ -123,10 +107,6 @@
 // Responsive adjustments
 @media (max-width: 1024px) {
   .blob-stores-page {
-    &__sidebar {
-      display: none;
-    }
-
     &__filter {
       width: 100%;
       max-width: 300px;

@@ -38,7 +38,7 @@ Ext.define('NX.oci.view.repository.facet.OciConnectorFacet', {
     var me = this,
       isCloud = NX.State.getValue('isCloud') === true,
       // Subdomain routing is a Pro-only, self-hosted feature — never available on cloud.
-      subdomainVisibility = !isCloud && NX.State.getEdition() === 'PRO';
+      subdomainVisibility = !isCloud && NX.State.isLicensedEdition();
 
     me.items = [
       {

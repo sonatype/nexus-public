@@ -29,7 +29,7 @@ import org.sonatype.nexus.common.property.PropertiesFile;
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -57,7 +57,7 @@ public class FileBlobStoreMetricsPropertiesReader
   protected void doInit(final FileBlobStore blobstore) throws IOException {
     Path storageDir = blobStore.getAbsoluteBlobDir();
 
-    checkNotNull(storageDir);
+    requireNonNull(storageDir);
     checkArgument(Files.isDirectory(storageDir));
     this.storageDirectory = storageDir;
   }

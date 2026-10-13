@@ -12,8 +12,8 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Box, Flex, Text, VisuallyHidden } from '@radix-ui/themes';
-import { Plus, MoreHorizontal, KeyRound } from 'lucide-react';
+import { Box, Flex, Text, TextField, VisuallyHidden } from '@radix-ui/themes';
+import { Plus, MoreHorizontal, KeyRound, Search } from 'lucide-react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
@@ -86,7 +86,7 @@ export function ServiceAccountTokensPage() {
 
   const [filter, setFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [revealedToken, setRevealedToken] = useState<string | null>(null);
+  const [revealedToken, setRevealedToken] = useState<{ name: string; rawToken: string } | null>(null);
   const [revokeTarget, setRevokeTarget] = useState<ServiceAccountToken | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortableColumn>('name');
@@ -125,7 +125,7 @@ export function ServiceAccountTokensPage() {
       try {
         const { rawToken } = await createToken(form);
         setShowCreateModal(false);
-        setRevealedToken(rawToken);
+        setRevealedToken({ name: form.name, rawToken });
         toast.success(MESSAGES.CREATE_SUCCESS(form.name));
       } catch (err: any) {
         toast.error(err?.message || MESSAGES.CREATE_ERROR_GENERIC);
@@ -344,13 +344,12 @@ export function ServiceAccountTokensPage() {
         align="center"
         mb="4"
         className="sat-page__toolbar"
-        role="search"
       >
-        <Box className="sat-page__filter">
+        <Box className="sat-page__filter" role="search">
           <VisuallyHidden>
             <label htmlFor="sat-filter-input">{LABELS.FILTER_LABEL}</label>
           </VisuallyHidden>
-          <input
+          <TextField.Root
             id="sat-filter-input"
             type="text"
             className="sat-page__filter-input"
@@ -359,7 +358,11 @@ export function ServiceAccountTokensPage() {
             onChange={(e) => setFilter(e.target.value)}
             aria-label={LABELS.FILTER_LABEL}
             data-testid="sat-filter-input"
-          />
+          >
+            <TextField.Slot>
+              <Search size={16} />
+            </TextField.Slot>
+          </TextField.Root>
         </Box>
         {canCreate && (
           <SettingsButton
@@ -418,7 +421,8 @@ export function ServiceAccountTokensPage() {
 
       <RevealTokenModal
         open={!!revealedToken}
-        token={revealedToken || ''}
+        name={revealedToken?.name || ''}
+        token={revealedToken?.rawToken || ''}
         onClose={() => setRevealedToken(null)}
         getRestoreFocus={getCreateButton}
       />

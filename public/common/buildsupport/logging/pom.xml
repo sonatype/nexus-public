@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-logging</artifactId>
@@ -29,7 +29,7 @@
 
   <properties>
     <slf4j.version>2.0.17</slf4j.version>
-    <logback.version>1.5.36</logback.version>
+    <logback.version>1.6.3</logback.version>
   </properties>
 
   <dependencyManagement>
@@ -37,12 +37,6 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-simple</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
 

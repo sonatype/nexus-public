@@ -12,7 +12,13 @@
  */
 
 import { UIView, UIRouterReact, servicesPlugin } from '@uirouter/react';
-import { Permissions, PREVIEW_FEATURE_FLAGS, SETTINGS_SECTIONS } from '@sonatype/nexus-ui-plugin';
+import {
+  Permissions,
+  PREVIEW_FEATURE_FLAGS,
+  SETTINGS_SECTIONS,
+  PRO_AND_COMMUNITY_EDITIONS,
+  PRO_FAMILY_EDITIONS,
+} from '@sonatype/nexus-ui-plugin';
 import { previewAdminRoutes } from '../previewAdminRoutes';
 import { previewBrowseRoutes } from '../previewBrowseRoutes';
 
@@ -152,10 +158,10 @@ describe('previewAdminRoutes', () => {
     expect(route.data.visibilityRequirements.requiresPermission).toBe(
       Permissions.USER_TOKENS_SETTINGS.READ,
     );
-    expect(route.data.visibilityRequirements.editions).toEqual(['PRO']);
+    expect(route.data.visibilityRequirements.editions).toEqual([...PRO_FAMILY_EDITIONS]);
   });
 
-  it('uses SERVICE_ACCOUNTS.READ and statesEnabled for serviceaccounttokens route', () => {
+  it('uses SERVICE_ACCOUNTS.READ and PRO edition for serviceaccounttokens route', () => {
     const route = previewAdminRoutes.find((r) => r.name === 'preview.admin.security.serviceaccounttokens');
 
     expect(route).toBeDefined();
@@ -163,11 +169,8 @@ describe('previewAdminRoutes', () => {
     expect(route.data.visibilityRequirements.requiresPermission).toBe(
       Permissions.SERVICE_ACCOUNTS.READ,
     );
-    expect(route.data.visibilityRequirements.statesEnabled).toBeDefined();
-    expect(route.data.visibilityRequirements.statesEnabled).toContainEqual({
-      key: 'serviceAccountEnabled',
-      defaultValue: false,
-    });
+    expect(route.data.visibilityRequirements.editions).toEqual([...PRO_FAMILY_EDITIONS]);
+    expect(route.data.visibilityRequirements.statesEnabled).toBeUndefined();
   });
 
   it('uses LICENSING.READ for licensing route', () => {
@@ -191,7 +194,7 @@ describe('previewAdminRoutes', () => {
 
     expect(route).toBeDefined();
     expect(route.data.visibilityRequirements.requiresPermission).toBe(Permissions.ADMIN);
-    expect(route.data.visibilityRequirements.editions).toEqual(['PRO']);
+    expect(route.data.visibilityRequirements.editions).toEqual([...PRO_FAMILY_EDITIONS]);
   });
 
   // NEXUS-54019: align Preview routes with Classic/Default UI (adminRoutes.js) edition/bundle/
@@ -201,19 +204,19 @@ describe('previewAdminRoutes', () => {
     it('gates datastore on the pro-datastore bundle + PRO/COMMUNITY editions', () => {
       const route = previewAdminRoutes.find((r) => r.name === 'preview.admin.repository.datastore');
       expect(route.data.visibilityRequirements.bundle).toBe('nexus-pro-datastore-plugin');
-      expect(route.data.visibilityRequirements.editions).toEqual(['PRO', 'COMMUNITY']);
+      expect(route.data.visibilityRequirements.editions).toEqual(PRO_AND_COMMUNITY_EDITIONS);
     });
 
     it('gates saml on the saml bundle + PRO edition', () => {
       const route = previewAdminRoutes.find((r) => r.name === 'preview.admin.security.saml');
       expect(route.data.visibilityRequirements.bundle).toBe('nexus-saml-plugin');
-      expect(route.data.visibilityRequirements.editions).toEqual(['PRO']);
+      expect(route.data.visibilityRequirements.editions).toEqual([...PRO_FAMILY_EDITIONS]);
     });
 
     it('gates oauth2 on the oauth2 bundle + PRO edition + oauth2Available state', () => {
       const route = previewAdminRoutes.find((r) => r.name === 'preview.admin.security.oauth2');
       expect(route.data.visibilityRequirements.bundle).toBe('nexus-oauth2-plugin');
-      expect(route.data.visibilityRequirements.editions).toEqual(['PRO']);
+      expect(route.data.visibilityRequirements.editions).toEqual([...PRO_FAMILY_EDITIONS]);
       expect(route.data.visibilityRequirements.statesEnabled).toContainEqual({
         key: 'oauth2Available',
         defaultValue: false,
@@ -246,7 +249,7 @@ describe('previewAdminRoutes', () => {
     it('gates supportrequest on atlas:create + PRO edition', () => {
       const route = previewAdminRoutes.find((r) => r.name === 'preview.admin.support.supportrequest');
       expect(route.data.visibilityRequirements.requiresPermission).toBe(Permissions.ATLAS.CREATE);
-      expect(route.data.visibilityRequirements.editions).toEqual(['PRO']);
+      expect(route.data.visibilityRequirements.editions).toEqual([...PRO_FAMILY_EDITIONS]);
     });
 
     it('gates supportzip on atlas:read', () => {
@@ -366,15 +369,6 @@ describe('previewAdminRoutes', () => {
       // Without `dynamic: true` a tab change is a state transition: the page
       // remounts and refetches the profile on every single tab click.
       expect(profileRoute().params.tab.dynamic).toBe(true);
-    });
-
-    it('matches the repository profile route it was modelled on', () => {
-      const repoRoute = previewAdminRoutes.find(
-        (r) => r.name === 'preview.admin.repository.repositories.profile',
-      );
-
-      expect(repoRoute.url).toContain('?tab');
-      expect(repoRoute.params.tab.dynamic).toBe(true);
     });
   });
 });

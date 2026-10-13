@@ -706,4 +706,5 @@ class SqlSearchServiceTest
     assertThat(logs.logs(), not(hasItem(logLevel(Level.WARN))));
     assertThat(logs.logs(), hasItem(logLevel(Level.DEBUG)));
   }
+
 }

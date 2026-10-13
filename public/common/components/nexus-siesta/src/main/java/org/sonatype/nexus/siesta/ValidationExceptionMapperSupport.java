@@ -24,8 +24,8 @@ import jakarta.ws.rs.core.Variant;
 import org.sonatype.nexus.rest.ExceptionMapperSupport;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.sonatype.nexus.rest.MediaTypes.VND_VALIDATION_ERRORS_V1_JSON_TYPE;
 import static org.sonatype.nexus.rest.MediaTypes.VND_VALIDATION_ERRORS_V1_XML_TYPE;
@@ -84,7 +84,7 @@ public abstract class ValidationExceptionMapperSupport<E extends Throwable>
 
   @Context
   public void setRequest(final Request request) {
-    this.request = checkNotNull(request);
+    this.request = requireNonNull(request);
   }
 
   protected Request getRequest() {

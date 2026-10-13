@@ -45,7 +45,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 //
@@ -68,8 +68,8 @@ public class HttpSettingsComponent
 
   @Autowired
   public HttpSettingsComponent(final HttpClientManager httpClientManager, final SecretsService secretsService) {
-    this.httpClientManager = checkNotNull(httpClientManager);
-    this.secretsService = checkNotNull(secretsService);
+    this.httpClientManager = requireNonNull(httpClientManager);
+    this.secretsService = requireNonNull(secretsService);
   }
 
   /**

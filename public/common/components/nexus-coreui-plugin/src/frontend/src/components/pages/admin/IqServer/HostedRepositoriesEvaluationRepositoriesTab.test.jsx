@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitFor, cleanup} from '@testing-library/react';
+import {render, screen, waitFor, cleanup, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {useMachine} from '@xstate/react';
 
@@ -1585,6 +1585,138 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       if (clearSelection) {
         expect(clearSelection.closest('button')).toBeDisabled();
       }
+    });
+  });
+
+  describe('unsupported formats', () => {
+    const {UNSUPPORTED_FORMAT} = HOSTED_REPOSITORIES_EVALUATION;
+    const SUPPORTED_NAMES = 'Maven, npm, PyPI, RubyGems, NuGet, Conda, R, Go, Pub (Dart), Helm';
+
+    const repos = [
+      {id: 'maven-1', name: 'maven-hosted', format: 'maven2', size: 1, artifactCount: 1, isSelected: false},
+      {id: 'raw-1', name: 'raw-hosted', format: 'raw', size: 1, artifactCount: 1, isSelected: false},
+      {id: 'docker-1', name: 'docker-hosted', format: 'docker', size: 1, artifactCount: 1, isSelected: true}
+    ];
+
+    const stateWith = (hasSelections) => ({
+      ...defaultMachineState,
+      context: {
+        ...defaultMachineState.context,
+        repositories: repos,
+        totalCount: repos.length,
+        hasSelections
+      },
+      matches: jest.fn((state) => state === 'loaded')
+    });
+
+    const rowFor = (name) => screen.getByText(name).closest('tr');
+    const checkboxFor = (name) => screen.getByRole('checkbox', {name: `Select repository ${name}`});
+
+    it('marks an unmonitored unsupported repository as Not supported but keeps it selectable', () => {
+      renderComponent({globalConfigAvailable: true}, stateWith(true));
+
+      const tag = within(rowFor('raw-hosted')).getByText(UNSUPPORTED_FORMAT.TAG);
+      expect(tag.closest('[title]')).toHaveAttribute('title',
+          `Hosted repository evaluation is not available for Raw repositories. Supported formats: ${SUPPORTED_NAMES}.`);
+      expect(checkboxFor('raw-hosted')).toBeEnabled();
+    });
+
+    it('leaves supported repositories unchanged', () => {
+      renderComponent({globalConfigAvailable: true}, stateWith(true));
+
+      expect(within(rowFor('maven-hosted')).queryByText(UNSUPPORTED_FORMAT.TAG)).not.toBeInTheDocument();
+      expect(checkboxFor('maven-hosted')).toBeEnabled();
+    });
+
+    it('keeps an already-monitored unsupported repository selectable so it can be disabled', async () => {
+      renderComponent({globalConfigAvailable: true}, stateWith(true));
+
+      expect(within(rowFor('docker-hosted')).queryByText(UNSUPPORTED_FORMAT.TAG)).not.toBeInTheDocument();
+      await userEvent.click(checkboxFor('docker-hosted'));
+      await userEvent.click(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring));
+
+      expect(rowFor('docker-hosted')).toHaveTextContent('Disabled');
+      await userEvent.click(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update));
+
+      expect(mockSend).toHaveBeenCalledWith({
+        type: 'UPDATE',
+        data: {repositoriesToAdd: [], repositoriesToRemove: ['docker-1']}
+      });
+      expect(mockSend).toHaveBeenCalledWith('PATCH_REPOSITORIES');
+    });
+
+    it('select all skips unmonitored unsupported repositories, so Enable Monitoring works', async () => {
+      renderComponent({globalConfigAvailable: true}, stateWith(true));
+
+      await userEvent.click(screen.getByRole('checkbox', {name: 'Select all repositories on this page'}));
+      expect(checkboxFor('maven-hosted')).toBeChecked();
+      expect(checkboxFor('docker-hosted')).toBeChecked();
+      expect(checkboxFor('raw-hosted')).not.toBeChecked();
+      expect(screen.getByRole('checkbox', {name: 'Select all repositories on this page'})).toBeChecked();
+
+      await userEvent.click(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring));
+
+      expect(screen.queryByText(/Monitoring can't be enabled/)).not.toBeInTheDocument();
+      expect(rowFor('maven-hosted')).toHaveTextContent('Enabled');
+    });
+
+    it('refuses Enable Monitoring for the whole selection when it contains an unsupported repository', async () => {
+      renderComponent({globalConfigAvailable: true}, stateWith(true));
+
+      await userEvent.click(checkboxFor('maven-hosted'));
+      await userEvent.click(checkboxFor('raw-hosted'));
+      await userEvent.click(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring));
+
+      expect(screen.getByText(UNSUPPORTED_FORMAT.ENABLE_BLOCKED('raw-hosted (Raw)', SUPPORTED_NAMES)))
+          .toBeInTheDocument();
+      // Nothing was staged: the supported repository in the selection stays Disabled too.
+      expect(rowFor('maven-hosted')).toHaveTextContent('Disabled');
+      expect(rowFor('raw-hosted')).not.toHaveTextContent('Enabled');
+    });
+
+    it('blocks the whole enable request when the selection contains an unsupported repository', async () => {
+      renderComponent({initialSelectedRepositories: ['maven-1', 'raw-1']}, stateWith(false));
+
+      await userEvent.click(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.save));
+
+      expect(screen.getByText(UNSUPPORTED_FORMAT.ENABLE_BLOCKED('raw-hosted (Raw)', SUPPORTED_NAMES)))
+          .toBeInTheDocument();
+      expect(mockSend).not.toHaveBeenCalledWith('SAVE');
+    });
+
+    it('lists at most five unsupported repositories and summarises the rest', async () => {
+      const rawRepos = Array.from({length: 7}, (_, i) => (
+        {id: `raw-${i}`, name: `raw-${i}`, format: 'raw', size: 1, artifactCount: 1, isSelected: false}));
+      const state = stateWith(false);
+      state.context = {...state.context, repositories: rawRepos, totalCount: rawRepos.length};
+      renderComponent({initialSelectedRepositories: rawRepos.map(repo => repo.id)}, state);
+
+      await userEvent.click(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.save));
+
+      const listed = 'raw-0 (Raw), raw-1 (Raw), raw-2 (Raw), raw-3 (Raw), raw-4 (Raw) and 2 more';
+      expect(screen.getByText(UNSUPPORTED_FORMAT.ENABLE_BLOCKED(listed, SUPPORTED_NAMES))).toBeInTheDocument();
+      expect(mockSend).not.toHaveBeenCalledWith('SAVE');
+    });
+
+    it('clears the unsupported-format error when the selection changes', async () => {
+      renderComponent({initialSelectedRepositories: ['maven-1', 'raw-1']}, stateWith(false));
+
+      await userEvent.click(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.save));
+      const message = UNSUPPORTED_FORMAT.ENABLE_BLOCKED('raw-hosted (Raw)', SUPPORTED_NAMES);
+      expect(screen.getByText(message)).toBeInTheDocument();
+
+      await userEvent.click(checkboxFor('maven-hosted'));
+
+      expect(screen.queryByText(message)).not.toBeInTheDocument();
+    });
+
+    it('saves a selection of supported repositories', async () => {
+      renderComponent({initialSelectedRepositories: ['maven-1']}, stateWith(false));
+
+      await userEvent.click(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.save));
+
+      expect(screen.queryByText(/Monitoring can't be enabled/)).not.toBeInTheDocument();
+      expect(mockSend).toHaveBeenCalledWith('SAVE');
     });
   });
 });

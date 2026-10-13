@@ -13,7 +13,7 @@
 import React from 'react';
 import {useMachine, useActor} from '@xstate/react';
 
-import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, useIsLicensedEdition} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxCheckbox,
@@ -35,7 +35,7 @@ const AZURE = UIStrings.BLOB_STORES.AZURE;
 export default function AzureBlobStoreSettings({service}) {
   const [current, send] = useActor(service);
   const {bucketConfiguration = {}} = current.context.data;
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const authMode = bucketConfiguration.authentication?.authenticationMethod;
   const isTokenCredentialAuth = authMode === 'MANAGEDIDENTITY' || authMode === 'ENVIRONMENTVARIABLE';
 
@@ -157,7 +157,7 @@ export default function AzureBlobStoreSettings({service}) {
         </NxFormGroup>
         }
 
-        {isProEdition && (
+        {isLicensedEdition && (
           <div className="nxrm-azure-presigned">
             <NxFieldset label={AZURE.PRE_SIGNED_URL.LABEL}
                         sublabel={AZURE.PRE_SIGNED_URL.SUBLABEL}>

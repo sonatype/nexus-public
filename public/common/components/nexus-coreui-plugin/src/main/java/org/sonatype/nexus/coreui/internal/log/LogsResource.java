@@ -36,7 +36,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
@@ -64,7 +64,7 @@ public class LogsResource
 
   @Autowired
   public LogsResource(final LogManager logManager) {
-    this.logManager = checkNotNull(logManager);
+    this.logManager = requireNonNull(logManager);
   }
 
   /**

@@ -21,7 +21,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.repository.view.Payload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
 /**
@@ -39,14 +39,14 @@ public class DetachedBlobPayload
   private final String contentType;
 
   public DetachedBlobPayload(final Blob blob) {
-    this.blob = checkNotNull(blob);
+    this.blob = requireNonNull(blob);
     this.sourceBlobStore = null;
     this.contentType = blob.getHeaders().get(CONTENT_TYPE_HEADER);
   }
 
   public DetachedBlobPayload(final Blob blob, final BlobStore sourceBlobStore) {
-    this.blob = checkNotNull(blob);
-    this.sourceBlobStore = checkNotNull(sourceBlobStore);
+    this.blob = requireNonNull(blob);
+    this.sourceBlobStore = requireNonNull(sourceBlobStore);
     this.contentType = blob.getHeaders().get(CONTENT_TYPE_HEADER);
   }
 

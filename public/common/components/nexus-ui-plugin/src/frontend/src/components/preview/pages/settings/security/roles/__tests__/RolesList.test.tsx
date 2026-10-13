@@ -115,39 +115,30 @@ describe('RolesList', () => {
     expect(screen.getAllByTitle('Read Only').length).toBeGreaterThanOrEqual(2);
   });
 
-  it('should show Edit pencil for custom (user-created) roles', async () => {
+  // NEXUS-54589: actions column (View/Edit/Delete IconButtons) removed. Row click is the only
+  // navigation surface; per-role permission gating happens on the destination page.
+  it('should not render an actions column header', async () => {
     renderWithTheme(<RolesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Custom Role')).toBeInTheDocument();
     });
-    
-    // Custom role has readOnly: false and source: Default - must show Edit pencil (isReadOnlyRole = false)
-    const editButtons = screen.getAllByLabelText(/^Edit /);
-    expect(editButtons.length).toBeGreaterThanOrEqual(1);
+
+    expect(screen.queryByRole('columnheader', { name: /actions/i })).not.toBeInTheDocument();
   });
 
-  // NEXUS-54212: the row Edit (pencil) action must respect nexus:roles:update.
-  it('should hide the Edit pencil for editable roles when canUpdate is false', async () => {
-    renderWithTheme(<RolesList onSelect={mockOnSelect} onCreate={mockOnCreate} canUpdate={false} />);
+  it('should not render any icon-button controls inside table rows', async () => {
+    // Row-level action buttons would appear as <button> children of <td> cells.
+    // NEXUS-54589 removes all of them; the <tr role="button"> click affordance stays.
+    const { container } = renderWithTheme(
+      <RolesList onSelect={mockOnSelect} onCreate={mockOnCreate} />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Custom Role')).toBeInTheDocument();
     });
 
-    // No Edit pencil for any role, but the read-only View action remains.
-    expect(screen.queryAllByLabelText(/^Edit /).length).toBe(0);
-    expect(screen.getAllByLabelText(/^View /).length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('should show the Edit pencil for editable roles when canUpdate is true', async () => {
-    renderWithTheme(<RolesList onSelect={mockOnSelect} onCreate={mockOnCreate} canUpdate={true} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Custom Role')).toBeInTheDocument();
-    });
-
-    expect(screen.getAllByLabelText(/^Edit /).length).toBeGreaterThanOrEqual(1);
+    expect(container.querySelectorAll('td button').length).toBe(0);
   });
 
   it('should filter roles by search term', async () => {
@@ -166,16 +157,19 @@ describe('RolesList', () => {
     });
   });
 
-  it('should call onSelect when clicking a role row', async () => {
+  // NEXUS-54589: onSelect now takes just the role id (no mode arg). The destination page
+  // decides read-only vs editable render.
+  it('should call onSelect with the role id when clicking a role row', async () => {
     renderWithTheme(<RolesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Administrator')).toBeInTheDocument();
     });
-    
+
     fireEvent.click(screen.getByText('Administrator'));
-    
-    expect(mockOnSelect).toHaveBeenCalledWith('nx-admin', 'profile');
+
+    expect(mockOnSelect).toHaveBeenCalledWith('nx-admin');
+    expect(mockOnSelect).toHaveBeenCalledTimes(1);
   });
 
   it('should sort roles by name ascending by default', async () => {
@@ -421,7 +415,7 @@ describe('RolesList', () => {
     });
   });
 
-  it('should call onSelect with correct role ID', async () => {
+  it('should call onSelect with the correct role id when clicking anywhere in the row', async () => {
     renderWithTheme(<RolesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
 
     await waitFor(() => {
@@ -431,7 +425,8 @@ describe('RolesList', () => {
     const row = screen.getByText('Custom Role').closest('tr');
     fireEvent.click(row!);
 
-    expect(mockOnSelect).toHaveBeenCalledWith('custom-role', 'profile');
+    expect(mockOnSelect).toHaveBeenCalledWith('custom-role');
+    expect(mockOnSelect).toHaveBeenCalledTimes(1);
   });
 
   it('should filter roles by description', async () => {

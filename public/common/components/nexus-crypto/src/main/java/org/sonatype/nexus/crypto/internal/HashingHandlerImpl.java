@@ -28,7 +28,7 @@ import org.sonatype.nexus.crypto.HashingHandler;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.lang.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_ITERATION_PHC;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_LEN_PHC;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
@@ -88,8 +88,8 @@ public class HashingHandlerImpl
       final char[] input,
       final String expectedValue) throws CipherException, InvalidKeySpecException
   {
-    checkNotNull(input);
-    checkNotNull(expectedValue);
+    requireNonNull(input);
+    requireNonNull(expectedValue);
 
     EncryptedSecret parsedExpectedHash = EncryptedSecret.parse(expectedValue);
     byte[] inputHash = this.generateHash(input, fromBase64(parsedExpectedHash.getSalt()));

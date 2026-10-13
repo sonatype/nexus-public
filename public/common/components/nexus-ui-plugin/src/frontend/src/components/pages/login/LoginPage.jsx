@@ -44,9 +44,8 @@ const ssoAuthenticationRealms = ["samlEnabled", "oauth2Enabled"];
 /**
  * Login page component that renders within LoginLayout.
  * Displays a welcome message and login form matching the design specification.
- * @param {Object} logoConfig - Logo configuration passed to LoginLayout
  */
-export default function LoginPage({ logoConfig }) {
+export default function LoginPage() {
   const [generalError, setGeneralError] = useState(null);
 
   const extStateReady = !!(window.NX?.State?.getValue);
@@ -82,7 +81,7 @@ export default function LoginPage({ logoConfig }) {
   const markOnlyLogoUrl = getMarkOnlyLogoUrl();
 
   return (
-    <LoginLayout logoConfig={logoConfig}>
+    <LoginLayout>
       <Theme appearance="light" accentColor="blue" hasBackground={false} className="login-theme-wrapper">
         <Card className="login-card" data-testid="login-tile" size="4">
         <Flex direction="column" gap="5" className="login-card__content">

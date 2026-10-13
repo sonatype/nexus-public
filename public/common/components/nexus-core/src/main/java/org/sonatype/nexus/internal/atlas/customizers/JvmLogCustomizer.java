@@ -32,7 +32,7 @@ import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.text.Strings2.MASK;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.LOW;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG;
@@ -57,8 +57,8 @@ public class JvmLogCustomizer
 
   @Autowired
   public JvmLogCustomizer(final LogManager logManager, final ApplicationDirectories applicationDirectories) {
-    this.logManager = checkNotNull(logManager);
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.logManager = requireNonNull(logManager);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
   }
 
   @Override

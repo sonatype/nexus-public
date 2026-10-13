@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
@@ -36,6 +38,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDownloadedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetRestoredEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPathChangedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetKindEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPreDeleteEvent;
@@ -43,6 +46,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
+import org.sonatype.nexus.repository.content.upgrades.SoftDeleteAnchorMigrationStep_2_169;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.transaction.Transactional;
 
@@ -50,7 +54,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.util.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
@@ -70,6 +74,12 @@ public class AssetStore<T extends AssetDAO>
 
   private GlobalRepositorySettings globalRepositorySettings;
 
+  /** See {@code ComponentStore#databaseCheck}. */
+  private DatabaseCheck databaseCheck;
+
+  /** Sticky cache for {@link #softDeleteAvailable()}. See {@code ComponentStore#softDeleteAvailable}. */
+  private volatile boolean softDeleteAvailable;
+
   @Autowired
   public AssetStore(
       final DataSessionSupplier sessionSupplier,
@@ -81,9 +91,26 @@ public class AssetStore<T extends AssetDAO>
     this.clustered = clustered;
   }
 
+  /** See {@code ComponentStore#setDatabaseCheck}. */
+  @Autowired(required = false)
+  public void setDatabaseCheck(final DatabaseCheck databaseCheck) {
+    this.databaseCheck = databaseCheck;
+  }
+
+  /**
+   * See {@code ComponentStore#softDeleteAvailable()}. Disabled for NEXUS-54969; when re-enabled it would
+   * again gate on {@link SoftDeleteAnchorMigrationStep_2_169#VERSION}.
+   */
+  protected boolean softDeleteAvailable() {
+    // NEXUS-54969: soft-delete disabled at the DB layer -- see ComponentStore#softDeleteAvailable() for the
+    // full rationale (prevents deleted_on/deleted_by from entering SELECT */INSERT/UPDATE and the resulting
+    // "cached plan must not change result type" 500s). Kept as a one-line revert to re-enable.
+    return false;
+  }
+
   @Autowired
   public void setGlobalRepositorySettings(final GlobalRepositorySettings globalRepositorySettings) {
-    this.globalRepositorySettings = checkNotNull(globalRepositorySettings);
+    this.globalRepositorySettings = requireNonNull(globalRepositorySettings);
   }
 
   /**
@@ -102,7 +129,7 @@ public class AssetStore<T extends AssetDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().countAssets(repositoryId, kind, filter, filterParams);
+    return dao().countAssets(repositoryId, kind, filter, filterParams, softDeleteAvailable());
   }
 
   /**
@@ -127,7 +154,8 @@ public class AssetStore<T extends AssetDAO>
       @Nullable final Map<String, Object> filterParams,
       final int limit)
   {
-    return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams);
+    return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams,
+        softDeleteAvailable());
   }
 
   /**
@@ -147,7 +175,7 @@ public class AssetStore<T extends AssetDAO>
       final int limit)
   {
     AssetBlobCreatedContinuationToken token = AssetBlobCreatedContinuationToken.decode(continuationToken);
-    return dao().browseEagerAssetsInRepository(repositoryId, token, limit, null, null);
+    return dao().browseEagerAssetsInRepository(repositoryId, token, limit, null, null, softDeleteAvailable());
   }
 
   /**
@@ -178,7 +206,7 @@ public class AssetStore<T extends AssetDAO>
       @Nullable final OffsetDateTime olderThan)
   {
     AssetBlobCreatedContinuationToken token = AssetBlobCreatedContinuationToken.decode(continuationToken);
-    return dao().browseEagerAssetsInRepository(repositoryId, token, limit, newerThan, olderThan);
+    return dao().browseEagerAssetsInRepository(repositoryId, token, limit, newerThan, olderThan, softDeleteAvailable());
   }
 
   /**
@@ -205,7 +233,8 @@ public class AssetStore<T extends AssetDAO>
       @Nullable final Map<String, Object> filterParams,
       final int limit)
   {
-    return dao().browseAssetsInRepositories(repositoryIds, continuationToken, kind, filter, filterParams, limit);
+    return dao().browseAssetsInRepositories(repositoryIds, continuationToken, kind, filter, filterParams, limit,
+        softDeleteAvailable());
   }
 
   /**
@@ -216,7 +245,12 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Collection<Asset> browseComponentAssets(final Component component) {
-    return dao().browseComponentAssets(component);
+    return dao().browseComponentAssets(component, softDeleteAvailable());
+  }
+
+  @Transactional
+  public Collection<Asset> browseAllComponentAssets(final Component component) {
+    return dao().browseAllComponentAssets(component);
   }
 
   /**
@@ -253,7 +287,7 @@ public class AssetStore<T extends AssetDAO>
     // this won't be the case, and we will not need a query to find them all.
     List<AssetInfo> assets =
         dao().findGreaterThanOrEqualToAddedToRepository(repositoryId, addedToRepositoryNormalized, regexList,
-            filter, filterParams, batchSize + 1);
+            filter, filterParams, batchSize + 1, softDeleteAvailable());
 
     if (assets.size() == batchSize + 1) {
       if (hasMoreResultsWithSameBlobCreated(assets)) {
@@ -267,7 +301,7 @@ public class AssetStore<T extends AssetDAO>
         // paging with a greater than query.
         List<AssetInfo> matchAddedToRepository =
             dao().findAddedToRepositoryWithinRange(repositoryId, startAddedToRepository, endAddedToRepository,
-                regexList, filter, filterParams, LAST_UPDATED_LIMIT);
+                regexList, filter, filterParams, LAST_UPDATED_LIMIT, softDeleteAvailable());
 
         if (matchAddedToRepository.size() == LAST_UPDATED_LIMIT) {
           log.error(
@@ -306,7 +340,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void createAsset(final AssetData asset) {
-    dao().createAsset(asset, clustered);
+    dao().createAsset(asset, clustered, softDeleteAvailable());
 
     postCommitEvent(() -> new AssetCreatedEvent(asset));
   }
@@ -319,7 +353,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Optional<Asset> readAsset(final int assetId) {
-    return dao().readAsset(assetId);
+    return dao().readAsset(assetId, softDeleteAvailable());
   }
 
   /**
@@ -331,7 +365,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Optional<Asset> readPath(final int repositoryId, final String path) {
-    return dao().readPath(repositoryId, path);
+    return dao().readPath(repositoryId, path, softDeleteAvailable());
   }
 
   /**
@@ -344,7 +378,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Optional<Asset> findByBlobRef(final int repositoryId, final BlobRef blobRef) {
-    return dao().findByBlobRef(repositoryId, blobRef);
+    return dao().findByBlobRef(repositoryId, blobRef, softDeleteAvailable());
   }
 
   /**
@@ -367,7 +401,8 @@ public class AssetStore<T extends AssetDAO>
       return List.of();
     }
 
-    return dao().findByComponentIds(componentIds, assetFilter, assetFilterParams, includeNullBlobs);
+    return dao().findByComponentIds(componentIds, assetFilter, assetFilterParams, includeNullBlobs,
+        softDeleteAvailable());
   }
 
   /**
@@ -391,7 +426,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void updateAssetPath(final Asset asset) {
-    String oldPath = dao().readAsset(InternalIds.internalAssetId(asset))
+    String oldPath = dao().readAsset(InternalIds.internalAssetId(asset), softDeleteAvailable())
         .map(Asset::path)
         .orElse(null);
 
@@ -410,8 +445,13 @@ public class AssetStore<T extends AssetDAO>
       final Asset asset,
       final AttributeChangeSet changeSet)
   {
-    // reload latest attributes, apply change, then update database if necessary
-    dao().readAssetAttributes(asset).ifPresent(attributes -> {
+    // Reload latest attributes, apply change, then update database if necessary. This read must NOT filter out
+    // soft-deleted assets (pass false, not softDeleteAvailable()): unlike normal reads, this is a targeted
+    // update of a specific asset by id, and stash-and-reapply formats (npm custom dist-tags + deprecated, Cargo
+    // registry index line/yanked) write a preservation attribute onto an asset that has just been soft-deleted.
+    // Filtering by deleted_on IS NULL here would make readAssetAttributes return empty and silently drop that
+    // write, losing the stashed metadata on the asset-level soft-delete/restore path (NEXUS-53911/54381/54382).
+    dao().readAssetAttributes(asset, false).ifPresent(attributes -> {
       ((AssetData) asset).setAttributes(attributes);
 
       boolean changesApplied = changeSet.getChanges()
@@ -478,6 +518,31 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
+   * Purges (hard-deletes) an asset only if it is still soft-deleted. Used by the manual Trash purge to
+   * avoid a read-then-delete race: if the asset is restored between selection and purge, {@code deleted_on}
+   * is cleared, the guarded delete removes 0 rows, and the now-live asset is preserved -- no
+   * {@link AssetDeletedEvent} (and therefore no blob reclamation) fires for the surviving asset.
+   *
+   * @return {@code true} if the asset was purged; {@code false} if it was no longer soft-deleted
+   */
+  @Transactional
+  public boolean purgeDeletedAsset(final Asset asset) {
+    boolean deleted = dao().purgeDeletedAsset(asset);
+
+    // Only fire delete events when a row was actually purged: on a race-lost no-op (the asset was restored
+    // before this ran) we must not fire AssetPreDeleteEvent/AssetDeletedEvent for the surviving live asset,
+    // which would reclaim its blob. Registration order within the transaction is irrelevant -- both hooks
+    // still fire pre-/post-commit, exactly as in deleteAsset.
+    if (deleted) {
+      preCommitEvent(() -> new AssetPreDeleteEvent(asset));
+      asset.component()
+          .ifPresent(component -> dao().updateEntityVersion(internalComponentId(component), clustered));
+      postCommitEvent(() -> new AssetDeletedEvent(asset));
+    }
+    return deleted;
+  }
+
+  /**
    * Deletes the asset located at the given path in the content data store.
    *
    * @param repositoryId the repository containing the asset
@@ -486,7 +551,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public boolean deletePath(final int repositoryId, final String path) {
-    return dao().readPath(repositoryId, path)
+    return dao().readPath(repositoryId, path, softDeleteAvailable())
         .map(this::deleteAsset)
         .orElse(false);
   }
@@ -504,7 +569,7 @@ public class AssetStore<T extends AssetDAO>
       return 0;
     }
 
-    Collection<Asset> assets = dao().readPathsFromRepository(repositoryId, paths);
+    Collection<Asset> assets = dao().readPathsFromRepository(repositoryId, paths, softDeleteAvailable());
 
     if (assets.isEmpty()) {
       return 0;
@@ -516,7 +581,7 @@ public class AssetStore<T extends AssetDAO>
 
     int[] componentIds = new int[0];
     if (clustered) {
-      componentIds = Arrays.stream(dao().selectComponentIds(assetIds)).distinct().toArray();
+      componentIds = Arrays.stream(dao().selectComponentIds(assetIds, softDeleteAvailable())).distinct().toArray();
     }
 
     int count = purgeAssets(assetIds);
@@ -559,7 +624,8 @@ public class AssetStore<T extends AssetDAO>
   public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo) {
     int purged = 0;
     while (true) {
-      int[] assetIds = dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize());
+      int[] assetIds =
+          dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize(), softDeleteAvailable());
       if (assetIds.length == 0) {
         break; // nothing left to purge
       }
@@ -617,7 +683,129 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Boolean assetRecordsExist(final BlobRef blobRef, final String path, final String repository) {
-    return dao().assetRecordsExist(blobRef, path, repository);
+    return dao().assetRecordsExist(blobRef, path, repository, softDeleteAvailable());
+  }
+
+  /**
+   * Soft-deletes an asset by marking it with deletion metadata.
+   */
+  @Transactional
+  public void softDeleteAsset(final Asset asset, final String deletedBy) {
+    int assetId = InternalIds.internalAssetId(asset);
+    dao().softDeleteAsset(assetId, deletedBy);
+    postCommitEvent(() -> new AssetDeletedEvent(asset));
+  }
+
+  /**
+   * Restores a soft-deleted asset by clearing deletion metadata.
+   */
+  @Transactional
+  public void undoSoftDeleteAsset(final Asset asset) {
+    int assetId = InternalIds.internalAssetId(asset);
+    dao().undoSoftDeleteAsset(assetId);
+    postCommitEvent(() -> new AssetRestoredEvent(asset));
+  }
+
+  /**
+   * Cascade soft-deletes all assets belonging to a component.
+   */
+  @Transactional
+  public void softDeleteComponentAssets(final Component component, final String deletedBy) {
+    int componentId = internalComponentId(component);
+    dao().softDeleteComponentAssets(componentId, deletedBy);
+  }
+
+  /**
+   * Re-stamps assets individually soft-deleted during a folder delete, aligning their timestamps
+   * with the component so they are hidden in Trash. Preserves true pre-existing individual deletes.
+   */
+  @Transactional
+  public void reSoftDeleteComponentAssets(
+      final Component component,
+      final String deletedBy,
+      final OffsetDateTime folderDeleteStarted)
+  {
+    int componentId = internalComponentId(component);
+    dao().reSoftDeleteComponentAssets(componentId, deletedBy, folderDeleteStarted);
+  }
+
+  /**
+   * Restores all soft-deleted assets of a component. Under the subsume-all model the component owns every one
+   * of its soft-deleted assets (including any deleted individually before the component), so they are all
+   * restored together with the component -- no timestamp guard, which would strand the earlier-deleted ones.
+   */
+  @Transactional
+  public void undoSoftDeleteComponentAssets(final Component component) {
+    int componentId = internalComponentId(component);
+    dao().undoSoftDeleteComponentAssets(componentId);
+  }
+
+  /**
+   * Aligns all soft-deleted assets of a component with the component's own deleted_on (see
+   * {@link AssetDAO#alignSoftDeletedAssetsWithComponent}). Used on the last-asset cascade so a component
+   * emptied piece-by-piece is treated as one cascade delete and restores as a whole (NEXUS-53984).
+   */
+  @Transactional
+  public void alignSoftDeletedAssetsWithComponent(final Component component) {
+    int componentId = internalComponentId(component);
+    dao().alignSoftDeletedAssetsWithComponent(componentId);
+  }
+
+  /**
+   * Reads a single soft-deleted asset by its internal ID.
+   */
+  @Transactional
+  public Optional<Asset> readDeletedAsset(final int assetId) {
+    return dao().readDeletedAsset(assetId);
+  }
+
+  /**
+   * Browse soft-deleted assets with optional repository filter.
+   */
+  @Transactional
+  public Continuation<Asset> browseDeletedAssets(
+      @Nullable final Integer repositoryId,
+      final int limit,
+      @Nullable final String continuationToken)
+  {
+    return dao().browseDeletedAssets(repositoryId, limit, continuationToken);
+  }
+
+  /**
+   * Browse all soft-deleted assets including cascade-deleted ones (see
+   * {@link AssetDAO#browseAllDeletedAssets}). Used by format GC to protect content still referenced by
+   * soft-deleted (restorable) components.
+   */
+  @Transactional
+  public Continuation<Asset> browseAllDeletedAssets(
+      @Nullable final Integer repositoryId,
+      final int limit,
+      @Nullable final String continuationToken)
+  {
+    // NEXUS-54969: unlike the other soft-delete store methods (only reached from the soft-delete plugin or
+    // the flag-gated DeleteFolderServiceImpl branch), this is called by Docker/OCI format GC on EVERY run,
+    // independent of the soft-delete feature flag. With soft-delete disabled the deleted_on column may not
+    // exist, so short-circuit here to avoid a "column deleted_on does not exist" failure during GC.
+    if (!softDeleteAvailable()) {
+      return emptyContinuation();
+    }
+    return dao().browseAllDeletedAssets(repositoryId, limit, continuationToken);
+  }
+
+  /**
+   * Count soft-deleted assets with optional repository filter.
+   */
+  @Transactional
+  public int countDeletedAssets(@Nullable final Integer repositoryId) {
+    return dao().countDeletedAssets(repositoryId);
+  }
+
+  /**
+   * Hard-delete assets that were soft-deleted before the given cutoff.
+   */
+  @Transactional
+  public int purgeDeletedAssetsBefore(final OffsetDateTime cutoff) {
+    return dao().purgeDeletedAssetsBefore(cutoff, deleteBatchSize());
   }
 
   private int purgeAssets(final int[] assetIds) {
@@ -627,6 +815,24 @@ public class AssetStore<T extends AssetDAO>
     }
     else {
       return dao().purgeSelectedAssets(assetIds, clustered);
+    }
+  }
+
+  /**
+   * Empty {@link Continuation} returned by the deleted-asset browse methods when soft-delete is disabled
+   * (NEXUS-54969), so callers iterate zero results without issuing SQL that references {@code deleted_on}.
+   */
+  private static Continuation<Asset> emptyContinuation() {
+    return new EmptyContinuation<>();
+  }
+
+  private static final class EmptyContinuation<E>
+      extends ArrayList<E>
+      implements Continuation<E>
+  {
+    @Override
+    public String nextContinuationToken() {
+      return null;
     }
   }
 }

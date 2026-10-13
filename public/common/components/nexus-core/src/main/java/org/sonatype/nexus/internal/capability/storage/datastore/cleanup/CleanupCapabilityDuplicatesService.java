@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Remove all capability duplicate records from storage.
@@ -42,7 +42,7 @@ public class CleanupCapabilityDuplicatesService
 
   @Autowired
   public CleanupCapabilityDuplicatesService(final UpgradeCapabilityStorage capabilityStorage) {
-    this.capabilityStorage = checkNotNull(capabilityStorage);
+    this.capabilityStorage = requireNonNull(capabilityStorage);
   }
 
   public void doCleanup() {

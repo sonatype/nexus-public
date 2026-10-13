@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.29
@@ -58,8 +58,8 @@ public class AttributeChangeSet
     private final Object value;
 
     private AttributeChange(final AttributeOperation operation, final String key, @Nullable final Object value) {
-      this.operation = checkNotNull(operation);
-      this.key = checkNotNull(key);
+      this.operation = requireNonNull(operation);
+      this.key = requireNonNull(key);
       this.value = value;
     }
 

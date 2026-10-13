@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.deser.std.UntypedObjectDeserializer;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of {@link UntypedObjectDeserializer} with using a {@link NestedAttributesMap} as a root map to
@@ -36,7 +36,7 @@ public class NestedAttributesMapUntypedObjectDeserializer
 
   public NestedAttributesMapUntypedObjectDeserializer(final NestedAttributesMapJsonParser jsonParser) {
     super((JavaType) null, null); // using this null, null constructor like the default deprecated one
-    this.jsonParser = checkNotNull(jsonParser);
+    this.jsonParser = requireNonNull(jsonParser);
   }
 
   /**

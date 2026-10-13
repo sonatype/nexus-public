@@ -122,7 +122,7 @@ public class NegativeCacheFacetImplTest
   }
 
   @Test
-  public void cacheIsCreatedAndRemoved() throws Exception {
+  public void cacheIsCreatedAndDestroyedOnDestroy() throws Exception {
     config.enabled = true;
     underTest.attach(repository);
     underTest.init();
@@ -132,18 +132,18 @@ public class NegativeCacheFacetImplTest
     when(cache.getName()).thenReturn(cacheNameCaptor.getValue());
     underTest.stop();
     underTest.destroy();
-    verify(cacheHelper, never()).maybeDestroyCache(any(String.class));
+    verify(cacheHelper).maybeDestroyCache(any(String.class));
   }
 
   @Test
-  public void cacheIsNotRemovedWhenManagerIsNotActive() throws Exception {
+  public void cacheIsDestroyedOnSoftDeletePath() throws Exception {
     config.enabled = true;
     underTest.attach(repository);
     underTest.init();
     underTest.start();
     underTest.stop();
     underTest.destroy();
-    verify(cacheHelper, never()).maybeDestroyCache(any(String.class));
+    verify(cacheHelper).maybeDestroyCache(any(String.class));
   }
 
   @Test

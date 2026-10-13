@@ -29,7 +29,7 @@ import org.sonatype.nexus.thread.NexusThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.join;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -81,9 +81,9 @@ public class StreamCopier<T>
       final Function<InputStream, T> read,
       final ExecutorService service)
   {
-    this.write = checkNotNull(write);
-    this.read = checkNotNull(read);
-    this.service = checkNotNull(service);
+    this.write = requireNonNull(write);
+    this.read = requireNonNull(read);
+    this.service = requireNonNull(service);
   }
 
   /**

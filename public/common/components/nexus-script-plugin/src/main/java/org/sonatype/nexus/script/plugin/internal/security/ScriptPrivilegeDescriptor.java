@@ -33,12 +33,11 @@ import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
-import com.google.common.base.Joiner;
 import org.apache.shiro.authz.Permission;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED_VALUE;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -115,7 +114,7 @@ public class ScriptPrivilegeDescriptor
                 messages.actionsHelp(),
                 FormField.MANDATORY,
                 "(^(browse|read|edit|add|delete|run)(,(browse|read|edit|add|delete|run)){0,5}$)|(^\\*$)"));
-    this.scriptManager = checkNotNull(scriptManager);
+    this.scriptManager = requireNonNull(scriptManager);
   }
 
   @Override
@@ -148,7 +147,7 @@ public class ScriptPrivilegeDescriptor
 
   public static String id(final String name, final String... actions) {
     checkArgument(actions.length > 0);
-    return "nx-" + TYPE + "-" + name + "-" + Joiner.on(',').join(actions);
+    return "nx-" + TYPE + "-" + name + "-" + String.join(",", actions);
   }
 
   @Override

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link ApplicationDirectories} implementation.
@@ -75,7 +75,7 @@ public class ApplicationDirectoriesImpl
 
   @Override
   public File getConfigDirectory(final String subsystem) {
-    checkNotNull(subsystem);
+    requireNonNull(subsystem);
     return new File(configDir, subsystem);
   }
 
@@ -91,7 +91,7 @@ public class ApplicationDirectoriesImpl
 
   @Override
   public File getWorkDirectory(final String path, final boolean create) {
-    checkNotNull(path);
+    requireNonNull(path);
     File dir = new File(path);
     if (!dir.isAbsolute()) {
       dir = new File(getWorkDirectory(), path);
@@ -122,7 +122,7 @@ public class ApplicationDirectoriesImpl
   }
 
   private File resolve(File dir, final boolean create) {
-    checkNotNull(dir);
+    requireNonNull(dir);
 
     LOG.trace("Resolving directory: {}; create: {}", dir, create);
     try {

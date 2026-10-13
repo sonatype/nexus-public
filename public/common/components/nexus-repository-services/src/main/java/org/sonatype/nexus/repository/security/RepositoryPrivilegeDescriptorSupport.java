@@ -26,7 +26,7 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.19
@@ -50,8 +50,8 @@ public abstract class RepositoryPrivilegeDescriptorSupport<T extends ApiPrivileg
       final List<Format> formats)
   {
     super(type);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.formats = checkNotNull(formats);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.formats = requireNonNull(formats);
   }
 
   @Override

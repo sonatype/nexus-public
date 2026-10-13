@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHan
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -46,7 +46,7 @@ public class LastDownloadedAttributePropertyFileHandler
 
   @Autowired
   public LastDownloadedAttributePropertyFileHandler(final BlobStoreManager blobStoreManager) {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
   }
 
   @Override

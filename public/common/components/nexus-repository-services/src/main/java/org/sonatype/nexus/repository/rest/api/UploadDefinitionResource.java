@@ -27,7 +27,7 @@ import org.sonatype.nexus.rest.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -49,7 +49,7 @@ public class UploadDefinitionResource
 
   @Autowired
   public UploadDefinitionResource(final UploadManager uploadManager) {
-    this.uploadManager = checkNotNull(uploadManager);
+    this.uploadManager = requireNonNull(uploadManager);
   }
 
   @Path("upload-specs")

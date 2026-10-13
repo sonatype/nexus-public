@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-common-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <groupId>org.sonatype.nexus.common.buildsupport</groupId>
@@ -39,7 +39,6 @@
     <module>httpclient</module>
     <module>internal</module>
     <module>jetty</module>
-    <module>jruby</module>
     <module>logging</module>
     <module>maven</module>
     <module>metrics</module>

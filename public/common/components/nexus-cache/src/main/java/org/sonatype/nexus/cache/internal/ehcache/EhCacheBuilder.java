@@ -36,7 +36,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * EhCache JCache {@link CacheBuilder}.
@@ -52,11 +52,11 @@ public class EhCacheBuilder<K, V>
   @Override
   @SuppressWarnings("unchecked")
   public Cache<K, V> build(final CacheManager manager) {
-    checkNotNull(manager);
-    checkNotNull(keyType);
-    checkNotNull(valueType);
-    checkNotNull(name);
-    checkNotNull(expiryFactory);
+    requireNonNull(manager);
+    requireNonNull(keyType);
+    requireNonNull(valueType);
+    requireNonNull(name);
+    requireNonNull(expiryFactory);
 
     CacheConfigurationBuilder<K, V> builder = CacheConfigurationBuilder.newCacheConfigurationBuilder(
         keyType,

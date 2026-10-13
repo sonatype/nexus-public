@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.NexusConditions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +32,7 @@ public class NexusConditionsImpl
 
   @Autowired
   public NexusConditionsImpl(final NexusIsActiveCondition nexusIsActiveCondition) {
-    this.nexusIsActiveCondition = checkNotNull(nexusIsActiveCondition);
+    this.nexusIsActiveCondition = requireNonNull(nexusIsActiveCondition);
   }
 
   @Override

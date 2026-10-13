@@ -35,7 +35,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 
 /**
@@ -75,10 +75,10 @@ public class QuartzSchedulerProvider
       @Value("${nexus.quartz.poolSize:20}") final int threadPoolSize,
       @Value("${nexus.quartz.taskThreadPriority:5}") final int threadPriority)
   {
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.jobStore = checkNotNull(jobStore);
-    this.connectionProvider = checkNotNull(connectionProvider);
-    this.jobFactory = checkNotNull(jobFactory);
+    this.nodeAccess = requireNonNull(nodeAccess);
+    this.jobStore = requireNonNull(jobStore);
+    this.connectionProvider = requireNonNull(connectionProvider);
+    this.jobFactory = requireNonNull(jobFactory);
     checkArgument(threadPoolSize > 0, "Invalid thread-pool size: %s", threadPoolSize);
     this.threadPoolSize = threadPoolSize;
     this.threadPriority = threadPriority;

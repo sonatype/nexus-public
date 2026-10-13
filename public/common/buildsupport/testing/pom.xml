@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-testing</artifactId>
@@ -32,36 +32,10 @@
     <iq.version>1.168.0</iq.version>
 
     <jupiter.version>6.1.0</jupiter.version>
-
-    <gatling.version>3.9.5</gatling.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
-
-      <dependency>
-        <groupId>org.databene</groupId>
-        <artifactId>contiperf</artifactId>
-        <version>2.3.4</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.github.oshi</groupId>
-        <artifactId>oshi-core</artifactId>
-        <version>6.1.6</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.icegreen</groupId>
-        <artifactId>greenmail</artifactId>
-        <version>1.4.1</version>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.activation</groupId>
-            <artifactId>activation</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
 
       <dependency>
         <groupId>org.reflections</groupId>
@@ -98,12 +72,6 @@
         <artifactId>system-stubs-jupiter</artifactId>
         <version>2.1.8</version>
         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.hamcrest</groupId>
-        <artifactId>hamcrest-library</artifactId>
-        <version>3.0</version>
       </dependency>
 
       <dependency>
@@ -154,9 +122,9 @@
       </dependency>
 
       <dependency>
-    	<groupId>pl.pragmatists</groupId>
-    	<artifactId>JUnitParams</artifactId>
-    	<version>1.1.1</version>
+        <groupId>pl.pragmatists</groupId>
+        <artifactId>JUnitParams</artifactId>
+        <version>1.1.1</version>
       </dependency>
 
       <dependency>
@@ -172,46 +140,6 @@
       </dependency>
 
       <dependency>
-        <groupId>net.javacrumbs.json-unit</groupId>
-        <artifactId>json-unit</artifactId>
-        <version>1.15.0</version>
-      </dependency>
-
-      <!--
-      TODO: Non-trivial changes to M20; needs investigation
-      -->
-      <dependency>
-        <groupId>org.apache.directory.server</groupId>
-        <artifactId>apacheds-test-framework</artifactId>
-        <version>2.0.0-M19</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>bouncycastle</groupId>
-            <artifactId>bcprov-jdk15</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-jdbm-partition</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.directory.jdbm</groupId>
-            <artifactId>apacheds-jdbm1</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.bryntum.siesta</groupId>
-        <artifactId>siesta-standard</artifactId>
-        <version>3.1.0</version>
-        <type>zip</type>
-      </dependency>
-
-      <dependency>
         <groupId>com.github.stefanbirkner</groupId>
         <artifactId>system-rules</artifactId>
         <version>1.16.1</version>
@@ -224,33 +152,9 @@
       </dependency>
 
       <dependency>
-        <groupId>com.unboundid</groupId>
-        <artifactId>unboundid-ldapsdk</artifactId>
-        <version>6.0.9</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.xmlunit</groupId>
         <artifactId>xmlunit-core</artifactId>
         <version>2.9.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.gatling.highcharts</groupId>
-        <artifactId>gatling-charts-highcharts</artifactId>
-        <version>${gatling.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>io.gatling</groupId>
-        <artifactId>gatling-http-java</artifactId>
-        <version>${gatling.version}</version>
       </dependency>
 
       <dependency>
@@ -261,20 +165,15 @@
 
       <dependency>
         <groupId>org.testcontainers</groupId>
-        <artifactId>testcontainers-junit-jupiter</artifactId>
-        <version>${testcontainers.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers-postgresql</artifactId>
         <version>${testcontainers.version}</version>
       </dependency>
 
+      <!-- Kept in public: also declared by testsuite/oci-integration-tests, which does not import the private DM. -->
       <dependency>
-        <groupId>com.adobe.testing</groupId>
-        <artifactId>s3mock-testcontainers</artifactId>
-        <version>2.17.0</version>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-junit-jupiter</artifactId>
+        <version>${testcontainers.version}</version>
       </dependency>
 
       <dependency>

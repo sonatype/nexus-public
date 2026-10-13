@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.authc;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.HostAuthenticationToken;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link AuthenticationToken} with a principal extracted from an HTTP header.
@@ -34,8 +34,8 @@ public class HttpHeaderAuthenticationToken
   private final String host;
 
   public HttpHeaderAuthenticationToken(final String headerName, final String headerValue, final String host) {
-    this.headerName = checkNotNull(headerName);
-    this.headerValue = checkNotNull(headerValue);
+    this.headerName = requireNonNull(headerName);
+    this.headerValue = requireNonNull(headerValue);
     this.host = host;
   }
 

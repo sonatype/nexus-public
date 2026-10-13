@@ -26,8 +26,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.createQuotaCheckJob;
 
 /**
@@ -60,10 +60,10 @@ public class BlobStoreQuotaUsageChecker
       @Value("${nexus.blobstore.quota.warnIntervalSeconds:60}") final int quotaCheckInterval,
       final BlobStoreQuotaService quotaService)
   {
-    this.jobService = checkNotNull(jobService);
+    this.jobService = requireNonNull(jobService);
     checkArgument(quotaCheckInterval > 0);
     this.quotaCheckInterval = quotaCheckInterval;
-    this.quotaService = checkNotNull(quotaService);
+    this.quotaService = requireNonNull(quotaService);
   }
 
   @Override
@@ -82,7 +82,7 @@ public class BlobStoreQuotaUsageChecker
 
   public void setBlobStore(final BlobStore blobStore) {
     checkState(this.blobStore == null, "Do not initialize twice");
-    checkNotNull(blobStore);
+    requireNonNull(blobStore);
     this.blobStore = blobStore;
   }
 }

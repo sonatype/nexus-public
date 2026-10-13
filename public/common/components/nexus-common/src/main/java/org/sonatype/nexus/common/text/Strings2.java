@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.io.BaseEncoding;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * String helpers.
@@ -84,7 +84,7 @@ public final class Strings2
    * Returns lower-case {@link Locale#ENGLISH} string.
    */
   public static String lower(final String value) {
-    checkNotNull(value);
+    requireNonNull(value);
     return value.toLowerCase(Locale.ENGLISH);
   }
 
@@ -92,7 +92,7 @@ public final class Strings2
    * Returns upper-case {@link Locale#ENGLISH} string.
    */
   public static String upper(final String value) {
-    checkNotNull(value);
+    requireNonNull(value);
     return value.toUpperCase(Locale.ENGLISH);
   }
 

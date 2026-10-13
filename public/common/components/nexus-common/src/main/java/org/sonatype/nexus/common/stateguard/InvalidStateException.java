@@ -14,7 +14,7 @@ package org.sonatype.nexus.common.stateguard;
 
 import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Runtime exception thrown when {@link StateGuard} check fails.
@@ -28,7 +28,7 @@ public class InvalidStateException
 
   public InvalidStateException(final String invalidState, final String[] allowedStates) {
     super("Invalid state: " + invalidState + "; allowed: " + Arrays.toString(allowedStates));
-    this.invalidState = checkNotNull(invalidState);
+    this.invalidState = requireNonNull(invalidState);
   }
 
   public String getInvalidState() {

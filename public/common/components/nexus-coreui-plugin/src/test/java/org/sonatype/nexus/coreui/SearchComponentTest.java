@@ -20,10 +20,7 @@ import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.validation.ValidationException;
-import jakarta.validation.Validator;
 
-import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.extdirect.model.LimitedPagedResponse;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
@@ -43,14 +40,13 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
+import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -58,6 +54,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -75,10 +72,6 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 @WithUser
 class SearchComponentTest
 {
-  @ValidationExecutor
-  private final Validator validator =
-      new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
-
   @Mock
   private SearchService searchService;
 
@@ -851,5 +844,47 @@ class SearchComponentTest
     List<ComponentXO> data = new ArrayList<>(result.getData());
     // Should fallback to "maven-releases" when no permission on either repo
     assertThat(data.get(0).getRepositoryName(), is("maven-releases"));
+  }
+
+  /*
+   * NEXUS-54105 - the ExtJS UI reaches the datastore through this DirectMethod rather than through
+   * a JAX-RS resource. Validation is not attached to the transport layer: it lives in
+   * SearchRequest.Builder#build, which every SearchService caller runs through. These tests
+   * confirm the DirectMethod path exercises that shared validator and rejects filter property
+   * and value with a NUL (0x00) before PostgreSQL fails the request with
+   * "invalid byte sequence for encoding UTF8: 0x00".
+   */
+  @Test
+  void testRead_withNulByteInFilterValue_throwsBadRequest() {
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("keyword");
+            setValue("abc\u0000x");
+          }
+        }));
+
+    assertThrows(ValidationErrorsException.class, () -> underTest.read(parameters));
+    verifyNoInteractions(searchService);
+  }
+
+  @Test
+  void testRead_withNulByteInFilterProperty_throwsBadRequest() {
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("keyword\u0000x");
+            setValue("abc");
+          }
+        }));
+
+    assertThrows(ValidationErrorsException.class, () -> underTest.read(parameters));
+    verifyNoInteractions(searchService);
   }
 }

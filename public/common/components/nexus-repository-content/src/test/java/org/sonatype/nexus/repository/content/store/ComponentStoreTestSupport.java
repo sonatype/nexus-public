@@ -227,7 +227,8 @@ public abstract class ComponentStoreTestSupport
     AssetStore<?> assetStore = testContext.getBean(FormatStoreManager.class).assetStore(DEFAULT_DATASTORE_NAME);
     when(contentFacetSupport.repository()).thenReturn(repository);
     when(contentFacetSupport.contentRepositoryId()).thenReturn(repositoryId);
-    when(contentFacetSupport.assets()).thenReturn(new FluentAssetsImpl(contentFacetSupport, assetStore));
+    when(contentFacetSupport.assets())
+        .thenReturn(new FluentAssetsImpl(contentFacetSupport, assetStore));
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacetSupport);
   }
 

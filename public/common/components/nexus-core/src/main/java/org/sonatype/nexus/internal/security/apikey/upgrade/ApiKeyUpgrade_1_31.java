@@ -44,12 +44,12 @@ public class ApiKeyUpgrade_1_31
   @Override
   public void migrate(final Connection connection) throws Exception {
     boolean tableExists = tableExists(connection, "api_key");
-    boolean indexExists = indexExists(connection, "pk_api_key_primaryprincipal_domain");
+    boolean constraintExists = constraintExists(connection, "api_key", "pk_api_key_primaryprincipal_domain");
 
-    log.info("Updating primary key for api_key. table_exists:{} index:{} change_required:{}", tableExists, indexExists,
-        tableExists && indexExists);
+    log.info("Updating primary key for api_key. table_exists:{} constraint:{} change_required:{}", tableExists,
+        constraintExists, tableExists && constraintExists);
 
-    if (tableExists && indexExists) {
+    if (tableExists && constraintExists) {
       runStatement(connection, DROP_CONSTRAINT + ADD_CONSTRAINT);
     }
   }

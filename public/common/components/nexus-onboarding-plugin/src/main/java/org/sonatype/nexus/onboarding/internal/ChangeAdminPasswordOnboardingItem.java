@@ -24,7 +24,7 @@ import org.sonatype.nexus.security.user.UserStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -40,7 +40,7 @@ public class ChangeAdminPasswordOnboardingItem
 
   @Autowired
   public ChangeAdminPasswordOnboardingItem(final SecuritySystem securitySystem) {
-    this.securitySystem = checkNotNull(securitySystem);
+    this.securitySystem = requireNonNull(securitySystem);
   }
 
   @Override

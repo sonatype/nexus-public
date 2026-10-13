@@ -37,6 +37,7 @@ import UIStrings from '../../../../constants/UIStrings';
 import {ROUTE_NAMES} from '../../../../routerConfig/routeNames/routeNames';
 
 import Machine from './IqServerMachine';
+import {setJustSavedIqConfig} from './iqServerJustSavedCache';
 
 import './IqServer.scss';
 
@@ -78,6 +79,7 @@ export default function IqServerForm() {
       // Navigate to Connected page after save (saving → loaded)
       if (hasSavedRef.current && wasSaving && isNowLoaded && pristineData.enabled && isFeatureEnabled) {
         hasSavedRef.current = false;
+        setJustSavedIqConfig(pristineData);
         router.stateService.go(ROUTE_NAMES.ADMIN.IQ.CONNECTED);
       }
     }

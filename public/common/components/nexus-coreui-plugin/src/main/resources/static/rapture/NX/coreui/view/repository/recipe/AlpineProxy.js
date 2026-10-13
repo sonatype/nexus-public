@@ -14,6 +14,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+/*global Ext, NX*/
+
 /**
  * Repository "Settings" form for an Alpine Proxy repository
  */
@@ -27,7 +29,8 @@ Ext.define('NX.coreui.view.repository.recipe.AlpineProxy', {
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
     'NX.coreui.view.repository.facet.HttpClientFacet',
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
-    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet',
+    'NX.coreui.view.repository.facet.FirewallFacet'
   ],
 
   /**
@@ -45,6 +48,12 @@ Ext.define('NX.coreui.view.repository.recipe.AlpineProxy', {
       {xtype: 'nx-coreui-repository-httpclient-facet'},
       {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
     ];
+
+    // FIRE-956: alpine is outside FirewallSupportedFormat, so the Firewall facet is only offered
+    // when the limited-support override is enabled. Mirrors PubProxy.js.
+    if (NX.State.getValue('firewallLimitedSupportFormatsEnabled')) {
+      me.items.unshift({xtype: 'nx-coreui-repository-firewall-facet'});
+    }
 
     me.callParent();
   }

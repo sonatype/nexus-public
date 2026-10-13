@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, useIsLicensedEdition} from '@sonatype/nexus-ui-plugin';
 import {
   NxCard,
   NxFontAwesomeIcon,
@@ -204,7 +204,7 @@ function MonthlyMetricsCard({usage}) {
 }
 
 function UsageCenterHeader() {
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const isCommunityEdition = useCommunityEdition();
   const throttlingStatus = ExtJS.useState(helperFunctions.useThrottlingStatusValue);
 
@@ -242,7 +242,7 @@ function UsageCenterHeader() {
         </NxTile.Headings>
       </NxTile.Header>
     }
-    {isProEdition && 
+    {isLicensedEdition &&
       <NxTile.Header>
         <NxTile.HeaderTitle>
           <span className="nx-h2">{MENU.TITLE}</span>
@@ -264,7 +264,7 @@ export default function UsageCenter() {
     STORAGE_KEY_CE_REQUESTS,
   ]);
 
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const isCommunityEdition = useCommunityEdition();
   const usage = ExtJS.state().getValue('contentUsageEvaluationResult', []);
   const componentCountLimitDateLastExceeded = ExtJS.state().getValue('nexus.community.componentCountLimitDateLastExceeded');
@@ -290,7 +290,7 @@ export default function UsageCenter() {
     <div className="nxrm-usage-center" id="nxrm-usage-center">
       <NxTile>
         <UsageCenterHeader/>
-        {isProEdition &&
+        {isLicensedEdition &&
           <NxCard.Container>
             <Card key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage}/>
             <Card key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage}/>

@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -43,7 +43,7 @@ public class RandomBytesGeneratorImpl
 
   @Autowired
   public RandomBytesGeneratorImpl(final CryptoHelper crypto) {
-    this.random = checkNotNull(crypto).createSecureRandom();
+    this.random = requireNonNull(crypto).createSecureRandom();
   }
 
   public byte[] generate(final int size) {

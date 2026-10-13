@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.MDC;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
@@ -69,11 +69,11 @@ public class ProgressTaskLogger
       final long progressInterval,
       final TimeUnit timeUnit)
   {
-    this.log = checkNotNull(log);
+    this.log = requireNonNull(log);
     this.initialDelay = initialDelay;
     checkArgument(progressInterval > 0, "progressInterval must be greater than 0");
     this.progressInterval = progressInterval;
-    this.timeUnit = checkNotNull(timeUnit);
+    this.timeUnit = requireNonNull(timeUnit);
   }
 
   @Override

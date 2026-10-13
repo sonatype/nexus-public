@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.query;
 
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Data carrier for paged results, containing one page of a particular query.
@@ -33,7 +33,7 @@ public class PageResult<T>
    */
   public PageResult(final long total, final List<T> results) {
     this.total = total;
-    this.results = checkNotNull(results);
+    this.results = requireNonNull(results);
   }
 
   public PageResult(final QueryOptions queryOptions, final List<T> results) {

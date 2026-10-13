@@ -12,20 +12,37 @@
  */
 package org.sonatype.nexus.security;
 
-import java.util.Objects;
-
 import org.apache.shiro.subject.SimplePrincipalCollection;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
+/**
+ * A {@link SimplePrincipalCollection} that also records whether its realm treats user IDs case-sensitively.
+ *
+ * <p>
+ * This class deliberately does not override {@code equals} or {@code hashCode}. Shiro compares
+ * {@code SimplePrincipalCollection} instances with {@code instanceof} over the realm-to-principals map, and an override
+ * that narrowed the test to {@code getClass()} made equality asymmetric: a stored instance never matched an equivalent
+ * {@code SimplePrincipalCollection}, which silently orphaned api key rows written before the OrientDB migration
+ * (NEXUS-54691). The case mapping describes realm behaviour, not identity, and is read through
+ * {@link #isRealmCaseSensitive()} instead.
+ */
 public class NexusSimplePrincipalCollection
     extends SimplePrincipalCollection
 {
+  /**
+   * Pinned to the value Java derived for this class before {@code equals} and {@code hashCode} were removed. The
+   * serialized state is unchanged - {@code realmCaseMapping} is still the only field - but the default UID is computed
+   * from method signatures, so dropping those overrides would otherwise make every {@code principals} BLOB already in
+   * the database unreadable with {@code InvalidClassException} (NEXUS-54691).
+   */
+  private static final long serialVersionUID = 6270148609559168170L;
+
   private final RealmCaseMapping realmCaseMapping;
 
   public NexusSimplePrincipalCollection(final String principal, final RealmCaseMapping realmCaseMapping) {
     super(principal, realmCaseMapping.getRealmName());
-    this.realmCaseMapping = checkNotNull(realmCaseMapping);
+    this.realmCaseMapping = requireNonNull(realmCaseMapping);
   }
 
   public String getRealmName() {
@@ -34,25 +51,5 @@ public class NexusSimplePrincipalCollection
 
   public boolean isRealmCaseSensitive() {
     return realmCaseMapping.isCaseSensitive();
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-    NexusSimplePrincipalCollection that = (NexusSimplePrincipalCollection) o;
-    return Objects.equals(realmCaseMapping, that.realmCaseMapping);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode(), realmCaseMapping);
   }
 }

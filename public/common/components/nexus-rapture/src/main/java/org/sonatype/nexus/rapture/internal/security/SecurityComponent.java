@@ -43,8 +43,8 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.subject.Subject;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -70,9 +70,9 @@ public class SecurityComponent
       final AnonymousManager anonymousManager,
       final AuthTicketService authTickets)
   {
-    this.securitySystem = checkNotNull(securitySystem);
-    this.anonymousManager = checkNotNull(anonymousManager);
-    this.authTickets = checkNotNull(authTickets);
+    this.securitySystem = requireNonNull(securitySystem);
+    this.anonymousManager = requireNonNull(anonymousManager);
+    this.authTickets = requireNonNull(authTickets);
   }
 
   // FIXME: Move authenticate to session servlet

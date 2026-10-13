@@ -623,12 +623,15 @@ Ext.define('NX.coreui.controller.Tasks', {
     const summary = records[0] ? records[0].data : {};
     const me = this;
 
-    me.getContent().down("#reconcilePlanInformation").setValues({
-      planCount: summary.planCount || 0,
-      blobStoreCount: summary.blobStoreCount || 0,
-      repositoryCount: summary.repositoryCount || 0,
-      startDate: summary.minStartDate || null,
-      endDate: summary.maxEndDate || null
-    });
+    const reconcilePlanInfo = me.getContent().down("#reconcilePlanInformation");
+    if (reconcilePlanInfo) {
+      reconcilePlanInfo.setValues({
+        planCount: summary.planCount || 0,
+        blobStoreCount: summary.blobStoreCount || 0,
+        repositoryCount: summary.repositoryCount || 0,
+        startDate: summary.minStartDate || null,
+        endDate: summary.maxEndDate || null
+      });
+    }
   }
 });

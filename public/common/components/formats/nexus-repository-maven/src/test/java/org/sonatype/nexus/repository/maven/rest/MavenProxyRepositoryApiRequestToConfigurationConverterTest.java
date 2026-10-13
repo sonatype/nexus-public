@@ -146,7 +146,7 @@ class MavenProxyRepositoryApiRequestToConfigurationConverterTest
 
   private MavenProxyRepositoryApiRequest createRequest(String contentDisposition) {
     MavenAttributes maven = new MavenAttributes("RELEASE", "STRICT", contentDisposition);
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     ProxyAttributes proxy = new ProxyAttributes("https://repo.maven.apache.org/maven2", 1440, 1440, false);
     NegativeCacheAttributes negativeCache = new NegativeCacheAttributes(false, 1440);
     HttpClientAttributesWithPreemptiveAuth httpClient = new HttpClientAttributesWithPreemptiveAuth(

@@ -21,7 +21,7 @@ import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.transaction.Transactional;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Component
 public class BlobStoreMetricsStoreImpl
@@ -82,8 +82,8 @@ public class BlobStoreMetricsStoreImpl
   @Override
   @Transactional
   public void rename(final String oldName, final String newName) {
-    checkNotNull(oldName);
-    checkNotNull(newName);
+    requireNonNull(oldName);
+    requireNonNull(newName);
     dao().rename(oldName, newName);
   }
 }

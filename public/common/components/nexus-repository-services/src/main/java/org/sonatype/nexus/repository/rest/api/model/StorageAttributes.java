@@ -12,23 +12,32 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import jakarta.validation.constraints.NotNull;
+import org.sonatype.nexus.repository.rest.api.validation.NotEmptyOnDistribution;
+import org.sonatype.nexus.swagger.DistributionVisibility;
+import org.sonatype.nexus.swagger.EditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
+import static org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistributionType.SELF_HOSTED;
 
 /**
  * REST API model describing a repository's storage settings.
  *
  * @since 3.20
  */
+@JsonFilter(EditionVisibility.NAME)
 public class StorageAttributes
 {
   @Schema(description = "Blob store used to store repository contents", example = "default",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  @NotEmpty
+  @DistributionVisibility(cloud = false,
+      note = "Cloud generates a blob store per repository and overwrites this value, so the name is an internal detail")
+  @NotEmptyOnDistribution(SELF_HOSTED)
   protected String blobStoreName;
 
   @Schema(description = "Whether to validate uploaded content's MIME type appropriate for the repository format",
@@ -36,13 +45,22 @@ public class StorageAttributes
   @NotNull
   protected Boolean strictContentTypeValidation;
 
+  @EditionVisibility(community = false, pro = false, proPlus = false, note = "Enterprise feature")
+  @Schema(
+      description = "When true the repository can redirect downloads to global distribution if configured. (Enterprise only)",
+      example = "true", defaultValue = "false")
+  @Nullable
+  protected Boolean globalDistribution = Boolean.FALSE;
+
   @JsonCreator
   public StorageAttributes(
       @JsonProperty("blobStoreName") final String blobStoreName,
-      @JsonProperty("strictContentTypeValidation") final Boolean strictContentTypeValidation)
+      @JsonProperty("strictContentTypeValidation") final Boolean strictContentTypeValidation,
+      @JsonProperty("globalDistribution") @Nullable final Boolean globalDistribution)
   {
     this.blobStoreName = blobStoreName;
     this.strictContentTypeValidation = strictContentTypeValidation;
+    this.globalDistribution = globalDistribution;
   }
 
   public String getBlobStoreName() {
@@ -51,5 +69,9 @@ public class StorageAttributes
 
   public Boolean getStrictContentTypeValidation() {
     return strictContentTypeValidation;
+  }
+
+  public Boolean getGlobalDistribution() {
+    return globalDistribution;
   }
 }

@@ -17,7 +17,7 @@ import java.util.Map;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.common.math.Math2;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An implementation of {@link BlobStoreMetrics} that supports adding to the blobCount and totalSize fields.
@@ -43,7 +43,7 @@ public class AccumulatingBlobStoreMetrics
   {
     this.blobCount = blobCount;
     this.totalSize = totalSize;
-    this.availableSpaceByFileStore = checkNotNull(availableSpaceByFileStore);
+    this.availableSpaceByFileStore = requireNonNull(availableSpaceByFileStore);
     this.unlimited = unlimited;
   }
 

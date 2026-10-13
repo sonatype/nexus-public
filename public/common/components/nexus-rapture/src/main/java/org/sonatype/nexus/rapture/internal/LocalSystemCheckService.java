@@ -33,7 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
@@ -70,9 +70,9 @@ public class LocalSystemCheckService
       final NodeAccess nodeAccess,
       @Value("${nexus.healthcheck.refreshInterval:15}") final int refreshInterval)
   {
-    this.jobService = checkNotNull(jobService);
-    this.registry = checkNotNull(registry);
-    this.nodeAccess = checkNotNull(nodeAccess);
+    this.jobService = requireNonNull(jobService);
+    this.registry = requireNonNull(registry);
+    this.nodeAccess = requireNonNull(nodeAccess);
     this.refreshInterval = refreshInterval;
   }
 

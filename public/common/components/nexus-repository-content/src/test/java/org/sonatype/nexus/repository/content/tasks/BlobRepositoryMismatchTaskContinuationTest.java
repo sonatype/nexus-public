@@ -123,7 +123,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     page.add(asset);
 
     lenient().when(fluentAssets.browseEager(eq(1000), eq(savedToken)))
-        .thenReturn(new FluentContinuation<>(page, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(
+            new FluentContinuation<>(page, a -> new FluentAssetImpl(contentFacet, a)));
 
     lenient().when(fluentAssets.browseEager(eq(1000), isNull()))
         .thenReturn(new FluentContinuation<>(new ContinuationArrayList<AssetData>(),
@@ -157,7 +158,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     page.add(asset);
 
     lenient().when(fluentAssets.browseEager(anyInt(), any()))
-        .thenReturn(new FluentContinuation<>(page, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(
+            new FluentContinuation<>(page, a -> new FluentAssetImpl(contentFacet, a)));
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(contentFacet.assets()).thenReturn(fluentAssets);
@@ -207,7 +209,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     page.add(asset);
 
     lenient().when(fluentAssets.browseEager(anyInt(), any()))
-        .thenReturn(new FluentContinuation<>(page, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(
+            new FluentContinuation<>(page, a -> new FluentAssetImpl(contentFacet, a)));
 
     lenient().when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     lenient().when(contentFacet.assets()).thenReturn(fluentAssets);
@@ -238,7 +241,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     page.add(asset);
 
     lenient().when(fluentAssets.browseEager(anyInt(), any()))
-        .thenReturn(new FluentContinuation<>(page, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(
+            new FluentContinuation<>(page, a -> new FluentAssetImpl(contentFacet, a)));
 
     TaskConfiguration task = new TaskConfiguration();
     task.setTypeId("typeId");
@@ -351,7 +355,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
             lenient().when(mockContinuation.iterator())
                 .thenAnswer(i -> new ContinuationArrayList<AssetData>().iterator());
           }
-          return new FluentContinuation<>(mockContinuation, a -> new FluentAssetImpl(contentFacet, a));
+          return new FluentContinuation<>(mockContinuation,
+              a -> new FluentAssetImpl(contentFacet, a));
         });
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
@@ -390,7 +395,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     ContinuationArrayList<AssetData> emptyPage = new ContinuationArrayList<>();
 
     lenient().when(fluentAssets.browseEager(anyInt(), any()))
-        .thenReturn(new FluentContinuation<>(emptyPage, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(new FluentContinuation<>(emptyPage,
+            a -> new FluentAssetImpl(contentFacet, a)));
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(contentFacet.assets()).thenReturn(fluentAssets);
@@ -435,7 +441,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     lenient().when(mockContinuation.iterator()).thenAnswer(invocation -> page.iterator());
     lenient().when(mockContinuation.size()).thenReturn(1);
     lenient().when(fluentAssets.browseEager(anyInt(), any()))
-        .thenReturn(new FluentContinuation<>(mockContinuation, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(new FluentContinuation<>(mockContinuation,
+            a -> new FluentAssetImpl(contentFacet, a)));
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(contentFacet.assets()).thenReturn(fluentAssets);
@@ -487,7 +494,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
             // Throw exception when callback tries to fetch next page
             throw new RuntimeException("Continuation callback triggered exception");
           }
-          return new FluentContinuation<>(mockContinuation, a -> new FluentAssetImpl(contentFacet, a));
+          return new FluentContinuation<>(mockContinuation,
+              a -> new FluentAssetImpl(contentFacet, a));
         });
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
@@ -553,7 +561,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     lenient().when(mockContinuation.size()).thenReturn(1);
 
     lenient().when(fluentAssets.browseEager(anyInt(), any()))
-        .thenReturn(new FluentContinuation<>(mockContinuation, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(new FluentContinuation<>(mockContinuation,
+            a -> new FluentAssetImpl(contentFacet, a)));
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(contentFacet.assets()).thenReturn(fluentAssets);
@@ -597,7 +606,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     // Test that the task handles this gracefully and clears the stale token.
     ContinuationArrayList<AssetData> emptyPage = new ContinuationArrayList<>();
     when(fluentAssets.browseEager(anyInt(), eq(staleToken)))
-        .thenReturn(new FluentContinuation<>(emptyPage, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(new FluentContinuation<>(emptyPage,
+            a -> new FluentAssetImpl(contentFacet, a)));
 
     // Set up the ContentFacet to return the repository
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
@@ -647,7 +657,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     // from firstPageContinuation is validated in Continuations.iteratorOf()
     // before browseEager is called again for the next page
     when(fluentAssets.browseEager(anyInt(), any()))
-        .thenReturn(new FluentContinuation<>(firstPageContinuation, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(new FluentContinuation<>(firstPageContinuation,
+            a -> new FluentAssetImpl(contentFacet, a)));
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(contentFacet.assets()).thenReturn(fluentAssets);
@@ -690,7 +701,8 @@ public class BlobRepositoryMismatchTaskContinuationTest
     // Even with a token at maximum length, the browse function should be called
     ContinuationArrayList<AssetData> emptyPage = new ContinuationArrayList<>();
     lenient().when(fluentAssets.browseEager(anyInt(), eq(maxToken)))
-        .thenReturn(new FluentContinuation<>(emptyPage, a -> new FluentAssetImpl(contentFacet, a)));
+        .thenReturn(new FluentContinuation<>(emptyPage,
+            a -> new FluentAssetImpl(contentFacet, a)));
 
     // Set up the ContentFacet to return the repository
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);

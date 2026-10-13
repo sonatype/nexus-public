@@ -14,7 +14,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {evaluationSettingsUrl} from './RepositoriesFormMachine';
+import Axios from 'axios';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+
+import RepositoriesFormMachine, {evaluationSettingsUrl} from './RepositoriesFormMachine';
+
+jest.mock('axios');
 
 describe('RepositoriesFormMachine URL helpers', () => {
   describe('evaluationSettingsUrl', () => {
@@ -33,5 +38,38 @@ describe('RepositoriesFormMachine URL helpers', () => {
         'service/rest/v1/repositories/my%2Frepo/evaluation-settings'
       );
     });
+  });
+});
+
+describe('RepositoriesFormMachine saveData evaluation settings', () => {
+  const {saveData} = RepositoriesFormMachine.options.services;
+
+  const hostedRepo = (format) => ({
+    format,
+    type: 'hosted',
+    name: 'repo-1',
+    attributes: {evaluation: {mode: 'INHERIT'}}
+  });
+
+  beforeEach(() => {
+    jest.spyOn(ExtJS, 'state').mockReturnValue({getValue: () => true});
+    Axios.post.mockResolvedValue({data: {name: 'repo-1'}});
+    Axios.put.mockResolvedValue({data: {}});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('saves evaluation settings for a supported format', async () => {
+    await saveData({data: hostedRepo('maven2'), pristineData: {name: ''}});
+
+    expect(Axios.put).toHaveBeenCalledWith(evaluationSettingsUrl('repo-1'), expect.objectContaining({mode: 'INHERIT'}));
+  });
+
+  it('does not enrol a new repository in an unsupported format', async () => {
+    await saveData({data: hostedRepo('raw'), pristineData: {name: ''}});
+
+    expect(Axios.put).not.toHaveBeenCalledWith(evaluationSettingsUrl('repo-1'), expect.anything());
   });
 });

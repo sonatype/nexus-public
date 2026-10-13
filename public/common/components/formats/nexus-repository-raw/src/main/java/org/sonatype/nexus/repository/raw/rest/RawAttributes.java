@@ -15,7 +15,8 @@ package org.sonatype.nexus.repository.raw.rest;
 import java.util.List;
 
 import org.sonatype.nexus.repository.raw.ContentDisposition;
-import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
+import org.sonatype.nexus.swagger.DistributionVisibility;
+import org.sonatype.nexus.swagger.EditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
@@ -28,7 +29,7 @@ import jakarta.validation.constraints.Size;
  *
  * @since 3.25
  */
-@JsonFilter(SwaggerEditionVisibility.NAME)
+@JsonFilter(EditionVisibility.NAME)
 public class RawAttributes
 {
   public static final String CONTENT_DISPOSITION = "contentDisposition";
@@ -38,7 +39,7 @@ public class RawAttributes
   public static final String EXCLUDED_QUERY_PARAMETERS = "excludedQueryParameters";
 
   @Schema(description = "Content Disposition", example = "ATTACHMENT")
-  @SwaggerEditionVisibility(cloud = false, note = "Hide content-disposition from cloud")
+  @DistributionVisibility(cloud = false, note = "Hide content-disposition from cloud")
   private final ContentDisposition contentDisposition;
 
   @Schema(description = "Whether to forward query parameters to the upstream repository",

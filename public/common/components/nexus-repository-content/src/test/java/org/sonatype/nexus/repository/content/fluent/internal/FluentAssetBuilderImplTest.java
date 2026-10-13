@@ -348,7 +348,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     assertThat(builderFromAsset, is(notNullValue()));
   }
@@ -360,7 +361,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     when(assetStore.readPath(anyInt(), eq(ASSET_PATH))).thenReturn(Optional.of(existingAsset));
 
@@ -782,7 +784,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     when(assetBlobStore.readAssetBlob(any(BlobRef.class))).thenReturn(Optional.empty());
 
@@ -805,7 +808,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     when(assetBlobStore.readAssetBlob(any(BlobRef.class))).thenReturn(Optional.empty());
 
@@ -830,7 +834,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     when(assetBlobStore.readAssetBlob(any(BlobRef.class))).thenReturn(Optional.empty());
 
@@ -864,7 +869,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     when(assetBlobStore.readAssetBlob(any(BlobRef.class))).thenReturn(Optional.empty());
 
@@ -892,7 +898,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     when(assetBlobStore.readAssetBlob(any(BlobRef.class))).thenReturn(Optional.empty());
 
@@ -921,7 +928,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     when(assetBlobStore.readAssetBlob(any(BlobRef.class))).thenReturn(Optional.empty());
 
@@ -960,7 +968,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     when(assetBlobStore.readAssetBlob(any(BlobRef.class))).thenReturn(Optional.empty());
 
@@ -1007,7 +1016,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     when(assetBlobStore.readAssetBlob(any(BlobRef.class))).thenReturn(Optional.empty());
 
@@ -1038,7 +1048,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     FluentAsset result = builderFromAsset.attach(blob, checksums);
 
@@ -1062,7 +1073,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     FluentAsset result = builderFromAsset.attach(blob, checksums);
 
@@ -1096,7 +1108,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     ArgumentCaptor<AssetBlobData> blobDataCaptor = ArgumentCaptor.forClass(AssetBlobData.class);
 
@@ -1133,7 +1146,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     ArgumentCaptor<AssetBlobData> blobDataCaptor = ArgumentCaptor.forClass(AssetBlobData.class);
 
@@ -1159,7 +1173,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     ArgumentCaptor<AssetBlobData> blobDataCaptor = ArgumentCaptor.forClass(AssetBlobData.class);
 
@@ -1196,7 +1211,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     ArgumentCaptor<AssetBlobData> blobDataCaptor = ArgumentCaptor.forClass(AssetBlobData.class);
 
@@ -1226,7 +1242,8 @@ public class FluentAssetBuilderImplTest
     existingAsset.setPath(ASSET_PATH);
     existingAsset.setKind("ARTIFACT");
 
-    FluentAssetBuilderImpl builderFromAsset = new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
+    FluentAssetBuilderImpl builderFromAsset =
+        new FluentAssetBuilderImpl(facet, assetStore, existingAsset);
 
     ArgumentCaptor<AssetBlobData> blobDataCaptor = ArgumentCaptor.forClass(AssetBlobData.class);
 

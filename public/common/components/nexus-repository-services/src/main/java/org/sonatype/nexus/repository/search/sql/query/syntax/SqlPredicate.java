@@ -16,7 +16,7 @@ import java.util.Objects;
 
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A predicate used in an SQL query, e.g. {@code foo = 'bar'}
@@ -31,9 +31,9 @@ public class SqlPredicate
   private final Term term;
 
   public SqlPredicate(final Operand operand, final SearchField searchField, final Term term) {
-    this.operand = checkNotNull(operand);
-    this.searchField = checkNotNull(searchField);
-    this.term = checkNotNull(term);
+    this.operand = requireNonNull(operand);
+    this.searchField = requireNonNull(searchField);
+    this.term = requireNonNull(term);
   }
 
   @Override

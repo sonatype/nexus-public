@@ -21,7 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.net.HttpHeaders.CACHE_CONTROL;
 import static com.google.common.net.HttpHeaders.EXPIRES;
 import static com.google.common.net.HttpHeaders.PRAGMA;
@@ -52,7 +52,7 @@ public class ServletHelper
    * Helper to check if {@code ?debug} flag is on request.
    */
   public static boolean isDebug(final HttpServletRequest request) {
-    checkNotNull(request);
+    requireNonNull(request);
 
     if (!debugEnabled) {
       return false;

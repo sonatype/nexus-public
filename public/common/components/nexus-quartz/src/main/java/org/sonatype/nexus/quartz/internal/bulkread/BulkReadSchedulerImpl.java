@@ -43,7 +43,7 @@ import org.quartz.utils.ConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.quartz.JobKey.jobKey;
 import static org.quartz.TriggerKey.triggerKey;
 
@@ -86,9 +86,9 @@ public class BulkReadSchedulerImpl
       final ConnectionProvider connectionProvider,
       final String schedulerName)
   {
-    this.delegate = checkNotNull(delegate);
-    this.connectionProvider = checkNotNull(connectionProvider);
-    this.schedulerName = checkNotNull(schedulerName);
+    this.delegate = requireNonNull(delegate);
+    this.connectionProvider = requireNonNull(connectionProvider);
+    this.schedulerName = requireNonNull(schedulerName);
   }
 
   @Override

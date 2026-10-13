@@ -13,8 +13,9 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
-
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.apache.shiro.authz.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith({MockitoExtension.class, AuthenticationExtension.class})
 class SuggestResourceTest
@@ -36,5 +38,25 @@ class SuggestResourceTest
   @Test
   public void testSuggest_unauthenticated() {
     assertThrows(UnauthenticatedException.class, () -> underTest.suggest(null, null, 50));
+  }
+
+  /*
+   * NEXUS-54105 - the suggest endpoint packs `q` and `format` directly into a SearchFilter,
+   * bypassing SearchUtils.convertParameters. A NUL (0x00) byte in either param must be rejected
+   * with HTTP 400 before it reaches the datastore, or PostgreSQL fails with
+   * "invalid byte sequence for encoding UTF8: 0x00".
+   */
+  @WithUser(isAuthenticated = false)
+  @Test
+  void suggest_withNulByteInQuery_throwsBadRequest() {
+    assertThrows(ValidationErrorsException.class, () -> underTest.suggest("abc\u0000x", null, 10));
+    verifyNoInteractions(searchService);
+  }
+
+  @WithUser(isAuthenticated = false)
+  @Test
+  void suggest_withNulByteInFormat_throwsBadRequest() {
+    assertThrows(ValidationErrorsException.class, () -> underTest.suggest("abc", "maven2\u0000x", 10));
+    verifyNoInteractions(searchService);
   }
 }

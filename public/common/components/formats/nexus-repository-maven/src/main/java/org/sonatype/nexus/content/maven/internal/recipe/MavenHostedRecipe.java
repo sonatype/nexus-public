@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -55,8 +55,8 @@ public class MavenHostedRecipe
       final Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet)
   {
     super(type, format);
-    this.mavenIndexFacet = checkNotNull(mavenIndexFacet);
-    this.mavenPurgeSnapshotsFacet = checkNotNull(mavenPurgeSnapshotsFacet);
+    this.mavenIndexFacet = requireNonNull(mavenIndexFacet);
+    this.mavenPurgeSnapshotsFacet = requireNonNull(mavenPurgeSnapshotsFacet);
   }
 
   @Override

@@ -191,7 +191,7 @@ class H2SearchTest
     when(asset.path()).thenReturn("/foo");
 
     FluentComponent result = sessionRule
-        .withDAO(TestComponentDAO.class, dao -> dao.readComponent(InternalIds.internalComponentId(component)))
+        .withDAO(TestComponentDAO.class, dao -> dao.readComponent(InternalIds.internalComponentId(component), true))
         .map(c -> new FluentComponentImpl(mock(), c, List.of(asset)))
         .orElseThrow();
 

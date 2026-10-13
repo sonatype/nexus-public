@@ -15,7 +15,7 @@ package org.sonatype.nexus.distributed.event.service.api.common;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
 
 /**
@@ -47,7 +47,7 @@ public class RepositoryRemoteConnectionStatusEvent
       @JsonProperty("requestUrl") final String requestUrl)
   {
     super(UPDATED);
-    this.repositoryName = checkNotNull(repositoryName);
+    this.repositoryName = requireNonNull(repositoryName);
     this.remoteConnectionStatusTypeOrdinal = remoteConnectionStatusTypeOrdinal;
     this.reason = reason;
     this.blockedUntilMillis = blockedUntilMillis;

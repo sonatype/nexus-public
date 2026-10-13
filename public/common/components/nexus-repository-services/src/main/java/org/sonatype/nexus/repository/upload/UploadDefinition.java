@@ -17,7 +17,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Describes the fields associated with a component, fields associated with an asset and whether the format supports
@@ -54,9 +54,9 @@ public class UploadDefinition
     this.uiUpload = uiUpload;
     this.apiUpload = apiUpload;
     this.multipleUpload = multipleUpload;
-    this.format = checkNotNull(format);
-    this.componentFields = Collections.unmodifiableList(checkNotNull(componentFields));
-    this.assetFields = Collections.unmodifiableList(checkNotNull(assetFields));
+    this.format = requireNonNull(format);
+    this.componentFields = Collections.unmodifiableList(requireNonNull(componentFields));
+    this.assetFields = Collections.unmodifiableList(requireNonNull(assetFields));
     this.regexMap = regexMap;
   }
 

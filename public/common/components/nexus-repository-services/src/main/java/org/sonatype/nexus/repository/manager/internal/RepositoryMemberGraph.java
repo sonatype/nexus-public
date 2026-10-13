@@ -29,7 +29,7 @@ import com.google.common.graph.MutableGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -44,8 +44,8 @@ public class RepositoryMemberGraph
 
   @Autowired
   public RepositoryMemberGraph(final RepositoryManager repositoryManager, @Qualifier(GroupType.NAME) final Type type) {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.groupType = checkNotNull(type);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.groupType = requireNonNull(type);
   }
 
   public Graph<Repository> renderAllRepos() {

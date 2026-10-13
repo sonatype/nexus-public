@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.view.handlers.IndexHtmlForwardHandler;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public abstract class ExampleRecipeSupport
     extends RecipeSupport
@@ -84,18 +84,18 @@ public abstract class ExampleRecipeSupport
       final LastDownloadedHandler lastDownloadedHandler,
       final HandlerContributor handlerContributor)
   {
-    this.securityFacet = checkNotNull(securityFacet);
-    this.viewFacet = checkNotNull(viewFacet);
-    this.contentFacet = checkNotNull(contentFacet);
-    this.exceptionHandler = checkNotNull(exceptionHandler);
-    this.timingHandler = checkNotNull(timingHandler);
-    this.indexHtmlForwardHandler = checkNotNull(indexHtmlForwardHandler);
-    this.securityHandler = checkNotNull(securityHandler);
-    this.partialFetchHandler = checkNotNull(partialFetchHandler);
-    this.contentHandler = checkNotNull(contentHandler);
-    this.conditionalRequestHandler = checkNotNull(conditionalRequestHandler);
-    this.contentHeadersHandler = checkNotNull(contentHeadersHandler);
-    this.lastDownloadedHandler = checkNotNull(lastDownloadedHandler);
-    this.handlerContributor = checkNotNull(handlerContributor);
+    this.securityFacet = requireNonNull(securityFacet);
+    this.viewFacet = requireNonNull(viewFacet);
+    this.contentFacet = requireNonNull(contentFacet);
+    this.exceptionHandler = requireNonNull(exceptionHandler);
+    this.timingHandler = requireNonNull(timingHandler);
+    this.indexHtmlForwardHandler = requireNonNull(indexHtmlForwardHandler);
+    this.securityHandler = requireNonNull(securityHandler);
+    this.partialFetchHandler = requireNonNull(partialFetchHandler);
+    this.contentHandler = requireNonNull(contentHandler);
+    this.conditionalRequestHandler = requireNonNull(conditionalRequestHandler);
+    this.contentHeadersHandler = requireNonNull(contentHeadersHandler);
+    this.lastDownloadedHandler = requireNonNull(lastDownloadedHandler);
+    this.handlerContributor = requireNonNull(handlerContributor);
   }
 }

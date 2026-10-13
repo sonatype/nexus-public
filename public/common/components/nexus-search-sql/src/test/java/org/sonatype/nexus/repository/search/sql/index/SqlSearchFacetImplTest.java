@@ -192,4 +192,21 @@ class SqlSearchFacetImplTest
     verify(searchStore).deleteAllForRepository(42, "cool-format");
     verify(searchStore).deleteAllSearchAssets(42, "cool-format");
   }
+
+  @Test
+  void testDeleteIndex() {
+    Format format = mock(Format.class);
+    when(format.getValue()).thenReturn("maven2");
+
+    ContentFacet contentFacet = mock(ContentFacet.class);
+    when(contentFacet.contentRepositoryId()).thenReturn(99);
+
+    when(repository.getFormat()).thenReturn(format);
+    when(repository.facet(eq(ContentFacet.class))).thenReturn(contentFacet);
+
+    underTest.deleteIndex();
+
+    verify(searchStore).deleteAllForRepository(99, "maven2");
+    verify(searchStore).deleteAllSearchAssets(99, "maven2");
+  }
 }

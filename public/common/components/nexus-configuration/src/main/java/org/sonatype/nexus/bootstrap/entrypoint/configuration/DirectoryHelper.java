@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to create directories and perform file-system operations.
@@ -100,7 +100,7 @@ public class DirectoryHelper
    * returned, and in any other case (path does not exists) {@code false} is returned.
    */
   public boolean cleanIfExists(final Path dir) throws IOException {
-    checkNotNull(dir);
+    requireNonNull(dir);
     if (Files.exists(dir)) {
       clean(dir);
       return true;
@@ -142,7 +142,7 @@ public class DirectoryHelper
    * returned, and in any other case (path does not exists) {@code false} is returned.
    */
   public boolean emptyIfExists(final Path dir) throws IOException {
-    checkNotNull(dir);
+    requireNonNull(dir);
     if (Files.exists(dir)) {
       empty(dir);
       return true;
@@ -235,7 +235,7 @@ public class DirectoryHelper
       final Path dir,
       @Nullable final com.google.common.base.Predicate<Path> excludeFilter) throws IOException
   {
-    checkNotNull(dir);
+    requireNonNull(dir);
     if (Files.exists(dir)) {
       delete(dir, excludeFilter);
       return true;
@@ -266,7 +266,7 @@ public class DirectoryHelper
       @Nullable final com.google.common.base.Predicate<Path> excludeFilter) throws IOException
   {
     validateDirectoryOrFile(from);
-    checkNotNull(to);
+    requireNonNull(to);
     if (Files.isDirectory(from)) {
       // Avoiding recursion: unless there's an exclude filter, the 'to' dir must not be inside the 'from' dir
       checkArgument(!isParentOf(from, to) || excludeFilter != null);
@@ -428,7 +428,7 @@ public class DirectoryHelper
     private final com.google.common.base.Function<Path, FileVisitResult> func;
 
     public FunctionVisitor(final com.google.common.base.Function<Path, FileVisitResult> func) {
-      this.func = checkNotNull(func);
+      this.func = requireNonNull(func);
     }
 
     @Override
@@ -494,7 +494,7 @@ public class DirectoryHelper
    */
   private static void validateDirectory(final Path... paths) {
     for (Path path : paths) {
-      checkNotNull(path, "Path must be non-null");
+      requireNonNull(path, "Path must be non-null");
       checkArgument(Files.isDirectory(path), "%s is not a directory", path);
     }
   }
@@ -504,7 +504,7 @@ public class DirectoryHelper
    */
   private static void validateDirectoryOrFile(final Path... paths) {
     for (Path path : paths) {
-      checkNotNull(path, "Path must be non-null");
+      requireNonNull(path, "Path must be non-null");
       checkArgument(Files.exists(path), "%s does not exists", path);
     }
   }

@@ -31,7 +31,7 @@ import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -51,14 +51,14 @@ public class LegacyCipherFactoryImpl
 
   @Autowired
   public LegacyCipherFactoryImpl(final CryptoHelper cryptoHelper) {
-    this.cryptoHelper = checkNotNull(cryptoHelper);
+    this.cryptoHelper = requireNonNull(cryptoHelper);
   }
 
   @Override
   public PbeCipher create(final String password, final String salt, final String iv) throws CipherException {
-    checkNotNull(password);
-    checkNotNull(salt);
-    checkNotNull(iv);
+    requireNonNull(password);
+    requireNonNull(salt);
+    requireNonNull(iv);
     return new PbeCipherImpl(cryptoHelper, password, salt, iv);
   }
 

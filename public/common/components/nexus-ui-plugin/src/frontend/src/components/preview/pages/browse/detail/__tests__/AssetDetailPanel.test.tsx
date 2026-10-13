@@ -372,7 +372,7 @@ describe('AssetDetailPanel', () => {
     });
 
     it('hides Component Tags tab in CE mode', () => {
-      jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(false);
+      jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(false);
 
       renderWithTheme(<AssetDetailPanel asset={mockAsset} />);
 
@@ -380,7 +380,7 @@ describe('AssetDetailPanel', () => {
     });
 
     it('shows Component Tags tab in Pro Edition', () => {
-      jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(true);
+      jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(true);
 
       renderWithTheme(<AssetDetailPanel asset={mockAsset} />);
 

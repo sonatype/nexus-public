@@ -11,11 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen} from '@testing-library/react';
+import {act, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import IqServerConnected from './IqServerConnected';
+import {buildIqServerConnectedMachine} from './IqServerConnectedMachine';
+import {peekJustSavedIqConfig, setJustSavedIqConfig} from './iqServerJustSavedCache';
 import UIStrings from '../../../../constants/UIStrings';
 
 const mockRouter = {
@@ -41,7 +43,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
 jest.mock('./IqServerConnectedMachine', () => {
   const {createMachine, assign} = require('xstate');
 
-  return createMachine({
+  const machine = createMachine({
     id: 'IqServerConnectedMachine',
     initial: 'loading',
     context: {
@@ -87,6 +89,13 @@ jest.mock('./IqServerConnectedMachine', () => {
       })
     }
   });
+
+  const buildIqServerConnectedMachine = jest.fn(() => machine);
+  return {
+    __esModule: true,
+    default: machine,
+    buildIqServerConnectedMachine
+  };
 });
 
 const {IQ_SERVER} = UIStrings;
@@ -326,5 +335,77 @@ describe('IqServerConnected', () => {
 
     const lifecycleTile = screen.getByLabelText('Sonatype Lifecycle - Not Available');
     expect(lifecycleTile).toHaveAttribute('tabIndex', '-1');
+  });
+
+  describe('just-saved handoff consumption', () => {
+    const justSaved = {enabled: true, url: 'http://iq', licensedSolutions: [{id: 'lifecycle'}]};
+
+    beforeEach(() => {
+      buildIqServerConnectedMachine.mockClear();
+      setJustSavedIqConfig(null);
+      mockClmState();
+    });
+
+    it('builds the machine from the just-saved config and clears the handoff after mount', () => {
+      setJustSavedIqConfig(justSaved);
+
+      render(<IqServerConnected />);
+
+      expect(buildIqServerConnectedMachine).toHaveBeenLastCalledWith(justSaved);
+      expect(peekJustSavedIqConfig()).toBeNull();
+    });
+
+    it('still gives the committed render the just-saved config under StrictMode double-render', () => {
+      // StrictMode double-renders. React keeps refs across that, so the Suspense test below is the one that
+      // catches a read that clears the slot during render; this one guards against the read happening twice.
+      setJustSavedIqConfig(justSaved);
+
+      render(
+        <React.StrictMode>
+          <IqServerConnected />
+        </React.StrictMode>
+      );
+
+      expect(buildIqServerConnectedMachine).toHaveBeenLastCalledWith(justSaved);
+      expect(buildIqServerConnectedMachine).not.toHaveBeenCalledWith(null);
+      expect(peekJustSavedIqConfig()).toBeNull();
+    });
+
+    it('still gives the committed render the just-saved config when the first render is suspended', async () => {
+      // A sibling suspends, so React throws away the page's first render, as it does under the lazy route.
+      setJustSavedIqConfig(justSaved);
+      let resolve;
+      const pending = new Promise((r) => { resolve = r; });
+      let ready = false;
+      function SuspendsOnce() {
+        if (!ready) {
+          throw pending;
+        }
+        return null;
+      }
+
+      render(
+        <React.Suspense fallback={<div>loading</div>}>
+          <IqServerConnected />
+          <SuspendsOnce />
+        </React.Suspense>
+      );
+      await act(async () => {
+        ready = true;
+        resolve();
+        await pending;
+      });
+
+      expect(await screen.findByText(IQ_SERVER.CONNECTED.TITLE)).toBeInTheDocument();
+      expect(buildIqServerConnectedMachine).toHaveBeenLastCalledWith(justSaved);
+      expect(buildIqServerConnectedMachine).not.toHaveBeenCalledWith(null);
+      expect(peekJustSavedIqConfig()).toBeNull();
+    });
+
+    it('builds the machine without a handoff on a normal visit', () => {
+      render(<IqServerConnected />);
+
+      expect(buildIqServerConnectedMachine).toHaveBeenLastCalledWith(null);
+    });
   });
 });

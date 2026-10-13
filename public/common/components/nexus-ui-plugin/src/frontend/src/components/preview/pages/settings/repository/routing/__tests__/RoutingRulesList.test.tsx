@@ -284,6 +284,23 @@ describe('RoutingRulesList', () => {
     });
   });
 
+  it('renders help section below the table (NEXUS-54308)', async () => {
+    const { container } = render(
+      <RoutingRulesList onSelect={mockOnSelect} onCreate={mockOnCreate} onPreview={mockOnPreview} />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('.routing-rules-list__table-wrapper')).toBeInTheDocument();
+    });
+
+    const tableWrapper = container.querySelector('.routing-rules-list__table-wrapper');
+    const help = screen.getByTestId('help-section');
+    expect(
+      tableWrapper && tableWrapper.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it('should have retry functionality in error state', async () => {
     const mockFetchRoutingRules = jest.fn()
       .mockRejectedValueOnce(new Error('Failed to load'))

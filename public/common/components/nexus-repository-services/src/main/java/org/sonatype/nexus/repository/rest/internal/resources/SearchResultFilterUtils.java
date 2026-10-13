@@ -34,7 +34,7 @@ import org.sonatype.nexus.repository.search.SearchUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
@@ -56,9 +56,9 @@ public class SearchResultFilterUtils
 
   @Autowired
   public SearchResultFilterUtils(final SearchUtils searchUtils, final List<SearchMappings> searchMappings) {
-    this.searchUtils = checkNotNull(searchUtils);
+    this.searchUtils = requireNonNull(searchUtils);
     Map<String, SearchMapping> byAttribute = new HashMap<>();
-    checkNotNull(searchMappings).stream()
+    requireNonNull(searchMappings).stream()
         .map(SearchMappings::get)
         .flatMap(iterable -> StreamSupport.stream(iterable.spliterator(), false))
         .forEach(mapping -> {

@@ -56,7 +56,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptyList;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
@@ -94,12 +94,12 @@ public class SearchComponent
       final RepositoryManager repositoryManager,
       final ContentPermissionChecker contentPermissionChecker)
   {
-    this.searchService = checkNotNull(searchService);
+    this.searchService = requireNonNull(searchService);
     this.searchResultsLimit = searchResultsLimit;
-    this.searchResultsGenerator = checkNotNull(searchResultsGenerator);
-    this.eventManager = checkNotNull(eventManager);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
+    this.searchResultsGenerator = requireNonNull(searchResultsGenerator);
+    this.eventManager = requireNonNull(eventManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.contentPermissionChecker = requireNonNull(contentPermissionChecker);
   }
 
   /**

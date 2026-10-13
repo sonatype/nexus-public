@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A simple {@code java.nio} implementation of {@link FileOperations}.
@@ -55,17 +55,17 @@ public class SimpleFileOperations
 
   @Autowired
   public SimpleFileOperations(final DirectoryHelper directoryHelper) {
-    this.directoryHelper = checkNotNull(directoryHelper);
+    this.directoryHelper = requireNonNull(directoryHelper);
   }
 
   @Override
   public StreamMetrics create(final Path path, final InputStream data) throws IOException {
-    checkNotNull(path);
-    checkNotNull(data);
+    requireNonNull(path);
+    requireNonNull(data);
 
     // Ensure path exists for new blob
     Path dir = path.getParent();
-    checkNotNull(dir, "Null parent for path: %s", path);
+    requireNonNull(dir, String.format("Null parent for path: %s", path));
     if (!Files.isDirectory(dir)) {
       directoryHelper.mkdir(dir);
     }
@@ -121,24 +121,24 @@ public class SimpleFileOperations
 
   @Override
   public void copy(final Path source, final Path target) throws IOException {
-    checkNotNull(source);
-    checkNotNull(target);
+    requireNonNull(source);
+    requireNonNull(target);
     directoryHelper.mkdir(target.getParent());
     Files.copy(source, target);
   }
 
   @Override
   public void move(final Path source, final Path target) throws IOException {
-    checkNotNull(source);
-    checkNotNull(target);
+    requireNonNull(source);
+    requireNonNull(target);
     directoryHelper.mkdir(target.getParent());
     Files.move(source, target);
   }
 
   @Override
   public void moveAtomic(final Path source, final Path target) throws IOException {
-    checkNotNull(source);
-    checkNotNull(target);
+    requireNonNull(source);
+    requireNonNull(target);
     directoryHelper.mkdir(target.getParent());
     try {
       Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
@@ -150,16 +150,16 @@ public class SimpleFileOperations
 
   @Override
   public void overwrite(final Path source, final Path target) throws IOException {
-    checkNotNull(source);
-    checkNotNull(target);
+    requireNonNull(source);
+    requireNonNull(target);
     directoryHelper.mkdir(target.getParent());
     Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
   }
 
   @Override
   public void overwriteAtomic(final Path source, final Path target) throws IOException {
-    checkNotNull(source);
-    checkNotNull(target);
+    requireNonNull(source);
+    requireNonNull(target);
     directoryHelper.mkdir(target.getParent());
     try {
       Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
@@ -171,8 +171,8 @@ public class SimpleFileOperations
 
   @Override
   public void copyIfLocked(final Path source, final Path target, final Mover mover) throws IOException {
-    checkNotNull(source);
-    checkNotNull(target);
+    requireNonNull(source);
+    requireNonNull(target);
     try {
       mover.accept(source, target);
     }
@@ -205,13 +205,13 @@ public class SimpleFileOperations
 
   @Override
   public boolean exists(final Path path) {
-    checkNotNull(path);
+    requireNonNull(path);
     return Files.exists(path);
   }
 
   @Override
   public boolean isBlobZeroLength(final Path path) {
-    checkNotNull(path);
+    requireNonNull(path);
     try {
       return Files.exists(path) && Files.size(path) == 0L;
     }
@@ -222,13 +222,13 @@ public class SimpleFileOperations
 
   @Override
   public InputStream openInputStream(final Path path) throws IOException {
-    checkNotNull(path);
+    requireNonNull(path);
     return Files.newInputStream(path, StandardOpenOption.READ);
   }
 
   @Override
   public boolean delete(final Path path) throws IOException {
-    checkNotNull(path);
+    requireNonNull(path);
     checkArgument(!Files.isDirectory(path));
     boolean deleted = Files.deleteIfExists(path);
 

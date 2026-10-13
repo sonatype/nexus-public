@@ -20,10 +20,7 @@ export const GA_REPOSITORIES_STRINGS = {
   EXPORT_CSV_ARIA: 'Export all filtered results as CSV',
   EXPORT_FILENAME: 'repositories.csv',
   FILTERS: {
-    SORT_LABEL: 'Sort',
     TYPE_LABEL: 'Type',
-    SORT_ASC: 'Ascending',
-    SORT_DESC: 'Descending',
   },
   TYPE_OPTIONS: [
     { value: 'hosted', label: 'Hosted' },

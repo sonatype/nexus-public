@@ -43,6 +43,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.JwtHelper.ID_TOKEN;
 import static org.sonatype.nexus.security.JwtHelper.ISSUER;
+import static org.sonatype.nexus.security.JwtHelper.MAX_JWT_LENGTH;
 import static org.sonatype.nexus.security.JwtHelper.REALM;
 import static org.sonatype.nexus.security.JwtHelper.USER;
 import static org.sonatype.nexus.security.JwtHelper.USER_SESSION_ID;
@@ -91,16 +92,101 @@ public class JwtHelperTest
   }
 
   @Test
-  public void testCreateJwtCookie_withIdToken() {
-    Session session = mock(Session.class);
-    doReturn(session).when(subject).getSession();
-    doReturn(VALID_JWT_TOKEN).when(session).getAttribute(ID_TOKEN);
+  public void testCreateJwtCookie_noIdTokenClaimWhenNoneGiven() {
     Cookie jwtCookie = underTest.createJwtCookie(subject, false);
+
+    assertTrue(decodeJwt(jwtCookie.getValue()).getClaim(ID_TOKEN).isNull());
+    assertEquals(Optional.empty(), underTest.readIdToken(jwtCookie.getValue()));
+  }
+
+  @Test
+  public void testCreateJwtCookie_withIdToken() {
+    Cookie jwtCookie = underTest.createJwtCookie(subject, false, VALID_JWT_TOKEN);
     assertNotNull(jwtCookie);
     String jwt = jwtCookie.getValue();
 
     assertJwt(jwt);
     assertCookie(jwtCookie);
+    assertEquals(VALID_JWT_TOKEN, decodeJwt(jwt).getClaim(ID_TOKEN).asString());
+    assertEquals(Optional.of(VALID_JWT_TOKEN), underTest.readIdToken(jwt));
+  }
+
+  /**
+   * The refresh runs on every authenticated request, so an id_token that is not carried forward here
+   * would be lost after the first one — leaving logout with no id_token_hint to send.
+   */
+  @Test
+  public void testRefreshJwtCookie_carriesIdTokenForward() throws Exception {
+    String jwt = underTest.createJwtCookie(subject, false, VALID_JWT_TOKEN).getValue();
+
+    Cookie refreshed = underTest.refreshJwtCookie(underTest.verifyJwt(jwt), false);
+
+    assertEquals(Optional.of(VALID_JWT_TOKEN), underTest.readIdToken(refreshed.getValue()));
+    assertJwt(refreshed.getValue());
+  }
+
+  /**
+   * An oversized id_token would push the cookie past the ~4KB browser limit and break the login it
+   * rides on, so the claim is dropped instead. Logout then identifies the session by client_id.
+   */
+  @Test
+  public void testCreateJwtCookie_dropsOversizedIdToken() {
+    String oversized = "x".repeat(MAX_JWT_LENGTH);
+
+    Cookie jwtCookie = underTest.createJwtCookie(subject, false, oversized);
+    String jwt = jwtCookie.getValue();
+
+    assertJwt(jwt);
+    assertCookie(jwtCookie);
+    assertTrue(decodeJwt(jwt).getClaim(ID_TOKEN).isNull());
+    assertEquals(Optional.empty(), underTest.readIdToken(jwt));
+    assertWithinCookieBudget(jwt);
+  }
+
+  /**
+   * An ID token at the top of the range a real provider issues -- a Keycloak token with group and
+   * role claims runs 1-2KB -- has to be kept, and the cookie it produces has to stay inside the
+   * browser budget. Asserting only the first half would let the limit be raised until the cookie is
+   * silently dropped.
+   */
+  @Test
+  public void testCreateJwtCookie_keepsRealisticIdTokenWithinCookieBudget() {
+    String realistic = "x".repeat(2048);
+
+    String jwt = underTest.createJwtCookie(subject, false, realistic).getValue();
+
+    assertEquals(Optional.of(realistic), underTest.readIdToken(jwt));
+    assertWithinCookieBudget(jwt);
+  }
+
+  /**
+   * The budget covers the whole JWT, not the id_token alone: a long principal name leaves less room
+   * for the claim, and an id_token that would fit on its own has to be dropped once the other claims
+   * have taken their share.
+   */
+  @Test
+  public void testCreateJwtCookie_dropsIdTokenWhenOtherClaimsConsumeTheBudget() {
+    when(subject.getPrincipal()).thenReturn("u".repeat(1800));
+    String wouldFitAlone = "x".repeat(2048);
+
+    String jwt = underTest.createJwtCookie(subject, false, wouldFitAlone).getValue();
+
+    assertTrue(decodeJwt(jwt).getClaim(ID_TOKEN).isNull());
+    assertEquals(Optional.empty(), underTest.readIdToken(jwt));
+    assertWithinCookieBudget(jwt);
+  }
+
+  private static void assertWithinCookieBudget(final String jwt) {
+    assertTrue("JWT is " + jwt.length() + " characters, over the " + MAX_JWT_LENGTH
+        + " character cookie budget; a browser would drop the cookie and the login with it",
+        jwt.length() <= MAX_JWT_LENGTH);
+  }
+
+  @Test
+  public void testReadIdToken_absentForBlankOrUnverifiableJwt() {
+    assertEquals(Optional.empty(), underTest.readIdToken(null));
+    assertEquals(Optional.empty(), underTest.readIdToken(""));
+    assertEquals(Optional.empty(), underTest.readIdToken(makeInvalidJwt()));
   }
 
   @Test

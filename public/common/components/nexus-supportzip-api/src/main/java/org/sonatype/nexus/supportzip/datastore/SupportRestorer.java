@@ -29,7 +29,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.RESTORE;
 import static org.sonatype.nexus.supportzip.datastore.RestoreHelper.FILE_SUFFIX;
 import org.springframework.stereotype.Component;
@@ -55,8 +55,8 @@ public class SupportRestorer
       final RestoreHelper restoreHelper,
       final List<ImportData> importDataByNameList)
   {
-    this.restoreHelper = checkNotNull(restoreHelper);
-    this.importDataByName = QualifierUtil.buildQualifierBeanMap(checkNotNull(importDataByNameList));
+    this.restoreHelper = requireNonNull(restoreHelper);
+    this.importDataByName = QualifierUtil.buildQualifierBeanMap(requireNonNull(importDataByNameList));
   }
 
   @Override

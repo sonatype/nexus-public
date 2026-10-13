@@ -212,7 +212,9 @@ export interface GAAsset {
   readonly downloadUrl: string;
 
   /**
-   * File format/extension (e.g., "jar", "pom", "sources.jar").
+   * MIME content type, despite the name (e.g., "application/java-archive"). Both mappers
+   * set it from the API's `contentType`, falling back to the repository format. The Files
+   * tab's "Type" column reads `extension`, not this.
    */
   readonly format: string;
 
@@ -223,7 +225,12 @@ export interface GAAsset {
   readonly classifier?: string;
 
   /**
-   * Maven extension (e.g., "jar", "pom", "war").
+   * File type shown in the Files tab's "Type" column.
+   *
+   * Not simply the tail of the path: derived by deriveFileType (fileType.ts), which falls
+   * back to a per-format label for formats whose asset paths carry no extension, and to
+   * UNKNOWN_FILE_TYPE when neither source can name a type. Compound extensions keep their
+   * last segment only, so "foo.tar.gz" is "gz".
    */
   readonly extension: string;
 

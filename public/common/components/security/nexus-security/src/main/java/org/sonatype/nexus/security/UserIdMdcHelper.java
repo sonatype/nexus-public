@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.UserIdHelper.SYSTEM;
 import static org.sonatype.nexus.security.UserIdHelper.UNKNOWN;
 
@@ -49,7 +49,7 @@ public class UserIdMdcHelper
   }
 
   public static void set(final Subject subject) {
-    checkNotNull(subject);
+    requireNonNull(subject);
     String userId = UserIdHelper.get(subject);
     log.trace("Set: {}", userId);
     MDC.put(KEY, userId);

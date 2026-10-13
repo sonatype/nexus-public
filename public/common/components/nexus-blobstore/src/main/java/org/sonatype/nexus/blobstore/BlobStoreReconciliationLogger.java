@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
 import org.springframework.stereotype.Component;
 
@@ -66,9 +66,9 @@ public class BlobStoreReconciliationLogger
       final ApplicationDirectories applicationDirectories,
       final BlobIdLocationResolver blobIdLocationResolver)
   {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
     this.reconciliationLogger = LoggerFactory.getLogger(RECONCILIATION_LOGGER_NAME);
-    this.blobIdLocationResolver = checkNotNull(blobIdLocationResolver);
+    this.blobIdLocationResolver = requireNonNull(blobIdLocationResolver);
   }
 
   /**

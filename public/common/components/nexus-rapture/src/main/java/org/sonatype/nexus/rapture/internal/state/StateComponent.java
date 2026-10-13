@@ -36,7 +36,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * State Ext.Direct component.
@@ -58,9 +58,9 @@ public class StateComponent
 
   @Autowired
   public StateComponent(@Lazy final List<StateContributor> stateContributors, final NodeAccess nodeAccess) {
-    this.stateContributors = checkNotNull(stateContributors);
+    this.stateContributors = requireNonNull(stateContributors);
     // special key on serverId hints UI event listeners to ignore serverId changes
-    final String prefix = checkNotNull(nodeAccess).isClustered() ? "ignore." : "";
+    final String prefix = requireNonNull(nodeAccess).isClustered() ? "ignore." : "";
     this.serverId = prefix + String.valueOf(System.nanoTime());
   }
 

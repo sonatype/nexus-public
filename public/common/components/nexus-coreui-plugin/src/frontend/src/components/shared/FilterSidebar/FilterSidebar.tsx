@@ -64,6 +64,8 @@ export interface FilterSidebarProps {
   footerText?: string;
   /** Custom class name */
   className?: string;
+  /** Whether to show the sidebar header (Filters title + clear button). Default: true */
+  showHeader?: boolean;
 }
 
 // =============================================================================
@@ -274,6 +276,7 @@ export function FilterSidebar({
   title = 'Filters',
   footerText = 'Filters apply automatically',
   className = '',
+  showHeader = true,
 }: FilterSidebarProps): JSX.Element {
   // Track expanded state for each section
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
@@ -313,7 +316,7 @@ export function FilterSidebar({
   return (
     <aside className={`filter-sidebar ${className}`} data-testid="filter-sidebar">
       {/* Header */}
-      <div className="filter-sidebar__header">
+      {showHeader && <div className="filter-sidebar__header">
         <div className="filter-sidebar__title">
           <Filter size={16} aria-hidden="true" />
           <span>{title}</span>
@@ -333,7 +336,8 @@ export function FilterSidebar({
             Clear all
           </button>
         )}
-      </div>
+      </div>}
+
 
       {/* Filter Sections */}
       <div className="filter-sidebar__content">

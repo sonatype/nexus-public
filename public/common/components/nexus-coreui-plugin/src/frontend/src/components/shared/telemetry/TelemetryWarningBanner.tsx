@@ -10,15 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {Link} from '@radix-ui/themes';
 import { ExternalLink } from 'lucide-react';
-import { ExtJS, SystemAlert } from '@sonatype/nexus-ui-plugin';
-import { restClient, urlBuilder } from '@/utils/api';
+import { ExtJS, SystemAlert, useIsPreviewUI } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../constants/UIStrings';
 
-const TASKS_PATH = '#admin/system/tasks';
-const TELEMETRY_TASK_TYPE = 'telemetry.upload.retry';
+const CLASSIC_TASKS_PATH = '#admin/system/tasks';
+const PREVIEW_TASKS_PATH = '#preview/admin/system/tasks';
 
 /**
  * Renders text with markdown-style bold (**text**) as React elements.
@@ -75,21 +74,6 @@ function messageWithLink(messageText: string, helperLink: HelperLink | undefined
 }
 
 /**
- * REST API Task shape (matches server response)
- */
-interface RestTask {
-  id: string;
-  name: string;
-  type: string;
-  enabled: boolean;
-  currentState: string;
-}
-
-interface RestTasksResponse {
-  items: RestTask[];
-}
-
-/**
  * Telemetry health state from backend. Empty object indicates opt-out mode (banner hidden).
  */
 interface TelemetryHealth {
@@ -97,16 +81,14 @@ interface TelemetryHealth {
   failedReportDays?: number;
   remainingGracePeriodDays?: number;
   readOnly?: boolean;
-  introducedWarning?: boolean;
 }
 
 /**
  * Displays warning banner when telemetry uploads fail persistently.
  *
- * Three mutually exclusive modes (determined by backend):
+ * Two mutually exclusive modes (determined by backend):
  * - Read-only mode: System is locked due to prolonged failures (readOnly=true) - red/error
  * - Mandatory warning: Grace period active, failures above threshold (showWarning=true) - yellow/warning
- * - Early warning: Failures detected but grace period not active (introducedWarning=true) - yellow/warning
  */
 export default function TelemetryWarningBanner(): React.ReactElement | null {
   const user = ExtJS.useUser();
@@ -116,51 +98,22 @@ export default function TelemetryWarningBanner(): React.ReactElement | null {
     () => ExtJS.state()?.getValue?.('nexus.telemetry.health')
   ) as TelemetryHealth | undefined;
 
-  const [telemetryTaskId, setTelemetryTaskId] = useState<string | null>(null);
-
   const isReadOnly = telemetryHealth?.readOnly ?? false;
   const showWarning = telemetryHealth?.showWarning ?? false;
-  const introducedWarning = telemetryHealth?.introducedWarning ?? false;
 
-  useEffect(() => {
-    if (isAdmin && (isReadOnly || showWarning || introducedWarning)) {
-      const fetchTelemetryTasks = async () => {
-        try {
-          const url = urlBuilder.tasks.list();
-          const response = await restClient.get<RestTasksResponse>(url);
-          const telemetryTasks = response.items.filter(
-            (task) => task.type === TELEMETRY_TASK_TYPE
-          );
-          if (telemetryTasks.length === 1) {
-            setTelemetryTaskId(telemetryTasks[0].id);
-          } else {
-            setTelemetryTaskId(null);
-          }
-        } catch (error) {
-          setTelemetryTaskId(null);
-        }
-      };
-      fetchTelemetryTasks();
-    }
-  }, [isAdmin, isReadOnly, showWarning, introducedWarning]);
+  // "Go to Tasks" always opens the Tasks list, in the UI the user is currently in
+  const isPreviewUI = useIsPreviewUI();
 
   if (!isAdmin) return null;
 
-  if (!isReadOnly && !showWarning && !introducedWarning) return null;
+  if (!isReadOnly && !showWarning) return null;
 
-  const getTaskUrl = () => {
-    if (telemetryTaskId) {
-      return `${TASKS_PATH}:${encodeURIComponent(telemetryTaskId)}`;
-    }
-    return TASKS_PATH;
-  };
+  const tasksUrl = isPreviewUI ? PREVIEW_TASKS_PATH : CLASSIC_TASKS_PATH;
 
   // Determine which content to show (read-only takes priority)
   const content = isReadOnly
     ? UIStrings.TELEMETRY.READONLY_BANNER
-    : introducedWarning
-      ? UIStrings.TELEMETRY.INTRODUCED_WARNING_BANNER
-      : UIStrings.TELEMETRY.WARNING_BANNER;
+    : UIStrings.TELEMETRY.WARNING_BANNER;
 
   const title = content.TITLE;
   const messageText = content.MESSAGE
@@ -171,7 +124,7 @@ export default function TelemetryWarningBanner(): React.ReactElement | null {
   const retryLink = content.RETRY_LINK;
   const helperLink = content.HELPER_LINK;
 
-  // Red for read-only mode, yellow/warning for both warning modes
+  // Red for read-only mode, yellow/warning for the grace-period warning
   const tier = isReadOnly ? 'error' : 'warning';
 
   const message = (
@@ -181,7 +134,7 @@ export default function TelemetryWarningBanner(): React.ReactElement | null {
       {retryRecommendation}{' '}
       <Link
         data-analytics-id="nxrm-telemetry-view-tasks-link"
-        href={getTaskUrl()}
+        href={tasksUrl}
       >
         {retryLink}
       </Link>

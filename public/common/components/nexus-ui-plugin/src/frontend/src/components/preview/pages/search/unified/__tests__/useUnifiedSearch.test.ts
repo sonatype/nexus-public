@@ -146,6 +146,20 @@ describe('useUnifiedSearch', () => {
     expect(result.current.hasMore).toBe(true);
   });
 
+  it('exposes the backend total from the search response in state', async () => {
+    mockedAxios.get.mockResolvedValueOnce({
+      data: { items: [], continuationToken: undefined, total: 4888 },
+    });
+
+    const { result } = renderHook(() => useUnifiedSearch());
+
+    await act(async () => {
+      await result.current.search();
+    });
+
+    expect(result.current.state.total).toBe(4888);
+  });
+
   it('search includes format in query params', async () => {
     mockedAxios.get.mockResolvedValueOnce(mockSearchResponse);
     

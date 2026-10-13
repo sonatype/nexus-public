@@ -48,7 +48,13 @@ import {
 import { RepositoryListState, SortDirection } from '../repository-list.types';
 
 jest.mock('@uirouter/react', () => ({
-  useRouter: () => ({ stateService: { go: jest.fn() } }),
+  useRouter: () => ({
+    stateService: {
+      go: jest.fn(),
+      href: (_state: string, params: { repoName: string }) =>
+        `#browse/browse/${params.repoName}/`,
+    },
+  }),
 }));
 
 // Mock the useRepositoryList hook
@@ -573,26 +579,274 @@ describe('IqPolicyViolationsCell', () => {
   });
 });
 
-describe('RepositoryListTable (Actions column, NEXUS-53948)', () => {
-  it('shouldRenderActionsColumnHeaderWithRowActionsLabel', () => {
-    renderWithTheme(
-      <RepositoryListTable repositories={mockRepositories} />
-    );
+describe('RepositoryListTable', () => {
+  const firstRepo = mockRepositories[0];
 
-    expect(
-      screen.getByRole('columnheader', { name: /row actions/i })
-    ).toBeInTheDocument();
+  function renderTable(props: Record<string, unknown> = {}) {
+    return renderWithTheme(
+      <RepositoryListTable repositories={mockRepositories} {...props} />
+    );
+  }
+
+  describe('per-row actions column', () => {
+    it('shouldNotRenderRowActionsColumnHeader', () => {
+      renderTable();
+
+      expect(
+        screen.queryByRole('columnheader', { name: /row actions/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it('shouldNotRenderPerRowActionsTrigger', () => {
+      renderTable();
+
+      expect(screen.queryByRole('button', { name: /^Actions for/ })).not.toBeInTheDocument();
+    });
+
+    it('shouldKeepStandaloneCopyUrlButtonForEveryRepository', () => {
+      renderTable();
+
+      expect(
+        screen.getAllByRole('button', { name: /copy url to clipboard/i })
+      ).toHaveLength(mockRepositories.length);
+    });
   });
 
-  it('shouldRenderPerRowActionsTriggerForEveryRepository', () => {
-    renderWithTheme(
-      <RepositoryListTable repositories={mockRepositories} />
-    );
+  describe('repository name navigation', () => {
+    it('shouldNavigateWhenRepositoryNameIsClicked', async () => {
+      const onSelect = jest.fn();
+      renderTable({ onSelect });
 
-    mockRepositories.forEach((repo) => {
+      await userEvent.click(screen.getByRole('link', { name: firstRepo.name }));
+
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith(firstRepo.name);
+    });
+
+    /*
+     * `onSelect` is optional, so the handler must only cancel the anchor's default when it has
+     * something to navigate with. Without that guard a consumer omitting the callback would get
+     * a link with a real href whose primary click is swallowed -- worse than the row-click
+     * behaviour it replaced, which at least had no destination to lose. fireEvent returns false
+     * when a listener called preventDefault().
+     */
+    it('shouldLeaveNativeNavigationIntactWhenNoSelectHandlerIsProvided', () => {
+      renderTable();
+
+      const notCancelled = fireEvent.click(screen.getByRole('link', { name: firstRepo.name }));
+
+      expect(notCancelled).toBe(true);
+    });
+
+    /*
+     * Enter activation and modifier/middle-click are the browser's own behaviour for an anchor
+     * and are not synthesised by jsdom, so what is asserted here is that the element really is a
+     * link carrying a destination; the interactions themselves are covered by manual verification.
+     */
+    it('shouldRenderTheRepositoryNameAsALinkWithADestination', () => {
+      renderTable({ onSelect: jest.fn() });
+
+      const name = screen.getByRole('link', { name: firstRepo.name });
+
+      expect(name.tagName).toBe('A');
+      expect(name.getAttribute('href')).toBeTruthy();
+    });
+
+    /*
+     * Nexus One resets bare anchors app-wide (App.scss:
+     * `.nxrm-main-content > .radix-themes:not(:has(.nxrm-ext-js-wrapper)) a:not([class*="x-"])`
+     * -> color: inherit). That selector outranks Radix's own `:where()`-wrapped rules, so
+     * without an inline override the name renders as plain dark table text and loses its link
+     * affordance. The accent colour itself is not observable here: React assigns inline styles
+     * via the style property, and jsdom's cssstyle rejects a var() colour on that path, so the
+     * value is absent from style.color, cssText and the style attribute alike. What is asserted
+     * is the accent metadata that makes the colour resolve, plus the absence of an underline --
+     * this list has never underlined repository names, and a persistent underline was briefly
+     * introduced here by mistake.
+     */
+    it('shouldGiveTheRepositoryNameTheBlueAccentWithoutAPersistentUnderline', () => {
+      renderTable({ onSelect: jest.fn() });
+
+      const name = screen.getByRole('link', { name: firstRepo.name });
+
+      expect(name).toHaveAttribute('data-accent-color', 'blue');
+      expect(name).not.toHaveStyle({ textDecorationLine: 'underline' });
+    });
+
+    it('shouldNotNavigateWhenAnEmptyPartOfTheRowIsClicked', async () => {
+      const onSelect = jest.fn();
+      renderTable({ onSelect });
+      const row = screen.getByRole('link', { name: firstRepo.name }).closest('tr');
+
+      await userEvent.click(row as HTMLElement);
+
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('row focus order', () => {
+    it('shouldNotExposeTheRowItselfAsANavigationTarget', () => {
+      renderTable();
+
       expect(
-        screen.getByRole('button', { name: `Actions for ${repo.name}` })
+        screen.queryByRole('button', { name: `Browse ${firstRepo.name}` })
+      ).not.toBeInTheDocument();
+    });
+
+    it('shouldNotMakeTheRowItselfATabStop', () => {
+      renderTable();
+
+      const row = screen.getByRole('link', { name: firstRepo.name }).closest('tr');
+
+      expect(row).not.toHaveAttribute('tabindex');
+    });
+
+    /* Rendered with the columns BrowsePage actually ships so the tab order is the shipped one. */
+    it('shouldTabToTheRepositoryNameFirstAndTheCopyUrlButtonSecond', async () => {
+      renderWithTheme(
+        <RepositoryListTable
+          repositories={mockRepositories.slice(0, 1)}
+          showIqPolicyViolations
+          showHealthCheck
+        />
+      );
+      const name = screen.getByRole('link', { name: firstRepo.name });
+      const copyUrl = screen.getByRole('button', { name: /copy url to clipboard/i });
+
+      await userEvent.tab();
+      expect(name).toHaveFocus();
+
+      await userEvent.tab();
+      expect(copyUrl).toHaveFocus();
+    });
+  });
+
+  describe('sorting', () => {
+    it('shouldOfferSortingOnNameTypeAndFormat', () => {
+      renderTable({ onSort: jest.fn() });
+
+      ['Name', 'Type', 'Format'].forEach((label) => {
+        expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+      });
+    });
+
+    it('shouldNotOfferSortingOnStatus', () => {
+      renderTable({ onSort: jest.fn() });
+
+      expect(screen.queryByRole('button', { name: 'Status' })).not.toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
+    });
+
+    it('shouldReportSortChangesForRetainedColumns', async () => {
+      const onSort = jest.fn();
+      renderTable({ onSort });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Type' }));
+
+      expect(onSort).toHaveBeenCalledWith('type', 'asc');
+    });
+  });
+
+  describe('format column terminology', () => {
+    it('shouldLabelTheFormatColumnFormat', () => {
+      renderTable();
+
+      expect(screen.getByRole('columnheader', { name: 'Format' })).toBeInTheDocument();
+      expect(screen.queryByText('Ecosystem')).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe('RepositoryListTable (loading states, NEXUS-54498)', () => {
+  describe('AC1 — filtering must not collapse the table', () => {
+    it('keeps the table and its rows mounted while a filter request is in flight', () => {
+      renderWithTheme(
+        <RepositoryListTable repositories={mockRepositories} loading={true} hasLoadedOnce={true} />
+      );
+
+      // The table structure survives the refetch: no blocking spinner replaces it.
+      expect(screen.getByRole('table')).toBeInTheDocument();
+      expect(
+        screen.getByRole('columnheader', { name: /name/i })
       ).toBeInTheDocument();
+      expect(screen.getByText('maven-central')).toBeInTheDocument();
+      expect(screen.queryByText(/loading repositories/i)).not.toBeInTheDocument();
+    });
+
+    it('marks the table busy while a filter request is in flight', () => {
+      renderWithTheme(
+        <RepositoryListTable repositories={mockRepositories} loading={true} hasLoadedOnce={true} />
+      );
+
+      // Radix Table.Root forwards props to the element wrapping the table region.
+      expect(screen.getByTestId('repository-list-table')).toHaveAttribute('aria-busy', 'true');
+    });
+
+    it('does not mark the table busy once the results have arrived', () => {
+      renderWithTheme(
+        <RepositoryListTable repositories={mockRepositories} loading={false} hasLoadedOnce={true} />
+      );
+
+      expect(screen.getByTestId('repository-list-table')).toHaveAttribute('aria-busy', 'false');
+    });
+
+    it('shows skeleton rows with the headers still visible on the initial load', () => {
+      // hasLoadedOnce false: no response has arrived yet, so there is nothing to preserve.
+      renderWithTheme(<RepositoryListTable repositories={[]} loading={true} hasLoadedOnce={false} />);
+
+      expect(screen.getAllByTestId('repository-list-skeleton-row').length).toBeGreaterThan(0);
+      // Headers stay for context (NexusOne table row skeleton pattern).
+      expect(
+        screen.getByRole('columnheader', { name: /name/i })
+      ).toBeInTheDocument();
+      // The initial load must not claim there is nothing to show.
+      expect(
+        screen.queryByText(/no repositories match the current filters/i)
+      ).not.toBeInTheDocument();
+    });
+
+    it('does not show skeleton rows while refetching over existing results', () => {
+      renderWithTheme(
+        <RepositoryListTable repositories={mockRepositories} loading={true} hasLoadedOnce={true} />
+      );
+
+      expect(screen.queryAllByTestId('repository-list-skeleton-row')).toHaveLength(0);
+    });
+
+    it('shows the filtered empty state when a filter legitimately matches nothing', () => {
+      renderWithTheme(
+        <RepositoryListTable
+          repositories={[]}
+          loading={false}
+          hasLoadedOnce={true}
+          hasFilters={true}
+        />
+      );
+
+      expect(
+        screen.getByText(/no repositories match the current filters/i)
+      ).toBeInTheDocument();
+      expect(screen.queryAllByTestId('repository-list-skeleton-row')).toHaveLength(0);
+    });
+
+    it('keeps the empty state mounted while refetching after a filter matched nothing', () => {
+      // The regression this guards: result count cannot tell a first load from a refetch, so an
+      // empty result would be swapped for five skeleton rows on the next filter change and the
+      // table body would resize — the collapse AC1 rules out.
+      renderWithTheme(
+        <RepositoryListTable
+          repositories={[]}
+          loading={true}
+          hasLoadedOnce={true}
+          hasFilters={true}
+        />
+      );
+
+      expect(screen.queryAllByTestId('repository-list-skeleton-row')).toHaveLength(0);
+      expect(
+        screen.getByText(/no repositories match the current filters/i)
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('repository-list-table')).toHaveAttribute('aria-busy', 'true');
     });
   });
 });

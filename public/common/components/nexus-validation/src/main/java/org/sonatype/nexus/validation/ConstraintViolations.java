@@ -20,7 +20,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link ConstraintViolation} helpers.
@@ -41,8 +41,8 @@ public class ConstraintViolations
    * @throws ConstraintViolationException
    */
   public static void maybePropagate(final Set<? extends ConstraintViolation<?>> violations, final Logger log) {
-    checkNotNull(violations);
-    checkNotNull(log);
+    requireNonNull(violations);
+    requireNonNull(log);
 
     if (!violations.isEmpty()) {
       String message = String.format("Validation failed; %d constraints violated", violations.size());

@@ -36,7 +36,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.apache.shiro.authz.annotation.RequiresUser;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
@@ -70,7 +70,7 @@ public class SearchVersionsResource
   private final ComponentVersionSearch componentVersionSearch;
 
   public SearchVersionsResource(final ComponentVersionSearch componentVersionSearch) {
-    this.componentVersionSearch = checkNotNull(componentVersionSearch);
+    this.componentVersionSearch = requireNonNull(componentVersionSearch);
   }
 
   @RequiresUser
@@ -122,13 +122,9 @@ public class SearchVersionsResource
   }
 
   private static SortDirection parseDirection(final String direction) {
-    if ("asc".equalsIgnoreCase(direction)) {
-      return SortDirection.ASC;
-    }
-    if ("desc".equalsIgnoreCase(direction)) {
-      return SortDirection.DESC;
-    }
-    throw new WebApplicationMessageException(BAD_REQUEST, "direction must be asc or desc");
+    return SortDirection.parse(direction)
+        .orElseThrow(() -> new WebApplicationMessageException(BAD_REQUEST,
+            String.format("\"%s\" is not a valid sort direction. Supported values are: ASC, DESC", direction)));
   }
 
   private static ComponentVersionsPageXO toXO(final ComponentVersionPage page) {

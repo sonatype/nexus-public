@@ -20,7 +20,7 @@ import Axios from 'axios';
 const IQ_CONFIG_URL = 'service/rest/v1/iq';
 const VERIFY_CONNECTION_URL = 'service/rest/v1/iq/verify-connection';
 
-function parseLicensedSolutions(iqConfig) {
+export function parseLicensedSolutions(iqConfig) {
   if (!iqConfig) {
     return {
       lifecycle: false,
@@ -37,17 +37,35 @@ function parseLicensedSolutions(iqConfig) {
   };
 }
 
-export default createMachine(
+// An empty list falls back to a GET. On IQ < 200 that GET is empty too, but on a current IQ it covers a licence fetch
+// that failed transiently during the save.
+function hasAuthoritativeCache(justSaved) {
+  return Boolean(justSaved)
+      && Array.isArray(justSaved.licensedSolutions)
+      && justSaved.licensedSolutions.length > 0;
+}
+
+// Total verify-connection attempts on the just-saved path, including the first.
+const VERIFY_MAX_ATTEMPTS = 3;
+
+const VERIFY_RETRY_DELAY_MS = 2000;
+
+export function buildIqServerConnectedMachine(justSaved) {
+  const skipFetch = hasAuthoritativeCache(justSaved);
+  const justSavedPresent = Boolean(justSaved);
+  const seeded = skipFetch ? parseLicensedSolutions(justSaved) : null;
+  return createMachine(
   {
     id: 'IqServerConnectedMachine',
-    initial: 'loading',
+    initial: skipFetch ? 'verifyingConnection' : 'loading',
 
     context: {
-      data: null,
-      pristineData: null,
-      iqServerUrl: '',
+      data: seeded,
+      pristineData: seeded,
+      iqServerUrl: skipFetch ? (justSaved.url || '') : '',
       error: null,
-      connectionStatus: null
+      connectionStatus: null,
+      verifyAttempts: 0
     },
 
     states: {
@@ -66,16 +84,29 @@ export default createMachine(
       },
 
       verifyingConnection: {
+        entry: 'incrementVerifyAttempts',
         invoke: {
           src: 'verifyConnection',
           onDone: {
             target: 'loaded',
             actions: ['setConnectionSuccess']
           },
-          onError: {
-            target: 'loaded',
-            actions: ['setConnectionError']
-          }
+          onError: [
+            {
+              cond: 'shouldRetryVerify',
+              target: 'retryingVerify'
+            },
+            {
+              target: 'loaded',
+              actions: ['setConnectionError']
+            }
+          ]
+        }
+      },
+
+      retryingVerify: {
+        after: {
+          [VERIFY_RETRY_DELAY_MS]: 'verifyingConnection'
         }
       },
 
@@ -83,6 +114,11 @@ export default createMachine(
     }
   },
   {
+    guards: {
+      // Only retry on the just-saved path; ordinary visits show a real connection error immediately.
+      shouldRetryVerify: (ctx) => justSavedPresent && ctx.verifyAttempts < VERIFY_MAX_ATTEMPTS
+    },
+
     actions: {
       setData: assign((_, {data}) => {
         const parsed = parseLicensedSolutions(data);
@@ -90,9 +126,12 @@ export default createMachine(
           data: parsed,
           pristineData: parsed,
           iqServerUrl: data?.url || '',
-          rawData: data,
           error: null
         };
+      }),
+
+      incrementVerifyAttempts: assign({
+        verifyAttempts: (ctx) => ctx.verifyAttempts + 1
       }),
 
       setError: assign({
@@ -140,3 +179,6 @@ export default createMachine(
     }
   }
 );
+}
+
+export default buildIqServerConnectedMachine(null);

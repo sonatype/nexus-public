@@ -23,7 +23,7 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -53,7 +53,7 @@ public class ScriptTask
 
   @Autowired
   public ScriptTask(final ScriptService scripts) {
-    this.scripts = checkNotNull(scripts);
+    this.scripts = requireNonNull(scripts);
   }
 
   @Override

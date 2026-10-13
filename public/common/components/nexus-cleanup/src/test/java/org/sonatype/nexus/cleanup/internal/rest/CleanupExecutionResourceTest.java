@@ -23,30 +23,33 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-
 import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
-import org.apache.shiro.subject.Subject;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import org.apache.shiro.util.ThreadContext;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@ExtendWith(ValidationExtension.class)
+@ExtendWith(AuthenticationExtension.class)
+@WithUser
 public class CleanupExecutionResourceTest
 {
   @Mock
@@ -60,19 +63,14 @@ public class CleanupExecutionResourceTest
 
   private CleanupExecutionResource underTest;
 
-  @Before
+  @BeforeEach
   public void setup() {
-    Subject subject = mock(Subject.class);
-    when(subject.isAuthenticated()).thenReturn(true);
-    when(subject.isPermitted(any(String.class))).thenReturn(true);
-    ThreadContext.bind(subject);
     underTest = new CleanupExecutionResource(cleanupService, repositoryManager);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     underTest.shutdown();
-    ThreadContext.remove();
   }
 
   @Test
@@ -130,7 +128,7 @@ public class CleanupExecutionResourceTest
   @Test
   public void testRunCleanupAcceptedAsync() {
     when(repositoryManager.get("repo-1")).thenReturn(repository);
-    when(cleanupService.cleanupRepository(any(), any())).thenReturn(0L);
+    lenient().when(cleanupService.cleanupRepository(any(), any())).thenReturn(0L);
 
     CleanupExecutionRequestXO request = new CleanupExecutionRequestXO();
     request.setRepository("repo-1");
@@ -182,8 +180,10 @@ public class CleanupExecutionResourceTest
   public void testConcurrentRunsForSameRepositoryYieldExactlyOneAccepted() throws Exception {
     when(repositoryManager.get("repo-1")).thenReturn(repository);
     // Block cleanupRepository until released so the first execution stays RUNNING during the race.
+    // lenient() because cleanup runs asynchronously in the resource's own executor; Mockito's
+    // afterEach may fire before the executor thread invokes the stub.
     CountDownLatch release = new CountDownLatch(1);
-    when(cleanupService.cleanupRepository(any(), any())).thenAnswer(invocation -> {
+    lenient().when(cleanupService.cleanupRepository(any(), any())).thenAnswer(invocation -> {
       release.await(5, TimeUnit.SECONDS);
       return 0L;
     });
@@ -248,8 +248,9 @@ public class CleanupExecutionResourceTest
   @Test
   public void testConflictLoserCleansUpOrphanStatus() throws Exception {
     when(repositoryManager.get("repo-1")).thenReturn(repository);
+    // lenient() for the same reason as testConcurrentRunsForSameRepositoryYieldExactlyOneAccepted.
     CountDownLatch release = new CountDownLatch(1);
-    when(cleanupService.cleanupRepository(any(), any())).thenAnswer(invocation -> {
+    lenient().when(cleanupService.cleanupRepository(any(), any())).thenAnswer(invocation -> {
       release.await(5, TimeUnit.SECONDS);
       return 0L;
     });
@@ -322,7 +323,10 @@ public class CleanupExecutionResourceTest
     // with the FAILED status update; poll briefly so we observe the post-cleanup state.
     // Use doReturn(...) here because the prior stubbing throws RuntimeException;
     // when(mock.method(...)) would invoke the existing stub and re-throw "disk full".
-    doReturn(0L).when(cleanupService).cleanupRepository(any(), any());
+    // lenient() because the follow-up runCleanup is ACCEPTED before its async task necessarily
+    // reaches cleanupRepository(...), so on faster runs Mockito's strict check flags this stub
+    // as unnecessary even though it guards against the executor throwing "disk full" again.
+    lenient().doReturn(0L).when(cleanupService).cleanupRepository(any(), any());
     Response follow = null;
     long followDeadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(5);
     while (System.currentTimeMillis() < followDeadline) {

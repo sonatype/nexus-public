@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.Format;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Component
 public class VersionNormalizerService
@@ -31,7 +31,7 @@ public class VersionNormalizerService
 
   @Autowired
   public VersionNormalizerService(final List<VersionNormalizer> versionNormalizersList) {
-    this.versionNormalizers = QualifierUtil.buildQualifierBeanMap(checkNotNull(versionNormalizersList));
+    this.versionNormalizers = QualifierUtil.buildQualifierBeanMap(requireNonNull(versionNormalizersList));
   }
 
   /**

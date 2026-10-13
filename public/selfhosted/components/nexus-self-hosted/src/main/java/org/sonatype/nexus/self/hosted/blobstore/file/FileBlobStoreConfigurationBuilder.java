@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 import org.sonatype.nexus.blobstore.BlobStoreConfigurationBuilder;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A builder to configure a file blob store.
@@ -52,7 +52,7 @@ public class FileBlobStoreConfigurationBuilder
    * Sets the local path where the blobs are persisted.
    */
   public FileBlobStoreConfigurationBuilder path(final String path) {
-    this.path = checkNotNull(path);
+    this.path = requireNonNull(path);
     return this;
   }
 

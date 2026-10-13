@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.common.sequence;
 
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * Simple handy class to subclass when you want to wrap another {@link NumberSequence}.
@@ -23,7 +23,7 @@ public abstract class NumberSequenceWrapper
   private final NumberSequence delegate;
 
   public NumberSequenceWrapper(final NumberSequence delegate) {
-    this.delegate = Preconditions.checkNotNull(delegate);
+    this.delegate = Objects.requireNonNull(delegate);
   }
 
   @Override

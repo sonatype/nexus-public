@@ -41,17 +41,21 @@ jest.mock('axios', () => ({
   get: jest.fn()
 }));
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
-    isProEdition: jest.fn(),
-    state: jest.fn().mockReturnValue({
-      getValue: jest.fn()
-    }),
-    useUser: jest.fn(),
-    useState: jest.fn()
-  },
-}));
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const isProEdition = jest.fn();
+  return {
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+    ExtJS: {
+      isProEdition,
+      state: jest.fn().mockReturnValue({
+        getValue: jest.fn()
+      }),
+      useUser: jest.fn(),
+      useState: jest.fn()
+    },
+    useIsLicensedEdition: (...args) => isProEdition(...args),
+  };
+});
 
 const selectors = {
   ...TestUtils.selectors,

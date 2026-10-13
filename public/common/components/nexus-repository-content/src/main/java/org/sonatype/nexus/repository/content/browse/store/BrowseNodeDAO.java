@@ -39,6 +39,11 @@ public interface BrowseNodeDAO
   String FILTER_PARAMS = "filterParams";
 
   /**
+   * See {@code ComponentDAO#SOFT_DELETE_AVAILABLE}.
+   */
+  String SOFT_DELETE_AVAILABLE = "softDeleteAvailable";
+
+  /**
    * Retrieves the browse nodes directly under the given hierarchical display path.
    *
    * @param repositoryId the repository containing the browse nodes
@@ -53,7 +58,8 @@ public interface BrowseNodeDAO
       @Param("displayPath") List<String> displayPath,
       @Param("limit") int limit,
       @Nullable @Param("filter") String filter,
-      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
+      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
 
   /**
    * Does a browse node already exist for this component?
@@ -136,6 +142,55 @@ public interface BrowseNodeDAO
   List<BrowseNode> getNodeParents(@Param("internalNodeId") Long internalNodeId);
 
   /**
+   * Returns the parent_id of the browse node identified by asset id and request path,
+   * without deleting it. H2-companion to {@link #deleteByAssetIdAndPath}.
+   *
+   * @param internalAssetId the asset internal id
+   * @param path the path
+   * @return the parent node id, or {@code null} if no row matches
+   */
+  Long findParentByAssetIdAndPath(
+      @Param("internalAssetId") Integer internalAssetId,
+      @Param("path") String path);
+
+  /**
+   * Returns the parent_id of the browse node identified by asset id, without deleting it.
+   * H2-companion to {@link #deleteByAssetId}.
+   *
+   * @param internalAssetId the asset internal id
+   * @return the parent node id, or {@code null} if no row matches
+   */
+  Long findParentByAssetId(@Param("internalAssetId") Integer internalAssetId);
+
+  /**
+   * Deletes the browse node identified by asset id and request path. Used after
+   * {@link #findParentByAssetIdAndPath} on H2 (Postgres uses the single-shot RETURNING form).
+   *
+   * @return number of rows affected
+   */
+  int deleteNodeByAssetIdAndPath(
+      @Param("internalAssetId") Integer internalAssetId,
+      @Param("path") String path);
+
+  /**
+   * Deletes the browse node identified by asset id. Used after
+   * {@link #findParentByAssetId} on H2.
+   *
+   * @return number of rows affected
+   */
+  int deleteNodeByAssetId(@Param("internalAssetId") Integer internalAssetId);
+
+  /**
+   * Looks up a single browse node by node id. Used by the H2 iterative parent walk
+   * that replaces the Postgres recursive CTE in {@link #getNodeParents}. Returns the
+   * concrete {@link BrowseNodeData} so the caller can read {@code parentId} for the walk.
+   *
+   * @param internalNodeId the node id
+   * @return the browse node data, or {@code null} if not found
+   */
+  BrowseNodeData getByNodeId(@Param("internalNodeId") Long internalNodeId);
+
+  /**
    * Deletes a browse node by its node id.
    *
    * @param internalNodeId the node id
@@ -162,4 +217,22 @@ public interface BrowseNodeDAO
       @Param("parentNodeId") Long parentNodeId,
       @Param("limit") int limit,
       @Param("offset") int offset);
+
+  /**
+   * Retrieves the node id of the browse node for the given asset.
+   *
+   * @param assetId the asset internal id
+   * @return the node id, or {@code null} if no browse node exists for the asset
+   */
+  @Nullable
+  Long getNodeIdForAsset(@Param("assetId") Integer assetId);
+
+  /**
+   * Deletes the browse node with the given node id and returns its parent id (PostgreSQL only).
+   *
+   * @param nodeId the node id to delete
+   * @return the parent node id of the deleted node, or {@code null} if the node had no parent
+   */
+  @Nullable
+  Long deleteByNodeIdReturningParentId(@Param("nodeId") Long nodeId);
 }

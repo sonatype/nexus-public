@@ -24,9 +24,7 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ElementKind;
 import jakarta.validation.Path.Node;
 
-import com.google.common.base.Joiner;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Ext.Direct validation response.
@@ -43,7 +41,7 @@ public class ValidationResponse
   public ValidationResponse(final ConstraintViolationException cause) {
     super(false, new ArrayList<>());
     // noinspection ThrowableResultOfMethodCallIgnored
-    checkNotNull(cause);
+    requireNonNull(cause);
     Set<ConstraintViolation<?>> violations = cause.getConstraintViolations();
     if (violations != null && !violations.isEmpty()) {
       for (ConstraintViolation<?> violation : violations) {
@@ -69,7 +67,7 @@ public class ValidationResponse
           if (errors == null) {
             errors = new HashMap<>();
           }
-          errors.put(Joiner.on('.').join(entries), violation.getMessage());
+          errors.put(String.join(".", entries), violation.getMessage());
         }
       }
     }

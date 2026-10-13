@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.content.store.internal.migration.AssetBlobRefMigrationTaskDescriptor.CONTENT_STORE_FIELD_ID;
 import static org.sonatype.nexus.repository.content.store.internal.migration.AssetBlobRefMigrationTaskDescriptor.FORMAT_FIELD_ID;
 import static org.sonatype.nexus.repository.content.store.internal.migration.AssetBlobRefMigrationTaskDescriptor.TYPE_ID;
@@ -67,9 +67,9 @@ public class AssetBlobRefMigrationStep_2_109
       final List<Format> formats,
       final UpgradeNexusKeyValueStore keyValueStore)
   {
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
-    this.formats = checkNotNull(formats);
-    this.keyValueStore = checkNotNull(keyValueStore);
+    this.upgradeTaskScheduler = requireNonNull(upgradeTaskScheduler);
+    this.formats = requireNonNull(formats);
+    this.keyValueStore = requireNonNull(keyValueStore);
   }
 
   @Override

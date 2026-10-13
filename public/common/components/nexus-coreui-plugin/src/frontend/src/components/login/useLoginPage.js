@@ -26,7 +26,6 @@ export default function useLoginPage() {
   const machine = useMemo(() => createLoginFormMachine(), []);
   const form = useForm(machine);
 
-  const edition = ExtJS.useState(() => ExtJS.state().getEdition?.()) || 'PRO';
   const samlEnabled = !!ExtJS.useState(() => ExtJS.state().getValue('samlEnabled', false));
   const oauth2Enabled = !!ExtJS.useState(() => ExtJS.state().getValue('oauth2Enabled', false));
   const contextPath = ExtJS.useState(() => ExtJS.state().getValue('nexus-context-path', '')) || '';
@@ -84,7 +83,6 @@ export default function useLoginPage() {
 
   return {
     ...form,
-    edition,
     showSsoLogin,
     showAnonymousAccess,
     isSsoRedirecting,

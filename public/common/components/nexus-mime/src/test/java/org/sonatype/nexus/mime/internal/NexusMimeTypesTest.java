@@ -16,7 +16,6 @@ import java.util.Properties;
 
 import org.sonatype.nexus.mime.MimeRule;
 
-import com.google.common.base.Joiner;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,7 +33,7 @@ public class NexusMimeTypesTest
   private NexusMimeTypes underTest = new NexusMimeTypes();
 
   private Properties addMimeType(final Properties properties, final String extension, final String... types) {
-    properties.setProperty(extension, Joiner.on(",").join(types));
+    properties.setProperty(extension, String.join(",", types));
     return properties;
   }
 

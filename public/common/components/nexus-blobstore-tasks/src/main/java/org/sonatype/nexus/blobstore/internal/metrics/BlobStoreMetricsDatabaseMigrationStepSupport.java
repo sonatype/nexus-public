@@ -27,7 +27,7 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Base task which will read the information from a metrics property file then adds it to the existing metrics total.
@@ -48,7 +48,7 @@ public abstract class BlobStoreMetricsDatabaseMigrationStepSupport
   private UpgradeTaskScheduler upgradeTaskScheduler;
 
   protected BlobStoreMetricsDatabaseMigrationStepSupport(final String blobStoreType) {
-    this.blobStoreType = checkNotNull(blobStoreType);
+    this.blobStoreType = requireNonNull(blobStoreType);
   }
 
   @Autowired
@@ -57,9 +57,9 @@ public abstract class BlobStoreMetricsDatabaseMigrationStepSupport
       final UpgradeBlobStoreConfigurationStore blobStoreConfigurationStore,
       final UpgradeTaskScheduler upgradeTaskScheduler)
   {
-    this.metricsStore = checkNotNull(metricsStore);
-    this.blobStoreConfigurationStore = checkNotNull(blobStoreConfigurationStore);
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
+    this.metricsStore = requireNonNull(metricsStore);
+    this.blobStoreConfigurationStore = requireNonNull(blobStoreConfigurationStore);
+    this.upgradeTaskScheduler = requireNonNull(upgradeTaskScheduler);
   }
 
   @Override

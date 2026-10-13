@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -42,7 +42,7 @@ public class HttpContextAttributeSSLContextSelector
 
   @Autowired
   public HttpContextAttributeSSLContextSelector(@Lazy final TrustStore trustStore) {
-    this.trustStore = checkNotNull(trustStore);
+    this.trustStore = requireNonNull(trustStore);
   }
 
   @Override

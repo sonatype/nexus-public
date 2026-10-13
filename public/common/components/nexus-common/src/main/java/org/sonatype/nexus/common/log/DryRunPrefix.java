@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +32,7 @@ public class DryRunPrefix
   public DryRunPrefix(
       @Value("${nexus.log.dryrun.prefix:::DRY RUN:: }") final String prefix)
   {
-    this.prefix = checkNotNull(prefix);
+    this.prefix = requireNonNull(prefix);
   }
 
   public String get() {

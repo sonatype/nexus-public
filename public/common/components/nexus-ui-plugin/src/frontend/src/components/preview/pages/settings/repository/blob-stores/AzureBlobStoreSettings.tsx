@@ -13,7 +13,6 @@
 
 import React from 'react';
 import { Cloud, CheckCircle, XCircle } from 'lucide-react';
-import { ExtJS } from '../../../../../../interface/ExtJS';
 import {
   SettingsFormSection,
   SettingsTextInput,
@@ -23,6 +22,7 @@ import {
   SettingsButton,
   SettingsAlert
 } from '../../../../shared/form';
+import { useIsLicensedEdition } from '../../../../shared/hooks';
 import { useAzureConnectionTest } from './useBlobStores';
 import type { BlobStoreFormData, AzureBlobStoreConfig } from './types';
 import './AzureBlobStoreSettings.scss';
@@ -97,7 +97,7 @@ export default function AzureBlobStoreSettings({
 }: AzureBlobStoreSettingsProps) {
   const { testing, result, testConnection, reset } = useAzureConnectionTest();
 
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
 
   const config: AzureBlobStoreConfig = (data.bucketConfiguration as AzureBlobStoreConfig) || {
     accountName: '',
@@ -130,7 +130,7 @@ export default function AzureBlobStoreSettings({
       config.authentication?.authenticationMethod === 'MANAGEDIDENTITY' ||
       config.authentication?.authenticationMethod === 'ENVIRONMENTVARIABLE';
   const showRbacNote =
-      isProEdition && !!config.preSignedUrlEnabled && isTokenCredentialAuth;
+      isLicensedEdition && !!config.preSignedUrlEnabled && isTokenCredentialAuth;
 
   return (
     <div className="azure-blob-store-settings">
@@ -186,7 +186,7 @@ export default function AzureBlobStoreSettings({
           />
         )}
 
-        {isProEdition && (
+        {isLicensedEdition && (
           <div className="azure-blob-store-settings__sas-section">
             <SettingsCheckbox
               name="azure-direct-download"

@@ -88,7 +88,6 @@ function buildQueryString(params: RepositoryFilterParams): string {
  * - Server-side filtering by format, type, status, name
  * - Server-side pagination
  * - Server-side sorting
- * - Debounced name filter
  * - Enterprise-scalable (only fetches matching data)
  * 
  * @param initialParams Initial filter parameters
@@ -106,15 +105,23 @@ export function useRepositoryListServer(
   // State
   const [repositories, setRepositories] = useState<RepositoryReference[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  // Tracks request lifecycle rather than result count, so a refetch over an empty result is still
+  // recognised as a refetch. Set once the first non-stale request settles and never cleared.
+  const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
 
-  // Debounce timer ref for name filter
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Filter changes can overlap, and responses are not guaranteed to arrive in the order they
+  // were requested. Each fetch takes the next request id and only the newest one is allowed to
+  // write to state, so the list always reflects the latest filters.
+  const requestIdRef = useRef<number>(0);
 
   // Fetch repositories from server
   const fetchRepositories = useCallback(async (params: RepositoryFilterParams) => {
+    const requestId = ++requestIdRef.current;
+    const isStale = () => requestId !== requestIdRef.current;
+
     setLoading(true);
     setError(null);
 
@@ -126,6 +133,7 @@ export function useRepositoryListServer(
           formats: params.formats,
           nameFilter: params.nameFilter,
         });
+        if (isStale()) return;
         setRepositories(pageData.data ?? []);
         setTotalCount(pageData.totalCount ?? 0);
         setTotalPages(pageData.totalPages ?? 0);
@@ -137,27 +145,37 @@ export function useRepositoryListServer(
         `${FILTERED_REPOSITORIES_API}${queryString}`
       );
 
+      if (isStale()) return;
       const pageData = response.data;
       setRepositories(pageData.data ?? []);
       setTotalCount(pageData.totalCount ?? 0);
       setTotalPages(pageData.totalPages ?? 0);
     } catch (err) {
+      if (isStale()) return;
       const errorMessage = err instanceof Error ? err.message : 'Failed to load repositories';
       setError(errorMessage);
       setRepositories([]);
       setTotalCount(0);
       setTotalPages(0);
     } finally {
-      setLoading(false);
+      if (!isStale()) {
+        setLoading(false);
+        setHasLoadedOnce(true);
+      }
     }
   }, []);
 
-  // Initial fetch
+  // This effect is the *only* fetch trigger. Do not also fetch from inside the
+  // setFilterParamsState updater: that duplicated every filter change into two requests and
+  // defeated any debouncing upstream, since one request went out immediately regardless.
+  // Keeping the fetch here also leaves the state updater pure.
   useEffect(() => {
     fetchRepositories(filterParams);
-  }, [fetchRepositories, filterParams]); // Only on mount
+  }, [fetchRepositories, filterParams]);
 
-  // Update filter params with debounce for name filter
+  // Update filter params. Callers own any debouncing of the value they feed in; every applied
+  // change lands here exactly once and is merged into the previous params, so overlapping
+  // changes accumulate into one combined filter state rather than replacing each other.
   const setFilterParams = useCallback((newParams: Partial<RepositoryFilterParams>) => {
     setFilterParamsState((prev) => {
       const updated = { ...prev, ...newParams };
@@ -167,22 +185,9 @@ export function useRepositoryListServer(
         updated.page = 1;
       }
 
-      // Debounce name filter changes
-      if ('nameFilter' in newParams) {
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-        }
-        debounceTimerRef.current = setTimeout(() => {
-          fetchRepositories(updated);
-        }, 300); // 300ms debounce
-      } else {
-        // Immediate fetch for other filter changes
-        fetchRepositories(updated);
-      }
-
       return updated;
     });
-  }, [fetchRepositories]);
+  }, []);
 
   // Pagination controls
   const nextPage = useCallback(() => {
@@ -208,18 +213,10 @@ export function useRepositoryListServer(
     fetchRepositories(filterParams);
   }, [fetchRepositories, filterParams]);
 
-  // Cleanup debounce timer on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
-
   return {
     repositories,
     loading,
+    hasLoadedOnce,
     error,
     filterParams,
     setFilterParams,

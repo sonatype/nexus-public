@@ -17,8 +17,8 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * View request.
@@ -28,6 +28,14 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class Request
 {
+  /**
+   * Request attribute key carrying the undecoded query string from
+   * {@code HttpServletRequest.getQueryString()}. Set by {@code ViewServlet} before dispatch so that
+   * format-specific facets (e.g. raw) can detect valueless parameters such as {@code ?flag}, which
+   * the Servlet API collapses to an empty string and cannot otherwise distinguish from {@code ?flag=}.
+   */
+  public static final String RAW_QUERY_STRING_ATTR = "nexus.rawQueryString";
+
   private final AttributesMap attributes;
 
   private final Headers headers;
@@ -54,11 +62,11 @@ public class Request
       final boolean multipart,
       @Nullable final Iterable<PartPayload> multiPayloads)
   {
-    this.attributes = checkNotNull(attributes);
-    this.headers = checkNotNull(headers);
-    this.action = checkNotNull(action);
-    this.path = checkNotNull(path);
-    this.parameters = checkNotNull(parameters);
+    this.attributes = requireNonNull(attributes);
+    this.headers = requireNonNull(headers);
+    this.action = requireNonNull(action);
+    this.path = requireNonNull(path);
+    this.parameters = requireNonNull(parameters);
     this.payload = payload;
     this.multipart = multipart;
     this.multiPayloads = multiPayloads;
@@ -215,7 +223,7 @@ public class Request
     }
 
     public Builder copy(final Request request) {
-      checkNotNull(request);
+      requireNonNull(request);
       attributes = request.getAttributes();
       headers = request.getHeaders();
       action = request.getAction();

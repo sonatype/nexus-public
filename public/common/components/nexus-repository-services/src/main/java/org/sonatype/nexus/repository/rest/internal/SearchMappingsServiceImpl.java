@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableList.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -42,7 +42,7 @@ public class SearchMappingsServiceImpl
 
   @Autowired
   public SearchMappingsServiceImpl(final List<SearchMappings> searchMappingsList) {
-    this.searchMappings = collectMappings(QualifierUtil.buildQualifierBeanMap(checkNotNull(searchMappingsList)));
+    this.searchMappings = collectMappings(QualifierUtil.buildQualifierBeanMap(requireNonNull(searchMappingsList)));
   }
 
   private static Collection<SearchMapping> collectMappings(final Map<String, SearchMappings> searchMappings) {

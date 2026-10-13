@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-ui</artifactId>
@@ -29,14 +29,6 @@
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>com.sencha</groupId>
-        <artifactId>ext</artifactId>
-        <classifier>commercial</classifier>
-        <type>zip</type>
-        <version>7.0</version>
-      </dependency>
-
       <dependency>
         <groupId>org.sonatype.directjngine</groupId>
         <artifactId>directjngine</artifactId>

@@ -191,6 +191,16 @@ describe('EndpointDetail', () => {
       expect(screen.getByTestId('try-it-tab')).toHaveAttribute('data-denied', 'true');
     });
 
+    it('passes accessDenied=true to TryItTab when access is partial', () => {
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="partial" />);
+      expect(screen.getByTestId('try-it-tab')).toHaveAttribute('data-denied', 'true');
+    });
+
+    it('passes accessDenied=false to TryItTab when access is unknown', () => {
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="unknown" />);
+      expect(screen.getByTestId('try-it-tab')).toHaveAttribute('data-denied', 'false');
+    });
+
     it('switches to Who Has Access tab on click', async () => {
       renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
       await userEvent.click(screen.getByRole('tab', { name: /Who Has Access/ }));

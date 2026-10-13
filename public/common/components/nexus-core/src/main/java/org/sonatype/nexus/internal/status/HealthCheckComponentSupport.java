@@ -12,10 +12,11 @@
  */
 package org.sonatype.nexus.internal.status;
 
+import java.util.Objects;
+
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 
 /**
@@ -26,7 +27,7 @@ import org.slf4j.Logger;
 public abstract class HealthCheckComponentSupport
     extends HealthCheck
 {
-  protected final Logger log = Preconditions.checkNotNull(this.createLogger());
+  protected final Logger log = Objects.requireNonNull(this.createLogger());
 
   protected HealthCheckComponentSupport() {
   }

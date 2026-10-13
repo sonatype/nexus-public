@@ -23,13 +23,17 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.DateBasedHelper.DateInterval;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobScanConcurrency;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
@@ -57,8 +61,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_FORMATTER;
 import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_PATH_FORMATTER;
@@ -120,8 +124,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
       final BlobIdLocationResolver blobIdLocationResolver,
       final DryRunPrefix dryRunPrefix)
   {
-    this.blobIdLocationResolver = checkNotNull(blobIdLocationResolver);
-    this.dryRunPrefix = checkNotNull(dryRunPrefix);
+    this.blobIdLocationResolver = requireNonNull(blobIdLocationResolver);
+    this.dryRunPrefix = requireNonNull(dryRunPrefix);
   }
 
   @Autowired
@@ -203,8 +207,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Override
   @Guarded(by = STARTED)
   public Blob create(final InputStream blobData, final Map<String, String> headers, @Nullable final BlobId blobId) {
-    checkNotNull(blobData);
-    checkNotNull(headers);
+    requireNonNull(blobData);
+    requireNonNull(headers);
     checkIsWritable();
 
     checkArgument(headers.containsKey(BLOB_NAME_HEADER), "Missing header: %s", BLOB_NAME_HEADER);
@@ -307,7 +311,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   }
 
   protected final Blob doGet(final BlobId blobId, final boolean includeDeleted) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
     final BlobSupport blob = liveBlobs.getUnchecked(blobId);
     if (blob.isStale()) {
       return refreshBlob(blob, blobId, includeDeleted);
@@ -318,7 +322,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Override
   @Guarded(by = STARTED)
   public boolean delete(final BlobId blobId, final String reason) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
 
     long start = System.nanoTime();
     try {
@@ -341,7 +345,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
       final BlobAttributes attributes,
       final boolean isDryRun)
   {
-    checkNotNull(attributes);
+    requireNonNull(attributes);
     String logPrefix = isDryRun ? dryRunPrefix.get() : "";
     Optional<String> blobName = Optional.of(attributes)
         .map(BlobAttributes::getProperties)
@@ -408,7 +412,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Override
   @Guarded(by = STARTED)
   public boolean deleteHard(final BlobId blobId) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
 
     long start = System.nanoTime();
     try {
@@ -617,6 +621,107 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
    */
   protected static boolean isBlobStoreContent(final String path) {
     return path.endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) || path.endsWith(BLOB_FILE_CONTENT_SUFFIX);
+  }
+
+  /**
+   * Narrows a raw listing to blob content, reporting each blob once rather than once per file.
+   *
+   * <p>
+   * A blob is listed as a {@code .bytes} and a {@code .properties} sharing one base path. The {@code .bytes} is kept
+   * so that a blob whose properties file is missing is still discovered, and the paired entry is dropped. Pairing is
+   * decided on the base path rather than on the parsed {@link BlobId}, because a soft-deleted blob has a second
+   * properties file written under the deletion date - same id, unrelated path, and deliberately reported separately.
+   * Entries are therefore unique per blob, not per {@link BlobId}.
+   *
+   * <p>
+   * Pairing is best effort and only happens for stores asserting {@link #listingIsOrderedByPath()}. Where it does not
+   * happen, or where ordering turns out not to hold, both entries are reported exactly as they were before: that
+   * costs a redundant attribute read and never changes which blobs the scan finds.
+   *
+   * @param keyPath extracts the store's full listing path from one entry
+   */
+  protected <E> Stream<E> uniqueBlobEntries(final Stream<E> entries, final Function<E, String> keyPath) {
+    Stream<E> content = entries.filter(entry -> isBlobStoreContent(keyPath.apply(entry)));
+    return listingIsOrderedByPath() ? dropRepeatedBasePath(content, keyPath) : content;
+  }
+
+  /**
+   * Whether this store lists entries sorted by path, which puts a blob's {@code .bytes} and {@code .properties} next
+   * to each other so one can be dropped with a single entry of lookbehind rather than a set of everything seen.
+   *
+   * <p>
+   * Defaults to {@code false}: every store has to confirm its own listing order before overriding this, because the
+   * guarantee differs per provider and per API - a hierarchical listing, for instance, orders within a level only.
+   * Overriding it on a store that does not sort by path costs redundant reads, never a wrong result.
+   */
+  protected boolean listingIsOrderedByPath() {
+    return false;
+  }
+
+  /**
+   * Drops each entry whose base path matches the entry immediately before it. Stateful, so it is only valid on a
+   * sequential stream still in listing order.
+   */
+  private static <E> Stream<E> dropRepeatedBasePath(final Stream<E> entries, final Function<E, String> keyPath) {
+    String[] previousBase = new String[1];
+    return entries.filter(entry -> {
+      String base = blobBasePath(keyPath.apply(entry));
+      boolean repeated = base.equals(previousBase[0]);
+      previousBase[0] = base;
+      return !repeated;
+    });
+  }
+
+  /**
+   * @return the path shared by a blob's {@code .bytes} and {@code .properties}
+   */
+  private static String blobBasePath(final String path) {
+    if (path.endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX)) {
+      return path.substring(0, path.length() - BLOB_FILE_ATTRIBUTES_SUFFIX.length());
+    }
+    if (path.endsWith(BLOB_FILE_CONTENT_SUFFIX)) {
+      return path.substring(0, path.length() - BLOB_FILE_CONTENT_SUFFIX.length());
+    }
+    return path;
+  }
+
+  /**
+   * Excludes temporary blobs, and for {@code vol-} prefixes blobs created outside the interval. Both checks share one
+   * attributes read; splitting them into separate filters would double the round trips the scan makes.
+   */
+  protected Stream<BlobId> excludeTemporaryAndOutOfRangeBlobs(
+      final Stream<BlobId> blobIds,
+      final String prefix,
+      final DateInterval interval,
+      @Nullable final BlobScanConcurrency concurrency)
+  {
+    boolean volumePrefix = VOLUME_PREFIX.equals(prefix);
+    Predicate<BlobId> retain = blobId -> retainBlob(blobId, volumePrefix, interval);
+
+    return concurrency == null
+        ? blobIds.filter(retain)
+        : ConcurrentBlobScan.filter(blobIds, retain, concurrency);
+  }
+
+  /**
+   * Never throws, so a read handed to an executor always yields a verdict rather than a failure.
+   */
+  private boolean retainBlob(final BlobId blobId, final boolean volumePrefix, final DateInterval interval) {
+    try {
+      Blob blob = get(blobId, true);
+      if (blob == null) {
+        return true;
+      }
+      // The id cannot tell us whether this is a temporary blob: CloudBlobStoreSupport.getBlobId strips
+      // TEMPORARY_BLOB_HEADER before deriving it, so a cloud temporary blob gets an ordinary id on an ordinary
+      // date-based path and is marked only in its properties, until makeBlobPermanent rewrites them in place.
+      // vol- paths carry no date, so their creation time can only come from the blob's metrics.
+      return isNonTempBlob(blob) && (!volumePrefix || isBlobCreatedInRange(blob, interval));
+    }
+    catch (Exception e) {
+      log.debug("Failed to read attributes for blob {}", blobId, e);
+      return true;
+    }
   }
 
   protected String getBlobstorePath(final String id) {

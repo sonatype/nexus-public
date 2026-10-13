@@ -12,7 +12,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { ExtJS, useIsLicensedEdition } from '@sonatype/nexus-ui-plugin';
 import { useForm } from '../../../../../../interface/form';
 import type { ValidationErrors } from '../../../../../../interface/form';
 import { useToast } from '../../../../shared';
@@ -62,7 +62,7 @@ export interface UseUsersFormResult {
   isExternal: boolean;
   isDirty: boolean;
   rolesDirty: boolean;
-  isPro: boolean;
+  isLicensedEdition: boolean;
   isUserTokenCapabilityActive: boolean;
   canResetUserToken: boolean;
   showsUserTokenReset: boolean;
@@ -197,7 +197,7 @@ export function useUsersForm(
   const externalRoles = currentUser?.externalRoles ?? [];
   const initialRolesFromMachine = rawContext.initialRoles;
 
-  const isPro = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const extState = ExtJS.state?.();
   const activeCapabilities: string[] =
     extState?.getValue?.('capabilityActiveTypes') ?? [];
@@ -235,7 +235,7 @@ export function useUsersForm(
   const showsUserTokenReset =
     !isCreate &&
     !isExternal &&
-    isPro &&
+    isLicensedEdition &&
     isUserTokenCapabilityActive &&
     canResetUserToken;
 
@@ -338,7 +338,7 @@ export function useUsersForm(
     isExternal,
     isDirty,
     rolesDirty,
-    isPro,
+    isLicensedEdition,
     isUserTokenCapabilityActive,
     canResetUserToken,
     showsUserTokenReset,

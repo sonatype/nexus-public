@@ -21,7 +21,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.crypto.secrets.SecretsService.SECRETS_MIGRATION_VERSION;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +39,7 @@ public class SecretsMigrationStep_2_2
 
   @Autowired
   public SecretsMigrationStep_2_2(final UpgradeTaskScheduler startupScheduler) {
-    this.startupScheduler = checkNotNull(startupScheduler);
+    this.startupScheduler = requireNonNull(startupScheduler);
   }
 
   @Override

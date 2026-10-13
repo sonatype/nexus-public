@@ -187,4 +187,12 @@ public class LastAssetMaintenanceFacetTest
     assertThat(deletedPaths, is(empty()));
     verify(fluentComponent).delete();
   }
+
+  @Test
+  public void cascadeSoftDeleteToComponent_cascadesOnlyForLastAsset() {
+    // The component is soft-deleted only along with its last asset (mirrors deleteAsset).
+    Asset asset = mock(Asset.class);
+    assertThat(underTest.cascadeSoftDeleteToComponent(asset, false), is(false));
+    assertThat(underTest.cascadeSoftDeleteToComponent(asset, true), is(true));
+  }
 }

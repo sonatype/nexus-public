@@ -45,6 +45,8 @@ import AptFlatConfiguration from './facets/AptFlatConfiguration';
 import TerraformSigningConfiguration from './facets/TerraformSigningConfiguration';
 import AlpineSigningConfiguration from './facets/AlpineSigningConfiguration';
 import RawQueryParamsConfiguration from './facets/RawQueryParamsConfiguration';
+import HuggingFaceXetConfiguration from './facets/HuggingFaceXetConfiguration';
+import FirewallConfiguration from './facets/FirewallConfiguration';
 
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {
@@ -53,7 +55,8 @@ import {
   validateDockerIndexUrl,
   validateNugetQueryCacheItemMaxAge,
   validateWritableMember,
-  validateDockerSubdomain
+  validateDockerSubdomain,
+  validateLayerDownloadTimeout
 } from './RepositoryFormValidators';
 
 import {mergeDeepRight} from 'ramda';
@@ -287,6 +290,7 @@ const repositoryFormats = {
     facets: [
       RepositoryConnectorsConfiguration,
       RegistryApiSupportConfiguration,
+      FirewallConfiguration,
       ...genericFacets.proxy
     ],
     defaultValues: {
@@ -302,7 +306,11 @@ const repositoryFormats = {
         indexType: DOCKER_INDEX_TYPES.registry,
         indexUrl: null,
         cacheForeignLayers: false,
-        foreignLayerUrlWhitelist: []
+        foreignLayerUrlWhitelist: [],
+        layerDownloadTimeoutMinutes: null
+      },
+      firewall: {
+        mode: 'DISABLED'
       }
     },
     validators: (data) => ({
@@ -313,7 +321,8 @@ const repositoryFormats = {
         subdomain: validateDockerSubdomain(data)
       },
       dockerProxy: {
-        indexUrl: validateDockerIndexUrl(data)
+        indexUrl: validateDockerIndexUrl(data),
+        layerDownloadTimeoutMinutes: validateLayerDownloadTimeout(data)
       }
     })
   },
@@ -448,6 +457,23 @@ const repositoryFormats = {
       ...genericValidators.group(data)
     })
   },
+  conda_proxy: {
+    facets: [
+      GenericStorageConfiguration,
+      GenericProxyConfiguration,
+      GenericOptionsConfiguration,
+      GenericCleanupConfiguration,
+      GenericHttpAuthConfiguration,
+      PreEmptiveAuthConfiguration,
+      GenericHttpReqConfiguration
+    ],
+    defaultValues: {
+      ...genericDefaultValues.proxy
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
+  },
   conda_hosted: {
     facets: [...genericFacets.hosted],
     defaultValues: {
@@ -504,6 +530,26 @@ const repositoryFormats = {
     },
     validators: (data) => ({
       ...genericValidators.group(data)
+    })
+  },
+  huggingface_proxy: {
+    facets: [
+      GenericStorageConfiguration,
+      HuggingFaceXetConfiguration,
+      GenericProxyConfiguration,
+      GenericOptionsConfiguration,
+      GenericCleanupConfiguration,
+      GenericHttpAuthConfiguration,
+      GenericHttpReqConfiguration
+    ],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      xet: {
+        enabled: false
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
     })
   }
 };

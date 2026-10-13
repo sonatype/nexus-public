@@ -122,11 +122,11 @@ export interface UseSearchNavigationReturn {
  * The gaId format is `format:group:name` (or `format:name` when there is no group).
  *
  * The returned string has the form:
- *   preview/browse/search/maven/{encodeURIComponent(name)}/ga/{encodeURIComponent(gaId)}[?version=...]
+ *   preview/browse/search/maven/{encodeURIComponent(name)}/ga/{encodeURIComponent(gaId)}[?version=…&repository=…]
  *
  * Examples:
- * - preview/browse/search/maven/lodash/ga/npm%3Alodash
- * - preview/browse/search/maven/commons-lang3/ga/maven2%3Aorg.apache.commons%3Acommons-lang3
+ * - preview/browse/search/maven/lodash/ga/npm%3Alodash?repository=npm-proxy
+ * - preview/browse/search/maven/commons-lang3/ga/maven2%3Aorg.apache.commons%3Acommons-lang3?version=3.12.0&repository=maven-central
  * - preview/browse/search/maven/curl/ga/apt%3Aamd64%3Acurl
  */
 function buildComponentDetailUrl(result: SearchResult): string {
@@ -136,11 +136,18 @@ function buildComponentDetailUrl(result: SearchResult): string {
   const keyword = encodeURIComponent(result.name);
 
   // Full URL with keyword segment: /maven/{keyword}/ga/{gaId}
-  let url = `preview/browse/search/maven/${keyword}/ga/${encodeURIComponent(gaId)}`;
+  const url = `preview/browse/search/maven/${keyword}/ga/${encodeURIComponent(gaId)}`;
+  const query = new URLSearchParams();
   if (result.version) {
-    url += `?version=${encodeURIComponent(result.version)}`;
+    query.set('version', result.version);
   }
-  return url;
+  // Include the repository so the string form matches navigateToDetail's deep link (see there for
+  // why result.group is not emitted as the route's group param).
+  if (result.repository) {
+    query.set('repository', result.repository);
+  }
+  const qs = query.toString();
+  return qs ? `${url}?${qs}` : url;
 }
 
 /**
@@ -196,6 +203,13 @@ export function useSearchNavigation(): UseSearchNavigationReturn {
       };
       if (result.version) {
         params.version = result.version;
+      }
+      // Carry the repository the component was found in, so the detail page deep-links to that
+      // exact repository (and its URL is shareable). result.group is the coordinate groupId — it is
+      // already encoded in gaId, NOT a group-type repository — so it is deliberately not sent as the
+      // route's `group` param; the detail page defaults the group selection from its own repo rows.
+      if (result.repository) {
+        params.repository = result.repository;
       }
 
       // Navigate to component detail (sibling of maven/npm search, replaces search view)

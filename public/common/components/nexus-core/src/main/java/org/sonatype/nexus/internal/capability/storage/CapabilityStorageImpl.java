@@ -72,9 +72,11 @@ public class CapabilityStorageImpl
   @Transactional
   @Override
   public CapabilityIdentity add(final CapabilityStorageItem item) {
-    postCommitEvent(() -> new CapabilityStorageItemCreatedEventImpl((CapabilityStorageItemData) item));
     try {
       dao().create((CapabilityStorageItemData) item);
+      // Register the post-commit event only after a successful insert, so a swallowed DuplicateKeyException
+      // (a no-op duplicate add) does not fire a spurious created-event to peers.
+      postCommitEvent(() -> new CapabilityStorageItemCreatedEventImpl((CapabilityStorageItemData) item));
     }
     catch (DuplicateKeyException e) {
       log.debug("Trying to add duplicate for {} capability. Ignore it.", item);
@@ -85,21 +87,31 @@ public class CapabilityStorageImpl
   @Transactional
   @Override
   public boolean update(final CapabilityIdentity id, final CapabilityStorageItem item) {
-    postCommitEvent(() -> new CapabilityStorageItemUpdatedEventImpl((CapabilityStorageItemData) item));
     ((HasEntityId) item).setId(entityId(id));
-    return dao().update((CapabilityStorageItemData) item);
+    boolean updated = dao().update((CapabilityStorageItemData) item);
+    if (updated) {
+      // Register the post-commit event only after a successful update, so a no-op (row gone) does not fire
+      // a spurious updated-event to peers.
+      postCommitEvent(() -> new CapabilityStorageItemUpdatedEventImpl((CapabilityStorageItemData) item));
+    }
+    return updated;
   }
 
   @Transactional
   @Override
   public boolean remove(final CapabilityIdentity id) {
-    getAll().values()
+    Optional<CapabilityStorageItemData> item = getAll().values()
         .stream()
         .filter(capability -> id.equals(capabilityIdentity(capability)))
         .findFirst()
-        .map(CapabilityStorageItemData.class::cast)
-        .ifPresent(item -> postCommitEvent(() -> new CapabilityStorageItemDeletedEventImpl(item)));
-    return dao().delete(entityId(id));
+        .map(CapabilityStorageItemData.class::cast);
+    boolean deleted = dao().delete(entityId(id));
+    if (deleted) {
+      // Register the post-commit event only after a successful delete, so a no-op (row already gone) does
+      // not fire a spurious deleted-event to peers.
+      item.ifPresent(it -> postCommitEvent(() -> new CapabilityStorageItemDeletedEventImpl(it)));
+    }
+    return deleted;
   }
 
   @Transactional
@@ -112,6 +124,13 @@ public class CapabilityStorageImpl
   @Override
   public Map<CapabilityIdentity, CapabilityStorageItem> getAll() {
     return stream(dao().browse()).collect(toImmutableMap(CapabilityStorageImpl::capabilityIdentity, identity()));
+  }
+
+  @Transactional
+  @Override
+  public Map<CapabilityIdentity, CapabilityStorageItem> getAllByType(final String type) {
+    return stream(dao().browseByType(type))
+        .collect(toImmutableMap(CapabilityStorageImpl::capabilityIdentity, identity()));
   }
 
   public static CapabilityIdentity capabilityIdentity(final CapabilityStorageItem item) {

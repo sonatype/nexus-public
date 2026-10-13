@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.DISABLE_CREATING_COMPONENT_INDEXES_TASK;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -51,7 +51,7 @@ public class CreateComponentIndexTask
       final CreateComponentIndexService createComponentIndexService,
       @Value("${" + DISABLE_CREATING_COMPONENT_INDEXES_TASK + ":false}") final boolean disableTask)
   {
-    this.createComponentIndexService = checkNotNull(createComponentIndexService);
+    this.createComponentIndexService = requireNonNull(createComponentIndexService);
     this.disableTask = disableTask;
   }
 

@@ -18,7 +18,7 @@ import org.sonatype.nexus.internal.security.apikey.ApiKeyInternal;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link ApiKeyInternal} data.
@@ -47,9 +47,9 @@ public class ApiKeyData
       final ApiKeyToken token,
       final OffsetDateTime created)
   {
-    this.domain = checkNotNull(domain);
-    this.principals = checkNotNull(principals);
-    this.token = checkNotNull(token);
+    this.domain = requireNonNull(domain);
+    this.principals = requireNonNull(principals);
+    this.token = requireNonNull(token);
     this.created = created;
   }
 

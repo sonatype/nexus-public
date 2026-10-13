@@ -12,15 +12,23 @@
  */
 package org.sonatype.nexus.repository.content.facet;
 
+import java.lang.reflect.Method;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.app.softdelete.SoftDeletedAssetRef;
+import org.sonatype.nexus.common.app.softdelete.TrashIndexRecorder;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.datastore.api.SerializedAccessException;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.RedeployDisabledException;
 import org.sonatype.nexus.repository.Repository;
@@ -32,14 +40,18 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport.Config;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
+import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.AssetStore;
+import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.transaction.Transaction;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import jakarta.validation.ConstraintViolationException;
@@ -47,11 +59,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -59,6 +74,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -95,6 +111,9 @@ class ContentFacetSupportTest
 
   @Mock
   AssetBlobStore assetBlobStore;
+
+  @Mock
+  TrashIndexRecorder trashIndexRecorder;
 
   ContentFacetSupport underTest;
 
@@ -271,6 +290,40 @@ class ContentFacetSupportTest
   }
 
   /**
+   * Fix: under the HA create->use race a peer may insert the shared content-repository row between our read
+   * and our insert. On the losing insert we must absorb the DuplicateKeyException and re-read the peer's row
+   * so the facet still starts, rather than failing its INITIALISED -> STARTED transition.
+   */
+  @Test
+  void testDoStart_toleratesConcurrentCreate_duplicateKeyReReadsPeerRow() throws Exception {
+    configureFacet(WritePolicy.ALLOW);
+
+    EntityId configRepoId = mock(EntityId.class);
+    when(repository.getConfiguration()).thenReturn(configuration);
+    when(configuration.getRepositoryId()).thenReturn(configRepoId);
+
+    ContentRepository peerRepo = mock(ContentRepository.class);
+    when(peerRepo.contentRepositoryId()).thenReturn(55);
+    // absent on our first read (we attempt to create); after losing the insert race the peer's row is present
+    when(contentRepositoryStore.readContentRepository(configRepoId))
+        .thenReturn(Optional.empty())
+        .thenReturn(Optional.of(peerRepo));
+    doThrow(new DuplicateKeyException(new RuntimeException("dup")))
+        .when(contentRepositoryStore)
+        .createContentRepository(any());
+
+    AssetBlobValidators validators = mock();
+    AssetBlobValidator validator = mock();
+    when(dependencies.getAssetBlobValidators()).thenReturn(validators);
+    when(validators.selectValidator(repository)).thenReturn(validator);
+
+    assertDoesNotThrow(() -> underTest.doStart());
+
+    assertThat(underTest.contentRepositoryId(), is(55));
+    verify(contentRepositoryStore).createContentRepository(any(ContentRepositoryData.class));
+  }
+
+  /**
    * Test doStart fails with IllegalStateException when configRepositoryId is null.
    */
   @Test
@@ -311,6 +364,24 @@ class ContentFacetSupportTest
     verify(assetStore, never()).deleteAssets(any(Integer.class));
     verify(componentStore, never()).deleteComponents(any(Integer.class));
     verify(contentRepositoryStore, never()).deleteContentRepository(any(EntityId.class));
+  }
+
+  /**
+   * Deleting a repository issues a transactional DELETE of the shared content-repository rows that can deadlock
+   * against the asynchronous browse/search flush of the same repository's content. The deadlock is transient, so
+   * doDelete must be annotated to retry on {@link SerializedAccessException}; otherwise the STOPPED -> DELETED
+   * transition fails with an HTTP 500 and the repository is stranded (NEXUS-54229).
+   */
+  @Test
+  void testDoDelete_retriesOnTransientSerializationFailure() throws Exception {
+    Method doDelete = ContentFacetSupport.class.getDeclaredMethod("doDelete");
+    Transactional transactional = doDelete.getAnnotation(Transactional.class);
+
+    assertThat("doDelete must be @Transactional", transactional, is(notNullValue()));
+    assertThat(
+        "doDelete must retry on a transient serialization failure / deadlock so a delete racing the async "
+            + "browse/search flush does not strand the repository",
+        asList(transactional.retryOn()), hasItem(SerializedAccessException.class));
   }
 
   /**
@@ -651,11 +722,214 @@ class ContentFacetSupportTest
     assertThat(exception.getMessage(), is("my-hosted-repo/my/artifact.tar.gz is read-only"));
   }
 
+  /**
+   * When a component is revived by re-upload, its stale "umbrella" trash entry is removed and each sibling
+   * asset that is still soft-deleted (not part of the re-upload) is re-surfaced as its own entry; live assets
+   * are left alone.
+   */
+  @Test
+  void cleanupComponentTrashIndex_removesComponentEntry_andResurfacesSoftDeletedSiblingsOnly() throws Exception {
+    configureFacet(WritePolicy.ALLOW);
+    startFacet(77);
+    setTrashIndexRecorder(trashIndexRecorder);
+
+    when(repository.getName()).thenReturn("repo1");
+    Format format = mock(Format.class);
+    when(format.getValue()).thenReturn("raw");
+    when(repository.getFormat()).thenReturn(format);
+
+    ComponentData component = new ComponentData();
+    component.setComponentId(50);
+
+    // The component was in Trash: its umbrella entry is removed (1 row), which triggers the sibling scan.
+    when(trashIndexRecorder.removeComponentByExternalId(eq("repo1"), any())).thenReturn(1);
+
+    AssetData deletedSibling = new AssetData();
+    deletedSibling.setAssetId(7);
+    deletedSibling.setPath("/com/example/demo/1.0/demo-1.0.pom");
+    deletedSibling.setKind("pom");
+    deletedSibling.setDeletedOn(OffsetDateTime.now());
+    deletedSibling.setDeletedBy("admin");
+
+    AssetData liveAsset = new AssetData();
+    liveAsset.setAssetId(8);
+    liveAsset.setPath("/com/example/demo/1.0/demo-1.0.jar");
+
+    when(assetStore.browseAllComponentAssets(component)).thenReturn(List.of(deletedSibling, liveAsset));
+
+    underTest.cleanupComponentTrashIndex(component);
+
+    String compExternalId = InternalIds.toExternalId(InternalIds.internalComponentId(component)).getValue();
+    verify(trashIndexRecorder).removeComponentByExternalId("repo1", compExternalId);
+
+    // Exactly one re-surface call (the still-soft-deleted sibling); the live asset is not re-surfaced.
+    ArgumentCaptor<SoftDeletedAssetRef> captor = ArgumentCaptor.forClass(SoftDeletedAssetRef.class);
+    verify(trashIndexRecorder).resurfaceSoftDeletedChildAsset(captor.capture());
+    SoftDeletedAssetRef ref = captor.getValue();
+    assertThat(ref.repositoryName(), is("repo1"));
+    assertThat(ref.repositoryId(), is(77));
+    assertThat(ref.format(), is("raw"));
+    assertThat(ref.componentExternalId(), is(compExternalId));
+    assertThat(ref.assetExternalId(),
+        is(InternalIds.toExternalId(InternalIds.internalAssetId(deletedSibling)).getValue()));
+    assertThat(ref.path(), is("/com/example/demo/1.0/demo-1.0.pom"));
+    assertThat(ref.kind(), is("pom"));
+    assertThat(ref.deletedBy(), is("admin"));
+  }
+
+  /**
+   * A component that was in Trash but whose siblings are now all live (fully re-uploaded) clears its umbrella
+   * entry but re-surfaces nothing.
+   */
+  @Test
+  void cleanupComponentTrashIndex_liveOnlySiblings_removesComponentEntry_noResurface() throws Exception {
+    configureFacet(WritePolicy.ALLOW);
+    startFacet(77);
+    setTrashIndexRecorder(trashIndexRecorder);
+
+    when(repository.getName()).thenReturn("repo1");
+    Format format = mock(Format.class);
+    when(format.getValue()).thenReturn("raw");
+    when(repository.getFormat()).thenReturn(format);
+
+    ComponentData component = new ComponentData();
+    component.setComponentId(50);
+
+    // The component had an umbrella entry (1 row removed), so the sibling scan runs.
+    when(trashIndexRecorder.removeComponentByExternalId(eq("repo1"), any())).thenReturn(1);
+
+    AssetData liveAsset = new AssetData();
+    liveAsset.setAssetId(8);
+    liveAsset.setPath("/live");
+
+    when(assetStore.browseAllComponentAssets(component)).thenReturn(List.of(liveAsset));
+
+    underTest.cleanupComponentTrashIndex(component);
+
+    verify(trashIndexRecorder).removeComponentByExternalId(eq("repo1"), any());
+    verify(trashIndexRecorder, never()).resurfaceSoftDeletedChildAsset(any());
+  }
+
+  /**
+   * With no trash recorder wired (soft-delete plugin absent / OSS build), the hook is a safe no-op.
+   */
+  @Test
+  void cleanupComponentTrashIndex_nullRecorder_isNoOp() throws Exception {
+    ComponentData component = new ComponentData();
+    component.setComponentId(50);
+
+    assertDoesNotThrow(() -> underTest.cleanupComponentTrashIndex(component));
+  }
+
+  /**
+   * Regression: the reconciliation must run whenever the recorder is present, regardless of the current
+   * {@code nexus.softDelete.enabled} state. A stale trash index row can be left by a period when the flag
+   * was ON and then be silently revived by a re-upload while the flag is OFF; if this hook were gated on
+   * the flag, that row would survive as an un-restorable ghost (component in Trash while live in the repo).
+   */
+  @Test
+  void cleanupComponentTrashIndex_recorderPresent_removesEntry_evenAfterFlagToggledOff() throws Exception {
+    configureFacet(WritePolicy.ALLOW);
+    startFacet(77);
+    setTrashIndexRecorder(trashIndexRecorder);
+
+    when(repository.getName()).thenReturn("repo1");
+    Format format = mock(Format.class);
+    when(format.getValue()).thenReturn("raw");
+    when(repository.getFormat()).thenReturn(format);
+
+    ComponentData component = new ComponentData();
+    component.setComponentId(50);
+
+    // Stale umbrella entry present (1 row removed) -> reconciliation proceeds.
+    when(trashIndexRecorder.removeComponentByExternalId(eq("repo1"), any())).thenReturn(1);
+
+    AssetData liveAsset = new AssetData();
+    liveAsset.setAssetId(8);
+    liveAsset.setPath("/live");
+
+    when(assetStore.browseAllComponentAssets(component)).thenReturn(List.of(liveAsset));
+
+    underTest.cleanupComponentTrashIndex(component);
+
+    // The stale umbrella entry is removed; no re-surface since the only sibling is live.
+    verify(trashIndexRecorder).removeComponentByExternalId(eq("repo1"), any());
+    verify(trashIndexRecorder, never()).resurfaceSoftDeletedChildAsset(any());
+  }
+
+  /**
+   * Fast path (Option A): when the component had no trash entry (a brand-new or never-deleted upload -- the
+   * common case), the umbrella delete removes 0 rows and the per-asset sibling scan is skipped entirely,
+   * keeping the create/upload hot path cheap.
+   */
+  @Test
+  void cleanupComponentTrashIndex_noEntryRemoved_skipsSiblingScan() throws Exception {
+    configureFacet(WritePolicy.ALLOW);
+    startFacet(77);
+    setTrashIndexRecorder(trashIndexRecorder);
+
+    when(repository.getName()).thenReturn("repo1");
+
+    ComponentData component = new ComponentData();
+    component.setComponentId(50);
+
+    // No umbrella entry existed -> delete removes 0 rows (Mockito's default for the unstubbed int call).
+    underTest.cleanupComponentTrashIndex(component);
+
+    // The delete is always attempted (this is what fixes the toggle-ghost bug), but the sibling scan and any
+    // re-surface are skipped because nothing was removed.
+    verify(trashIndexRecorder).removeComponentByExternalId(eq("repo1"), any());
+    verify(assetStore, never()).browseAllComponentAssets(any());
+    verify(trashIndexRecorder, never()).resurfaceSoftDeletedChildAsset(any());
+  }
+
   // --- Helper methods ---
+
+  private void setTrashIndexRecorder(final TrashIndexRecorder recorder) throws Exception {
+    java.lang.reflect.Field field = ContentFacetSupport.class.getDeclaredField("trashIndexRecorder");
+    field.setAccessible(true);
+    field.set(underTest, recorder);
+  }
 
   /**
    * Configures the facet with the given write policy using mock ConfigurationFacet.
    */
+  @Test
+  void isGlobalDistributionEnabled_returnsFalseWhenAttributesNull() throws Exception {
+    configureFacet(WritePolicy.ALLOW);
+    // configuration.getAttributes() returns null (Mockito default)
+    assertThat(underTest.isGlobalDistributionEnabled(), is(false));
+  }
+
+  @Test
+  void isGlobalDistributionEnabled_readsBooleanTrueFromStorageGlobalDistribution() throws Exception {
+    when(configuration.getAttributes())
+        .thenReturn(Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE,
+            Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION_ENABLED,
+                Boolean.TRUE)));
+    configureFacet(WritePolicy.ALLOW);
+    assertThat(underTest.isGlobalDistributionEnabled(), is(true));
+  }
+
+  @Test
+  void isGlobalDistributionEnabled_readsStringTrueFromStorageGlobalDistribution() throws Exception {
+    when(configuration.getAttributes())
+        .thenReturn(Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE,
+            Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION_ENABLED, "true")));
+    configureFacet(WritePolicy.ALLOW);
+    assertThat(underTest.isGlobalDistributionEnabled(), is(true));
+  }
+
+  @Test
+  void isGlobalDistributionEnabled_readsBooleanFalseFromStorageGlobalDistribution() throws Exception {
+    when(configuration.getAttributes())
+        .thenReturn(Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE,
+            Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION_ENABLED,
+                Boolean.FALSE)));
+    configureFacet(WritePolicy.ALLOW);
+    assertThat(underTest.isGlobalDistributionEnabled(), is(false));
+  }
+
   private void configureFacet(final WritePolicy writePolicy) throws Exception {
     ConfigurationFacet conf = mock();
     when(repository.facet(ConfigurationFacet.class)).thenReturn(conf);

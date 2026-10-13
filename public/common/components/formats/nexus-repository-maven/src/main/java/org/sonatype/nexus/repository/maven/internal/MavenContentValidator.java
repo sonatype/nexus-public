@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -48,7 +48,7 @@ public class MavenContentValidator
 
   @Autowired
   public MavenContentValidator(final DefaultContentValidator defaultContentValidator) {
-    this.defaultContentValidator = checkNotNull(defaultContentValidator);
+    this.defaultContentValidator = requireNonNull(defaultContentValidator);
   }
 
   @Nonnull

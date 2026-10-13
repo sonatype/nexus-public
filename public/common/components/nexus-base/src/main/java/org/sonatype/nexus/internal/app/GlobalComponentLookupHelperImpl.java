@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.app;
 
+import java.util.regex.Pattern;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
@@ -23,7 +25,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link GlobalComponentLookupHelper}.
@@ -34,13 +36,22 @@ public class GlobalComponentLookupHelperImpl
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
+  /**
+   * Matches a syntactically valid Java binary class name (dot-separated identifiers, each starting
+   * with a letter, {@code _} or {@code $}). Callers always pass fully-qualified class names, so a
+   * legitimate lookup always matches; anything else (URIs such as {@code jar:file:/proc/self/fd/3},
+   * paths, or other injected strings) is rejected before it can reach the classloader (NEXUS-54946).
+   */
+  private static final Pattern SAFE_CLASS_NAME =
+      Pattern.compile("^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$");
+
   private ApplicationContext applicationContext;
 
   @Override
   @Nullable
   public Object lookup(final String className) {
-    checkNotNull(className);
-    checkNotNull(applicationContext);
+    requireNonNull(className);
+    requireNonNull(applicationContext);
     try {
       log.trace("Looking up component by class-name: {}", className);
       Class<?> type = getClass().getClassLoader().loadClass(className);
@@ -55,7 +66,7 @@ public class GlobalComponentLookupHelperImpl
   @Override
   @Nullable
   public <T> T lookup(final Class<T> clazz) {
-    checkNotNull(clazz);
+    requireNonNull(clazz);
 
     return applicationContext.getBean(clazz);
   }
@@ -63,8 +74,8 @@ public class GlobalComponentLookupHelperImpl
   @Override
   @Nullable
   public <T> T lookup(final Class<T> clazz, final String name) {
-    checkNotNull(clazz);
-    checkNotNull(name);
+    requireNonNull(clazz);
+    requireNonNull(name);
 
     return applicationContext.getBean(name, clazz);
   }
@@ -72,7 +83,11 @@ public class GlobalComponentLookupHelperImpl
   @Override
   @Nullable
   public Class<?> type(final String className) {
-    checkNotNull(className);
+    requireNonNull(className);
+    if (!SAFE_CLASS_NAME.matcher(className).matches()) {
+      log.warn("Rejecting type lookup for value that is not a Java binary class name: {}", className);
+      return null;
+    }
     try {
       log.trace("Looking up type: {}", className);
       return getClass().getClassLoader().loadClass(className);

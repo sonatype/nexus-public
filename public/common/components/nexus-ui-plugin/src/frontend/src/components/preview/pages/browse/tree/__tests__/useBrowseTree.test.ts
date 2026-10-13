@@ -572,7 +572,7 @@ describe('useBrowseTree', () => {
       expect(result.current.state.selectedNodeId).toBe('lib%2B%2B/file%2B1.txt');
     });
 
-    it('toggle works with %21-encoded node IDs', async () => {
+    it('auto-expands and toggles a chain of %21/%40-encoded node IDs', async () => {
       ExtAPIUtils.extAPIRequest.mockImplementation(
         async (_action: string, _method: string, { data }: { data: [{ repositoryName: string; node: string }] }) => {
           const requestedNodeId = data[0].node;
@@ -587,16 +587,35 @@ describe('useBrowseTree', () => {
         expect(result.current.state.loading).toBe(false);
       });
 
-      // Expand github.com
-      await act(async () => {
-        await result.current.actions.toggle('github.com');
+      // The Go root is a single-child folder chain, so auto-expansion opens
+      // it down to `@v` — whose only child is a leaf asset — without any click.
+      // Every level's ID keeps the Java URLEncoder form (%21 for !, %40 for @).
+      await waitFor(() => {
+        const github = result.current.state.nodes.find((n) => n.node.id === 'github.com');
+        expect(github?.expanded).toBe(true);
+        expect(github?.children).toHaveLength(1);
+        expect(github?.children?.[0].node.id).toBe('github.com/%21data%21dog');
+        expect(github?.children?.[0].expanded).toBe(true);
+        expect(github?.children?.[0].children?.[0].node.id).toBe(
+          'github.com/%21data%21dog/gostackparse'
+        );
       });
 
-      const githubNode = result.current.state.nodes.find((n) => n.node.id === 'github.com');
-      expect(githubNode?.expanded).toBe(true);
-      expect(githubNode?.children).toHaveLength(1);
-      // Child should have Java-encoded ID with %21
-      expect(githubNode?.children?.[0].node.id).toBe('github.com/%21data%21dog');
+      // Toggling the encoded node collapses it, and toggling again re-opens it
+      // from cache — the encoded ID must round-trip through both directions.
+      await act(async () => {
+        await result.current.actions.toggle('github.com/%21data%21dog');
+      });
+      let datadog = result.current.state.nodes[0].children?.[0];
+      expect(datadog?.expanded).toBe(false);
+
+      await act(async () => {
+        await result.current.actions.toggle('github.com/%21data%21dog');
+      });
+      datadog = result.current.state.nodes[0].children?.[0];
+      expect(datadog?.expanded).toBe(true);
+      expect(datadog?.children?.[0].node.id).toBe('github.com/%21data%21dog/gostackparse');
+
     });
   });
 });

@@ -26,7 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.LOW;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.AUDITLOG;
 import org.springframework.stereotype.Component;
@@ -46,7 +46,7 @@ public class AuditLogCustomizer
 
   @Autowired
   public AuditLogCustomizer(final LogManager logManager) {
-    this.logManager = checkNotNull(logManager);
+    this.logManager = requireNonNull(logManager);
   }
 
   @Override

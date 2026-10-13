@@ -12,9 +12,22 @@
  */
 
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { ExtJS } from "../../interface/ExtJS";
+import {
+  EDITION_COMMUNITY,
+  EDITION_CORE,
+  EDITION_ENTERPRISE,
+  EDITION_ID_STATE_KEY,
+  EDITION_PRO,
+  EDITION_PRO_PLUS,
+} from "../../interface/editionUtils";
 import LoginLayout from "./LoginLayout";
+
+const HEADER_IMG_SELECTOR = ".nxrm-login-header img";
+const HEADER_LINK_SELECTOR = ".nxrm-login-header a";
+const EDITION_BADGE_SELECTOR = ".nxrm-login-header__edition-badge";
+const NEUTRAL_LOGO_ALT = "Sonatype Nexus Repository";
 
 jest.mock("../../interface/ExtJS", () => ({
   ExtJS: {
@@ -23,193 +36,203 @@ jest.mock("../../interface/ExtJS", () => ({
   },
 }));
 
-const mockState = {
-  getEdition: jest.fn(),
-  getValue: jest.fn(),
-};
+// The state values ExtJS.state().getValue(key, fallback) should return for a given render.
+let stateValues = {};
 
-const defaultLogoConfig = {
-  proLight: "/logos/pro-light.svg",
-  ceLight: "/logos/ce-light.svg",
-  coreLight: "/logos/core-light.svg",
-};
+function setStateValues(values) {
+  stateValues = values;
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  stateValues = {};
+  ExtJS.state.mockImplementation(() => ({
+    getValue: jest.fn((key, fallback) =>
+      Object.prototype.hasOwnProperty.call(stateValues, key) ? stateValues[key] : fallback
+    ),
+  }));
+  // Default: run the factory just as ExtJS would once state is hydrated.
+  ExtJS.useState.mockImplementation((fn) => fn());
+});
+
+function renderLayout() {
+  return render(
+    <LoginLayout>
+      <div>Test Content</div>
+    </LoginLayout>
+  );
+}
 
 describe("LoginLayout", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    ExtJS.state.mockReturnValue(mockState);
-    mockState.getEdition.mockReturnValue("PRO");
-    // By default, no context path
-    mockState.getValue.mockReturnValue("");
-    ExtJS.useState.mockImplementation((fn) => fn());
-  });
+  it("renders header, main, and children", () => {
+    setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_PRO });
 
-  it("render component for Professional", () => {
-    const { container } = render(
-        <LoginLayout logoConfig={defaultLogoConfig}>
-          <div>Test Content</div>
-        </LoginLayout>
-    );
+    const { container } = renderLayout();
 
-    // verify structure rendered (light-only theme)
     expect(container.querySelector(".nxrm-login-header")).toBeInTheDocument();
     expect(container.querySelector(".nxrm-login-main")).toBeInTheDocument();
     expect(screen.getByText("Test Content")).toBeInTheDocument();
-
-    // verify home link
-    expect(container.querySelector(".nxrm-login-header a[href]")).toHaveAttribute("href", "/#browse/welcome");
-
-    // verify logo image is rendered (light-only, single image)
-    const image = container.querySelector('.nxrm-login-header img');
-    expect(image).toBeInTheDocument();
-    expect(image).toHaveAttribute("src", "/logos/pro-light.svg");
-    expect(image).toHaveAttribute("alt", "Sonatype Nexus Repository Professional");
-    expect(mockState.getEdition).toHaveBeenCalled();
   });
 
-  describe("logo selection", () => {
-    it("handles missing logo gracefully when PRO style is not available", () => {
-      const { container } = render(
-        <LoginLayout logoConfig={{}}>
-          <div>Test Content</div>
-        </LoginLayout>
+  describe("edition badge and neutral wordmark", () => {
+    it("uses the neutral wordmark alt regardless of edition", () => {
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_PRO });
+
+      const { container } = renderLayout();
+
+      expect(container.querySelector(HEADER_IMG_SELECTOR)).toHaveAttribute(
+        "alt",
+        NEUTRAL_LOGO_ALT
       );
+    });
 
-      expect(screen.getByText("Test Content")).toBeInTheDocument();
-      // No logo shown when proLight is not available
-      const image = container.querySelector('.nxrm-login-header__logo');
+    it("renders the Pro+ edition badge for the pro plus edition id", () => {
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_PRO_PLUS });
+
+      const { container } = renderLayout();
+
+      expect(container.querySelector(EDITION_BADGE_SELECTOR)).toHaveTextContent(
+        "Pro+"
+      );
+    });
+
+    it("renders the Enterprise edition badge for the enterprise edition id", () => {
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_ENTERPRISE });
+
+      const { container } = renderLayout();
+
+      expect(container.querySelector(EDITION_BADGE_SELECTOR)).toHaveTextContent(
+        "Enterprise"
+      );
+    });
+
+    it("renders the Pro edition badge for the pro edition id", () => {
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_PRO });
+
+      const { container } = renderLayout();
+
+      expect(container.querySelector(EDITION_BADGE_SELECTOR)).toHaveTextContent(
+        "Pro"
+      );
+    });
+
+    it("renders the Community Edition badge for the community edition id", () => {
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_COMMUNITY });
+
+      const { container } = renderLayout();
+
+      expect(container.querySelector(EDITION_BADGE_SELECTOR)).toHaveTextContent(
+        "Community Edition"
+      );
+    });
+
+    it("renders the Core edition badge for the core edition id", () => {
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_CORE });
+
+      const { container } = renderLayout();
+
+      expect(container.querySelector(EDITION_BADGE_SELECTOR)).toHaveTextContent(
+        "Core"
+      );
+    });
+
+    it("renders the edition as a solid green Radix Badge, not a hand-rolled span", () => {
+      // Guards the review decision to use the Radix Badge instead of CSS tokens.
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_PRO_PLUS });
+
+      const { container } = renderLayout();
+      const badge = container.querySelector(EDITION_BADGE_SELECTOR);
+
+      expect(badge).toHaveClass("rt-Badge");
+      expect(badge).toHaveClass("rt-variant-solid");
+    });
+
+    it("keeps the home link aria-label edition-free so the edition is not announced twice", () => {
+      // Edition is conveyed by the badge; repeating it here would double-announce it.
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_ENTERPRISE });
+
+      const { container } = renderLayout();
+
+      expect(container.querySelector(HEADER_LINK_SELECTOR)).toHaveAttribute(
+        "aria-label",
+        "Sonatype Nexus Repository home"
+      );
+    });
+
+    it("does not render the edition badge before an edition id is published", () => {
+      // Early-boot window: no editionId in state yet.
+      ExtJS.useState.mockImplementation(() => undefined);
+
+      const { container } = renderLayout();
+
+      expect(
+        container.querySelector(EDITION_BADGE_SELECTOR)
+      ).not.toBeInTheDocument();
+    });
+
+    it("resolves a wordmark logo src even when editionId is missing at bootstrap", () => {
+      // No editionId yet, so the layout still renders the wordmark, not an empty img.
+      const { container } = renderLayout();
+      const image = container.querySelector(HEADER_IMG_SELECTOR);
       expect(image).toBeInTheDocument();
-      expect(mockState.getEdition).toHaveBeenCalled();
+      expect(image.getAttribute("src")).toBeTruthy();
     });
 
-    describe("logo selection - Community edition", () => {
-      it("uses ceLight logo when available", () => {
-        mockState.getEdition.mockReturnValue("COMMUNITY");
+    it("keeps a stable, edition-free aria-label before state resolves", () => {
+      // Early-boot window where ExtJS.useState has not been attached yet.
+      ExtJS.useState.mockImplementation(() => undefined);
 
-        const { container } = render(
-            <LoginLayout logoConfig={defaultLogoConfig}>
-              <div>Test Content</div>
-            </LoginLayout>
-        );
+      const { container } = renderLayout();
 
-        expect(screen.getByText("Test Content")).toBeInTheDocument();
-        const image = container.querySelector('.nxrm-login-header img');
-        expect(image).toHaveAttribute("src", "/logos/ce-light.svg");
-        expect(image).toHaveAttribute("alt", "Sonatype Nexus Repository Community");
-        expect(mockState.getEdition).toHaveBeenCalled();
-      });
-
-      it("falls back to proLight when Community style is not available", () => {
-        mockState.getEdition.mockReturnValue("COMMUNITY");
-
-        const logoConfigWithoutCE = {
-          proLight: "/logos/pro-light.svg",
-        };
-
-        const { container } = render(
-            <LoginLayout logoConfig={logoConfigWithoutCE}>
-              <div>Test Content</div>
-            </LoginLayout>
-        );
-
-        expect(screen.getByText("Test Content")).toBeInTheDocument();
-        const image = container.querySelector('.nxrm-login-header img');
-        expect(image).toHaveAttribute("src", "/logos/pro-light.svg");
-        expect(mockState.getEdition).toHaveBeenCalled();
-      });
-    });
-
-    describe("logo selection - Core edition", () => {
-      beforeEach(() => {
-        mockState.getEdition.mockReturnValue("distinctToCommunityAndPro");
-      });
-
-      it("uses coreLight logo when available", () => {
-        const { container } = render(
-            <LoginLayout logoConfig={defaultLogoConfig}>
-              <div>Test Content</div>
-            </LoginLayout>
-        );
-
-        expect(screen.getByText("Test Content")).toBeInTheDocument();
-        const image = container.querySelector('.nxrm-login-header img');
-        expect(image).toHaveAttribute("src", "/logos/core-light.svg");
-        expect(image).toHaveAttribute("alt", "Sonatype Nexus Repository Core");
-        expect(mockState.getEdition).toHaveBeenCalled();
-      });
-
-      it("falls back to proLight when Core style is not available", () => {
-        const logoConfigWithoutCore = {
-          proLight: "/logos/pro-light.svg",
-        };
-
-        const { container } = render(
-            <LoginLayout logoConfig={logoConfigWithoutCore}>
-              <div>Test Content</div>
-            </LoginLayout>
-        );
-
-        expect(screen.getByText("Test Content")).toBeInTheDocument();
-        const image = container.querySelector('.nxrm-login-header img');
-        expect(image).toHaveAttribute("src", "/logos/pro-light.svg");
-        expect(mockState.getEdition).toHaveBeenCalled();
-      });
+      expect(container.querySelector(HEADER_LINK_SELECTOR)).toHaveAttribute(
+        "aria-label",
+        "Sonatype Nexus Repository home"
+      );
     });
   });
 
-  it("uses context path from ExtJS state when provided", () => {
-    mockState.getValue.mockReturnValue("/nexus-context");
+  describe("home link", () => {
+    it("defaults to /#browse/welcome when no context path is published", () => {
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_PRO });
 
-    const { container } = render(
-        <LoginLayout logoConfig={defaultLogoConfig}>
-          <div>Test Content</div>
-        </LoginLayout>
-    );
+      const { container } = renderLayout();
 
-    expect(screen.getByText("Test Content")).toBeInTheDocument();
-    const homeLink = container.querySelector(".nxrm-login-header a[href]");
-    expect(homeLink).toHaveAttribute("href", "/nexus-context/#browse/welcome");
+      expect(container.querySelector(".nxrm-login-header a[href]")).toHaveAttribute(
+        "href",
+        "/#browse/welcome"
+      );
+    });
+
+    it("prefixes the context path when published in state", () => {
+      setStateValues({
+        [EDITION_ID_STATE_KEY]: EDITION_PRO,
+        "nexus-context-path": "/nexus-context",
+      });
+
+      const { container } = renderLayout();
+
+      expect(container.querySelector(".nxrm-login-header a[href]")).toHaveAttribute(
+        "href",
+        "/nexus-context/#browse/welcome"
+      );
+    });
+
+    it("routes to the welcome hash on logo click without a full navigation", () => {
+      setStateValues({ [EDITION_ID_STATE_KEY]: EDITION_PRO });
+
+      const { container } = renderLayout();
+      fireEvent.click(container.querySelector(HEADER_LINK_SELECTOR));
+
+      expect(window.location.hash).toBe("#browse/welcome");
+    });
   });
 
-  describe("edge cases", () => {
-    it("handles missing logoConfig gracefully", () => {
-      const { container } = render(
-        <LoginLayout logoConfig={undefined}>
-          <div>Test Content</div>
-        </LoginLayout>
-      );
+  describe("bootstrap resilience", () => {
+    it("does not throw when ExtJS.useState is temporarily unavailable", () => {
+      ExtJS.useState.mockImplementation(() => undefined);
 
+      expect(() => renderLayout()).not.toThrow();
       expect(screen.getByText("Test Content")).toBeInTheDocument();
-      // Image element exists but has no src
-      const image = container.querySelector('.nxrm-login-header__logo');
-      expect(image).toBeInTheDocument();
-      expect(mockState.getEdition).toHaveBeenCalled();
-    });
-
-    it("handles empty logoConfig gracefully", () => {
-      const { container } = render(
-        <LoginLayout logoConfig={{}}>
-          <div>Test Content</div>
-        </LoginLayout>
-      );
-
-      expect(screen.getByText("Test Content")).toBeInTheDocument();
-      const image = container.querySelector('.nxrm-login-header__logo');
-      expect(image).toBeInTheDocument();
-      expect(mockState.getEdition).toHaveBeenCalled();
-    });
-
-    it("handles null logoConfig gracefully", () => {
-      const { container } = render(
-        <LoginLayout logoConfig={null}>
-          <div>Test Content</div>
-        </LoginLayout>
-      );
-
-      expect(screen.getByText("Test Content")).toBeInTheDocument();
-      const image = container.querySelector('.nxrm-login-header__logo');
-      expect(image).toBeInTheDocument();
-      expect(mockState.getEdition).toHaveBeenCalled();
     });
   });
 });

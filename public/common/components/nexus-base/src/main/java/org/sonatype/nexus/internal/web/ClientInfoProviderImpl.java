@@ -24,7 +24,7 @@ import org.sonatype.nexus.security.UserIdHelper;
 
 import com.google.common.net.HttpHeaders;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,7 +44,7 @@ public class ClientInfoProviderImpl
 
   @Autowired
   public ClientInfoProviderImpl(@Context final Provider<HttpServletRequest> httpRequestProvider) {
-    this.httpRequestProvider = checkNotNull(httpRequestProvider);
+    this.httpRequestProvider = requireNonNull(httpRequestProvider);
   }
 
   @Override
@@ -78,8 +78,8 @@ public class ClientInfoProviderImpl
 
   @Override
   public void setClientInfo(final String remoteIp, final String userId) {
-    this.remoteIp.set(checkNotNull(remoteIp));
-    this.userId.set(checkNotNull(userId));
+    this.remoteIp.set(requireNonNull(remoteIp));
+    this.userId.set(requireNonNull(userId));
   }
 
   @Override

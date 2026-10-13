@@ -10,3 +10,60 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+
+// The card is a positioning context for the title control's full-bleed overlay.
+.search-result-card {
+  position: relative;
+}
+
+// The component name is the card's single accessible control (a real <button>), styled to read
+// as the bold title text rather than a chrome button. Because it is a discrete element — not a
+// role="button" wrapper around the whole card — the card's descriptive text (group, repository,
+// format, date) stays exposed to assistive technology, and the Guide link is no longer nested
+// inside an interactive control (WCAG 4.1.2).
+.search-result-card__title {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0; // let the inner truncating Text shrink instead of forcing overflow
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+// Full-bleed overlay: keeps the whole card clickable by mouse as a convenience, without wrapping
+// the card content in the control. Keyboard users operate the button directly, so this is a
+// pointer-only affordance.
+.search-result-card__title::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+// Move the focus ring off the small title text and onto the whole card, so keyboard focus is
+// clearly visible on the element the overlay actually activates.
+.search-result-card__title:focus-visible {
+  outline: none;
+}
+
+.search-result-card__title:focus-visible::after {
+  outline: 2px solid var(--focus-8);
+  // Negative offset paints the ring INSIDE the overlay's inset:0 box. Radix's .rt-BaseCard sets
+  // `overflow: hidden` + `contain: paint`, which clips anything drawn outside that box — a positive
+  // offset would clip the ring away entirely, leaving a keyboard-focused card with no visible focus
+  // indicator (WCAG 2.4.7). Radix's own .rt-Card:focus-visible uses a negative offset for the same
+  // reason. jsdom has no layout, so no unit test can catch this — it must be verified in a browser.
+  outline-offset: -2px;
+  border-radius: var(--radius-4);
+}
+
+// Keep the Guide link above the title overlay so it stays independently clickable.
+.search-result-card__guide {
+  position: relative;
+  z-index: 1;
+}

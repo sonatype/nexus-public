@@ -13,8 +13,7 @@
 package org.sonatype.nexus.common.collect;
 
 import com.google.common.annotations.VisibleForTesting;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to build attribute keys.
@@ -31,12 +30,12 @@ public class AttributeKey
   }
 
   public static String get(final Class<?> type) {
-    checkNotNull(type);
+    requireNonNull(type);
     return type.getName();
   }
 
   public static String get(final Class<?> type, final String suffix) {
-    checkNotNull(suffix);
+    requireNonNull(suffix);
     return get(type) + SUFFIX_SEPARATOR + suffix;
   }
 }

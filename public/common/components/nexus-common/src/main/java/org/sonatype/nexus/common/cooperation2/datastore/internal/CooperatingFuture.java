@@ -33,9 +33,9 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagateIfPossible;
 import static java.lang.Boolean.TRUE;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link CompletableFuture} that has various features added to help with cooperation.
@@ -60,8 +60,8 @@ public class CooperatingFuture<T>
   private final Config config;
 
   public CooperatingFuture(final CooperationKey requestKey, final Config config) {
-    this.requestKey = checkNotNull(requestKey);
-    this.config = checkNotNull(config);
+    this.requestKey = requireNonNull(requestKey);
+    this.config = requireNonNull(config);
   }
 
   /**

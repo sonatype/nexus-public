@@ -34,7 +34,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 
 @Component(RepositoryWebhookCapability.TYPE_ID)
@@ -97,8 +97,8 @@ public class RepositoryWebhookCapability
       final WebhookService webhookService,
       final RepositoryConditions repositoryConditions)
   {
-    this.webhookService = checkNotNull(webhookService);
-    this.repositoryConditions = checkNotNull(repositoryConditions);
+    this.webhookService = requireNonNull(webhookService);
+    this.repositoryConditions = requireNonNull(repositoryConditions);
   }
 
   @Override

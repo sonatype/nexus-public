@@ -29,7 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID;
 
@@ -67,8 +67,8 @@ public abstract class RepositoryParallelTaskSupport
 
   @Autowired
   public void install(final RepositoryManager repositoryManager, @Qualifier(GroupType.NAME) final Type groupType) {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.groupType = checkNotNull(groupType, "repository group type required");
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.groupType = requireNonNull(groupType, "repository group type required");
   }
 
   @Override

@@ -16,7 +16,7 @@ import org.sonatype.nexus.rapture.settings.RaptureSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,7 +36,7 @@ public class UiSettingsManager
   }
 
   public void setSettings(final RaptureSettings settings) {
-    this.settings = checkNotNull(settings);
+    this.settings = requireNonNull(settings);
   }
 
   public void resetSettings() {

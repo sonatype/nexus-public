@@ -24,7 +24,7 @@ interface WizardStateSchema extends StateSchema<WizardMachineContext> {
   states: {
     loading: Record<string, never>;
     stepReady: Record<string, never>;
-    setupComplete: Record<string, never>;
+    verificationFailed: Record<string, never>;
     verifying: Record<string, never>;
     done: Record<string, never>;
     issueOccurred: Record<string, never>;
@@ -48,7 +48,7 @@ const initialContext: WizardMachineContext = {
 // user to re-finalize choices instead of showing a transport-failure message.
 export const ONBOARDING_STILL_REQUIRED_NAME = 'OnboardingStillRequired';
 
-// Ceiling for the verify request before the machine falls back to setupComplete.
+// Ceiling for the verify request before the machine falls back to verificationFailed.
 // Prevents the user getting stranded on the verifying screen if the request never
 // resolves or rejects (silently-dropped TCP, hung proxy, etc.).
 export const VERIFY_TIMEOUT_MS = 30_000;
@@ -94,7 +94,7 @@ export function createWizardMachine(
             GET_STARTED: [
               {
                 cond: 'noSteps',
-                target: 'setupComplete',
+                target: 'verifying',
                 actions: assign({ currentIndex: 0 }),
               },
               {
@@ -105,7 +105,7 @@ export function createWizardMachine(
             STEP_ADVANCED: [
               {
                 cond: 'isLastStep',
-                target: 'setupComplete',
+                target: 'verifying',
                 actions: assign((context) => ({
                   currentIndex: context.currentIndex + 1,
                 })),
@@ -126,7 +126,7 @@ export function createWizardMachine(
             SKIP: 'skipped',
           },
         },
-        setupComplete: {
+        verificationFailed: {
           on: {
             // Clear any prior verify failure so the retry starts from a clean slate.
             SUBMIT: {
@@ -140,7 +140,7 @@ export function createWizardMachine(
             src: 'verify',
             onDone: 'done',
             onError: {
-              target: 'setupComplete',
+              target: 'verificationFailed',
               actions: assign((_, event) => ({
                 errorMessage: String(event.data),
                 errorKind: classifyVerifyError(event.data),
@@ -149,7 +149,7 @@ export function createWizardMachine(
           },
           after: {
             [VERIFY_TIMEOUT_MS]: {
-              target: 'setupComplete',
+              target: 'verificationFailed',
               actions: assign({
                 errorMessage: 'Verification timed out',
                 errorKind: 'network',

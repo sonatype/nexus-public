@@ -50,7 +50,7 @@ import org.mozilla.javascript.ast.ObjectProperty;
 import org.mozilla.javascript.ast.PropertyGet;
 import org.mozilla.javascript.ast.StringLiteral;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.mozilla.javascript.Token.CALL;
 import static org.mozilla.javascript.Token.NEW;
 
@@ -70,7 +70,7 @@ public class ClassDefScanner
   private String namespace;
 
   public ClassDefScanner(final Log log) {
-    this.log = checkNotNull(log);
+    this.log = requireNonNull(log);
   }
 
   public boolean isWarnings() {
@@ -95,7 +95,7 @@ public class ClassDefScanner
    * ie. Foo extends Bar, Bar will be before Foo.
    */
   public List<ClassDef> scan(final Scanner files) throws Exception {
-    checkNotNull(files);
+    requireNonNull(files);
 
     final boolean debug = log.isDebugEnabled();
 

@@ -1,0 +1,80 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+package org.sonatype.nexus.security.privilege;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.sonatype.nexus.security.SecuritySystem;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.Silent.class)
+public class UniquePrivilegeIdValidatorTest
+{
+  @Mock
+  private SecuritySystem securitySystem;
+
+  private UniquePrivilegeIdValidator underTest;
+
+  @Before
+  public void setUp() {
+    underTest = new UniquePrivilegeIdValidator(securitySystem);
+  }
+
+  /*
+   * Null value is considered valid (other constraints such as @NotEmpty handle the null/empty case)
+   */
+  @Test
+  public void isValid_nullValue() {
+    assertThat(underTest.isValid(null, null), is(true));
+  }
+
+  @Test
+  public void isValid_privilegeIdAlreadyExists() {
+    Privilege existing = new Privilege();
+    existing.setId("existing-privilege");
+    Set<Privilege> privileges = new HashSet<>();
+    privileges.add(existing);
+    when(securitySystem.listPrivileges()).thenReturn(privileges);
+
+    assertThat(underTest.isValid("existing-privilege", null), is(false));
+  }
+
+  @Test
+  public void isValid_privilegeIdDoesNotExist() {
+    Privilege existing = new Privilege();
+    existing.setId("existing-privilege");
+    Set<Privilege> privileges = new HashSet<>();
+    privileges.add(existing);
+    when(securitySystem.listPrivileges()).thenReturn(privileges);
+
+    assertThat(underTest.isValid("new-privilege", null), is(true));
+  }
+
+  @Test
+  public void isValid_noPrivilegesConfigured() {
+    when(securitySystem.listPrivileges()).thenReturn(Collections.emptySet());
+
+    assertThat(underTest.isValid("any-privilege", null), is(true));
+  }
+}

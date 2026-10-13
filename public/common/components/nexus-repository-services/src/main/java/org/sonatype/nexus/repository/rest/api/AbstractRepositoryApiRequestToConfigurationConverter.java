@@ -12,27 +12,33 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
 
 /**
  * @since 3.20
  */
-public abstract class AbstractRepositoryApiRequestToConfigurationConverter<T extends AbstractRepositoryApiRequest>
+public abstract class AbstractRepositoryApiRequestToConfigurationConverter<S extends StorageAttributes, T extends AbstractRepositoryApiRequest<S>>
 {
   protected ConfigurationStore configurationStore;
 
   @Autowired
   public void setConfigurationStore(final ConfigurationStore configurationStore) {
-    this.configurationStore = checkNotNull(configurationStore);
+    this.configurationStore = requireNonNull(configurationStore);
   }
 
   protected void maybeAddDataStoreName(final Configuration configuration) {
@@ -44,6 +50,18 @@ public abstract class AbstractRepositoryApiRequestToConfigurationConverter<T ext
     configuration.setRepositoryName(request.getName());
     configuration.setRecipeName(String.join("-", request.getFormat(), request.getType()));
     configuration.setOnline(request.getOnline());
+    convertStorage(request, configuration);
     return configuration;
+  }
+
+  protected void convertStorage(final T request, final Configuration configuration) {
+    StorageAttributes storage = request.getStorage();
+    if (nonNull(storage)) {
+      NestedAttributesMap storageConfiguration = configuration.attributes(STORAGE);
+      storageConfiguration.set(BLOB_STORE_NAME, storage.getBlobStoreName());
+      storageConfiguration.set(STRICT_CONTENT_TYPE_VALIDATION, storage.getStrictContentTypeValidation());
+      storageConfiguration.set(GLOBAL_DISTRIBUTION, storage.getGlobalDistribution());
+      maybeAddDataStoreName(configuration);
+    }
   }
 }

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.config;
 
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -23,12 +24,11 @@ import org.sonatype.nexus.common.concurrent.Locks;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.internal.SecurityContributionChangedEvent;
 
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Mutable {@link SecurityContributor}.
@@ -55,8 +55,8 @@ public class MutableSecurityContributor
   @Autowired
   protected void initialize(final EventManager eventManager, final SecurityConfigurationManager configurationManager) {
     checkState(!initialized, "already initialized");
-    this.eventManager = Preconditions.checkNotNull(eventManager);
-    this.configurationManager = Preconditions.checkNotNull(configurationManager);
+    this.eventManager = Objects.requireNonNull(eventManager);
+    this.configurationManager = Objects.requireNonNull(configurationManager);
     initial(model);
     initialized = true;
   }
@@ -92,7 +92,7 @@ public class MutableSecurityContributor
 
   public void apply(final Mutator mutator) {
     checkState(initialized, "not initialized");
-    checkNotNull(mutator);
+    requireNonNull(mutator);
 
     Lock lock = Locks.write(readWriteLock);
     try {

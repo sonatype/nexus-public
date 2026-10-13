@@ -21,22 +21,34 @@ const mockPut = jest.fn();
 const mockDelete = jest.fn();
 
 // Mock the REST API from the relative path used by the source
-jest.mock('../../../../../../../interface/api', () => ({
-  ...jest.requireActual('../../../../../../../interface/api'),
-  restClient: {
-    get: (...args: unknown[]) => mockGet(...args),
-    post: (...args: unknown[]) => mockPost(...args),
-    put: (...args: unknown[]) => mockPut(...args),
-    delete: (...args: unknown[]) => mockDelete(...args),
-  },
-  parseApiError: jest.fn((err: unknown) => {
-    const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
+jest.mock('../../../../../../../interface/api', () => {
+  const mockParse = (err: unknown): { message: string; status: number } => {
+    const error = err as {
+      response?: { status?: number; data?: { message?: string } };
+      message?: string;
+    };
     return {
       message: error?.response?.data?.message || error?.message || 'Error',
-      status: error?.response?.status,
+      status: error?.response?.status ?? 0,
     };
-  }),
-}));
+  };
+  return {
+    ...jest.requireActual('../../../../../../../interface/api'),
+    restClient: {
+      get: (...args: unknown[]) => mockGet(...args),
+      post: (...args: unknown[]) => mockPost(...args),
+      put: (...args: unknown[]) => mockPut(...args),
+      delete: (...args: unknown[]) => mockDelete(...args),
+    },
+    parseApiError: jest.fn(mockParse),
+    wrapApiError: jest.fn((err: unknown) => {
+      const parsed = mockParse(err);
+      const wrapped = new Error(parsed.message) as Error & { status: number };
+      wrapped.status = parsed.status;
+      return wrapped;
+    }),
+  };
+});
 
 // REST API response format (different from ExtDirect)
 const mockRestRoles = [
@@ -143,6 +155,19 @@ describe('useRolesApi', () => {
       const { result } = renderHook(() => useRolesApi());
 
       await expect(result.current.fetchRoles()).rejects.toThrow('Network error');
+    });
+
+    it('propagates status on the thrown error (not a bare Error)', async () => {
+      mockGet.mockRejectedValueOnce({
+        response: { status: 500, data: { message: 'Boom' } },
+      });
+
+      const { result } = renderHook(() => useRolesApi());
+
+      await expect(result.current.fetchRoles()).rejects.toMatchObject({
+        message: 'Boom',
+        status: 500,
+      });
     });
   });
 

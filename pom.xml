@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.96.4-01</version>
+  <version>3.97.0-13</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,11 +62,11 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.96.4-01</nexus.version>
+    <nexus.version>3.97.0-13</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <spring-boot.version>4.1.0</spring-boot.version>
-    <spring.version>7.0.8</spring.version>
+    <spring.version>7.0.9</spring.version>
 
     <!-- Default empty argLine for JaCoCo agent, will be populated by jacoco:prepare-agent -->
     <argLine/>
@@ -160,12 +160,49 @@
     <!--
     Force jboss-logging above the 3.4.3.Final that the Spring Boot BOM pins, which lacks
     the getMessageLogger(MethodHandles.Lookup, Class, String) method introduced in 3.5.0.
-    RESTEasy 7.0.0 (also on the classpath) was compiled against 3.5+ and calls this method
+    RESTEasy 7.x (also on the classpath) was compiled against 3.5+ and calls this method
     during static initialisation of LogMessages, crashing the Jetty thread before it can
-    bind to the HTTP port. 3.6.1.Final is the version already present in the local repository.
+    bind to the HTTP port. RESTEasy 7.0.5.Final manages 3.6.3.Final upstream, but 3.6.1.Final
+    satisfies it: the two releases expose an identical org.jboss.logging API surface, and every
+    jboss-logging member referenced by resteasy-core 7.0.5.Final resolves against 3.6.1.Final.
     Remove this pin once the Spring Boot BOM ships jboss-logging 3.5.0+.
     -->
     <jboss.logging.version>3.6.1.Final</jboss.logging.version>
+
+    <!--
+    Force reactor-core above the 3.8.6 that the Spring Boot 4.1.0 BOM pins, which carries
+    two Security-High CVEs:
+      - CVE-2026-47857 (CVSS 8.2)
+      - CVE-2026-47863 (CVSS 7.5) unbounded buffering in FluxBufferTimeout under backpressure
+    See NEXUS-54911. Remove this pin once the Spring Boot BOM ships 3.8.7+.
+
+    This pin wins over the reactor-bom import in public/common/buildsupport/other/pom.xml, so
+    it is what actually decides reactor-core for the whole build. It currently matches the
+    3.8.7 that reactor-bom 2025.0.7 ships. Any future reactor-bom bump must raise this pin to
+    the reactor-core version that new release train ships; otherwise reactor-core is silently
+    held back here while reactor-netty moves forward.
+    -->
+    <reactor-core.version>3.8.7</reactor-core.version>
+
+    <!--
+    Pin zstd-jni above the version pulled transitively by jetty-compression-zstandard.
+    Jetty 12.1.12 pulls zstd-jni:1.5.7-11, which has security vulnerabilities.
+    1.5.7-14 is the patched version.
+    Remove this pin once Jetty ships a patched version.
+    -->
+    <zstd-jni.version>1.5.7-14</zstd-jni.version>
+
+    <!--
+    Shared AWS SDK v2 version, consumed by the public and private common buildsupport BOMs.
+    Defined here so the two BOMs stay in lockstep from a single source.
+    The SDK ships a repackaged copy of jackson-core as software.amazon.awssdk:third-party-jackson-core,
+    so com.fasterxml.jackson.core dependency management does not reach it - it only moves when the SDK
+    version moves. The shaded parser is vulnerable to CVE-2026-68498 (CWE-770, denial of service via
+    unbounded JSON property-name buffering) through 2.55.3; 2.55.4 is the confirmed remediation
+    (NEXUS-55381). Updates to AWS or Azure SDKs should also examine their expected netty dependencies
+    and potentially adjust the netty BOM import.
+    -->
+    <aws-java-sdk.version>2.55.4</aws-java-sdk.version>
   </properties>
 
   <dependencyManagement>
@@ -194,6 +231,18 @@
         <groupId>org.jboss.logging</groupId>
         <artifactId>jboss-logging</artifactId>
         <version>${jboss.logging.version}</version>
+      </dependency>
+      <!-- NEXUS-54911: pin reactor-core to a patched version (see property above). -->
+      <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-core</artifactId>
+        <version>${reactor-core.version}</version>
+      </dependency>
+      <!-- pin zstd-jni to a patched version (see property above). -->
+      <dependency>
+        <groupId>com.github.luben</groupId>
+        <artifactId>zstd-jni</artifactId>
+        <version>${zstd-jni.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -251,7 +300,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.96.4-01</version>
+          <version>3.97.0-13</version>
           <executions>
             <execution>
               <goals>
@@ -879,10 +928,31 @@
                     <exclude>log4j:*</exclude>
 
                     <!--
-                    CVE-2021-44228
+                    Ban log4j-core outright. Compensating control for NEXUS-54820:
+                    Sonatype advisory sonatype-2026-006746 (CVSS 9.2, RCE via
+                    FilteredObjectInputStream allowlist bypass) flags every version
+                    of log4j-api, but the vulnerable class lives in log4j-core.
+                    Keeping log4j-core off the classpath is what makes the finding
+                    non-exploitable for us; enforcing that here prevents a future
+                    transitive dep from silently invalidating the waiver's premise.
+                    Original range-based exclusion (CVE-2021-44228, Log4Shell) is
+                    subsumed by banning the coordinate entirely.
                     -->
-                    <exclude>org.apache.logging.log4j:log4j-core:(,2.15.0)</exclude>
+                    <exclude>org.apache.logging.log4j:log4j-core</exclude>
                     <exclude>ch.qos.logback:logback-classic:(,1.2.9)</exclude>
+
+                    <!--
+                    Ban reactor-core below 3.8.7. Versions up to 3.8.6 carry two
+                    Security-High CVEs (CVE-2026-47857, CVE-2026-47863), and the
+                    reactor-core.version property above is what decides the version
+                    for the whole build. This makes that floor a build failure rather
+                    than a convention, so lowering the property or a transitive
+                    downgrade cannot quietly put a vulnerable reactor-core back on the
+                    classpath. The rule enforces the minimum only; it does not verify
+                    that the pin still matches whatever reactor-core the imported
+                    reactor-bom ships.
+                    -->
+                    <exclude>io.projectreactor:reactor-core:(,3.8.7)</exclude>
 
                     <!--
                     Ban old bouncycastle.

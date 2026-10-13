@@ -25,7 +25,7 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.METHOD_NOT_ALLOWED_CODE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.NO_SUCH_BUCKET_POLICY_CODE;
@@ -51,7 +51,7 @@ public class BucketValidationCacheService
       @Value("${nexus.blobstore.s3.bucket.validation.cache.maxSize:100}") final int maxSize,
       final BucketOwnershipCheckFeatureFlag ownershipCheckFeatureFlag)
   {
-    this.ownershipCheckFeatureFlag = checkNotNull(ownershipCheckFeatureFlag);
+    this.ownershipCheckFeatureFlag = requireNonNull(ownershipCheckFeatureFlag);
     this.cache = CacheBuilder.newBuilder()
         .expireAfterWrite(ttl, TimeUnit.SECONDS)
         .maximumSize(maxSize)
@@ -65,7 +65,7 @@ public class BucketValidationCacheService
       final String bucket) throws ExecutionException
   {
     try {
-      s3Holder.set(checkNotNull(s3));
+      s3Holder.set(requireNonNull(s3));
       return cache.get(new BucketReference(endpoint, bucket));
     }
     finally {

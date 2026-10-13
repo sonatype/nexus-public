@@ -109,12 +109,17 @@ public class BlobStoreOverrideImplTest
 
   // --- Credential encryption tests ---
   //
-  // Only S3 exercises the encryption path in production because only its descriptor's read side
-  // (AmazonS3Factory) dereferences _<id>. Azure and GCS deliberately do NOT declare
-  // getSensitiveConfigurationFields() at present: Azure has no SecretsService integration on the
-  // read path, and GCS uses EncryptDecryptService via a different key. Wiring those would break
-  // authentication outright, so treating them as opaque strings here is intentional and covered
-  // by testAzureAccountKeyMergedVerbatimWithoutEncryption below.
+  // Whether a field is encrypted is decided entirely by the descriptor's
+  // getSensitiveConfigurationFields(). S3 declares secretAccessKey/sessionToken, and as of this
+  // ticket AzureBlobStoreDescriptor declares accountKey (AzureStorageClientFactory now dereferences
+  // the _<id> on the read side), so both types encrypt. GCS is the one type still left out: its
+  // descriptor does not override the interface default (Collections.emptyList) because its read path
+  // decrypts with EncryptDecryptService under a separate key, so encrypting here would break
+  // authentication outright — see testGcsAuthAccountKeyMergedVerbatimWithoutEncryption below.
+  // Arming GCS is NEXUS-54379.
+  //
+  // Each test stubs its descriptor to match that production declaration; the shared setUp defaults
+  // every descriptor to emptyList so an unstubbed one can never silently pass a credential through.
 
   @Test
   public void testS3SecretAccessKeyEncryption() {
@@ -156,22 +161,43 @@ public class BlobStoreOverrideImplTest
   }
 
   @Test
-  public void testAzureAccountKeyMergedVerbatimWithoutEncryption() {
-    // AzureBlobStoreDescriptor does not declare accountKey as a sensitive field (see comment on
-    // "Credential encryption tests" above). The override JSON's accountKey must therefore land in
-    // the config verbatim, without any SecretsService interaction. This test locks that in.
+  public void testAzureAccountKeyEncryption() {
+    // Mirrors production: AzureBlobStoreDescriptor#getSensitiveConfigurationFields now returns
+    // List.of(ACCOUNT_KEY_KEY), so an override-supplied plaintext accountKey must be encrypted and
+    // the config must end up holding the _<id> reference rather than the credential itself.
     environmentVariables.set(NEXUS_BLOB_STORE_OVERRIDE,
         "{\"my-azure\":{\"azure cloud storage\":{\"accountKey\":\"az-plaintext\"}}}");
+    when(azureDescriptor.getSensitiveConfigurationFields()).thenReturn(singletonList("accountKey"));
 
     BlobStoreConfiguration config = createConfig("my-azure", "Azure Cloud Storage");
+    when(configStore.list()).thenReturn(singletonList(config));
+
+    stubEncryptMavenReturning("_3");
+
+    underTest.apply();
+
+    verify(secretsService).encryptMaven(eq("blobstore-config"), argCharArrayEquals("az-plaintext"), isNull());
+    verify(configStore).update(config);
+    assertThat((String) config.getAttributes().get("azure cloud storage").get("accountKey"), equalTo("_3"));
+  }
+
+  @Test
+  public void testGcsAuthAccountKeyMergedVerbatimWithoutEncryption() {
+    // GCS is the remaining type whose descriptor declares nothing sensitive (see comment on
+    // "Credential encryption tests" above), so auth_account_key must land in the config verbatim
+    // without any SecretsService interaction. This test locks that in until NEXUS-54379 arms GCS.
+    environmentVariables.set(NEXUS_BLOB_STORE_OVERRIDE,
+        "{\"my-gcs\":{\"google cloud storage\":{\"auth_account_key\":\"gcs-plaintext\"}}}");
+
+    BlobStoreConfiguration config = createConfig("my-gcs", "Google Cloud Storage");
     when(configStore.list()).thenReturn(singletonList(config));
 
     underTest.apply();
 
     verifyNoInteractions(secretsService);
     verify(configStore).update(config);
-    assertThat((String) config.getAttributes().get("azure cloud storage").get("accountKey"),
-        equalTo("az-plaintext"));
+    assertThat((String) config.getAttributes().get("google cloud storage").get("auth_account_key"),
+        equalTo("gcs-plaintext"));
   }
 
   @Test
@@ -263,6 +289,32 @@ public class BlobStoreOverrideImplTest
     verify(secretsService, never()).remove(any());
     verify(configStore, never()).update(any());
     assertThat((String) config.getAttributes().get("s3").get("secretAccessKey"), equalTo("_5"));
+  }
+
+  @Test
+  public void testOverrideMatchingStoredPlaintextIsStillEncrypted() {
+    // Case C. The operator supplies the same credential the config already holds in plaintext.
+    // Equality here does NOT mean "nothing to do" — it means the stored value is an unprotected
+    // credential, which is precisely what this class exists to fix. Nothing else will come back for
+    // it: there is no per-boot sweep, and the version-gated migration step never re-runs. An
+    // equality short-circuit would therefore leave the credential in plaintext forever.
+    environmentVariables.set(NEXUS_BLOB_STORE_OVERRIDE,
+        "{\"my-s3\":{\"s3\":{\"secretAccessKey\":\"AKIA-plaintext\"}}}");
+    when(s3Descriptor.getSensitiveConfigurationFields()).thenReturn(singletonList("secretAccessKey"));
+
+    BlobStoreConfiguration config = createConfig("my-s3", "S3");
+    config.getAttributes().get("s3").put("secretAccessKey", "AKIA-plaintext");
+    when(configStore.list()).thenReturn(singletonList(config));
+
+    stubEncryptMavenReturning("_9");
+
+    underTest.apply();
+
+    verify(secretsService).encryptMaven(eq("blobstore-config"), argCharArrayEquals("AKIA-plaintext"), isNull());
+    verify(configStore).update(config);
+    assertThat((String) config.getAttributes().get("s3").get("secretAccessKey"), equalTo("_9"));
+    // No prior secret existed, so there is nothing to supersede.
+    verify(secretsService, never()).remove(any());
   }
 
   @Test

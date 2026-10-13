@@ -38,6 +38,9 @@ describe('createRouter - onBefore - validate permissions and configuration on ea
     ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
     ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
     ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
 
     router = getTestRouter();
   });
@@ -392,6 +395,9 @@ describe('createRouter - otherwise handler - unrecognized URLs', () => {
     ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
     ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
     ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
     router = getTestRouter();
   });
 
@@ -503,6 +509,9 @@ describe('createRouter - preserve URL hash on browser refresh', () => {
     ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
     ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
     ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -567,6 +576,9 @@ describe('createRouter - onBefore - state with no visibilityRequirements', () =>
     ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
     ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
     ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
     router = getTestRouter();
   });
 
@@ -619,6 +631,9 @@ describe('createRouter - onBefore - unresolved auth state (NEXUS-54290)', () => 
     ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(false);
     ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
     ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
 
     router = getTestRouter();
     router.stateRegistry.register(GATED_ROUTE);
@@ -746,116 +761,116 @@ describe('createRouter - onBefore - unresolved auth state (NEXUS-54290)', () => 
   });
 });
 
-describe('createRouter - onBefore - unresolved permissions state (NEXUS-54422)', () => {
+/*
+ * NEXUS-54428: on a cold deep-link (pasting a component-detail URL into a fresh tab) the user is
+ * authenticated but permissions load asynchronously AFTER the auth state resolves (NEXUS-53199 —
+ * see App.jsx). Evaluating route visibility before permissions land made every permission-gated
+ * preview route bounce to the dashboard on first load, only resolving after a manual reload once
+ * permissions were cached. The guard must wait for permissions before redirecting.
+ */
+describe('createRouter - onBefore - permissions not yet loaded on cold deep-link (NEXUS-54428)', () => {
   let router;
-
-  /**
-   * Models a permission-gated preview route (e.g. the unified search page, gated
-   * on nexus:search:read). On a hard reload, NEXUS-52583's fast-render bootstrap
-   * lets the router evaluate this before NX.Permissions has loaded, so the
-   * visibility check below fails not because the user lacks the permission, but
-   * because the answer has not arrived yet.
-   */
-  const GATED_ROUTE = {
-    name: 'preview.gated',
-    url: '/gated',
-    component: () => null,
-    data: { visibilityRequirements: { permissions: ['nexus:search:read'] } }
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // A session cookie resolves hasUser()/isAuthStateResolved() immediately, well
-    // before the separate permissions poll lands — the two are not the same signal.
+    // Authenticated, auth state already resolved — the cold-load case is specifically about
+    // permissions not having landed yet, not about the user being unknown.
     ExtJS.hasUser = jest.fn().mockReturnValue(true);
+    ExtJS.state = jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
     ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
     ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
     ExtJS.onStateChange = jest.fn(() => () => {});
-    ExtJS.state = jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
 
-    // Permissions have not loaded yet: NX.Permissions.permissions is undefined
-    // (see ExtJS.arePermissionsReady), so every check reads as denied.
-    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(false);
+    // Permissions have not loaded yet: NX.Permissions.check returns false for everything.
     global.NX.Permissions.check.mockReturnValue(false);
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(false);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
 
     router = getTestRouter();
-    // 'preview.browse.welcome' must exist so the isPreviewUIRouteName redirect target
-    // resolves, and 'preview'/'preview.browse' must exist as ancestors before a dotted
-    // state name can be registered at all.
+
+    // A permission-gated preview search subtree with a child component route, mirroring the real
+    // previewBrowseRoutes: the parent carries the nexus:search:read gate, the child inherits it.
     router.stateRegistry.register({ name: 'preview', url: '/preview', component: UIView });
-    router.stateRegistry.register({ name: 'preview.browse', url: '/browse', component: UIView });
     router.stateRegistry.register({
-      name: 'preview.browse.welcome',
-      url: '/welcome',
-      component: () => null,
+      name: 'preview.browse', url: '/browse', abstract: true, component: UIView,
+    });
+    router.stateRegistry.register({
+      name: 'preview.browse.welcome', url: '/welcome', component: () => null,
       data: { visibilityRequirements: {} },
     });
-    router.stateRegistry.register(GATED_ROUTE);
+    router.stateRegistry.register({
+      name: 'preview.browse.search', url: '/search', abstract: true, component: UIView,
+      data: { visibilityRequirements: { permissions: ['nexus:search:read'] } },
+    });
+    router.stateRegistry.register({
+      name: 'preview.browse.search.component', url: '/component/:gaId', component: () => null,
+      params: { gaId: { type: 'string', raw: true } },
+      data: { title: 'Component Details' },
+    });
   });
 
-  it('waits for permissions, then allows the route once they grant it', async () => {
-    ExtJS.waitForPermissions = jest.fn().mockImplementation(() => {
+  it('waits for permissions then allows a gated preview route instead of redirecting to the dashboard', async () => {
+    // Permissions arrive during the wait: arePermissionsReady flips and the needed check passes.
+    ExtJS.waitForPermissions.mockImplementation(() => {
       ExtJS.arePermissionsReady.mockReturnValue(true);
       global.NX.Permissions.check.mockReturnValue(true);
       return Promise.resolve();
     });
 
     const goSpy = jest.spyOn(router.stateService, 'go');
-    await router.stateService.go('preview.gated').catch(() => {});
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
 
-    // Bounded to a short settle window, NOT waitForPermissions()'s 30s default. This
-    // wait only avoids a welcome-page flash; correctness comes from the recovery
-    // subscription. Blocking for 30s here stalled navigation on a slow permissions
-    // endpoint and timed out cloudui's App tests (NEXUS-54422).
-    expect(ExtJS.waitForPermissions).toHaveBeenCalledWith(500);
+    expect(ExtJS.waitForPermissions).toHaveBeenCalled();
     expect(goSpy).not.toHaveBeenCalledWith('preview.browse.welcome');
-    expect(router.stateService.current.name).toBe('preview.gated');
+    expect(router.stateService.current.name).toBe('preview.browse.search.component');
   });
 
-  it('never blocks navigation for longer than the settle window', async () => {
-    // Pins the regression directly: any caller passing no argument (or a large one)
-    // inherits the 30s default and stalls the transition.
-    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
-
-    await router.stateService.go('preview.gated').catch(() => {});
-
-    const [timeout] = ExtJS.waitForPermissions.mock.calls[0];
-    expect(timeout).toBeLessThanOrEqual(1000);
-  });
-
-  it('falls back to the welcome redirect if permissions resolve without granting access', async () => {
-    ExtJS.waitForPermissions = jest.fn().mockImplementation(() => {
+  it('still redirects to the dashboard when permissions load but the required one is absent', async () => {
+    // Permissions finish loading during the wait, but the user genuinely lacks nexus:search:read.
+    ExtJS.waitForPermissions.mockImplementation(() => {
       ExtJS.arePermissionsReady.mockReturnValue(true);
-      // permissions loaded, but genuinely does not include nexus:search:read
-      return Promise.resolve();
+      return Promise.resolve(); // NX.Permissions.check stays false
     });
 
     const goSpy = jest.spyOn(router.stateService, 'go');
-    await router.stateService.go('preview.gated').catch(() => {});
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
 
     expect(ExtJS.waitForPermissions).toHaveBeenCalled();
     expect(goSpy).toHaveBeenCalledWith('preview.browse.welcome');
   });
 
-  it('falls back to the welcome redirect if the permissions wait times out', async () => {
-    ExtJS.waitForPermissions = jest.fn().mockRejectedValue(new Error('Permissions load timed out'));
-
-    const goSpy = jest.spyOn(router.stateService, 'go');
-    await router.stateService.go('preview.gated').catch(() => {});
-
-    expect(goSpy).toHaveBeenCalledWith('preview.browse.welcome');
-  });
-
-  it('does not wait when permissions are already loaded', async () => {
+  it('does not wait for permissions when they are already loaded', async () => {
+    // Warm app: permissions are loaded, the user simply lacks the gate — redirect immediately.
     ExtJS.arePermissionsReady.mockReturnValue(true);
-    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
 
     const goSpy = jest.spyOn(router.stateService, 'go');
-    await router.stateService.go('preview.gated').catch(() => {});
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
 
     expect(ExtJS.waitForPermissions).not.toHaveBeenCalled();
     expect(goSpy).toHaveBeenCalledWith('preview.browse.welcome');
+  });
+
+  it('does not wait for permissions for an unauthenticated user (routes to login instead)', async () => {
+    ExtJS.hasUser.mockReturnValue(false);
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    jest.spyOn(router.urlService, 'url').mockReturnValue('/preview/browse/search/component/maven2:g:a');
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
+
+    expect(ExtJS.waitForPermissions).not.toHaveBeenCalled();
+    expect(goSpy).toHaveBeenCalledWith('login', expect.objectContaining({ returnTo: expect.any(String) }));
+  });
+
+  it('bounds the permission wait by calculateTimeout rather than the hardcoded default', async () => {
+    // A deep-linked gated route must not hang for the 30s default when permissions never arrive;
+    // the wait is bounded by the UI's own status interval.
+    ExtJS.calculateTimeout = jest.fn().mockReturnValue(10000);
+
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
+
+    expect(ExtJS.calculateTimeout).toHaveBeenCalled();
+    expect(ExtJS.waitForPermissions).toHaveBeenCalledWith(10000);
   });
 });
 
@@ -998,4 +1013,3 @@ describe('createRouter - onBefore - permissions arriving after the redirect (NEX
     }
   });
 });
-

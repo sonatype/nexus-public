@@ -322,6 +322,30 @@ function isAxiosError(error: unknown): error is AxiosError<RestErrorResponse> {
   );
 }
 
+// Runtime Error carrying the parsed ApiError fields. Consumers that catch this
+// can branch on `status` / inspect `fieldErrors` without re-parsing.
+export type ThrownApiError = Error & {
+  status: number;
+  code?: string;
+  fieldErrors?: FieldError[];
+  requestId?: string;
+};
+
+/**
+ * Wrap a raw thrown value into a ThrownApiError that preserves the parsed
+ * status/code/fieldErrors/requestId. Use inside catch blocks to re-throw with
+ * the full parsed shape intact rather than losing it via `new Error(msg)`.
+ */
+export function wrapApiError(error: unknown): ThrownApiError {
+  const apiError = parseApiError(error);
+  const wrapped = new Error(apiError.message) as ThrownApiError;
+  wrapped.status = apiError.status;
+  if (apiError.code !== undefined) wrapped.code = apiError.code;
+  if (apiError.fieldErrors !== undefined) wrapped.fieldErrors = apiError.fieldErrors;
+  if (apiError.requestId !== undefined) wrapped.requestId = apiError.requestId;
+  return wrapped;
+}
+
 /**
  * Get user-friendly message for display
  */

@@ -30,7 +30,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.encoding.EncodingUtil;
 import org.sonatype.nexus.common.text.Strings2;
-import org.sonatype.nexus.coreui.BrowseNodeXO;
+import org.sonatype.nexus.api.common.shared.repository.browse.BrowseNodeXO;
 import org.sonatype.nexus.coreui.ComponentHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
@@ -56,7 +56,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
@@ -108,11 +108,11 @@ public class BrowseResource
       final SecurityHelper securityHelper,
       final ComponentHelper componentHelper)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.browseNodeQueryService = checkNotNull(browseNodeQueryService);
-    this.configuration = checkNotNull(configuration);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.componentHelper = checkNotNull(componentHelper);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.browseNodeQueryService = requireNonNull(browseNodeQueryService);
+    this.configuration = requireNonNull(configuration);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.componentHelper = requireNonNull(componentHelper);
   }
 
   @GET

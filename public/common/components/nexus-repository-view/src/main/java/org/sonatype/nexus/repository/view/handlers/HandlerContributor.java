@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.view.Response;
 import com.google.common.annotations.VisibleForTesting;
 import org.springframework.context.annotation.Lazy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.view.Router.LOCAL_ATTRIBUTE_PREFIX;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +45,7 @@ public class HandlerContributor
 
   @Autowired
   public HandlerContributor(@Lazy final List<ContributedHandler> contributedHandlers) {
-    this.contributedHandlers = checkNotNull(contributedHandlers);
+    this.contributedHandlers = requireNonNull(contributedHandlers);
   }
 
   @Nonnull

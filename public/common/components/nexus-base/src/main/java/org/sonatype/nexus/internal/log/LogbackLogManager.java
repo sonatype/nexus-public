@@ -71,7 +71,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
@@ -104,8 +103,8 @@ public class LogbackLogManager
       final EventManager eventManager,
       final LoggerOverrides overrides)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.overrides = checkNotNull(overrides);
+    this.eventManager = requireNonNull(eventManager);
+    this.overrides = requireNonNull(overrides);
     this.customizations = new HashMap<>();
   }
 
@@ -513,8 +512,8 @@ public class LogbackLogManager
     log.debug("Registering customizations: {}", customizer);
 
     customizer.customize((name, level) -> {
-      checkNotNull(name);
-      checkNotNull(level);
+      requireNonNull(name);
+      requireNonNull(level);
       customizations.put(name, level);
 
       // only apply customization if there is not an override, and the level is not DEFAULT

@@ -48,7 +48,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link RolePermissionResolver}.
@@ -87,8 +87,8 @@ public class RolePermissionResolverImpl
       final List<PrivilegeDescriptor> privilegeDescriptors,
       @Value("${security.roleNotFoundCacheSize:100000}") final int roleNotFoundCacheSize)
   {
-    this.configuration = checkNotNull(configuration);
-    this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
+    this.configuration = requireNonNull(configuration);
+    this.privilegeDescriptors = requireNonNull(privilegeDescriptors);
     this.roleNotFoundCache = CacheBuilder.newBuilder().maximumSize(roleNotFoundCacheSize).build();
   }
 
@@ -124,7 +124,7 @@ public class RolePermissionResolverImpl
 
   @Override
   public Collection<Permission> resolvePermissionsInRole(final String roleString) {
-    checkNotNull(roleString);
+    requireNonNull(roleString);
 
     // check memory-sensitive cache; use cached value as long as config is not dirty
     Collection<Permission> cachedPermissions = rolePermissionsCache.getIfPresent(roleString);
@@ -299,7 +299,7 @@ public class RolePermissionResolverImpl
    */
   @Nullable
   private PrivilegeDescriptor descriptor(final String privilegeType) {
-    checkNotNull(privilegeType);
+    requireNonNull(privilegeType);
 
     for (PrivilegeDescriptor descriptor : privilegeDescriptors) {
       if (privilegeType.equals(descriptor.getType())) {
@@ -316,7 +316,7 @@ public class RolePermissionResolverImpl
    */
   @Nullable
   private Permission permission(final String privilegeId) {
-    checkNotNull(privilegeId);
+    requireNonNull(privilegeId);
 
     Permission permission = permissionsCache.getIfPresent(privilegeId);
     if (permission == null) {

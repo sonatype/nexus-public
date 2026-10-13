@@ -42,8 +42,6 @@ export interface UseGARepositoriesTabResult {
 
   // Commands
   changeSort(key: string, direction: SortDirection): void;
-  changeSortKey(key: string): void;
-  changeSortDirection(direction: SortDirection): void;
   changeSearchQuery(value: string): void;
   toggleTypeFilter(value: string, checked: boolean): void;
   changePage(page: number): void;
@@ -110,16 +108,6 @@ export function useGARepositoriesTab({ rows }: Options): UseGARepositoriesTabRes
     setCurrentPage(1);
   }, []);
 
-  const changeSortKey = useCallback((key: string) => {
-    setSortKey(key as SortKey);
-    setCurrentPage(1);
-  }, []);
-
-  const changeSortDirection = useCallback((direction: SortDirection) => {
-    setSortDirection(direction);
-    setCurrentPage(1);
-  }, []);
-
   const changeSearchQuery = useCallback((value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
@@ -168,8 +156,6 @@ export function useGARepositoriesTab({ rows }: Options): UseGARepositoriesTabRes
     hasActiveFilters,
 
     changeSort,
-    changeSortKey,
-    changeSortDirection,
     changeSearchQuery,
     toggleTypeFilter,
     changePage,

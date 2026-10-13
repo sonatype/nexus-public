@@ -29,7 +29,7 @@ import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -58,8 +58,8 @@ public class RawGroupRecipe
       @Qualifier("default") final GroupHandler groupHandler)
   {
     super(type, format);
-    this.groupFacet = checkNotNull(groupFacet);
-    this.groupHandler = checkNotNull(groupHandler);
+    this.groupFacet = requireNonNull(groupFacet);
+    this.groupHandler = requireNonNull(groupHandler);
   }
 
   @Override

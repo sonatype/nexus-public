@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.validation.constraints.NotEmpty;
 
 import org.sonatype.nexus.common.QualifierUtil;
@@ -48,10 +47,11 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Streams.stream;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
+import static com.google.common.collect.Streams.stream;
 
 /**
  * Component {@link DirectComponent}.
@@ -82,12 +82,12 @@ public class ComponentComponent
       final RepositoryPermissionChecker repositoryPermissionChecker,
       final List<AssetAttributeTransformer> formatTransformationsList)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.selectorFactory = checkNotNull(selectorFactory);
-    this.jsonMapper = checkNotNull(jsonMapper);
-    this.componentHelper = checkNotNull(componentHelper);
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
-    this.formatTransformations = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatTransformationsList));
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.selectorFactory = requireNonNull(selectorFactory);
+    this.jsonMapper = requireNonNull(jsonMapper);
+    this.componentHelper = requireNonNull(componentHelper);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
+    this.formatTransformations = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatTransformationsList));
   }
 
   @DirectMethod
@@ -156,6 +156,8 @@ public class ComponentComponent
   public Set<String> deleteComponent(@NotEmpty final String componentModelString) {
     ComponentXO componentXO = readComponent(componentModelString);
     Repository repository = repositoryManager.get(componentXO.getRepositoryName());
+    // Soft-delete-vs-hard-delete and the content DELETE authorization are owned by
+    // ContentDeletionService, which ComponentHelper delegates to (NEXUS-49147).
     return componentHelper.deleteComponent(repository, componentXO);
   }
 
@@ -176,6 +178,8 @@ public class ComponentComponent
   @Validate
   public Set<String> deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName);
+    // Soft-delete-vs-hard-delete and the content DELETE authorization are owned by
+    // ContentDeletionService, which ComponentHelper delegates to (NEXUS-49147).
     // GSON used by DirectJNgine can exclude some of the Guava collection types
     return new HashSet<>(componentHelper.deleteAsset(repository, new DetachedEntityId(assetId)));
   }
@@ -256,7 +260,7 @@ public class ComponentComponent
   }
 
   private ComponentXO readComponent(final String componentString) {
-    checkNotNull(componentString);
+    requireNonNull(componentString);
     try {
       return jsonMapper.readValue(componentString, ComponentXO.class);
     }

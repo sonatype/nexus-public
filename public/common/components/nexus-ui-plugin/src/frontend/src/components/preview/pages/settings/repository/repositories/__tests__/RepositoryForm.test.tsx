@@ -208,6 +208,55 @@ describe('RepositoryForm', () => {
     });
   });
 
+  // NEXUS-54771: OciFacet existed but nothing rendered it, so the OCI sections
+  // never appeared and the create payload carried no `oci` block (HTTP 400).
+  it('renders the OCI facet for an oci proxy recipe', async () => {
+    const ociFormData = {
+      name: '', type: 'proxy', format: 'oci',
+      recipe: 'oci-proxy', online: true,
+      storage: { blobStoreName: '', strictContentTypeValidation: true },
+      proxy: { remoteUrl: '', contentMaxAge: 1440, metadataMaxAge: 1440 },
+      oci: { v1Enabled: false, forceBasicAuth: true, pathEnabled: true },
+      ociProxy: { indexType: 'REGISTRY' },
+    };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      formData: ociFormData as any,
+      form: createMockForm(ociFormData),
+    }));
+
+    renderWithTheme(
+      <RepositoryForm
+        recipe={{ format: 'oci', type: 'proxy', name: 'oci-proxy' }}
+        isCreate={true}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('OCI Registry Connectors')).toBeInTheDocument();
+      expect(screen.getByText('OCI Proxy')).toBeInTheDocument();
+    });
+  });
+
+  it('does not render the OCI facet for a non-oci recipe', async () => {
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn());
+
+    renderWithTheme(
+      <RepositoryForm
+        recipe={MOCK_HOSTED_RECIPE}
+        isCreate={true}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText('OCI Registry Connectors')).not.toBeInTheDocument();
+  });
+
   it('renders form for creating group repository', async () => {
     const groupFormData = {
       name: '', type: 'group', format: 'maven2',
@@ -764,6 +813,77 @@ describe('RepositoryForm', () => {
       expect(screen.getByText('APT Signing')).toBeInTheDocument();
       expect(screen.getByText('GPG Signing Key')).toBeInTheDocument();
       expect(screen.getByText('GPG Signing Key Passphrase')).toBeInTheDocument();
+    });
+  });
+
+  // NEXUS-54536: the edit view must not offer a "Firewall" tab for a proxy of a format
+  // Firewall does not support. "Health Check" is unrelated to Firewall and must stay visible.
+  it('hides the Firewall tab (but keeps Health Check) when editing a proxy of a format Firewall does not support (apt)', async () => {
+    const aptEditFormData = {
+      name: 'apt-proxy-test', type: 'proxy', format: 'apt',
+      recipe: 'apt-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'http://archive.ubuntu.com/ubuntu/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+      apt: { distribution: 'focal' },
+    };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      isCreate: false,
+      repository: { name: 'apt-proxy-test', type: 'proxy', format: 'apt' } as any,
+      activeTab: 'settings',
+      formData: aptEditFormData as any,
+      form: createMockForm(aptEditFormData),
+    }));
+
+    const aptProxyRecipe = { format: 'apt', type: 'proxy', name: 'apt-proxy' };
+
+    renderWithTheme(
+      <RepositoryForm
+        repository={{ name: 'apt-proxy-test', type: 'proxy', format: 'apt' } as any}
+        recipe={aptProxyRecipe}
+        isCreate={false}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /health check/i })).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('tab', { name: /firewall/i })).not.toBeInTheDocument();
+  });
+
+  // Guards against an implementer special-casing 'apt' instead of using the real
+  // firewall-supported-format predicate: npm is supported and is a different format.
+  it('still shows the Firewall tab when editing a proxy of a format Firewall supports (npm)', async () => {
+    const npmEditFormData = {
+      name: 'npm-proxy-test', type: 'proxy', format: 'npm',
+      recipe: 'npm-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://registry.npmjs.org/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+    };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      isCreate: false,
+      repository: { name: 'npm-proxy-test', type: 'proxy', format: 'npm' } as any,
+      activeTab: 'settings',
+      formData: npmEditFormData as any,
+      form: createMockForm(npmEditFormData),
+    }));
+
+    const npmProxyRecipe = { format: 'npm', type: 'proxy', name: 'npm-proxy' };
+
+    renderWithTheme(
+      <RepositoryForm
+        repository={{ name: 'npm-proxy-test', type: 'proxy', format: 'npm' } as any}
+        recipe={npmProxyRecipe}
+        isCreate={false}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /firewall/i })).toBeInTheDocument();
     });
   });
 
@@ -1427,6 +1547,83 @@ describe('RepositoryForm', () => {
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /create repository/i })).toBeInTheDocument();
       });
+    });
+  });
+
+  // NEXUS-54742: conda proxy repositories must expose the preemptive auth checkbox,
+  // matching the behaviour already present for maven2, pypi, and terraform.
+  describe('preemptive auth format gating (NEXUS-54742)', () => {
+    const condaProxyFormData = {
+      name: 'conda-proxy',
+      type: 'proxy',
+      format: 'conda',
+      recipe: 'conda-proxy',
+      online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://repo.anaconda.com/pkgs/main/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+      negativeCache: { enabled: true, timeToLive: 1440 },
+      httpClient: {
+        blocked: false,
+        autoBlock: true,
+        connection: null,
+        authentication: {
+          type: 'username',
+          username: 'testuser',
+          password: 'testpass',
+          preemptive: false,
+        },
+      },
+    };
+
+    const condaProxyRecipe = { format: 'conda', type: 'proxy', name: 'conda-proxy' };
+
+    it('renders the preemptive auth checkbox for conda proxy repositories', async () => {
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        formData: condaProxyFormData as any,
+        form: createMockForm(condaProxyFormData),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          recipe={condaProxyRecipe}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/use pre-emptive authentication/i)).toBeInTheDocument();
+      });
+    });
+
+    it('does not render the preemptive auth checkbox for formats that do not support it', async () => {
+      const npmProxyFormData = {
+        ...condaProxyFormData,
+        format: 'npm',
+        recipe: 'npm-proxy',
+      };
+      const npmProxyRecipe = { format: 'npm', type: 'proxy', name: 'npm-proxy' };
+
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        formData: npmProxyFormData as any,
+        form: createMockForm(npmProxyFormData),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          recipe={npmProxyRecipe}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/remote storage/i)).toBeInTheDocument();
+      });
+
+      expect(screen.queryByLabelText(/use pre-emptive authentication/i)).not.toBeInTheDocument();
     });
   });
 });

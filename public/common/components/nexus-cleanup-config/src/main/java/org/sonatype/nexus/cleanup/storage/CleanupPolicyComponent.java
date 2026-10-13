@@ -27,7 +27,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
@@ -58,8 +58,8 @@ public class CleanupPolicyComponent
       final RepositoryManager repositoryManager,
       final RepositoryPermissionChecker repositoryPermissionChecker)
   {
-    this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.cleanupPolicyStorage = requireNonNull(cleanupPolicyStorage);
+    this.repositoryManager = requireNonNull(repositoryManager);
     this.repositoryPermissionChecker = repositoryPermissionChecker;
   }
 

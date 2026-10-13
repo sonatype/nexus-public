@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.selector;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Subset of JEXL selectors that can also be represented as SQL.
@@ -28,7 +28,7 @@ public class CselSelector
 
   public CselSelector(final CselToSql cselToSql, final JexlExpression expression) {
     super(expression);
-    this.cselToSql = checkNotNull(cselToSql);
+    this.cselToSql = requireNonNull(cselToSql);
 
   }
 

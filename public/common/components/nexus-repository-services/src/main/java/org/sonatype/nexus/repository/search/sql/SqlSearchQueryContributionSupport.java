@@ -42,7 +42,7 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
@@ -70,7 +70,7 @@ public abstract class SqlSearchQueryContributionSupport
       final SearchMappingService mappingService,
       @Value("${nexus.search.multi.wildcard.regex.enabled:false}") final boolean multiWildcardRegexEnabled)
   {
-    this.mappingService = checkNotNull(mappingService);
+    this.mappingService = requireNonNull(mappingService);
     this.multiWildcardRegexEnabled = multiWildcardRegexEnabled;
   }
 

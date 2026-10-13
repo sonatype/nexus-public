@@ -118,51 +118,130 @@
   </Set>
 
   <!-- NexusResponseCompressionHandler wraps all application contexts for response compression -->
-  <New id="NexusResponseCompressionHandler" class="org.eclipse.jetty.server.handler.gzip.GzipHandler">
-    <!-- Increase threshold to 512 bytes to avoid small response penalties (NEXUS-49328) -->
-    <Set name="minGzipSize"><Property name="jetty.gzip.minGzipSize" default="512"/></Set>
+  <New id="NexusResponseCompressionHandler" class="org.eclipse.jetty.compression.server.CompressionHandler">
+    <Call class="org.eclipse.jetty.compression.server.CompressionConfig" name="builder">
+      <Call name="compressIncludeMethod">
+        <Arg>GET</Arg>
+      </Call>
+      <Call name="compressIncludeMethod">
+        <Arg>POST</Arg>
+      </Call>
+      <Call name="compressIncludeMimeType">
+        <Arg>text/html</Arg>
+      </Call>
+      <Call name="compressIncludeMimeType">
+        <Arg>text/css</Arg>
+      </Call>
+      <Call name="compressIncludeMimeType">
+        <Arg>text/javascript</Arg>
+      </Call>
+      <Call name="compressIncludeMimeType">
+        <Arg>application/javascript</Arg>
+      </Call>
+      <Call name="compressIncludeMimeType">
+        <Arg>application/x-javascript</Arg>
+      </Call>
+      <Call name="compressIncludeMimeType">
+        <Arg>image/svg+xml</Arg>
+      </Call>
+      <Call id="uiCfg" name="build" />
+    </Call>
 
-    <!-- Include these HTTP methods for compression -->
-    <Set name="includedMethods">
-      <Array type="String">
-        <Item>GET</Item>
-        <Item>POST</Item>
-      </Array>
-    </Set>
+    <!-- Configure compression for UI assets and API paths -->
+    <Call name="putConfiguration">
+      <Arg>/static/*</Arg>
+      <Arg>
+        <Ref refid="uiCfg" />
+      </Arg>
+    </Call>
+    <Call name="putConfiguration">
+      <Arg>/assets/*</Arg>
+      <Arg>
+        <Ref refid="uiCfg" />
+      </Arg>
+    </Call>
+    <Call name="putConfiguration">
+      <Arg>/</Arg>
+      <Arg>
+        <Ref refid="uiCfg" />
+      </Arg>
+    </Call>
+    <Call name="putConfiguration">
+      <Arg>/service/outreach/*</Arg>
+      <Arg>
+        <Ref refid="uiCfg" />
+      </Arg>
+    </Call>
 
-    <!-- Include specific paths for compression (UI assets + API paths) -->
-    <Set name="includedPaths">
-      <Array type="String">
-        <!-- Static UI bundles -->
-        <Item>/static/*</Item>
+    <Call class="org.eclipse.jetty.compression.server.CompressionConfig" name="builder">
+      <Call name="compressIncludeMethod">
+        <Arg>GET</Arg>
+      </Call>
+      <Call name="compressIncludeMethod">
+        <Arg>POST</Arg>
+      </Call>
+      <Call name="compressIncludeMethod">
+        <Arg>PUT</Arg>
+      </Call>
+      <!-- Exclude common compressed file types  -->
+      <Call name="compressExcludeMimeType">
+        <Arg>application/compress</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/gzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/java-archive</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/octet-stream</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/x-bzip2</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/x-gtar</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/x-gzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/x-rar-compressed</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/x-tgz</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/x-xz</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/zip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/zstd</Arg>
+      </Call>
+      <Call id="repoCfg" name="build" />
+    </Call>
 
-        <!-- Font assets -->
-        <Item>/assets/*</Item>
+    <!-- Configure compression for repository paths -->
+    <Call name="putConfiguration">
+      <!--
+        Prefix ^ triggers regular expression.
+        Exclude token endpoints
+      -->
+      <Arg>^/repository/[^/]+/(?!(-/user/org\.couchdb\.user:.*)|(v2/token)|(api/token)|((v2|v1)/users/authenticate)).*</Arg>
+      <Arg>
+        <Ref refid="repoCfg" />
+      </Arg>
+    </Call>
 
-        <!-- Root HTML page -->
-        <Item>/</Item>
-
-        <!-- Outreach service (mixed assets) -->
-        <Item>/service/outreach/*</Item>
-      </Array>
-    </Set>
-
-    <!-- Include these MIME types for compression -->
-    <Set name="includedMimeTypes">
-      <Array type="String">
-        <!-- HTML & CSS -->
-        <Item>text/html</Item>
-        <Item>text/css</Item>
-
-        <!-- JavaScript (all variants) -->
-        <Item>text/javascript</Item>
-        <Item>application/javascript</Item>
-        <Item>application/x-javascript</Item>
-
-        <!-- Images -->
-        <Item>image/svg+xml</Item>
-      </Array>
-    </Set>
+    <!-- Configure compression for services -->
+    <Call name="putConfiguration">
+      <Arg>/service/*</Arg>
+      <Arg>
+        <Ref refid="repoCfg" />
+      </Arg>
+    </Call>
 
     <!-- Wrap the application contexts collection -->
     <Set name="handler">

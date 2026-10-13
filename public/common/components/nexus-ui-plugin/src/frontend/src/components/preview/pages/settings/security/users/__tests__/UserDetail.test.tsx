@@ -28,42 +28,46 @@ jest.mock('../useUsersApi', () => ({
 const mockedUseUsersApi = useUsersApiModule.useUsersApi as jest.MockedFunction<typeof useUsersApiModule.useUsersApi>;
 
 // Mock ExtJS
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ExtJS: {
-    checkPermission: jest.fn().mockReturnValue(true),
-    isProEdition: jest.fn().mockReturnValue(true),
-    state: jest.fn().mockReturnValue({
-      getValue: jest.fn((key: string) => {
-        if (key === 'capabilityActiveTypes') {
-          return ['usertoken'];
-        }
-        return 'anonymous';
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const isProEdition = jest.fn().mockReturnValue(true);
+  return {
+    ExtJS: {
+      checkPermission: jest.fn().mockReturnValue(true),
+      isProEdition,
+      state: jest.fn().mockReturnValue({
+        getValue: jest.fn((key: string) => {
+          if (key === 'capabilityActiveTypes') {
+            return ['usertoken'];
+          }
+          return 'anonymous';
+        }),
+        getUser: jest.fn().mockReturnValue({ id: 'currentuser' }),
       }),
-      getUser: jest.fn().mockReturnValue({ id: 'currentuser' }),
-    }),
-  },
-  APIConstants: {
-    EXT: {
-      USER: {
-        ACTION: 'coreui_User',
-        METHODS: {
-          READ: 'read',
-          CREATE: 'create',
-          UPDATE: 'update',
-          REMOVE: 'remove',
-          CHANGE_PASSWORD: 'changePassword',
-          READ_SOURCES: 'readSources',
-          READ_ROLES: 'readRoles',
+    },
+    APIConstants: {
+      EXT: {
+        USER: {
+          ACTION: 'coreui_User',
+          METHODS: {
+            READ: 'read',
+            CREATE: 'create',
+            UPDATE: 'update',
+            REMOVE: 'remove',
+            CHANGE_PASSWORD: 'changePassword',
+            READ_SOURCES: 'readSources',
+            READ_ROLES: 'readRoles',
+          },
+        },
+      },
+      REST: {
+        PUBLIC: {
+          USERS: '/service/rest/v1/security/users',
         },
       },
     },
-    REST: {
-      PUBLIC: {
-        USERS: '/service/rest/v1/security/users',
-      },
-    },
-  },
-}));
+    useIsLicensedEdition: isProEdition,
+  };
+});
 
 // Wrapper component for Radix Theme and Toast context
 function TestWrapper({ children }: { children: React.ReactNode }) {

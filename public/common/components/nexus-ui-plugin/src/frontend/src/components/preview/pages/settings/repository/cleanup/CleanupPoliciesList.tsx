@@ -150,16 +150,6 @@ export function CleanupPoliciesList({ onSelect, onCreate }: CleanupPoliciesListP
 
   return (
     <Box className="cleanup-policies-list">
-      {/* Help Section */}
-      <HelpSection
-        title="What is a cleanup policy?"
-        content="Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. Once created, a cleanup policy must be assigned to a repository from the repository configuration screen."
-        docLink={{
-          label: 'Learn more',
-          href: 'http://links.sonatype.com/products/nxrm3/docs/cleanup-policy',
-        }}
-      />
-
       {/* Search/Filter */}
       <Box className="cleanup-policies-list__toolbar">
         <TextField.Root
@@ -191,6 +181,16 @@ export function CleanupPoliciesList({ onSelect, onCreate }: CleanupPoliciesListP
         onSort={handleSort}
         ariaLabel="Cleanup policies table"
         className="cleanup-policies-list__table"
+      />
+
+      {/* Help Section */}
+      <HelpSection
+        title="What is a cleanup policy?"
+        content="Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. Once created, a cleanup policy must be assigned to a repository from the repository configuration screen."
+        docLink={{
+          label: 'Learn more',
+          href: 'http://links.sonatype.com/products/nxrm3/docs/cleanup-policy',
+        }}
       />
     </Box>
   );

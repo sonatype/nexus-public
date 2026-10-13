@@ -23,7 +23,7 @@ import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.utils.httpclient.UserAgentGenerator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -40,8 +40,8 @@ public class MavenProxyRequestHeaderSupport
       final CapabilityRegistry capabilityRegistry,
       final UserAgentGenerator userAgentGenerator)
   {
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.userAgentGenerator = checkNotNull(userAgentGenerator);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
+    this.userAgentGenerator = requireNonNull(userAgentGenerator);
   }
 
   public String getUserAgentForAnalytics() {

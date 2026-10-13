@@ -31,8 +31,8 @@ import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to provide {@link Facet} lookup.
@@ -58,7 +58,7 @@ public class FacetLookup
    * Add a facet and bind exposed types.
    */
   public void add(final Facet facet) {
-    checkNotNull(facet);
+    requireNonNull(facet);
 
     // discover all types to expose facet
     Class<? extends Facet> root = facet.getClass();
@@ -107,7 +107,7 @@ public class FacetLookup
   @SuppressWarnings("unchecked")
   @Nullable
   public <T extends Facet> T get(final Class<T> type) {
-    checkNotNull(type);
+    requireNonNull(type);
     return (T) exposed.get(type);
   }
 

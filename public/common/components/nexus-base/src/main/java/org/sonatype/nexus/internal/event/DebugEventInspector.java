@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A simple "debug" helper component, that dumps out events to log.
@@ -54,7 +54,7 @@ public class DebugEventInspector
 
   @Autowired
   public DebugEventInspector(final EventManager eventManager) {
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
     setEnabled(ENABLED_DEFAULT);
   }
 

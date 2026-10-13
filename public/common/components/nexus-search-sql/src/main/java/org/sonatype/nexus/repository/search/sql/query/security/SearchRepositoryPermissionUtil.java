@@ -30,8 +30,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
@@ -59,9 +59,9 @@ public class SearchRepositoryPermissionUtil
       final SecurityHelper securityHelper,
       final SelectorManager selectorManager)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.selectorManager = checkNotNull(selectorManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.selectorManager = requireNonNull(selectorManager);
   }
 
   public Set<String> browsableAndUnknownRepositories(final Set<String> repositories) {

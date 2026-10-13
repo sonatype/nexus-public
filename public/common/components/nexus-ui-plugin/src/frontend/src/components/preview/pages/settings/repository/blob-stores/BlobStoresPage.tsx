@@ -873,36 +873,30 @@ export default function BlobStoresPage() {
         </Box>
       )}
 
-      <Flex className="blob-stores-page__content">
-        <div className="blob-stores-page__main">
-          <EntityTable<BlobStore>
-            data={sortedData}
-            columns={columns}
-            getRowKey={(row) => row.name}
-            onRowClick={handleRowClick}
-            loading={listLoading}
-            loadingMessage={STRINGS.LOADING}
-            error={listError || undefined}
-            onRetry={refetch}
-            emptyState={emptyState}
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-            ariaLabel="Blob stores table"
-          />
-        </div>
+      <EntityTable<BlobStore>
+        data={sortedData}
+        columns={columns}
+        getRowKey={(row) => row.name}
+        onRowClick={handleRowClick}
+        loading={listLoading}
+        loadingMessage={STRINGS.LOADING}
+        error={listError || undefined}
+        onRetry={refetch}
+        emptyState={emptyState}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        ariaLabel="Blob stores table"
+      />
 
-        <aside className="blob-stores-page__sidebar">
-          <HelpSection
-            title={STRINGS.HELP.TITLE}
-            content={STRINGS.HELP.CONTENT}
-            docLink={{
-              label: STRINGS.HELP.DOC_LABEL,
-              href: 'https://help.sonatype.com/en/blob-stores.html',
-            }}
-          />
-        </aside>
-      </Flex>
+      <HelpSection
+        title={STRINGS.HELP.TITLE}
+        content={STRINGS.HELP.CONTENT}
+        docLink={{
+          label: STRINGS.HELP.DOC_LABEL,
+          href: 'https://help.sonatype.com/en/blob-stores.html',
+        }}
+      />
     </>
   );
 

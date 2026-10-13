@@ -32,7 +32,7 @@ import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -54,7 +54,7 @@ public class MetadataDatabase
 
   @Autowired
   public MetadataDatabase(final DataStoreManager dataStoreManager) {
-    this.dataStoreManager = checkNotNull(dataStoreManager);
+    this.dataStoreManager = requireNonNull(dataStoreManager);
   }
 
   @Override

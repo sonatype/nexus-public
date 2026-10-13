@@ -26,6 +26,7 @@ Ext.define('NX.coreui.view.repository.recipe.HuggingFaceProxy', {
   alias: 'widget.nx-coreui-repository-huggingface-proxy',
   requires: [
     'NX.coreui.view.repository.facet.FirewallFacet',
+    'NX.coreui.view.repository.facet.HuggingFaceXetFacet',
     'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
@@ -42,6 +43,7 @@ Ext.define('NX.coreui.view.repository.recipe.HuggingFaceProxy', {
 
     me.items = [
       {xtype: 'nx-coreui-repository-firewall-facet'},
+      {xtype: 'nx-coreui-repository-huggingface-xet-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},
@@ -60,6 +62,17 @@ Ext.define('NX.coreui.view.repository.recipe.HuggingFaceProxy', {
       if (this.getRecord() === undefined) {
         const httpClientFacet = this.down('nx-coreui-repository-httpclient-facet-with-bearer-token');
         httpClientFacet.down('numberfield[name=attributes.httpclient.connection.timeout]').setValue(120);
+        // NEXUS-48685: seed XET off for new repositories so the save payload
+        // always carries the xet block with an explicit value. The facet's
+        // field default is also UNCHECKED so pre-feature repos preserve LFS
+        // on upgrade.
+        const xetFacet = this.down('nx-coreui-repository-huggingface-xet-facet');
+        if (xetFacet) {
+          const xetCheckbox = xetFacet.down('checkbox[name=attributes.xet.enabled]');
+          if (xetCheckbox) {
+            xetCheckbox.setValue(false);
+          }
+        }
       }
     }
   }

@@ -63,7 +63,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateSha1;
 import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertificate;
@@ -119,12 +119,12 @@ public class TrustStoreImpl
       final GlobalKeyValueStore globalKeyValueStore,
       final CryptoHelper cryptoHelper) throws Exception
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.keyStoreManager = checkNotNull(keyStoreManager);
-    this.trustedSSLCertificateStore = checkNotNull(trustedSSLCertificateStore);
-    this.trustedKeyStoreManager = checkNotNull(trustedKeyStoreManager);
-    this.databaseCheck = checkNotNull(databaseCheck);
-    checkNotNull(cryptoHelper);
+    this.eventManager = requireNonNull(eventManager);
+    this.keyStoreManager = requireNonNull(keyStoreManager);
+    this.trustedSSLCertificateStore = requireNonNull(trustedSSLCertificateStore);
+    this.trustedKeyStoreManager = requireNonNull(trustedKeyStoreManager);
+    this.databaseCheck = requireNonNull(databaseCheck);
+    requireNonNull(cryptoHelper);
     this.keyManagers = getSystemKeyManagers(cryptoHelper);
     this.trustManagers = getTrustManagers(cryptoHelper);
     this.secretMigrationComplete = globalKeyValueStore
@@ -211,7 +211,7 @@ public class TrustStoreImpl
   }
 
   private Certificate getTrustedCertificateFromNewTable(final String alias) throws KeystoreException {
-    checkNotNull(alias, "'alias' cannot be null when looking up a trusted Certificate.");
+    requireNonNull(alias, "'alias' cannot be null when looking up a trusted Certificate.");
 
     TrustedSSLCertificate trustedSSLCertificate = trustedSSLCertificateStore.find(alias)
         .orElseThrow(() -> new KeyNotFoundException("does not exist a certificate with alias '" + alias + "'."));
@@ -504,7 +504,7 @@ public class TrustStoreImpl
     private final X509TrustManager primary;
 
     FallbackOnManagedX509TrustManager(final X509TrustManager primary) {
-      this.primary = checkNotNull(primary);
+      this.primary = requireNonNull(primary);
     }
 
     @Override

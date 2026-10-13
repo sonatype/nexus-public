@@ -17,6 +17,8 @@ import { Box, Button, Flex, Link } from '@radix-ui/themes';
 import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
 import { ArrowLeft, Database, Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
+import { isFirewallSupportedFormat } from '../../../../../../utils/firewallFormats';
+import { useIsLicensedEdition } from '../../../../shared/hooks';
 
 import { SettingsAlert, WizardForm } from '../../../../shared/form';
 import { clearDirtyState } from '../../../../shared/hooks/useUnsavedChangesWarning';
@@ -146,6 +148,23 @@ export function RepositoriesPage() {
   const canUpdate = ExtJS.checkPermission('nexus:repository-admin:*:*:edit');
   const canDelete = ExtJS.checkPermission('nexus:repository-admin:*:*:delete');
 
+  const isLicensedEdition = useIsLicensedEdition();
+
+  // Soft-delete is enabled (flag + PRO/cloud). Deleting a hosted repository under this mode moves it
+  // to Trash (recoverable) rather than permanently removing it, so the delete modal + toast reflect that.
+  const softDeleteFeatureEnabled =
+    (ExtJS.state()?.getValue?.('nexus.softDelete.enabled', false) ?? false) &&
+    isLicensedEdition;
+  const softDeleteRetentionDays = ExtJS.state()?.getValue?.('softDeleteRetentionDays');
+  // Server-side soft-delete is gated by enabled + hosted + a per-format allowlist ("*" = all). Mirror all
+  // three here so the delete modal/toast only promise Trash when the repository would actually be recoverable.
+  const softDeleteFormats = (ExtJS.state()?.getValue?.('softDeleteFormats') as string[] | undefined) ?? [];
+  const isRepoSoftDeleteActive = (repo?: { type?: string; format?: string } | null): boolean =>
+    softDeleteFeatureEnabled
+    && repo?.type === 'hosted'
+    && (softDeleteFormats.includes('*')
+      || (!!repo?.format && softDeleteFormats.includes(repo.format.toLowerCase())));
+
   useEffect(() => {
     const handleHashChange = () => {
       const newState = parseRoute(window.location.hash);
@@ -225,23 +244,45 @@ export function RepositoriesPage() {
     fetchHealthCheckCapabilityEnabled().then(setRhcCapabilityEnabled);
   }, [isProxyRecipe, fetchHealthCheckCapabilityEnabled]);
 
-  const wizardSteps = useMemo(
-    () => [
+  // Only proxy repositories continue past Configure: the Firewall and RHC steps are
+  // proxy-only (and Firewall additionally requires a supported format), while hosted
+  // and group repositories are created straight from Configure. Advertising the two
+  // extra steps unconditionally made Configure a non-final step for hosted/group, so
+  // WizardForm labelled its button "Continue" instead of "Create Repository" and the
+  // progress indicator promised steps that never arrive.
+  const wizardSteps = useMemo(() => {
+    const steps = [
       { id: 'format', label: 'Select Format' },
       { id: 'type', label: 'Select Type' },
       { id: 'config', label: 'Configure' },
-      { id: 'firewall', label: 'Enable Firewall' },
-      { id: 'rhc', label: 'Enable RHC' },
-    ],
-    []
-  );
+    ];
 
+    // Before a type is chosen (steps 0-1) no type is known yet; fall back to the
+    // pending selection so the indicator settles as soon as the user picks one.
+    const type = selectedRecipe?.type ?? pendingRecipe?.type;
+    const format = selectedRecipe?.format ?? pendingRecipe?.format;
+
+    if (type === 'proxy') {
+      if (isFirewallSupportedFormat(format)) {
+        steps.push({ id: 'firewall', label: 'Enable Firewall' });
+      }
+      steps.push({ id: 'rhc', label: 'Enable RHC' });
+    }
+
+    return steps;
+  }, [selectedRecipe?.type, selectedRecipe?.format, pendingRecipe?.type, pendingRecipe?.format]);
+
+  // Resolve the post-create steps by id rather than by hard-coded index: a proxy on a
+  // firewall-unsupported format has no Firewall step, so RHC sits at index 3 there and
+  // at index 4 when Firewall is present.
   const createStep = useMemo(() => {
-    if (postCreateStep === 'rhc') return 4;
-    if (postCreateStep === 'firewall') return 3;
+    if (postCreateStep) {
+      const idx = wizardSteps.findIndex(step => step.id === postCreateStep);
+      if (idx !== -1) return idx;
+    }
     if (routeState.viewMode === 'create' && selectedRecipe) return 2;
     return internalWizardStep;
-  }, [routeState.viewMode, selectedRecipe, internalWizardStep, postCreateStep]);
+  }, [routeState.viewMode, selectedRecipe, internalWizardStep, postCreateStep, wizardSteps]);
 
   const finishCreate = useCallback(() => {
     setRefreshKey(k => k + 1);
@@ -254,12 +295,18 @@ export function RepositoriesPage() {
   }, []);
 
   const handleWizardStepChange = useCallback((step: number) => {
-    if (postCreateStep && step < 3) {
+    // Steps 0-2 (Format/Type/Configure) are always present, so index 2 is the
+    // Configure step regardless of which post-create steps this recipe has.
+    const targetId = wizardSteps[step]?.id;
+    if (postCreateStep && step <= 2) {
       setPostCreateStep(null);
       return;
     }
-    if (postCreateStep === 'rhc' && step === 3) {
-      setPostCreateStep('firewall');
+    if (postCreateStep === 'rhc' && targetId === 'firewall') {
+      // Back from RHC step: return to Firewall step only when the format supports it.
+      // For unsupported formats the forward path skips Firewall entirely (postCreateStep goes
+      // straight to 'rhc'), so we must not re-introduce the Firewall step here.
+      setPostCreateStep(isFirewallSupportedFormat(selectedRecipe?.format) ? 'firewall' : null);
       return;
     }
     if (step === 0) {
@@ -282,16 +329,22 @@ export function RepositoriesPage() {
       if (pendingRecipe?.type) {
         navigateTo(`${BASE_PATH}/create/${encodeURIComponent(pendingRecipe.format)}/${encodeURIComponent(pendingRecipe.type)}`);
       }
-    } else if (step === 3 && selectedRecipe) {
-      if (selectedRecipe.type === 'proxy') {
-        setPostCreateStep('firewall');
-      } else {
-        repoFormSubmitRef.current?.();
+    } else if (targetId === 'firewall' && selectedRecipe) {
+      setPostCreateStep('firewall');
+    } else if (targetId === 'rhc' && selectedRecipe) {
+      // Reached directly when the format has no Firewall step. Skipping Firewall must
+      // also discard any level chosen earlier in this session for a different, supported
+      // format — the user never sees the step here, so a stale choice would be applied
+      // invisibly.
+      if (!isFirewallSupportedFormat(selectedRecipe.format)) {
+        setFirewallChoice(null);
       }
-    } else if (step === 4) {
       setPostCreateStep('rhc');
     }
-  }, [pendingRecipe, selectedRecipe, postCreateStep]);
+    // No branch for an out-of-range index: for hosted/group, Configure is the last
+    // step, so WizardForm routes submission through onStepSubmitOverride(2) →
+    // repoFormSubmitRef and never calls onStepChange with a higher index.
+  }, [pendingRecipe, selectedRecipe, postCreateStep, wizardSteps]);
 
   const repoFormSubmitRef = useRef<(() => void) | null>(null);
 
@@ -301,7 +354,10 @@ export function RepositoriesPage() {
         await createRepository(savedFormDataRef.current);
         const repoName = savedFormDataRef.current.name;
         const hasFw = hasFirewallLicense();
-        if (hasFw && firewallChoice && firewallChoice !== 'none') {
+        // Backstop for the format gate: never enable Firewall on a format it does not
+        // support, whatever firewallChoice currently holds.
+        const formatSupportsFirewall = isFirewallSupportedFormat(selectedRecipe?.format);
+        if (hasFw && formatSupportsFirewall && firewallChoice && firewallChoice !== 'none') {
           try {
             if (firewallChoice === 'audit') await enableFirewallAudit(repoName);
             else if (firewallChoice === 'quarantine') await enableFirewallQuarantine(repoName);
@@ -335,7 +391,7 @@ export function RepositoriesPage() {
     } else if (repoFormSubmitRef.current) {
       repoFormSubmitRef.current();
     }
-  }, [postCreateStep, firewallChoice, rhcChoice, createRepository, enableHealthCheck, disableHealthCheck, finishCreate, toast]);
+  }, [postCreateStep, selectedRecipe, firewallChoice, rhcChoice, createRepository, enableHealthCheck, disableHealthCheck, finishCreate, toast]);
 
   const handleRecipeSelectionChange = useCallback((canAdvance: boolean, recipe: Recipe | null) => {
     if (recipe && !recipe.type) {
@@ -377,7 +433,14 @@ export function RepositoriesPage() {
         postCreateStep === null
       ) {
         savedFormDataRef.current = data;
-        setPostCreateStep('firewall');
+        if (isFirewallSupportedFormat(selectedRecipe.format)) {
+          setPostCreateStep('firewall');
+        } else {
+          // See handleWizardStepChange: skipping the Firewall step also discards any level
+          // chosen earlier for a different, supported format.
+          setFirewallChoice(null);
+          setPostCreateStep('rhc');
+        }
         return { skipNavigate: true };
       }
       // Non-proxy repos: create directly from wizard (form machine stays in editing
@@ -401,18 +464,23 @@ export function RepositoriesPage() {
   const handleDeleteConfirm = useCallback(async () => {
     if (!repository) return;
     setIsDeleting(true);
+    const movedToTrash = isRepoSoftDeleteActive(repository);
     try {
       await deleteRepository(repository.name);
-      toast.success(`Repository "${repository.name}" deleted successfully`);
+      toast.success(movedToTrash
+        ? `Repository "${repository.name}" moved to Trash`
+        : `Repository "${repository.name}" deleted successfully`);
       setRefreshKey(k => k + 1);
       setDeleteModalOpen(false);
       handleBack();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      // Guard the message: a non-Error reject would make err.message undefined and setError(undefined)
+      // would silently clear the banner (mirrors the other catch blocks in this file).
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsDeleting(false);
     }
-  }, [repository, deleteRepository, toast, handleBack, setError]);
+  }, [repository, deleteRepository, toast, handleBack, setError, softDeleteFeatureEnabled]);
 
   // Action handlers: stage pending action → ConfirmDialog → handleConfirmAction; refetch after toggle keeps pristineData in sync.
   const handleRebuildIndex = useCallback(() => {
@@ -636,7 +704,7 @@ export function RepositoriesPage() {
                 />
               </Box>
             )}
-            {isProxyRecipe && postCreateStep === 'firewall' && createStep === 3 && (
+            {isProxyRecipe && postCreateStep === 'firewall' && (
               <RepositoryFirewallStep
                 mode="deferred"
                 value={firewallChoice ?? 'none'}
@@ -645,7 +713,7 @@ export function RepositoriesPage() {
                 format={selectedRecipe?.format}
               />
             )}
-            {isProxyRecipe && postCreateStep === 'rhc' && createStep === 4 && (
+            {isProxyRecipe && postCreateStep === 'rhc' && (
               <RepositoryRHCStep
                 mode="deferred"
                 value={rhcChoice ?? 'none'}
@@ -679,6 +747,8 @@ export function RepositoriesPage() {
         entityName={repository?.name || ''}
         entityType="repository"
         loading={isDeleting}
+        softDelete={isRepoSoftDeleteActive(repository)}
+        retentionDays={typeof softDeleteRetentionDays === 'number' ? softDeleteRetentionDays : undefined}
       />
       <ConfirmDialog
         open={pendingAction !== null}

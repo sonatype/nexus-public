@@ -30,8 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.getRootCause;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An {@code error.html} servlet to handle generic servlet error-page dispatched requests.
@@ -83,7 +83,7 @@ public class ErrorPageServlet
 
   @Autowired
   public ErrorPageServlet(final ErrorPageService errorPageService) {
-    this.errorPageService = checkNotNull(errorPageService);
+    this.errorPageService = requireNonNull(errorPageService);
   }
 
   @SuppressWarnings("unused")

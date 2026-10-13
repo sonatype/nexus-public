@@ -27,7 +27,7 @@ import io.swagger.v3.oas.models.parameters.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toMap;
 
@@ -67,9 +67,9 @@ public abstract class ParameterContributor<T extends Parameter>
       final Collection<String> paths,
       final Collection<T> params)
   {
-    this.httpMethods = checkNotNull(httpMethods);
-    this.paths = checkNotNull(paths);
-    this.params = checkNotNull(params);
+    this.httpMethods = requireNonNull(httpMethods);
+    this.paths = requireNonNull(paths);
+    this.params = requireNonNull(params);
     this.contributed = httpMethods.stream()
         .flatMap(httpMethod -> paths.stream().map(path -> getKey(httpMethod, path)))
         .collect(toMap(p -> (String) p, p -> false));

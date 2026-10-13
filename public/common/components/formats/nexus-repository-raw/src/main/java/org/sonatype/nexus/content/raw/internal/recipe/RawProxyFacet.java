@@ -16,20 +16,24 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Parameters;
+import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
 import com.google.common.collect.ImmutableSet;
@@ -51,6 +55,12 @@ import static org.sonatype.nexus.common.app.FeatureFlags.RAW_QUERYPARAMS_FORWARD
 public class RawProxyFacet
     extends ContentProxyFacetSupport
 {
+  /**
+   * Context attribute key used to cache the valueless param names within a single request
+   * so {@link #getValuelessParamNames} is only parsed once per request lifecycle.
+   */
+  private static final String VALUELESS_PARAMS_ATTR = "nexus.valuelessParamNames";
+
   // Characters that ONLY raw format needs to encode (unique to raw)
   // When preserveEncodedCharacters is true, EncodingHelper already handles: #, ?, [, ]
   private static final ImmutableSet<String> CHARS_UNIQUE_TO_RAW = ImmutableSet.of("^", "\u202F");
@@ -136,16 +146,21 @@ public class RawProxyFacet
     // Append query string AFTER all path encoding is complete to avoid the encoding
     // pipeline in ProxyFacetSupport converting ? to %3F
     Parameters parameters = context.getRequest().getParameters();
-    String queryString = queryParamHelper.buildQueryString(parameters);
+    Set<String> valueless = queryParamHelper.isForwardingEnabled()
+        ? getValuelessParamNames(context)
+        : Collections.emptySet();
+    String queryString = queryParamHelper.buildQueryString(parameters, valueless);
 
     URI finalUri = uri;
     if (!queryString.isEmpty()) {
       try {
-        finalUri = new URIBuilder(uri)
-            .setCustomQuery(queryString) // Properly handles existing query strings
-            .build();
-        log.debug("Raw proxy: forwarding request to {} with query parameters", finalUri);
+        String uriStr = uri.toString();
+        // getUrl() always returns a query-string-free path, so this will always be "?".
+        // The "&" branch is a defensive guard in case that contract ever changes.
+        String separator = uriStr.contains("?") ? "&" : "?";
+        finalUri = new URI(uriStr + separator + queryString);
         // Note: Parameter values not logged for security. Use excludedQueryParameters to filter sensitive params.
+        log.debug("Raw proxy: forwarding request to {} with query parameters", finalUri);
       }
       catch (URISyntaxException e) {
         log.warn("Failed to append query parameters to URI: {}. Using URI without query string.",
@@ -164,11 +179,49 @@ public class RawProxyFacet
    */
   private String cacheKey(final Context context) {
     String path = assetPath(context);
-    String queryString = queryParamHelper.buildQueryString(context.getRequest().getParameters());
+    Set<String> valueless = queryParamHelper.isForwardingEnabled()
+        ? getValuelessParamNames(context)
+        : Collections.emptySet();
+    String queryString = queryParamHelper.buildQueryString(context.getRequest().getParameters(), valueless);
     if (!queryString.isEmpty()) {
       return path + "?" + queryString;
     }
     return path;
+  }
+
+  /**
+   * Parses the raw (undecoded) query string stored in request attributes to find parameter names
+   * that appear without an {@code =} sign (e.g. {@code ?flag}). The Servlet API returns {@code ""}
+   * for both {@code ?flag} and {@code ?empty=}, so this is the only way to distinguish them.
+   *
+   * <p>
+   * The result is cached in the context attributes so the raw query string is only parsed
+   * once per request regardless of how many times this method is called.
+   */
+  private Set<String> getValuelessParamNames(final Context context) {
+    @SuppressWarnings("unchecked")
+    Set<String> cached = context.getAttributes().get(VALUELESS_PARAMS_ATTR, Set.class);
+    if (cached != null) {
+      return cached;
+    }
+
+    String rawQueryString = context.getRequest().getAttributes().get(Request.RAW_QUERY_STRING_ATTR, String.class);
+    Set<String> valueless = (rawQueryString == null || rawQueryString.isEmpty())
+        ? Collections.emptySet()
+        : Arrays.stream(rawQueryString.split("&"))
+            .filter(s -> !s.isEmpty() && !s.contains("="))
+            .map(s -> {
+              try {
+                return URLDecoder.decode(s, StandardCharsets.UTF_8);
+              }
+              catch (IllegalArgumentException e) {
+                return s;
+              }
+            })
+            .collect(Collectors.toUnmodifiableSet());
+
+    context.getAttributes().set(VALUELESS_PARAMS_ATTR, valueless);
+    return valueless;
   }
 
   private RawContentFacet content() {

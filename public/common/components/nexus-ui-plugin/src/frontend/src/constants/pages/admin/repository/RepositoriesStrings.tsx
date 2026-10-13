@@ -400,6 +400,21 @@ export default {
   },
 
   // ---------------------------------------------------------------------------
+  // HuggingFaceFacet
+  // ---------------------------------------------------------------------------
+  HUGGINGFACE: {
+    SECTION: {
+      title: 'Transfer Protocol',
+      description: 'HuggingFace proxy transfer-protocol configuration',
+    },
+    ENABLE_XET: {
+      label: 'Enable XET',
+      description:
+        'When enabled, the XET protocol is used for file transfers. When disabled, the legacy LFS path is used.',
+    },
+  },
+
+  // ---------------------------------------------------------------------------
   // ProxyFacet
   // ---------------------------------------------------------------------------
   PROXY: {
@@ -532,6 +547,10 @@ export default {
       description:
         'Validate that all content uploaded to this repository is of a MIME type appropriate for the repository format',
     },
+    GLOBAL_DISTRIBUTION: {
+      label: 'Global distribution',
+      description: 'Distribute this repository through the global content delivery network',
+    },
   },
 
   // ---------------------------------------------------------------------------
@@ -562,6 +581,25 @@ export default {
         helpText: 'Validate that RPM deployments comply with the deployed version',
         STRICT: 'Strict',
         PERMISSIVE: 'Permissive',
+      },
+    },
+  },
+
+  // ---------------------------------------------------------------------------
+  // TerraformFacet
+  // ---------------------------------------------------------------------------
+  TERRAFORM: {
+    SIGNING: {
+      title: 'Terraform Signing',
+      description: 'GPG signing configuration for Terraform hosted repositories',
+      KEYPAIR: {
+        label: 'GPG Signing Key',
+        helpText:
+          'PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor)',
+      },
+      PASSPHRASE: {
+        label: 'GPG Signing Key Passphrase',
+        helpText: 'Passphrase for the PGP signing key (leave empty if key has no passphrase)',
       },
     },
   },

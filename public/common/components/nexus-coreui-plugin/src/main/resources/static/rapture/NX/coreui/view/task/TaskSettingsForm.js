@@ -205,7 +205,9 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
       Ext.each(formFields, function (field) {
         var properties = model.get('properties');
         if (properties && !properties.hasOwnProperty(field.id)) {
-          properties[field.id] = null;
+          properties[field.id] = (field.initialValue !== undefined && field.initialValue !== null && field.initialValue !== '')
+              ? field.initialValue
+              : null;
           model.set('properties', properties, { dirty: false });
         }
         if(!properties && field.id === "name" && field.initialValue) {

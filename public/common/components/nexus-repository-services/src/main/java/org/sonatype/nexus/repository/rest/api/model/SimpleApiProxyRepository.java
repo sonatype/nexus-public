@@ -111,6 +111,16 @@ public class SimpleApiProxyRepository
     return replication;
   }
 
+  // NON_NULL (not the replication field's NON_EMPTY/content=NON_NULL) because FirewallAttributes
+  // is a plain single-field POJO, not a container: NON_EMPTY's content-level check is a no-op here,
+  // and Jackson's default POJO isEmpty() would not treat a non-null FirewallAttributes with a null
+  // mode as "empty" anyway. NON_NULL says exactly what is intended: omit only when no firewall
+  // attributes were ever set on this repository (fromConfiguration() returns null in that case).
+  // This holds because FirewallAttributes.fromConfiguration() is the sole producer of non-null
+  // FirewallAttributes instances in production, and it returns null for every "not configured"
+  // case (null Configuration, missing/empty firewall attributes map, null mode, or an unrecognised
+  // mode value) rather than a FirewallAttributes with a null mode inside it.
+  @JsonInclude(Include.NON_NULL)
   public FirewallAttributes getFirewall() {
     return firewall;
   }

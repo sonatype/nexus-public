@@ -21,6 +21,20 @@
  */
 
 import { ExtJS } from '../../../../interface/ExtJS';
+import {
+  FIREWALL_SUPPORTED_FORMATS,
+  isFirewallAnalyzableFormat as isFirewallEnabledFormat,
+} from '../../../../utils/firewallFormats';
+
+/**
+ * State key published by MaliciousRiskStateContributor (backend). True when Repository Firewall is
+ * available to this instance — the always-on capability on Pro+/Enterprise, or a configured CLM
+ * firewall on plain Pro (NEXUS-54874). It is the authoritative "included in your license" signal:
+ * derive card copy and upgrade prompts from this capability flag rather than from the edition short
+ * name. Independent of whether an IQ Server connection is currently live (clm.hasFirewall) — an
+ * edition that includes Firewall must never be pitched an "upgrade" even before IQ is connected.
+ */
+export const FIREWALL_AVAILABLE_STATE_KEY = 'nexus.firewall.available';
 
 export type FirewallTier = 'none' | 'pro' | 'enterprise';
 
@@ -153,37 +167,65 @@ export function isFirewallProSupportedFormat(format: string): boolean {
 
 /**
  * Formats supported by Firewall Enterprise (IQ Server).
- * Enterprise supports all formats that IQ Server can analyze.
+ *
+ * Enterprise supports every format Repository Firewall supports, so this is derived from
+ * FIREWALL_SUPPORTED_FORMATS — the single frontend mirror of the backend
+ * FirewallSupportedFormat enum — rather than maintained as a second list here. The
+ * hand-maintained list it replaces had drifted: it used 'golang' (the NXRM format id is
+ * 'go') and omitted yum, docker, raw, conda, r, p2 and huggingface.
+ *
+ * Exposed as a function rather than a module-level constant so formats still behind a
+ * rollout flag (see firewallFormats FLAG_GATED_FORMATS, e.g. 'swift', 'pub') are excluded
+ * while their flag is off: flag state lives in NX.State and must be read at call time,
+ * not baked in at import time.
  */
-export const FIREWALL_ENTERPRISE_SUPPORTED_FORMATS = [
-  'maven2',
-  'npm',
-  'nuget',
-  'pypi',
-  'rubygems',
-  'golang',
-  'conan',
-  'cargo',
-  'cocoapods',
-  'composer',
-] as const;
-
-/**
- * Check if a format is supported by Firewall Enterprise.
- */
-export function isFirewallEnterpriseSupportedFormat(format: string): boolean {
-  return FIREWALL_ENTERPRISE_SUPPORTED_FORMATS.includes(format.toLowerCase() as any);
+export function getFirewallEnterpriseSupportedFormats(): readonly string[] {
+  return [...FIREWALL_SUPPORTED_FORMATS].filter((format) =>
+    isFirewallEnabledFormat(format)
+  );
 }
 
 /**
- * Check if a format is supported by the current firewall tier.
+ * Check if a format is supported by Firewall Enterprise.
+ *
+ * Routed through firewallFormats.isFirewallAnalyzableFormat so flag-gated formats report
+ * unsupported while their rollout flag is off, mirroring the enterprise branch of the
+ * tier-aware isFirewallSupportedFormat below.
+ *
+ * Deliberately NOT firewallFormats.isFirewallSupportedFormat: that is the UI-visibility gate and
+ * carries the FIRE-956 blanket limited-support override, which lifts the backend's *configuration*
+ * restriction without giving IQ any new analysis capability. Routing this through it would report
+ * Enterprise protection for a format IQ cannot analyze.
+ */
+export function isFirewallEnterpriseSupportedFormat(format: string): boolean {
+  return isFirewallEnabledFormat(format);
+}
+
+/**
+ * Tier/license-aware check: returns true when the given format is supported by the
+ * current Firewall tier (Enterprise or Pro), taking the active license into account.
+ *
+ * Use this function for Firewall status display, protection-level controls, and other
+ * logic that depends on the active license tier.
+ *
+ * See also: firewallFormats.isFirewallSupportedFormat for the format-only, tier-agnostic
+ * variant used for UI-visibility gating (wizard step, edit tab, etc.).
+ *
+ * The enterprise branch goes through firewallFormats.isFirewallAnalyzableFormat rather than
+ * the plain enum-membership check, so formats still behind a rollout flag (see
+ * FLAG_GATED_FORMATS) report unsupported while their flag is off — otherwise turning the
+ * flag off would leave this reporting supported for a format the backend rejects.
+ *
+ * It must not go through the visibility gate isFirewallSupportedFormat, which additionally honours
+ * the FIRE-956 blanket limited-support override. That override makes a format *configurable*, not
+ * *analyzable*, so letting it reach this tier path would overstate the protection level.
  */
 export function isFirewallSupportedFormat(format: string, tier?: FirewallTier): boolean {
   const currentTier = tier ?? getFirewallTier();
 
   switch (currentTier) {
     case 'enterprise':
-      return isFirewallEnterpriseSupportedFormat(format);
+      return isFirewallEnabledFormat(format);
     case 'pro':
       return isFirewallProSupportedFormat(format);
     default:

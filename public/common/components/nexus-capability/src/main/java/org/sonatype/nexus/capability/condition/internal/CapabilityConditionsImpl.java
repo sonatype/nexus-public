@@ -21,7 +21,7 @@ import org.sonatype.nexus.capability.Evaluable;
 import org.sonatype.nexus.capability.condition.CapabilityConditions;
 import org.sonatype.nexus.common.event.EventManager;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -46,9 +46,9 @@ public class CapabilityConditionsImpl
       final CapabilityDescriptorRegistry descriptorRegistry,
       final CapabilityRegistry capabilityRegistry)
   {
-    this.descriptorRegistry = checkNotNull(descriptorRegistry);
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.eventManager = checkNotNull(eventManager);
+    this.descriptorRegistry = requireNonNull(descriptorRegistry);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override

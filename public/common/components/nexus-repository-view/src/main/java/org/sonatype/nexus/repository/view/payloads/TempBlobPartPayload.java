@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.view.PartPayload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * PartPayload backed by a TempBlob. Useful for file uploads surrounded by other multipart data.
@@ -38,7 +38,7 @@ public class TempBlobPartPayload
   private final PartPayload sourcePayload;
 
   public TempBlobPartPayload(final PartPayload payload, final TempBlob tempBlob) throws IOException {
-    super(tempBlob, checkNotNull(payload).getContentType());
+    super(tempBlob, requireNonNull(payload).getContentType());
     this.name = payload.getName();
     this.fieldName = payload.getFieldName();
     this.isFormField = payload.isFormField();
@@ -56,7 +56,7 @@ public class TempBlobPartPayload
       final TempBlob tempBlob)
   {
     super(tempBlob, contentType);
-    this.fieldName = checkNotNull(fieldName);
+    this.fieldName = requireNonNull(fieldName);
     this.name = name;
     this.isFormField = isFormField;
     this.sourcePayload = null;

@@ -20,7 +20,7 @@ import org.sonatype.nexus.security.authz.WildcardPermission2;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Application permission, using {@code nexus:} namespace.
@@ -41,8 +41,8 @@ public class ApplicationPermission
   private final List<String> actions;
 
   public ApplicationPermission(final String domain, final List<String> actions) {
-    this.domain = checkNotNull(domain);
-    this.actions = checkNotNull(actions);
+    this.domain = requireNonNull(domain);
+    this.actions = requireNonNull(actions);
 
     if (domain.indexOf(PART_SEPARATOR) < 0) {
       setParts(ImmutableList.of(SYSTEM, domain), actions);

@@ -31,7 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Dynamic MBean.
@@ -56,7 +56,7 @@ public class MBean
       final Collection<MBeanAttribute> attributes,
       final Collection<MBeanOperation> operations)
   {
-    this.info = checkNotNull(info);
+    this.info = requireNonNull(info);
 
     // build attributes lookup map
     ImmutableMap.Builder<String, MBeanAttribute> attrs = ImmutableMap.builder();
@@ -86,7 +86,7 @@ public class MBean
    * Lookup attribute by name.
    */
   private MBeanAttribute attribute(final String name) throws AttributeNotFoundException {
-    checkNotNull(name);
+    requireNonNull(name);
     MBeanAttribute attribute = attributes.get(name);
     if (attribute == null) {
       throw new AttributeNotFoundException(name);
@@ -102,7 +102,7 @@ public class MBean
    * Lookup operation by key.
    */
   private MBeanOperation operation(final OperationKey key) throws ServiceNotFoundException {
-    checkNotNull(key);
+    requireNonNull(key);
     MBeanOperation operation = operations.get(key);
     if (operation == null) {
       throw new ServiceNotFoundException("Missing operation: " + key);

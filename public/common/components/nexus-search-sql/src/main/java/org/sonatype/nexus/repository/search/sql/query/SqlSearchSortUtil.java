@@ -31,7 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.stream.StreamSupport.stream;
@@ -62,8 +62,8 @@ public class SqlSearchSortUtil
 
   @Autowired
   public SqlSearchSortUtil(final SearchDatabase searchDatabase, final List<SearchMappings> searchMappings) {
-    this.searchDatabase = checkNotNull(searchDatabase);
-    this.aliasToColumn = checkNotNull(searchMappings).stream()
+    this.searchDatabase = requireNonNull(searchDatabase);
+    this.aliasToColumn = requireNonNull(searchMappings).stream()
         .map(SearchMappings::get)
         .flatMap(iterable -> stream(iterable.spliterator(), false))
         .collect(Collectors.toMap(mapping -> getAlias(mapping.getAlias()), SearchMapping::getField));

@@ -52,7 +52,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.time.DateHelper.optionalOffsetToDate;
 
 /**
@@ -79,9 +79,9 @@ public class CleanupPreviewHelperImpl
       final CleanupBrowseServiceFactory browseServiceFactory,
       @Value("${nexus.cleanup.retainAllFormats.enabled:false}") final boolean retainAllFormatsEnabled)
   {
-    this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
-    this.previewTimeout = checkNotNull(previewTimeout);
-    this.browseServiceFactory = checkNotNull(browseServiceFactory);
+    this.cleanupPolicyStorage = requireNonNull(cleanupPolicyStorage);
+    this.previewTimeout = requireNonNull(previewTimeout);
+    this.browseServiceFactory = requireNonNull(browseServiceFactory);
     this.retainAllFormatsEnabled = retainAllFormatsEnabled;
   }
 
@@ -104,7 +104,7 @@ public class CleanupPreviewHelperImpl
   {
     CleanupPolicy cleanupPolicy = toCleanupPolicy(previewXO);
 
-    CleanupComponentBrowse browseService = browseServiceFactory.getPreviewService();
+    CleanupComponentBrowse browseService = browseServiceFactory.getPreviewService(repository.getFormat());
     Stream<FluentComponent> componentSteam =
         browseService.browseIncludingAssets(cleanupPolicy, repository);
 
@@ -154,7 +154,7 @@ public class CleanupPreviewHelperImpl
       CancelableHelper.set(cancelled);
       try {
         // compute preview and return it
-        CleanupComponentBrowse browseService = browseServiceFactory.getPreviewService();
+        CleanupComponentBrowse browseService = browseServiceFactory.getPreviewService(repository.getFormat());
         return browseService.browseByPage(policy, repository, queryOptions);
       }
       finally {

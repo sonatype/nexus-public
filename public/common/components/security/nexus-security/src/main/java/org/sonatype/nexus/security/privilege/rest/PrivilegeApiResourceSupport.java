@@ -37,7 +37,7 @@ import org.apache.shiro.authz.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 public abstract class PrivilegeApiResourceSupport
@@ -70,9 +70,9 @@ public abstract class PrivilegeApiResourceSupport
       final SecurityHelper securityHelper,
       final List<PrivilegeDescriptor> privilegeDescriptorsList)
   {
-    this.securitySystem = checkNotNull(securitySystem);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.privilegeDescriptors = QualifierUtil.buildQualifierBeanMap(checkNotNull(privilegeDescriptorsList));
+    this.securitySystem = requireNonNull(securitySystem);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.privilegeDescriptors = QualifierUtil.buildQualifierBeanMap(requireNonNull(privilegeDescriptorsList));
   }
 
   protected Response doCreate(String type, ApiPrivilegeRequest apiPrivilege) {
@@ -131,7 +131,8 @@ public abstract class PrivilegeApiResourceSupport
 
   private void checkGrantRights(final PrivilegeDescriptor privilegeDescriptor, final Privilege privilege) {
     Permission resolved = privilegeDescriptor.createPermission(toCPrivilege(privilege));
-    checkNotNull(resolved, "PrivilegeDescriptor for type '%s' returned a null permission", privilege.getType());
+    requireNonNull(resolved,
+        String.format("PrivilegeDescriptor for type '%s' returned a null permission", privilege.getType()));
     if (!securityHelper.allPermitted(resolved)) {
       log.debug(
           "Rejected privilege '{}' mutation: caller lacks the effective permission '{}' the privilege would grant.",

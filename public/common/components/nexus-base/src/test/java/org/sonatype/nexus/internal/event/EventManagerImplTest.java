@@ -18,6 +18,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.slf4j.LoggerFactory;
+
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
@@ -73,6 +79,79 @@ public class EventManagerImplTest
     underTest.post("a string");
 
     assertThat(handler.firstCalled, is(nullValue()));
+  }
+
+  @Test
+  public void preStartDropsAreDebugAndSummarizedWithoutWarn() throws Exception {
+    Logger logger = (Logger) LoggerFactory.getLogger(EventManagerImpl.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    Level previous = logger.getLevel();
+    logger.setLevel(Level.DEBUG);
+    logger.addAppender(appender);
+    try {
+      EventManagerImpl underTest = new EventManagerImpl(newEventExecutor());
+
+      // pre-EVENTS posts: dropped, and MUST NOT emit a WARN
+      underTest.post("a string");
+      underTest.post(123);
+
+      assertThat(appender.list.stream()
+          .noneMatch(e -> e.getLevel() == Level.WARN
+              && e.getFormattedMessage().contains("EventManager is not started")),
+          is(true));
+      assertThat(appender.list.stream()
+          .filter(e -> e.getLevel() == Level.DEBUG
+              && e.getFormattedMessage().contains("dropping event posted outside the EVENTS phase"))
+          .count(), is(2L));
+
+      // starting flushes a single INFO summary naming the dropped count
+      underTest.start();
+      assertThat(appender.list.stream()
+          .anyMatch(e -> e.getLevel() == Level.INFO
+              && e.getFormattedMessage().contains("2 event(s)")
+              && e.getFormattedMessage().contains("posted before the EVENTS phase were dropped")),
+          is(true));
+    }
+    finally {
+      logger.detachAppender(appender);
+      logger.setLevel(previous);
+    }
+  }
+
+  @Test
+  public void postShutdownDropsAreDebugOnlyWithNoSummary() throws Exception {
+    Logger logger = (Logger) LoggerFactory.getLogger(EventManagerImpl.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    Level previous = logger.getLevel();
+    logger.setLevel(Level.DEBUG);
+    logger.addAppender(appender);
+    try {
+      EventManagerImpl underTest = new EventManagerImpl(newEventExecutor());
+      underTest.start();
+      underTest.stop();
+
+      // post-shutdown drop: logged at DEBUG only, with no INFO summary (there is no later start to flush at)
+      underTest.post("after shutdown");
+
+      assertThat(appender.list.stream()
+          .noneMatch(e -> e.getLevel() == Level.WARN
+              && e.getFormattedMessage().contains("EventManager is not started")),
+          is(true));
+      assertThat(appender.list.stream()
+          .filter(e -> e.getLevel() == Level.DEBUG
+              && e.getFormattedMessage().contains("dropping event posted outside the EVENTS phase"))
+          .count(), is(1L));
+      assertThat(appender.list.stream()
+          .noneMatch(e -> e.getLevel() == Level.INFO
+              && e.getFormattedMessage().contains("posted before the EVENTS phase were dropped")),
+          is(true));
+    }
+    finally {
+      logger.detachAppender(appender);
+      logger.setLevel(previous);
+    }
   }
 
   private static class ReentrantHandler

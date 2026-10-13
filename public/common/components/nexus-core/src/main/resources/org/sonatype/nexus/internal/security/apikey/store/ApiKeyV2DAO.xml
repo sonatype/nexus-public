@@ -54,7 +54,8 @@
     SELECT *
       FROM api_key_v2
      WHERE username   = #{username}
-       AND domain = #{domain};
+       AND domain = #{domain}
+  ORDER BY created ASC NULLS LAST, access_key ASC;
   </select>
 
   <select id="findApiKeysForUser" resultMap="ApiKeyV2DataResultMap">

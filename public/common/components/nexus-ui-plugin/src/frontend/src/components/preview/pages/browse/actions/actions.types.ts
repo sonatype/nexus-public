@@ -53,6 +53,12 @@ export interface DeleteDialogProps {
   onConfirm: () => void;
   /** Whether the delete operation is in progress */
   isDeleting?: boolean;
+  /** When true, the item is moved to Trash (recoverable) instead of permanently deleted, so the
+   *  copy reflects a recoverable soft-delete. Callers pass this only when a soft-delete will actually
+   *  occur (soft-delete enabled on a hosted repository). */
+  softDelete?: boolean;
+  /** Optional retention window (days) surfaced in the soft-delete copy. Only used when softDelete. */
+  retentionDays?: number;
 }
 
 /**
@@ -131,6 +137,10 @@ export interface ActionStrings {
     readonly componentMessage: (name: string) => string;
     readonly assetMessage: (name: string) => string;
     readonly folderMessage: (name: string) => string;
+    /** Recoverable soft-delete (Trash) variants, used when deleting from a hosted repo with soft-delete on. */
+    readonly componentTrashMessage: (name: string, retentionDays?: number) => string;
+    readonly assetTrashMessage: (name: string, retentionDays?: number) => string;
+    readonly folderTrashMessage: (name: string, retentionDays?: number) => string;
     readonly confirmButton: string;
     readonly cancelButton: string;
     readonly deletingButton: string;
@@ -164,6 +174,12 @@ export const ACTION_STRINGS: ActionStrings = {
       `Are you sure you want to delete asset "${name}"? This action cannot be undone.`,
     folderMessage: (name: string) =>
       `Are you sure you want to delete folder "${name}" and all its contents? This action cannot be undone.`,
+    componentTrashMessage: (name: string, retentionDays?: number) =>
+      `Component "${name}" will be moved to Trash and can be restored${retentionDays ? ` for ${retentionDays} days` : ''} before it is permanently removed.`,
+    assetTrashMessage: (name: string, retentionDays?: number) =>
+      `Asset "${name}" will be moved to Trash and can be restored${retentionDays ? ` for ${retentionDays} days` : ''} before it is permanently removed.`,
+    folderTrashMessage: (name: string, retentionDays?: number) =>
+      `Folder "${name}" and all its contents will be moved to Trash and can be restored${retentionDays ? ` for ${retentionDays} days` : ''} before they are permanently removed.`,
     confirmButton: 'Delete',
     cancelButton: 'Cancel',
     deletingButton: 'Deleting...',

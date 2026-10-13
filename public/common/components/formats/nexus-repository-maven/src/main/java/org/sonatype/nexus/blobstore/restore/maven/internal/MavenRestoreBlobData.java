@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class MavenRestoreBlobData
     extends DataStoreRestoreBlobData
@@ -36,7 +36,7 @@ public class MavenRestoreBlobData
       final MavenPathParser mavenPathParser)
   {
     super(blob, blobProperties, blobStore, repositoryManager);
-    this.mavenPath = checkNotNull(mavenPathParser).parsePath(getBlobName());
+    this.mavenPath = requireNonNull(mavenPathParser).parsePath(getBlobName());
   }
 
   public MavenPath getMavenPath() {

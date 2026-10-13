@@ -26,7 +26,7 @@ import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.repository.content.AssetBlob;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
@@ -126,7 +126,7 @@ public class AssetBlobData
    * Sets the reference to the blob.
    */
   public void setBlobRef(final BlobRef blobRef) {
-    this.blobRef = checkNotNull(blobRef);
+    this.blobRef = requireNonNull(blobRef);
   }
 
   /**
@@ -140,7 +140,7 @@ public class AssetBlobData
    * Sets the content-type of the blob.
    */
   public void setContentType(final String contentType) {
-    this.contentType = checkNotNull(contentType);
+    this.contentType = requireNonNull(contentType);
   }
 
   /**
@@ -149,21 +149,21 @@ public class AssetBlobData
    * @since 3.24
    */
   public void setChecksums(final Map<String, String> checksums) {
-    this.checksums = checkNotNull(checksums);
+    this.checksums = requireNonNull(checksums);
   }
 
   /**
    * Sets when the blob was created.
    */
   public void setBlobCreated(final OffsetDateTime blobCreated) {
-    this.blobCreated = checkNotNull(blobCreated);
+    this.blobCreated = requireNonNull(blobCreated);
   }
 
   /**
    * Sets when the blob was added to repository.
    */
   public void setAddedToRepository(final OffsetDateTime addedToRepository) {
-    this.addedToRepository = checkNotNull(addedToRepository);
+    this.addedToRepository = requireNonNull(addedToRepository);
   }
 
   /**

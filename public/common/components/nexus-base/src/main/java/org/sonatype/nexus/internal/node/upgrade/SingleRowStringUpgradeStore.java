@@ -21,7 +21,7 @@ import java.util.Optional;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.upgrade.datastore.UpgradeConfigStoreSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Base for UPGRADE-phase-safe stores backed by a single-row, single-string-column table keyed on
@@ -50,8 +50,8 @@ public abstract class SingleRowStringUpgradeStore
       final String column)
   {
     super(sessionSupplier);
-    this.table = checkNotNull(table);
-    checkNotNull(column);
+    this.table = requireNonNull(table);
+    requireNonNull(column);
     this.selectSql = String.format("SELECT %s FROM %s WHERE id = 1", column, table);
     this.mergeH2Sql = String.format("MERGE INTO %s (id, %s) VALUES (1, ?)", table, column);
     this.upsertPgSql = String.format(
@@ -76,7 +76,7 @@ public abstract class SingleRowStringUpgradeStore
    * Upserts the single stored value (id = 1).
    */
   protected void write(final String value) {
-    checkNotNull(value, "value");
+    requireNonNull(value, "value");
     try (Connection conn = openConnection()) {
       try {
         boolean h2 = isH2(conn);

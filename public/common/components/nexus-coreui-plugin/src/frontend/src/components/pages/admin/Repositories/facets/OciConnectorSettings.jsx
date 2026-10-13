@@ -24,7 +24,7 @@ import {
   NxFormSelect,
   NxWarningAlert
 } from '@sonatype/react-shared-components';
-import {FormUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ExtJS, useIsLicensedEdition} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -48,7 +48,7 @@ export default function OciConnectorSettings({parentMachine}) {
   const [parentState, sendParent] = parentMachine;
 
   const repositoryName = parentState.context.data.name;
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
 
   return (
     <>
@@ -68,7 +68,7 @@ export default function OciConnectorSettings({parentMachine}) {
         </NxCheckbox>
       </NxFieldset>
 
-      {isProEdition && (
+      {isLicensedEdition && (
         <ToggleableTextInput
           parentMachine={parentMachine}
           contextPropName="oci.subdomain"

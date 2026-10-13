@@ -78,7 +78,7 @@ public class AssetTableIndexesMigrationStep_2_32
       final String tableName,
       final String columnName) throws SQLException
   {
-    if (!indexExists(connection, indexName)) {
+    if (!indexExists(connection, tableName, indexName)) {
       runStatement(connection, String.format(
           "CREATE INDEX IF NOT EXISTS %s ON %s (%s)",
           indexName, tableName, columnName));

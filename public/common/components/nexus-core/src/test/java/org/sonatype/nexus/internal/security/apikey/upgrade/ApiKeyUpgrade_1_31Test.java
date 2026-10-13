@@ -26,9 +26,9 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 
 public class ApiKeyUpgrade_1_31Test
 {
-  private static final String NEW_INDEX_NAME = "pk_api_key_primaryprincipal_domain_principals";
+  private static final String NEW_CONSTRAINT_NAME = "pk_api_key_primaryprincipal_domain_principals";
 
-  private static final String OLD_INDEX_NAME = "pk_api_key_primaryprincipal_domain";
+  private static final String OLD_CONSTRAINT_NAME = "pk_api_key_primaryprincipal_domain";
 
   private static final String OLD_SCHEMA = "CREATE TABLE IF NOT EXISTS api_key (\n"
       + "      primary_principal VARCHAR(200)   NOT NULL,\n"
@@ -54,12 +54,13 @@ public class ApiKeyUpgrade_1_31Test
 
       // Sanity checks
       assertTrue("Sanity check - table exists", underTest.tableExists(conn, "api_key"));
-      assertTrue("Sanity check - old index exists", underTest.indexExists(conn, OLD_INDEX_NAME));
+      assertTrue("Sanity check - old constraint exists",
+          underTest.constraintExists(conn, "api_key", OLD_CONSTRAINT_NAME));
 
       underTest.migrate(conn);
 
-      assertTrue("New index created", underTest.indexExists(conn, NEW_INDEX_NAME));
-      assertFalse("Old index removed", underTest.indexExists(conn, OLD_INDEX_NAME));
+      assertTrue("New constraint created", underTest.constraintExists(conn, "api_key", NEW_CONSTRAINT_NAME));
+      assertFalse("Old constraint removed", underTest.constraintExists(conn, "api_key", OLD_CONSTRAINT_NAME));
     }
   }
 
@@ -81,7 +82,8 @@ public class ApiKeyUpgrade_1_31Test
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // Sanity checks
       assertTrue("Sanity check - table exists", underTest.tableExists(conn, "api_key"));
-      assertTrue("Sanity check - new index exists", underTest.indexExists(conn, NEW_INDEX_NAME));
+      assertTrue("Sanity check - new constraint exists",
+          underTest.constraintExists(conn, "api_key", NEW_CONSTRAINT_NAME));
 
       underTest.migrate(conn);
       // The real check here is that the migration does not error.

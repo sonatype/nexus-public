@@ -23,8 +23,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * String multimap support.
@@ -37,7 +36,7 @@ public class StringMultimap
   private final ListMultimap<String, String> backing;
 
   public StringMultimap(final ListMultimap<String, String> entries) {
-    this.backing = checkNotNull(entries);
+    this.backing = requireNonNull(entries);
   }
 
   public StringMultimap() {

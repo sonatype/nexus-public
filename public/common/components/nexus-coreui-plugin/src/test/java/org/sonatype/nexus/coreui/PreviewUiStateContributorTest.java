@@ -83,7 +83,59 @@ class PreviewUiStateContributorTest
     assertThat(underTest.getState().get("previewAuditEnabled"), is(false));
   }
 
+  @Test
+  public void shouldExposeDefaultToPreviewUiTrueWhenNoStoredPreferenceAndSystemDefaultTrue() {
+    PreviewUiStateContributor underTest = contributorWithPreviewDefault(true);
+
+    assertThat(underTest.getState().get("defaultToPreviewUi"), is(true));
+  }
+
+  @Test
+  public void shouldExposeDefaultToPreviewUiFalseWhenNoStoredPreferenceAndSystemDefaultFalse() {
+    PreviewUiStateContributor underTest = contributorWithPreviewDefault(false);
+
+    assertThat(underTest.getState().get("defaultToPreviewUi"), is(false));
+  }
+
+  @Test
+  public void shouldHonorUserExplicitClassicPreferenceEvenWhenSystemDefaultIsPreview() {
+    when(keyValueStore.getBoolean("preview.ui.default.enabled")).thenReturn(Optional.of(false));
+
+    PreviewUiStateContributor underTest = contributorWithPreviewDefault(true);
+
+    assertThat(underTest.getState().get("defaultToPreviewUi"), is(false));
+  }
+
+  @Test
+  public void shouldHonorUserExplicitPreviewPreferenceEvenWhenSystemDefaultIsClassic() {
+    when(keyValueStore.getBoolean("preview.ui.default.enabled")).thenReturn(Optional.of(true));
+
+    PreviewUiStateContributor underTest = contributorWithPreviewDefault(false);
+
+    assertThat(underTest.getState().get("defaultToPreviewUi"), is(true));
+  }
+
+  @Test
+  public void shouldExposeAnonymousEnabledTrueWhenNoStoredPreferenceAndSystemDefaultTrue() {
+    PreviewUiStateContributor underTest =
+        new PreviewUiStateContributor(keyValueStore, true, false, false, false, false, false);
+
+    assertThat(underTest.getState().get("anonymousEnabled"), is(true));
+  }
+
+  @Test
+  public void shouldExposeLoggedInEnabledTrueWhenNoStoredPreferenceAndSystemDefaultTrue() {
+    PreviewUiStateContributor underTest =
+        new PreviewUiStateContributor(keyValueStore, false, true, false, false, false, false);
+
+    assertThat(underTest.getState().get("loggedInEnabled"), is(true));
+  }
+
   private PreviewUiStateContributor contributor(final boolean auditEnabled) {
     return new PreviewUiStateContributor(keyValueStore, false, false, false, false, false, auditEnabled);
+  }
+
+  private PreviewUiStateContributor contributorWithPreviewDefault(final boolean defaultDefaultToPreview) {
+    return new PreviewUiStateContributor(keyValueStore, false, false, defaultDefaultToPreview, false, false, false);
   }
 }

@@ -30,7 +30,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -56,9 +56,9 @@ public class RepositorySettingsApiResource
       @Qualifier("default") final ApiRepositoryAdapter defaultAdapter,
       final List<ApiRepositoryAdapter> convertersByFormatList)
   {
-    this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
-    this.defaultAdapter = checkNotNull(defaultAdapter);
-    this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(convertersByFormatList));
+    this.authorizingRepositoryManager = requireNonNull(authorizingRepositoryManager);
+    this.defaultAdapter = requireNonNull(defaultAdapter);
+    this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(requireNonNull(convertersByFormatList));
   }
 
   @Override

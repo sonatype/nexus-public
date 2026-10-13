@@ -28,6 +28,7 @@ import { Search, X, Info } from 'lucide-react';
 import { ExtJS } from '../../../../interface/ExtJS';
 import { isVisible } from '../../../../interface/NavigationUtils';
 import { PageHeader } from '../../shared';
+import { useIsLicensedEdition } from '../../shared/hooks';
 import { SETTINGS_SECTIONS } from './settingsConfig';
 import SettingsSection from './SettingsSection';
 
@@ -46,7 +47,7 @@ import SettingsSection from './SettingsSection';
 export function SettingsHubPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const isCloud = ExtJS.state?.().getValue?.('isCloud', false) ?? false;
-  const isProEdition = ExtJS.isProEdition?.() ?? false;
+  const isLicensedEdition = useIsLicensedEdition();
   const user = ExtJS.useUser();
   const isAdmin = !!user?.administrator;
 
@@ -93,12 +94,11 @@ export function SettingsHubPage() {
     };
   }, []);
 
-  // ExtJS.state() is a singleton store that React cannot observe — edition values
-  // are read at startup and do not change during a session,
-  // so omitting them from the dependency array is intentional.
+  // isCloud/isLicensedEdition are stable ExtJS singleton reads; permissionsVersion is the reactive re-filter trigger.
   const filteredSections = useMemo(() => {
     let sections = SETTINGS_SECTIONS;
 
+    // Deployment axis (cloud): hide cloud-excluded cards in cloud
     if (isCloud) {
       sections = sections
         .filter((section) => !section.cloudExcluded)
@@ -107,21 +107,22 @@ export function SettingsHubPage() {
           cards: section.cards.filter((card) => !card.cloudExcluded),
         }))
         .filter((section) => section.cards.length > 0);
-    } else if (!isProEdition) {
-      sections = sections
-        .map((section) => ({
-          ...section,
-          cards: section.cards.filter((card) => !card.proOnly),
-        }))
-        .filter((section) => section.cards.length > 0);
-    }
-
-    // Cloud-only cards (e.g. Usage) are hidden on any self-hosted deployment.
-    if (!isCloud) {
+    } else {
+      // Deployment axis (self-hosted): hide cloud-only cards off cloud
       sections = sections
         .map((section) => ({
           ...section,
           cards: section.cards.filter((card) => !card.cloudOnly),
+        }))
+        .filter((section) => section.cards.length > 0);
+    }
+
+    // Edition axis (tier): hide pro-only cards on unlicensed editions, independent of deployment
+    if (!isLicensedEdition) {
+      sections = sections
+        .map((section) => ({
+          ...section,
+          cards: section.cards.filter((card) => !card.proOnly),
         }))
         .filter((section) => section.cards.length > 0);
     }
@@ -156,7 +157,7 @@ export function SettingsHubPage() {
         card.searchTerms?.some((term) => term.toLowerCase().includes(query))
       ),
     })).filter((section) => section.cards.length > 0);
-  }, [searchQuery, isCloud, isProEdition, isAdmin, permissionsVersion]);
+  }, [searchQuery, isCloud, isLicensedEdition, isAdmin, permissionsVersion]);
 
   const hasResults = filteredSections.length > 0;
 

@@ -16,10 +16,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.sonatype.nexus.swagger.SwaggerContributor;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.Components;

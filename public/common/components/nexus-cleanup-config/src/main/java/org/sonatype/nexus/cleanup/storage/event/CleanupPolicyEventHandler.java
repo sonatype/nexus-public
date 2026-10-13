@@ -29,8 +29,8 @@ import com.google.common.eventbus.Subscribe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.CLEANUP_ATTRIBUTES_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.CLEANUP_NAME_KEY;
 import org.springframework.stereotype.Component;
@@ -50,7 +50,7 @@ public class CleanupPolicyEventHandler
 
   @Autowired
   public CleanupPolicyEventHandler(final RepositoryManager repositoryManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Subscribe
@@ -85,7 +85,7 @@ public class CleanupPolicyEventHandler
   }
 
   private boolean shouldProcess(final CleanupPolicyEvent event) {
-    checkNotNull(event);
+    requireNonNull(event);
     return event.isLocal();
   }
 

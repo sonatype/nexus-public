@@ -120,7 +120,8 @@ export interface AssetXO {
   componentId?: string;
   blobRef?: string;
   createdBy?: string;
-  createdByIp?: string; // mapped from API but intentionally not rendered — privacy concern
+  createdByIp?: string; // IP the asset was uploaded from; rendered for Classic parity (NEXUS-54501)
+  containingRepositoryName?: string; // for group repos: the member repo that holds the asset
   // Format-specific attributes are serialized by @JsonAnyGetter in AssetXO
   [key: string]: unknown; // Allow dynamic format-specific attributes
   attributes?: Record<string, unknown>;
@@ -367,6 +368,13 @@ export interface UseRepositoryListResult {
   repositories: RepositoryReference[];
   /** Loading state */
   loading: boolean;
+  /**
+   * Whether at least one repository-list response has settled. Request lifecycle, not result
+   * count: it stays true once the first request finishes, including when that request — or any
+   * later one — matched nothing. Consumers use this to tell a first load from a refetch without
+   * inferring it from `repositories.length`, which cannot distinguish the two.
+   */
+  hasLoadedOnce: boolean;
   /** Error message */
   error: string | null;
   /** Current filter parameters */

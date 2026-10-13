@@ -15,7 +15,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { UIView } from '@uirouter/react';
-import { Permissions, CleanupPoliciesList, CleanupPoliciesForm, CapabilitiesList, CapabilitiesCreate, CapabilitiesEdit } from '@sonatype/nexus-ui-plugin';
+import {
+  Permissions,
+  CleanupPoliciesList,
+  CleanupPoliciesForm,
+  CapabilitiesList,
+  CapabilitiesCreate,
+  CapabilitiesEdit,
+  PRO_AND_COMMUNITY_EDITIONS,
+  PRO_FAMILY_EDITIONS,
+} from '@sonatype/nexus-ui-plugin';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
 import { lazyLoad } from './lazyLoad';
 
@@ -196,7 +205,7 @@ export const adminRoutes = [
       visibilityRequirements: {
         bundle: 'nexus-pro-datastore-plugin',
         permissions: ['nexus:*'],
-        editions: ['PRO', 'COMMUNITY'],
+        editions: PRO_AND_COMMUNITY_EDITIONS,
       },
       title: ADMIN.REPOSITORY.DATASTORE.TITLE,
     },
@@ -505,7 +514,7 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         permissions: [Permissions.USER_TOKENS_SETTINGS.READ],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
         licenseValid: [
           {
             key: 'usertoken',
@@ -525,14 +534,9 @@ export const adminRoutes = [
       visibilityRequirements: {
         requiresUser: true,
         permissions: [Permissions.SERVICE_ACCOUNTS.READ],
-        // Cloud uses Preview UI; classic UI is PRO-only. Backend allows PRO+CLOUD via @ConditionalOnEdition.
-        editions: ['PRO'],
-        statesEnabled: [
-          {
-            key: 'serviceAccountEnabled',
-            defaultValue: false,
-          },
-        ],
+        // Matches the backend gate on ServiceAccountServiceImpl:
+        // @ConditionalOnEdition(pro, proPlus, enterprise, cloud).
+        editions: PRO_FAMILY_EDITIONS,
       },
       title: ADMIN.SECURITY.SERVICE_ACCOUNT_TOKENS.TITLE,
     },
@@ -565,7 +569,7 @@ export const adminRoutes = [
       visibilityRequirements: {
         bundle: 'nexus-saml-plugin',
         permissions: ['nexus:*'],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
       title: ADMIN.SECURITY.SAML.TITLE,
     },
@@ -579,7 +583,7 @@ export const adminRoutes = [
       visibilityRequirements: {
         bundle: 'nexus-oauth2-plugin',
         permissions: ['nexus:*'],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
         statesEnabled: [
           {
             key: 'oauth2Available',
@@ -612,7 +616,7 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         permissions: [Permissions.ATLAS.CREATE],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
       title: ADMIN.SUPPORT.SUPPORTREQUEST.TITLE,
     },
@@ -951,12 +955,8 @@ export const adminRoutes = [
     },
     data: {
       visibilityRequirements: {
-        // Reached via cross-app deep-link from IQ on a fresh page load; the async permissions
-        // fetch (NEXUS-52583) is often still in-flight when the route check runs, so a
-        // permissions:[…] gate here would redirect to welcome before the real permission set
-        // arrives. Gate on requiresUser instead — server APIs and inner components still
-        // enforce nexus:settings:read, so non-admins get an empty page rather than a deep
-        // link that silently bounces.
+        // requiresUser only — permission enforcement is server-side (nexus:settings:read),
+        // and the page renders a permission-denied banner on 403 (CLM-49697).
         requiresUser: true,
         statesEnabled: [
           {

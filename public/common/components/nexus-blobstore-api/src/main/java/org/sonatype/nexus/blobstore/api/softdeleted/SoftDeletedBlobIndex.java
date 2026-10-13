@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.api.softdeleted;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -41,6 +42,13 @@ public interface SoftDeletedBlobIndex
    * @param blobId the {@link BlobId} of record to be deleted
    */
   void deleteRecord(BlobId blobId);
+
+  /**
+   * Bulk delete records identified by the provided {@link BlobId}s. Empty or null input is a no-op.
+   *
+   * @param blobIds collection of {@link BlobId}s to delete
+   */
+  void deleteRecords(Collection<BlobId> blobIds);
 
   /**
    * Deletes all records currently holding

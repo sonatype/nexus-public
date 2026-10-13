@@ -22,11 +22,14 @@ import {
   Grid,
   IconButton,
   Inset,
+  Link,
   Select,
   Spinner,
   Table,
   Text,
   TextField,
+  Tooltip,
+  VisuallyHidden,
 } from '@radix-ui/themes';
 import { AlertCircle, Download, Filter, RefreshCw, Search, X } from 'lucide-react';
 
@@ -37,7 +40,7 @@ import {
   type SortDirection,
 } from '../../../shared';
 import { MobileFilterDrawer } from '../unified/MobileFilterDrawer';
-import { exportToCsv } from '../../../shared';
+import { NO_DATE, exportToCsv, formatDateTime } from '../../../shared';
 
 interface GAVersionsTabProps {
   /** The current page's versions, already ordered and filtered server-side. */
@@ -54,13 +57,15 @@ interface GAVersionsTabProps {
   searchQuery: string;
   loading: boolean;
   error: string | null;
+  /** The version currently driving the header and other tabs; its row is highlighted. */
+  selectedVersion?: string | null;
+  /** Selecting a row makes that version the active one. When omitted, rows are read-only. */
+  onSelectVersion?: (version: string) => void;
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (size: number) => void;
   onSortChange: (sort: ComponentVersionSort, direction: 'asc' | 'desc') => void;
   onSearchQueryChange: (value: string) => void;
   onRetry: () => void;
-  selectedVersion: string | null;
-  onVersionSelect: (version: string) => void;
 }
 
 /**
@@ -82,13 +87,13 @@ export function GAVersionsTab({
   searchQuery,
   loading,
   error,
+  selectedVersion,
+  onSelectVersion,
   onPageChange,
   onItemsPerPageChange,
   onSortChange,
   onSearchQueryChange,
   onRetry,
-  selectedVersion,
-  onVersionSelect,
 }: GAVersionsTabProps) {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   // searchInput is local so the field stays responsive while onSearchQueryChange debounces.
@@ -363,63 +368,82 @@ export function GAVersionsTab({
                       </Table.Header>
 
                       <Table.Body>
-                        {versions.map((version) => (
+                        {versions.map((version) => {
+                          const isSelected = version.version === selectedVersion;
+                          const selectable = Boolean(onSelectVersion);
+                          return (
                           <Table.Row
                             key={version.version}
                             data-version={version.version}
-                            data-selected={selectedVersion === version.version}
+                            role={selectable ? 'button' : undefined}
+                            tabIndex={selectable ? 0 : undefined}
+                            aria-selected={selectable ? isSelected : undefined}
+                            onClick={onSelectVersion ? () => onSelectVersion(version.version) : undefined}
+                            onKeyDown={
+                              onSelectVersion
+                                ? (e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
+                                      onSelectVersion(version.version);
+                                    }
+                                  }
+                                : undefined
+                            }
                             style={{
-                              cursor: 'pointer',
-                              backgroundColor:
-                                selectedVersion === version.version
-                                  ? 'var(--blue-2)'
-                                  : undefined,
-                              borderLeft:
-                                selectedVersion === version.version
-                                  ? '3px solid var(--blue-9)'
-                                  : undefined,
-                              boxSizing: 'border-box',
+                              cursor: selectable ? 'pointer' : undefined,
+                              backgroundColor: isSelected ? 'var(--accent-a3)' : undefined,
                             }}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              onVersionSelect(version.version);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                onVersionSelect(version.version);
-                              }
-                            }}
-                            tabIndex={0}
-                            role="button"
-                            aria-pressed={selectedVersion === version.version}
                           >
                             <Table.Cell>
-                              <Text size="2" weight="medium" color="blue">
-                                {version.version}
-                              </Text>
+                              <Flex align="center" gap="2">
+                                {selectable ? (
+                                  // Link styling signals the version is clickable; the click still
+                                  // bubbles to the row's handler, so no separate onClick is needed.
+                                  //
+                                  // The color/underline are applied INLINE deliberately. Nexus One
+                                  // resets bare anchors with a high-specificity App.scss rule
+                                  // (`.nxrm-main-content > .radix-themes:not(:has(.nxrm-ext-js-wrapper))
+                                  // a:not([class*="x-"])` → color: inherit; text-decoration: none),
+                                  // which outranks Radix's own `.rt-Text[data-accent-color]` rule and
+                                  // leaves the Link black. Only an inline style beats that selector.
+                                  // `color="blue"` still stamps data-accent-color="blue", so
+                                  // var(--accent-11) resolves to blue even outside the blue Theme.
+                                  <Link
+                                    color="blue"
+                                    size="2"
+                                    weight="medium"
+                                    style={{ cursor: 'pointer', color: 'var(--accent-11)', textDecorationLine: 'underline' }}
+                                  >
+                                    {version.version}
+                                  </Link>
+                                ) : (
+                                  <Text size="2" weight="medium">
+                                    {version.version}
+                                  </Text>
+                                )}
+                                {isSelected && (
+                                  // Subdued gray, not accent green: the "Selected" state is a
+                                  // neutral marker, so it should read as quieter than — and visually
+                                  // distinct from — the colored repository-type badges.
+                                  <Badge color="gray" variant="soft" size="1" highContrast>
+                                    Selected
+                                  </Badge>
+                                )}
+                              </Flex>
                             </Table.Cell>
 
                             <Table.Cell justify="center">
-                              <Badge
-                                color="gray"
-                                variant="solid"
-                                radius="full"
-                                size="1"
-                              >
-                                {version.repositories.length} repo
-                                {version.repositories.length !== 1 ? 's' : ''}
-                              </Badge>
+                              <RepositoryCell repositories={version.repositories} />
                             </Table.Cell>
 
                             <Table.Cell>
                               <Text size="2" color="gray">
-                                {formatDate(version.lastUpdated)}
+                                {formatDateTime(version.lastUpdated)}
                               </Text>
                             </Table.Cell>
                           </Table.Row>
-                        ))}
+                          );
+                        })}
                       </Table.Body>
                     </Table.Root>
                   </Box>
@@ -452,16 +476,50 @@ export function GAVersionsTab({
   );
 }
 
-function formatDate(dateString: string): string {
-  try {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return dateString;
+/**
+ * How many repositories a version lives in, shown as a count badge (NEXUS-54430). The bare count is
+ * the at-a-glance value; the actual repository names are revealed in a tooltip on hover or keyboard
+ * focus rather than widening the column. The name list is capped at 10 so a version present in
+ * dozens of repositories does not produce an unreadable wall of text — any beyond the first 10
+ * collapse into a "+N more" suffix. No repositories renders as an em dash, the same empty marker the
+ * Last Updated column uses.
+ */
+const MAX_TOOLTIP_REPOSITORIES = 10;
+
+function RepositoryCell({ repositories }: { repositories: readonly string[] }) {
+  if (repositories.length === 0) {
+    return (
+      <Text size="2" color="gray">
+        {NO_DATE}
+      </Text>
+    );
   }
+
+  const count = repositories.length;
+  const countLabel = `${count} repo${count !== 1 ? 's' : ''}`;
+
+  const shownNames = repositories.slice(0, MAX_TOOLTIP_REPOSITORIES);
+  const remaining = count - shownNames.length;
+  const nameList =
+    remaining > 0 ? `${shownNames.join(', ')}, +${remaining} more` : shownNames.join(', ');
+
+  return (
+    <Tooltip content={nameList}>
+      {/* tabIndex makes the badge focusable so the tooltip is reachable by keyboard, not only by a
+          pointer hover; Radix's tooltip trigger does not make a non-interactive child focusable on
+          its own.
+
+          The names live in a VisuallyHidden span *inside* the badge rather than in an aria-label:
+          Radix's Badge is a role-generic <span>, and ARIA forbids naming role-generic elements, so
+          an aria-label there is unreliable for real assistive tech (even though RTL's getByLabelText
+          would honor it). Text content, hidden or not, is always announced — and works whether or
+          not the tooltip is open. */}
+      <Badge color="gray" variant="solid" radius="full" size="1" tabIndex={0}>
+        {countLabel}
+        <VisuallyHidden>: {nameList}</VisuallyHidden>
+      </Badge>
+    </Tooltip>
+  );
 }
 
 export default GAVersionsTab;

@@ -19,6 +19,7 @@ import org.sonatype.nexus.repository.MissingRepositoryException;
 import org.sonatype.nexus.repository.config.ConfigurationCreatedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationEvent;
+import org.sonatype.nexus.repository.config.ConfigurationSoftDeletedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationUpdatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
@@ -26,7 +27,7 @@ import com.google.common.eventbus.Subscribe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -42,7 +43,7 @@ public class ConfigurationSubscriber
 
   @Autowired
   public ConfigurationSubscriber(final RepositoryManager repositoryManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Subscribe
@@ -78,6 +79,11 @@ public class ConfigurationSubscriber
   @Subscribe
   public void on(final ConfigurationDeletedEvent event) {
     handleReplication(event, e -> repositoryManager.delete(e.getRepositoryName()));
+  }
+
+  @Subscribe
+  public void on(final ConfigurationSoftDeletedEvent event) {
+    handleReplication(event, e -> repositoryManager.softDelete(e.getRepositoryName(), "system:replication"));
   }
 
   private void handleReplication(final ConfigurationEvent event, final EventConsumer<ConfigurationEvent> consumer) {

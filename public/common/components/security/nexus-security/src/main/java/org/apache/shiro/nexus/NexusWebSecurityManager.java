@@ -36,7 +36,7 @@ import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptySet;
 import static org.sonatype.nexus.common.app.ManagedLifecycleManager.isShuttingDown;
 
@@ -56,7 +56,7 @@ public class NexusWebSecurityManager
       final Provider<CacheHelper> cacheHelper,
       @Value("${nexus.shiro.cache.defaultTimeToLive:2m}") final Provider<Time> defaultTimeToLive)
   {
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
     setCacheManager(new ShiroJCacheManagerAdapter(cacheHelper, defaultTimeToLive));
     // explicitly disable rememberMe
     this.setRememberMeManager(null);

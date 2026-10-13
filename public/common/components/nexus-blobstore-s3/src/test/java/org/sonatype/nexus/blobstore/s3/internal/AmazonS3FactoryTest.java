@@ -15,7 +15,6 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.crypto.secrets.Secret;
@@ -30,6 +29,7 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
 import software.amazon.awssdk.core.checksums.ResponseChecksumValidation;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.metrics.publishers.cloudwatch.CloudWatchMetricPublisher;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -105,6 +105,7 @@ public class AmazonS3FactoryTest
     when(s3ClientBuilder.region(any(Region.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.requestChecksumCalculation(any(RequestChecksumCalculation.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.responseChecksumValidation(any(ResponseChecksumValidation.class))).thenReturn(s3ClientBuilder);
+    when(s3ClientBuilder.overrideConfiguration(any(ClientOverrideConfiguration.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.build()).thenReturn(client);
 
     when(client.serviceClientConfiguration()).thenReturn(s3Serviceconfiguration);
@@ -204,7 +205,7 @@ public class AmazonS3FactoryTest
     amazonS3Factory.create(config);
 
     verify(cloudWatchMetricsPublisherBuilder).namespace(givenNamespace);
-    verify(s3ClientBuilder).overrideConfiguration(any(Consumer.class));
+    verify(s3ClientBuilder).overrideConfiguration(any(ClientOverrideConfiguration.class));
   }
 
   @Test

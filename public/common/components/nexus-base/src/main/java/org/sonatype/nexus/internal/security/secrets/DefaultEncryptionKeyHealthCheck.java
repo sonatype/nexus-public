@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A {@link HealthCheck} which fails if the administrator has not configured a key to use for encrypting secrets.
@@ -39,7 +39,7 @@ public class DefaultEncryptionKeyHealthCheck
 
   @Autowired
   public DefaultEncryptionKeyHealthCheck(final EncryptionKeyValidator encryptionKeyValidator) {
-    this.encryptionKeyValidator = checkNotNull(encryptionKeyValidator);
+    this.encryptionKeyValidator = requireNonNull(encryptionKeyValidator);
   }
 
   @Override

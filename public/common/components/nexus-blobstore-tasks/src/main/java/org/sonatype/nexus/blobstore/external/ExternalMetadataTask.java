@@ -44,7 +44,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
@@ -83,7 +83,7 @@ public class ExternalMetadataTask
       @Value("${external.metadata.repository.concurrencyLimit:5}") final int concurrencyLimit)
   {
     super(concurrencyLimit);
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
   }
 
   @Override

@@ -16,6 +16,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="${namespace}">
 
+  <!-- NEXUS-54969: explicit column list that deliberately EXCLUDES deleted_on/deleted_by. With soft-delete
+       disabled those columns may be absent, and listing them would let a SELECT's result shape drift. -->
+  <sql id="assetColumns">
+    asset_id, repository_id, path, kind, component_id, asset_blob_id,
+    last_downloaded, attributes, created, last_updated, asset_blob_size
+  </sql>
+
+  <sql id="componentColumns">
+    component_id, repository_id, namespace, name, kind, version,
+    normalized_version, attributes, created, last_updated, entity_version
+  </sql>
+
   <insert id="createSchema" databaseId="H2">
     --
     -- each format has an asset table which they can extend
@@ -32,6 +44,8 @@
       created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       last_updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       asset_blob_size BIGINT,
+      deleted_on      TIMESTAMP WITH TIME ZONE,
+      deleted_by      VARCHAR(200),
 
       CONSTRAINT pk_${format}_asset_id PRIMARY KEY (asset_id),
       CONSTRAINT uk_${format}_asset_repository_path UNIQUE (repository_id, path),
@@ -64,6 +78,8 @@
       created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       last_updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       asset_blob_size BIGINT,
+      deleted_on      TIMESTAMP WITH TIME ZONE,
+      deleted_by      VARCHAR(200),
 
       CONSTRAINT pk_${format}_asset_id PRIMARY KEY (asset_id),
       CONSTRAINT uk_${format}_asset_repository_path UNIQUE (repository_id, path),
@@ -104,6 +120,8 @@
   <resultMap id="assetResult" type="AssetData">
     <result property="assetBlobId" column="asset_blob_id"/>
     <result property="componentId" column="component_id" />
+    <!-- NEXUS-54969: deleted_on/deleted_by are no longer selected (soft-delete disabled; the columns may not
+         exist), so they are not mapped here. -->
     <association property="component" column="component_id" select="fetchComponent" fetchType="lazy"/>
     <association property="assetBlob" column="asset_blob_id" select="fetchAssetBlob" fetchType="lazy"/>
   </resultMap>
@@ -148,21 +166,25 @@
   </resultMap>
 
   <select id="fetchComponent" resultType="ComponentData">
-    SELECT * FROM ${format}_component WHERE component_id = #{component_id}
+    SELECT <include refid="componentColumns"/> FROM ${format}_component WHERE component_id = #{component_id}
   </select>
 
   <select id="fetchAssetBlob" resultType="AssetBlobData">
     SELECT * FROM ${format}_asset_blob WHERE asset_blob_id = #{asset_blob_id}
   </select>
 
+  <!-- Every read query that filters on deleted_on wraps the predicate in
+       <if test="softDeleteAvailable">...</if>. See ComponentDAO.xml for the rationale. -->
   <select id="countAssets" resultType="int">
     SELECT COUNT(*) FROM ${format}_asset WHERE repository_id = #{repositoryId}
+        <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
         <if test="kind != null"> AND kind = #{kind}</if>
         <if test="filter != null"> AND (${filter})</if>;
   </select>
 
   <select id="browseAssets" resultMap="assetResult">
-    SELECT * FROM ${format}_asset as asset WHERE repository_id = #{repositoryId}
+    SELECT <include refid="assetColumns"/> FROM ${format}_asset as asset WHERE repository_id = #{repositoryId}
+        <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
         <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
         <if test="kind != null"> AND kind = #{kind}</if>
         <if test="filter != null"> AND (${filter})</if>
@@ -177,10 +199,16 @@
     ensures the flag is atomically bound to each result row from this specific eager query.
   -->
   <select id="browseEagerAssetsInRepository" resultMap="eagerAssetResult">
-    SELECT A.*, C.*, B.*, true AS from_eager_query FROM ${format}_asset as A
+    <!-- B.* (asset_blob) is intentionally left as-is: that table has no soft-delete columns. -->
+    SELECT A.asset_id, A.repository_id, A.path, A.kind, A.component_id, A.asset_blob_id,
+           A.last_downloaded, A.attributes, A.created, A.last_updated, A.asset_blob_size,
+           C.component_id, C.repository_id, C.namespace, C.name, C.kind, C.version,
+           C.normalized_version, C.attributes, C.created, C.last_updated, C.entity_version,
+           B.*, true AS from_eager_query FROM ${format}_asset as A
       LEFT JOIN ${format}_component C ON C.component_id = A.component_id
       INNER JOIN ${format}_asset_blob B ON B.asset_blob_id = A.asset_blob_id
     WHERE A.repository_id = #{repositoryId}
+      <if test="softDeleteAvailable">AND A.deleted_on IS NULL</if>
       <if test="newerThan != null">AND B.blob_created > #{newerThan}</if>
       <if test="olderThan != null">AND B.blob_created &lt; #{olderThan}</if>
       <if test="continuationToken != null">
@@ -194,28 +222,44 @@
   </select>
 
   <select id="browseAssetsInRepositories" resultMap="assetResult">
-    SELECT * FROM ${format}_asset
+    SELECT <include refid="assetColumns"/> FROM ${format}_asset
     WHERE repository_id IN
       <foreach item="repositoryId" index="index" collection="repositoryIds"
                open="(" separator="," close=")">
         #{repositoryId}
       </foreach>
+      <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
       <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
       <if test="kind != null"> AND kind = #{kind}</if>
       <if test="filter != null"> AND (${filter})</if>
     ORDER BY asset_id LIMIT #{limit};
   </select>
 
-  <select id="browseComponentAssets" resultMap="assetResult" parameterType="ComponentData">
+  <select id="browseComponentAssets" resultMap="assetResult">
+    <!-- DAO method now takes @Param("component") + softDeleteAvailable. Rebind for backwards
+         compatibility with the choose branches below. -->
+    <bind name="componentId" value="component.componentId"/>
+    <bind name="repositoryId" value="component.repositoryId"/>
+    <bind name="namespace" value="component.namespace"/>
+    <bind name="name" value="component.name"/>
+    <bind name="version" value="component.version"/>
     <choose>
       <when test="componentId != null">
-        SELECT * FROM ${format}_asset WHERE component_id = #{componentId};
+        SELECT <include refid="assetColumns"/> FROM ${format}_asset WHERE component_id = #{componentId}
+          <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
       </when>
       <otherwise>
-        SELECT A.* FROM ${format}_asset A INNER JOIN ${format}_component C
-            USING (component_id) WHERE <include refid="componentCoordinateMatch"/>;
+        SELECT A.asset_id, A.repository_id, A.path, A.kind, A.component_id, A.asset_blob_id,
+               A.last_downloaded, A.attributes, A.created, A.last_updated, A.asset_blob_size
+        FROM ${format}_asset A INNER JOIN ${format}_component C
+            USING (component_id) WHERE <include refid="componentCoordinateMatch"/>
+            <if test="softDeleteAvailable">AND A.deleted_on IS NULL</if>;
       </otherwise>
     </choose>
+  </select>
+
+  <select id="browseAllComponentAssets" resultMap="assetResult" parameterType="ComponentData">
+    SELECT <include refid="assetColumns"/> FROM ${format}_asset WHERE component_id = #{componentId};
   </select>
 
   <sql id="regexList">
@@ -225,8 +269,12 @@
   </sql>
 
   <select id="findGreaterThanOrEqualToAddedToRepository" resultType="org.sonatype.nexus.repository.content.store.AssetInfoData">
-    SELECT * FROM ${format}_asset a INNER JOIN ${format}_asset_blob ab USING (asset_blob_id)
+    <!-- NEXUS-54969: a.* expanded to explicit columns (excluding deleted_on/deleted_by); ab.* unchanged. -->
+    SELECT a.asset_id, a.repository_id, a.path, a.kind, a.component_id, a.asset_blob_id,
+           a.last_downloaded, a.attributes, a.created, a.last_updated, a.asset_blob_size, ab.*
+    FROM ${format}_asset a INNER JOIN ${format}_asset_blob ab USING (asset_blob_id)
     WHERE a.repository_id = #{repositoryId}
+    <if test="softDeleteAvailable">AND a.deleted_on IS NULL</if>
     <if test="addedToRepository != null"> AND ab.added_to_repository >= #{addedToRepository}</if>
     <include refid="regexList"/>
     <if test="filter != null"> AND (${filter})</if>
@@ -234,34 +282,54 @@
   </select>
 
   <select id="findAddedToRepositoryWithinRange" resultType="org.sonatype.nexus.repository.content.store.AssetInfoData">
-    SELECT * FROM ${format}_asset a INNER JOIN ${format}_asset_blob ab USING (asset_blob_id)
+    <!-- NEXUS-54969: a.* expanded to explicit columns (excluding deleted_on/deleted_by); ab.* unchanged. -->
+    SELECT a.asset_id, a.repository_id, a.path, a.kind, a.component_id, a.asset_blob_id,
+           a.last_downloaded, a.attributes, a.created, a.last_updated, a.asset_blob_size, ab.*
+    FROM ${format}_asset a INNER JOIN ${format}_asset_blob ab USING (asset_blob_id)
     WHERE a.repository_id = #{repositoryId}
+    <if test="softDeleteAvailable">AND a.deleted_on IS NULL</if>
     AND ab.added_to_repository >= #{startAddedToRepository} AND ab.added_to_repository &lt; #{endAddedToRepository}
     <include refid="regexList"/>
     <if test="filter != null"> AND (${filter})</if>
     ORDER BY ab.added_to_repository LIMIT #{limit}
   </select>
 
+  <!-- ON CONFLICT fires unconditionally (no WHERE deleted_on IS NOT NULL guard) because readPath already
+       filters out soft-deleted rows, so createAsset is only called when:
+       (a) no row exists at this path (plain insert), or
+       (b) a soft-deleted row exists (conflict -> update revives it, clearing deleted_on/deleted_by).
+       The AFTER selectKey is required for upsert correctness: BEFORE+NEXTVAL would return a sequence-allocated
+       ID that doesn't match the existing row's ID when the ON CONFLICT update path fires. -->
   <insert id="createAsset" databaseId="PostgreSQL">
-    <selectKey keyProperty="asset.assetId" resultType="int" order="BEFORE">
-      SELECT NEXTVAL('${format}_asset_asset_id_seq');
-    </selectKey>
+    INSERT INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
+    attributes, asset_blob_size<if test="softDeleteAvailable">, deleted_on, deleted_by</if>)
+    VALUES (#{asset.repositoryId}, #{asset.path}, #{asset.kind}, #{asset.componentId}, #{asset.assetBlobId},
+    #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes}, #{asset.assetBlob.blobSize}<if test="softDeleteAvailable">, NULL, NULL</if>)
+    ON CONFLICT ON CONSTRAINT uk_${format}_asset_repository_path DO UPDATE SET
+      kind = #{asset.kind}, component_id = #{asset.componentId}, asset_blob_id = #{asset.assetBlobId},
+      last_updated = CURRENT_TIMESTAMP, last_downloaded = #{asset.lastDownloaded},
+      attributes = #{asset.attributes}, asset_blob_size = #{asset.assetBlob.blobSize}<if test="softDeleteAvailable">,
+      deleted_on = NULL, deleted_by = NULL</if>;
 
-    INSERT INTO ${format}_asset (asset_id, repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
-    attributes, asset_blob_size)
-    VALUES (#{asset.assetId}, #{asset.repositoryId}, #{asset.path}, #{asset.kind}, #{asset.componentId}, #{asset.assetBlobId},
-    #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes}, #{asset.assetBlob.blobSize});
+    <selectKey keyProperty="asset.assetId" resultType="int" order="AFTER">
+      SELECT asset_id FROM ${format}_asset WHERE repository_id = #{asset.repositoryId} AND path = #{asset.path}
+    </selectKey>
 
     <if test="updateComponentEntityVersion and asset.componentId != null">
       <include refid="componentEntityVersionIncrement"/> WHERE component_id = #{asset.componentId};
     </if>
   </insert>
 
-  <insert id="createAsset" useGeneratedKeys="true" keyProperty="asset.assetId" databaseId="H2">
-    INSERT INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
-    attributes, asset_blob_size)
+  <insert id="createAsset" databaseId="H2">
+    MERGE INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
+    attributes, asset_blob_size<if test="softDeleteAvailable">, deleted_on, deleted_by</if>)
+    KEY (repository_id, path)
     VALUES (#{asset.repositoryId}, #{asset.path}, #{asset.kind}, #{asset.componentId}, #{asset.assetBlobId},
-    #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes}, #{asset.assetBlob.blobSize});
+    #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes}, #{asset.assetBlob.blobSize}<if test="softDeleteAvailable">, NULL, NULL</if>);
+
+    <selectKey keyProperty="asset.assetId" resultType="int" order="AFTER">
+      SELECT asset_id FROM ${format}_asset WHERE repository_id = #{asset.repositoryId} AND path = #{asset.path}
+    </selectKey>
 
     <if test="updateComponentEntityVersion and asset.componentId != null">
       <include refid="componentEntityVersionIncrement"/> WHERE component_id = #{asset.componentId};
@@ -274,34 +342,46 @@
   </update>
 
   <select id="readAsset" resultMap="assetResult">
-    SELECT * FROM ${format}_asset WHERE <include refid="assetMatch"/>;
+    SELECT <include refid="assetColumns"/> FROM ${format}_asset WHERE <include refid="assetMatch"/>
+    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <select id="readPath" resultMap="assetResult">
-    SELECT * FROM ${format}_asset WHERE <include refid="assetPathMatch"/>;
+    SELECT <include refid="assetColumns"/> FROM ${format}_asset WHERE <include refid="assetPathMatch"/>
+    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <select id="readPathsFromRepository" resultMap="assetResult">
-    SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId} AND path IN
+    SELECT <include refid="assetColumns"/> FROM ${format}_asset WHERE repository_id = #{repositoryId}
+    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+    AND path IN
     <foreach item="path" index="index" collection="paths" open="(" separator="," close=")">
       #{path}
     </foreach>;
   </select>
 
   <select id="findByBlobRef" resultMap="assetResult">
-    SELECT A.* FROM ${format}_asset A INNER JOIN ${format}_asset_blob B USING (asset_blob_id)
-    WHERE repository_id = #{repositoryId} AND blob_ref = #{blobRef};
+    <!-- NEXUS-54969: A.* expanded to explicit asset columns (excluding deleted_on/deleted_by). -->
+    SELECT A.asset_id, A.repository_id, A.path, A.kind, A.component_id, A.asset_blob_id,
+           A.last_downloaded, A.attributes, A.created, A.last_updated, A.asset_blob_size
+    FROM ${format}_asset A INNER JOIN ${format}_asset_blob B USING (asset_blob_id)
+    WHERE A.repository_id = #{repositoryId}
+    <if test="softDeleteAvailable">AND A.deleted_on IS NULL</if>
+    AND blob_ref = #{blobRef};
   </select>
 
   <select id="findByComponentIds" resultMap="eagerAssetResult" parameterType="java.util.Set">
-    SELECT *
+    <!-- NEXUS-54969: A.* expanded to explicit asset columns (excluding deleted_on/deleted_by); the joined
+         asset_blob columns (B.*) are unchanged since that table has no soft-delete columns. -->
+    SELECT A.asset_id, A.repository_id, A.path, A.kind, A.component_id, A.asset_blob_id,
+           A.last_downloaded, A.attributes, A.created, A.last_updated, A.asset_blob_size, B.*
     FROM ${format}_asset A
     <choose>
       <when test="includeNullBlobs">
-        LEFT JOIN ${format}_asset_blob USING (asset_blob_id)
+        LEFT JOIN ${format}_asset_blob B USING (asset_blob_id)
       </when>
       <otherwise>
-        INNER JOIN ${format}_asset_blob USING (asset_blob_id)
+        INNER JOIN ${format}_asset_blob B USING (asset_blob_id)
       </otherwise>
     </choose>
     <if test="assetFilter != null">
@@ -325,6 +405,7 @@
     </if>
     <if test="assetFilter == null">
       <where>
+        <if test="softDeleteAvailable">A.deleted_on IS NULL AND</if>
         <foreach collection="componentIds" item="componentId" index="index" open="A.component_id IN (" close=")" separator=",">
           #{componentId}
         </foreach>
@@ -366,7 +447,12 @@
   </update>
 
   <select id="readAssetAttributes" resultType="NestedAttributesMap">
-    SELECT attributes FROM ${format}_asset WHERE <include refid="assetMatch"/>;
+    <!-- DAO takes @Param("asset") + softDeleteAvailable. Rebind for assetMatch. -->
+    <bind name="assetId" value="asset.assetId"/>
+    <bind name="repositoryId" value="asset.repositoryId"/>
+    <bind name="path" value="asset.path"/>
+    SELECT attributes FROM ${format}_asset WHERE <include refid="assetMatch"/>
+    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <update id="updateAssetAttributes">
@@ -427,6 +513,12 @@
     DELETE FROM ${format}_asset WHERE <include refid="assetMatch"/>;
   </delete>
 
+  <!-- Guarded purge for the manual Trash purge: deletes only if still soft-deleted, so a concurrent
+       restore (deleted_on cleared) between selection and delete leaves the now-live asset intact. -->
+  <delete id="purgeDeletedAsset" parameterType="AssetData">
+    DELETE FROM ${format}_asset WHERE <include refid="assetMatch"/> AND deleted_on IS NOT NULL;
+  </delete>
+
   <delete id="deleteAssets">
     -- No need to update entity_version for components because
     -- deleting all assets for repository, will
@@ -467,18 +559,28 @@
   <select id="selectNotRecentlyDownloaded" resultType="int">
     SELECT asset_id FROM ${format}_asset
         WHERE repository_id = #{repositoryId} AND component_id IS NULL
+        <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
         AND last_downloaded &lt;= CURRENT_TIMESTAMP - CAST(#{daysAgo} AS INT) * INTERVAL '1' DAY
         <if test="limit gt 0"> LIMIT #{limit}</if>;
   </select>
 
   <delete id="purgeSelectedAssets">
     -- Can't update component entity_version as these assets don't have a component
-    DELETE FROM ${format}_asset WHERE asset_id = ANY(#{assetIds});
-  </delete>
-
-  <delete id="purgeSelectedAssets" databaseId="PostgreSQL">
-    -- Can't update component entity_version as these assets don't have a component
-    DELETE FROM ${format}_asset WHERE asset_id = ANY(#{assetIds}::int[]);
+    DELETE FROM ${format}_asset WHERE
+    <choose>
+      <when test="_databaseId == 'PostgreSQL'">
+        asset_id = ANY(#{assetIds}::int[])
+      </when>
+      <otherwise>
+        <choose>
+          <when test="assetIds.length > 0">
+            asset_id IN
+            <foreach collection="assetIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+          </when>
+          <otherwise>1 = 0</otherwise>
+        </choose>
+      </otherwise>
+    </choose>;
   </delete>
 
   <update id="updateEntityVersion" parameterType="AssetData">
@@ -502,7 +604,9 @@
   <select id="selectComponentIds" resultType="int">
     SELECT DISTINCT component_id FROM ${format}_asset
     <where>
-      component_id IS NOT NULL AND
+      component_id IS NOT NULL
+      <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+      AND
       <foreach collection="assetIds" item="assetId" open="asset_id IN (" separator="," close=")">
         ${assetId}
       </foreach>
@@ -513,7 +617,9 @@
     SELECT EXISTS (SELECT 1
                    FROM ${format}_asset a
                           JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
-                   WHERE (ab.blob_ref = #{blobRef} OR ab.blob_ref in (SELECT blob_ref
+                   <where>
+                     <if test="softDeleteAvailable">a.deleted_on IS NULL AND</if>
+                     (ab.blob_ref = #{blobRef} OR ab.blob_ref in (SELECT blob_ref
                                                                          FROM ${format}_asset a
                                                                                 JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
                                                                                 JOIN ${format}_content_repository cr
@@ -521,11 +627,13 @@
                                                                                 JOIN repository
                                                                                      ON repository.id = cr.config_repository_id
                                                                          where a.path = #{path}
+                                                                           <if test="softDeleteAvailable">AND a.deleted_on IS NULL</if>
                                                                            AND repository.name = #{repository}))
-             AND (a.component_id IS NULL
-        OR a.component_id = (SELECT a.component_id
-                             FROM ${format}_component c
-                             WHERE a.component_id = c.component_id))
+                     AND (a.component_id IS NULL
+                       OR a.component_id = (SELECT a.component_id
+                                            FROM ${format}_component c
+                                            WHERE a.component_id = c.component_id))
+                   </where>
       );
 
   </select>
@@ -534,4 +642,117 @@
     UPDATE ${format}_component SET
       entity_version = COALESCE(entity_version, 1) + 1
   </sql>
+
+  <!-- Soft-delete: mark a single asset as deleted -->
+  <update id="softDeleteAsset">
+    UPDATE ${format}_asset
+    SET deleted_on = CURRENT_TIMESTAMP, deleted_by = #{deletedBy},
+        last_updated = CURRENT_TIMESTAMP
+    WHERE asset_id = #{assetId} AND deleted_on IS NULL;
+  </update>
+
+  <!-- Restore: clear deletion metadata from a single asset -->
+  <update id="undoSoftDeleteAsset">
+    UPDATE ${format}_asset
+    SET deleted_on = NULL, deleted_by = NULL,
+        last_updated = CURRENT_TIMESTAMP
+    WHERE asset_id = #{assetId} AND deleted_on IS NOT NULL;
+  </update>
+
+  <!-- Cascade soft-delete: mark all assets of a component as deleted -->
+  <update id="softDeleteComponentAssets">
+    UPDATE ${format}_asset
+    SET deleted_on = CURRENT_TIMESTAMP, deleted_by = #{deletedBy},
+        last_updated = CURRENT_TIMESTAMP
+    WHERE component_id = #{componentId} AND deleted_on IS NULL;
+  </update>
+
+  <!-- Re-stamp assets that were individually soft-deleted during a folder delete operation,
+       setting their deleted_on to CURRENT_TIMESTAMP (which is at or after the component's deleted_on)
+       so the Trash filter (A.deleted_on < C.deleted_on) hides them as cascade-deleted.
+       Only affects assets deleted at or after folderDeleteStarted (preserving true individual deletes). -->
+  <update id="reSoftDeleteComponentAssets">
+    UPDATE ${format}_asset
+    SET deleted_on = CURRENT_TIMESTAMP, deleted_by = #{deletedBy},
+        last_updated = CURRENT_TIMESTAMP
+    WHERE component_id = #{componentId}
+      AND deleted_on IS NOT NULL
+      AND deleted_on &gt;= #{folderDeleteStarted};
+  </update>
+
+  <!-- Align all soft-deleted assets of a component with the component's own deleted_on (NEXUS-53984). Used
+       when the last asset's deletion cascades the component: assets deleted earlier one-by-one all predate
+       the component's timestamp, which would otherwise leave them behind on restore and show them as
+       separate Trash entries. Setting them equal makes the whole set a single cascade group. -->
+  <update id="alignSoftDeletedAssetsWithComponent">
+    UPDATE ${format}_asset
+    SET deleted_on = (SELECT deleted_on FROM ${format}_component WHERE component_id = #{componentId}),
+        last_updated = CURRENT_TIMESTAMP
+    WHERE component_id = #{componentId} AND deleted_on IS NOT NULL
+      <!-- Guard: only align when the component is actually soft-deleted. If it was concurrently restored
+           (deleted_on cleared) between softDeleteComponent and this call, the subselect would be NULL and
+           this UPDATE would silently un-delete every soft-deleted asset of the component (NEXUS-51733). -->
+      AND (SELECT deleted_on FROM ${format}_component WHERE component_id = #{componentId}) IS NOT NULL;
+  </update>
+
+  <!-- Restore ALL soft-deleted assets of a component. Under the subsume-all model (approach A) a soft-deleted
+       component owns every one of its soft-deleted assets (including any deleted individually beforehand,
+       whose Trash row was already removed by removeByParentComponent on delete). Restoring the component must
+       therefore restore them all as one unit; a timestamp guard would strand the earlier-deleted assets in a
+       soft-deleted-but-invisible state (NEXUS-53984). -->
+  <update id="undoSoftDeleteComponentAssets">
+    UPDATE ${format}_asset
+    SET deleted_on = NULL, deleted_by = NULL,
+        last_updated = CURRENT_TIMESTAMP
+    WHERE component_id = #{componentId} AND deleted_on IS NOT NULL;
+  </update>
+
+  <!-- Read a single deleted asset by ID (ignoring non-deleted) -->
+  <select id="readDeletedAsset" resultMap="assetResult">
+    SELECT * FROM ${format}_asset WHERE asset_id = #{assetId} AND deleted_on IS NOT NULL;
+  </select>
+
+  <!-- Browse soft-deleted assets, hiding cascade-deleted assets but showing individually-deleted ones -->
+  <select id="browseDeletedAssets" resultMap="assetResult">
+    SELECT A.* FROM ${format}_asset A
+    LEFT JOIN ${format}_component C ON A.component_id = C.component_id
+    WHERE A.deleted_on IS NOT NULL
+    AND (A.component_id IS NULL OR C.deleted_on IS NULL OR A.deleted_on &lt; C.deleted_on)
+    <if test="repositoryId != null"> AND A.repository_id = #{repositoryId}</if>
+    <if test="continuationToken != null"> AND A.asset_id > #{continuationToken}</if>
+    ORDER BY A.asset_id ASC LIMIT #{limit};
+  </select>
+
+  <!-- Browse ALL soft-deleted assets (including cascade-deleted ones); used by format GC to protect
+       blobs/manifests still referenced by soft-deleted (restorable) content -->
+  <select id="browseAllDeletedAssets" resultMap="assetResult">
+    SELECT * FROM ${format}_asset
+    WHERE deleted_on IS NOT NULL
+    <if test="repositoryId != null"> AND repository_id = #{repositoryId}</if>
+    <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
+    ORDER BY asset_id ASC LIMIT #{limit};
+  </select>
+
+  <!-- Count soft-deleted assets, hiding cascade-deleted assets but showing individually-deleted ones -->
+  <select id="countDeletedAssets" resultType="int">
+    SELECT COUNT(*) FROM ${format}_asset A
+    LEFT JOIN ${format}_component C ON A.component_id = C.component_id
+    WHERE A.deleted_on IS NOT NULL
+    AND (A.component_id IS NULL OR C.deleted_on IS NULL OR A.deleted_on &lt; C.deleted_on)
+    <if test="repositoryId != null"> AND A.repository_id = #{repositoryId}</if>;
+  </select>
+
+  <!-- Purge: hard-delete assets that were soft-deleted before the cutoff -->
+  <delete id="purgeDeletedAssetsBefore">
+    DELETE FROM ${format}_asset
+    WHERE deleted_on IS NOT NULL AND deleted_on &lt; #{cutoff}
+    <if test="limit gt 0"> LIMIT #{limit}</if>;
+  </delete>
+
+  <delete id="purgeDeletedAssetsBefore" databaseId="PostgreSQL">
+    DELETE FROM ${format}_asset
+    WHERE <if test="limit gt 0"> asset_id IN (SELECT asset_id FROM ${format}_asset WHERE </if>
+    deleted_on IS NOT NULL AND deleted_on &lt; #{cutoff}
+    <if test="limit gt 0"> LIMIT #{limit})</if>;
+  </delete>
 </mapper>

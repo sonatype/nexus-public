@@ -46,12 +46,16 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.ConfigurationValidator;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
+import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryRestoredEvent;
+import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.rest.api.ProxyRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 
 import jakarta.inject.Provider;
+import jakarta.validation.ConstraintViolation;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,6 +79,8 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -333,6 +339,8 @@ public class BaseRepositoryManagerTest
         groupMemberMappingCache, validators, httpAuthenticationSecretEncoder, failedRepositoryTracker)
     {
     };
+
+    repositoryManager.setNodeAccess(nodeAccess);
 
     repositoryManager.start();
     return repositoryManager;
@@ -894,6 +902,49 @@ public class BaseRepositoryManagerTest
     verify(configurationStore).update(parentGroupConfiguration);
   }
 
+  /**
+   * NEXUS-54229: isBlobstoreUsed() must consult the shared configuration store (authoritative across HA nodes)
+   * rather than this node's in-memory repository cache, which can lag a peer node's create/delete and yield a
+   * false "in use" (blocking a legitimate blob store delete) or a false "not used".
+   */
+  @Test
+  public void testIsBlobstoreUsed_readsFromConfigurationStore() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    when(blobStoreManager.blobStoreUsageCount("used")).thenReturn(0L);
+    when(blobStoreManager.blobStoreUsageCount("unused")).thenReturn(0L);
+    when(configurationStore.countByBlobStore("used")).thenReturn(1);
+    when(configurationStore.countByBlobStore("unused")).thenReturn(0);
+
+    assertThat(repositoryManager.isBlobstoreUsed("used"), is(true));
+    assertThat(repositoryManager.isBlobstoreUsed("unused"), is(false));
+
+    // proves the authoritative store was consulted, not the in-memory browse() cache
+    verify(configurationStore).countByBlobStore("used");
+    verify(configurationStore).countByBlobStore("unused");
+  }
+
+  /**
+   * NEXUS-54229: blobstoresInUse() resolves the distinct set of referenced blob store names from the shared
+   * store in a single query, so the blob store list UI does not need an isBlobstoreUsed() call per blob store.
+   */
+  @Test
+  public void testBlobStoresInUse_readsDistinctNamesFromStore() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    Configuration usesA1 = mock(Configuration.class);
+    when(usesA1.getAttributes()).thenReturn(Map.of("storage", Map.of("blobStoreName", (Object) "bs-a")));
+    Configuration usesA2 = mock(Configuration.class);
+    when(usesA2.getAttributes()).thenReturn(Map.of("storage", Map.of("blobStoreName", (Object) "bs-a")));
+    Configuration usesB = mock(Configuration.class);
+    when(usesB.getAttributes()).thenReturn(Map.of("storage", Map.of("blobStoreName", (Object) "bs-b")));
+    Configuration group = mock(Configuration.class); // no storage.blobStoreName -- must be ignored
+    when(group.getAttributes()).thenReturn(Map.of("group", Map.of("memberNames", (Object) "x")));
+    when(configurationStore.list()).thenReturn(List.of(usesA1, usesA2, usesB, group));
+
+    assertThat(repositoryManager.blobstoresInUse(), equalTo(Set.of("bs-a", "bs-b")));
+  }
+
   @Test
   public void testStartup_groupMemberMappingCacheInitAlwaysCalled_withSkipDefaults() throws Exception {
     // Test NEXUS-50379: Ensure groupMemberMappingCache.init is called even when skipping default repositories
@@ -1194,6 +1245,552 @@ public class BaseRepositoryManagerTest
     verify(failedRepositoryTracker).clearFailure(failedRepoName);
   }
 
+  @Test
+  public void testRestoreRepositories_continuesWhenOneRepositoryFailsToInitialize() throws Exception {
+    // Test NEXUS-51389: Ensure repository restore continues when one repository fails during initialization
+    when(configurationStore.list())
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration));
+
+    // Make apache-snapshots fail during init
+    doThrow(new RuntimeException("Invalid secret - repository cannot initialize"))
+        .when(apacheSnapshotsRepository)
+        .init(apacheSnapshotsConfiguration);
+
+    repositoryManager = initializeAndStartRepositoryManager(false);
+
+    // Verify: maven-central and third-party were initialized and started successfully
+    verify(mavenCentralRepository).init(mavenCentralConfiguration);
+    verify(mavenCentralRepository).start();
+    verify(thirdPartyRepository).init(thirdPartyConfiguration);
+    verify(thirdPartyRepository).start();
+
+    // Verify: apache-snapshots init was attempted but failed
+    verify(apacheSnapshotsRepository).init(apacheSnapshotsConfiguration);
+    // apache-snapshots should NOT have been started or tracked
+    verify(apacheSnapshotsRepository, never()).start();
+
+    // Verify: Only successful repositories are browsable (2 out of 3)
+    assertThat(size(repositoryManager.browse()), equalTo(2));
+  }
+
+  @Test
+  public void testRestoreRepositories_skipsRepositoryWithUnavailableRecipe() throws Exception {
+    // Test NEXUS-51389: Ensure repositories with unavailable recipes are skipped gracefully
+    Configuration unavailableRecipeConfig = mock(Configuration.class);
+    when(unavailableRecipeConfig.getRecipeName()).thenReturn("unavailable-recipe");
+    when(unavailableRecipeConfig.getRepositoryName()).thenReturn("unavailable-repo");
+
+    when(configurationStore.list())
+        .thenReturn(asList(mavenCentralConfiguration, unavailableRecipeConfig));
+
+    repositoryManager = initializeAndStartRepositoryManager(false);
+
+    // Verify: Only maven-central was initialized (unavailable recipe was skipped)
+    verify(mavenCentralRepository).init(mavenCentralConfiguration);
+    verify(mavenCentralRepository).start();
+
+    // Verify: Only 1 repository loaded (unavailable recipe was skipped)
+    assertThat(size(repositoryManager.browse()), equalTo(1));
+  }
+
+  @Test
+  public void testStartRepositories_continuesWhenOneRepositoryFailsToStart() throws Exception {
+    // Test NEXUS-51389: Ensure repository start continues when one repository fails during start()
+    when(configurationStore.list())
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration));
+
+    // Make apache-snapshots fail during start (after successful init)
+    doThrow(new RuntimeException("Failed to start repository - invalid configuration"))
+        .when(apacheSnapshotsRepository)
+        .start();
+
+    repositoryManager = initializeAndStartRepositoryManager(false);
+
+    // Verify: All three repositories were initialized
+    verify(mavenCentralRepository).init(mavenCentralConfiguration);
+    verify(apacheSnapshotsRepository).init(apacheSnapshotsConfiguration);
+    verify(thirdPartyRepository).init(thirdPartyConfiguration);
+
+    // Verify: All three start() calls were attempted
+    verify(mavenCentralRepository).start();
+    verify(apacheSnapshotsRepository).start();
+    verify(thirdPartyRepository).start();
+
+    // Verify: All three repositories are tracked (even failed ones remain in STOPPED/FAILED state)
+    assertThat(size(repositoryManager.browse()), equalTo(3));
+  }
+
+  @Test
+  public void testStartRepositories_postsEventsOnlyForSuccessfulStarts() throws Exception {
+    // Test NEXUS-51389: Verify RepositoryRestoredEvent is only posted for successfully started repositories
+    when(configurationStore.list())
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration));
+
+    // Make apache-snapshots fail during start
+    doThrow(new RuntimeException("Start failed"))
+        .when(apacheSnapshotsRepository)
+        .start();
+
+    repositoryManager = initializeAndStartRepositoryManager(false);
+
+    // Verify: Events posted (2 RepositoryLoadedEvent + 1 RepositoryRestoredEvent = 3 total)
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+    verify(eventManager, times(3)).post(eventCaptor.capture());
+
+    List<Object> events = eventCaptor.getAllValues();
+    long restoredEvents = events.stream()
+        .filter(e -> e.getClass().getSimpleName().equals("RepositoryRestoredEvent"))
+        .count();
+
+    // Only one RepositoryRestoredEvent should be posted (for maven-central, not apache-snapshots)
+    assertThat(restoredEvents, equalTo(1L));
+  }
+
+  @Test
+  public void testRestoreRepositories_allFailuresDontStopNexus() throws Exception {
+    // Test NEXUS-51389: Even if all repositories fail, Nexus startup should continue
+    when(configurationStore.list())
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration));
+
+    // Make both repositories fail during init
+    doThrow(new RuntimeException("Init failed - repository 1"))
+        .when(mavenCentralRepository)
+        .init(mavenCentralConfiguration);
+    doThrow(new RuntimeException("Init failed - repository 2"))
+        .when(apacheSnapshotsRepository)
+        .init(apacheSnapshotsConfiguration);
+
+    // This should NOT throw an exception - Nexus should start successfully
+    repositoryManager = initializeAndStartRepositoryManager(false);
+
+    // Verify: Both init attempts were made
+    verify(mavenCentralRepository).init(mavenCentralConfiguration);
+    verify(apacheSnapshotsRepository).init(apacheSnapshotsConfiguration);
+
+    // Verify: Neither repository was started
+    verify(mavenCentralRepository, never()).start();
+    verify(apacheSnapshotsRepository, never()).start();
+
+    // Verify: No repositories are browsable (all failed)
+    assertThat(size(repositoryManager.browse()), equalTo(0));
+
+    // Verify: groupMemberMappingCache.init was still called (startup completes)
+    verify(groupMemberMappingCache).init(repositoryManager);
+  }
+
+  @Test
+  public void testRestoreRepositories_mixOfSuccessAndFailure() throws Exception {
+    // Test NEXUS-51389: Comprehensive test with mix of success, init failure, and start failure
+    Configuration fourthRepoConfig = mock(Configuration.class);
+    Repository fourthRepository = mock(Repository.class);
+    when(fourthRepoConfig.getRecipeName()).thenReturn(recipeName);
+    when(fourthRepoConfig.getRepositoryName()).thenReturn("fourth-repo");
+    when(fourthRepoConfig.copy()).thenReturn(fourthRepoConfig);
+    when(fourthRepository.getName()).thenReturn("fourth-repo");
+    when(fourthRepository.getConfiguration()).thenReturn(fourthRepoConfig);
+    when(fourthRepository.optionalFacet(any(Class.class))).thenReturn(Optional.empty());
+
+    Map<String, Map<String, Object>> fourthAttr = new HashMap<>();
+    fourthAttr.put("storage", Map.of("blobStoreName", "default"));
+    when(fourthRepoConfig.getAttributes()).thenReturn(fourthAttr);
+
+    when(configurationStore.list())
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration,
+            thirdPartyConfiguration, fourthRepoConfig));
+
+    when(repositoryFactory.create(type, format))
+        .thenReturn(mavenCentralRepository, apacheSnapshotsRepository, thirdPartyRepository, fourthRepository);
+
+    // maven-central: success
+    // apache-snapshots: fails during init
+    doThrow(new RuntimeException("Init failure")).when(apacheSnapshotsRepository).init(apacheSnapshotsConfiguration);
+    // third-party: success during init, fails during start
+    doThrow(new RuntimeException("Start failure")).when(thirdPartyRepository).start();
+    // fourth-repo: success
+
+    repositoryManager = initializeAndStartRepositoryManager(false);
+
+    // Verify: All init attempts were made
+    verify(mavenCentralRepository).init(mavenCentralConfiguration);
+    verify(apacheSnapshotsRepository).init(apacheSnapshotsConfiguration);
+    verify(thirdPartyRepository).init(thirdPartyConfiguration);
+    verify(fourthRepository).init(fourthRepoConfig);
+
+    // Verify: Only successfully initialized repos had start() called
+    verify(mavenCentralRepository).start();
+    verify(apacheSnapshotsRepository, never()).start(); // Failed init, no start attempt
+    verify(thirdPartyRepository).start(); // Init succeeded, start attempted (but failed)
+    verify(fourthRepository).start();
+
+    // Verify: Three repositories are browsable (apache-snapshots failed init, not tracked)
+    assertThat(size(repositoryManager.browse()), equalTo(3));
+  }
+
+  // ---- Soft-delete / restore / hard-delete tests ----
+
+  @Test
+  public void testSoftDelete_stopsUntracksAndMarksInDb() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+
+    verify(mavenCentralRepository).stopSafe();
+    verify(mavenCentralRepository).destroy();
+    verify(configurationStore).softDelete(MAVEN_CENTRAL_NAME, "testuser");
+
+    // Verify untracked: browse should no longer contain the repo
+    assertThat(size(repositoryManager.browse()), equalTo(7));
+
+    // Verify deletion event posted
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+    verify(eventManager, times(18)).post(eventCaptor.capture());
+    long deletedEvents = eventCaptor.getAllValues()
+        .stream()
+        .filter(e -> e instanceof RepositoryDeletedEvent)
+        .count();
+    assertThat(deletedEvents, equalTo(1L));
+  }
+
+  @Test
+  public void testSoftDelete_removesFromGroups() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    repositoryManager.softDelete(APACHE_SNAPSHOTS_NAME, "admin");
+
+    // apache-snapshots is a member of group, parentGroup, cycleA, cycleB
+    verify(configurationStore).update(groupConfiguration);
+    verify(configurationStore).update(parentGroupConfiguration);
+  }
+
+  @Test(expected = MissingRepositoryException.class)
+  public void testSoftDelete_throwsForMissingRepository() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+    repositoryManager.softDelete("non-existent", "testuser");
+  }
+
+  @Test
+  public void testRestoreFromSoftDelete_createsTracksAndStarts() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    // First soft-delete maven-central
+    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    org.mockito.Mockito.clearInvocations(eventManager, configurationStore, repositoryFactory);
+
+    // Setup for restore: store.readByNames returns the config, factory creates a new repo
+    Repository restoredRepo = mock(Repository.class);
+    when(restoredRepo.getName()).thenReturn(MAVEN_CENTRAL_NAME);
+    when(restoredRepo.getConfiguration()).thenReturn(mavenCentralConfiguration);
+    when(restoredRepo.optionalFacet(any(Class.class))).thenReturn(Optional.empty());
+
+    when(configurationStore.readByNames(Set.of(MAVEN_CENTRAL_NAME)))
+        .thenReturn(Set.of(mavenCentralConfiguration));
+
+    when(repositoryFactory.create(type, format)).thenReturn(restoredRepo);
+
+    Repository result = repositoryManager.restoreFromSoftDelete(MAVEN_CENTRAL_NAME);
+
+    verify(configurationStore).undoSoftDelete(MAVEN_CENTRAL_NAME);
+    verify(restoredRepo).init(mavenCentralConfiguration);
+    verify(restoredRepo).start();
+
+    // Verify event posted
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+    verify(eventManager).post(eventCaptor.capture());
+    assertThat(eventCaptor.getValue().getClass().getSimpleName(), equalTo("RepositoryCreatedEvent"));
+
+    // Verify repo is now browsable again
+    assertThat(repositoryManager.get(MAVEN_CENTRAL_NAME), is(restoredRepo));
+  }
+
+  @Test(expected = MissingRepositoryException.class)
+  public void testRestoreFromSoftDelete_throwsWhenConfigNotFound() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+
+    when(configurationStore.readByNames(Set.of("missing")))
+        .thenReturn(Set.of());
+
+    repositoryManager.restoreFromSoftDelete("missing");
+  }
+
+  @Test
+  public void testHardDelete_runsContentCleanupAndRemovesConfig() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+
+    Configuration deletedConfig = mock(Configuration.class);
+    when(deletedConfig.getRecipeName()).thenReturn(recipeName);
+    when(deletedConfig.getRepositoryName()).thenReturn("deleted-repo");
+    Map<String, Map<String, Object>> attrs = new HashMap<>();
+    attrs.put("storage", Map.of("blobStoreName", "default"));
+    when(deletedConfig.getAttributes()).thenReturn(attrs);
+
+    when(configurationStore.readDeleted("deleted-repo")).thenReturn(deletedConfig);
+
+    Repository tempRepo = mock(Repository.class);
+    when(tempRepo.getName()).thenReturn("deleted-repo");
+    when(tempRepo.getConfiguration()).thenReturn(deletedConfig);
+    when(tempRepo.optionalFacet(any(Class.class))).thenReturn(Optional.empty());
+    when(repositoryFactory.create(type, format)).thenReturn(tempRepo);
+
+    repositoryManager.hardDelete("deleted-repo");
+
+    // Verify temporary repo was created, started, stopped, delete called for content cleanup, then destroyed
+    verify(tempRepo).init(deletedConfig);
+    verify(tempRepo).start();
+    verify(tempRepo).stop();
+    verify(tempRepo).delete();
+    verify(tempRepo).destroy();
+
+    // Verify secrets removed and config permanently deleted
+    verify(httpAuthenticationSecretEncoder).removeSecret(attrs);
+    verify(configurationStore).hardDelete("deleted-repo");
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testHardDelete_throwsWhenNotSoftDeleted() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+
+    when(configurationStore.readDeleted("not-deleted")).thenReturn(null);
+
+    repositoryManager.hardDelete("not-deleted");
+  }
+
+  @Test
+  public void testHardDelete_continuesEvenIfContentCleanupFails() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+
+    Configuration deletedConfig = mock(Configuration.class);
+    when(deletedConfig.getRecipeName()).thenReturn(recipeName);
+    when(deletedConfig.getRepositoryName()).thenReturn("deleted-repo");
+    Map<String, Map<String, Object>> attrs = new HashMap<>();
+    attrs.put("storage", Map.of("blobStoreName", "default"));
+    when(deletedConfig.getAttributes()).thenReturn(attrs);
+
+    when(configurationStore.readDeleted("deleted-repo")).thenReturn(deletedConfig);
+
+    Repository tempRepo = mock(Repository.class);
+    when(tempRepo.getName()).thenReturn("deleted-repo");
+    when(tempRepo.getConfiguration()).thenReturn(deletedConfig);
+    when(tempRepo.optionalFacet(any(Class.class))).thenReturn(Optional.empty());
+    when(repositoryFactory.create(type, format)).thenReturn(tempRepo);
+
+    // Content cleanup fails
+    doThrow(new RuntimeException("Content cleanup failed")).when(tempRepo).delete();
+
+    repositoryManager.hardDelete("deleted-repo");
+
+    // When delete() throws, destroy() is called once from the catch block
+    verify(tempRepo).destroy();
+
+    // Verify config was still permanently deleted despite content cleanup failure
+    verify(httpAuthenticationSecretEncoder).removeSecret(attrs);
+    verify(configurationStore).hardDelete("deleted-repo");
+  }
+
+  @Test
+  public void testSoftDelete_cleansSearchIndex() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    SearchIndexFacet searchFacet = mock(SearchIndexFacet.class);
+    when(mavenCentralRepository.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(searchFacet));
+
+    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+
+    verify(searchFacet).deleteIndex();
+    verify(mavenCentralRepository).stopSafe();
+    verify(mavenCentralRepository).destroy();
+  }
+
+  @Test
+  public void testSoftDelete_continuesWhenSearchCleanupFails() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    SearchIndexFacet searchFacet = mock(SearchIndexFacet.class);
+    when(mavenCentralRepository.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(searchFacet));
+    doThrow(new RuntimeException("Search cleanup failed")).when(searchFacet).deleteIndex();
+
+    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+
+    verify(searchFacet).deleteIndex();
+    verify(mavenCentralRepository).destroy();
+    verify(configurationStore).softDelete(MAVEN_CENTRAL_NAME, "testuser");
+  }
+
+  @Test
+  public void testSoftDelete_worksWithoutSearchFacet() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    // Default mock returns Optional.empty() for optionalFacet
+
+    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+
+    verify(mavenCentralRepository).stopSafe();
+    verify(mavenCentralRepository).destroy();
+    verify(configurationStore).softDelete(MAVEN_CENTRAL_NAME, "testuser");
+  }
+
+  @Test
+  public void testRestoreFromSoftDelete_rebuildsSearchIndex() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    org.mockito.Mockito.clearInvocations(eventManager, configurationStore, repositoryFactory);
+
+    Repository restoredRepo = mock(Repository.class);
+    when(restoredRepo.getName()).thenReturn(MAVEN_CENTRAL_NAME);
+    when(restoredRepo.getConfiguration()).thenReturn(mavenCentralConfiguration);
+
+    SearchIndexFacet searchFacet = mock(SearchIndexFacet.class);
+    when(restoredRepo.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(searchFacet));
+    when(restoredRepo.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
+
+    when(configurationStore.readByNames(Set.of(MAVEN_CENTRAL_NAME)))
+        .thenReturn(Set.of(mavenCentralConfiguration));
+    when(repositoryFactory.create(type, format)).thenReturn(restoredRepo);
+
+    repositoryManager.restoreFromSoftDelete(MAVEN_CENTRAL_NAME);
+
+    verify(restoredRepo).start();
+    verify(searchFacet).rebuildIndex();
+  }
+
+  @Test
+  public void testRestoreFromSoftDelete_continuesWhenSearchRebuildFails() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    org.mockito.Mockito.clearInvocations(eventManager, configurationStore, repositoryFactory);
+
+    Repository restoredRepo = mock(Repository.class);
+    when(restoredRepo.getName()).thenReturn(MAVEN_CENTRAL_NAME);
+    when(restoredRepo.getConfiguration()).thenReturn(mavenCentralConfiguration);
+
+    SearchIndexFacet searchFacet = mock(SearchIndexFacet.class);
+    when(restoredRepo.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(searchFacet));
+    when(restoredRepo.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
+    doThrow(new RuntimeException("Rebuild failed")).when(searchFacet).rebuildIndex();
+
+    when(configurationStore.readByNames(Set.of(MAVEN_CENTRAL_NAME)))
+        .thenReturn(Set.of(mavenCentralConfiguration));
+    when(repositoryFactory.create(type, format)).thenReturn(restoredRepo);
+
+    Repository result = repositoryManager.restoreFromSoftDelete(MAVEN_CENTRAL_NAME);
+
+    verify(searchFacet).rebuildIndex();
+    assertThat(result, is(restoredRepo));
+    assertThat(repositoryManager.get(MAVEN_CENTRAL_NAME), is(restoredRepo));
+  }
+
+  /**
+   * Security: ConfigurationValidators must run on default-repository provisioning so that
+   * edition-specific guards (e.g. OciCloudEditionConfigurationValidator) cannot be bypassed
+   * by a DefaultRepositoriesContributor that supplies an illegal configuration. Per-repo
+   * rejections are tracked rather than aborting the entire provisioning loop, so a single
+   * misconfigured contributor cannot prevent the rest of the manager from booting.
+   */
+  @Test
+  public void testProvisionDefaultRepositories_runsConfigurationValidators() throws Exception {
+    // Validator that always rejects to prove provisionDefaultRepositories invokes it.
+    ConfigurationValidator alwaysRejects = config -> {
+      ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+      return violation;
+    };
+
+    // Empty store triggers provisionDefaultRepositories on start
+    when(configurationStore.list()).thenReturn(List.of());
+
+    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(alwaysRejects));
+
+    // All 8 contributor-supplied defaults are tracked rather than propagated. The exact count
+    // assertion proves the provisioning loop did NOT abort on the first failure — a regression
+    // to the prior fail-fast behavior would surface here as a count of 1.
+    verify(failedRepositoryTracker, times(8)).recordFailure(any(String.class), any(Exception.class));
+    verify(configurationStore, never()).create(any(Configuration.class));
+  }
+
+  /**
+   * Security: a single misconfigured DefaultRepositoriesContributor must not prevent other
+   * default repositories (or the rest of the manager) from starting. Verifies the per-repo
+   * fail-tracking soften behavior added under the second-pass review (NEXUS-42721).
+   */
+  @Test
+  public void testProvisionDefaultRepositories_oneBadContributorDoesNotBlockOthers() throws Exception {
+    // Validator that rejects exactly one default and allows the rest.
+    ConfigurationValidator selectiveValidator = config -> {
+      if (config != null && MAVEN_CENTRAL_NAME.equals(config.getRepositoryName())) {
+        return mock(ConstraintViolation.class);
+      }
+      return null;
+    };
+
+    // Empty store triggers provisionDefaultRepositories on start
+    when(configurationStore.list()).thenReturn(List.of());
+
+    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(selectiveValidator));
+
+    // mavenCentral was rejected and tracked.
+    verify(failedRepositoryTracker).recordFailure(eq(MAVEN_CENTRAL_NAME), any(Exception.class));
+    // The other 7 defaults still got created — provisioning loop did not abort on the rejection.
+    // Verifying both an early-list config (apacheSnapshots) AND a late-list config
+    // (ungroupedRepoConfiguration) proves the loop ran to completion, not just past the
+    // rejection point.
+    verify(configurationStore).create(apacheSnapshotsConfiguration);
+    verify(configurationStore).create(thirdPartyConfiguration);
+    verify(configurationStore).create(ungroupedRepoConfiguration);
+    verify(configurationStore, times(7)).create(any(Configuration.class));
+    verify(configurationStore, never()).create(mavenCentralConfiguration);
+  }
+
+  @Test
+  public void testProvisionDefaultRepositories_passesWhenValidatorAllows() throws Exception {
+    // Validator that returns null (no violation) for every configuration.
+    ConfigurationValidator allowsAll = config -> null;
+
+    // Empty initial store, then return configs after provisioning
+    when(configurationStore.list())
+        .thenReturn(List.of())
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
+            groupConfiguration, parentGroupConfiguration, cycleGroupAConfiguration, cycleGroupBConfiguration,
+            ungroupedRepoConfiguration));
+
+    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(allowsAll));
+
+    // All defaults were created since validator allowed them
+    verify(configurationStore).create(mavenCentralConfiguration);
+    verify(configurationStore).create(apacheSnapshotsConfiguration);
+    verify(configurationStore).create(thirdPartyConfiguration);
+  }
+
+  /**
+   * Security: ConfigurationValidators must run on restore so a backup taken on a self-hosted
+   * node cannot smuggle a now-illegal configuration onto a cloud node. A failure here is
+   * caught by the per-repository try/catch block and tracked as a failed repository, while
+   * other repositories continue to start.
+   */
+  @Test
+  public void testRestoreRepositories_validatorFailureIsTrackedNotPropagated() throws Exception {
+    // Validator that rejects exactly one specific repository (mavenCentral) and allows others.
+    ConfigurationValidator selectiveValidator = config -> {
+      if (config != null && MAVEN_CENTRAL_NAME.equals(config.getRepositoryName())) {
+        return mock(ConstraintViolation.class);
+      }
+      return null;
+    };
+
+    // defaultsConfigured=true: store returns the existing repos and restore is invoked
+    when(configurationStore.list())
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
+            groupConfiguration, parentGroupConfiguration, cycleGroupAConfiguration, cycleGroupBConfiguration,
+            ungroupedRepoConfiguration));
+
+    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(selectiveValidator));
+
+    // Verify mavenCentral was tracked as a failure (validation rejected it before newRepository was invoked).
+    // This is the security-critical assertion: the rejected config is captured by the per-repo
+    // try/catch in restoreRepositories and surfaced via FailedRepositoryTracker rather than
+    // silently allowed through.
+    verify(failedRepositoryTracker).recordFailure(eq(MAVEN_CENTRAL_NAME), any(Exception.class));
+  }
+
   // -----------------------------------------------------------------------------------------------
   // NEXUS-53393 — firewall preservation on partial update.
   //
@@ -1258,6 +1855,66 @@ public class BaseRepositoryManagerTest
 
     Map<String, Map<String, Object>> attrs = target.getAttributes();
     assertThat(attrs == null || !attrs.containsKey("firewall"), is(true));
+  }
+
+  /**
+   * NEXUS-48685 regression: the UI plants {@code firewall: {mode: null}} in the persisted
+   * config when a repository is created with the XET feature flag off (or before the flag
+   * was introduced). {@link java.util.concurrent.ConcurrentHashMap} — which backs
+   * {@link ConfigurationData#attributes(String)} sub-maps — throws
+   * {@link NullPointerException} on {@code putAll} whenever any value is {@code null}. A
+   * map whose only entry is {@code null}-valued carries no actionable configuration; the
+   * helper must treat it the same as an absent/empty firewall block and return early.
+   */
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_existingHasNullModeOnly_leavesTargetAlone() {
+    ConfigurationData existing = new ConfigurationData();
+    Map<String, Map<String, Object>> existingAttrs = new HashMap<>();
+    Map<String, Object> firewall = new HashMap<>();
+    firewall.put("mode", null);
+    existingAttrs.put("firewall", firewall);
+    existing.setAttributes(existingAttrs);
+
+    Configuration target = configWithoutFirewall();
+
+    // Must not throw NullPointerException (the pre-fix bug) and must not synthesise an
+    // empty / null-valued firewall block in the target.
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    Map<String, Map<String, Object>> attrs = target.getAttributes();
+    assertThat(
+        "target must NOT gain a firewall block when existing only has null mode",
+        attrs == null || !attrs.containsKey("firewall"), is(true));
+  }
+
+  /**
+   * NEXUS-48685: when the existing firewall map contains a mix of non-null and null values
+   * (e.g. {@code {mode=QUARANTINE, unknownKey=null}}) the helper must preserve the
+   * non-null entries and silently drop the null ones. {@link java.util.concurrent.ConcurrentHashMap}
+   * rejects null values so a verbatim {@code putAll} would NPE; the null-filtering forEach
+   * must copy only the non-null entries.
+   */
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_existingHasMixedNullAndNonNull_preservesNonNullEntries() {
+    ConfigurationData existing = new ConfigurationData();
+    Map<String, Map<String, Object>> existingAttrs = new HashMap<>();
+    Map<String, Object> firewall = new HashMap<>();
+    firewall.put("mode", "QUARANTINE");
+    firewall.put("unknownKey", null);
+    existingAttrs.put("firewall", firewall);
+    existing.setAttributes(existingAttrs);
+
+    Configuration target = configWithoutFirewall();
+
+    // Must not throw NullPointerException and must carry the non-null mode forward.
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    assertThat(
+        "non-null firewall mode must be preserved",
+        target.attributes("firewall").get("mode"), is((Object) "QUARANTINE"));
+    assertThat(
+        "null-valued key must be silently dropped (ConcurrentHashMap cannot hold null values)",
+        target.attributes("firewall").get("unknownKey"), is(nullValue()));
   }
 
   /**
@@ -1470,5 +2127,191 @@ public class BaseRepositoryManagerTest
     converter.setConfigurationStore(store);
 
     return converter.convert(request);
+  }
+
+  @Test
+  public void getMaterializesRepositoryFromStoreOnReadMiss() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true); // empty: nothing cached at start
+    when(nodeAccess.isClustered()).thenReturn(true);
+
+    Configuration peerConfig = mock(Configuration.class);
+    Repository peerRepo = mock(Repository.class);
+    mockRepository(peerConfig, peerRepo, "peer-repo", "default");
+    when(configurationStore.readByName("peer-repo")).thenReturn(Optional.of(peerConfig));
+    when(repositoryFactory.create(type, format)).thenReturn(peerRepo);
+
+    // get() misses the in-memory cache, materializes from the store, and caches it
+    Repository result = repositoryManager.get("peer-repo");
+
+    assertThat(result, is(peerRepo));
+    verify(peerRepo).start(); // fully started before being returned
+    // now cached: a plain (non-materializing) softGet returns it, proving the cache was updated
+    assertThat(repositoryManager.softGet("peer-repo"), is(peerRepo));
+  }
+
+  @Test
+  public void getTreatsConcurrentlyDeletedRepositoryAsReadMiss() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+    when(nodeAccess.isClustered()).thenReturn(true);
+
+    Configuration ghostConfig = mock(Configuration.class);
+    Repository ghostRepo = mock(Repository.class);
+    mockRepository(ghostConfig, ghostRepo, "ghost-repo", "default");
+    // Row is present when materialization starts, then a concurrent peer delete removes it; the post-materialize
+    // re-check (NEXUS-54229) must treat this as a miss rather than return a repository that no longer exists.
+    when(configurationStore.readByName("ghost-repo")).thenReturn(Optional.of(ghostConfig), Optional.empty());
+    when(repositoryFactory.create(type, format)).thenReturn(ghostRepo);
+
+    assertThat(repositoryManager.get("ghost-repo"), is(nullValue()));
+  }
+
+  @Test
+  public void getReturnsNullForAbsentRepositoryWithoutMaterializing() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+    when(nodeAccess.isClustered()).thenReturn(true);
+    when(configurationStore.readByName("does-not-exist")).thenReturn(Optional.empty());
+
+    assertThat(repositoryManager.get("does-not-exist"), is(nullValue()));
+
+    // a single store read is an authoritative miss for a genuinely-absent repository -- nothing is materialized
+    verify(repositoryFactory, never()).create(any(), any());
+  }
+
+  @Test
+  public void getReturnsCachedRepositoryWithoutConsultingStore() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true); // loads maven-central etc. into the cache
+    when(nodeAccess.isClustered()).thenReturn(true);
+
+    Repository result = repositoryManager.get(MAVEN_CENTRAL_NAME);
+
+    assertThat(result, is(mavenCentralRepository));
+    // a cache hit must not enter the read-through path
+    verify(configurationStore, never()).readByName(any());
+  }
+
+  @Test
+  public void getSkipsReadThroughOnSingleNode() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+    when(nodeAccess.isClustered()).thenReturn(false); // single node -- a miss is authoritative
+
+    assertThat(repositoryManager.get("peer-repo"), is(nullValue()));
+
+    // no peers, so a miss must not consult the store at all
+    verify(configurationStore, never()).readByName(any());
+  }
+
+  @Test
+  public void getReadMissMaterializesWithoutPersistingAndFiresEvent() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+    when(nodeAccess.isClustered()).thenReturn(true);
+
+    Configuration peerConfig = mock(Configuration.class);
+    Repository peerRepo = mock(Repository.class);
+    mockRepository(peerConfig, peerRepo, "peer-repo", "default");
+    when(configurationStore.readByName("peer-repo")).thenReturn(Optional.of(peerConfig));
+    when(repositoryFactory.create(type, format)).thenReturn(peerRepo);
+
+    Repository result = repositoryManager.get("peer-repo");
+
+    assertThat(result, is(peerRepo));
+    // materializing an already-persisted peer config must not re-persist it ...
+    verify(configurationStore, never()).create(any());
+    // ... but must still fire the create event locally so local subscribers react
+    verify(eventManager).post(any(RepositoryCreatedEvent.class));
+  }
+
+  @Test
+  public void replicatingCreateAdoptsAlreadyMaterializedRepository() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+
+    Configuration config = mock(Configuration.class);
+    Repository repo = mock(Repository.class);
+    mockRepository(config, repo, "shared-repo", "default");
+    when(repositoryFactory.create(type, format)).thenReturn(repo);
+
+    // First replicated materialization builds, starts and tracks the repository exactly once.
+    Repository first = createReplicating(config);
+    assertThat(first, is(repo));
+
+    // A second replicated create for the same name (a get() read-miss racing the config event handler) must
+    // adopt the already-tracked instance instead of building/starting/persisting a duplicate -- a duplicate
+    // would leak and, for path-routed formats such as Docker, deregister the live instance.
+    Repository second = createReplicating(config);
+
+    assertThat(second, is(first));
+    verify(repositoryFactory, times(1)).create(type, format); // not rebuilt
+    verify(repo, times(1)).start(); // not restarted
+    verify(configurationStore, never()).create(any()); // never persisted while replicating
+  }
+
+  @Test
+  public void createDoesNotReenterMaterializationWhenStartResolvesSelf() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+    when(nodeAccess.isClustered()).thenReturn(true);
+
+    Configuration config = mock(Configuration.class);
+    Repository repo = mock(Repository.class);
+    mockRepository(config, repo, "self-ref", "default");
+    when(repositoryFactory.create(type, format)).thenReturn(repo);
+    when(configurationStore.exists("self-ref")).thenReturn(true);
+    when(configurationStore.readByName("self-ref")).thenReturn(Optional.of(config));
+
+    // Simulate a subscriber/facet resolving get(self) while the repository is starting -- before it is tracked.
+    // The read-miss must not re-enter create() (that would self-wait on the in-flight cooperation future); it
+    // returns the in-progress instance being configured on this thread.
+    Repository[] resolvedDuringStart = new Repository[1];
+    doAnswer(invocation -> {
+      resolvedDuringStart[0] = repositoryManager.get("self-ref");
+      return null;
+    }).when(repo).start();
+
+    Repository created = repositoryManager.create(config);
+
+    assertThat(created, is(repo));
+    assertThat("get(self) during start must return the in-progress instance, not re-enter materialization",
+        resolvedDuringStart[0], is(repo));
+    // built exactly once -- the re-entrant read-miss did not spin up a duplicate materialization
+    verify(repositoryFactory, times(1)).create(type, format);
+  }
+
+  @Test
+  public void reentrantCreateReturnsTheInProgressInstanceWithoutSelfWaiting() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+    when(nodeAccess.isClustered()).thenReturn(true);
+
+    Configuration config = mock(Configuration.class);
+    Repository repo = mock(Repository.class);
+    mockRepository(config, repo, "self-ref", "default");
+    when(repositoryFactory.create(type, format)).thenReturn(repo);
+
+    // A facet/subscriber that re-enters create(self) while the repository is starting must get the in-progress
+    // instance back immediately, not re-enter the cooperation point and wait on this thread's own future.
+    Repository[] reentrant = new Repository[1];
+    doAnswer(invocation -> {
+      try {
+        reentrant[0] = repositoryManager.create(config);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      return null;
+    }).when(repo).start();
+
+    Repository created = repositoryManager.create(config);
+
+    assertThat(created, is(repo));
+    assertThat("re-entrant create(self) during start returns the in-progress instance", reentrant[0], is(repo));
+    verify(repositoryFactory, times(1)).create(type, format); // built exactly once, no self-wait re-materialize
+  }
+
+  private Repository createReplicating(final Configuration configuration) {
+    return EventHelper.asReplicating(() -> {
+      try {
+        return repositoryManager.create(configuration);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 }

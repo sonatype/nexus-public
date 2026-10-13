@@ -56,6 +56,10 @@
     margin-bottom: var(--space-2, 8px);
   }
 
+  &__picker-row {
+    padding: var(--space-2, 8px) 0;
+  }
+
   &__privilege-warning {
     margin: var(--space-2, 8px) 0;
     padding: var(--space-3, 12px) var(--space-4, 16px);

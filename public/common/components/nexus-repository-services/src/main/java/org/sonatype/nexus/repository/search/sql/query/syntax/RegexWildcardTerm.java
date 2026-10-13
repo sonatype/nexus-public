@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.sql.query.syntax;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A term representing a wildcard pattern that should be converted to a regex for positional matching.
@@ -29,7 +29,7 @@ public record RegexWildcardTerm(String term)
     implements StringTerm
 {
   public RegexWildcardTerm {
-    checkNotNull(term);
+    requireNonNull(term);
   }
 
   /**

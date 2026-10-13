@@ -12,26 +12,26 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.user;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.stream.Collectors;
 import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
 import jakarta.ws.rs.core.Response.Status;
-
-import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
-import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
 import org.sonatype.nexus.security.internal.rest.ApiUser;
 import org.sonatype.nexus.security.internal.rest.ApiUserStatus;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
+import org.sonatype.nexus.security.user.DuplicateUserException;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
@@ -40,25 +40,21 @@ import org.sonatype.nexus.security.user.UserStatus;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -73,9 +69,6 @@ import static org.mockito.Mockito.when;
 class UserApiResourceTest
 {
   public static final String USER_ID = "jsmith";
-
-  @ValidationExecutor
-  private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
   @Mock
   private SecuritySystem securitySystem;
@@ -144,6 +137,22 @@ class UserApiResourceTest
     WebApplicationMessageException ex = assertThrows(WebApplicationMessageException.class,
         () -> underTest.createUser(createUser), "Unable to locate source: default");
     assertThat(ex.getResponse().getStatusInfo(), is(Status.NOT_FOUND));
+  }
+
+  @Test
+  void testCreateUser_duplicateUser() throws Exception {
+    User user = createUser();
+    when(securitySystem.addUser(user, "admin123")).thenThrow(new DuplicateUserException(user.getUserId()));
+
+    ApiCreateUser createUser = new ApiCreateUser(USER_ID, "John", "Smith", "jsmith@example.org", "admin123",
+        ApiUserStatus.disabled, Collections.singleton("nx-admin"));
+
+    ValidationErrorsException ex =
+        assertThrows(ValidationErrorsException.class, () -> underTest.createUser(createUser));
+    assertThat(ex.getValidationErrors().size(), is(1));
+    assertThat(ex.getValidationErrors().get(0).getId(), is("userId"));
+    assertThat(ex.getValidationErrors().get(0).getMessage(),
+        is(String.format("User '%s' already exists.", USER_ID)));
   }
 
   /*

@@ -45,7 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
@@ -80,9 +80,9 @@ public class JwtSecurityFilter
       final AuditRecorder auditRecorder)
   {
     super(webSecurityManager, filterChainResolver);
-    this.jwtHelper = checkNotNull(jwtHelper);
-    this.jwtSessionRevocationService = checkNotNull(jwtSessionRevocationService);
-    this.auditRecorder = checkNotNull(auditRecorder);
+    this.jwtHelper = requireNonNull(jwtHelper);
+    this.jwtSessionRevocationService = requireNonNull(jwtSessionRevocationService);
+    this.auditRecorder = requireNonNull(auditRecorder);
   }
 
   @Override

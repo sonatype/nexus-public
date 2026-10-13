@@ -35,7 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
@@ -64,8 +64,8 @@ public class JwtFilter
       final JwtHelper jwtHelper,
       final JwtSessionRevocationService jwtSessionRevocationService)
   {
-    this.jwtHelper = checkNotNull(jwtHelper);
-    this.jwtSessionRevocationService = checkNotNull(jwtSessionRevocationService);
+    this.jwtHelper = requireNonNull(jwtHelper);
+    this.jwtSessionRevocationService = requireNonNull(jwtSessionRevocationService);
   }
 
   @Override

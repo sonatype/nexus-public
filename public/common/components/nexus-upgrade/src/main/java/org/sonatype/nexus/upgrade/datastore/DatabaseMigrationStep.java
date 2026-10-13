@@ -14,9 +14,7 @@ package org.sonatype.nexus.upgrade.datastore;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -61,7 +59,7 @@ public interface DatabaseMigrationStep
   }
 
   default boolean isH2(final Connection conn) throws SQLException {
-    return "H2".equals(conn.getMetaData().getDatabaseProductName());
+    return DatabaseMigrationUtility.INSTANCE.isH2(conn);
   }
 
   /**
@@ -81,136 +79,47 @@ public interface DatabaseMigrationStep
   }
 
   default boolean isPostgresql(final Connection conn) throws SQLException {
-    return "PostgreSQL".equals(conn.getMetaData().getDatabaseProductName());
+    return DatabaseMigrationUtility.INSTANCE.isPostgresql(conn);
   }
 
   default boolean tableExists(final Connection conn, final String tableName) throws SQLException {
-    if (isH2(conn)) {
-      try (PreparedStatement statement =
-          conn.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?")) {
-        statement.setString(1, tableName.toUpperCase());
-        try (ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
-    }
-    else if (isPostgresql(conn)) {
-      try (PreparedStatement statement = conn.prepareStatement("SELECT to_regclass(?);")) {
-        statement.setString(1, tableName);
-        try (ResultSet results = statement.executeQuery()) {
-          if (!results.next()) {
-            return false;
-          }
-          Object oid = results.getObject(1);
-          return oid != null;
-        }
-      }
-    }
-    else {
-      throw new UnsupportedOperationException();
-    }
+    return DatabaseMigrationUtility.INSTANCE.tableExists(conn, tableName);
   }
 
+  /**
+   * Whether {@code columnName} exists on the table {@code tableName} resolves to.
+   */
   default boolean columnExists(
       final Connection conn,
       final String tableName,
       final String columnName) throws SQLException
   {
-    String sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE UPPER(TABLE_NAME) = ? AND UPPER(COLUMN_NAME) = ?";
-    try (PreparedStatement statement = conn.prepareStatement(sql)) {
-      statement.setString(1, tableName.toUpperCase());
-      statement.setString(2, columnName.toUpperCase());
-      try (ResultSet results = statement.executeQuery()) {
-        return results.next();
-      }
-    }
+    return DatabaseMigrationUtility.INSTANCE.columnExists(conn, tableName, columnName);
   }
 
+  /**
+   * Whether {@code constraintName} exists on the table {@code tableName} resolves to.
+   */
   default boolean constraintExists(
       final Connection conn,
       final String tableName,
       final String constraintName) throws SQLException
   {
-    String sql = "SELECT * FROM INFORMATION_SCHEMA.constraint_column_usage " +
-        " WHERE UPPER(table_name) = ?" +
-        "   AND UPPER(constraint_name) = ?";
-    try (PreparedStatement statement = conn.prepareStatement(sql)) {
-      statement.setString(1, tableName.toUpperCase());
-      statement.setString(2, constraintName.toUpperCase());
-      try (ResultSet results = statement.executeQuery()) {
-        return results.next();
-      }
-    }
+    return DatabaseMigrationUtility.INSTANCE.constraintExists(conn, tableName, constraintName);
   }
 
-  default boolean indexExists(final Connection conn, final String indexName) throws SQLException {
-    if (isPostgresql(conn)) {
-      String currentSchema = currentSchema(conn);
-      String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS" +
-          " WHERE UPPER(constraint_name) = ?" +
-          "   AND UPPER(constraint_schema) = ?";
-
-      try (PreparedStatement statement = conn.prepareStatement(sql)) {
-        statement.setString(1, indexName.toUpperCase());
-        statement.setString(2, currentSchema.toUpperCase());
-        try (ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
-    }
-    else if (isH2(conn)) {
-      String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS" +
-          " WHERE UPPER(constraint_name) = ?";
-      try (PreparedStatement statement = conn.prepareStatement(sql)) {
-        statement.setString(1, indexName.toUpperCase());
-        try (ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
-    }
-    throw new UnsupportedOperationException();
-  }
-
+  /**
+   * Whether an index named {@code indexName} exists on the table {@code tableName} resolves to.
+   */
   default boolean indexExists(
       final Connection conn,
       final String tableName,
       final String indexName) throws SQLException
   {
-    if (isPostgresql(conn)) {
-      String currentSchema = currentSchema(conn);
-      String sql = "SELECT * FROM pg_indexes WHERE UPPER(tablename) = ? AND UPPER(indexname) = ?";
-
-      try (PreparedStatement statement = conn.prepareStatement(sql)) {
-        statement.setString(1, tableName.toUpperCase(Locale.ENGLISH));
-        statement.setString(2, indexName.toUpperCase(Locale.ENGLISH));
-        try (ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
-    }
-    else if (isH2(conn)) {
-      String sql =
-          "SELECT * FROM information_schema.indexes WHERE REGEXP_LIKE(UPPER(index_name), ?) AND UPPER(TABLE_NAME) = ?";
-      try (PreparedStatement statement = conn.prepareStatement(sql)) {
-        statement.setString(1, (indexName.toUpperCase(Locale.ENGLISH) + H2_REGEX_SUFFIX));
-        statement.setString(2, tableName.toUpperCase(Locale.ENGLISH));
-        try (ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
-    }
-    throw new UnsupportedOperationException();
+    return DatabaseMigrationUtility.INSTANCE.indexExists(conn, tableName, indexName);
   }
 
   default String currentSchema(final Connection conn) throws SQLException {
-    String sql = "select current_schema()";
-    try (PreparedStatement statement = conn.prepareStatement(sql)) {
-      try (ResultSet results = statement.executeQuery()) {
-        if (results.next()) {
-          return results.getString(1);
-        }
-      }
-    }
-    throw new IllegalStateException("Unable to determine current database schema");
+    return DatabaseMigrationUtility.INSTANCE.currentSchema(conn);
   }
 }

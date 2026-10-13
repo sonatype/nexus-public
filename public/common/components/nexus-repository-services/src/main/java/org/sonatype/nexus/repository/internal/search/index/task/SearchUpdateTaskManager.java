@@ -32,7 +32,6 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.repository.internal.search.index.task.SearchUpdateTaskDescriptor.REPOSITORY_NAMES_FIELD_ID;
@@ -69,7 +68,7 @@ public class SearchUpdateTaskManager
     this.taskScheduler = requireNonNull(taskScheduler);
     this.repositoryManager = requireNonNull(repositoryManager);
     this.searchUpdateService = requireNonNull(searchUpdateService);
-    this.periodicJobService = checkNotNull(periodicJobService);
+    this.periodicJobService = requireNonNull(periodicJobService);
     this.enabled = enabled;
   }
 

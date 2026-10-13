@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-formats-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
 
@@ -79,11 +79,13 @@
       <artifactId>xz</artifactId>
     </dependency>
 
-    <!-- commons-compress dependency for zstd support -->
+    <!--
+    Direct dependency for zstd-jni to enable zstd compression support in commons-compress
+    for APT metadata parsing. Version is managed in root pom.xml dependencyManagement.
+    -->
     <dependency>
       <groupId>com.github.luben</groupId>
       <artifactId>zstd-jni</artifactId>
-      <version>1.5.2-1</version>
     </dependency>
 
     <dependency>

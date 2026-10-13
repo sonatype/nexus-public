@@ -22,22 +22,34 @@ import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeQueryService;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeData;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
+import org.sonatype.nexus.repository.content.facet.ContentFacetStores;
+import org.sonatype.nexus.repository.content.store.AssetBlobStore;
+import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
+import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.repository.content.store.AssetStore;
+import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
+import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.security.SecurityHelper;
 
 import org.junit.Before;
@@ -119,7 +131,7 @@ public class DeleteFolderServiceImplTest
 
     underTest = new DeleteFolderServiceImpl(
         browseNodeQueryService, configuration, contentPermissionChecker,
-        variableResolverAdapterManager, securityHelper, databaseCheck);
+        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(false, ""));
   }
 
   @Test
@@ -147,42 +159,42 @@ public class DeleteFolderServiceImplTest
   public void testNullBrowseNodeQueryServiceRejected() {
     new DeleteFolderServiceImpl(
         null, configuration, contentPermissionChecker,
-        variableResolverAdapterManager, securityHelper, databaseCheck);
+        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(false, ""));
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullConfigurationRejected() {
     new DeleteFolderServiceImpl(
         browseNodeQueryService, null, contentPermissionChecker,
-        variableResolverAdapterManager, securityHelper, databaseCheck);
+        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(false, ""));
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullSecurityHelperRejected() {
     new DeleteFolderServiceImpl(
         browseNodeQueryService, configuration, contentPermissionChecker,
-        variableResolverAdapterManager, null, databaseCheck);
+        variableResolverAdapterManager, null, databaseCheck, new SoftDeleteFormatGate(false, ""));
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullContentPermissionCheckerRejected() {
     new DeleteFolderServiceImpl(
         browseNodeQueryService, configuration, null,
-        variableResolverAdapterManager, securityHelper, databaseCheck);
+        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(false, ""));
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullVariableResolverAdapterManagerRejected() {
     new DeleteFolderServiceImpl(
         browseNodeQueryService, configuration, contentPermissionChecker,
-        null, securityHelper, databaseCheck);
+        null, securityHelper, databaseCheck, new SoftDeleteFormatGate(false, ""));
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullDatabaseCheckRejected() {
     new DeleteFolderServiceImpl(
         browseNodeQueryService, configuration, contentPermissionChecker,
-        variableResolverAdapterManager, securityHelper, null);
+        variableResolverAdapterManager, securityHelper, null, new SoftDeleteFormatGate(false, ""));
   }
 
   // ---- deleteFolder: routing based on database type ----
@@ -221,6 +233,30 @@ public class DeleteFolderServiceImplTest
     spied.deleteFolder(repository, "some/path", OffsetDateTime.now());
 
     verify(repository, never()).facet(BrowseFacet.class);
+  }
+
+  @Test
+  public void deleteFolder_routesToBrowseNodeAwarePath_whenSoftDeleteEnabledOnH2() {
+    // Soft-delete records deletions as UPDATEs, so the async browse-node trim never fires; the folder
+    // delete must use the browse-node-aware path (which removes nodes synchronously) even on H2.
+    DeleteFolderServiceImpl softDeleteService = new DeleteFolderServiceImpl(
+        browseNodeQueryService, configuration, contentPermissionChecker,
+        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(true, "maven2"));
+    DeleteFolderServiceImpl spied = spy(softDeleteService);
+    doReturn(true).when(spied).canDeleteComponent(repository);
+    when(databaseCheck.isPostgresql()).thenReturn(false);
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(repository.facet(ContentMaintenanceFacet.class)).thenReturn(contentMaintenance);
+    when(repository.facet(BrowseFacet.class)).thenReturn(browseFacet);
+    when(configuration.getMaxNodes()).thenReturn(10000);
+
+    when(browseNodeQueryService.getByPath(any(), anyList(), anyInt()))
+        .thenReturn(Collections.emptyList());
+    when(browseFacet.getByRequestPath(anyString())).thenReturn(Optional.empty());
+
+    spied.deleteFolder(repository, "some/path", OffsetDateTime.now());
+
+    verify(repository).facet(BrowseFacet.class);
   }
 
   // ---- checkDeleteAsset: real delegation through deleteAsset ----
@@ -364,7 +400,7 @@ public class DeleteFolderServiceImplTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.of(fluentComponent));
 
     boolean result = underTest.checkDeleteComponent(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
 
     assertThat(result, is(true));
     verify(contentMaintenance).deleteComponent(fluentComponent);
@@ -376,7 +412,7 @@ public class DeleteFolderServiceImplTest
     BrowseNode node = mockLeafNode("node", null, componentId);
 
     boolean result = underTest.checkDeleteComponent(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, false, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, false, node);
 
     assertThat(result, is(true));
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -389,7 +425,7 @@ public class DeleteFolderServiceImplTest
     BrowseNode node = mockLeafNode("node", assetId, componentId);
 
     boolean result = underTest.checkDeleteComponent(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
 
     assertThat(result, is(true));
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -407,7 +443,7 @@ public class DeleteFolderServiceImplTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.of(fluentComponent));
 
     boolean result = underTest.checkDeleteComponent(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
 
     assertThat(result, is(false));
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -422,7 +458,7 @@ public class DeleteFolderServiceImplTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.empty());
 
     boolean result = underTest.checkDeleteComponent(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
 
     assertThat(result, is(true));
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -441,7 +477,7 @@ public class DeleteFolderServiceImplTest
     doThrow(new RuntimeException("delete failed")).when(contentMaintenance).deleteComponent(fluentComponent);
 
     boolean result = underTest.checkDeleteComponent(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
 
     assertThat(result, is(false));
   }
@@ -461,7 +497,7 @@ public class DeleteFolderServiceImplTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.of(fluentComponent));
 
     boolean result = underTest.checkDeleteComponentWithAssets(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, node);
 
     assertThat(result, is(true));
     verify(contentMaintenance).deleteComponent(fluentComponent);
@@ -479,7 +515,7 @@ public class DeleteFolderServiceImplTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.of(fluentComponent));
 
     boolean result = underTest.checkDeleteComponentWithAssets(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, node);
 
     assertThat(result, is(true));
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -490,7 +526,7 @@ public class DeleteFolderServiceImplTest
     BrowseNode node = mockLeafNode("node", null, null);
 
     boolean result = underTest.checkDeleteComponentWithAssets(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, node);
 
     assertThat(result, is(true));
     verifyNoInteractions(fluentComponents);
@@ -505,7 +541,7 @@ public class DeleteFolderServiceImplTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.empty());
 
     boolean result = underTest.checkDeleteComponentWithAssets(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, node);
 
     assertThat(result, is(true));
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -525,7 +561,7 @@ public class DeleteFolderServiceImplTest
     doThrow(new RuntimeException("delete failed")).when(contentMaintenance).deleteComponent(fluentComponent);
 
     boolean result = underTest.checkDeleteComponentWithAssets(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, node);
 
     assertThat(result, is(false));
   }
@@ -543,7 +579,7 @@ public class DeleteFolderServiceImplTest
     when(fluentComponents.find(componentId)).thenReturn(Optional.of(fluentComponent));
 
     boolean result = underTest.checkDeleteComponentWithAssets(
-        OffsetDateTime.now(), contentFacet, contentMaintenance, node);
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, node);
 
     assertThat(result, is(false));
     verify(contentMaintenance, never()).deleteComponent(any());
@@ -990,6 +1026,189 @@ public class DeleteFolderServiceImplTest
         repository, "/already/correct/", OffsetDateTime.now(), contentFacet, contentMaintenance, 10000, true);
 
     verify(browseFacet).getByRequestPath("/already/correct/");
+  }
+
+  // ---- Soft-delete routing tests ----
+
+  @Test
+  public void deleteComponent_softDeletes_whenEnabledAndHosted() {
+    DeleteFolderServiceImpl softDeleteService = new DeleteFolderServiceImpl(
+        browseNodeQueryService, configuration, contentPermissionChecker,
+        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(true, "maven2"));
+
+    Repository hostedRepo = mockHostedRepository();
+    ComponentStore<?> componentStore = mock(ComponentStore.class);
+    AssetStore<?> assetStore = mock(AssetStore.class);
+    ContentFacetSupport contentFacetSupport = mockContentFacetSupport(componentStore, assetStore);
+    when(hostedRepo.facet(ContentFacet.class)).thenReturn(contentFacetSupport);
+
+    org.apache.shiro.subject.Subject subject = mock(org.apache.shiro.subject.Subject.class);
+    when(subject.getPrincipal()).thenReturn("admin");
+    when(securityHelper.subject()).thenReturn(subject);
+
+    EntityId componentId = mock(EntityId.class);
+    BrowseNode node = mockLeafNode("node", null, componentId);
+
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    when(fluentComponent.lastUpdated()).thenReturn(OffsetDateTime.now().minusDays(1));
+    when(fluentComponent.name()).thenReturn("test-component");
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.find(componentId)).thenReturn(Optional.of(fluentComponent));
+
+    OffsetDateTime folderDeleteStarted = OffsetDateTime.now();
+    boolean result = softDeleteService.checkDeleteComponent(
+        hostedRepo, folderDeleteStarted, contentFacet, contentMaintenance, true, node);
+
+    assertThat(result, is(true));
+    verify(componentStore).softDeleteComponent(fluentComponent, "admin");
+    verify(assetStore).softDeleteComponentAssets(fluentComponent, "admin");
+    verify(assetStore).reSoftDeleteComponentAssets(fluentComponent, "admin", folderDeleteStarted);
+    verify(contentMaintenance).afterComponentSoftDeleted(fluentComponent);
+    verify(contentMaintenance, never()).deleteComponent(any());
+  }
+
+  @Test
+  public void deleteComponent_hardDeletes_whenSoftDeleteDisabled() {
+    when(contentFacet.components()).thenReturn(fluentComponents);
+
+    EntityId componentId = mock(EntityId.class);
+    BrowseNode node = mockLeafNode("node", null, componentId);
+
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    when(fluentComponent.lastUpdated()).thenReturn(OffsetDateTime.now().minusDays(1));
+    when(fluentComponents.find(componentId)).thenReturn(Optional.of(fluentComponent));
+
+    boolean result = underTest.checkDeleteComponent(
+        repository, OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
+
+    assertThat(result, is(true));
+    verify(contentMaintenance).deleteComponent(fluentComponent);
+  }
+
+  @Test
+  public void deleteAsset_softDeletes_whenEnabledAndHosted() {
+    DeleteFolderServiceImpl softDeleteService = new DeleteFolderServiceImpl(
+        browseNodeQueryService, configuration, contentPermissionChecker,
+        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(true, "maven2"));
+
+    Repository hostedRepo = mockHostedRepository();
+    AssetStore<?> assetStore = mock(AssetStore.class);
+    ContentFacetSupport contentFacetSupport = mockContentFacetSupport(null, assetStore);
+    when(hostedRepo.facet(ContentFacet.class)).thenReturn(contentFacetSupport);
+
+    org.apache.shiro.subject.Subject subject = mock(org.apache.shiro.subject.Subject.class);
+    when(subject.getPrincipal()).thenReturn("admin");
+    when(securityHelper.subject()).thenReturn(subject);
+
+    when(variableResolverAdapterManager.get("maven2")).thenReturn(variableResolverAdapter);
+    when(contentPermissionChecker.isPermitted(eq("test-repo"), eq("maven2"), eq(DELETE), any()))
+        .thenReturn(true);
+
+    EntityId assetId = mock(EntityId.class);
+    BrowseNode node = mockLeafNode("file.jar", assetId, null);
+
+    FluentAsset fluentAsset = mock(FluentAsset.class);
+    AssetBlob assetBlob = mock(AssetBlob.class);
+    when(assetBlob.blobCreated()).thenReturn(OffsetDateTime.now().minusDays(1));
+    when(fluentAsset.blob()).thenReturn(Optional.of(assetBlob));
+    when(fluentAsset.path()).thenReturn("/some/path");
+    when(fluentAsset.component()).thenReturn(Optional.empty());
+    when(contentFacet.assets()).thenReturn(fluentAssets);
+    when(fluentAssets.find(assetId)).thenReturn(Optional.of(fluentAsset));
+
+    boolean result = softDeleteService.checkDeleteAsset(
+        hostedRepo, OffsetDateTime.now(), contentFacet, contentMaintenance, node);
+
+    assertThat(result, is(true));
+    verify(assetStore).softDeleteAsset(fluentAsset, "admin");
+    verify(contentMaintenance).afterAssetSoftDeleted(fluentAsset);
+    verify(contentMaintenance, never()).deleteAsset(any());
+  }
+
+  @Test
+  public void deleteComponent_hardDeletes_whenNotHosted() {
+    DeleteFolderServiceImpl softDeleteService = new DeleteFolderServiceImpl(
+        browseNodeQueryService, configuration, contentPermissionChecker,
+        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(true, "maven2"));
+
+    Type proxyType = mock(Type.class);
+    when(proxyType.getValue()).thenReturn("proxy");
+    Repository proxyRepo = mock(Repository.class);
+    when(proxyRepo.getType()).thenReturn(proxyType);
+    when(proxyRepo.getName()).thenReturn("proxy-repo");
+    when(proxyRepo.getFormat()).thenReturn(format);
+
+    when(contentFacet.components()).thenReturn(fluentComponents);
+
+    EntityId componentId = mock(EntityId.class);
+    BrowseNode node = mockLeafNode("node", null, componentId);
+
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    when(fluentComponent.lastUpdated()).thenReturn(OffsetDateTime.now().minusDays(1));
+    when(fluentComponents.find(componentId)).thenReturn(Optional.of(fluentComponent));
+
+    boolean result = softDeleteService.checkDeleteComponent(
+        proxyRepo, OffsetDateTime.now(), contentFacet, contentMaintenance, true, node);
+
+    assertThat(result, is(true));
+    verify(contentMaintenance).deleteComponent(fluentComponent);
+  }
+
+  @SuppressWarnings("unchecked")
+  private ContentFacetSupport mockContentFacetSupport(
+      final ComponentStore<?> componentStore,
+      final AssetStore<?> assetStore)
+  {
+    ContentFacetSupport facetSupport = mock(ContentFacetSupport.class);
+    BlobStoreManager blobStoreManager = mock(BlobStoreManager.class);
+    FormatStoreManager formatStoreManager = mock(FormatStoreManager.class);
+    doReturn(componentStore != null ? componentStore : mock(ComponentStore.class))
+        .when(formatStoreManager)
+        .componentStore("test");
+    doReturn(assetStore != null ? assetStore : mock(AssetStore.class))
+        .when(formatStoreManager)
+        .assetStore("test");
+    doReturn(mock(ContentRepositoryStore.class))
+        .when(formatStoreManager)
+        .contentRepositoryStore("test");
+    doReturn(mock(AssetBlobStore.class))
+        .when(formatStoreManager)
+        .assetBlobStore("test");
+    ContentFacetStores stores = new ContentFacetStores(blobStoreManager, "default", formatStoreManager, "test");
+    when(facetSupport.stores()).thenReturn(stores);
+    return facetSupport;
+  }
+
+  private Repository mockHostedRepository() {
+    Repository hostedRepo = mock(Repository.class);
+    Type hostedType = mock(Type.class);
+    when(hostedType.getValue()).thenReturn(HostedType.NAME);
+    when(hostedRepo.getType()).thenReturn(hostedType);
+    when(hostedRepo.getName()).thenReturn("test-repo");
+    when(hostedRepo.getFormat()).thenReturn(format);
+    return hostedRepo;
+  }
+
+  // ---- componentDisplayName: distinguishable Trash entries for same-named components ----
+
+  @Test
+  public void componentDisplayName_includesNamespaceAndVersion() {
+    Component component = mock(Component.class);
+    when(component.namespace()).thenReturn("com.example.app");
+    when(component.name()).thenReturn("service");
+    when(component.version()).thenReturn("1.0.0");
+
+    assertThat(DeleteFolderServiceImpl.componentDisplayName(component), is("com.example.app:service:1.0.0"));
+  }
+
+  @Test
+  public void componentDisplayName_omitsEmptyNamespaceAndVersion() {
+    Component component = mock(Component.class);
+    when(component.namespace()).thenReturn("");
+    when(component.name()).thenReturn("service");
+    when(component.version()).thenReturn("");
+
+    assertThat(DeleteFolderServiceImpl.componentDisplayName(component), is("service"));
   }
 
   // ---- Helper methods ----

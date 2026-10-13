@@ -17,12 +17,22 @@ import { useMachine } from '@xstate/react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { createEndpointDetailMachine, type EndpointDetailTab } from './endpointDetailMachine';
+import type { EndpointAccessDot } from './utils/endpointAccess';
 import { canGrantAccess, canReadSecurityDirectory } from './utils/endpointPermissions';
+import { formatEndpointPermissions } from './utils/formatEndpointPermissions';
+import type { MergedApiEndpoint } from './utils/mergeSwaggerPermissions';
+
+export interface UseEndpointDetailOptions {
+  row: MergedApiEndpoint | null;
+  access: EndpointAccessDot;
+}
 
 export interface UseEndpointDetailReturn {
   tab: EndpointDetailTab;
   hasSecurityDirectoryRead: boolean;
   hasGrantAccess: boolean;
+  requiredPermissionsText: string;
+  isAccessDenied: boolean;
   selectTab: (tab: string) => void;
 }
 
@@ -35,9 +45,12 @@ function isKnownTab(value: string): value is EndpointDetailTab {
 /**
  * ViewModel for {@link ../EndpointDetail}. Wraps {@link createEndpointDetailMachine} and
  * feeds it permission changes as they resolve so the machine owns the current-tab
- * selection and any auto-reset when the active tab loses visibility.
+ * selection and any auto-reset when the active tab loses visibility. Also derives
+ * `requiredPermissionsText` and `isAccessDenied` so the view stays purely presentational.
  */
-export function useEndpointDetail(): UseEndpointDetailReturn {
+export function useEndpointDetail(options: UseEndpointDetailOptions): UseEndpointDetailReturn {
+  const { row, access } = options;
+
   const hasUser = ExtJS.useUser() ?? false;
   const hasSecurityDirectoryRead = ExtJS.usePermission(() => canReadSecurityDirectory(), [hasUser]);
   const hasGrantAccess = ExtJS.usePermission(() => canGrantAccess(), [hasUser]);
@@ -69,10 +82,19 @@ export function useEndpointDetail(): UseEndpointDetailReturn {
     [send]
   );
 
+  const requiredPermissionsText = useMemo(
+    () => (row ? formatEndpointPermissions(row) : ''),
+    [row]
+  );
+
+  const isAccessDenied = access === 'denied' || access === 'partial';
+
   return {
     tab,
     hasSecurityDirectoryRead,
     hasGrantAccess,
+    requiredPermissionsText,
+    isAccessDenied,
     selectTab,
   };
 }

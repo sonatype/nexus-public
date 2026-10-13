@@ -20,7 +20,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Ties into Springs lifecycle phase to manage Nexus startup & shutdown
@@ -39,8 +39,8 @@ public class ManagedJetty
 
   @Autowired
   public ManagedJetty(final ApplicationContext context, final JettyServer jetty) {
-    this.context = checkNotNull(context);
-    this.jetty = checkNotNull(jetty);
+    this.context = requireNonNull(context);
+    this.jetty = requireNonNull(jetty);
   }
 
   @Override

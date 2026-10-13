@@ -1,0 +1,47 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.about-modal__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--gray-a5);
+  border-radius: var(--radius-3);
+  background-color: var(--gray-a2);
+}
+
+.about-modal__info-row {
+  min-height: var(--space-5);
+}
+
+/* Legal content is injected from the server-rendered COPYRIGHT.html body. Style
+   its paragraphs and links to inherit Preview UI theme tokens in dark and light. */
+.about-modal__legal {
+  color: var(--gray-12);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-2);
+
+  p {
+    margin: 0 0 var(--space-2);
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  a {
+    color: var(--accent-11);
+    text-decoration: underline;
+  }
+}

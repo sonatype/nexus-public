@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.WrappedContent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Collections2.transform;
 
 /**
@@ -56,8 +56,8 @@ public class FluentComponentImpl
       final Component component,
       @Nullable final Collection<FluentAsset> assets)
   {
-    this.facet = checkNotNull(facet);
-    this.component = checkNotNull(component);
+    this.facet = requireNonNull(facet);
+    this.component = requireNonNull(component);
     this.assets = assets == null ? null : Collections.unmodifiableCollection(assets);
   }
 

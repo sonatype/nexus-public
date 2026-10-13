@@ -52,7 +52,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.BZ2;
@@ -112,10 +112,10 @@ public abstract class AptMetadataFacetSupport
       final Duration minorTimeout,
       final int threadsPerKey)
   {
-    this.mapper = checkNotNull(mapper);
-    this.clock = checkNotNull(clock);
+    this.mapper = requireNonNull(mapper);
+    this.clock = requireNonNull(clock);
 
-    this.cooperationBuilder = checkNotNull(cooperationFactory).configure()
+    this.cooperationBuilder = requireNonNull(cooperationFactory).configure()
         .enabled(cooperationEnabled)
         .majorTimeout(majorTimeout)
         .minorTimeout(minorTimeout)
@@ -135,7 +135,7 @@ public abstract class AptMetadataFacetSupport
    * @param asset the asset containing package metadata
    */
   public void addPackageMetadata(final FluentAsset asset) {
-    checkNotNull(asset);
+    requireNonNull(asset);
     log.debug("Storing metadata for repository: {} asset: {}", getRepository().getName(), asset.path());
     componentId(asset).ifPresent(
         componentId -> keyValue().addPackageMetadata(componentId, InternalIds.internalAssetId(asset),
@@ -148,7 +148,7 @@ public abstract class AptMetadataFacetSupport
    * @param asset the asset whose metadata should be removed
    */
   public void removePackageMetadata(final FluentAsset asset) {
-    checkNotNull(asset);
+    requireNonNull(asset);
     log.debug("Removing metadata for repository: {} asset: {}", getRepository().getName(), asset.path());
     OptionalInt compId = componentId(asset);
     if (compId.isPresent()) {

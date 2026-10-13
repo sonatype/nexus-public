@@ -26,7 +26,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Capability for exposing identity details.
@@ -51,7 +51,7 @@ public class IdentityCapability
 
   @Autowired
   public IdentityCapability(final NodeAccess nodeAccess) {
-    this.nodeAccess = checkNotNull(nodeAccess);
+    this.nodeAccess = requireNonNull(nodeAccess);
   }
 
   @Override

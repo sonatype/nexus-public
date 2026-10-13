@@ -25,6 +25,7 @@ jest.mock('../../../../../interface/api', () => ({
   })),
   ENDPOINTS: {
     REPOSITORIES: '/service/rest/v1/repositories',
+    REPOSITORIES_DETAILS: '/service/rest/internal/ui/repositories/details',
     COMPONENTS: '/service/rest/v1/components',
     ASSETS: '/service/rest/v1/assets',
     SEARCH: '/service/rest/v1/search',
@@ -76,6 +77,7 @@ import {
   searchInRepository,
   showSuccessMessage,
   showErrorMessage,
+  fetchComponentTags,
 } from '../browse.api';
 import { restClient, encodeRepositoryItemId } from '../../../../../interface/api';
 import ExtAPIUtils from '../../../../../interface/ExtAPIUtils';
@@ -401,6 +403,57 @@ describe('browse.api', () => {
       });
 
       expect(await canDeleteAsset(ASSET_ID, REPO_NAME)).toBe(false);
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('fetchComponentTags (NEXUS-54501)', () => {
+    // Raw internal component id, as returned by ExtDirect coreui_Component.readComponent/readAsset.
+    // NOT the base64 RepositoryItemIDXO the REST API uses: readTagListDetails resolves the component
+    // with `find(new DetachedEntityId(componentId))`, and the encoded form fails server-side with
+    // `For input string: "bWF2ZW4t..."`.
+    const COMPONENT_ID = '7e8fcfcb';
+    const REPO_NAME = 'maven-central';
+
+    it('calls proui_TagList.readTagListDetails filtered by componentId + repositoryName and returns tag names', async () => {
+      // Verbatim shape of the server's TagSummaryXO — `id` carries the tag name, and the timestamps
+      // are `lastUpdatedTime`/`firstCreatedTime`. Captured from a live Pro instance:
+      //   {"id":"nexus-54501-manual-test","lastUpdatedTime":"2026-09-01T17:13:15.640Z",
+      //    "firstCreatedTime":"2026-09-01T17:13:15.640Z"}
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue([
+        {
+          id: 'nexus-54501-manual-test',
+          lastUpdatedTime: '2026-09-01T17:13:15.640Z',
+          firstCreatedTime: '2026-09-01T17:13:15.640Z',
+        },
+        { id: 'release', lastUpdatedTime: null, firstCreatedTime: null },
+      ]);
+
+      const tags = await fetchComponentTags(COMPONENT_ID, REPO_NAME);
+
+      expect(mockExtAPI.extAPIRequest).toHaveBeenCalledWith('proui_TagList', 'readTagListDetails', {
+        filter: [
+          { property: 'componentId', value: COMPONENT_ID },
+          { property: 'repositoryName', value: REPO_NAME },
+        ],
+      });
+      expect(tags).toEqual(['nexus-54501-manual-test', 'release']);
+    });
+
+    it('returns an empty array when the server returns no data', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(undefined);
+
+      expect(await fetchComponentTags(COMPONENT_ID, REPO_NAME)).toEqual([]);
+    });
+
+    it('returns an empty array and logs when the server throws', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockExtAPI.checkForErrorAndExtract.mockImplementation(() => {
+        throw new Error('tags unavailable');
+      });
+
+      expect(await fetchComponentTags(COMPONENT_ID, REPO_NAME)).toEqual([]);
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });

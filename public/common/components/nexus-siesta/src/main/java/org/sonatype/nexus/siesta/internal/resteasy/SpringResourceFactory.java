@@ -19,7 +19,7 @@ import org.jboss.resteasy.spi.ResourceFactory;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.springframework.context.ApplicationContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class SpringResourceFactory
     implements ResourceFactory
@@ -31,8 +31,8 @@ public class SpringResourceFactory
   private PropertyInjector propertyInjector;
 
   public SpringResourceFactory(final ApplicationContext context, final String beanName) {
-    this.context = checkNotNull(context);
-    this.beanName = checkNotNull(beanName);
+    this.context = requireNonNull(context);
+    this.beanName = requireNonNull(beanName);
   }
 
   @Override
@@ -42,7 +42,7 @@ public class SpringResourceFactory
 
   @Override
   public void registered(final ResteasyProviderFactory factory) {
-    checkNotNull(factory);
+    requireNonNull(factory);
     propertyInjector = factory.getInjectorFactory().createPropertyInjector(getScannableClass(), factory);
   }
 

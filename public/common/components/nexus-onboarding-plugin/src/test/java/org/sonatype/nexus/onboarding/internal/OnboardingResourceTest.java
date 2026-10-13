@@ -12,13 +12,6 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.ws.rs.WebApplicationException;
-
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.onboarding.OnboardingManager;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -27,12 +20,15 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.InOrder;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -55,9 +51,6 @@ import static org.sonatype.nexus.onboarding.internal.OnboardingResource.PASSWORD
 @WithUser
 class OnboardingResourceTest
 {
-  @ValidationExecutor
-  private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-
   @Mock
   private OnboardingManager onboardingManager;
 

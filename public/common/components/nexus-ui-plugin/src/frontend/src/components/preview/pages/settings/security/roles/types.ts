@@ -68,17 +68,6 @@ export interface RoleFormData {
 }
 
 /**
- * Form validation errors
- */
-export interface RoleFormErrors {
-  id?: string;
-  name?: string;
-  description?: string;
-  privileges?: string;
-  roles?: string;
-}
-
-/**
  * Sort direction type
  */
 export type SortDirection = 'asc' | 'desc' | null;
@@ -99,16 +88,8 @@ export interface RolesPageProps {
  * Props for RolesList component
  */
 export interface RolesListProps {
-  onSelect: (roleId: string, mode?: 'profile' | 'edit') => void;
-  onDelete?: (roleId: string, roleName?: string) => void;
+  onSelect: (roleId: string) => void;
   onCreate: () => void;
-  /**
-   * When false, hides the row Edit (pencil) action so a user without
-   * nexus:roles:update sees only the read-only View action (NEXUS-54212).
-   * Defaults to true.
-   */
-  canUpdate?: boolean;
-  canDelete?: boolean;
 }
 
 /**
@@ -136,31 +117,6 @@ export interface RoleFormProps {
   onComplete?: () => void;
   loading?: boolean;
   error?: string;
-}
-
-/**
- * Props for PrivilegesSelectionModal
- */
-export interface PrivilegesSelectionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  availablePrivileges: PrivilegeReference[];
-  selectedPrivileges: string[];
-  onSave: (privileges: string[]) => void;
-  loading?: boolean;
-}
-
-/**
- * Props for RolesSelectionModal
- */
-export interface RolesSelectionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  availableRoles: RoleReference[];
-  selectedRoles: string[];
-  currentRoleId?: string; // To exclude current role from selection
-  onSave: (roles: string[]) => void;
-  loading?: boolean;
 }
 
 /**
@@ -224,12 +180,11 @@ export function formatRoleSourceDisplay(source: string): string {
 }
 
 /**
- * Check if role is read-only.
- * A role is locked if:
- * 1. readOnly: true is returned by the API
- * 2. It comes from an external source (LDAP, Crowd, etc.)
+ * Check if role is read-only. Mirrors classic UI's rule (`canEdit = hasEditPermissions && !readOnly`):
+ * a role is locked only when the backend flags it as such (system-protected roles like nx-admin).
+ * Source (LDAP/SAML/Crowd/OAuth2) is not part of the decision — external roles remain editable
+ * unless the backend independently marks them read-only.
  */
-export const isReadOnlyRole = (role: Role): boolean => 
-  role.readOnly === true || isExternalRole(role.source);
+export const isReadOnlyRole = (role: Role): boolean => role.readOnly === true;
 
 

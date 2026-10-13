@@ -358,6 +358,23 @@ public interface BlobStore
       final OffsetDateTime toDateTime);
 
   /**
+   * As {@link #getBlobIdUpdatedSinceStream(String, OffsetDateTime, OffsetDateTime)}, offering the concurrency a
+   * caller is willing to fund for the blob attribute reads the scan performs.
+   *
+   * <p>
+   * Implementations that read sequentially ignore it, as does {@code null}. Supplying concurrency leaves the order of
+   * the returned ids unspecified, since they are emitted as their reads finish.
+   */
+  default Stream<BlobId> getBlobIdUpdatedSinceStream(
+      final String prefix,
+      final OffsetDateTime fromDateTime,
+      final OffsetDateTime toDateTime,
+      @Nullable final BlobScanConcurrency concurrency)
+  {
+    return getBlobIdUpdatedSinceStream(prefix, fromDateTime, toDateTime);
+  }
+
+  /**
    * Get a {@link Stream} of direct-path {@link BlobId}s under the specified path prefix.
    */
   Stream<BlobId> getDirectPathBlobIdStream(String prefix);

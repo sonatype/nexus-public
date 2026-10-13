@@ -15,7 +15,7 @@ import React, {useCallback} from 'react';
 import Axios from 'axios';
 
 import {NxH2, NxCheckbox, NxFieldset, NxInfoAlert} from '@sonatype/react-shared-components';
-import {FormUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ExtJS, useIsLicensedEdition} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -28,7 +28,7 @@ export default function RepositoryConnectorsConfiguration({parentMachine}) {
 
   const repositoryName = parentState.context.data.name;
 
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
 
   const fetchSuggestedPort = useCallback(async (contextPropName) => {
     try {
@@ -57,7 +57,7 @@ export default function RepositoryConnectorsConfiguration({parentMachine}) {
 
       <p className="nxrm-docker-connectors-help">{CONNECTORS.HELP}</p>
 
-      {isProEdition && (
+      {isLicensedEdition && (
         <ToggleableTextInput
           parentMachine={parentMachine}
           contextPropName="docker.subdomain"

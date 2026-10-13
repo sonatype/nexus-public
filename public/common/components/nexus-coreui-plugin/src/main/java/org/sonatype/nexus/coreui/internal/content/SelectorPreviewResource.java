@@ -37,7 +37,7 @@ import org.apache.shiro.authz.annotation.Logical;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Streams.stream;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
@@ -70,10 +70,10 @@ public class SelectorPreviewResource
       final SelectorFactory selectorFactory,
       final RepositoryPermissionChecker repositoryPermissionChecker)
   {
-    this.componentHelper = checkNotNull(componentHelper);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.selectorFactory = checkNotNull(selectorFactory);
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.componentHelper = requireNonNull(componentHelper);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.selectorFactory = requireNonNull(selectorFactory);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
   }
 
   @POST

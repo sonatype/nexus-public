@@ -11,9 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useMemo, useEffect, useState, useCallback, useRef } from 'react';
-import { Box, Flex, Text } from '@radix-ui/themes';
-import { Trash2, Loader2, AlertCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Button, Flex, Text } from '@radix-ui/themes';
+import { Trash2, Loader2, AlertCircle, Pencil } from 'lucide-react';
 
 import {
   SettingsForm,
@@ -21,29 +21,29 @@ import {
   SettingsTextInput,
   SettingsTextArea,
   SettingsCombobox,
-  SettingsTransferList,
   SettingsButton,
   SettingsSelect,
+  SettingsSelectionModal,
+  useSettingsSelectionModal,
 } from '../../../../shared/form';
+import type { SettingsSelectionItem } from '../../../../shared/form/settingsSelectionModalMachine';
 import { useRolesApi } from './useRolesApi';
 import { useRolesForm } from './useRolesForm';
 import {
   RoleFormData,
   RoleFormProps,
   RolesFormContext,
-  NEXUS_SOURCE,
-  PRIVILEGE_GROUP_LABELS,
   LDAP_EMPTY_SEARCH_MESSAGE,
   isExternalRole,
-  isReadOnlyRole,
 } from './types';
+import { ROLE_FORM } from './RoleFormStrings';
 
 import './RoleForm.scss';
 
-/**
- * RoleForm - Form for creating and editing roles
- * Uses XState for state management via useRolesForm hook
- */
+// Single flat progressive-disclosure form for Create and Edit. Type selector at the
+// top drives visibility of external-source fields; all other sections render inline.
+// Privileges and Contained Roles use the shared RolePicker (search + pagination +
+// sortable columns) instead of the old unpaginated combobox / transfer list.
 export function RoleForm({
   role,
   isCreate,
@@ -52,16 +52,7 @@ export function RoleForm({
   onComplete,
   loading = false,
   error,
-  hideActions = false,
-  onSubmitRef,
-  onValidationChange,
-  wizardStep = 0,
-}: RoleFormProps & {
-  hideActions?: boolean;
-  onSubmitRef?: React.MutableRefObject<(() => void) | null>;
-  onValidationChange?: (isValid: boolean) => void;
-  wizardStep?: number;
-}) {
+}: RoleFormProps) {
   const { createRole, updateRole, searchRoles } = useRolesApi();
   const [ldapRoleOptions, setLdapRoleOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [ldapSearchLoading, setLdapSearchLoading] = useState(false);
@@ -77,48 +68,7 @@ export function RoleForm({
     updateRole,
   });
 
-  // P0: Require at least one privilege or contained role on final step
   const formData = form.data as RoleFormData;
-  const hasPrivilegeOrRole = (formData.privileges?.length ?? 0) > 0 || (formData.roles?.length ?? 0) > 0;
-
-  // Calculate validation state with useMemo for cleaner dependency tracking
-  const isStepValid = useMemo(() => {
-    const isIdValid = !!form.data.id?.trim() && !form.validationErrors?.id;
-    const isNameValid = !!form.data.name?.trim() && !form.validationErrors?.name;
-    const hasValidExternalSource = formData.roleType !== 'external' || !!formData.externalSource;
-
-    if (wizardStep === 0) return true; // Step 0: Role type selection (always valid)
-    if (wizardStep === 1) return isIdValid && isNameValid && hasValidExternalSource;
-    if (wizardStep === 3) return hasPrivilegeOrRole;
-    return true;
-  }, [form.data.id, form.data.name, form.validationErrors, formData.roleType, formData.externalSource, wizardStep, hasPrivilegeOrRole]);
-
-  // Notify parent of validation status
-  useEffect(() => {
-    onValidationChange?.(isStepValid);
-  }, [onValidationChange, isStepValid]);
-
-  const submitDisabled = !hasPrivilegeOrRole;
-  const [hasAttemptedAdvance, setHasAttemptedAdvance] = useState(false);
-
-  // Expose submit function to parent via ref (for WizardForm integration)
-  useEffect(() => {
-    if (onSubmitRef) {
-      onSubmitRef.current = () => {
-        if (wizardStep === 3) setHasAttemptedAdvance(true);
-        if (submitDisabled && wizardStep === 3) return;
-        if (!form.isLoading && !form.isSaving) {
-          form.submit();
-        }
-      };
-      return () => { onSubmitRef.current = null; };
-    }
-  }, [onSubmitRef, form, wizardStep, submitDisabled]);
-
-  // Reset attempt flag only when returning to Type Selection (step 0) - keeps warning visible if user goes Back from step 3 to step 2
-  useEffect(() => {
-    if (wizardStep === 0) setHasAttemptedAdvance(false);
-  }, [wizardStep]);
 
   // Cleanup LDAP search timer on unmount
   useEffect(() => {
@@ -129,320 +79,342 @@ export function RoleForm({
     };
   }, []);
 
-  // Use the role from props if provided, otherwise from form state
   const currentRole = role || loadedRole;
   const isExternal = currentRole ? isExternalRole(currentRole.source) : false;
-  const isReadOnly = currentRole ? isReadOnlyRole(currentRole) : false;
+  // Defense in depth: even though callers gate on `canEdit`, the form disables inputs when the
+  // backend flags the role read-only. Source (LDAP/SAML/Crowd/OAuth2) is not part of this check.
+  const isReadOnly = currentRole?.readOnly === true;
 
   // Access extended context for reference data
   const context = form.state.context as RolesFormContext;
   const allPrivileges = context.allPrivileges || [];
   const allRoles = context.allRoles || [];
-  const allSources = context.allSources || [];
 
-  const _sourceOptions = useMemo(() => {
-    const options = allSources.map(s => ({ value: s.id, label: s.name }));
-    if (!options.some(o => o.value === NEXUS_SOURCE)) {
-      options.unshift({ value: NEXUS_SOURCE, label: NEXUS_SOURCE });
-    }
-    return options;
-  }, [allSources]);
+  // Adapt reference data to the SettingsSelectionModal's item shape.
+  const privilegeItems: SettingsSelectionItem[] = useMemo(
+    () =>
+      allPrivileges.map((priv) => ({
+        id: priv.id,
+        name: priv.name,
+        description: priv.description,
+      })),
+    [allPrivileges],
+  );
 
-  // Convert privileges to combobox option format
-  const privilegeOptions = useMemo(() => {
-    return allPrivileges.map((priv) => ({
-      value: priv.id,
-      label: priv.name,
-      description: priv.description,
-    }));
-  }, [allPrivileges]);
+  const roleItems: SettingsSelectionItem[] = useMemo(
+    () =>
+      allRoles
+        .filter((r) => r.id !== role?.id && r.id !== formData.id)
+        .map((r) => ({ id: r.id, name: r.name })),
+    [allRoles, role?.id, formData.id],
+  );
 
-  // Group privileges by prefix for better organization in combobox
-  const groupPrivilege = useCallback((option: { value: string; label: string }) => {
-    const prefixes = Object.keys(PRIVILEGE_GROUP_LABELS);
-    for (const prefix of prefixes) {
-      if (option.value.startsWith(prefix)) return PRIVILEGE_GROUP_LABELS[prefix];
-    }
-    return 'Other';
-  }, []);
+  const handleApplyPrivileges = useCallback(
+    (ids: string[]) => form.send({ type: 'UPDATE', name: 'privileges', value: ids }),
+    [form],
+  );
+  const handleApplyRoles = useCallback(
+    (ids: string[]) => form.send({ type: 'UPDATE', name: 'roles', value: ids }),
+    [form],
+  );
 
-  const showPrivilegeWarning = submitDisabled && hasAttemptedAdvance && wizardStep === 3;
+  const privilegesPicker = useSettingsSelectionModal({
+    availableItems: privilegeItems,
+    onConfirm: handleApplyPrivileges,
+  });
+  const containedRolesPicker = useSettingsSelectionModal({
+    availableItems: roleItems,
+    onConfirm: handleApplyRoles,
+  });
 
-  const handlePrivilegesChange = (values: string[]) => {
-    form.send({ type: 'UPDATE', name: 'privileges', value: values });
-  };
+  const openPrivilegesPicker = useCallback(
+    () => privilegesPicker.open(formData.privileges ?? []),
+    [privilegesPicker, formData.privileges],
+  );
+  const openContainedRolesPicker = useCallback(
+    () => containedRolesPicker.open(formData.roles ?? []),
+    [containedRolesPicker, formData.roles],
+  );
 
-  // Convert roles to transfer list format
-  const availableRoles = useMemo(() => {
-    return allRoles
-      .filter((r) => r.id !== role?.id && r.id !== formData.id)
-      .map((r) => ({
-        id: r.id,
-        name: r.name,
-      }));
-  }, [allRoles, role?.id, formData.id]);
-
-  const selectedRoles = useMemo(() => {
-    return allRoles
-      .filter((r) => formData.roles?.includes(r.id))
-      .map((r) => ({
-        id: r.id,
-        name: r.name,
-      }));
-  }, [allRoles, formData.roles]);
-
-  const handleRolesChange = (newSelected: Array<{ id: string; name: string }>) => {
-    form.send({ type: 'UPDATE', name: 'roles', value: newSelected.map((r) => r.id) });
-  };
+  const hasPrivilegeOrRole =
+    (formData.privileges?.length ?? 0) > 0 || (formData.roles?.length ?? 0) > 0;
+  const submitDisabled = !hasPrivilegeOrRole;
 
   // Handle LDAP role search with debounce
-  const handleLdapSearch = useCallback(async (query: string) => {
-    if (formData.externalSource !== 'LDAP') {
-      setLdapRoleOptions([]);
-      setLdapEmptyMessage(null);
-      return;
-    }
-
-    if (query.length < 3) {
-      setLdapRoleOptions([]);
-      setLdapEmptyMessage('Enter 3 or more characters to search.');
-      return;
-    }
-
-    // Clear any pending search
-    if (ldapSearchTimerRef.current) {
-      clearTimeout(ldapSearchTimerRef.current);
-    }
-
-    // Debounce the search by 300ms
-    ldapSearchTimerRef.current = setTimeout(async () => {
-      setLdapSearchLoading(true);
-      setLdapEmptyMessage(null);
-
-      try {
-        const results = await searchRoles(formData.externalSource, query);
-        const options = results.map(r => ({ value: r.id, label: r.name }));
-        setLdapRoleOptions(options);
-        if (options.length === 0) {
-          setLdapEmptyMessage(LDAP_EMPTY_SEARCH_MESSAGE);
-        }
-      } catch (err) {
-        console.error('Failed to search LDAP roles:', err);
+  const handleLdapSearch = useCallback(
+    async (query: string) => {
+      if (formData.externalSource !== 'LDAP') {
         setLdapRoleOptions([]);
-        setLdapEmptyMessage('Failed to search LDAP roles.');
-      } finally {
-        setLdapSearchLoading(false);
+        setLdapEmptyMessage(null);
+        return;
       }
-    }, 300);
-  }, [formData.externalSource, searchRoles]);
 
-  // Show loading state while data loads
+      if (query.length < 3) {
+        setLdapRoleOptions([]);
+        setLdapEmptyMessage(ROLE_FORM.SECTION_EXTERNAL.LDAP_MIN_CHARS);
+        return;
+      }
+
+      if (ldapSearchTimerRef.current) {
+        clearTimeout(ldapSearchTimerRef.current);
+      }
+
+      ldapSearchTimerRef.current = setTimeout(async () => {
+        setLdapSearchLoading(true);
+        setLdapEmptyMessage(null);
+
+        try {
+          const results = await searchRoles(formData.externalSource!, query);
+          const options = results.map((r) => ({ value: r.id, label: r.name }));
+          setLdapRoleOptions(options);
+          if (options.length === 0) {
+            setLdapEmptyMessage(LDAP_EMPTY_SEARCH_MESSAGE);
+          }
+        } catch (err) {
+          console.error('Failed to search LDAP roles:', err);
+          setLdapRoleOptions([]);
+          setLdapEmptyMessage(ROLE_FORM.SECTION_EXTERNAL.LDAP_SEARCH_FAILED);
+        } finally {
+          setLdapSearchLoading(false);
+        }
+      }, 300);
+    },
+    [formData.externalSource, searchRoles],
+  );
+
   if (form.isLoading) {
     return (
       <Flex align="center" justify="center" className="role-form__loading">
         <Loader2 size={24} className="role-form__spinner" />
-        <Text size="2">Loading form...</Text>
+        <Text size="2">{ROLE_FORM.LOADING}</Text>
       </Flex>
     );
   }
 
   const roleTypeOptions = [
-    { value: 'nexus', label: 'Nexus Role', description: 'Standard role managed by Nexus' },
-    { value: 'external', label: 'External Role Mapping', description: 'Map to roles from LDAP, SAML, or Crowd' },
+    {
+      value: 'nexus',
+      label: ROLE_FORM.SECTION_TYPE.OPTION_NEXUS_LABEL,
+      description: ROLE_FORM.SECTION_TYPE.OPTION_NEXUS_DESCRIPTION,
+    },
+    {
+      value: 'external',
+      label: ROLE_FORM.SECTION_TYPE.OPTION_EXTERNAL_LABEL,
+      description: ROLE_FORM.SECTION_TYPE.OPTION_EXTERNAL_DESCRIPTION,
+    },
   ];
 
-  const formContent = (
-    <>
-      {/* Step 0: Role Type — create mode only. Edit mode skips this step at the
-          wizard level (RolesPage never passes wizardStep=0 when !isCreate) because
-          the role type is immutable once persisted; showing a read-only step there
-          adds no value. Props are passed individually (not via form.field spread)
-          so the explicit value={... ?? 'nexus'} default is unambiguous. */}
-      {wizardStep === 0 && isCreate && (
-        <SettingsFormSection title="Role Type" defaultOpen>
-          <Text size="2" className="role-form__section-help">
-            Choose the type of role to create.
-          </Text>
-          <SettingsSelect
-            name="roleType"
-            onChange={(value) => form.send({ type: 'UPDATE', name: 'roleType', value })}
-            label="Type"
-            options={roleTypeOptions}
-            helpText="Select whether this is a standard Nexus role or maps to an external authentication source"
-            value={formData.roleType ?? 'nexus'}
-          />
-        </SettingsFormSection>
-      )}
-
-      {/* Step 1: Role Setup Section */}
-      {wizardStep === 1 && (
-        <SettingsFormSection title="Role Setup" defaultOpen>
-          {/* External Source is FIRST for external roles */}
-          {formData.roleType === 'external' && (
-            <>
-              <SettingsSelect
-                {...form.field('externalSource')}
-                label="External Source"
-                options={[
-                  { value: 'LDAP', label: 'LDAP' },
-                  { value: 'SAML', label: 'SAML' },
-                  { value: 'Crowd', label: 'Crowd' },
-                ]}
-                helpText="Select the external authentication source (LDAP, SAML, or Crowd)"
-                disabled={!isCreate || isReadOnly}
-                required
-              />
-
-              {formData.externalSource && (
-                <SettingsCombobox
-                  name="mappedRole"
-                  value={formData.mappedRole || ''}
-                  onChange={(value) => {
-                    form.send({ type: 'UPDATE', name: 'mappedRole', value });
-                  }}
-                  onInputChange={handleLdapSearch}
-                  options={ldapRoleOptions}
-                  placeholder={formData.externalSource === 'LDAP' ? 'Search LDAP roles...' : `Enter ${formData.externalSource} role name`}
-                  label="Mapped Role"
-                  helpText={formData.externalSource === 'LDAP'
-                    ? 'Enter or search for a role from LDAP. Type 3+ characters to search.'
-                    : `Enter the exact role name from ${formData.externalSource}.`}
-                  allowCustomValue
-                  loading={ldapSearchLoading}
-                  disabled={isReadOnly}
-                  hideEmptyMessage={formData.externalSource !== 'LDAP'}
-                  emptyMessage={ldapEmptyMessage}
-                />
-              )}
-            </>
-          )}
-
-          <SettingsTextInput
-            {...form.field('id')}
-            label="ID"
-            placeholder="nx-custom-role"
-            helpText="Unique identifier for this role"
-            required
-            disabled={!isCreate || isExternal}
-          />
-
-          <SettingsTextInput
-            {...form.field('name')}
-            label="Name"
-            placeholder="My Custom Role"
-            helpText="Human-readable name for this role"
-            required
-            disabled={isReadOnly}
-          />
-
-          <SettingsTextArea
-            {...form.field('description')}
-            label="Description"
-            placeholder="Grants read access to all Maven repositories"
-            helpText="Optional description of this role's purpose"
-            rows={3}
-            disabled={isReadOnly}
-          />
-        </SettingsFormSection>
-      )}
-
-      {/* Step 2: Privileges Section */}
-      {wizardStep === 2 && (
-        <SettingsFormSection title="Privileges" defaultOpen>
-          <Text size="2" className="role-form__section-help">
-            Search and select privileges to grant. Results are grouped by type.
-          </Text>
-          <SettingsCombobox
-            name="privileges"
-            multiple
-            selectedValues={formData.privileges || []}
-            onMultiChange={handlePrivilegesChange}
-            options={privilegeOptions}
-            groupBy={groupPrivilege}
-            placeholder="Search privileges by name..."
-            helpText={`${formData.privileges?.length || 0} privilege${(formData.privileges?.length || 0) === 1 ? '' : 's'} granted`}
-            disabled={isReadOnly}
-          />
-          {hasAttemptedAdvance && form.validationErrors?.privileges && (
-            <Text size="1" className="role-form__error">{form.validationErrors.privileges}</Text>
-          )}
-        </SettingsFormSection>
-      )}
-
-      {/* Step 3: Contained Roles Section */}
-      {wizardStep === 3 && (
-        <>
-          <SettingsFormSection title="Contained Roles" defaultOpen>
-            <Text size="2" className="role-form__section-help">
-              Select other roles to include. Their privileges will be inherited by this role.
-            </Text>
-            <SettingsTransferList
-              name="roles"
-              testId="role-form-roles"
-              availableItems={availableRoles}
-              selectedItems={selectedRoles}
-              onChange={handleRolesChange}
-              availableLabel="Available"
-              selectedLabel="Contained"
-              getItemId={(item) => item.id}
-              getItemLabel={(item) => item.name}
-              disabled={isReadOnly}
-            />
-          </SettingsFormSection>
-
-          {/* Validation error: no privileges or roles selected */}
-          {showPrivilegeWarning && (
-            <Flex align="center" gap="2" className="role-form__privilege-warning" data-testid="privilege-warning" role="alert">
-              <AlertCircle size={14} />
-              <Text size="2" weight="medium">
-                {form.validationErrors?.privileges ?? 'Select at least one privilege or contained role'}
-              </Text>
-            </Flex>
-          )}
-        </>
-      )}
-    </>
-  );
-
-  if (hideActions) {
-    return <Box className="role-form">{formContent}</Box>;
-  }
+  const selectedRoleType = formData.roleType ?? 'nexus';
+  const isExternalType = selectedRoleType === 'external';
 
   return (
     <Box className="role-form">
       <SettingsForm
         testId="role-form"
         onSubmit={() => {
-          if (wizardStep === 2) setHasAttemptedAdvance(true);
-          if (submitDisabled && wizardStep === 2) return;
+          if (submitDisabled) return;
           form.submit();
         }}
         onCancel={onCancel}
-        cancelLabel="Cancel"
+        onDiscardConfirm={() => {
+          // useForm already registers this form's machine.id in window.dirty.
+          // SettingsForm's default onDiscardConfirm only clears its own
+          // duplicate registration; without clearing ours the router prompts
+          // again after Leave. Clear ours synchronously before navigating.
+          form.clearDirty();
+          onCancel();
+        }}
+        externalDirtyTracking
+        cancelLabel={ROLE_FORM.BUTTON_CANCEL}
         loading={form.isSaving || loading}
         pristine={form.isPristine}
         error={error || form.saveError || undefined}
-        submitLabel={isCreate ? 'Create' : 'Save'}
+        submitLabel={isCreate ? ROLE_FORM.BUTTON_CREATE : ROLE_FORM.BUTTON_SAVE}
         submitDisabled={submitDisabled}
         footerExtra={
           !isCreate && onDelete && !isReadOnly ? (
-            <SettingsButton
-              testId="form-delete"
-              variant="danger"
+            <Button
+              type="button"
+              variant="soft"
+              color="red"
               onClick={onDelete}
               disabled={form.isSaving || loading}
-              icon={Trash2}
+              data-testid="form-delete"
+              data-analytics-id="nxrm-role-delete"
             >
-              Delete Role
-            </SettingsButton>
+              <Trash2 size={16} />
+              {ROLE_FORM.BUTTON_DELETE}
+            </Button>
           ) : undefined
         }
       >
-        {formContent}
+        {/* Role Type - Create only. Edit mode never shows this because role type
+            is immutable once persisted; the external source shows read-only under Setup. */}
+        {isCreate && (
+          <SettingsFormSection title={ROLE_FORM.SECTION_TYPE.TITLE} defaultOpen>
+            <Text size="2" className="role-form__section-help">
+              {ROLE_FORM.SECTION_TYPE.HELP}
+            </Text>
+            <SettingsSelect
+              name="roleType"
+              onChange={(value) => form.send({ type: 'UPDATE', name: 'roleType', value })}
+              label={ROLE_FORM.SECTION_TYPE.FIELD_LABEL}
+              options={roleTypeOptions}
+              helpText={ROLE_FORM.SECTION_TYPE.FIELD_HELP}
+              value={selectedRoleType}
+            />
+          </SettingsFormSection>
+        )}
+
+        {/* External Source + Mapped Role - shown only when Type=External (Create) or role is external (Edit) */}
+        {(isExternalType || (!isCreate && isExternal)) && (
+          <SettingsFormSection title={ROLE_FORM.SECTION_EXTERNAL.TITLE} defaultOpen>
+            <SettingsSelect
+              {...form.field('externalSource')}
+              label={ROLE_FORM.SECTION_EXTERNAL.FIELD_LABEL}
+              options={[
+                { value: 'LDAP', label: 'LDAP' },
+                { value: 'SAML', label: 'SAML' },
+                { value: 'Crowd', label: 'Crowd' },
+              ]}
+              helpText={ROLE_FORM.SECTION_EXTERNAL.FIELD_HELP}
+              disabled={!isCreate || isReadOnly}
+              required
+            />
+
+            {formData.externalSource && (
+              <SettingsCombobox
+                name="mappedRole"
+                value={formData.mappedRole || ''}
+                onChange={(value) => {
+                  form.send({ type: 'UPDATE', name: 'mappedRole', value });
+                }}
+                onInputChange={handleLdapSearch}
+                options={ldapRoleOptions}
+                placeholder={
+                  formData.externalSource === 'LDAP'
+                    ? ROLE_FORM.SECTION_EXTERNAL.LDAP_PLACEHOLDER
+                    : ROLE_FORM.SECTION_EXTERNAL.OTHER_PLACEHOLDER(formData.externalSource)
+                }
+                label={ROLE_FORM.SECTION_EXTERNAL.MAPPED_ROLE_LABEL}
+                helpText={
+                  formData.externalSource === 'LDAP'
+                    ? ROLE_FORM.SECTION_EXTERNAL.LDAP_HELP
+                    : ROLE_FORM.SECTION_EXTERNAL.OTHER_HELP(formData.externalSource)
+                }
+                allowCustomValue
+                loading={ldapSearchLoading}
+                disabled={isReadOnly}
+                hideEmptyMessage={formData.externalSource !== 'LDAP'}
+                emptyMessage={ldapEmptyMessage}
+              />
+            )}
+          </SettingsFormSection>
+        )}
+
+        {/* Setup - always visible */}
+        <SettingsFormSection title={ROLE_FORM.SECTION_SETUP.TITLE} defaultOpen>
+          <SettingsTextInput
+            {...form.field('id')}
+            label={ROLE_FORM.SECTION_SETUP.ID_LABEL}
+            placeholder={ROLE_FORM.SECTION_SETUP.ID_PLACEHOLDER}
+            helpText={ROLE_FORM.SECTION_SETUP.ID_HELP}
+            required
+            disabled={!isCreate || isExternal}
+          />
+
+          <SettingsTextInput
+            {...form.field('name')}
+            label={ROLE_FORM.SECTION_SETUP.NAME_LABEL}
+            placeholder={ROLE_FORM.SECTION_SETUP.NAME_PLACEHOLDER}
+            helpText={ROLE_FORM.SECTION_SETUP.NAME_HELP}
+            required
+            disabled={isReadOnly}
+          />
+
+          <SettingsTextArea
+            {...form.field('description')}
+            label={ROLE_FORM.SECTION_SETUP.DESCRIPTION_LABEL}
+            placeholder={ROLE_FORM.SECTION_SETUP.DESCRIPTION_PLACEHOLDER}
+            helpText={ROLE_FORM.SECTION_SETUP.DESCRIPTION_HELP}
+            rows={3}
+            disabled={isReadOnly}
+          />
+        </SettingsFormSection>
+
+        {/* Privileges - RolePicker trigger + summary */}
+        <SettingsFormSection title={ROLE_FORM.SECTION_PRIVILEGES.TITLE} defaultOpen>
+          <Text size="2" className="role-form__section-help">
+            {ROLE_FORM.SECTION_PRIVILEGES.HELP}
+          </Text>
+          <Flex align="center" gap="3" className="role-form__picker-row">
+            <Text size="2" data-testid="role-form-privileges-count">
+              {ROLE_FORM.SECTION_PRIVILEGES.COUNT(formData.privileges?.length ?? 0)}
+            </Text>
+            <SettingsButton
+              variant="secondary"
+              onClick={openPrivilegesPicker}
+              disabled={isReadOnly}
+              testId="role-form-open-privileges"
+              icon={Pencil}
+            >
+              {ROLE_FORM.BUTTON_EDIT_PRIVILEGES}
+            </SettingsButton>
+          </Flex>
+        </SettingsFormSection>
+
+        {/* Contained Roles - RolePicker trigger + summary */}
+        <SettingsFormSection title={ROLE_FORM.SECTION_CONTAINED_ROLES.TITLE} defaultOpen>
+          <Text size="2" className="role-form__section-help">
+            {ROLE_FORM.SECTION_CONTAINED_ROLES.HELP}
+          </Text>
+          <Flex align="center" gap="3" className="role-form__picker-row">
+            <Text size="2" data-testid="role-form-roles-count">
+              {ROLE_FORM.SECTION_CONTAINED_ROLES.COUNT(formData.roles?.length ?? 0)}
+            </Text>
+            <SettingsButton
+              variant="secondary"
+              onClick={openContainedRolesPicker}
+              disabled={isReadOnly}
+              testId="role-form-open-contained-roles"
+              icon={Pencil}
+            >
+              {ROLE_FORM.BUTTON_EDIT_CONTAINED_ROLES}
+            </SettingsButton>
+          </Flex>
+
+          {submitDisabled && (
+            <Flex
+              align="center"
+              gap="2"
+              className="role-form__privilege-warning"
+              data-testid="privilege-warning"
+              role="alert"
+            >
+              <AlertCircle size={14} />
+              <Text size="2" weight="medium">
+                {ROLE_FORM.PRIVILEGE_WARNING}
+              </Text>
+            </Flex>
+          )}
+        </SettingsFormSection>
       </SettingsForm>
+
+      <SettingsSelectionModal
+        picker={privilegesPicker}
+        title={ROLE_FORM.PICKERS.PRIVILEGES_TITLE}
+        emptyMessage={ROLE_FORM.PICKERS.PRIVILEGES_EMPTY}
+        testId="privileges-picker"
+      />
+      <SettingsSelectionModal
+        picker={containedRolesPicker}
+        title={ROLE_FORM.PICKERS.CONTAINED_ROLES_TITLE}
+        showDescriptionColumn={false}
+        emptyMessage={ROLE_FORM.PICKERS.CONTAINED_ROLES_EMPTY}
+        testId="contained-roles-picker"
+      />
     </Box>
   );
 }
-
 
 export default RoleForm;

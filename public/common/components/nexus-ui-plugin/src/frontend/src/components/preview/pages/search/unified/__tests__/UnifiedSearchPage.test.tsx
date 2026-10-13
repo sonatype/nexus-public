@@ -46,7 +46,11 @@ jest.mock('../useRepositories', () => ({
 let mockUrlState = { format: 'all', query: '', filters: {} };
 const mockSyncToUrl = jest.fn();
 const mockReadFromUrl = jest.fn(() => mockUrlState);
+// Only the hook is replaced: DEFAULT_SORT_FIELD / DEFAULT_SORT_DIRECTION are
+// consumed directly by the page, and stubbing them away would let it call
+// setSort(undefined, undefined) — a state unreachable in production.
 jest.mock('../useSearchUrlState', () => ({
+  ...jest.requireActual('../useSearchUrlState'),
   useSearchUrlState: () => ({
     readFromUrl: mockReadFromUrl,
     syncToUrl: mockSyncToUrl,

@@ -53,7 +53,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
@@ -86,8 +86,8 @@ public class UpgradeManagerImpl
       final List<DatabaseMigrationStep> migrations)
   {
     this.migrations = checkVersionedMigrations(migrations);
-    this.dataStoreManager = checkNotNull(dataStoreManager);
-    this.auditor = checkNotNull(auditor);
+    this.dataStoreManager = requireNonNull(dataStoreManager);
+    this.auditor = requireNonNull(auditor);
   }
 
   @Override
@@ -262,7 +262,7 @@ public class UpgradeManagerImpl
    * don't exist (e.g., in OSS deployments).
    */
   private List<DatabaseMigrationStep> checkVersionedMigrations(final List<DatabaseMigrationStep> migrations) {
-    checkNotNull(migrations);
+    requireNonNull(migrations);
 
     // Package filter removed - migrations can be in org.sonatype or com.sonatype
     // Real protection is defensive migration code that checks table existence

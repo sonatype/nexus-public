@@ -59,7 +59,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -111,16 +111,16 @@ public class SqlSearchService
       final SqlSearchEventHandler sqlSearchEventHandler,
       final AssetPermissionChecker assetPermissionChecker)
   {
-    this.searchStore = checkNotNull(searchStore);
-    this.expressionBuilder = checkNotNull(expressionBuilder);
-    this.requestModifier = checkNotNull(requestModifier);
-    this.queryFactory = checkNotNull(queryFactory);
+    this.searchStore = requireNonNull(searchStore);
+    this.expressionBuilder = requireNonNull(expressionBuilder);
+    this.requestModifier = requireNonNull(requestModifier);
+    this.queryFactory = requireNonNull(queryFactory);
     this.formatStoreManagersByFormat =
-        QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersByFormatList));
-    this.sqlSearchSortUtil = checkNotNull(sqlSearchSortUtil);
-    this.decorators = checkNotNull(decorators);
-    this.sqlSearchEventHandler = checkNotNull(sqlSearchEventHandler);
-    this.assetPermissionChecker = checkNotNull(assetPermissionChecker);
+        QualifierUtil.buildQualifierBeanMap(requireNonNull(formatStoreManagersByFormatList));
+    this.sqlSearchSortUtil = requireNonNull(sqlSearchSortUtil);
+    this.decorators = requireNonNull(decorators);
+    this.sqlSearchEventHandler = requireNonNull(sqlSearchEventHandler);
+    this.assetPermissionChecker = requireNonNull(assetPermissionChecker);
   }
 
   @Override
@@ -496,7 +496,7 @@ public class SqlSearchService
         final List<ComponentSearchResult> componentSearchResults)
     {
       this.nextOffset = nextOffset;
-      this.componentSearchResults = checkNotNull(componentSearchResults);
+      this.componentSearchResults = requireNonNull(componentSearchResults);
     }
 
     private static SqlSearchService.ComponentSearchResultPage empty() {

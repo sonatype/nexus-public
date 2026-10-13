@@ -27,7 +27,7 @@ import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.OPTIONAL;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.ARCHIVEDLOG;
 import org.springframework.stereotype.Component;
@@ -42,7 +42,7 @@ public class ArchivedLogCustomizer
 
   @Autowired
   public ArchivedLogCustomizer(final ApplicationDirectories applicationDirectories) {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
   }
 
   @Override

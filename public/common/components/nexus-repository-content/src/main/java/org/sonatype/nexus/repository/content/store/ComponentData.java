@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -19,7 +20,7 @@ import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link Component} data backed by the content data store.
@@ -43,6 +44,12 @@ public class ComponentData
   private Integer entityVersion;
 
   private List<Asset> assets;
+
+  @Nullable
+  private OffsetDateTime deletedOn;
+
+  @Nullable
+  private String deletedBy;
 
   public ComponentData() {
     // empty constructor to be able to instantiate object using myBatis
@@ -97,14 +104,14 @@ public class ComponentData
    * Sets the component namespace.
    */
   public void setNamespace(final String namespace) {
-    this.namespace = checkNotNull(namespace);
+    this.namespace = requireNonNull(namespace);
   }
 
   /**
    * Sets the component name.
    */
   public void setName(final String name) {
-    this.name = checkNotNull(name);
+    this.name = requireNonNull(name);
   }
 
   /**
@@ -113,21 +120,21 @@ public class ComponentData
    * @since 3.25
    */
   public void setKind(final String kind) {
-    this.kind = checkNotNull(kind);
+    this.kind = requireNonNull(kind);
   }
 
   /**
    * Sets the component version.
    */
   public void setVersion(final String version) {
-    this.version = checkNotNull(version);
+    this.version = requireNonNull(version);
   }
 
   /**
    * Sets the component normalized version
    */
   public void setNormalizedVersion(final String normalizedVersion) {
-    this.normalizedVersion = checkNotNull(normalizedVersion);
+    this.normalizedVersion = requireNonNull(normalizedVersion);
   }
 
   /**
@@ -144,6 +151,24 @@ public class ComponentData
 
   public void setAssets(final List<Asset> assets) {
     this.assets = assets;
+  }
+
+  @Nullable
+  public OffsetDateTime getDeletedOn() {
+    return deletedOn;
+  }
+
+  public void setDeletedOn(@Nullable final OffsetDateTime deletedOn) {
+    this.deletedOn = deletedOn;
+  }
+
+  @Nullable
+  public String getDeletedBy() {
+    return deletedBy;
+  }
+
+  public void setDeletedBy(@Nullable final String deletedBy) {
+    this.deletedBy = deletedBy;
   }
 
   // ContinuationAware

@@ -16,7 +16,7 @@ import java.util.Date;
 
 import org.sonatype.nexus.security.ClientInfo;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Event fired for an anonymous access of the system.
@@ -30,8 +30,8 @@ public class AnonymousAccessEvent
   private final Date eventDate;
 
   public AnonymousAccessEvent(final ClientInfo clientInfo, final Date eventDate) {
-    this.clientInfo = checkNotNull(clientInfo);
-    this.eventDate = checkNotNull(eventDate);
+    this.clientInfo = requireNonNull(clientInfo);
+    this.eventDate = requireNonNull(eventDate);
   }
 
   public ClientInfo getClientInfo() {

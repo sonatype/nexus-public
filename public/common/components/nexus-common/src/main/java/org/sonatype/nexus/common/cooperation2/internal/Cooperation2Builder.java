@@ -17,8 +17,7 @@ import java.util.Optional;
 import org.sonatype.nexus.common.cooperation2.Cooperation2.Builder;
 import org.sonatype.nexus.common.cooperation2.IOCall;
 import org.sonatype.nexus.common.cooperation2.IOCheck;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Abstract implementation of {@link Builder}
@@ -33,12 +32,12 @@ public abstract class Cooperation2Builder<RET>
   protected final IOCall<RET> workFunction;
 
   protected Cooperation2Builder(final IOCall<RET> workFunction) {
-    this.workFunction = checkNotNull(workFunction, "The work function for this co-operation is missing");
+    this.workFunction = requireNonNull(workFunction, "The work function for this co-operation is missing");
   }
 
   @Override
   public Cooperation2Builder<RET> checkFunction(final IOCheck<RET> checkFunction) {
-    this.checkFunction = checkNotNull(checkFunction, "The check function for this co-operation is missing");
+    this.checkFunction = requireNonNull(checkFunction, "The check function for this co-operation is missing");
     return this;
   }
 

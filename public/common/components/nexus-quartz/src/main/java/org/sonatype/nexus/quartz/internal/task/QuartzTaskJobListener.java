@@ -32,7 +32,7 @@ import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.configurationOf;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.getCurrentTrigger;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobData;
@@ -78,10 +78,10 @@ public class QuartzTaskJobListener
       final QuartzSchedulerSPI scheduler,
       final QuartzTaskInfo taskInfo)
   {
-    this.name = checkNotNull(name);
-    this.eventManager = checkNotNull(eventManager);
-    this.scheduler = checkNotNull(scheduler);
-    this.taskInfo = checkNotNull(taskInfo);
+    this.name = requireNonNull(name);
+    this.eventManager = requireNonNull(eventManager);
+    this.scheduler = requireNonNull(scheduler);
+    this.taskInfo = requireNonNull(taskInfo);
   }
 
   public QuartzTaskInfo getTaskInfo() {

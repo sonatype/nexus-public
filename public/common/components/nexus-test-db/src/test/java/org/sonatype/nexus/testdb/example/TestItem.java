@@ -19,8 +19,8 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.HasEntityId;
 import org.sonatype.nexus.common.entity.HasVersion;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.hash;
+import static java.util.Objects.requireNonNull;
 
 public class TestItem
     implements HasEntityId, HasVersion
@@ -68,7 +68,7 @@ public class TestItem
   }
 
   public void setNotes(final String notes) {
-    this.notes = checkNotNull(notes);
+    this.notes = requireNonNull(notes);
   }
 
   public Map<String, String> getProperties() {
@@ -76,7 +76,7 @@ public class TestItem
   }
 
   public void setProperties(Map<String, String> properties) {
-    this.properties = checkNotNull(properties);
+    this.properties = requireNonNull(properties);
   }
 
   @Override

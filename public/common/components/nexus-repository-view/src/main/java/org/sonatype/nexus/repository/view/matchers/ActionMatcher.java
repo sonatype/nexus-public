@@ -21,8 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Matches if the {@link Request#getAction() request action} is in the allowed list.
@@ -37,7 +37,7 @@ public class ActionMatcher
   private final List<String> allowedActions;
 
   public ActionMatcher(final String... allowedActions) {
-    checkNotNull(allowedActions);
+    requireNonNull(allowedActions);
     checkArgument(allowedActions.length > 0, "at least one allowed action must be specified");
     this.allowedActions = asList(allowedActions);
   }

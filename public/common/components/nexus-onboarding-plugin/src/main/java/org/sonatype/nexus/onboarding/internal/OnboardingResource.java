@@ -39,7 +39,7 @@ import jakarta.validation.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import org.springframework.stereotype.Component;
 
@@ -72,10 +72,10 @@ public class OnboardingResource
       final AdminPasswordFileManager adminPasswordFileManager,
       final OnboardingSessionRefresher sessionRefresher)
   {
-    this.onboardingManager = checkNotNull(onboardingManager);
-    this.securitySystem = checkNotNull(securitySystem);
-    this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
-    this.sessionRefresher = checkNotNull(sessionRefresher);
+    this.onboardingManager = requireNonNull(onboardingManager);
+    this.securitySystem = requireNonNull(securitySystem);
+    this.adminPasswordFileManager = requireNonNull(adminPasswordFileManager);
+    this.sessionRefresher = requireNonNull(sessionRefresher);
   }
 
   @GET

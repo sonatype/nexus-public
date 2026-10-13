@@ -22,8 +22,7 @@ import jakarta.inject.Provider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractBaseUrlManager
     implements BaseUrlManager
@@ -36,7 +35,7 @@ public abstract class AbstractBaseUrlManager
 
   @Autowired
   protected AbstractBaseUrlManager(final Provider<HttpServletRequest> requestProvider) {
-    this.requestProvider = checkNotNull(requestProvider);
+    this.requestProvider = requireNonNull(requestProvider);
   }
 
   @Override

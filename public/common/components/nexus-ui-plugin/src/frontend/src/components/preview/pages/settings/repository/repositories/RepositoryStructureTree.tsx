@@ -12,6 +12,7 @@
  */
 
 import React, { useCallback, useEffect, useRef } from 'react';
+import { useRouter } from '@uirouter/react';
 import { Box, Flex, Text, Tooltip, ScrollArea, Callout, TextField, IconButton, Switch, Separator } from '@radix-ui/themes';
 import { 
   FolderTree, 
@@ -99,6 +100,8 @@ const TreeNode = ({
   highlightedNodeIds,
   showIssuesOnly,
 }: TreeNodeProps) => {
+  let router: ReturnType<typeof useRouter> | null = null;
+  try { router = useRouter(); } catch { /* no UIRouter context */ }
   const isExpanded = expandedIds.has(node.id);
   const isFocused = focusedId === node.id;
   const hasChildren = node.children && node.children.length > 0;
@@ -141,14 +144,9 @@ const TreeNode = ({
     setFocusedId(node.id);
   };
 
-  const goToProfile = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    window.location.hash = `preview/admin/repository/repositories/${encodeURIComponent(node.name)}/profile`;
-  };
-
   const goToSettings = (e: React.MouseEvent) => {
     e.stopPropagation();
-    window.location.hash = `preview/admin/repository/repositories/${encodeURIComponent(node.name)}`;
+    router?.stateService.go('preview.admin.repository.repositories.detail', { repositoryName: node.name });
   };
 
   const copyUrl = (e: React.MouseEvent) => {
@@ -243,13 +241,7 @@ const TreeNode = ({
             </Box>
           </Tooltip>
 
-          <Tooltip content="View Profile">
-            <IconButton variant="ghost" size="1" onClick={goToProfile} className="repository-tree-node__action-btn">
-              <ExternalLink size={14} />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip content="Edit Settings">
+          <Tooltip content="View Settings">
             <IconButton variant="ghost" size="1" onClick={goToSettings} className="repository-tree-node__action-btn">
               <Settings size={14} />
             </IconButton>

@@ -459,7 +459,8 @@ public class FluentComponentBuilderImplTest
 
   @Test(expected = NullPointerException.class)
   public void testConstructorRejectsNullComponentStore() {
-    new FluentComponentBuilderImpl(facet, null, FluentComponentBuilderImplTest::normalize, COMPONENT_NAME);
+    new FluentComponentBuilderImpl(facet, null, FluentComponentBuilderImplTest::normalize,
+        COMPONENT_NAME);
   }
 
   @Test(expected = NullPointerException.class)

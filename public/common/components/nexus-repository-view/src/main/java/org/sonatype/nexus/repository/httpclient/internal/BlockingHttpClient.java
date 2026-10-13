@@ -42,10 +42,10 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.util.Locale.ENGLISH;
+import static java.util.Objects.requireNonNull;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
@@ -108,9 +108,9 @@ public class BlockingHttpClient
       final OutboundRequestMetricRecorder outboundRequestRecorder)
   {
     super(delegate);
-    checkNotNull(config);
-    this.statusObserver = checkNotNull(statusObserver);
-    this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
+    requireNonNull(config);
+    this.statusObserver = requireNonNull(statusObserver);
+    this.autoBlockConfiguration = requireNonNull(autoBlockConfiguration);
     this.outboundRequestRecorder = outboundRequestRecorder;
 
     blocked = config.blocked != null ? config.blocked : false;

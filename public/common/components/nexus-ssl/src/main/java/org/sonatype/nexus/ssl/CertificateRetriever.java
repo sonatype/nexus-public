@@ -48,7 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Certificates retriever from a host:port using Apache Http Client 4.
@@ -72,9 +72,9 @@ public class CertificateRetriever
       final AntiSsrfService antiSsrfService,
       @Lazy final TrustStore trustStore)
   {
-    this.httpClientManager = checkNotNull(httpClientManager);
-    this.antiSsrfService = checkNotNull(antiSsrfService);
-    this.trustStore = checkNotNull(trustStore);
+    this.httpClientManager = requireNonNull(httpClientManager);
+    this.antiSsrfService = requireNonNull(antiSsrfService);
+    this.trustStore = requireNonNull(trustStore);
   }
 
   private static final TrustManager ACCEPT_ALL_TRUST_MANAGER = new X509TrustManager()
@@ -200,7 +200,7 @@ public class CertificateRetriever
       final Integer port,
       final String protocolHint) throws Exception
   {
-    checkNotNull(host);
+    requireNonNull(host);
     // Validate host doesn't resolve to private/local network (SSRF protection)
     antiSsrfService.validateHost(host);
 

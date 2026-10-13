@@ -20,6 +20,7 @@ import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.repository.RepositoryStartedEvent;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -34,7 +35,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Multimaps.synchronizedSetMultimap;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -61,12 +62,22 @@ public class AssetBlobCleanupTaskManager
 
   @Autowired
   public AssetBlobCleanupTaskManager(final TaskScheduler taskScheduler) {
-    this.taskScheduler = checkNotNull(taskScheduler);
+    this.taskScheduler = requireNonNull(taskScheduler);
   }
 
   @Subscribe
   @AllowConcurrentEvents
   public void on(final RepositoryStartedEvent event) {
+    if (EventHelper.isReplicating()) {
+      // Scheduling the per-format cleanup task is a non-replicated, cluster-wide operation: QuartzSchedulerSPI
+      // refuses to schedule while replicating. Under HA a RepositoryStartedEvent frequently fires under
+      // replication (a peer's config replayed by the config-notify drain, or a read-miss materialization), so
+      // skip entirely -- without this the failing schedule would still "claim" the format/store in
+      // activeFormatStores and never be retried, leaving the task unscheduled. The node that starts the
+      // repository locally (non-replicating) schedules it, and clustered scheduling shares it across the node set.
+      return;
+    }
+
     String format = event.getRepository().getFormat().getValue();
 
     Configuration repositoryConfiguration = event.getRepository().getConfiguration();

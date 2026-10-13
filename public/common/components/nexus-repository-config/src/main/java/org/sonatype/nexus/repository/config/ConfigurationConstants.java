@@ -33,9 +33,17 @@ public interface ConfigurationConstants
    */
   String LATEST_POLICY = "latestPolicy";
 
+  /**
+   * Boolean {@code storage} attribute controlling whether downloads from this repository may be
+   * redirected through the CDN generator configured on the underlying blob store.
+   */
+  String GLOBAL_DISTRIBUTION_ENABLED = "globalDistribution";
+
   String WRITE_POLICY_DEFAULT = "ALLOW";
 
   String STRICT_CONTENT_TYPE_VALIDATION = "strictContentTypeValidation";
+
+  String GLOBAL_DISTRIBUTION = "globalDistribution";
 
   String GROUP_WRITE_MEMBER = "groupWriteMember";
 

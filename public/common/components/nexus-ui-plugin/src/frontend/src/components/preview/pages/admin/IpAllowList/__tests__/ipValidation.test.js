@@ -152,6 +152,47 @@ describe('isValidIP', () => {
       expect(isValidIP('::ffff:010.0.0.1')).toBe(false);
     });
   });
+
+  describe('URI-bracketed IPv6 leniency (NEXUS-54702)', () => {
+    it('accepts bracketed IPv6 addresses', () => {
+      expect(isValidIP('[::1]')).toBe(true);
+      expect(isValidIP('[2001:db8::1]')).toBe(true);
+      expect(isValidIP('[2001:0db8:0000:0000:0000:0000:0000:0001]')).toBe(true);
+    });
+
+    it('accepts bracketed IPv6 CIDR', () => {
+      expect(isValidIP('[2001:db8::]/32')).toBe(true);
+      expect(isValidIP('[::]/0')).toBe(true);
+    });
+
+    it('accepts bracketed IPv4-mapped IPv6', () => {
+      expect(isValidIP('[::ffff:192.168.1.1]')).toBe(true);
+    });
+
+    it('rejects half-bracketed forms', () => {
+      expect(isValidIP('[::1')).toBe(false);
+      expect(isValidIP('::1]')).toBe(false);
+      expect(isValidIP('[2001:db8::/32')).toBe(false);
+      expect(isValidIP('2001:db8::]/32')).toBe(false);
+    });
+
+    it('rejects empty brackets and bracketed IPv4', () => {
+      // Empty brackets have no address inside.
+      expect(isValidIP('[]')).toBe(false);
+      // RFC 3986 brackets are IPv6-only; bracketed IPv4 is not a real form.
+      expect(isValidIP('[192.168.1.1]')).toBe(false);
+      expect(isValidIP('[192.168.1.0/24]')).toBe(false);
+    });
+
+    it('rejects whole-CIDR brackets to stay in sync with the Java validator', () => {
+      // RFC 3986 wraps the address only, not the CIDR prefix. Java's validateCidr
+      // splits on '/' first so networkPart='[2001:db8::' is half-bracketed and
+      // rejected by Guava. JS mirrors this: split on '/' first, then bracket-check
+      // the head only.
+      expect(isValidIP('[2001:db8::/32]')).toBe(false);
+      expect(isValidIP('[::1/128]')).toBe(false);
+    });
+  });
 });
 
 describe('normalizeIPv6', () => {
@@ -259,6 +300,29 @@ describe('validateAndNormalize', () => {
       const result = validateAndNormalize('  192.168.1.1  ');
       expect(result.isValid).toBe(true);
       expect(result.normalized).toBe('192.168.1.1');
+    });
+  });
+
+  describe('URI-bracketed IPv6 leniency (NEXUS-54702)', () => {
+    it('normalizes bracketed IPv6 to bare canonical form', () => {
+      const result = validateAndNormalize('[::1]');
+      expect(result.isValid).toBe(true);
+      expect(result.normalized).toBe('::1');
+      expect(result.error).toBeNull();
+    });
+
+    it('normalizes bracketed IPv6 CIDR to bare canonical form', () => {
+      const result = validateAndNormalize('[2001:db8::]/32');
+      expect(result.isValid).toBe(true);
+      expect(result.normalized).toBe('2001:db8::/32');
+      expect(result.error).toBeNull();
+    });
+
+    it('normalizes bracketed full IPv6 to canonical short form', () => {
+      const result = validateAndNormalize('[2001:0db8:0000:0000:0000:0000:0000:0001]');
+      expect(result.isValid).toBe(true);
+      expect(result.normalized).toBe('2001:db8::1');
+      expect(result.error).toBeNull();
     });
   });
 });

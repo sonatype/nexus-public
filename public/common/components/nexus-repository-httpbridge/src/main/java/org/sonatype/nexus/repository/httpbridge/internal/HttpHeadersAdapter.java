@@ -18,7 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.view.Headers;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * HTTP {@link Headers} adapter.
@@ -29,7 +29,7 @@ class HttpHeadersAdapter
     extends Headers
 {
   public HttpHeadersAdapter(final HttpServletRequest request) {
-    checkNotNull(request);
+    requireNonNull(request);
     Enumeration<String> names = request.getHeaderNames();
     while (names.hasMoreElements()) {
       String name = names.nextElement();

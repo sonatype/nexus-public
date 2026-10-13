@@ -21,7 +21,7 @@ import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.security.secrets.SecretsMigrator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -40,7 +40,7 @@ public class SecretsMigrationTask
 
   @Autowired
   public SecretsMigrationTask(final List<SecretsMigrator> migrators) {
-    this.migrators = checkNotNull(migrators);
+    this.migrators = requireNonNull(migrators);
   }
 
   @Override

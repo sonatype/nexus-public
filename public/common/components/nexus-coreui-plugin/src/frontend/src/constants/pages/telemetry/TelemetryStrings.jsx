@@ -25,14 +25,6 @@ const SHARED = {
 
 export default {
   TELEMETRY: {
-    INTRODUCED_WARNING_BANNER: {
-      TITLE: 'Baseline Telemetry Upload Issue',
-      MESSAGE: 'This instance of Nexus Repository has been unable to upload required base telemetry data for the past {failedReportDays} days. This is a warning only. Your instance will continue to operate normally.',
-      GENERAL_RECOMMENDATION: 'Check that your server can reach the Sonatype telemetry service, then run the Upload Retry task.',
-      RETRY_RECOMMENDATION: 'If your environment cannot send telemetry or the issue persists, contact Sonatype Support.',
-      RETRY_LINK: 'Go to Tasks.',
-      HELPER_LINK,
-    },
     WARNING_BANNER: {
       TITLE: 'Baseline Telemetry Upload Issue',
       MESSAGE: 'Nexus Repository has been unable to upload base telemetry data. If telemetry uploads cannot be restored, Nexus Repository will enter **read-only mode in {remainingGracePeriodDays} day(s)**.',

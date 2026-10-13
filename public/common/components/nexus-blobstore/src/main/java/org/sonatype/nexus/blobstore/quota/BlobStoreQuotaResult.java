@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.quota;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Holds result for the evaluation of {@link BlobStoreQuota}.
@@ -33,8 +33,8 @@ public class BlobStoreQuotaResult
       final String humanReadableMessage)
   {
     this.isViolation = isViolation;
-    this.blobStoreName = checkNotNull(blobStoreName);
-    this.humanReadableMessage = checkNotNull(humanReadableMessage);
+    this.blobStoreName = requireNonNull(blobStoreName);
+    this.humanReadableMessage = requireNonNull(humanReadableMessage);
   }
 
   public boolean isViolation() {

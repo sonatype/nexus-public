@@ -20,7 +20,7 @@ import org.sonatype.nexus.security.role.Role;
 
 import com.codahale.metrics.health.HealthCheck;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -47,9 +47,9 @@ public class DefaultRoleHealthCheck
       final DefaultRoleRealm defaultRoleRealm,
       final SecuritySystem securitySystem)
   {
-    this.realmManager = checkNotNull(realmManager);
-    this.defaultRoleRealm = checkNotNull(defaultRoleRealm);
-    this.securitySystem = checkNotNull(securitySystem);
+    this.realmManager = requireNonNull(realmManager);
+    this.defaultRoleRealm = requireNonNull(defaultRoleRealm);
+    this.securitySystem = requireNonNull(securitySystem);
   }
 
   @Override

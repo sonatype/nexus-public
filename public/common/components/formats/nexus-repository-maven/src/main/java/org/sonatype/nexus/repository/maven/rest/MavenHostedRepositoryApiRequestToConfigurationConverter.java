@@ -16,6 +16,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.ContentDispositionHelper;
 import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
+import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class MavenHostedRepositoryApiRequestToConfigurationConverter
-    extends HostedRepositoryApiRequestToConfigurationConverter<MavenHostedRepositoryApiRequest>
+    extends HostedRepositoryApiRequestToConfigurationConverter<HostedStorageAttributes, MavenHostedRepositoryApiRequest>
 {
   private static final String MAVEN = "maven";
 

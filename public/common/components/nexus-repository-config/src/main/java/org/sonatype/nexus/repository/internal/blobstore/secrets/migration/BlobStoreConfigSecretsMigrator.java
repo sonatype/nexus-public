@@ -27,7 +27,7 @@ import org.sonatype.nexus.security.secrets.SecretsMigrator;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -51,8 +51,8 @@ public class BlobStoreConfigSecretsMigrator
 
   @Autowired
   public BlobStoreConfigSecretsMigrator(final BlobStoreManager blobStoreManager, final SecretsService secretsService) {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.secretsService = checkNotNull(secretsService);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.secretsService = requireNonNull(secretsService);
   }
 
   @Override

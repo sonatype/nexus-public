@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -67,7 +67,7 @@ public abstract class CapabilitySupport<ConfigT>
       final CapabilityContext context,
       final SecretsService secretsService)
   {
-    this.context = checkNotNull(context);
+    this.context = requireNonNull(context);
     this.secretsService = secretsService;
   }
 
@@ -250,7 +250,7 @@ public abstract class CapabilitySupport<ConfigT>
   @Autowired
   public void installConditionComponents(final Conditions conditions) {
     checkState(this.conditions == null);
-    this.conditions = checkNotNull(conditions);
+    this.conditions = requireNonNull(conditions);
   }
 
   protected Conditions conditions() {
@@ -266,7 +266,7 @@ public abstract class CapabilitySupport<ConfigT>
 
   @Autowired
   public void setTemplateHelper(final TemplateHelper templateHelper) {
-    this.templateHelper = checkNotNull(templateHelper);
+    this.templateHelper = requireNonNull(templateHelper);
   }
 
   protected String render(final String template, final TemplateParameters params) {

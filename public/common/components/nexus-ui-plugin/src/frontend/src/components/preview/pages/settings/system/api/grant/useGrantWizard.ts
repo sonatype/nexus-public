@@ -27,6 +27,7 @@ import {
 } from '../hooks/securityDirectoryCache';
 import { computeEndpointAccessSummaries } from '../hooks/useEndpointAccess';
 import type { MergedApiEndpoint } from '../utils/mergeSwaggerPermissions';
+import { permissionLogical } from '../utils/formatEndpointPermissions';
 import { pickPrivilegeIdsForRequirements } from '../utils/grantPrivilegePicker';
 import { rankRolesForGrantRecommendations } from '../utils/grantRoleRecommendations';
 
@@ -138,7 +139,7 @@ export function useGrantWizard(row: MergedApiEndpoint | null, active: boolean) {
       if (reqs.length === 0) {
         throw new Error('No mapped permissions for this endpoint');
       }
-      const logical = row.permission?.permissions?.[0]?.logical === 'OR' ? 'OR' : 'AND';
+      const logical = permissionLogical(row.permission);
 
       let targetRoleId: string;
       if (ctx.mode === 'create') {

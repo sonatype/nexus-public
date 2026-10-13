@@ -27,7 +27,7 @@ import org.sonatype.nexus.common.upgrade.events.UpgradeStartedEvent;
 
 import com.google.common.eventbus.Subscribe;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -60,7 +60,7 @@ public class UpgradeAuditor
 
   @Autowired
   public UpgradeAuditor(final ApplicationVersion applicationVersion) {
-    nexusVersion = checkNotNull(applicationVersion).getVersion();
+    nexusVersion = requireNonNull(applicationVersion).getVersion();
 
     registerType(UpgradeCompletedEvent.class, COMPLETED);
     registerType(UpgradeFailedEvent.class, FAILED);

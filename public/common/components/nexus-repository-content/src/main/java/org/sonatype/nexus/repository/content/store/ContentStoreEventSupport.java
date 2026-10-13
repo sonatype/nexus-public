@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.common.text.Strings2.lower;
 
@@ -54,8 +54,8 @@ public abstract class ContentStoreEventSupport<T extends ContentDataAccess>
 
   @Autowired
   protected void setDependencies(final ContentFacetFinder contentFacetFinder, final EventManager eventManager) {
-    this.contentFacetFinder = checkNotNull(contentFacetFinder);
-    this.eventManager = checkNotNull(eventManager);
+    this.contentFacetFinder = requireNonNull(contentFacetFinder);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   public void preCommitEvent(final Supplier<Event> eventSupplier) {

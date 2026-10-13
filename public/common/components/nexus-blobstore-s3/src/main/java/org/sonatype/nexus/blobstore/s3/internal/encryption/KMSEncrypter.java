@@ -20,7 +20,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
 import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.empty;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -52,7 +52,7 @@ public class KMSEncrypter
   }
 
   public KMSEncrypter(final Optional<String> kmsId) {
-    this.kmsKeyId = checkNotNull(kmsId)
+    this.kmsKeyId = requireNonNull(kmsId)
         .map(String::trim)
         .filter(id -> !id.isEmpty())
         .orElse(null);

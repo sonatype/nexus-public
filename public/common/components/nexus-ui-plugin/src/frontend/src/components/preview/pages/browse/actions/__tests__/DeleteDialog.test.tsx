@@ -335,6 +335,51 @@ describe('DeleteDialog', () => {
     });
   });
 
+  describe('soft-delete (Trash) messaging', () => {
+    it('shows "moved to Trash" copy for a component when softDelete is set', () => {
+      renderWithTheme(
+        <DeleteDialog
+          open={true}
+          onOpenChange={mockOnOpenChange}
+          item={mockComponentItem}
+          onConfirm={mockOnConfirm}
+          softDelete
+          retentionDays={30}
+        />
+      );
+      expect(screen.getByText(/will be moved to Trash/)).toBeInTheDocument();
+      expect(screen.getByText(/restored for 30 days/)).toBeInTheDocument();
+      expect(screen.queryByText(/This action cannot be undone/)).not.toBeInTheDocument();
+    });
+
+    it('shows "moved to Trash" copy for an asset when softDelete is set', () => {
+      renderWithTheme(
+        <DeleteDialog
+          open={true}
+          onOpenChange={mockOnOpenChange}
+          item={mockAssetItem}
+          onConfirm={mockOnConfirm}
+          softDelete
+        />
+      );
+      expect(screen.getByText(/Asset "artifact\.jar" will be moved to Trash/)).toBeInTheDocument();
+      expect(screen.queryByText(/This action cannot be undone/)).not.toBeInTheDocument();
+    });
+
+    it('shows permanent-delete copy by default (softDelete off)', () => {
+      renderWithTheme(
+        <DeleteDialog
+          open={true}
+          onOpenChange={mockOnOpenChange}
+          item={mockAssetItem}
+          onConfirm={mockOnConfirm}
+        />
+      );
+      expect(screen.getByText(/This action cannot be undone/)).toBeInTheDocument();
+      expect(screen.queryByText(/moved to Trash/)).not.toBeInTheDocument();
+    });
+  });
+
   describe('accessibility', () => {
     it('has correct role', () => {
       renderWithTheme(

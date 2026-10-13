@@ -17,7 +17,7 @@ import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.LogicalConditions;
 import org.sonatype.nexus.common.event.EventManager;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,7 +34,7 @@ public class LogicalConditionsImpl
 
   @Autowired
   public LogicalConditionsImpl(final EventManager eventManager) {
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override

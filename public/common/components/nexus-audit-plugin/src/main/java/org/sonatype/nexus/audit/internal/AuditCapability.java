@@ -39,7 +39,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.singleton;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 
@@ -82,8 +82,8 @@ public class AuditCapability
 
   @Autowired
   public AuditCapability(final AuditRecorder auditRecorder, final AuditRetentionSettings retentionSettings) {
-    this.auditRecorder = checkNotNull(auditRecorder);
-    this.retentionSettings = checkNotNull(retentionSettings);
+    this.auditRecorder = requireNonNull(auditRecorder);
+    this.retentionSettings = requireNonNull(retentionSettings);
   }
 
   @Override
@@ -135,7 +135,7 @@ public class AuditCapability
     private final int retentionDays;
 
     public Configuration(final Map<String, String> properties, final int maxRetentionDays) {
-      checkNotNull(properties);
+      requireNonNull(properties);
       String raw = properties.get(RETENTION_DAYS);
       int parsed;
       try {
@@ -174,7 +174,7 @@ public class AuditCapability
 
     @Autowired
     public Descriptor(final AuditRetentionSettings retentionSettings) {
-      this.retentionSettings = checkNotNull(retentionSettings);
+      this.retentionSettings = requireNonNull(retentionSettings);
       setExposed(true);
       setHidden(false);
     }

@@ -24,7 +24,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Scheduler capability.
@@ -42,7 +42,7 @@ public class SchedulerCapability
 
   @Autowired
   public SchedulerCapability(final SchedulerSPI scheduler) {
-    this.scheduler = checkNotNull(scheduler);
+    this.scheduler = requireNonNull(scheduler);
   }
 
   @Override

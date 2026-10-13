@@ -24,7 +24,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -39,7 +39,7 @@ public class SystemInformationComponent
 
   @Autowired
   public SystemInformationComponent(final SystemInformationGenerator systemInformationGenerator) {
-    this.systemInformationGenerator = checkNotNull(systemInformationGenerator);
+    this.systemInformationGenerator = requireNonNull(systemInformationGenerator);
   }
 
   /**

@@ -38,7 +38,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * REST API for managing NXRM security realms
@@ -56,7 +56,7 @@ public class RealmApiResource
 
   @Autowired
   public RealmApiResource(final RealmManager realmManager) {
-    this.realmManager = checkNotNull(realmManager);
+    this.realmManager = requireNonNull(realmManager);
   }
 
   @Path("available")

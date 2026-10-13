@@ -1011,7 +1011,6 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                     label: 'View Documentation',
                     href: 'https://help.sonatype.com/en/repository-administration.html',
                   }}
-                  className="repositories-list__help"
                 />
               </Box>
             </Box>

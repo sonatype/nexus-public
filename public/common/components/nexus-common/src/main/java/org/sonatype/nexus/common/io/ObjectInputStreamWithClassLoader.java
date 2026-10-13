@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Allows a custom class loader to be used with ObjectInputStream
@@ -57,8 +57,8 @@ public class ObjectInputStreamWithClassLoader
       final Predicate<Class<?>> classFilter) throws IOException
   {
     super(inputStream);
-    this.classLoading = checkNotNull(classLoading);
-    setObjectInputFilter(createObjectInputFilter(checkNotNull(classFilter)));
+    this.classLoading = requireNonNull(classLoading);
+    setObjectInputFilter(createObjectInputFilter(requireNonNull(classFilter)));
   }
 
   /**
@@ -76,9 +76,9 @@ public class ObjectInputStreamWithClassLoader
       final Predicate<Class<?>> classFilter) throws IOException
   {
     super(inputStream);
-    checkNotNull(loader);
+    requireNonNull(loader);
     this.classLoading = name -> Class.forName(name, false, loader);
-    setObjectInputFilter(createObjectInputFilter(checkNotNull(classFilter)));
+    setObjectInputFilter(createObjectInputFilter(requireNonNull(classFilter)));
   }
 
   private static ObjectInputFilter createObjectInputFilter(final Predicate<Class<?>> classFilter) {

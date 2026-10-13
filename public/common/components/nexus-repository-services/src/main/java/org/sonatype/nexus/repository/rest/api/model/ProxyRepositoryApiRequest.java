@@ -12,27 +12,22 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-
-import com.fasterxml.jackson.annotation.JsonAlias;
 import org.sonatype.nexus.repository.types.ProxyType;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 3.20
  */
 public class ProxyRepositoryApiRequest
-    extends AbstractRepositoryApiRequest
+    extends AbstractRepositoryApiRequest<StorageAttributes>
 {
-  @NotNull
-  @Valid
-  private final StorageAttributes storage;
-
   @Valid
   private final CleanupPolicyAttributes cleanup;
 
@@ -75,18 +70,13 @@ public class ProxyRepositoryApiRequest
       @JsonProperty("replication") @JsonInclude(value = Include.NON_EMPTY,
           content = Include.NON_NULL) final ReplicationAttributes replication)
   {
-    super(name, format, ProxyType.NAME, online);
-    this.storage = storage;
+    super(name, format, ProxyType.NAME, online, storage);
     this.cleanup = cleanup;
     this.proxy = proxy;
     this.negativeCache = negativeCache;
     this.httpClient = httpClient;
     this.routingRuleName = routingRuleName;
     this.replication = replication;
-  }
-
-  public StorageAttributes getStorage() {
-    return storage;
   }
 
   public CleanupPolicyAttributes getCleanup() {
@@ -113,6 +103,11 @@ public class ProxyRepositoryApiRequest
     return replication;
   }
 
+  // NON_NULL for the same reason as the getFirewall() getter on the sibling response class
+  // SimpleApiProxyRepository — see that class's field-level comment for the full rationale,
+  // including why this holds: FirewallAttributes.fromConfiguration() is the sole production
+  // producer of non-null FirewallAttributes and it returns null for every "not configured" case.
+  @JsonInclude(Include.NON_NULL)
   public FirewallAttributes getFirewall() {
     return firewall;
   }

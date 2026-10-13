@@ -53,9 +53,9 @@ jest.mock('../RevokeTokenModal', () => ({
 }));
 
 jest.mock('../RevealTokenModal', () => ({
-  RevealTokenModal: ({ open, token, onClose }: any) =>
+  RevealTokenModal: ({ open, token, name, onClose }: any) =>
     open ? (
-      <div data-testid="mock-reveal-modal" data-token={token}>
+      <div data-testid="mock-reveal-modal" data-token={token} data-name={name}>
         <button data-testid="mock-reveal-done" onClick={onClose}>
           done
         </button>
@@ -193,7 +193,7 @@ describe('ServiceAccountTokensPage', () => {
     it('renders the about section text', () => {
       render(<ServiceAccountTokensPage />);
 
-      expect(screen.getByText(/View, create, and revoke tokens/)).toBeInTheDocument();
+      expect(screen.getByText(SERVICE_ACCOUNT_TOKENS_STRINGS.PAGE.ABOUT.TEXT_ADMIN)).toBeInTheDocument();
     });
 
     it('renders the learn more link', () => {
@@ -315,6 +315,7 @@ describe('ServiceAccountTokensPage', () => {
       );
       const reveal = await screen.findByTestId('mock-reveal-modal');
       expect(reveal).toHaveAttribute('data-token', 'raw-token-123');
+      expect(reveal).toHaveAttribute('data-name', 'New Token');
     });
   });
 

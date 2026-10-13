@@ -29,7 +29,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.api.rest.selfhosted.status.StatusCheckResource.RESOURCE_PATH;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -47,7 +47,7 @@ public class StatusCheckResource
 
   @Autowired
   public StatusCheckResource(final HealthCheckRegistry registry) {
-    this.registry = checkNotNull(registry);
+    this.registry = requireNonNull(registry);
   }
 
   @GET

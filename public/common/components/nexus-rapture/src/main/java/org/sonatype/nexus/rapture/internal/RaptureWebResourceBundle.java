@@ -47,7 +47,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import org.springframework.stereotype.Component;
 
@@ -103,12 +103,12 @@ public class RaptureWebResourceBundle
       @Nullable @Value("${" + PROPERTY_WEBRESOURCES_CACHEBUSTER + ":#{null}}") final String cacheBuster,
       @Nullable @Value("${" + PROPERTY_WEBRESOURCES_VERSION + ":#{null}}") final String webResourcesVersion)
   {
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.servletRequestProvider = checkNotNull(servletRequestProvider);
-    this.stateComponentProvider = checkNotNull(stateComponentProvider);
-    this.templateHelper = checkNotNull(templateHelper);
-    this.pluginDescriptors = checkNotNull(pluginDescriptors);
-    this.extJsPluginDescriptors = checkNotNull(extJsPluginDescriptors);
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.servletRequestProvider = requireNonNull(servletRequestProvider);
+    this.stateComponentProvider = requireNonNull(stateComponentProvider);
+    this.templateHelper = requireNonNull(templateHelper);
+    this.pluginDescriptors = requireNonNull(pluginDescriptors);
+    this.extJsPluginDescriptors = requireNonNull(extJsPluginDescriptors);
     this.webResourcesVersion = webResourcesVersion;
     if (webResourcesVersion != null) {
       log.info("Setting web resources version value to {} from property {}", webResourcesVersion,

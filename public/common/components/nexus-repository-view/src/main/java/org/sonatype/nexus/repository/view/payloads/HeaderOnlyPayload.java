@@ -25,7 +25,7 @@ import com.google.common.net.HttpHeaders;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Payload for HEAD responses that preserves header information without a body.
@@ -43,7 +43,7 @@ public class HeaderOnlyPayload
   private final String contentType;
 
   public HeaderOnlyPayload(final HttpResponse response) {
-    this.response = checkNotNull(response);
+    this.response = requireNonNull(response);
     this.contentLength = extractContentLength(response);
     this.contentType = extractContentType(response);
   }

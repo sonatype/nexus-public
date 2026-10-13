@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for {@link ScheduleFactory} implementations.
@@ -45,50 +45,50 @@ public class ScheduleFactoryImpl
 
   @Override
   public Once once(final Date startAt) {
-    checkNotNull(startAt);
+    requireNonNull(startAt);
     return new Once(startAt);
   }
 
   @Override
   public Hourly hourly(final Date startAt) {
-    checkNotNull(startAt);
+    requireNonNull(startAt);
     return new Hourly(startAt);
   }
 
   @Override
   public Daily daily(final Date startAt) {
-    checkNotNull(startAt);
+    requireNonNull(startAt);
     return new Daily(startAt);
   }
 
   @Override
   public Weekly weekly(final Date startAt, final Set<Weekday> daysToRun) {
-    checkNotNull(startAt);
-    checkNotNull(daysToRun);
+    requireNonNull(startAt);
+    requireNonNull(daysToRun);
     checkArgument(!daysToRun.isEmpty(), "No days of week set to run");
     return new Weekly(startAt, daysToRun);
   }
 
   @Override
   public Monthly monthly(final Date startAt, final Set<CalendarDay> daysToRun) {
-    checkNotNull(startAt);
-    checkNotNull(daysToRun);
+    requireNonNull(startAt);
+    requireNonNull(daysToRun);
     checkArgument(!daysToRun.isEmpty(), "No days of month set to run");
     return new Monthly(startAt, daysToRun);
   }
 
   @Override
   public Cron cron(final Date startAt, final String cronExpression) {
-    checkNotNull(startAt);
-    checkNotNull(cronExpression);
+    requireNonNull(startAt);
+    requireNonNull(cronExpression);
     return new Cron(startAt, cronExpression);
   }
 
   @Override
   public Cron cron(final Date startAt, final String cronExpression, final String zoneId) {
-    checkNotNull(startAt);
-    checkNotNull(cronExpression);
-    checkNotNull(zoneId);
+    requireNonNull(startAt);
+    requireNonNull(cronExpression);
+    requireNonNull(zoneId);
     return new Cron(startAt, cronExpression, zoneId);
   }
 }

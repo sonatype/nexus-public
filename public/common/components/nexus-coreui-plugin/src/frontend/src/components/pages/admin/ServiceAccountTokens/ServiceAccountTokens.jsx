@@ -299,6 +299,7 @@ export default function ServiceAccountTokens() {
 
       {createdToken && (
         <ServiceAccountTokensTokenModal
+          name={createdToken.name}
           token={createdToken.rawToken}
           onClose={clearCreatedToken}
         />

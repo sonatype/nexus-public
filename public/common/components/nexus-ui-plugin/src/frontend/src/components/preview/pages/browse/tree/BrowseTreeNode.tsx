@@ -63,19 +63,34 @@ export function BrowseTreeNode({
   onToggle,
   onSelect,
   isFocused,
+  focusedNodeId,
+  tabStopNodeId,
   selectedNodeId,
   onKeyDown,
   baseUrl,
+  siblingCount,
+  siblingIndex,
 }: BrowseTreeNodeProps): JSX.Element {
   const { node, expanded, children, loading, error } = nodeState;
   const nodeRef = useRef<HTMLDivElement>(null);
 
+  // `isFocused` is honoured when passed explicitly; otherwise it is derived from
+  // focusedNodeId, which is threaded all the way down the recursion so nested
+  // nodes can hold the roving tab stop too (previously every child was rendered
+  // with isFocused={false}, making deep nodes unreachable).
+  const focused = isFocused ?? focusedNodeId === node.id;
+  const selected = selectedNodeId === node.id;
+  // Roving tab stop: one tabbable row per tree. It follows focus once the user
+  // is navigating, and otherwise rests on whichever node the tree nominates
+  // (the first visible one), which must not pull DOM focus.
+  const tabStop = focused || tabStopNodeId === node.id;
+
   // Focus management
   useEffect(() => {
-    if (isFocused && nodeRef.current) {
+    if (focused && nodeRef.current) {
       nodeRef.current.focus();
     }
-  }, [isFocused]);
+  }, [focused]);
 
   /**
    * Handle click on the expand/collapse chevron.
@@ -92,7 +107,13 @@ export function BrowseTreeNode({
   );
 
   /**
-   * Handle click on the node content.
+   * Handle a click anywhere on the row.
+   *
+   * The whole row is the hit target, not just the icon and label: the row already
+   * spans the full visible width and shows a pointer cursor, so a click landing on
+   * the indent or on the empty space past the label must select too. Restricting
+   * it to the text made the row look clickable while parts of it were inert.
+   *
    * Uses a non-navigating element to prevent the browser from
    * following an href and corrupting the URL hash (see 9mw3).
    */
@@ -108,10 +129,40 @@ export function BrowseTreeNode({
   );
 
   /**
+   * Handle double click on the row: expand a collapsed folder, collapse an
+   * expanded one. Leaves are inert — a double click on an
+   * asset must not attempt to load children.
+   */
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (node.leaf) {
+        return;
+      }
+      // The chevron already toggled once per click, and `dblclick` is delivered
+      // in addition to those clicks rather than instead of them. Toggling again
+      // here would make a double click on the chevron flip the folder three
+      // times — visible flicker, plus a redundant children fetch.
+      if ((e.target as HTMLElement | null)?.closest('.browse-tree__toggle')) {
+        return;
+      }
+      onToggle(node.id);
+    },
+    [node.id, node.leaf, onToggle]
+  );
+
+  /**
    * Handle keyboard events.
    */
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      // Descendant treeitems are nested inside this element, so their key events
+      // bubble through here. Only the treeitem the event actually came from may
+      // act on it, or one keystroke would drive every ancestor as well.
+      const origin = (e.target as HTMLElement | null)?.closest('[role="treeitem"]');
+      if (origin && origin !== e.currentTarget) return;
+
       onKeyDown(e, node.id);
     },
     [node.id, onKeyDown]
@@ -121,36 +172,52 @@ export function BrowseTreeNode({
   const indentPx = depth * 20;
 
   return (
+    // The treeitem is the focusable element: role, ARIA state, the roving
+    // tabIndex, the key handler and DOM focus all sit on this one node, so what
+    // assistive technology reports and what receives the keystroke can never
+    // drift apart. The row below carries presentation and the pointer hit target;
+    // it deliberately does not wrap the child group, so a click on a nested row
+    // cannot be read as a click on its ancestor.
     <div
+      ref={nodeRef}
       className="browse-tree__node-container"
       data-node-id={node.id}
       role="treeitem"
       aria-expanded={node.leaf ? undefined : expanded}
-      aria-selected={isFocused}
+      aria-selected={selected}
       aria-level={depth + 1}
+      aria-setsize={siblingCount}
+      aria-posinset={siblingIndex}
+      tabIndex={tabStop ? 0 : -1}
+      onKeyDown={handleKeyDown}
+      onDoubleClick={handleDoubleClick}
+      data-testid={`tree-node-${node.id}`}
     >
       <Flex
-        ref={nodeRef}
-        className={`browse-tree__node ${isFocused ? 'browse-tree__node--focused' : ''} ${selectedNodeId === node.id ? 'browse-tree__node--selected' : ''}`}
+        className={`browse-tree__node ${focused ? 'browse-tree__node--focused' : ''} ${selected ? 'browse-tree__node--selected' : ''}`}
         align="center"
         gap="1"
         py="1"
-        tabIndex={isFocused ? 0 : -1}
-        onKeyDown={handleKeyDown}
+        onClick={handleNodeClick}
         style={{ paddingLeft: `${indentPx}px` }}
-        data-testid={`tree-node-${node.id}`}
+        data-testid={`tree-row-${node.id}`}
       >
         {/* Expand/Collapse Toggle */}
         <Box
           className="browse-tree__toggle"
-          onClick={handleToggleClick}
+          // Leaves have no toggle, so this 20px column is invisible spacing; leaving
+          // a handler on it would stop propagation and make that strip of the row dead.
+          onClick={node.leaf ? undefined : handleToggleClick}
           style={{ 
             width: '20px',
             cursor: node.leaf ? 'default' : 'pointer',
             opacity: node.leaf ? 0 : 1,
           }}
-          aria-label={expanded ? 'Collapse' : 'Expand'}
-          aria-hidden={node.leaf}
+          /* Decorative: aria-expanded on the treeitem already conveys the state,
+             and keyboard users expand with ArrowRight. Exposing a second
+             unlabelled control here would only add noise for screen readers. */
+          aria-hidden="true"
+          tabIndex={-1}
           data-testid={`toggle-${node.id}`}
         >
           {!node.leaf && (
@@ -164,15 +231,12 @@ export function BrowseTreeNode({
           )}
         </Box>
 
-        {/* Node Icon — clickable, same as label */}
-        <Box
-          onClick={handleNodeClick}
-          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-        >
+        {/* Node Icon — the row handles the click */}
+        <Box style={{ display: 'flex', alignItems: 'center' }}>
           <NodeIcon
             type={node.type}
             expanded={expanded}
-            isSelected={selectedNodeId === node.id}
+            isSelected={selected}
           />
         </Box>
 
@@ -182,7 +246,6 @@ export function BrowseTreeNode({
             handled programmatically by BrowsePage.handleSelectNode. */}
         <Text
           size="2"
-          onClick={handleNodeClick}
           className="browse-tree__node-link"
           tabIndex={-1}
           data-testid={`link-${node.id}`}
@@ -203,7 +266,7 @@ export function BrowseTreeNode({
       {/* Children (if expanded) */}
       {expanded && children && children.length > 0 && (
         <div role="group" className="browse-tree__children">
-          {children.map((childState) => (
+          {children.map((childState, index) => (
             <BrowseTreeNode
               key={childState.node.id}
               nodeState={childState}
@@ -211,10 +274,13 @@ export function BrowseTreeNode({
               depth={depth + 1}
               onToggle={onToggle}
               onSelect={onSelect}
-              isFocused={false}
+              focusedNodeId={focusedNodeId}
+              tabStopNodeId={tabStopNodeId}
               selectedNodeId={selectedNodeId}
               onKeyDown={onKeyDown}
               baseUrl={baseUrl}
+              siblingCount={children.length}
+              siblingIndex={index + 1}
             />
           ))}
         </div>

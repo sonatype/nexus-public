@@ -30,10 +30,13 @@ import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
+import org.sonatype.nexus.security.privilege.UniquePrivilegeIdValidator;
+import org.sonatype.nexus.security.privilege.UniquePrivilegeNameValidator;
 import org.sonatype.nexus.security.privilege.WildcardPrivilegeDescriptor;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension.RegisterValidator;
 
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.Permission;
@@ -41,8 +44,8 @@ import org.apache.shiro.authz.permission.WildcardPermission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.google.common.collect.Lists.reverse;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -65,6 +68,14 @@ import static org.mockito.Mockito.when;
 @WithUser
 class PrivilegeComponentTest
 {
+  @RegisterValidator
+  @Mock
+  UniquePrivilegeNameValidator nameValidator;
+
+  @RegisterValidator
+  @Mock
+  UniquePrivilegeIdValidator idValidator;
+
   @Mock
   private SecuritySystem securitySystem;
 
@@ -80,6 +91,8 @@ class PrivilegeComponentTest
 
   @BeforeEach
   void setup() {
+    lenient().when(idValidator.isValid(any(), any())).thenReturn(true);
+    lenient().when(nameValidator.isValid(any(), any())).thenReturn(true);
     underTest = new PrivilegeComponent(securitySystem, securityHelper, privilegeDescriptors);
   }
 

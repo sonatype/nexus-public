@@ -25,7 +25,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for wrapping {@link CloseableHttpClient}s.
@@ -43,7 +43,7 @@ public abstract class FilteredHttpClientSupport
   private final CloseableHttpClient delegate;
 
   public FilteredHttpClientSupport(final CloseableHttpClient delegate) {
-    this.delegate = checkNotNull(delegate);
+    this.delegate = requireNonNull(delegate);
   }
 
   @Override

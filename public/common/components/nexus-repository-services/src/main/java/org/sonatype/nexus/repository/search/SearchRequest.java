@@ -117,6 +117,21 @@ public class SearchRequest
     return new Builder();
   }
 
+  /**
+   * Rejects NUL (0x00) bytes in any string field that flows into a SQL bind (NEXUS-54105).
+   */
+  void validate() {
+    SearchFilterValidator.validate(continuationToken);
+    SearchFilterValidator.validate(sortField);
+    for (String repository : repositories) {
+      SearchFilterValidator.validate(repository);
+    }
+    for (SearchFilter filter : searchFilters) {
+      SearchFilterValidator.validate(filter.getProperty());
+      SearchFilterValidator.validate(filter.getValue());
+    }
+  }
+
   @Override
   public String toString() {
     return new ToStringBuilder(this)
@@ -303,7 +318,9 @@ public class SearchRequest
         this.limit = DEFAULT_LIMIT;
       }
 
-      return new SearchRequest(this);
+      SearchRequest request = new SearchRequest(this);
+      request.validate();
+      return request;
     }
   }
 }

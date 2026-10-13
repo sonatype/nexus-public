@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.AUDIT_EVENTS_CLEANUP_TASK_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.AUDIT_EVENTS_CLEANUP_TASK_ENABLED_NAMED_VALUE;
 import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_PROTOTYPE;
@@ -75,10 +75,10 @@ public class AuditEventCleanupTask
       final boolean enabled,
       final Clock clock)
   {
-    this.store = checkNotNull(store);
-    this.settings = checkNotNull(settings);
+    this.store = requireNonNull(store);
+    this.settings = requireNonNull(settings);
     this.enabled = enabled;
-    this.clock = checkNotNull(clock);
+    this.clock = requireNonNull(clock);
   }
 
   @Override

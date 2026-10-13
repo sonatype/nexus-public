@@ -20,7 +20,7 @@ import java.util.Objects;
 
 import com.google.common.collect.Iterables;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A collection of {@link StringTerm} which is to the right of the operand in an {@link SqlPredicate}.
@@ -34,7 +34,7 @@ public class TermCollection
    * To keep things simple we only accept StringTerm to avoid nested TermCollections
    */
   private TermCollection(final Collection<SingleValueTerm<?>> terms) {
-    this.terms = List.copyOf(checkNotNull(terms));
+    this.terms = List.copyOf(requireNonNull(terms));
   }
 
   public Collection<SingleValueTerm<?>> get() {

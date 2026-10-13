@@ -295,7 +295,8 @@ class ExternalMetadataTaskTest
   private Continuation<FluentAsset> of(final AssetData... assets) {
     ContinuationArrayList<AssetData> continuation = new ContinuationArrayList<>();
     continuation.addAll(Arrays.asList(assets));
-    return new FluentContinuation<FluentAsset, AssetData>(continuation, asset -> new FluentAssetImpl(content, asset));
+    return new FluentContinuation<FluentAsset, AssetData>(continuation,
+        asset -> new FluentAssetImpl(content, asset));
   }
 
   private Repository mockRepository(final String name, final String blobStoreName) {

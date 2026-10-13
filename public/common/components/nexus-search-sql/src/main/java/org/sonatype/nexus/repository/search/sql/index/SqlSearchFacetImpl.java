@@ -36,8 +36,8 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.apache.shiro.util.CollectionUtils.isEmpty;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
@@ -65,8 +65,8 @@ public class SqlSearchFacetImpl
       final SqlSearchIndexService sqlSearchIndexService,
       @Value("${nexus.rebuild.search.batchSize:500}") final int batchSize)
   {
-    this.store = checkNotNull(store);
-    this.sqlSearchIndexService = checkNotNull(sqlSearchIndexService);
+    this.store = requireNonNull(store);
+    this.sqlSearchIndexService = requireNonNull(sqlSearchIndexService);
 
     checkState(batchSize >= 1, "batchSize should be greater than 1");
     this.batchSize = batchSize;
@@ -139,11 +139,20 @@ public class SqlSearchFacetImpl
     sqlSearchIndexService.purge(componentIds, getRepository());
   }
 
+  @Override
+  public void deleteIndex() {
+    deleteSearchRecords();
+  }
+
   /**
    * Deletes all search records for the repository.
    */
   @Override
   protected void doDelete() {
+    deleteSearchRecords();
+  }
+
+  private void deleteSearchRecords() {
     Repository repository = getRepository();
     String repositoryFormat = repository.getFormat().getValue();
     String repositoryName = repository.getName();

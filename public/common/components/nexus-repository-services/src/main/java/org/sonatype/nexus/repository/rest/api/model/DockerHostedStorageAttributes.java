@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.rest.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
 
 /**
  * REST API model for describing storage of docker hosted repositories.
@@ -33,10 +34,11 @@ public class DockerHostedStorageAttributes
   public DockerHostedStorageAttributes(
       @JsonProperty("blobStoreName") final String blobStoreName,
       @JsonProperty("strictContentTypeValidation") final Boolean strictContentTypeValidation,
+      @JsonProperty("globalDistribution") @Nullable final Boolean globalDistribution,
       @JsonProperty("writePolicy") final String writePolicy,
       @JsonProperty("latestPolicy") final Boolean latestPolicy)
   {
-    super(blobStoreName, strictContentTypeValidation, writePolicy);
+    super(blobStoreName, strictContentTypeValidation, globalDistribution, writePolicy);
     this.latestPolicy = latestPolicy;
   }
 

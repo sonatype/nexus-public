@@ -27,7 +27,7 @@ import com.google.common.hash.HashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Blob handle that holds information for a temporary blob used in place of temporary files and streams. Instances must
@@ -56,10 +56,10 @@ public class TempBlob
       final boolean hashesVerified,
       final BlobStore blobStore)
   {
-    this.blob = checkNotNull(blob);
-    this.hashes = checkNotNull(hashes);
+    this.blob = requireNonNull(blob);
+    this.hashes = requireNonNull(hashes);
     this.hashesVerified = hashesVerified;
-    this.blobStore = checkNotNull(blobStore);
+    this.blobStore = requireNonNull(blobStore);
   }
 
   /**

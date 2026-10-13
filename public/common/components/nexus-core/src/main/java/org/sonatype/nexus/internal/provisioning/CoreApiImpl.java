@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.httpclient.config.AuthenticationConfiguration.AUTHENTICATION_CONFIGURATION;
 import org.springframework.stereotype.Component;
 
@@ -63,14 +63,14 @@ public class CoreApiImpl
       final HttpClientManager httpClientManager,
       final SecretsService secretsService)
   {
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.httpClientManager = checkNotNull(httpClientManager);
-    this.secretsService = checkNotNull(secretsService);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
+    this.httpClientManager = requireNonNull(httpClientManager);
+    this.secretsService = requireNonNull(secretsService);
   }
 
   @Override
   public void baseUrl(final String url) {
-    checkNotNull(url);
+    requireNonNull(url);
     DefaultCapabilityReference existing = (DefaultCapabilityReference) capabilityRegistry.getAll()
         .stream()
         .filter(
@@ -111,7 +111,7 @@ public class CoreApiImpl
 
   @Override
   public void userAgentCustomization(final String userAgentSuffix) {
-    checkNotNull(userAgentSuffix);
+    requireNonNull(userAgentSuffix);
     HttpClientConfiguration configuration = detachedConfiguration();
     connection(configuration).setUserAgentSuffix(userAgentSuffix);
     httpClientManager.setConfiguration(configuration);
@@ -135,17 +135,17 @@ public class CoreApiImpl
 
   @Override
   public void httpProxy(final String host, final int port) {
-    checkNotNull(host);
+    requireNonNull(host);
     checkPort(port);
     configureProxy(host, port, false, null, null);
   }
 
   @Override
   public void httpProxyWithBasicAuth(final String host, final int port, final String username, final String password) {
-    checkNotNull(host);
+    requireNonNull(host);
     checkPort(port);
-    checkNotNull(username);
-    checkNotNull(password);
+    requireNonNull(username);
+    requireNonNull(password);
     UsernameAuthenticationConfiguration config = new UsernameAuthenticationConfiguration();
     config.setUsername(username);
     final Secret secret = encrypt(password);
@@ -166,12 +166,12 @@ public class CoreApiImpl
       final String ntlmHost,
       final String domain)
   {
-    checkNotNull(host);
+    requireNonNull(host);
     checkPort(port);
-    checkNotNull(username);
-    checkNotNull(password);
-    checkNotNull(ntlmHost);
-    checkNotNull(domain);
+    requireNonNull(username);
+    requireNonNull(password);
+    requireNonNull(ntlmHost);
+    requireNonNull(domain);
     NtlmAuthenticationConfiguration config = new NtlmAuthenticationConfiguration();
     config.setUsername(username);
     final Secret secret = encrypt(password);
@@ -192,17 +192,17 @@ public class CoreApiImpl
 
   @Override
   public void httpsProxy(final String host, final int port) {
-    checkNotNull(host);
+    requireNonNull(host);
     checkPort(port);
     configureProxy(host, port, true, null, null);
   }
 
   @Override
   public void httpsProxyWithBasicAuth(final String host, final int port, final String username, final String password) {
-    checkNotNull(host);
+    requireNonNull(host);
     checkPort(port);
-    checkNotNull(username);
-    checkNotNull(password);
+    requireNonNull(username);
+    requireNonNull(password);
     UsernameAuthenticationConfiguration config = new UsernameAuthenticationConfiguration();
     config.setUsername(username);
     final Secret secret = encrypt(password);
@@ -219,12 +219,12 @@ public class CoreApiImpl
       final String ntlmHost,
       final String domain)
   {
-    checkNotNull(host);
+    requireNonNull(host);
     checkPort(port);
-    checkNotNull(username);
-    checkNotNull(password);
-    checkNotNull(ntlmHost);
-    checkNotNull(domain);
+    requireNonNull(username);
+    requireNonNull(password);
+    requireNonNull(ntlmHost);
+    requireNonNull(domain);
     NtlmAuthenticationConfiguration config = new NtlmAuthenticationConfiguration();
     config.setUsername(username);
     final Secret secret = encrypt(password);

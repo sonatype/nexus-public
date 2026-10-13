@@ -24,7 +24,7 @@ import org.sonatype.nexus.common.time.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Waits for any overdue event deliveries before starting the next event posting.
@@ -51,8 +51,8 @@ class AffinityBarrier
   public AffinityBarrier(final Executor coordinator, final Executor executor, final Time timeout) {
     super(1); // initialize parties to 1 to represent the posting thread
 
-    this.coordinator = checkNotNull(coordinator);
-    this.executor = checkNotNull(executor);
+    this.coordinator = requireNonNull(coordinator);
+    this.executor = requireNonNull(executor);
     this.timeout = timeout;
   }
 

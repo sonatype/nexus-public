@@ -12,6 +12,10 @@
  */
 
 import { SETTINGS_SECTIONS, type SettingCard } from '../settingsConfig';
+import {
+  PRO_AND_COMMUNITY_EDITIONS,
+  PRO_FAMILY_EDITIONS,
+} from '../../../../../interface/editionUtils';
 
 const cardById = (id: string): SettingCard | undefined =>
   SETTINGS_SECTIONS.flatMap((section) => section.cards).find((card) => card.id === id);
@@ -78,10 +82,10 @@ describe('settingsConfig permission gating (NEXUS-54048)', () => {
     ]);
   });
 
-  it('gates the user-tokens card on usertoken-settings:read for PRO only', () => {
+  it('gates the user-tokens card on usertoken-settings:read for the Pro family only', () => {
     const card = cardById('user-tokens');
     expect(card?.visibilityRequirements?.requiresPermission).toBe('nexus:usertoken-settings:read');
-    expect(card?.visibilityRequirements?.editions).toEqual(['PRO']);
+    expect(card?.visibilityRequirements?.editions).toEqual(PRO_FAMILY_EDITIONS);
   });
 
   it('gates the usage card on nexus:settings:read (matches cloud Classic)', () => {
@@ -93,22 +97,22 @@ describe('settingsConfig permission gating (NEXUS-54048)', () => {
   // license/capability gates and correct three permission-string mismatches. Each card must carry
   // the SAME gate as its route or a tile dead-ends in a 403 / shows where the feature is absent.
   describe('NEXUS-54019 alignment with Default UI gates', () => {
-    it('gates data-store on the pro-datastore bundle + PRO/COMMUNITY editions', () => {
+    it('gates data-store on the pro-datastore bundle + Pro/Community editions', () => {
       const card = cardById('data-store');
       expect(card?.visibilityRequirements?.bundle).toBe('nexus-pro-datastore-plugin');
-      expect(card?.visibilityRequirements?.editions).toEqual(['PRO', 'COMMUNITY']);
+      expect(card?.visibilityRequirements?.editions).toEqual(PRO_AND_COMMUNITY_EDITIONS);
     });
 
-    it('gates saml on the saml bundle + PRO edition', () => {
+    it('gates saml on the saml bundle + Pro family editions', () => {
       const card = cardById('saml');
       expect(card?.visibilityRequirements?.bundle).toBe('nexus-saml-plugin');
-      expect(card?.visibilityRequirements?.editions).toEqual(['PRO']);
+      expect(card?.visibilityRequirements?.editions).toEqual(PRO_FAMILY_EDITIONS);
     });
 
-    it('gates oauth2 on the oauth2 bundle + PRO edition + oauth2Available state', () => {
+    it('gates oauth2 on the oauth2 bundle + Pro family editions + oauth2Available state', () => {
       const card = cardById('oauth2');
       expect(card?.visibilityRequirements?.bundle).toBe('nexus-oauth2-plugin');
-      expect(card?.visibilityRequirements?.editions).toEqual(['PRO']);
+      expect(card?.visibilityRequirements?.editions).toEqual(PRO_FAMILY_EDITIONS);
       expect(card?.visibilityRequirements?.statesEnabled).toContainEqual({
         key: 'oauth2Available',
         defaultValue: false,
@@ -132,13 +136,11 @@ describe('settingsConfig permission gating (NEXUS-54048)', () => {
       });
     });
 
-    it('gates service-account-tokens on PRO edition + serviceAccountEnabled state', () => {
+    it('gates service-account-tokens on service-accounts:read permission and Pro family editions', () => {
       const card = cardById('service-account-tokens');
-      expect(card?.visibilityRequirements?.editions).toEqual(['PRO']);
-      expect(card?.visibilityRequirements?.statesEnabled).toContainEqual({
-        key: 'serviceAccountEnabled',
-        defaultValue: false,
-      });
+      expect(card?.visibilityRequirements?.requiresPermission).toBe('nexus:service-accounts:read');
+      expect(card?.visibilityRequirements?.editions).toEqual(PRO_FAMILY_EDITIONS);
+      expect(card?.visibilityRequirements?.statesEnabled).toBeUndefined();
     });
 
     it('gates ldap on ldap:read with NO edition restriction (matches Default UI)', () => {
@@ -147,10 +149,10 @@ describe('settingsConfig permission gating (NEXUS-54048)', () => {
       expect(card?.visibilityRequirements?.editions).toBeUndefined();
     });
 
-    it('gates support-request on atlas:create + PRO edition', () => {
+    it('gates support-request on atlas:create + Pro family editions', () => {
       const card = cardById('support-request');
       expect(card?.visibilityRequirements?.requiresPermission).toBe('nexus:atlas:create');
-      expect(card?.visibilityRequirements?.editions).toEqual(['PRO']);
+      expect(card?.visibilityRequirements?.editions).toEqual(PRO_FAMILY_EDITIONS);
     });
 
     it('gates support-zip on atlas:read', () => {

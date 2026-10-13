@@ -37,6 +37,9 @@ public class RoleExistsStringValidator
 
   @Override
   public boolean isValid(final String role, final ConstraintValidatorContext constraintValidatorContext) {
+    if (role == null) {
+      return true;
+    }
     try {
       authorizationManager.getRole(role);
       return true;

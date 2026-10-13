@@ -38,7 +38,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -67,7 +67,7 @@ public class TasksApiResource
 
   @Autowired
   public TasksApiResource(final TaskScheduler taskScheduler) {
-    this.taskScheduler = checkNotNull(taskScheduler);
+    this.taskScheduler = requireNonNull(taskScheduler);
   }
 
   @Override

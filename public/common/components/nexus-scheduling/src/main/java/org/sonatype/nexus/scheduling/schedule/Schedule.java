@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import com.google.common.base.Splitter;
 import org.joda.time.DateTime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Schedule.
@@ -44,7 +44,7 @@ public abstract class Schedule
   private final Map<String, String> properties = new HashMap<>();
 
   protected Schedule(final String type) {
-    checkNotNull(type);
+    requireNonNull(type);
     set(SCHEDULE_TYPE, type);
   }
 

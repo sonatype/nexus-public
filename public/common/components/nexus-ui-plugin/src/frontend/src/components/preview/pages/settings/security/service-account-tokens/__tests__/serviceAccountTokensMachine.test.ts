@@ -144,7 +144,7 @@ describe('serviceAccountTokensMachine', () => {
       await waitFor(service, (state) => state.matches('idle'));
       expect(service.getSnapshot().context.pendingRevokeId).toBeNull();
       expect(service.getSnapshot().context.revokeError).toBeNull();
-      expect(services.revokeToken).toHaveBeenCalledWith(SAMPLE_TOKEN.id);
+      expect(services.revokeToken).toHaveBeenCalledWith(SAMPLE_TOKEN.id, SAMPLE_TOKEN.name);
       expect(services.loadAll).toHaveBeenCalledTimes(2);
 
       service.stop();

@@ -12,17 +12,25 @@
  */
 package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 
+import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiSoftQuota;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiGlobalDistributionType.S3BlobStoreApiGlobalDistribution;
+import org.sonatype.nexus.swagger.EditionVisibility;
+import org.sonatype.nexus.validation.constraint.NamePatternConstants;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
-import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiSoftQuota;
-import org.sonatype.nexus.validation.constraint.NamePatternConstants;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
-
+import static org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiGlobalDistributionType.STR_CLOUDFRONT;
+import static org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiGlobalDistributionType.STR_TRANSFER_ACCELERATION;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 
 /**
@@ -30,6 +38,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
  *
  * @since 3.20
  */
+@JsonFilter(EditionVisibility.NAME)
 public class S3BlobStoreApiModel
 {
   @NotNull
@@ -45,15 +54,30 @@ public class S3BlobStoreApiModel
   @Schema(description = "The S3 specific configuration details for the S3 object that'll contain the blob store.")
   private final S3BlobStoreApiBucketConfiguration bucketConfiguration;
 
+  @EditionVisibility(community = false, pro = false, proPlus = false, note = "Enterprise feature")
+  @Valid
+  @Schema(description = "Global distribution content distribution configuration. (Enterprise only)",
+      oneOf = {S3BlobStoreApiCloudFront.class, S3BlobStoreApiTransferAcceleration.class},
+      discriminatorProperty = "type",
+      discriminatorMapping = {@DiscriminatorMapping(value = STR_CLOUDFRONT, schema = S3BlobStoreApiCloudFront.class),
+          @DiscriminatorMapping(value = STR_TRANSFER_ACCELERATION, schema = S3BlobStoreApiTransferAcceleration.class)})
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type",
+      visible = true)
+  @JsonSubTypes(value = {@JsonSubTypes.Type(value = S3BlobStoreApiCloudFront.class, name = STR_CLOUDFRONT),
+      @JsonSubTypes.Type(value = S3BlobStoreApiTransferAcceleration.class, name = STR_TRANSFER_ACCELERATION),})
+  private S3BlobStoreApiGlobalDistribution globalDistribution;
+
   @JsonCreator
   public S3BlobStoreApiModel(
       @JsonProperty("name") final String name,
       @JsonProperty("softQuota") final BlobStoreApiSoftQuota softQuota,
-      @JsonProperty("bucketConfiguration") final S3BlobStoreApiBucketConfiguration bucketConfiguration)
+      @JsonProperty("bucketConfiguration") final S3BlobStoreApiBucketConfiguration bucketConfiguration,
+      @JsonProperty("globalDistribution") @Nullable final S3BlobStoreApiGlobalDistribution globalDistribution)
   {
     this.name = name;
     this.softQuota = softQuota;
     this.bucketConfiguration = bucketConfiguration;
+    this.globalDistribution = globalDistribution;
   }
 
   public String getName() {
@@ -68,9 +92,17 @@ public class S3BlobStoreApiModel
     return bucketConfiguration;
   }
 
+  @Nullable
+  public S3BlobStoreApiGlobalDistribution getGlobalDistribution() {
+    return globalDistribution;
+  }
+
+  public void setGlobalDistribution(@Nullable final S3BlobStoreApiGlobalDistribution globalDistribution) {
+    this.globalDistribution = globalDistribution;
+  }
+
   @Schema(description = "The blob store type.", example = TYPE)
   public String getType() {
     return TYPE;
   }
-
 }

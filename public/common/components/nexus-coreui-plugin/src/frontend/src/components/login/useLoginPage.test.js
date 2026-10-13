@@ -267,20 +267,6 @@ describe('useLoginPage', () => {
     });
   });
 
-  describe('edition', () => {
-    it('returns PRO edition by default', () => {
-      setupStates();
-      const {result} = renderHook(() => useLoginPage());
-      expect(result.current.edition).toBe('PRO');
-    });
-
-    it('returns the configured edition', () => {
-      setupStates({edition: 'COMMUNITY'});
-      const {result} = renderHook(() => useLoginPage());
-      expect(result.current.edition).toBe('COMMUNITY');
-    });
-  });
-
   describe('initial admin password state', () => {
     it('returns adminPasswordFilePath from state', () => {
       setupStates({'admin.password.file': '/opt/sonatype/nexus/admin.password'});

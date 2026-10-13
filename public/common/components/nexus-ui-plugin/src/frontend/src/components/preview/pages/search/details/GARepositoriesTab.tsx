@@ -23,7 +23,6 @@ import {
   Grid,
   IconButton,
   Inset,
-  Select,
   Spinner,
   Table,
   Text,
@@ -59,36 +58,6 @@ export function GARepositoriesTab({
         {UI.RESET_FILTERS}
       </Button>
       <Flex direction="column" gap="4">
-        <Box>
-          <Text size="2" weight="bold" mb="2" style={{ display: 'block' }}>
-            {UI.FILTERS.SORT_LABEL}
-          </Text>
-          <Flex direction="column" gap="2">
-            <Select.Root
-              value={vm.sortKey}
-              onValueChange={vm.changeSortKey}
-              size="2"
-            >
-              <Select.Trigger />
-              <Select.Content>
-                <Select.Item value="repositoryName">{UI.COLUMNS.REPOSITORY}</Select.Item>
-                <Select.Item value="type">{UI.COLUMNS.TYPE}</Select.Item>
-                <Select.Item value="versionCount">{UI.COLUMNS.VERSIONS_IN_REPO}</Select.Item>
-              </Select.Content>
-            </Select.Root>
-            <Select.Root
-              value={vm.sortDirection}
-              onValueChange={(v) => vm.changeSortDirection(v as typeof vm.sortDirection)}
-              size="2"
-            >
-              <Select.Trigger />
-              <Select.Content>
-                <Select.Item value="asc">{UI.FILTERS.SORT_ASC}</Select.Item>
-                <Select.Item value="desc">{UI.FILTERS.SORT_DESC}</Select.Item>
-              </Select.Content>
-            </Select.Root>
-          </Flex>
-        </Box>
         <Box>
           <Text size="2" weight="bold" mb="2" style={{ display: 'block' }}>
             {UI.FILTERS.TYPE_LABEL}

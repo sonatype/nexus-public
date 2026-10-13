@@ -47,7 +47,7 @@ import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.BOTH;
 import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.LOCAL;
@@ -76,9 +76,9 @@ public class FluentComponentsImpl
       final ComponentStore<?> componentStore,
       final Function<String, String> versionNormalizer)
   {
-    this.facet = checkNotNull(facet);
-    this.componentStore = checkNotNull(componentStore);
-    this.versionNormalizer = checkNotNull(versionNormalizer);
+    this.facet = requireNonNull(facet);
+    this.componentStore = requireNonNull(componentStore);
+    this.versionNormalizer = requireNonNull(versionNormalizer);
   }
 
   @Override
@@ -244,6 +244,11 @@ public class FluentComponentsImpl
   @Override
   public Collection<String> names(final String namespace) {
     return componentStore.browseNames(facet.contentRepositoryId(), namespace);
+  }
+
+  @Override
+  public boolean existsByName(final String namespace, final String name) {
+    return componentStore.existsByName(facet.contentRepositoryId(), namespace, name);
   }
 
   @Override

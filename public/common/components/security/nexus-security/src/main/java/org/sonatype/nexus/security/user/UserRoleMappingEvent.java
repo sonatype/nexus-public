@@ -14,7 +14,7 @@ package org.sonatype.nexus.security.user;
 
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * User role-mapping event.
@@ -37,9 +37,9 @@ public abstract class UserRoleMappingEvent
       final String userSource,
       final Set<String> roles)
   {
-    this.userId = checkNotNull(userId);
-    this.userSource = checkNotNull(userSource);
-    this.roles = checkNotNull(roles);
+    this.userId = requireNonNull(userId);
+    this.userSource = requireNonNull(userSource);
+    this.roles = requireNonNull(roles);
   }
 
   public String getUserId() {

@@ -21,7 +21,7 @@ import org.sonatype.nexus.internal.security.apikey.ApiKeyInternal;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An {@link ApiKeyInternal} data for use with {@link ApiKeyStoreV2Impl}
@@ -67,11 +67,11 @@ public class ApiKeyV2Data
       @Nullable final String createdByUserId,
       @Nullable final String createdByRealm)
   {
-    this.domain = checkNotNull(domain);
-    this.principals = checkNotNull(principals);
+    this.domain = requireNonNull(domain);
+    this.principals = requireNonNull(principals);
     this.username = principals.getPrimaryPrincipal().toString();
-    this.accessKey = checkNotNull(accessKey);
-    this.secret = checkNotNull(secret);
+    this.accessKey = requireNonNull(accessKey);
+    this.secret = requireNonNull(secret);
     this.created = created;
     this.createdByUserId = createdByUserId;
     this.createdByRealm = createdByRealm;
@@ -117,7 +117,7 @@ public class ApiKeyV2Data
   }
 
   public void setAccessKey(final String accessKey) {
-    this.accessKey = checkNotNull(accessKey);
+    this.accessKey = requireNonNull(accessKey);
   }
 
   @Override
@@ -132,7 +132,7 @@ public class ApiKeyV2Data
 
   @Override
   public void setPrincipals(final PrincipalCollection principals) {
-    this.principals = checkNotNull(principals);
+    this.principals = requireNonNull(principals);
     this.username = principals.getPrimaryPrincipal().toString();
   }
 

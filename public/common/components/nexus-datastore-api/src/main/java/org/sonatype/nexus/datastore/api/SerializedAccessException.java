@@ -12,14 +12,28 @@
  */
 package org.sonatype.nexus.datastore.api;
 
+/**
+ * Thrown when a transaction is aborted by the database because of a transient concurrency conflict that the
+ * caller can safely retry: a serialization failure (SQLState {@value #SQL_STATE}) or a detected deadlock
+ * (SQLState {@value #DEADLOCK_SQL_STATE}).
+ */
 public class SerializedAccessException
     extends DataAccessException
 {
   private static final long serialVersionUID = 98739582308995723L;
 
+  /**
+   * PostgreSQL {@code serialization_failure}.
+   */
   public static final String SQL_STATE = "40001";
 
+  /**
+   * PostgreSQL {@code deadlock_detected}. A deadlock aborts one of the participating transactions; retrying the
+   * aborted transaction after the survivor releases its locks is the standard remedy.
+   */
+  public static final String DEADLOCK_SQL_STATE = "40P01";
+
   public SerializedAccessException(final Throwable cause) {
-    super("Duplicate key", cause);
+    super("Serialization failure or deadlock detected", cause);
   }
 }

@@ -169,7 +169,7 @@ public abstract class SearchTableDAOTestSupport
       tableData.addUploader("uploader-name");
       tableData.addUploaderIp("uploader-ip-address");
 
-      componentDAO.readComponent(internalComponentId(component))
+      componentDAO.readComponent(internalComponentId(component), true)
           .map(Component::entityVersion)
           .ifPresent(tableData::setEntityVersion);
 
@@ -679,11 +679,13 @@ public abstract class SearchTableDAOTestSupport
 
   private void assertEntityVersionsAreSameAsSearchTableDataToSave() {
     ComponentDAO componentDAO = session.access(TestComponentDAO.class);
-    Optional<Component> savedComponent1 = componentDAO.readComponent(internalComponentId(generatedComponents().get(0)));
+    Optional<Component> savedComponent1 =
+        componentDAO.readComponent(internalComponentId(generatedComponents().get(0)), true);
     assertThat(savedComponent1.isPresent(), is(true));
     assertThat(GENERATED_DATA.get(0).getEntityVersion(), is(savedComponent1.get().entityVersion()));
 
-    Optional<Component> savedComponent2 = componentDAO.readComponent(internalComponentId(generatedComponents().get(1)));
+    Optional<Component> savedComponent2 =
+        componentDAO.readComponent(internalComponentId(generatedComponents().get(1)), true);
     assertThat(savedComponent2.isPresent(), is(true));
     assertThat(GENERATED_DATA.get(1).getEntityVersion(), is(savedComponent2.get().entityVersion()));
   }

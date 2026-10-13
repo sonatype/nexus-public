@@ -12,42 +12,31 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {Flex, Box, IconButton, Button, Dialog, Text, Popover, TextArea, Heading} from '@radix-ui/themes';
-import {Tooltip} from '@sonatype/nexus-ui-plugin';
+import {Flex, Box, IconButton, Button, Badge, Dialog, Text, Popover, TextArea, Heading} from '@radix-ui/themes';
+import {Tooltip, ExtJS, HelpMenu, handleExtJsUnsavedChanges, hasUnsavedChanges, restClient, useSideNavbarOpenState,
+  getEditionDisplayName, getHeaderWordmarkLogo, EDITION_ID_STATE_KEY} from '@sonatype/nexus-ui-plugin';
 import {RefreshCw, Repeat, Menu} from 'lucide-react';
-import {ExtJS, handleExtJsUnsavedChanges, hasUnsavedChanges, restClient, useSideNavbarOpenState} from '@sonatype/nexus-ui-plugin';
 import {useRouter} from '@uirouter/react';
 import {useTheme} from '../../contexts/ThemeContext';
-
-import proLogo from "../../../../art/logos/logo-pro-edition-header.svg";
-import proDarkLogo from "../../../../art/logos/logo-pro-edition-header-dark.svg";
-import ceLogo from "../../../../art/logos/logo-community-edition-header.svg";
-import ceDarkLogo from "../../../../art/logos/logo-community-edition-header-dark.svg";
-import coreLogo from "../../../../art/logos/logo-core-edition-header.svg";
-import coreDarkLogo from "../../../../art/logos/logo-core-edition-header-dark.svg";
 
 import SearchRadix from './SearchRadix';
 import SystemStatusRadix from './SystemStatusRadix';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
-import HelpMenuRadix from './HelpMenuRadix';
 import LoginAndUserButtonRadix from './LoginAndUserButtonRadix';
 import {refreshReactPage} from '../../routerConfig/routerUtils';
 import {getHeritageEquivalent} from './previewHeritageNavigation';
 
 import './GlobalHeaderRadix.scss';
 
-const COMMUNITY = "COMMUNITY";
-const PRO = "PRO";
 const MAX_FEEDBACK_LENGTH = 500;
 
 export default function GlobalHeaderRadix() {
   const router = useRouter();
   const {effectiveTheme, setTheme} = useTheme();
   
-  // Use useStatus().edition which is more reliable than state().getEdition()
   const status = ExtJS.useStatus();
-  const edition = status?.edition;
   const version = status?.version;
+  const editionId = ExtJS.useState?.(() => ExtJS.state()?.getValue?.(EDITION_ID_STATE_KEY));
   
   // Use useUser for authentication state - this is a stable hook
   const user = ExtJS.useUser();
@@ -207,8 +196,9 @@ export default function GlobalHeaderRadix() {
   }, [isPreviewUI, canAccessPreviewUi, currentPath, setTheme, isLoggedIn]);
   
   const switchToClassicUI = useCallback(() => {
-    const heritagePath = getHeritageEquivalent(currentPath);
-    if (heritagePath === null) {
+    // Consulted only to detect Preview-only views (null = no Classic equivalent); the
+    // switch itself always lands on the Classic home page below.
+    if (getHeritageEquivalent(currentPath) === null) {
       setHeritageUnavailableOpen(true);
       setUiSwitchPopoverOpen(false);
       return;
@@ -216,7 +206,7 @@ export default function GlobalHeaderRadix() {
 
     if (!isDisableSwitchFeedback) {
       restClient.post('/service/rest/internal/ui/switch-feedback', {
-        edition: edition ?? 'Unknown',
+        edition: editionId ?? 'Unknown',
         version: version ?? 'Unknown',
         feedback: classicUiFeedback.trim().slice(0, 500),
       }).catch(() => {});
@@ -226,8 +216,11 @@ export default function GlobalHeaderRadix() {
     setTheme('light');
     setUiSwitchPopoverOpen(false);
     setClassicUiFeedback('');
-    window.location.hash = heritagePath;
-  }, [currentPath, classicUiFeedback, isDisableSwitchFeedback, setTheme, edition, version]);
+    // Land on the Classic home page rather than the mapped equivalent of the current
+    // route. getHeritageEquivalent is still consulted above so a Preview-only view keeps
+    // showing the "Not Available in Classic UI" dialog instead of switching silently.
+    window.location.hash = 'browse/welcome';
+  }, [currentPath, classicUiFeedback, isDisableSwitchFeedback, setTheme, editionId, version]);
 
   // Always land on the Preview dashboard rather than attempting to map the
   // current Classic route to its Preview equivalent. heritageToPreviewPath has
@@ -275,21 +268,11 @@ export default function GlobalHeaderRadix() {
   };
 
   function getLogo() {
-    const isDark = effectiveTheme === 'dark';
-    
-    if (edition === COMMUNITY) {
-      return isDark ? ceDarkLogo : ceLogo;
-    } else if (edition === PRO) {
-      return isDark ? proDarkLogo : proLogo;
-    } else {
-      return isDark ? coreDarkLogo : coreLogo;
-    }
+    return getHeaderWordmarkLogo(effectiveTheme === 'dark');
   }
 
   function getEditionText() {
-    return edition === COMMUNITY ? "Community"
-        : edition === PRO ? "Professional"
-        : "Core";
+    return getEditionDisplayName(editionId);
   }
 
   const [isSidebarOpen] = useSideNavbarOpenState(false);
@@ -314,15 +297,22 @@ export default function GlobalHeaderRadix() {
                 <Menu size={16} />
               </IconButton>
             </Tooltip>
-            <Box asChild>
-              <a href={`${contextPath}#${isPreviewUI ? 'preview/browse/welcome' : 'browse/welcome'}`} title="Home">
-                <img
-                  src={getLogo()}
-                  alt={`Sonatype Nexus Repository ${getEditionText()}`}
-                  className="nxrm-global-header-radix__logo"
-                />
-              </a>
-            </Box>
+            <Flex align="center" gap="2">
+              <Box asChild>
+                <a href={`${contextPath}#${isPreviewUI ? 'preview/browse/welcome' : 'browse/welcome'}`} title="Home">
+                  <img
+                    src={getLogo()}
+                    alt="Sonatype Nexus Repository"
+                    className="nxrm-global-header-radix__logo"
+                  />
+                </a>
+              </Box>
+              {Boolean(editionId) && (
+                <Badge color="green" variant="solid" size="1">
+                  {getEditionText()}
+                </Badge>
+              )}
+            </Flex>
           </Flex>
 
           {/* Center: Search Bar */}
@@ -461,7 +451,7 @@ export default function GlobalHeaderRadix() {
               </IconButton>
             </Tooltip>
 
-            <HelpMenuRadix />
+            <HelpMenu />
 
             <LoginAndUserButtonRadix />
           </Flex>

@@ -18,7 +18,7 @@ import org.sonatype.nexus.internal.capability.storage.CapabilityStorageImpl;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemData;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEvent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class CapabilityStorageItemEventSupport
     extends EventWithSource
@@ -31,7 +31,7 @@ public class CapabilityStorageItemEventSupport
   }
 
   protected CapabilityStorageItemEventSupport(final CapabilityStorageItemData item) {
-    this.capabilityId = CapabilityStorageImpl.capabilityIdentity(checkNotNull(item));
+    this.capabilityId = CapabilityStorageImpl.capabilityIdentity(requireNonNull(item));
   }
 
   @Override

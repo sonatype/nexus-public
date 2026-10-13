@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { Permissions } from '@sonatype/nexus-ui-plugin';
+import { Permissions, PRO_FAMILY_EDITIONS } from '@sonatype/nexus-ui-plugin';
 import { UIRouter, memoryLocationPlugin, servicesPlugin } from '@uirouter/core';
 import { previewBrowseRoutes } from '../previewBrowseRoutes';
 
@@ -67,22 +67,22 @@ describe('previewBrowseRoutes permission gating (NEXUS-54048)', () => {
     expect(route.data.visibilityRequirements.permissions).toContain(Permissions.COMPONENT.CREATE);
   });
 
-  it('gates preview.browse.tags with TAGS.READ and PRO edition', () => {
+  it('gates preview.browse.tags with TAGS.READ and the full Pro-family editions', () => {
     const route = routeByName('preview.browse.tags');
     expect(route).toBeDefined();
     const vr = route.data.visibilityRequirements;
     expect(vr).toBeDefined();
     expect(vr.permissions).toContain(Permissions.TAGS.READ);
-    expect(vr.editions).toContain('PRO');
+    expect(vr.editions).toEqual([...PRO_FAMILY_EDITIONS]);
   });
 
-  it('gates preview.browse.tagdetail with TAGS.READ and PRO edition (sibling of tags, no inherited gate)', () => {
+  it('gates preview.browse.tagdetail with TAGS.READ and the full Pro-family editions (sibling of tags, no inherited gate)', () => {
     const route = routeByName('preview.browse.tagdetail');
     expect(route).toBeDefined();
     const vr = route.data.visibilityRequirements;
     expect(vr).toBeDefined();
     expect(vr.permissions).toContain(Permissions.TAGS.READ);
-    expect(vr.editions).toContain('PRO');
+    expect(vr.editions).toEqual([...PRO_FAMILY_EDITIONS]);
   });
 
   it('gates preview.browse.api with SETTINGS.READ (matches Default UI / Classic)', () => {

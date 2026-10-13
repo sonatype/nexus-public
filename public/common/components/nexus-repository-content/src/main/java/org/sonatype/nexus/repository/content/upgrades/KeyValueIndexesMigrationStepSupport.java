@@ -19,7 +19,7 @@ import java.util.List;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Adds indexes to {format}_key_value tables for existing databases.
@@ -33,7 +33,7 @@ public abstract class KeyValueIndexesMigrationStepSupport
    * @param formats a list of formats to create indexes for if required
    */
   protected KeyValueIndexesMigrationStepSupport(final List<String> formats) {
-    this.formats = checkNotNull(formats);
+    this.formats = requireNonNull(formats);
   }
 
   @Override

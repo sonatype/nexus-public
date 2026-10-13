@@ -20,15 +20,22 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.blobstore.DateBasedLocationStrategy;
@@ -38,6 +45,7 @@ import org.sonatype.nexus.blobstore.VolumeChapterLocationStrategy;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobScanConcurrency;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
@@ -79,14 +87,19 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
@@ -101,6 +114,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
@@ -236,7 +250,9 @@ public class S3BlobStoreTest
 
     List<BlobId> blobIdStream =
         blobStore.getBlobIdUpdatedSinceStream("vol-", before, before.plusDays(1)).toList();
-    assertThat(blobIdStream.size(), is(3));
+    // The three content objects are the .properties/.bytes/.properties of a single blob, reported once
+    assertThat(blobIdStream, hasSize(1));
+    assertThat(blobIdStream.get(0).asUniqueString(), is("12345678-1234-1234-1234-123456789abc"));
   }
 
   @Test
@@ -276,7 +292,243 @@ public class S3BlobStoreTest
 
     List<BlobId> blobIdStream =
         blobStore.getBlobIdUpdatedSinceStream("2016", before, before.plusDays(1)).toList();
-    assertThat(blobIdStream.size(), is(2));
+    // object1/object2 are the .properties/.bytes of one blob; object3 is outside the interval
+    assertThat(blobIdStream, hasSize(1));
+    assertThat(blobIdStream.get(0).asUniqueString(), is("12345678-1234-1234-1234-123456789abc"));
+
+    // NEXUS-54604: the pair must not cost two attribute reads
+    verify(s3, times(1)).getObject(anyString(), eq(object1.key()));
+  }
+
+  @Test
+  public void testGetBlobIdUpdatedSinceStream_dateBasedFindsBlobWithoutPropertiesFile() throws Exception {
+    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
+    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
+    blobStore.init(cfg);
+    blobStore.start();
+
+    OffsetDateTime before =
+        LocalDateTime.now().withYear(2017).withMonth(6).withDayOfMonth(1).withHour(0).atOffset(ZoneOffset.UTC);
+    DateBasedLocationStrategy strategy = new DateBasedLocationStrategy();
+
+    // Only the .bytes exists - the properties file is missing, which is what the reconcile plan needs to detect, and
+    // the reason the pair is deduplicated rather than filtered down to .properties
+    S3Object bytesOnly = S3Object.builder()
+        .key("myPrefix/content/"
+            + strategy.location(new BlobId("12345678-1234-1234-1234-123456789abc", before.plusHours(1)))
+            + ".bytes")
+        .build();
+    when(s3.listObjectsWithPrefix(eq("myPrefix/content/2016"))).thenReturn(Stream.of(bytesOnly));
+
+    List<BlobId> blobIdStream =
+        blobStore.getBlobIdUpdatedSinceStream("2016", before, before.plusDays(1)).toList();
+
+    assertThat(blobIdStream, hasSize(1));
+    assertThat(blobIdStream.get(0).asUniqueString(), is("12345678-1234-1234-1234-123456789abc"));
+  }
+
+  @Test
+  public void testGetBlobIdUpdatedSinceStream_dateBasedExcludesTemporaryBlob() throws Exception {
+    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
+    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
+    blobStore.init(cfg);
+    blobStore.start();
+
+    OffsetDateTime before =
+        LocalDateTime.now().withYear(2017).withMonth(6).withDayOfMonth(1).withHour(0).atOffset(ZoneOffset.UTC);
+    DateBasedLocationStrategy strategy = new DateBasedLocationStrategy();
+
+    // A cloud temporary blob has an ordinary id on an ordinary date-based path - only the header in its properties
+    // distinguishes it, so the id alone must not be used to filter these out
+    String temporaryKey = "myPrefix/content/"
+        + strategy.location(new BlobId("12345678-1234-1234-1234-123456789abc", before.plusHours(1))) + ".properties";
+    when(s3.getObject(anyString(), eq(temporaryKey)))
+        .thenAnswer(invocation -> getResponseInputStream(
+            attributesContents + HEADER_PREFIX + TEMPORARY_BLOB_HEADER + "=\n"));
+    when(s3.listObjectsWithPrefix(eq("myPrefix/content/2016")))
+        .thenReturn(Stream.of(S3Object.builder().key(temporaryKey).build()));
+
+    List<BlobId> blobIdStream =
+        blobStore.getBlobIdUpdatedSinceStream("2016", before, before.plusDays(1)).toList();
+
+    assertThat(blobIdStream, empty());
+  }
+
+  @Test
+  public void testGetBlobIdUpdatedSinceStream_concurrentMatchesSequential() throws Exception {
+    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
+    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
+    blobStore.init(cfg);
+    blobStore.start();
+
+    OffsetDateTime before =
+        LocalDateTime.now().withYear(2017).withMonth(6).withDayOfMonth(1).withHour(0).atOffset(ZoneOffset.UTC);
+    DateBasedLocationStrategy strategy = new DateBasedLocationStrategy();
+
+    List<S3Object> listing = new ArrayList<>();
+    for (int i = 0; i < 50; i++) {
+      listing.add(S3Object.builder()
+          .key("myPrefix/content/"
+              + strategy.location(new BlobId(String.format("12345678-1234-1234-1234-%012d", i), before.plusHours(1)))
+              + ".properties")
+          .build());
+    }
+    when(s3.listObjectsWithPrefix(eq("myPrefix/content/2016")))
+        .thenReturn(listing.stream())
+        .thenReturn(listing.stream());
+
+    List<BlobId> sequential =
+        blobStore.getBlobIdUpdatedSinceStream("2016", before, before.plusDays(1), null).toList();
+
+    ExecutorService scanExecutor = Executors.newFixedThreadPool(8);
+    List<BlobId> concurrent;
+    try (Stream<BlobId> stream = blobStore.getBlobIdUpdatedSinceStream("2016", before, before.plusDays(1),
+        BlobScanConcurrency.of(scanExecutor))) {
+      concurrent = stream.toList();
+    }
+
+    assertThat(concurrent, hasSize(50));
+    // Ids come out as their reads finish, so concurrency may reorder - but it must not add, drop or duplicate any
+    assertThat(concurrent, containsInAnyOrder(sequential.toArray(new BlobId[0])));
+    // The executor belongs to the caller: closing the stream must not shut it down
+    assertThat(scanExecutor.isShutdown(), is(false));
+    scanExecutor.shutdownNow();
+  }
+
+  @Test
+  public void testGetBlobIdUpdatedSinceStream_concurrentReadsRunOffTheCallingThread() throws Exception {
+    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
+    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
+    blobStore.init(cfg);
+    blobStore.start();
+
+    OffsetDateTime before =
+        LocalDateTime.now().withYear(2017).withMonth(6).withDayOfMonth(1).withHour(0).atOffset(ZoneOffset.UTC);
+    DateBasedLocationStrategy strategy = new DateBasedLocationStrategy();
+
+    String key = "myPrefix/content/"
+        + strategy.location(new BlobId("12345678-1234-1234-1234-123456789abc", before.plusHours(1))) + ".properties";
+    when(s3.listObjectsWithPrefix(eq("myPrefix/content/2016")))
+        .thenReturn(Stream.of(S3Object.builder().key(key).build()));
+
+    Set<String> readerThreads = ConcurrentHashMap.newKeySet();
+    when(s3.getObject(anyString(), eq(key))).thenAnswer(invocation -> {
+      readerThreads.add(Thread.currentThread().getName());
+      return getResponseInputStream(attributesContents);
+    });
+
+    ExecutorService scanExecutor = Executors.newFixedThreadPool(2, runnable -> new Thread(runnable, "scan-worker"));
+    try (Stream<BlobId> stream = blobStore.getBlobIdUpdatedSinceStream("2016", before, before.plusDays(1),
+        BlobScanConcurrency.of(scanExecutor))) {
+      assertThat(stream.toList(), hasSize(1));
+    }
+    finally {
+      scanExecutor.shutdownNow();
+    }
+
+    // Set equality also asserts the calling thread performed no read itself
+    assertThat(readerThreads, is(Set.of("scan-worker")));
+  }
+
+  @Test
+  public void testGetBlobIdUpdatedSinceStream_finishedReadsEmitWhileAnotherIsStillBlocked() throws Exception {
+    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
+    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
+    blobStore.init(cfg);
+    blobStore.start();
+
+    OffsetDateTime before =
+        LocalDateTime.now().withYear(2017).withMonth(6).withDayOfMonth(1).withHour(0).atOffset(ZoneOffset.UTC);
+    DateBasedLocationStrategy strategy = new DateBasedLocationStrategy();
+
+    // The blocked read is first in the listing, so submission order and completion order disagree
+    String blockedId = "12345678-1234-1234-1234-000000000001";
+    String firstFreeId = "12345678-1234-1234-1234-000000000002";
+    String secondFreeId = "12345678-1234-1234-1234-000000000003";
+    String blockedKey =
+        "myPrefix/content/" + strategy.location(new BlobId(blockedId, before.plusHours(1))) + ".properties";
+    String firstFreeKey =
+        "myPrefix/content/" + strategy.location(new BlobId(firstFreeId, before.plusHours(1))) + ".properties";
+    String secondFreeKey =
+        "myPrefix/content/" + strategy.location(new BlobId(secondFreeId, before.plusHours(1))) + ".properties";
+
+    when(s3.listObjectsWithPrefix(eq("myPrefix/content/2016"))).thenReturn(Stream.of(
+        S3Object.builder().key(blockedKey).build(),
+        S3Object.builder().key(firstFreeKey).build(),
+        S3Object.builder().key(secondFreeKey).build()));
+
+    CountDownLatch releaseBlockedRead = new CountDownLatch(1);
+    when(s3.getObject(anyString(), eq(blockedKey))).thenAnswer(invocation -> {
+      releaseBlockedRead.await(30, TimeUnit.SECONDS);
+      return getResponseInputStream(attributesContents);
+    });
+    when(s3.getObject(anyString(), eq(firstFreeKey)))
+        .thenAnswer(invocation -> getResponseInputStream(attributesContents));
+    when(s3.getObject(anyString(), eq(secondFreeKey)))
+        .thenAnswer(invocation -> getResponseInputStream(attributesContents));
+
+    ExecutorService scanExecutor = Executors.newFixedThreadPool(3);
+    try (Stream<BlobId> stream = blobStore.getBlobIdUpdatedSinceStream("2016", before, before.plusDays(1),
+        new BlobScanConcurrency(scanExecutor, 100, Duration.ofSeconds(30)))) {
+      Iterator<BlobId> ids = stream.iterator();
+
+      // Both unblocked reads must come out while the first read is still held, which is only possible if the scan
+      // emits reads as they finish rather than in the order it submitted them
+      List<String> emittedWhileBlocked = List.of(ids.next().asUniqueString(), ids.next().asUniqueString());
+      assertThat(emittedWhileBlocked, containsInAnyOrder(firstFreeId, secondFreeId));
+
+      releaseBlockedRead.countDown();
+      assertThat(ids.next().asUniqueString(), is(blockedId));
+      assertThat(ids.hasNext(), is(false));
+    }
+    finally {
+      releaseBlockedRead.countDown();
+      scanExecutor.shutdownNow();
+    }
+  }
+
+  @Test
+  public void testGetBlobIdUpdatedSinceStream_readTimeoutKeepsBlobAndDoesNotStallScan() throws Exception {
+    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
+    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
+    blobStore.init(cfg);
+    blobStore.start();
+
+    OffsetDateTime before =
+        LocalDateTime.now().withYear(2017).withMonth(6).withDayOfMonth(1).withHour(0).atOffset(ZoneOffset.UTC);
+    DateBasedLocationStrategy strategy = new DateBasedLocationStrategy();
+
+    String key = "myPrefix/content/"
+        + strategy.location(new BlobId("12345678-1234-1234-1234-123456789abc", before.plusHours(1))) + ".properties";
+    when(s3.listObjectsWithPrefix(eq("myPrefix/content/2016")))
+        .thenReturn(Stream.of(S3Object.builder().key(key).build()));
+
+    // A read that takes far longer than the timeout allows
+    CountDownLatch neverReleased = new CountDownLatch(1);
+    when(s3.getObject(anyString(), eq(key))).thenAnswer(invocation -> {
+      neverReleased.await(30, TimeUnit.SECONDS);
+      return getResponseInputStream(attributesContents);
+    });
+
+    ExecutorService scanExecutor = Executors.newFixedThreadPool(2);
+    List<BlobId> blobIds;
+    long elapsedMillis;
+    try (Stream<BlobId> stream = blobStore.getBlobIdUpdatedSinceStream("2016", before, before.plusDays(1),
+        new BlobScanConcurrency(scanExecutor, 100, Duration.ofMillis(200)))) {
+      long start = System.nanoTime();
+      blobIds = stream.toList();
+      elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+    }
+    finally {
+      neverReleased.countDown();
+      scanExecutor.shutdownNow();
+    }
+
+    // A read that produced no answer must not drop the blob - the caller re-reads its attributes anyway
+    assertThat(blobIds, hasSize(1));
+    assertThat(blobIds.get(0).asUniqueString(), is("12345678-1234-1234-1234-123456789abc"));
+    // And the scan must not have waited for the stuck read
+    assertThat(elapsedMillis, is(lessThan(5000L)));
   }
 
   @Test
@@ -806,7 +1058,8 @@ public class S3BlobStoreTest
 
   private S3BlobStore createBlobStore() {
     S3BlobStore blobstore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
-        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null);
+        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null,
+        false, 300, 8);
 
     ReflectionTestUtils.setField(blobstore, "maxRetries", 1);
     ReflectionTestUtils.setField(blobstore, "retryDelayMs", 500L);
@@ -973,7 +1226,7 @@ public class S3BlobStoreTest
 
     S3BlobStore blobStoreWithMigration = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(),
         uploader, copier, false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager,
-        blobStoreQuotaUsageChecker, true, migrationStateProvider);
+        blobStoreQuotaUsageChecker, true, migrationStateProvider, true, 300, 8);
     ReflectionTestUtils.setField(blobStoreWithMigration, "maxRetries", 1);
     ReflectionTestUtils.setField(blobStoreWithMigration, "retryDelayMs", 500L);
 
@@ -1011,7 +1264,7 @@ public class S3BlobStoreTest
 
     S3BlobStore blobStoreWithMigration = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(),
         uploader, copier, false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager,
-        blobStoreQuotaUsageChecker, true, migrationStateProvider);
+        blobStoreQuotaUsageChecker, true, migrationStateProvider, true, 300, 8);
     ReflectionTestUtils.setField(blobStoreWithMigration, "maxRetries", 1);
     ReflectionTestUtils.setField(blobStoreWithMigration, "retryDelayMs", 500L);
 
@@ -1285,4 +1538,265 @@ public class S3BlobStoreTest
     props.store(outputStream, null);
     return outputStream.toString("UTF-8");
   }
+
+  /** Mirrors {@link #createBlobStore()} with {@code compactBatchEnabled=true} (opt-in path). */
+  private S3BlobStore createBlobStoreBatched() {
+    S3BlobStore bs = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
+        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null,
+        true, 300, 8);
+    ReflectionTestUtils.setField(bs, "maxRetries", 1);
+    ReflectionTestUtils.setField(bs, "retryDelayMs", 500L);
+    return bs;
+  }
+
+  @Test
+  public void testBatchedCompact_emptyIndex_doesNothing() throws Exception {
+    S3BlobStore batched = createBlobStoreBatched();
+    batched.init(config);
+    batched.start();
+
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(0);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class))).thenReturn(Stream.empty());
+
+    batched.compact(null, Duration.ZERO);
+
+    verify(s3, never()).deleteObjects(any(DeleteObjectsRequest.class));
+    verify(deletedBlobIndex, never()).deleteRecords(any());
+  }
+
+  @Test
+  public void testBatchedCompact_processesEligibleBlobsAsBulk() throws Exception {
+    S3BlobStore batched = createBlobStoreBatched();
+    batched.init(config);
+    batched.start();
+
+    BlobId id1 = new BlobId(UUID.randomUUID().toString());
+    BlobId id2 = new BlobId(UUID.randomUUID().toString());
+
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(2);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class)))
+        .thenReturn(Stream.of(id1, id2));
+
+    // Default mocks return attrs without @deleted, so classifier treats both blobs as eligible.
+    when(s3.deleteObjects(any(DeleteObjectsRequest.class)))
+        .thenReturn(DeleteObjectsResponse.builder().build());
+
+    batched.compact(null, Duration.ZERO);
+
+    // bulk DeleteObjects fired at least once for the batched chunk
+    verify(s3, atLeastOnce()).deleteObjects(any(DeleteObjectsRequest.class));
+    // bulk index deleteRecords fired (NOT the per-blob deleteRecord)
+    verify(deletedBlobIndex, atLeastOnce()).deleteRecords(any());
+    verify(deletedBlobIndex, never()).deleteRecord(any(BlobId.class));
+  }
+
+  @Test
+  public void testBatchedCompact_s3FailureLeavesIndexRecordsForRetry() throws Exception {
+    S3BlobStore batched = createBlobStoreBatched();
+    batched.init(config);
+    batched.start();
+
+    BlobId id1 = new BlobId(UUID.randomUUID().toString());
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(1);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class)))
+        .thenReturn(Stream.of(id1));
+
+    when(s3.deleteObjects(any(DeleteObjectsRequest.class)))
+        .thenThrow(S3Exception.builder().message("ServiceUnavailable").build());
+
+    batched.compact(null, Duration.ZERO);
+
+    // S3 threw → flushBatch swallowed it, no bulk index removal
+    verify(deletedBlobIndex, never()).deleteRecords(any());
+  }
+
+  @Test
+  public void testBatchedCompact_partialFailure_dropsOnlyFailedKey() throws Exception {
+    S3BlobStore batched = createBlobStoreBatched();
+    batched.init(config);
+    batched.start();
+
+    BlobId id1 = new BlobId(UUID.randomUUID().toString());
+    BlobId id2 = new BlobId(UUID.randomUUID().toString());
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(2);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class)))
+        .thenReturn(Stream.of(id1, id2));
+
+    // Fail only keys belonging to id1 so id2 is removed from the index regardless of batch grouping.
+    // (Hour-prefix grouping may split id1 and id2 into separate flushBatch calls; the mock must not
+    // accidentally fail id2's keys by keying off request position rather than blob identity.)
+    String id1Key = id1.asUniqueString();
+    when(s3.deleteObjects(any(DeleteObjectsRequest.class)))
+        .thenAnswer(invocation -> {
+          DeleteObjectsRequest req = invocation.getArgument(0);
+          List<software.amazon.awssdk.services.s3.model.S3Error> errors = req.delete()
+              .objects()
+              .stream()
+              .filter(o -> o.key().contains(id1Key))
+              .map(o -> software.amazon.awssdk.services.s3.model.S3Error.builder()
+                  .key(o.key())
+                  .code("AccessDenied")
+                  .message("denied")
+                  .build())
+              .collect(java.util.stream.Collectors.toList());
+          return errors.isEmpty()
+              ? DeleteObjectsResponse.builder().build()
+              : DeleteObjectsResponse.builder().errors(errors).build();
+        });
+
+    batched.compact(null, Duration.ZERO);
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    ArgumentCaptor<java.util.Collection<BlobId>> captor =
+        ArgumentCaptor.forClass((Class) java.util.Collection.class);
+    verify(deletedBlobIndex, atLeastOnce()).deleteRecords(captor.capture());
+    assertThat(captor.getValue(), hasSize(1));
+    assertThat(captor.getValue(), contains(id2));
+  }
+
+  /** Interrupting the compact thread mid-classify must propagate TaskInterruptedException. */
+  @Test
+  public void testBatchedCompact_interrupted_throwsTaskInterruptedException() throws Exception {
+    S3BlobStore batched = createBlobStoreBatched();
+    batched.init(config);
+    batched.start();
+
+    BlobId id = new BlobId(UUID.randomUUID().toString());
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(1);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class))).thenReturn(Stream.of(id));
+
+    CountDownLatch classifyStarted = new CountDownLatch(1);
+    CountDownLatch neverReleased = new CountDownLatch(1);
+    // Pass metadata.properties through so doCompact setup completes; block only blob attribute fetches
+    // so the classify worker parks and the compact thread is stuck at f.get() when interrupted.
+    when(s3.getObject(anyString(), anyString())).thenAnswer(inv -> {
+      String key = inv.getArgument(1);
+      if (key.contains("metadata.properties")) {
+        return getResponseInputStream(attributesContents);
+      }
+      classifyStarted.countDown();
+      neverReleased.await();
+      return null;
+    });
+
+    AtomicReference<Throwable> thrown = new AtomicReference<>();
+    Thread compactThread = new Thread(() -> {
+      try {
+        batched.compact(null, Duration.ZERO);
+      }
+      catch (Throwable t) {
+        thrown.set(t);
+      }
+    });
+    compactThread.start();
+    assertThat(classifyStarted.await(5, TimeUnit.SECONDS), is(true));
+    compactThread.interrupt();
+    compactThread.join(5_000);
+
+    assertThat(compactThread.isAlive(), is(false));
+    assertThat(thrown.get(), is(notNullValue()));
+    assertThat(thrown.get().getClass().getSimpleName(), is("TaskInterruptedException"));
+  }
+
+  /** classifyForCompact worker-time re-check: non-stale live blob in cache must be skipped. */
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testBatchedCompact_liveBlobInCache_isSkipped() throws Exception {
+    S3BlobStore batched = createBlobStoreBatched();
+    batched.init(config);
+    batched.start();
+
+    BlobId id = new BlobId(UUID.randomUUID().toString());
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(1);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class))).thenReturn(Stream.of(id));
+
+    com.google.common.cache.LoadingCache<BlobId, S3Blob> liveBlobs =
+        (com.google.common.cache.LoadingCache<BlobId, S3Blob>) ReflectionTestUtils.getField(batched, "liveBlobs");
+    S3Blob liveBlob = mock(S3Blob.class);
+    when(liveBlob.isStale()).thenReturn(false);
+    liveBlobs.put(id, liveBlob);
+
+    batched.compact(null, Duration.ZERO);
+
+    verify(s3, never()).deleteObjects(any(DeleteObjectsRequest.class));
+    verify(deletedBlobIndex, never()).deleteRecords(any());
+  }
+
+  /** Batched path must decrement metrics + invalidate liveBlobs in parity with sequential doDeleteHard. */
+  @Test
+  public void testBatchedCompact_recordsMetricAndInvalidatesCacheOnSuccessfulDelete() throws Exception {
+    S3BlobStore batched = createBlobStoreBatched();
+    batched.init(config);
+    batched.start();
+
+    BlobId id = new BlobId(UUID.randomUUID().toString());
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(1);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class))).thenReturn(Stream.of(id));
+    when(s3.deleteObjects(any(DeleteObjectsRequest.class)))
+        .thenReturn(DeleteObjectsResponse.builder().build());
+
+    batched.compact(null, Duration.ZERO);
+
+    // Per-blob byte sum is covered in S3CompactBatcherTest; here we only assert the callback is wired.
+    verify(storeMetrics, atLeastOnce()).recordDeletion(anyLong());
+  }
+
+  /** Compact must run on its own pool even when async-ops pool exists; no contention with asyncDelete. */
+  @Test
+  public void testBatchedCompact_doesNotShareAsyncOpsPool() throws Exception {
+    S3BlobStore batched = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
+        true, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null,
+        true, 300, 8);
+    ReflectionTestUtils.setField(batched, "maxRetries", 1);
+    ReflectionTestUtils.setField(batched, "retryDelayMs", 500L);
+    batched.init(config);
+    batched.start();
+
+    BlobId id = new BlobId(UUID.randomUUID().toString());
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(1);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class))).thenReturn(Stream.of(id));
+    when(s3.deleteObjects(any(DeleteObjectsRequest.class)))
+        .thenReturn(DeleteObjectsResponse.builder().build());
+
+    batched.compact(null, Duration.ZERO);
+
+    verify(s3, atLeastOnce()).deleteObjects(any(DeleteObjectsRequest.class));
+  }
+
+  /** Out-of-range deleteBatchSize must be clamped to max — app must not fail to start. */
+  @Test
+  public void testBatchedCompact_oversizeDeleteBatchSize_clampsToMax() {
+    S3BlobStore bs = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
+        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null,
+        true, 500, 8);
+    assertThat((int) ReflectionTestUtils.getField(bs, "compactDeleteBatchSize"), is(333));
+  }
+
+  /** Out-of-range workerPoolSize must be clamped to max — app must not fail to start. */
+  @Test
+  public void testBatchedCompact_oversizeWorkerPoolSize_clampsToMax() {
+    S3BlobStore bs = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
+        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null,
+        true, 300, 100);
+    assertThat((int) ReflectionTestUtils.getField(bs, "compactWorkerPoolSize"), is(64));
+  }
+
+  /** Zero or negative deleteBatchSize must also clamp — not throw. */
+  @Test
+  public void testBatchedCompact_zeroDeleteBatchSize_clampsToMax() {
+    S3BlobStore bs = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
+        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null,
+        true, 0, 8);
+    assertThat((int) ReflectionTestUtils.getField(bs, "compactDeleteBatchSize"), is(333));
+  }
+
+  /** Negative deleteBatchSize must also clamp — not throw. */
+  @Test
+  public void testBatchedCompact_negativeDeleteBatchSize_clampsToMax() {
+    S3BlobStore bs = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
+        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null,
+        true, -1, 8);
+    assertThat((int) ReflectionTestUtils.getField(bs, "compactDeleteBatchSize"), is(333));
+  }
+
 }

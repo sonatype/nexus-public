@@ -16,7 +16,7 @@ import com.google.common.base.Stopwatch;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 
 /**
@@ -40,7 +40,7 @@ public class ProgressLogIntervalHelper
   private static final long SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
 
   public ProgressLogIntervalHelper(final Logger logger, int intervalInSeconds) {
-    this.logger = checkNotNull(logger);
+    this.logger = requireNonNull(logger);
     this.internal = intervalInSeconds;
 
     this.elapsed = Stopwatch.createStarted();

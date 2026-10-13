@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -42,8 +42,8 @@ public class BlobStoreLocatorImpl
 
   @Autowired
   public BlobStoreLocatorImpl(final BlobStoreManager blobStoreManager, final RepositoryManager repositoryManager) {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Override

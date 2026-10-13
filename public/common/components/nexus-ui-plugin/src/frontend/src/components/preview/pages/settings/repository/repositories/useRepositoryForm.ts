@@ -17,6 +17,8 @@ import { useForm } from '../../../../../../interface/form';
 import { useToast, useIsCloud, useHasFirewallLicense } from '../../../../shared';
 import { useRepositoriesApi } from './useRepositoriesApi';
 import { createRepositoryFormMachine, validateRepository } from './repositoryFormMachine';
+import { isFirewallSupportedFormat } from '../../../../../../utils/firewallFormats';
+import { isHostedRepoEvaluationSupportedFormat } from '../../../../../../utils/hostedRepoEvaluationFormats';
 import {
   Repository,
   RepositoryFormData,
@@ -161,9 +163,14 @@ export function useRepositoryForm({
   const initialTab: RepositoryFormTab = (() => {
     if (isCreate) return 'summary';
     const requested = routerParams?.tab as string | undefined | null;
-    return requested && (TAB_IDS as readonly string[]).includes(requested)
-      ? (requested as RepositoryFormTab)
-      : 'settings';
+    if (!requested || !(TAB_IDS as readonly string[]).includes(requested)) return 'settings';
+    // Guard: ?tab=firewall deep-link for an unsupported format would render a blank panel
+    // because RepositoryForm conditionally omits the Firewall tab content for unsupported
+    // formats. Fall back to 'settings' to avoid the blank-panel UX.
+    if (requested === 'firewall' && !isFirewallSupportedFormat(format)) return 'settings';
+    // Same for ?tab=evaluation: RepositoryForm omits the Evaluation tab for formats HRS can't monitor.
+    if (requested === 'evaluation' && !isHostedRepoEvaluationSupportedFormat(format)) return 'settings';
+    return requested as RepositoryFormTab;
   })();
   const [activeTab, setActiveTab] = useState<RepositoryFormTab>(initialTab);
   const [originChangeWarning, setOriginChangeWarning] = useState(false);

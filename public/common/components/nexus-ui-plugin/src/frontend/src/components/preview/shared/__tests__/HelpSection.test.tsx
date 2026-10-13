@@ -69,6 +69,39 @@ Third paragraph.`}
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('passes a docLink analyticsId through to the rendered anchor', () => {
+    renderWithTheme(
+      <HelpSection
+        title="Title"
+        content="Content"
+        docLink={{
+          label: 'View Documentation',
+          href: 'https://help.sonatype.com/blob-stores',
+          analyticsId: 'nxrm-test-documentation-lnk',
+        }}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: /view documentation/i })).toHaveAttribute(
+      'data-analytics-id',
+      'nxrm-test-documentation-lnk',
+    );
+  });
+
+  it('omits data-analytics-id when no analyticsId is supplied', () => {
+    renderWithTheme(
+      <HelpSection
+        title="Title"
+        content="Content"
+        docLink={{ label: 'View Documentation', href: 'https://help.sonatype.com/blob-stores' }}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: /view documentation/i })).not.toHaveAttribute(
+      'data-analytics-id',
+    );
+  });
+
   it('hides icon when showIcon is false', () => {
     const { container } = renderWithTheme(
       <HelpSection

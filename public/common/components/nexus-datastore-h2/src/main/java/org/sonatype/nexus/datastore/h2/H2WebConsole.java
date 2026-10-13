@@ -25,7 +25,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.h2.tools.Server;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import org.springframework.stereotype.Component;
@@ -56,7 +56,7 @@ public class H2WebConsole
       @Value("${nexus.h2.httpListenerPort:8082}") final int httpListenerPort,
       final NodeAccess nodeAccess)
   {
-    checkNotNull(applicationDirectories);
+    requireNonNull(applicationDirectories);
     this.httpListenerEnabled = httpListenerEnabled;
     this.httpListenerPort = httpListenerPort;
     databasesDir = applicationDirectories.getWorkDirectory("db", false);

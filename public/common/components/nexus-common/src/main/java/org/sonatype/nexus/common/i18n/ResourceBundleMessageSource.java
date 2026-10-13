@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Message source backed up by {@link ResourceBundle} instances.
@@ -39,7 +39,7 @@ public class ResourceBundleMessageSource
   private final Locale locale;
 
   public ResourceBundleMessageSource(final Locale locale) {
-    this.locale = checkNotNull(locale);
+    this.locale = requireNonNull(locale);
   }
 
   public ResourceBundleMessageSource(final Class<?>... types) {
@@ -52,7 +52,7 @@ public class ResourceBundleMessageSource
   }
 
   public ResourceBundleMessageSource add(final boolean required, final Class<?>... types) {
-    checkNotNull(types);
+    requireNonNull(types);
 
     for (Class<?> type : types) {
       try {
@@ -78,7 +78,7 @@ public class ResourceBundleMessageSource
    */
   @Override
   public String getMessage(final String code) {
-    checkNotNull(code);
+    requireNonNull(code);
 
     for (ResourceBundle bundle : bundles) {
       try {

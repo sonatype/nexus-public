@@ -34,6 +34,12 @@
     }
   }
 
+  .repository-format-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--nx-spacing-2x);
+  }
+
   .repository-name-cell {
     display: flex;
     align-items: center;

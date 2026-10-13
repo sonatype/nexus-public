@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
-import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.move.RepositoryMoveService;
@@ -121,7 +121,7 @@ class AssetsResourceTest
   private RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
   @Mock
-  private MaintenanceService maintenanceService;
+  private ContentDeletionService contentDeletionService;
 
   @Mock
   private Continuation<FluentAsset> assetContinuation;
@@ -135,7 +135,8 @@ class AssetsResourceTest
   void setup() {
     mockRepository();
     when(contentAuthHelper.checkPathPermissions(ASSET_PATH, A_FORMAT, repository.getName())).thenReturn(true);
-    underTest = new AssetsResource(repositoryManagerRESTAdapter, maintenanceService, contentAuthHelper, emptyList());
+    underTest = new AssetsResource(repositoryManagerRESTAdapter, contentDeletionService, contentAuthHelper,
+        emptyList());
   }
 
   // --- getAssets tests ---
@@ -384,7 +385,7 @@ class AssetsResourceTest
 
     underTest.deleteAsset(anEncodedAssetId());
 
-    verify(maintenanceService).deleteAsset(repository, assetToDelete);
+    verify(contentDeletionService).deleteAsset(repository, assetToDelete);
   }
 
   @WithUser(isAuthenticated = false)
@@ -425,13 +426,13 @@ class AssetsResourceTest
 
     assertThrows(NotFoundException.class, () -> underTest.deleteAsset(anEncodedAssetId()));
 
-    verify(maintenanceService, never()).deleteAsset(any(), any());
+    verify(contentDeletionService, never()).deleteAsset(any(), any());
   }
 
   @Test
   void deleteAsset_unauthenticated() {
     assertThrows(UnauthenticatedException.class, () -> underTest.deleteAsset(anEncodedAssetId()));
-    verifyNoInteractions(fluentAssets, maintenanceService);
+    verifyNoInteractions(fluentAssets, contentDeletionService);
   }
 
   // --- browse (AssetsResourceSupport) pagination tests ---

@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.view.Payload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link Blob} backed payload.
@@ -36,9 +36,15 @@ public class BlobPayload
 
   private final String contentType;
 
+  private boolean globalDistributionEnabled = true;
+
   public BlobPayload(final Blob blob, @Nullable final String contentType) {
-    this.blob = checkNotNull(blob);
+    this.blob = requireNonNull(blob);
     this.contentType = contentType;
+  }
+
+  public void disableGlobalDistribution() {
+    this.globalDistributionEnabled = false;
   }
 
   @Override
@@ -59,7 +65,7 @@ public class BlobPayload
 
   @Override
   public Optional<URL> getRedirectUrl(final String action, final String name) {
-    return blob.getRedirectUrl(action, name, contentType);
+    return blob.getRedirectUrl(action, name, contentType, globalDistributionEnabled);
   }
 
   /**

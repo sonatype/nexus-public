@@ -17,8 +17,7 @@ import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Slf4j logging {@link SubscriberExceptionHandler}.
@@ -31,7 +30,7 @@ final class Slf4jSubscriberExceptionHandler
   private final Logger logger;
 
   public Slf4jSubscriberExceptionHandler(final String identifier) {
-    checkNotNull(identifier);
+    requireNonNull(identifier);
     this.logger = LoggerFactory.getLogger(EventBus.class.getName() + "." + identifier);
   }
 

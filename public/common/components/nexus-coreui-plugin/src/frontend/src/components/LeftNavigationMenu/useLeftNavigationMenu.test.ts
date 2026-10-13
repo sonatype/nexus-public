@@ -18,7 +18,7 @@ const mockSetFormats = jest.fn();
 const mockUseRepositories = jest.fn();
 const mockUseIsPreviewUI = jest.fn(() => true);
 const mockIsSonatypeDevMode = jest.fn(() => false);
-const mockIsProEdition = jest.fn(() => true);
+const mockIsLicensedEdition = jest.fn(() => true);
 const mockUseDefaultAdminRouteName = jest.fn<string | null, []>(() => 'admin.system.api');
 const mockUseSideNavbarOpenState = jest.fn(() => [true, jest.fn()]);
 
@@ -43,7 +43,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   useIsPreviewUI: (...args: unknown[]) => mockUseIsPreviewUI(...args),
   isSonatypeDevMode: (...args: unknown[]) => mockIsSonatypeDevMode(...args),
   useSideNavbarOpenState: (...args: unknown[]) => mockUseSideNavbarOpenState(...args),
-  ExtJS: { isProEdition: (...args: unknown[]) => mockIsProEdition(...args) },
+  useIsLicensedEdition: (...args: unknown[]) => mockIsLicensedEdition(...args),
+  ExtJS: { isLicensedEdition: (...args: unknown[]) => mockIsLicensedEdition(...args) },
 }));
 
 jest.mock('@uirouter/react', () => ({
@@ -201,7 +202,7 @@ describe('useLeftNavigationMenu', () => {
     jest.clearAllMocks();
     mockUseIsPreviewUI.mockReturnValue(true);
     mockIsSonatypeDevMode.mockReturnValue(false);
-    mockIsProEdition.mockReturnValue(true);
+    mockIsLicensedEdition.mockReturnValue(true);
     mockUseDefaultAdminRouteName.mockReturnValue('admin.system.api');
     // useSideNavbarOpenState returns [isOpen, toggle]; open (true) => not collapsed.
     mockUseSideNavbarOpenState.mockReturnValue([true, jest.fn()]);
@@ -212,7 +213,7 @@ describe('useLeftNavigationMenu', () => {
 
     expect(result.current.isCollapsed).toBe(false);
     expect(result.current.isPreviewUI).toBe(true);
-    expect(result.current.isProEdition).toBe(true);
+    expect(result.current.isLicensedEdition).toBe(true);
     expect(result.current.showTestHub).toBe(false);
     expect(result.current.adminInitialRouteName).toBe('admin.system.api');
     expect(result.current.isSettingsVisible).toBe(true);
@@ -235,12 +236,12 @@ describe('useLeftNavigationMenu', () => {
     expect(result.current.isPreviewUI).toBe(false);
   });
 
-  it('reports CE mode (isProEdition false) when ExtJS is not Pro', () => {
-    mockIsProEdition.mockReturnValue(false);
+  it('reports CE mode (isLicensedEdition false) when ExtJS is not Pro', () => {
+    mockIsLicensedEdition.mockReturnValue(false);
 
     const { result } = renderHook(() => useLeftNavigationMenu());
 
-    expect(result.current.isProEdition).toBe(false);
+    expect(result.current.isLicensedEdition).toBe(false);
   });
 
   it('shows the Test Hub flag when isSonatypeDevMode is true and Preview UI is active', () => {

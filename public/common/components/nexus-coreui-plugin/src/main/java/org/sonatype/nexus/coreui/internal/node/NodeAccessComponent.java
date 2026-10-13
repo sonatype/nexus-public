@@ -23,7 +23,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +39,7 @@ public class NodeAccessComponent
 
   @Autowired
   public NodeAccessComponent(final NodeAccess nodeAccess) {
-    this.nodeAccess = checkNotNull(nodeAccess);
+    this.nodeAccess = requireNonNull(nodeAccess);
   }
 
   @DirectMethod

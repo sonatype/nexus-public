@@ -39,7 +39,7 @@ import org.sonatype.nexus.scheduling.CancelableByRecoveryMode;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getInteger;
@@ -93,8 +93,8 @@ public class AssetBlobCleanupTask
       final BlobStoreManager blobStoreManager,
       @Nullable final RecoveryModeService recoveryModeService)
   {
-    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersList));
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatStoreManagersList));
+    this.blobStoreManager = requireNonNull(blobStoreManager);
     this.recoveryModeService = recoveryModeService;
   }
 

@@ -30,26 +30,26 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.BLOB_STORE_NAME_UPDATE_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.BLOB_STORE_TYPE_MISMATCH_ERROR_FORMAT;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.DUPLICATE_REGIONS_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.FAILOVER_DEFAULT_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.MATCHES_PRIMARY_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class S3BlobStoreApiUpdateValidationTest
@@ -150,7 +150,7 @@ public class S3BlobStoreApiUpdateValidationTest
     S3BlobStoreApiBucketConfiguration bucketConfig = new S3BlobStoreApiBucketConfiguration(
         anS3BlobStoreApiBucket("us-east-1", "use-bucket"), null, null, null,
         s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null, null);
-    S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig);
+    S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig, null);
 
     ValidationErrorsException exception =
         assertThrows(ValidationErrorsException.class, () -> underTest.validateCreateRequest(model));
@@ -172,7 +172,7 @@ public class S3BlobStoreApiUpdateValidationTest
     S3BlobStoreApiBucketConfiguration bucketConfig = new S3BlobStoreApiBucketConfiguration(
         anS3BlobStoreApiBucket("us-east-1", "use-bucket"), null, null, null,
         s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null, null);
-    S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig);
+    S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig, null);
 
     ValidationErrorsException exception =
         assertThrows(ValidationErrorsException.class, () -> underTest.validateUpdateRequest(model, BLOB_STORE_NAME));
@@ -196,7 +196,7 @@ public class S3BlobStoreApiUpdateValidationTest
   }
 
   private S3BlobStoreApiModel anS3BlobStoreApiModel(final String blobStoreName) {
-    return new S3BlobStoreApiModel(blobStoreName, null, null);
+    return new S3BlobStoreApiModel(blobStoreName, null, null, null);
   }
 
   private static S3BlobStoreApiBucket anS3BlobStoreApiBucket(final String region, final String bucket) {

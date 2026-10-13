@@ -30,7 +30,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Capability that allows selecting a role to apply to all authorized users
@@ -63,9 +63,9 @@ public class DefaultRoleCapability
       final DefaultRoleRealm defaultRoleRealm,
       final EventManager eventManager)
   {
-    this.realmManager = checkNotNull(realmManager);
-    this.defaultRoleRealm = checkNotNull(defaultRoleRealm);
-    this.eventManager = checkNotNull(eventManager);
+    this.realmManager = requireNonNull(realmManager);
+    this.defaultRoleRealm = requireNonNull(defaultRoleRealm);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override

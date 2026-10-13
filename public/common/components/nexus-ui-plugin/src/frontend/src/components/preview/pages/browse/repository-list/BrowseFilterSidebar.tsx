@@ -66,6 +66,8 @@ export interface BrowseFilterSidebarProps {
   selectedHealthCheck: string[];
   /** Sort field */
   sortField: string;
+  /** Restricts the sortable fields offered; defaults to every field */
+  sortableFields?: readonly string[];
   /** Sort direction */
   sortDirection: 'asc' | 'desc';
   /** Callback when format filter changes */
@@ -196,6 +198,7 @@ export function BrowseFilterSidebar({
   selectedProtection,
   selectedHealthCheck,
   sortField,
+  sortableFields,
   sortDirection,
   onFormatsChange,
   onTypesChange,
@@ -207,6 +210,10 @@ export function BrowseFilterSidebar({
   disabled = false,
   hideClearButton = false,
 }: BrowseFilterSidebarProps): JSX.Element {
+  const sortFieldOptions = sortableFields
+    ? SORT_FIELD_OPTIONS.filter((o) => sortableFields.includes(o.value))
+    : SORT_FIELD_OPTIONS;
+
   // Sort field - when changed, keep current direction
   const handleSortFieldChange = useCallback(
     (v: string) => onSortChange(v, sortDirection),
@@ -253,7 +260,7 @@ export function BrowseFilterSidebar({
             >
               <Select.Trigger />
               <Select.Content>
-                {SORT_FIELD_OPTIONS.map((o) => (
+                {sortFieldOptions.map((o) => (
                   <Select.Item key={o.value} value={o.value}>
                     {o.label}
                   </Select.Item>

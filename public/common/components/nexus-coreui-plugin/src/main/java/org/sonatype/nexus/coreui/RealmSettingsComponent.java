@@ -40,7 +40,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.QualifierUtil.description;
 
 /**
@@ -60,7 +60,7 @@ public class RealmSettingsComponent
 
   @Autowired
   public RealmSettingsComponent(final RealmManager realmManager) {
-    this.realmManager = checkNotNull(realmManager);
+    this.realmManager = requireNonNull(realmManager);
   }
 
   /**

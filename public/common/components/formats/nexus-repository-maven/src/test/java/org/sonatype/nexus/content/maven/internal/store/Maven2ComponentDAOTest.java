@@ -85,7 +85,7 @@ public class Maven2ComponentDAOTest
   public void findComponent() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
-      Optional<Component> component = dao.readComponent(1);
+      Optional<Component> component = dao.readComponent(1, true);
       assertTrue(component.isPresent());
     }
   }
@@ -94,7 +94,7 @@ public class Maven2ComponentDAOTest
   public void findGavsWithSnaphots() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
-      Set<GAV> gavsWithSnaphots = dao.findGavsWithSnaphots(repositoryId, 2);
+      Set<GAV> gavsWithSnaphots = dao.findGavsWithSnaphots(repositoryId, 2, true);
       assertThat(gavsWithSnaphots.size(), is(1));
       GAV gav = gavsWithSnaphots.stream().findFirst().get();
       assertThat(gav.group, is("group"));
@@ -108,7 +108,7 @@ public class Maven2ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
 
-      Set<GAV> gavsWithSnaphots = dao.findGavsWithSnaphots(repositoryId, 3);
+      Set<GAV> gavsWithSnaphots = dao.findGavsWithSnaphots(repositoryId, 3, true);
       assertThat(gavsWithSnaphots.size(), is(0));
     }
   }
@@ -118,7 +118,7 @@ public class Maven2ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
       List<Maven2ComponentData> componentsForGav =
-          dao.findComponentsForGav(repositoryId, "artifact", "group", "1.0.0-SNAPSHOT", "1.0.0");
+          dao.findComponentsForGav(repositoryId, "artifact", "group", "1.0.0-SNAPSHOT", "1.0.0", true);
       assertThat(componentsForGav.size(), is(3));
       List<String> componentVersions =
           componentsForGav.stream().map(component -> component.version()).collect(Collectors.toList());
@@ -132,7 +132,7 @@ public class Maven2ComponentDAOTest
   public void selectSnapshotsAfterRelease() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
-      int[] componentIds = dao.selectSnapshotsAfterRelease(repositoryId, 0);
+      int[] componentIds = dao.selectSnapshotsAfterRelease(repositoryId, 0, true);
       assertThat(componentIds.length, is(3));
 
       List<Integer> ids = Arrays.stream(componentIds).boxed().collect(Collectors.toList());
@@ -146,7 +146,7 @@ public class Maven2ComponentDAOTest
   public void selectSnapshotsAfterReleaseInGracePeriod() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
-      int[] componentIds = dao.selectSnapshotsAfterRelease(repositoryId, 1);
+      int[] componentIds = dao.selectSnapshotsAfterRelease(repositoryId, 1, true);
       assertThat(componentIds.length, is(0));
     }
   }

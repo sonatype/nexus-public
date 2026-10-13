@@ -15,6 +15,7 @@ import { assign } from 'xstate';
 import { API_INTERNAL_UI, ENDPOINTS, restClient } from '../../../../../../interface/api';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { createFormMachine, type FormContext, type ValidationErrors } from '../../../../../../interface/form';
+import UIStrings from '../../../../../../constants/UIStrings';
 
 import {
   Repository,
@@ -96,6 +97,54 @@ function looksLikeRegexPattern(entry: string): boolean {
 }
 
 /**
+ * Reported when a submitted URL cannot be parsed at all, as distinct from parsing
+ * cleanly but carrying a scheme we do not accept. Exported so tests assert against
+ * this value rather than a copied literal.
+ */
+export const INVALID_URL_FORMAT_MESSAGE = 'Invalid URL format';
+
+/**
+ * Reject any URL whose scheme is not http/https, for parity with the server's `@Url`
+ * constraint (`UrlValidator.SCHEME_RE = ^https?$`) applied to
+ * `ProxyFacetSupport.ProxyConfig#remoteUrl` and `DockerProxyFacetSupport.Config#indexUrl`.
+ *
+ * Scheme parity only — this is deliberately not a full port of the server-side check.
+ * `new URL()` still accepts things the server rejects (port 0, and a missing host as in
+ * `http:example.com`), so the backend remains the source of truth; this exists to stop
+ * the common `oci://` / `ftp://` / `file://` mistakes at the point of entry instead of
+ * after a round trip.
+ *
+ * Deliberately NOT `ValidationUtils.validateIsUrl`: that helper re-extracts the host with
+ * a regex which rejects IPv6 literals (`http://[::1]`) and userinfo (`http://user@host`),
+ * both of which the server accepts (see `UrlValidatorTest`). Delegating there would trade
+ * one client/server mismatch for another.
+ *
+ * The scheme message is a parameter: this helper unifies the RULE, not the copy. Each
+ * caller keeps its own pre-existing wording, so `dockerProxy.indexUrl` is not restrung by
+ * an OCI ticket. The parse message stays the pre-existing wording for the same reason —
+ * it is exported as {@link INVALID_URL_FORMAT_MESSAGE} only so tests can assert against
+ * the source of truth instead of re-typing the literal. It deliberately does NOT move
+ * into `UIStrings.ERROR`: `dockerProxy.indexUrl` and the foreign-layer whitelist share
+ * this wording, so promoting it would be a cross-format string change beyond this ticket.
+ *
+ * @param raw the submitted URL value.
+ * @param schemeMessage the error to report when the scheme is not http/https.
+ * @returns the error message, or `undefined` when the value is an acceptable http(s) URL.
+ */
+function validateHttpUrl(raw: string, schemeMessage: string): string | undefined {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return INVALID_URL_FORMAT_MESSAGE;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return schemeMessage;
+  }
+  return undefined;
+}
+
+/**
  * Validate repository form data.
  * Returns flat validation errors using dot notation for nested fields,
  * compatible with the createFormMachine validation contract.
@@ -120,10 +169,12 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
     if (!data.proxy?.remoteUrl?.trim()) {
       errors['proxy.remoteUrl'] = 'Remote URL is required';
     } else {
-      try {
-        new URL(data.proxy.remoteUrl);
-      } catch {
-        errors['proxy.remoteUrl'] = 'Invalid URL format';
+      // NEXUS-54771: a bare `new URL()` parses any scheme, so oci:// / oci+http:// /
+      // ftp:// / file:// used to pass client-side for every proxy format and were only
+      // caught by the server's @Url constraint.
+      const remoteUrlError = validateHttpUrl(data.proxy.remoteUrl, UIStrings.ERROR.URL_ERROR);
+      if (remoteUrlError) {
+        errors['proxy.remoteUrl'] = remoteUrlError;
       }
     }
 
@@ -199,6 +250,16 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
     }
   }
 
+  // GPG signing is mandatory for Terraform hosted repositories: the REST model
+  // marks `terraformSigning` @NotNull with a @NotBlank `keypair`, so validate
+  // here rather than surfacing a bare "must not be null" from the server.
+  if (data.format === 'terraform' && data.type === 'hosted') {
+    if (!data.terraformSigning?.keypair?.trim()) {
+      errors['terraformSigning.keypair'] =
+        'GPG signing key is required for Terraform hosted repositories';
+    }
+  }
+
   // Docker port validation
   if (data.format === 'docker' && !data.docker?.pathEnabled) {
     const httpPort = data.docker?.httpPort;
@@ -208,6 +269,40 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
     }
     if (httpsPort != null && (httpsPort < 1 || httpsPort > 65535)) {
       errors['docker.httpsPort'] = 'Port must be between 1 and 65535';
+    }
+  }
+
+  // OCI connector port validation. Mirrors the Docker branch above (same bounds, same message)
+  // and the server-side @PortNumber constraint on OciAttributes; without it an out-of-range port
+  // was only caught by a round-trip 400.
+  //
+  // Skipping the check under path-based routing is only sound because OciFacet hides the
+  // connector inputs and clears httpPort/httpsPort/subdomain when path routing is switched on
+  // (see handlePathEnabledChange), so no stale port can reach the server unvalidated. The server
+  // applies @PortNumber regardless of pathEnabled.
+  if (data.format === 'oci' && !data.oci?.pathEnabled) {
+    const httpPort = data.oci?.httpPort;
+    const httpsPort = data.oci?.httpsPort;
+    if (httpPort != null && (httpPort < 1 || httpPort > 65535)) {
+      errors['oci.httpPort'] = 'Port must be between 1 and 65535';
+    }
+    if (httpsPort != null && (httpsPort < 1 || httpsPort > 65535)) {
+      errors['oci.httpsPort'] = 'Port must be between 1 and 65535';
+    }
+  }
+
+  // OCI proxy custom index URL validation. The facet presents this field as required, but the
+  // message used to be rendered locally at render time, so it appeared without ever blocking
+  // Save. Validating here makes the requirement enforceable.
+  if (data.format === 'oci' && data.type === 'proxy' && data.ociProxy?.indexType === 'CUSTOM') {
+    const indexUrl = data.ociProxy.indexUrl?.trim();
+    if (!indexUrl) {
+      errors['ociProxy.indexUrl'] = 'Index URL is required when Custom index is selected';
+    } else {
+      const indexUrlError = validateHttpUrl(indexUrl, 'Index URL must use http or https');
+      if (indexUrlError) {
+        errors['ociProxy.indexUrl'] = indexUrlError;
+      }
     }
   }
 
@@ -238,13 +333,9 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
     if (!indexUrl) {
       errors['dockerProxy.indexUrl'] = 'Index URL is required';
     } else {
-      try {
-        const parsed = new URL(indexUrl);
-        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-          errors['dockerProxy.indexUrl'] = 'Index URL must use http or https';
-        }
-      } catch {
-        errors['dockerProxy.indexUrl'] = 'Invalid URL format';
+      const indexUrlError = validateHttpUrl(indexUrl, 'Index URL must use http or https');
+      if (indexUrlError) {
+        errors['dockerProxy.indexUrl'] = indexUrlError;
       }
     }
   }
@@ -265,13 +356,37 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
 // =============================================================================
 
 /**
- * Fetch a single repository by name from the REST API
+ * Formats whose configuration cannot round-trip through the generic
+ * `/service/rest/v1/repositories/{name}` endpoint because it returns a
+ * minimal `RepositoryXO` shape that omits format-specific attributes
+ * (e.g. HuggingFace's `xet` block). For these formats we fetch through
+ * the format+type-specific endpoint, which serializes the full
+ * `AbstractApiRepository` DTO via the format's `ApiRepositoryAdapter`.
+ *
+ * NEXUS-48685: Without this, editing a HuggingFace proxy with XET
+ * disabled rendered the XET checkbox as checked, because the load
+ * response never carried `xet` for the form-machine to pluck.
  */
-async function findRepository(name: string): Promise<Repository | null> {
+const FORMAT_SPECIFIC_ENDPOINT_FORMATS = new Set<string>(['huggingface']);
+
+/**
+ * Fetch a single repository by name from the REST API.
+ *
+ * Uses the format+type-specific endpoint for formats whose response
+ * DTOs contain fields not surfaced by the generic endpoint; see
+ * FORMAT_SPECIFIC_ENDPOINT_FORMATS.
+ */
+async function findRepository(
+  name: string,
+  format?: string,
+  type?: string,
+): Promise<Repository | null> {
   try {
-    const data = await restClient.get<Repository>(
-      `${ENDPOINTS.REPOSITORIES}/${encodeURIComponent(name)}`
-    );
+    const url =
+      format && type && FORMAT_SPECIFIC_ENDPOINT_FORMATS.has(format)
+        ? `${ENDPOINTS.REPOSITORIES}/${encodeURIComponent(format)}/${encodeURIComponent(type)}/${encodeURIComponent(name)}`
+        : `${ENDPOINTS.REPOSITORIES}/${encodeURIComponent(name)}`;
+    const data = await restClient.get<Repository>(url);
     return data || null;
   } catch (err) {
     console.error('Failed to load repository:', err);
@@ -292,6 +407,7 @@ function buildFormDataFromRepository(repo: Repository): RepositoryFormData {
   const storageConfig = getConfig<{
     blobStoreName?: string;
     strictContentTypeValidation?: boolean;
+    globalDistribution?: boolean;
     writePolicy?: string;
   }>('storage');
 
@@ -307,10 +423,14 @@ function buildFormDataFromRepository(repo: Repository): RepositoryFormData {
     format: repo.format,
     recipe: repo.recipe || `${repo.format}-${repo.type}`,
     online: repo.online ?? true,
+    // Entitled editions default the absent field so the checkbox still renders.
     routingRuleId: repo.routingRuleId ?? (repoData.routingRuleName as string | null | undefined),
     storage: {
       blobStoreName,
       strictContentTypeValidation: storageConfig?.strictContentTypeValidation ?? true,
+      globalDistribution:
+        storageConfig?.globalDistribution ??
+        (ExtJS.state()?.getValue('hasEnterprise', false) ? false : undefined),
       writePolicy: storageConfig?.writePolicy as 'ALLOW' | 'ALLOW_ONCE' | 'DENY' | undefined,
     },
     proxy: getConfig('proxy'),
@@ -323,6 +443,12 @@ function buildFormDataFromRepository(repo: Repository): RepositoryFormData {
     maven: getConfig('maven'),
     docker: getConfig('docker'),
     dockerProxy: getConfig('dockerProxy'),
+    // OCI stores three sibling blocks (`oci`, `ociProxy`, `cosign`). All three
+    // must be seeded on edit, otherwise saving without opening the OCI section
+    // would drop the persisted values from the PUT body.
+    oci: getConfig('oci'),
+    ociProxy: getConfig('ociProxy'),
+    cosign: getConfig('cosign'),
     nugetProxy: getConfig('nugetProxy'),
     apt: getConfig('apt'),
     aptSigning: getConfig('aptSigning'),
@@ -337,6 +463,14 @@ function buildFormDataFromRepository(repo: Repository): RepositoryFormData {
     // is now expressed via `firewall.mode = "PCCS"` on the top-level config.)
     pypi: getConfig('pypi'),
     terraformSigning: getConfig('terraformSigning'),
+    // NEXUS-48685: HuggingFace XET transfer-protocol toggle. Pluck the
+    // persisted xet block through to form data so the facet can reflect
+    // the saved enabled state. When the backend response omits xet
+    // (pre-feature repositories; Jackson NON_NULL), formData.xet stays
+    // undefined and the facet falls back to unchecked (LFS-preserving on
+    // upgrade). New repositories get xet.enabled=true seeded in
+    // buildDefaultFormData.
+    xet: getConfig('xet'),
   };
 }
 
@@ -391,22 +525,63 @@ function buildDefaultFormData(format: string, type: RepositoryType): RepositoryF
     };
   }
 
+  // OCI defaults. `oci.v1Enabled` and `oci.forceBasicAuth` are @NotNull on the
+  // REST model, so seeding them here keeps the create payload valid even if the
+  // user never opens the OCI section, and makes the effective values visible in
+  // the form rather than applied invisibly at submit time. forceBasicAuth=true
+  // matches the REST model default and is mandatory on cloud.
+  if (format === 'oci') {
+    baseValues.oci = {
+      v1Enabled: false,
+      forceBasicAuth: true,
+      pathEnabled: true,
+      httpPort: null,
+      httpsPort: null,
+      subdomain: null,
+    };
+    if (type === 'proxy') {
+      baseValues.ociProxy = {
+        indexType: 'REGISTRY',
+        indexUrl: null,
+        cacheForeignLayers: false,
+        foreignLayerUrlWhitelist: [],
+      };
+    }
+  }
+
   // npm proxy: post-migration STL-381 there is no longer any npm-specific
   // form data to seed. The legacy `removeQuarantinedVersions` flag was npm's
   // only field and has been removed; `NpmConfig` no longer exists in types.ts.
   // PCCS is now expressed via `firewall.mode = "PCCS"` on the top-level
   // repository config (set via the Firewall tab).
 
-  switch (type) {
-    case 'hosted':
-      return { ...baseValues, ...DEFAULT_HOSTED_VALUES } as RepositoryFormData;
-    case 'proxy':
-      return { ...baseValues, ...DEFAULT_PROXY_VALUES } as RepositoryFormData;
-    case 'group':
-      return { ...baseValues, ...DEFAULT_GROUP_VALUES } as RepositoryFormData;
-    default:
-      return baseValues;
+  // NEXUS-48685: HuggingFace proxy create mode seeds xet.enabled=false so the
+  // XET checkbox renders as unchecked by default and the save payload always
+  // carries the xet block with an explicit value. The facet's
+  // undefined-fallback is also *unchecked* to preserve legacy LFS behavior
+  // for pre-feature repositories (which have no persisted xet block).
+  if (format === 'huggingface' && type === 'proxy') {
+    baseValues.xet = {
+      enabled: false,
+    };
   }
+
+  const TYPE_DEFAULTS = {
+    hosted: DEFAULT_HOSTED_VALUES,
+    proxy: DEFAULT_PROXY_VALUES,
+    group: DEFAULT_GROUP_VALUES,
+  } as const;
+  const typeDefaults = TYPE_DEFAULTS[type as keyof typeof TYPE_DEFAULTS];
+  const values = typeDefaults ? ({ ...baseValues, ...typeDefaults } as RepositoryFormData) : baseValues;
+
+  // Seeded only for editions whose API exposes the field, so the create payload
+  // never sends `globalDistribution` to an API that strips it. Applied after the
+  // type defaults, whose own `storage` object replaces `baseValues.storage`.
+  if (ExtJS.state()?.getValue('hasEnterprise', false)) {
+    values.storage = { ...values.storage, globalDistribution: false };
+  }
+
+  return values;
 }
 
 // =============================================================================
@@ -468,7 +643,7 @@ export function createRepositoryFormMachine(options: RepositoryFormMachineOption
         }),
       })),
       // Custom action: update type, reset type-specific fields, apply defaults.
-      // Preserves common fields (name, format, online, blobStoreName).
+      // Preserves common fields (name, format, online, globalDistribution, blobStoreName).
       changeType: assign((context: any, event: any) => {
         const newType = event.value as RepositoryType;
         const currentData = context.data as RepositoryFormData;
@@ -517,6 +692,27 @@ export function createRepositoryFormMachine(options: RepositoryFormMachineOption
           // `removeQuarantinedVersions` removed post-migration STL-381 — see PypiConfig in types.ts.
           formatDefaults.pypi = { indexPath: '/simple' };
         }
+        if (currentData.format === 'oci') {
+          // Keep in step with the OCI branch of buildDefaultFormData. `v1Enabled` and
+          // `forceBasicAuth` are @NotNull on the REST model, so a TYPE_CHANGE landing on an OCI
+          // recipe has to seed them exactly as a fresh create would.
+          formatDefaults.oci = {
+            v1Enabled: false,
+            forceBasicAuth: true,
+            pathEnabled: true,
+            httpPort: null,
+            httpsPort: null,
+            subdomain: null,
+          };
+          if (newType === 'proxy') {
+            formatDefaults.ociProxy = {
+              indexType: 'REGISTRY',
+              indexUrl: null,
+              cacheForeignLayers: false,
+              foreignLayerUrlWhitelist: [],
+            };
+          }
+        }
         // npm proxy has no format-specific defaults post-migration STL-381 (NpmConfig was removed).
 
         // Build new data: type defaults + format defaults + preserved common fields + explicit overrides
@@ -529,6 +725,7 @@ export function createRepositoryFormMachine(options: RepositoryFormMachineOption
           storage: {
             ...(typeDefaults.storage || { blobStoreName: '', strictContentTypeValidation: true }),
             blobStoreName: currentData.storage?.blobStoreName || '',
+            globalDistribution: currentData.storage?.globalDistribution,
           },
         } as RepositoryFormData;
 
@@ -553,7 +750,7 @@ export function createRepositoryFormMachine(options: RepositoryFormMachineOption
             preloadedRepository
               ? Promise.resolve(preloadedRepository)
               : repositoryName
-                ? findRepository(repositoryName).catch((err: unknown) => {
+                ? findRepository(repositoryName, format, initialType).catch((err: unknown) => {
                     console.error('Failed to load repository:', err);
                     throw err;
                   })

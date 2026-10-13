@@ -53,7 +53,13 @@ export async function fetchIqSettings(): Promise<IqServerFormData> {
   try {
     const response = await Axios.get(IQ_API);
     const data = { ...DEFAULT_IQ_CONFIGURATION, ...response.data };
-    if (!data.authenticationType && data.username) data.authenticationType = 'USER';
+    // GET /v1/iq returns an all-null XO while IQ has never been configured, and spreading that
+    // over the defaults replaces the '' default with null. The API rejects a null/blank
+    // authenticationType (@NotNull on IqConnectionXo), and the dialog's dropdown already
+    // displays USER for an absent value, so normalize here instead of shipping a value the
+    // form never shows. Previously this only fired when a username was present, which is
+    // never true on a first-time setup.
+    if (!data.authenticationType) data.authenticationType = 'USER';
     return toFormData(data);
   } catch (err: any) {
     throw new Error(err?.response?.data?.message || err?.message || 'Failed to load IQ Server settings');
@@ -63,6 +69,19 @@ export async function fetchIqSettings(): Promise<IqServerFormData> {
 export async function putIqSettings(config: IqServerConfiguration): Promise<IqServerConfiguration> {
   const response = await Axios.put(IQ_API, config);
   return response.data;
+}
+
+/**
+ * Disable IQ Server via the dedicated endpoint.
+ *
+ * POST /v1/iq/disable flips only the enabled flag — the backend re-persists the
+ * already-stored ClmConfiguration untouched, so every stored setting survives by
+ * construction, including ones the GET does not expose and a reconstructed PUT payload
+ * could therefore never echo back. It also performs no request to the remote IQ Server,
+ * so disabling works while IQ is unreachable.
+ */
+export async function disableIqServer(): Promise<void> {
+  await Axios.post(`${IQ_API}/disable`);
 }
 
 export async function saveIqSettings(formData: IqServerFormData): Promise<IqServerFormData> {
@@ -79,7 +98,7 @@ export async function saveIqSettings(formData: IqServerFormData): Promise<IqServ
     properties: payload.properties,
     ...serverData,
   };
-  if (!data.authenticationType && data.username) data.authenticationType = 'USER';
+  if (!data.authenticationType) data.authenticationType = 'USER';
   // Keep caller's properties array (stable row ids) to avoid row remounts/focus loss after save.
   return { ...toFormData(data), properties: formData.properties, propertiesDroppedLineCount: 0 };
 }

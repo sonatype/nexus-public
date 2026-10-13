@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID;
 
@@ -42,7 +42,7 @@ public class BlobRepositoryMismatchMigrationStep_2_106
 
   @Autowired
   public BlobRepositoryMismatchMigrationStep_2_106(final UpgradeTaskScheduler upgradeTaskScheduler) {
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
+    this.upgradeTaskScheduler = requireNonNull(upgradeTaskScheduler);
   }
 
   @Override

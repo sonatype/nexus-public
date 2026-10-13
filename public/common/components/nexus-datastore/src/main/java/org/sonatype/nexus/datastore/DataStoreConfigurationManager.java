@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Streams.stream;
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
 
@@ -46,7 +46,7 @@ public class DataStoreConfigurationManager
 
   @Autowired
   public DataStoreConfigurationManager(final List<DataStoreConfigurationSource> configurationSourcesList) {
-    this.configurationSources = checkNotNull(configurationSourcesList);
+    this.configurationSources = requireNonNull(configurationSourcesList);
   }
 
   /**

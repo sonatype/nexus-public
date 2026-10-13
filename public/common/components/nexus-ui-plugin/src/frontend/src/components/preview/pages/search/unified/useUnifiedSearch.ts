@@ -82,6 +82,8 @@ interface RawSearchItem {
 
 interface RawSearchResponse {
   items: RawSearchItem[];
+  /** True server-side match count for the whole query (exact COUNT from the API) */
+  total?: number;
   continuationToken?: string;
 }
 
@@ -200,6 +202,7 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
         return Axios.get<RawSearchResponse>(url, { signal: abortController.signal })
           .then((response) => ({
             results: response.data.items.map(transformResult),
+            total: response.data.total,
             continuationToken: response.data.continuationToken,
           }))
           .catch((error) => {
@@ -207,7 +210,7 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
             // XState ignores stale invocation results anyway, but this prevents
             // the machine from entering the error state on cancellation.
             if (error instanceof Error && error.name === ABORT_ERROR_NAME) {
-              return { results: [] as SearchResult[], continuationToken: undefined };
+              return { results: [] as SearchResult[], total: undefined, continuationToken: undefined };
             }
             throw error;
           });
@@ -240,11 +243,12 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
         return Axios.get<RawSearchResponse>(url, { signal: abortController.signal })
           .then((response) => ({
             results: response.data.items.map(transformResult),
+            total: response.data.total,
             continuationToken: response.data.continuationToken,
           }))
           .catch((error) => {
             if (error instanceof Error && error.name === ABORT_ERROR_NAME) {
-              return { results: [] as SearchResult[], continuationToken: undefined };
+              return { results: [] as SearchResult[], total: undefined, continuationToken: undefined };
             }
             throw error;
           });
@@ -271,6 +275,7 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
     filters: machineState.context.filters,
     results: machineState.context.results,
     totalCount: machineState.context.totalCount,
+    total: machineState.context.total,
     loading:
       machineState.matches({ lifecycle: 'searching' }) ||
       machineState.matches({ lifecycle: 'loadingMore' }),

@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Handles capability activation by reacting capability activation condition being satisfied/unsatisfied.
@@ -53,9 +53,9 @@ public class ActivationConditionHandler
       final Conditions conditions,
       final DefaultCapabilityReference reference)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.conditions = checkNotNull(conditions);
-    this.reference = checkNotNull(reference);
+    this.eventManager = requireNonNull(eventManager);
+    this.conditions = requireNonNull(conditions);
+    this.reference = requireNonNull(reference);
   }
 
   boolean isConditionSatisfied() {

@@ -303,51 +303,6 @@
   &__row-edit-icon {
     color: var(--gray-9, #8d8d8f);
   }
-
-  &__help {
-    margin-top: var(--space-6, 24px);
-    padding: var(--space-4, 16px);
-    background: var(--blue-2, #f0f9ff);
-    border-radius: var(--radius-2, 6px);
-
-    [data-theme='dark'] & {
-      background: var(--blue-2, #0d2847);
-    }
-  }
-
-  &__help-header {
-    margin-bottom: var(--space-2, 8px);
-    color: var(--blue-11, #0d74ce);
-
-    [data-theme='dark'] & {
-      color: var(--blue-11, #52a9ff);
-    }
-  }
-
-  &__help-text {
-    color: var(--gray-11, #6f6f78);
-    line-height: 1.5;
-
-    [data-theme='dark'] & {
-      color: var(--gray-11, #9898a1);
-    }
-  }
-
-  &__help-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--blue-11, #0d74ce);
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    [data-theme='dark'] & {
-      color: var(--blue-11, #52a9ff);
-    }
-  }
 }
 
 

@@ -53,7 +53,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Base class for APT metadata rebuild scheduler facets.
@@ -102,13 +102,13 @@ public class AptMetadataRebuildSchedulerFacet
       @Value("${nexus.apt.metadata.cooperation.minorTimeout:30s}") final Duration minorTimeout,
       @Value("${nexus.apt.metadata.cooperation.threadsPerKey:100}") final int threadsPerKey)
   {
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.clock = checkNotNull(clock);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.clock = requireNonNull(clock);
 
     checkArgument(!rebuildDelay.isNegative(), "nexus.apt.metadata.rebuild.debounce must be positive");
     this.rebuildDelay = rebuildDelay;
 
-    this.cooperationBuilder = checkNotNull(cooperationFactory).configure()
+    this.cooperationBuilder = requireNonNull(cooperationFactory).configure()
         .enabled(cooperationEnabled)
         .majorTimeout(majorTimeout)
         .minorTimeout(minorTimeout)

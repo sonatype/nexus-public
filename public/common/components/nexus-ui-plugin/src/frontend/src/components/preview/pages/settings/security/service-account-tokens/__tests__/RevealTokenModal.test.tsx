@@ -12,11 +12,11 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import {render, screen, fireEvent, act} from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { RevealTokenModal } from '../RevealTokenModal';
-import { SERVICE_ACCOUNT_TOKENS_STRINGS } from '../strings';
+import {RevealTokenModal} from '../RevealTokenModal';
+import {SERVICE_ACCOUNT_TOKENS_STRINGS} from '../strings';
 
 const LABELS = SERVICE_ACCOUNT_TOKENS_STRINGS.REVEAL_MODAL;
 
@@ -24,6 +24,7 @@ describe('RevealTokenModal', () => {
   const defaultProps = {
     open: true,
     token: 'sat.test-token-abc123',
+    name: 'jenkins-prod',
     onClose: jest.fn(),
   };
 
@@ -53,41 +54,6 @@ describe('RevealTokenModal', () => {
     });
   });
 
-  describe('countdown', () => {
-    it('shows countdown text aligned with the Done button', () => {
-      render(<RevealTokenModal {...defaultProps} />);
-
-      const countdown = screen.getByTestId('sat-reveal-countdown');
-      expect(countdown).toHaveTextContent(LABELS.AUTO_CLOSE_NOTICE(60));
-    });
-
-    it('countdown decrements over time', () => {
-      render(<RevealTokenModal {...defaultProps} />);
-
-      // Initial state
-      expect(screen.getByText(LABELS.AUTO_CLOSE_NOTICE(60))).toBeInTheDocument();
-
-      // Advance 1 second
-      act(() => {
-        jest.advanceTimersByTime(1000);
-      });
-
-      expect(screen.getByText(LABELS.AUTO_CLOSE_NOTICE(59))).toBeInTheDocument();
-    });
-
-    it('calls onClose when countdown reaches 0', () => {
-      const onClose = jest.fn();
-      render(<RevealTokenModal {...defaultProps} onClose={onClose} />);
-
-      // Fast-forward 60 seconds
-      act(() => {
-        jest.advanceTimersByTime(60000);
-      });
-
-      expect(onClose).toHaveBeenCalled();
-    });
-  });
-
   describe('copy functionality', () => {
     it('has a copy button', () => {
       render(<RevealTokenModal {...defaultProps} />);
@@ -98,7 +64,7 @@ describe('RevealTokenModal', () => {
       const mockClipboard = {
         writeText: jest.fn().mockResolvedValue(undefined),
       };
-      Object.assign(navigator, { clipboard: mockClipboard });
+      Object.assign(navigator, {clipboard: mockClipboard});
 
       render(<RevealTokenModal {...defaultProps} />);
 
@@ -122,7 +88,7 @@ describe('RevealTokenModal', () => {
       const mockClipboard = {
         writeText: jest.fn().mockResolvedValue(undefined),
       };
-      Object.assign(navigator, { clipboard: mockClipboard });
+      Object.assign(navigator, {clipboard: mockClipboard});
 
       render(<RevealTokenModal {...defaultProps} />);
 
@@ -152,12 +118,11 @@ describe('RevealTokenModal', () => {
       expect(callout).toBeInTheDocument();
     });
 
-    it('contains the warning message in the callout, countdown rendered alongside the Done button', () => {
+    it('contains the warning message in the callout', () => {
       render(<RevealTokenModal {...defaultProps} />);
 
       const callout = screen.getByRole('alert');
       expect(callout).toHaveTextContent(LABELS.WARNING);
-      expect(screen.getByTestId('sat-reveal-countdown')).toHaveTextContent(LABELS.AUTO_CLOSE_NOTICE(60));
     });
   });
 
@@ -169,8 +134,182 @@ describe('RevealTokenModal', () => {
 
     it('has Dialog.Description for screen readers', () => {
       render(<RevealTokenModal {...defaultProps} />);
-      // The description is in a VisuallyHidden component
-      expect(screen.getByText(LABELS.DIALOG_DESCRIPTION)).toBeInTheDocument();
+      // The description carries the same sentence as the visible callout, so the text
+      // matches twice. Resolve the dialog's aria-describedby to assert the hidden one.
+      const describedBy = screen.getByRole('dialog').getAttribute('aria-describedby');
+      expect(describedBy).toBeTruthy();
+      expect(document.getElementById(describedBy as string)).toHaveTextContent(LABELS.WARNING);
+    });
+  });
+
+  describe('Basic authentication credentials', () => {
+    it('renders labeled Username field showing the account name', () => {
+      render(<RevealTokenModal {...defaultProps} />);
+      expect(screen.getByTestId('sat-basic-username')).toHaveTextContent('jenkins-prod');
+    });
+
+    it('renders labeled Password field showing the token', () => {
+      render(<RevealTokenModal {...defaultProps} />);
+      expect(screen.getByTestId('sat-basic-password')).toHaveTextContent('sat.test-token-abc123');
+    });
+
+    it('still renders the Bearer token field (sat-token-value)', () => {
+      render(<RevealTokenModal {...defaultProps} />);
+      expect(screen.getByTestId('sat-token-value')).toBeInTheDocument();
+      expect(screen.getByTestId('sat-token-value')).toHaveTextContent('sat.test-token-abc123');
+    });
+
+    it('copies the account name when username copy button is clicked', () => {
+      const mockClipboard = {writeText: jest.fn().mockResolvedValue(undefined)};
+      Object.assign(navigator, {clipboard: mockClipboard});
+
+      render(<RevealTokenModal {...defaultProps} />);
+      fireEvent.click(screen.getByTestId('sat-basic-username-copy'));
+
+      expect(mockClipboard.writeText).toHaveBeenCalledWith('jenkins-prod');
+    });
+
+    it('copies the token when password copy button is clicked', () => {
+      const mockClipboard = {writeText: jest.fn().mockResolvedValue(undefined)};
+      Object.assign(navigator, {clipboard: mockClipboard});
+
+      render(<RevealTokenModal {...defaultProps} />);
+      fireEvent.click(screen.getByTestId('sat-basic-password-copy'));
+
+      expect(mockClipboard.writeText).toHaveBeenCalledWith('sat.test-token-abc123');
+    });
+
+    it('hides the encoded value initially and shows the reveal button', () => {
+      render(<RevealTokenModal {...defaultProps} />);
+      expect(screen.queryByTestId('sat-basic-encoded-value')).not.toBeInTheDocument();
+      expect(screen.getByTestId('sat-basic-encoded-reveal')).toBeInTheDocument();
+    });
+
+    it('shows the encoded Authorization header after clicking reveal', () => {
+      render(<RevealTokenModal {...defaultProps} />);
+      fireEvent.click(screen.getByTestId('sat-basic-encoded-reveal'));
+
+      const encoded = screen.getByTestId('sat-basic-encoded-value');
+      expect(encoded).toBeInTheDocument();
+
+      const expectedBase64 = btoa('jenkins-prod:sat.test-token-abc123');
+      expect(encoded).toHaveTextContent(`Authorization: Basic ${expectedBase64}`);
+      expect(encoded.textContent).toMatch(/^Authorization: Basic /);
+    });
+
+    it('AT-074: encoded value is base64 encoded exactly once (not double-encoded)', () => {
+      render(<RevealTokenModal {...defaultProps} />);
+      fireEvent.click(screen.getByTestId('sat-basic-encoded-reveal'));
+
+      const encoded = screen.getByTestId('sat-basic-encoded-value');
+      const text = encoded.textContent ?? '';
+      const prefix = 'Authorization: Basic ';
+      expect(text.startsWith(prefix)).toBe(true);
+
+      const base64Part = text.slice(prefix.length).trim();
+      expect(atob(base64Part)).toBe('jenkins-prod:sat.test-token-abc123');
+    });
+
+    it('encodes non-ASCII account names via UTF-8 (bare btoa would throw)', () => {
+      const name = 'usér-café-名前';
+      // The previous bare btoa(`${name}:${token}`) throws on these characters;
+      // safeBtoa round-trips through UTF-8 so the encoded value is non-empty.
+      expect(() => btoa(name)).toThrow();
+
+      render(<RevealTokenModal {...defaultProps} name={name} />);
+      fireEvent.click(screen.getByTestId('sat-basic-encoded-reveal'));
+
+      const encoded = screen.getByTestId('sat-basic-encoded-value');
+      const text = encoded.textContent ?? '';
+      const prefix = 'Authorization: Basic ';
+      expect(text.startsWith(prefix)).toBe(true);
+
+      const base64Part = text.slice(prefix.length).trim();
+      expect(base64Part.length).toBeGreaterThan(0);
+      expect(base64Part).toBe(btoa(unescape(encodeURIComponent(`${name}:sat.test-token-abc123`))));
+    });
+
+    it('copies the full Authorization header when encoded copy button is clicked', () => {
+      const mockClipboard = {writeText: jest.fn().mockResolvedValue(undefined)};
+      Object.assign(navigator, {clipboard: mockClipboard});
+
+      render(<RevealTokenModal {...defaultProps} />);
+      fireEvent.click(screen.getByTestId('sat-basic-encoded-reveal'));
+      fireEvent.click(screen.getByTestId('sat-basic-encoded-copy'));
+
+      const expected = `Authorization: Basic ${btoa('jenkins-prod:sat.test-token-abc123')}`;
+      expect(mockClipboard.writeText).toHaveBeenCalledWith(expected);
+    });
+
+    it('announces USERNAME_COPY_ANNOUNCEMENT in status region after copying username', async () => {
+      const mockClipboard = {writeText: jest.fn().mockResolvedValue(undefined)};
+      Object.assign(navigator, {clipboard: mockClipboard});
+
+      render(<RevealTokenModal {...defaultProps} />);
+      const statusRegion = document.querySelector('[role="status"]');
+
+      fireEvent.click(screen.getByTestId('sat-basic-username-copy'));
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(statusRegion).toHaveTextContent(LABELS.USERNAME_COPY_ANNOUNCEMENT);
+    });
+
+    it('announces PASSWORD_COPY_ANNOUNCEMENT in status region after copying password', async () => {
+      const mockClipboard = {writeText: jest.fn().mockResolvedValue(undefined)};
+      Object.assign(navigator, {clipboard: mockClipboard});
+
+      render(<RevealTokenModal {...defaultProps} />);
+      const statusRegion = document.querySelector('[role="status"]');
+
+      fireEvent.click(screen.getByTestId('sat-basic-password-copy'));
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(statusRegion).toHaveTextContent(LABELS.PASSWORD_COPY_ANNOUNCEMENT);
+    });
+
+    it('announces ENCODED_COPY_ANNOUNCEMENT in status region after copying encoded value', async () => {
+      const mockClipboard = {writeText: jest.fn().mockResolvedValue(undefined)};
+      Object.assign(navigator, {clipboard: mockClipboard});
+
+      render(<RevealTokenModal {...defaultProps} />);
+      fireEvent.click(screen.getByTestId('sat-basic-encoded-reveal'));
+
+      const statusRegion = document.querySelector('[role="status"]');
+      fireEvent.click(screen.getByTestId('sat-basic-encoded-copy'));
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(statusRegion).toHaveTextContent(LABELS.ENCODED_COPY_ANNOUNCEMENT);
+    });
+
+    it('renders the docs link with correct href, text, target, and rel', () => {
+      render(<RevealTokenModal {...defaultProps} />);
+      const link = screen.getByTestId('sat-docs-link');
+
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute('href', LABELS.DOCS_LINK_HREF);
+      expect(link).toHaveTextContent(LABELS.DOCS_LINK);
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link.getAttribute('rel')).toContain('noopener');
+    });
+
+    it('username copy button has an accessible aria-label containing "username"', () => {
+      render(<RevealTokenModal {...defaultProps} />);
+      const btn = screen.getByTestId('sat-basic-username-copy');
+      const ariaLabel = (btn.getAttribute('aria-label') ?? '').toLowerCase();
+      expect(ariaLabel).toContain('username');
+    });
+
+    it('password copy button has an accessible aria-label containing "password"', () => {
+      render(<RevealTokenModal {...defaultProps} />);
+      const btn = screen.getByTestId('sat-basic-password-copy');
+      const ariaLabel = (btn.getAttribute('aria-label') ?? '').toLowerCase();
+      expect(ariaLabel).toContain('password');
     });
   });
 });

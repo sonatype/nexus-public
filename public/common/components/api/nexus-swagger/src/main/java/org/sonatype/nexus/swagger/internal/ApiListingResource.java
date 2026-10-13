@@ -39,7 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Nexus REST endpoint serving the OpenAPI 3 description of the Nexus API.
@@ -108,7 +108,7 @@ public class ApiListingResource
     private final SwaggerModel swaggerModel;
 
     private OpenApiCacheLoader(final SwaggerModel swaggerModel) {
-      this.swaggerModel = checkNotNull(swaggerModel);
+      this.swaggerModel = requireNonNull(swaggerModel);
     }
 
     /*

@@ -13,18 +13,25 @@
 
 import AnonymousAccessStep from '../AnonymousAccessStep';
 import ChangePasswordStep from '../ChangePasswordStep';
+import MandatoryTelemetryAcknowledgementStep from '../steps/MandatoryTelemetryAcknowledgementStep/MandatoryTelemetryAcknowledgementStep';
 import { stepRegistry } from '../stepRegistry';
 
 describe('stepRegistry', () => {
   it('resolves ChangeAdminPassword to the ChangePasswordStep component', () => {
-    expect(stepRegistry['ChangeAdminPassword']).toBe(ChangePasswordStep);
+    expect(stepRegistry.ChangeAdminPassword).toBe(ChangePasswordStep);
   });
 
   it('resolves ConfigureAnonymousAccess to the AnonymousAccessStep component', () => {
-    expect(stepRegistry['ConfigureAnonymousAccess']).toBe(AnonymousAccessStep);
+    expect(stepRegistry.ConfigureAnonymousAccess).toBe(AnonymousAccessStep);
+  });
+
+  it('resolves MandatoryTelemetryAcknowledgement to its step component', () => {
+    expect(stepRegistry.MandatoryTelemetryAcknowledgement).toBe(
+      MandatoryTelemetryAcknowledgementStep
+    );
   });
 
   it('returns undefined for unknown step types (drives Wizard fallback rendering)', () => {
-    expect(stepRegistry['NotARealStep']).toBeUndefined();
+    expect(stepRegistry.NotARealStep).toBeUndefined();
   });
 });

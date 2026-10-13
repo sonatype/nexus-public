@@ -542,6 +542,52 @@ describe('tasksFormMachine', () => {
       service.stop();
     });
 
+    it('applies initialValue for a checkbox absent from a migrated task (NEXUS-54568)', async () => {
+      // Simulate a pre-migration blobstore.planReconciliation task that was saved before
+      // onlyNotify existed — its properties object has no onlyNotify key.
+      // The mock API response comes from MOCK_TASK_TYPES (defined at the top of this file),
+      // which mirrors the real TaskTemplateXO response and carries onlyNotify: 'true' in
+      // the properties map — that value is what normalizeCheckboxProperties reads as initialValue.
+      const migratedTask: any = {
+        id: 'plan-migrated', enabled: true, name: 'Plan Data Repair',
+        typeId: 'blobstore.planReconciliation', typeName: 'Repair - Data Repair Plan',
+        status: 'WAITING', statusDescription: '', runnable: true, stoppable: false,
+        alertEmail: '', notificationCondition: 'FAILURE', schedule: 'manual',
+        // No onlyNotify key — exactly as saved by an older Nexus version
+        properties: { taskScope: 'duration', sinceDays: '', sinceHours: '', sinceMinutes: '30' },
+      };
+      const machine = createTaskFormMachine('plan-migrated', migratedTask);
+      const service = await startAndLoad(machine);
+
+      const props = (service.getSnapshot().context as any).data.properties;
+      // The template declares onlyNotify with initialValue 'true'; the machine must
+      // use that default rather than 'false' when the key is absent from saved properties.
+      expect(props.onlyNotify).toBe('true');
+
+      service.stop();
+    });
+
+    it('does not overwrite an explicit onlyNotify: false with initialValue (NEXUS-54568)', async () => {
+      // A task where onlyNotify was explicitly saved as 'false' must not be overridden
+      // by the template's initialValue: 'true'. normalizeCheckboxProperties only fills
+      // in absent keys — it must not touch keys that are already present.
+      const taskWithFalse: any = {
+        id: 'plan-explicit-false', enabled: true, name: 'Plan Data Repair',
+        typeId: 'blobstore.planReconciliation', typeName: 'Repair - Data Repair Plan',
+        status: 'WAITING', statusDescription: '', runnable: true, stoppable: false,
+        alertEmail: '', notificationCondition: 'FAILURE', schedule: 'manual',
+        properties: { taskScope: 'duration', sinceDays: '', sinceHours: '', sinceMinutes: '30', onlyNotify: 'false' },
+      };
+      const machine = createTaskFormMachine('plan-explicit-false', taskWithFalse);
+      const service = await startAndLoad(machine);
+
+      const props = (service.getSnapshot().context as any).data.properties;
+      // Explicitly saved 'false' must be preserved — not replaced by initialValue 'true'.
+      expect(props.onlyNotify).toBe('false');
+
+      service.stop();
+    });
+
     it('does not relax numeric validation for unrelated task types', async () => {
       const machine = createTaskFormMachine(undefined);
       const service = await startAndLoad(machine);

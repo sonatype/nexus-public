@@ -24,7 +24,7 @@ import org.sonatype.nexus.node.datastore.NodeIdStore;
 
 import com.google.common.collect.ImmutableMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -47,7 +47,7 @@ public class LocalNodeAccess
 
   @Autowired
   public LocalNodeAccess(final NodeIdStore nodeIdStore) {
-    this.nodeIdStore = checkNotNull(nodeIdStore);
+    this.nodeIdStore = requireNonNull(nodeIdStore);
   }
 
   @Override

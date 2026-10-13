@@ -19,13 +19,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.view.Content;
 
-import com.google.common.base.Predicate;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ public class ArchetypeCatalogMerger
           continue;
         }
         for (Archetype archetype : catalog.getArchetypes()) {
-          if (uniqueFilter.apply(archetype)) {
+          if (uniqueFilter.test(archetype)) {
             archetype.setRepository(null);
             mergedCatalog.addArchetype(archetype);
           }
@@ -105,7 +105,7 @@ public class ArchetypeCatalogMerger
     private Map<String, Map<String, Set<String>>> gav = new HashMap<>();
 
     @Override
-    public boolean apply(final Archetype input) {
+    public boolean test(final Archetype input) {
       String g = input.getGroupId();
       String a = input.getArtifactId();
       String v = input.getVersion();

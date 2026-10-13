@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.template;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import org.apache.velocity.app.VelocityEngine;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,21 +39,20 @@ public class TemplateConfiguration
       @Value("${nexus.velocity." + PARSER_POOL_SIZE + ":20}") final int velocityParserPoolSize)
   {
     VelocityEngine engine = new VelocityEngine();
-    Joiner j = Joiner.on('.');
 
     // to avoid "unable to find resource 'VM_global_library.vm' in any resource loader."
     engine.setProperty(VM_LIBRARY, "");
 
     // to use classpath loader
     engine.setProperty(RESOURCE_LOADERS, RESOURCE_LOADER_CLASS);
-    engine.setProperty(j.join(RESOURCE_LOADERS, RESOURCE_LOADER_CLASS, RESOURCE_LOADER_CLASS),
+    engine.setProperty(String.join(".", RESOURCE_LOADERS, RESOURCE_LOADER_CLASS, RESOURCE_LOADER_CLASS),
         "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
 
     // to set caching ON
-    engine.setProperty(j.join(RESOURCE_LOADERS, RESOURCE_LOADER_CLASS, RESOURCE_LOADER_CACHE), "true");
+    engine.setProperty(String.join(".", RESOURCE_LOADERS, RESOURCE_LOADER_CLASS, RESOURCE_LOADER_CACHE), "true");
 
     // to never check for template modification (they are JARred)
-    engine.setProperty(j.join(RESOURCE_LOADERS, RESOURCE_LOADER_CLASS, RESOURCE_LOADER_CHECK_INTERVAL), "0");
+    engine.setProperty(String.join(".", RESOURCE_LOADERS, RESOURCE_LOADER_CLASS, RESOURCE_LOADER_CHECK_INTERVAL), "0");
 
     // to set strict mode OFF
     engine.setProperty(RUNTIME_REFERENCES_STRICT, "false");

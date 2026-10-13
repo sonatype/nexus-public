@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Enables SSRF protection by default on new installations (those with no components across any format).
@@ -64,8 +64,8 @@ public class SsrfProtectionDefaultMigrationStep_2_120
       final UpgradeNexusKeyValueStore keyValueStore,
       final List<Format> formats)
   {
-    this.keyValueStore = checkNotNull(keyValueStore);
-    this.formats = checkNotNull(formats);
+    this.keyValueStore = requireNonNull(keyValueStore);
+    this.formats = requireNonNull(formats);
   }
 
   @Override

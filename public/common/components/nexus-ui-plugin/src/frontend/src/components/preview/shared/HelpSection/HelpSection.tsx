@@ -22,6 +22,12 @@ export interface DocLink {
   label: string;
   /** Link URL */
   href: string;
+  /**
+   * Gainsight analytics identifier, applied to the rendered anchor as
+   * `data-analytics-id`. Supplied by the consumer so the id describes the page
+   * the link lives on rather than this generic component.
+   */
+  analyticsId?: string;
 }
 
 export interface HelpSectionProps {
@@ -92,6 +98,7 @@ export function HelpSection({
           target="_blank"
           rel="noopener noreferrer"
           className="help-section__link"
+          data-analytics-id={docLink.analyticsId}
         >
           {docLink.label}
           <ExternalLink size={12} aria-hidden="true" />

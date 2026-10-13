@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class ConfigurationDeletedEvent
     extends EventWithSource
@@ -30,7 +30,7 @@ public class ConfigurationDeletedEvent
   }
 
   public ConfigurationDeletedEvent(final ConfigurationData configuration) {
-    this.repositoryName = checkNotNull(configuration).getRepositoryName();
+    this.repositoryName = requireNonNull(configuration).getRepositoryName();
   }
 
   @Override

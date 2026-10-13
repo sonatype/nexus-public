@@ -24,8 +24,8 @@ import org.sonatype.nexus.jmx.MBeanAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Reflection {@link MBeanAttribute}.
@@ -53,9 +53,9 @@ public class ReflectionMBeanAttribute
       @Nullable final Method getter,
       @Nullable final Method setter)
   {
-    this.info = checkNotNull(info);
+    this.info = requireNonNull(info);
     this.name = info.getName();
-    this.target = checkNotNull(target);
+    this.target = requireNonNull(target);
     this.getter = getter;
     this.setter = setter;
   }

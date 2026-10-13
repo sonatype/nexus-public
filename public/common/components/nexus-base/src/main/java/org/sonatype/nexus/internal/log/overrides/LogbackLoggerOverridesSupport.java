@@ -38,7 +38,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support logback files operations for {@link LoggerOverrides}
@@ -51,12 +51,12 @@ public abstract class LogbackLoggerOverridesSupport
   private final File logbackFile;
 
   protected LogbackLoggerOverridesSupport(final ApplicationDirectories applicationDirectories) {
-    this(new File(checkNotNull(applicationDirectories)
+    this(new File(requireNonNull(applicationDirectories)
         .getWorkDirectory("etc/logback"), LOGBACK_OVERRIDES_FILENAME));
   }
 
   protected LogbackLoggerOverridesSupport(final File logbackFile) {
-    this.logbackFile = checkNotNull(logbackFile);
+    this.logbackFile = requireNonNull(logbackFile);
     log.info("File: {}", logbackFile);
   }
 

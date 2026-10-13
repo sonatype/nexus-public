@@ -13,11 +13,12 @@
 package org.sonatype.nexus.repository.content.browse;
 
 import java.lang.reflect.Method;
-import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
@@ -46,6 +47,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -87,9 +90,8 @@ public class BrowseEventHandlerTest
     when(repository.getName()).thenReturn("test-repo");
     when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
 
-    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
-    underTest = new BrowseEventHandler(cooperation, periodicJobService, eventManager, true, Duration.ofSeconds(0),
-        Duration.ofSeconds(30), 100, 2, true, databaseCheck, browseTrimService);
+    underTest =
+        new BrowseEventHandler(periodicJobService, eventManager, 100, 2, true, 64, databaseCheck, browseTrimService);
   }
 
   // --- Paused event handling tests ---
@@ -155,57 +157,48 @@ public class BrowseEventHandlerTest
   // --- Constructor validation ---
 
   @Test(expected = NullPointerException.class)
-  public void testConstructor_rejectsNullCooperationFactory() {
-    new BrowseEventHandler(null, periodicJobService, eventManager, true, Duration.ofSeconds(0),
-        Duration.ofSeconds(30), 100, 2, true, databaseCheck, browseTrimService);
-  }
-
-  @Test(expected = NullPointerException.class)
   public void testConstructor_rejectsNullPeriodicJobService() {
-    new BrowseEventHandler(new DefaultCooperation2Factory(), null, eventManager, true, Duration.ofSeconds(0),
-        Duration.ofSeconds(30), 100, 2, true, databaseCheck, browseTrimService);
+    new BrowseEventHandler(null, eventManager, 100, 2, true, 64, databaseCheck, browseTrimService);
   }
 
   @Test(expected = NullPointerException.class)
   public void testConstructor_rejectsNullEventManager() {
-    new BrowseEventHandler(new DefaultCooperation2Factory(), periodicJobService, null, true, Duration.ofSeconds(0),
-        Duration.ofSeconds(30), 100, 2, true, databaseCheck, browseTrimService);
+    new BrowseEventHandler(periodicJobService, null, 100, 2, true, 64, databaseCheck, browseTrimService);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testConstructor_rejectsZeroFlushOnCount() {
-    new BrowseEventHandler(new DefaultCooperation2Factory(), periodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 0, 2, true, databaseCheck, browseTrimService);
+    new BrowseEventHandler(periodicJobService, eventManager, 0, 2, true, 64, databaseCheck, browseTrimService);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testConstructor_rejectsNegativeFlushOnCount() {
-    new BrowseEventHandler(new DefaultCooperation2Factory(), periodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), -1, 2, true, databaseCheck, browseTrimService);
+    new BrowseEventHandler(periodicJobService, eventManager, -1, 2, true, 64, databaseCheck, browseTrimService);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testConstructor_rejectsZeroFlushOnSeconds() {
-    new BrowseEventHandler(new DefaultCooperation2Factory(), periodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 100, 0, true, databaseCheck, browseTrimService);
+    new BrowseEventHandler(periodicJobService, eventManager, 100, 0, true, 64, databaseCheck, browseTrimService);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testConstructor_rejectsNegativeFlushOnSeconds() {
-    new BrowseEventHandler(new DefaultCooperation2Factory(), periodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 100, -1, true, databaseCheck, browseTrimService);
+    new BrowseEventHandler(periodicJobService, eventManager, 100, -1, true, 64, databaseCheck, browseTrimService);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructor_rejectsZeroLockStripes() {
+    new BrowseEventHandler(periodicJobService, eventManager, 100, 2, true, 0, databaseCheck, browseTrimService);
   }
 
   @Test(expected = NullPointerException.class)
   public void testConstructor_rejectsNullDatabaseCheck() {
-    new BrowseEventHandler(new DefaultCooperation2Factory(), periodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 100, 2, true, null, browseTrimService);
+    new BrowseEventHandler(periodicJobService, eventManager, 100, 2, true, 64, null, browseTrimService);
   }
 
   @Test(expected = NullPointerException.class)
   public void testConstructor_rejectsNullBrowseTrimService() {
-    new BrowseEventHandler(new DefaultCooperation2Factory(), periodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 100, 2, true, databaseCheck, null);
+    new BrowseEventHandler(periodicJobService, eventManager, 100, 2, true, 64, databaseCheck, null);
   }
 
   // --- markAssetAsPending via on(AssetCreatedEvent) ---
@@ -383,9 +376,8 @@ public class BrowseEventHandlerTest
   @Test
   public void testAssetCreatedEvent_exceedingFlushOnCount_postsFlushEvent() throws Exception {
     // Create handler with flushOnCount=2 to easily trigger the threshold
-    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
-    BrowseEventHandler handler = new BrowseEventHandler(cooperation, periodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 2, 2, true, databaseCheck, browseTrimService);
+    BrowseEventHandler handler =
+        new BrowseEventHandler(periodicJobService, eventManager, 2, 2, true, 64, databaseCheck, browseTrimService);
 
     AssetCreatedEvent event1 = createAssetCreatedEvent(1, repository);
     AssetCreatedEvent event2 = createAssetCreatedEvent(2, repository);
@@ -510,9 +502,8 @@ public class BrowseEventHandlerTest
   @Test
   public void testMarkRepositoryForTrimming_noPurgeDelayFalse_doesNotPostPurgeEvent() throws Exception {
     // Create handler with noPurgeDelay=false
-    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
-    BrowseEventHandler handler = new BrowseEventHandler(cooperation, periodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 100, 2, false, databaseCheck, browseTrimService);
+    BrowseEventHandler handler =
+        new BrowseEventHandler(periodicJobService, eventManager, 100, 2, false, 64, databaseCheck, browseTrimService);
     when(browseTrimService.isBatchTrimEnabled()).thenReturn(false);
 
     AssetDeletedEvent event = createAssetDeletedEvent(1, repository);
@@ -573,9 +564,8 @@ public class BrowseEventHandlerTest
   @Test
   public void testFlushAssets_clearsFlushQueuedFlag() throws Exception {
     // Create handler with flushOnCount=2 to trigger flush event
-    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
-    BrowseEventHandler handler = new BrowseEventHandler(cooperation, periodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 2, 2, true, databaseCheck, browseTrimService);
+    BrowseEventHandler handler =
+        new BrowseEventHandler(periodicJobService, eventManager, 2, 2, true, 64, databaseCheck, browseTrimService);
 
     AssetCreatedEvent event1 = createAssetCreatedEvent(1, repository);
     AssetCreatedEvent event2 = createAssetCreatedEvent(2, repository);
@@ -615,6 +605,118 @@ public class BrowseEventHandlerTest
     underTest.on(event2);
     underTest.flushAssets();
 
+    verify(browseFacet).addPathsToAssets(any());
+    verify(browseFacet2).addPathsToAssets(any());
+  }
+
+  @Test
+  public void testFlushAssets_doesNotHoldLockDuringDbWrites() throws Exception {
+    CountDownLatch insideDbWrite = new CountDownLatch(1);
+    CountDownLatch secondFlushCompleted = new CountDownLatch(1);
+    AtomicBoolean secondFlushRanConcurrently = new AtomicBoolean(false);
+
+    // While the first flush is inside addPathsToAssets, a second thread must be able to run
+    // flushAssets() to completion. This only holds if flushMutex is released before the DB-write phase.
+    doAnswer(invocation -> {
+      insideDbWrite.countDown();
+      secondFlushRanConcurrently.set(secondFlushCompleted.await(5, TimeUnit.SECONDS));
+      return null;
+    }).when(browseFacet).addPathsToAssets(any());
+
+    AssetCreatedEvent event = createAssetCreatedEvent(5, repository);
+    underTest.on(event);
+
+    Thread firstFlush = new Thread(underTest::flushAssets, "first-flush");
+    firstFlush.start();
+
+    // wait until the first flush is inside the (mocked) DB write
+    assertTrue("First flush never reached addPathsToAssets", insideDbWrite.await(5, TimeUnit.SECONDS));
+
+    // a second flush must not block on the mutex while the first is in the DB-write phase
+    Thread secondFlush = new Thread(() -> {
+      underTest.flushAssets();
+      secondFlushCompleted.countDown();
+    }, "second-flush");
+    secondFlush.start();
+
+    firstFlush.join(10_000);
+    secondFlush.join(10_000);
+
+    assertFalse("first-flush thread did not complete within timeout", firstFlush.isAlive());
+    assertFalse("second-flush thread did not complete within timeout", secondFlush.isAlive());
+
+    assertTrue("Second flushAssets was blocked while the first held the lock during addPathsToAssets - "
+        + "the flushMutex must not be held during the DB-write phase", secondFlushRanConcurrently.get());
+  }
+
+  @Test
+  public void testFlushAssets_sameRepository_concurrentFlush_deliversBothBatches() throws Exception {
+    // NEXUS-54233 regression: two flushes for the SAME repository run concurrently. The first flush
+    // acquires the per-repository lock and is held inside addPathsToAssets; the second flush drains
+    // its own (distinct) asset and then blocks on the same per-repository lock. Once the first flush
+    // releases the lock the second must acquire it and apply ITS OWN addPathsToAssets for its batch.
+    // Neither batch may be dropped or collapsed, so addPathsToAssets must be invoked twice.
+    CountDownLatch firstInsideDbWrite = new CountDownLatch(1);
+    CountDownLatch releaseFirst = new CountDownLatch(1);
+
+    doAnswer(invocation -> {
+      firstInsideDbWrite.countDown();
+      // hold the per-repository lock until the second flush has had time to block on it
+      releaseFirst.await(5, TimeUnit.SECONDS);
+      return null;
+    }).when(browseFacet).addPathsToAssets(any());
+
+    // first asset for the repo -> first flush acquires the per-repository lock
+    underTest.on(createAssetCreatedEvent(5, repository));
+    Thread first = new Thread(underTest::flushAssets, "first-flush");
+    first.start();
+
+    assertTrue("first flush never reached addPathsToAssets", firstInsideDbWrite.await(5, TimeUnit.SECONDS));
+
+    // second, distinct asset for the SAME repo -> second flush blocks on the same per-repository lock
+    underTest.on(createAssetCreatedEvent(6, repository));
+    Thread second = new Thread(underTest::flushAssets, "second-flush");
+    second.start();
+
+    // give the second flush time to drain its asset and block on the per-repository lock
+    Thread.sleep(1000);
+
+    // let the first flush finish and release the lock; the second flush then applies its own batch
+    releaseFirst.countDown();
+
+    first.join(10_000);
+    second.join(10_000);
+
+    assertFalse("first-flush thread did not complete within timeout", first.isAlive());
+    assertFalse("second-flush thread did not complete within timeout", second.isAlive());
+
+    // Both the first and the second flush's batches must be pushed to the browse tree.
+    verify(browseFacet, times(2)).addPathsToAssets(any());
+  }
+
+  @Test
+  public void testFlushAssets_stoppedRepository_skipsAndContinues() throws Exception {
+    // test-repo is stopped: its browse facet is @Guarded(by = STARTED) and throws when flushed.
+    doThrow(new IllegalStateException("repository stopped")).when(browseFacet).addPathsToAssets(any());
+
+    Repository repo2 = mock(Repository.class);
+    Format format2 = mock(Format.class);
+    when(format2.getValue()).thenReturn("npm");
+    when(repo2.getFormat()).thenReturn(format2);
+    when(repo2.getName()).thenReturn("npm-repo");
+    BrowseFacet browseFacet2 = mock(BrowseFacet.class);
+    when(repo2.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet2));
+
+    AssetCreatedEvent event1 = createAssetCreatedEvent(1, repository);
+    AssetCreatedEvent event2 = createAssetCreatedEventWithFormat(2, repo2, "npm");
+
+    underTest.on(event1);
+    underTest.on(event2);
+
+    // Must not throw even though the stopped repository's browse facet throws (NEXUS-54229)...
+    underTest.flushAssets();
+
+    // ...and the healthy repository's browse work is still delivered.
     verify(browseFacet).addPathsToAssets(any());
     verify(browseFacet2).addPathsToAssets(any());
   }
@@ -776,9 +878,8 @@ public class BrowseEventHandlerTest
     PeriodicJobService localPeriodicJobService = mock(PeriodicJobService.class);
     when(localPeriodicJobService.schedule(any(Runnable.class), anyInt())).thenReturn(periodicJob);
 
-    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
-    BrowseEventHandler handler = new BrowseEventHandler(cooperation, localPeriodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 100, 2, true, databaseCheck, browseTrimService);
+    BrowseEventHandler handler = new BrowseEventHandler(localPeriodicJobService, eventManager, 100, 2, true, 64,
+        databaseCheck, browseTrimService);
 
     handler.doStart();
 
@@ -792,9 +893,8 @@ public class BrowseEventHandlerTest
     PeriodicJobService localPeriodicJobService = mock(PeriodicJobService.class);
     when(localPeriodicJobService.schedule(any(Runnable.class), anyInt())).thenReturn(periodicJob);
 
-    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
-    BrowseEventHandler handler = new BrowseEventHandler(cooperation, localPeriodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 100, 2, true, databaseCheck, browseTrimService);
+    BrowseEventHandler handler = new BrowseEventHandler(localPeriodicJobService, eventManager, 100, 2, true, 64,
+        databaseCheck, browseTrimService);
 
     handler.doStart();
     handler.doStop();
@@ -807,9 +907,8 @@ public class BrowseEventHandlerTest
   public void testDoStart_withFlushOnCountOne_doesNotSchedule() throws Exception {
     PeriodicJobService localPeriodicJobService = mock(PeriodicJobService.class);
 
-    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
-    BrowseEventHandler handler = new BrowseEventHandler(cooperation, localPeriodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 1, 2, true, databaseCheck, browseTrimService);
+    BrowseEventHandler handler =
+        new BrowseEventHandler(localPeriodicJobService, eventManager, 1, 2, true, 64, databaseCheck, browseTrimService);
 
     handler.doStart();
 
@@ -821,9 +920,8 @@ public class BrowseEventHandlerTest
   public void testDoStop_withFlushOnCountOne_doesNotCancel() throws Exception {
     PeriodicJobService localPeriodicJobService = mock(PeriodicJobService.class);
 
-    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
-    BrowseEventHandler handler = new BrowseEventHandler(cooperation, localPeriodicJobService, eventManager, true,
-        Duration.ofSeconds(0), Duration.ofSeconds(30), 1, 2, true, databaseCheck, browseTrimService);
+    BrowseEventHandler handler =
+        new BrowseEventHandler(localPeriodicJobService, eventManager, 1, 2, true, 64, databaseCheck, browseTrimService);
 
     handler.doStart();
     handler.doStop();
@@ -837,10 +935,8 @@ public class BrowseEventHandlerTest
   public void testShouldTriggerImmediatePurge_withBatchEnabled_returnsFalse() {
     when(browseTrimService.isBatchTrimEnabled()).thenReturn(true);
 
-    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
     BrowseEventHandler handler = new BrowseEventHandler(
-        cooperation, periodicJobService, eventManager, true, Duration.ofSeconds(0),
-        Duration.ofSeconds(30), 100, 2, true, databaseCheck, browseTrimService);
+        periodicJobService, eventManager, 100, 2, true, 64, databaseCheck, browseTrimService);
 
     when(browseTrimService.isBatchTrimEnabled()).thenReturn(true);
   }

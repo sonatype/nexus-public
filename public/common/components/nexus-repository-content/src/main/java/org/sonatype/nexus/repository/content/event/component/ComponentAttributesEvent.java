@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -44,8 +44,8 @@ public class ComponentAttributesEvent
       @Nullable final Object value)
   {
     super(component);
-    this.change = checkNotNull(change);
-    this.key = checkNotNull(key);
+    this.change = requireNonNull(change);
+    this.key = requireNonNull(key);
     this.value = value;
   }
 

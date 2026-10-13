@@ -307,7 +307,7 @@ class BrowseNodeDAOTest
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
-      List<BrowseNode> listing = dao.getByDisplayPath(1, of("gamma"), 100, "true or true", null);
+      List<BrowseNode> listing = dao.getByDisplayPath(1, of("gamma"), 100, "true or true", null, true);
       assertThat(listing, hasSize(1));
       assertThat(listing.get(0).getPath(), equalTo("/g/1/"));
     }
@@ -549,7 +549,7 @@ class BrowseNodeDAOTest
   }
 
   private static List<BrowseNode> getListing(final BrowseNodeDAO dao, final String... paths) {
-    List<BrowseNode> listing = dao.getByDisplayPath(1, asList(paths), 100, null, null);
+    List<BrowseNode> listing = dao.getByDisplayPath(1, asList(paths), 100, null, null, true);
     listing.sort(byName);
     return listing;
   }
@@ -557,7 +557,7 @@ class BrowseNodeDAOTest
   private static List<BrowseNode> filterListing(final BrowseNodeDAO dao, final String... paths) {
     // select any nodes whose request path ends in a slash
     List<BrowseNode> listing = dao.getByDisplayPath(1, asList(paths), 100,
-        "B.request_path ~ #{filterParams.regex}", ImmutableMap.of("regex", "^(.*/)$"));
+        "B.request_path ~ #{filterParams.regex}", ImmutableMap.of("regex", "^(.*/)$"), true);
     listing.sort(byName);
     return listing;
   }

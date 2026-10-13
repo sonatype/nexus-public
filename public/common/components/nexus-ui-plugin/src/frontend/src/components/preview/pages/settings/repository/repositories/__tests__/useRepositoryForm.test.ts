@@ -104,9 +104,11 @@ jest.mock('../../../../../shared', () => ({
 
 // useRepositoryForm uses UIRouter's useCurrentStateAndParams to read the
 // `?tab=` query param from the URL. The renderHook test harness doesn't mount a
-// <UIRouter> wrapper, so stub the hook to return empty params.
+// <UIRouter> wrapper, so stub the hook with a mutable params object so individual
+// tests can control the ?tab= value via mockRouterParams.
+let mockRouterParams: Record<string, any> = {};
 jest.mock('@uirouter/react', () => ({
-  useCurrentStateAndParams: () => ({ state: null, params: {} }),
+  useCurrentStateAndParams: () => ({ state: null, params: mockRouterParams }),
 }));
 
 const DEFAULT_OPTIONS = {
@@ -119,6 +121,7 @@ const DEFAULT_OPTIONS = {
 describe('useRepositoryForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRouterParams = {};
   });
 
   describe('derived state', () => {
@@ -220,6 +223,46 @@ describe('useRepositoryForm', () => {
       });
 
       expect(result.current.originChangeWarning).toBe(true);
+    });
+
+    // NEXUS-54536 Fix 3: ?tab=firewall deep-link for an unsupported format must fall back to
+    // 'settings' instead of rendering a blank panel (RepositoryForm conditionally omits the
+    // Firewall tab for unsupported formats).
+    it('shouldFallBackToSettingsWhenFirewallTabRequestedForUnsupportedFormat', () => {
+      mockRouterParams = { tab: 'firewall' };
+      const { result } = renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, format: 'apt', repositoryName: 'apt-proxy' })
+      );
+
+      expect(result.current.activeTab).toBe('settings');
+    });
+
+    // CLM-53820: the Evaluation tab is omitted for formats hosted repository evaluation can't monitor.
+    it('shouldFallBackToSettingsWhenEvaluationTabRequestedForUnsupportedFormat', () => {
+      mockRouterParams = { tab: 'evaluation' };
+      const { result } = renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, format: 'raw', repositoryName: 'raw-hosted' })
+      );
+
+      expect(result.current.activeTab).toBe('settings');
+    });
+
+    it('shouldHonourEvaluationTabDeepLinkForSupportedFormat', () => {
+      mockRouterParams = { tab: 'evaluation' };
+      const { result } = renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, format: 'npm', repositoryName: 'npm-hosted' })
+      );
+
+      expect(result.current.activeTab).toBe('evaluation');
+    });
+
+    it('shouldHonourFirewallTabDeepLinkForSupportedFormat', () => {
+      mockRouterParams = { tab: 'firewall' };
+      const { result } = renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, format: 'maven2', repositoryName: 'maven-proxy' })
+      );
+
+      expect(result.current.activeTab).toBe('firewall');
     });
   });
 

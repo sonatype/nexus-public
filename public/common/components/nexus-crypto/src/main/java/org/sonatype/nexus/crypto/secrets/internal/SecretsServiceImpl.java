@@ -51,7 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import org.springframework.context.annotation.Primary;
@@ -122,15 +122,15 @@ public class SecretsServiceImpl
       this.legacyCipher = null; // FIPS mode does not support legacy ciphers
     }
     else {
-      this.legacyCipher = checkNotNull(legacyCipherFactory).create(legacyPassword, legacySalt, legacyIv);// NOSONAR
+      this.legacyCipher = requireNonNull(legacyCipherFactory).create(legacyPassword, legacySalt, legacyIv);// NOSONAR
     }
 
-    this.mavenCipher = checkNotNull(mavenCipher);// NOSONAR
-    this.phraseService = checkNotNull(phraseService);// NOSONAR
-    this.cipherFactory = checkNotNull(pbeCipherFactory);
-    this.secretsStore = checkNotNull(secretsStore);
-    this.encryptionKeySource = checkNotNull(encryptionKeySource);
-    this.databaseCheck = checkNotNull(databaseCheck);
+    this.mavenCipher = requireNonNull(mavenCipher);// NOSONAR
+    this.phraseService = requireNonNull(phraseService);// NOSONAR
+    this.cipherFactory = requireNonNull(pbeCipherFactory);
+    this.secretsStore = requireNonNull(secretsStore);
+    this.encryptionKeySource = requireNonNull(encryptionKeySource);
+    this.databaseCheck = requireNonNull(databaseCheck);
     this.defaultKey = new SecretEncryptionKey(null, legacyPassword);
   }
 
@@ -205,7 +205,7 @@ public class SecretsServiceImpl
 
   @Override
   public void remove(final Secret secret) {
-    checkNotNull(secret);
+    requireNonNull(secret);
 
     if (isLegacyToken(secret.getId())) {
       log.debug("legacy tokens are not stored, deletion not needed.");
@@ -318,8 +318,8 @@ public class SecretsServiceImpl
 
   @Override
   public String exportEncryptedWithPassword(final String secretId, final String customPassword) throws CipherException {
-    checkNotNull(secretId, "secretId cannot be null");
-    checkNotNull(customPassword, "customPassword cannot be null");
+    requireNonNull(secretId, "secretId cannot be null");
+    requireNonNull(customPassword, "customPassword cannot be null");
 
     if (customPassword.isEmpty()) {
       throw new CipherException("Custom password cannot be empty");
@@ -357,8 +357,8 @@ public class SecretsServiceImpl
       final String plaintext,
       final String customPassword) throws CipherException
   {
-    checkNotNull(plaintext, "plaintext cannot be null");
-    checkNotNull(customPassword, "customPassword cannot be null");
+    requireNonNull(plaintext, "plaintext cannot be null");
+    requireNonNull(customPassword, "customPassword cannot be null");
 
     if (customPassword.isEmpty()) {
       throw new CipherException("Custom password cannot be empty");
@@ -379,8 +379,8 @@ public class SecretsServiceImpl
       final byte[] plaintext,
       final String customPassword) throws CipherException
   {
-    checkNotNull(plaintext, "plaintext cannot be null");
-    checkNotNull(customPassword, "customPassword cannot be null");
+    requireNonNull(plaintext, "plaintext cannot be null");
+    requireNonNull(customPassword, "customPassword cannot be null");
 
     if (customPassword.isEmpty()) {
       throw new CipherException("Custom password cannot be empty");

@@ -40,7 +40,7 @@ import org.sonatype.nexus.scheduling.TaskUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.sonatype.nexus.blobstore.compact.internal.CompactBlobStoreTaskDescriptor.BLOBS_OLDER_THAN_FIELD_ID;
@@ -83,8 +83,8 @@ public class CompactBlobStoreTask
   {
     super(concurrencyLimit);
     this.changeBlobstoreStore = Optional.ofNullable(changeBlobstoreStore);
-    this.blobStoreUsageChecker = checkNotNull(blobStoreUsageChecker);
-    this.taskUtils = checkNotNull(taskUtils);
+    this.blobStoreUsageChecker = requireNonNull(blobStoreUsageChecker);
+    this.taskUtils = requireNonNull(taskUtils);
     this.recoveryModeService = recoveryModeService;
   }
 

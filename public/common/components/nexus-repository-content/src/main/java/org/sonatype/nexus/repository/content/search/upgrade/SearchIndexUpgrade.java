@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEARCH_INDEX_OUTDATED;
 
@@ -67,7 +67,7 @@ public abstract class SearchIndexUpgrade
 
   @Autowired
   public final void inject(final List<Recipe> recipesList) {
-    this.recipes = QualifierUtil.buildQualifierBeanMap(checkNotNull(recipesList));
+    this.recipes = QualifierUtil.buildQualifierBeanMap(requireNonNull(recipesList));
   }
 
   public boolean test(final String format) {

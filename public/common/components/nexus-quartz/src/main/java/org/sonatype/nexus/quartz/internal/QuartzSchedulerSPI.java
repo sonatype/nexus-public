@@ -74,10 +74,10 @@ import org.quartz.core.QuartzScheduler;
 import org.quartz.spi.JobStore;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.filterKeys;
 import static java.util.Collections.emptyMap;
+import static java.util.Objects.requireNonNull;
 import static org.quartz.JobKey.jobKey;
 import static org.quartz.TriggerBuilder.newTrigger;
 import static org.quartz.TriggerKey.triggerKey;
@@ -148,13 +148,13 @@ public abstract class QuartzSchedulerSPI
       final DatabaseStatusDelayedExecutor delayedExecutor,
       @Value("${nexus.quartz.recoverInterruptedJobs:true}") final boolean recoverInterruptedJobs)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.jobStoreProvider = checkNotNull(jobStoreProvider);
-    this.schedulerProvider = checkNotNull(schedulerProvider);
-    this.lastShutdownTimeService = checkNotNull(lastShutdownTimeService);
+    this.eventManager = requireNonNull(eventManager);
+    this.nodeAccess = requireNonNull(nodeAccess);
+    this.jobStoreProvider = requireNonNull(jobStoreProvider);
+    this.schedulerProvider = requireNonNull(schedulerProvider);
+    this.lastShutdownTimeService = requireNonNull(lastShutdownTimeService);
     this.recoverInterruptedJobs = recoverInterruptedJobs;
-    this.delayedExecutor = checkNotNull(delayedExecutor);
+    this.delayedExecutor = requireNonNull(delayedExecutor);
 
     this.scheduleFactory = new QuartzScheduleFactory();
     this.triggerConverter = new QuartzTriggerConverter(this.scheduleFactory);
@@ -632,7 +632,7 @@ public abstract class QuartzSchedulerSPI
 
   @Override
   public boolean isTriggerMissing(final TaskInfo taskInfo) {
-    checkNotNull(taskInfo);
+    requireNonNull(taskInfo);
 
     if (!(taskInfo instanceof QuartzTaskInfo quartzTaskInfo)) {
       return false;
@@ -881,7 +881,7 @@ public abstract class QuartzSchedulerSPI
    */
   @Guarded(by = STARTED)
   public boolean cancelJob(final JobKey jobKey) {
-    checkNotNull(jobKey);
+    requireNonNull(jobKey);
 
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       return scheduler.interrupt(jobKey);
@@ -970,8 +970,8 @@ public abstract class QuartzSchedulerSPI
   @Nullable
   @Override
   public TaskInfo getTaskByTypeId(final String typeId, final Map<String, String> config) {
-    checkNotNull(typeId);
-    checkNotNull(config);
+    requireNonNull(typeId);
+    requireNonNull(config);
     return listsTasks().stream()
         .filter(t -> typeId.equals(t.getTypeId()))
         .filter(matchConfig(config))
@@ -997,8 +997,8 @@ public abstract class QuartzSchedulerSPI
 
   @Override
   public boolean findAndSubmit(final String typeId, final Map<String, String> config) {
-    checkNotNull(typeId);
-    checkNotNull(config);
+    requireNonNull(typeId);
+    requireNonNull(config);
     TaskInfo taskInfo = getTaskByTypeId(typeId, config);
     if (taskInfo == null) {
       return false;

@@ -16,7 +16,7 @@ import java.io.Serializable;
 import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A unique identifier for a blob within a specific {@link BlobStore}.
@@ -41,13 +41,13 @@ public class BlobId
   }
 
   public BlobId(final String id, @Nullable OffsetDateTime blobCreatedRef) {
-    this.id = checkNotNull(id);
+    this.id = requireNonNull(id);
     this.blobCreatedRef = blobCreatedRef;
     this.blobstorePath = null;
   }
 
   public BlobId(final String id, @Nullable OffsetDateTime blobCreatedRef, @Nullable String blobstorePath) {
-    this.id = checkNotNull(id);
+    this.id = requireNonNull(id);
     this.blobCreatedRef = blobCreatedRef;
     this.blobstorePath = blobstorePath;
   }

@@ -41,7 +41,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.IV;
@@ -104,9 +104,9 @@ public class ReEncryptPrincipalsTask
       @Value(NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE) final String nexusSecretsAlgorithm,
       @Value(NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE) final Integer nexusSecretsIterations)
   {
-    this.sessionSupplier = checkNotNull(sessionSupplier);
-    this.encryptionKeySource = checkNotNull(encryptionKeySource);
-    this.pbeCipherFactory = checkNotNull(pbeCipherFactory);
+    this.sessionSupplier = requireNonNull(sessionSupplier);
+    this.encryptionKeySource = requireNonNull(encryptionKeySource);
+    this.pbeCipherFactory = requireNonNull(pbeCipherFactory);
     this.password = password;
     this.salt = salt;
     this.iv = iv;

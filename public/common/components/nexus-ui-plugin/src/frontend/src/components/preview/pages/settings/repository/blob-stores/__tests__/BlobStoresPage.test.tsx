@@ -922,3 +922,21 @@ describe('save when API omits name and type fields', () => {
     expect(save).toHaveBeenCalledWith(expect.objectContaining({ name: 'my-store', type: 'file' }));
   });
 });
+
+describe('help section placement in list view (NEXUS-54308)', () => {
+  it('renders help section below the entity table', () => {
+    setListHash();
+    mockUseBlobStoresList.mockReturnValue({
+      blobStores: [{ name: 'my-store', type: 'file' }],
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    render(<BlobStoresPage />);
+
+    const table = screen.getByTestId('entity-table');
+    const help = screen.getByTestId('help-section');
+    expect(table.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});

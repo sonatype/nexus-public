@@ -35,6 +35,7 @@ jest.mock('../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper', () => (
 }));
 
 import {ExtJS} from '../../../../../interface/ExtJS';
+import {EDITION_COMMUNITY, EDITION_ID_STATE_KEY} from '../../../../../interface/editionUtils';
 import {helperFunctions} from '../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
 import {scrollToUsageCenter} from '../../../../../interface/LocationUtils';
 
@@ -42,8 +43,12 @@ const mockStatus = helperFunctions.useThrottlingStatus as jest.Mock;
 const mockUser = ExtJS.useUser as jest.Mock;
 const mockState = ExtJS.state as jest.Mock;
 const mockScrollToUsageCenter = scrollToUsageCenter as jest.Mock;
+// getValue is keyed: the editionId state key must resolve to the community identifier;
+// every other key (e.g. the HA clustering flag) defaults to false.
+const getValueImpl = (key: string) =>
+  key === EDITION_ID_STATE_KEY ? EDITION_COMMUNITY : false;
 const stateValue = {
-  getValue: jest.fn().mockReturnValue(false), // HA off
+  getValue: jest.fn(getValueImpl),
   getEdition: jest.fn().mockReturnValue('COMMUNITY'),
 };
 
@@ -52,7 +57,7 @@ describe('CELimitsAlert', () => {
     jest.clearAllMocks();
     mockUser.mockReturnValue({administrator: true});
     mockState.mockReturnValue(stateValue);
-    stateValue.getValue.mockReturnValue(false);
+    stateValue.getValue.mockImplementation(getValueImpl);
     stateValue.getEdition.mockReturnValue('COMMUNITY');
     document.cookie = 'under_end_grace=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
   });
@@ -129,6 +134,9 @@ describe('CELimitsAlert', () => {
   });
 
   it('renders null when not Community Edition', () => {
+    stateValue.getValue.mockImplementation((key: string) =>
+      key === EDITION_ID_STATE_KEY ? 'nexus-professional-edition' : false,
+    );
     stateValue.getEdition.mockReturnValue('PRO');
     mockStatus.mockReturnValue('OVER_LIMITS_GRACE_PERIOD_ENDED');
     const {container} = render(<CELimitsAlert />);
@@ -136,7 +144,9 @@ describe('CELimitsAlert', () => {
   });
 
   it('renders null in HA mode', () => {
-    stateValue.getValue.mockReturnValue(true); // clustered.enabled = true
+    stateValue.getValue.mockImplementation((key: string) =>
+      key === EDITION_ID_STATE_KEY ? EDITION_COMMUNITY : true,
+    ); // clustered.enabled = true
     mockStatus.mockReturnValue('OVER_LIMITS_GRACE_PERIOD_ENDED');
     const {container} = render(<CELimitsAlert />);
     expect(container.querySelector('[data-testid="nxrm-system-alert"]')).toBeNull();

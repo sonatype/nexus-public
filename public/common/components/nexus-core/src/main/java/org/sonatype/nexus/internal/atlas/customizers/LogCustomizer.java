@@ -22,9 +22,11 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import jakarta.ws.rs.NotFoundException;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
@@ -35,18 +37,20 @@ import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.log.LogManager.DEFAULT_LOGGER;
 import static org.sonatype.nexus.common.text.Strings2.MASK;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.LOW;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG;
-import org.springframework.stereotype.Component;
 
 /**
  * Adds log files to support bundle.
- * Redacts sensitive authentication header values while preserving authentication types.
+ * Redacts sensitive authentication header values while preserving authentication types,
+ * and masks sensitive Set-Cookie session token values (e.g. Keycloak) at support-ZIP generation time.
  *
- * @since 2.7
+ * Skipped entirely on the cloud edition, where logs stream to stdout and no file appender is
+ * configured; on every other edition a missing default appender is treated as a real error and
+ * aborts the customizer.
  */
 @Component
 public class LogCustomizer
@@ -54,9 +58,13 @@ public class LogCustomizer
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
+  private static final String CLOUD_EDITION_ID = "nexus-cloud-edition";
+
   private final LogManager logManager;
 
   private final ApplicationDirectories applicationDirectories;
+
+  private final NexusEditionSelector nexusEditionSelector;
 
   // Pattern to match sensitive authentication headers
   // Captures: header name, optional scheme (Bearer, Basic, Token, etc.), and the credential value
@@ -67,14 +75,31 @@ public class LogCustomizer
       "(Authorization|WWW-Authenticate|Proxy-Authorization|Proxy-Authenticate|X-Auth-Token|X-API-Key)\\s*:\\s*(Bearer|Basic|Token|Digest|NTLM|Negotiate|AWS4-HMAC-SHA256)?\\s*.+",
       Pattern.CASE_INSENSITIVE);
 
+  // NEXUS-54602: mask sensitive session cookies (e.g. Keycloak) in Set-Cookie headers.
+  // Group 1 = prefix to preserve (optional "Set-Cookie: " + cookie name + "="); the value is masked.
+  // Note: the write-time logback converter layer also honors the nexus.log.mask.cookies system property
+  // for additional cookie names; this backstop covers the default Keycloak set only.
+  private static final Pattern SET_COOKIE_PATTERN = Pattern.compile(
+      "((?:Set-Cookie:\\s*)?(?:KEYCLOAK_IDENTITY|KEYCLOAK_IDENTITY_LEGACY|KEYCLOAK_SESSION|KEYCLOAK_SESSION_LEGACY|AUTH_SESSION_ID|AUTH_SESSION_ID_LEGACY)\\s*=)[^;,\\s\"]+",
+      Pattern.CASE_INSENSITIVE);
+
   @Autowired
-  public LogCustomizer(final LogManager logManager, final ApplicationDirectories applicationDirectories) {
-    this.logManager = checkNotNull(logManager);
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+  public LogCustomizer(
+      final LogManager logManager,
+      final ApplicationDirectories applicationDirectories,
+      final NexusEditionSelector nexusEditionSelector)
+  {
+    this.logManager = requireNonNull(logManager);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
+    this.nexusEditionSelector = requireNonNull(nexusEditionSelector);
   }
 
   @Override
   public void customize(final SupportBundle supportBundle) {
+    if (CLOUD_EDITION_ID.equals(nexusEditionSelector.getCurrent().getId())) {
+      return;
+    }
+
     // add source for default log
     String logName = logManager.getLogFor(DEFAULT_LOGGER)
         .orElseThrow(() -> new NotFoundException("Failed to determine log file name for " + DEFAULT_LOGGER));
@@ -90,6 +115,7 @@ public class LogCustomizer
               String line;
               while ((line = reader.readLine()) != null) {
                 String redactedLine = redactAuthenticationHeaders(line);
+                redactedLine = redactSensitiveCookies(redactedLine);
                 writer.write(redactedLine);
                 writer.newLine();
               }
@@ -148,5 +174,17 @@ public class LogCustomizer
         return header + ": " + MASK;
       }
     });
+  }
+
+  /**
+   * Redacts sensitive session cookie values in Set-Cookie headers while preserving the cookie name prefix
+   * and any trailing cookie attributes (Path, HttpOnly, etc.).
+   *
+   * Examples:
+   * - "Set-Cookie: KEYCLOAK_IDENTITY=eyJhbGc...; Path=/auth" → "Set-Cookie: KEYCLOAK_IDENTITY=****; Path=/auth"
+   * - "Set-Cookie: AUTH_SESSION_ID=abc123" → "Set-Cookie: AUTH_SESSION_ID=****"
+   */
+  private String redactSensitiveCookies(final String line) {
+    return SET_COOKIE_PATTERN.matcher(line).replaceAll(mr -> mr.group(1) + MASK);
   }
 }

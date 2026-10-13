@@ -22,7 +22,7 @@ import org.sonatype.nexus.onboarding.OnboardingManager;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ONBOARDING_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ONBOARDING_ENABLED_NAMED_VALUE;
 import org.springframework.stereotype.Component;
@@ -48,9 +48,9 @@ public class OnboardingStateContributor
       final AdminPasswordFileManager adminPasswordFileManager,
       @Value(REACT_ONBOARDING_ENABLED_NAMED_VALUE) final boolean isReactOnboardingEnabled)
   {
-    this.onboardingConfiguration = checkNotNull(onboardingConfiguration);
-    this.onboardingManager = checkNotNull(onboardingManager);
-    this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
+    this.onboardingConfiguration = requireNonNull(onboardingConfiguration);
+    this.onboardingManager = requireNonNull(onboardingManager);
+    this.adminPasswordFileManager = requireNonNull(adminPasswordFileManager);
     this.isReactOnboardingEnabled = isReactOnboardingEnabled;
   }
 

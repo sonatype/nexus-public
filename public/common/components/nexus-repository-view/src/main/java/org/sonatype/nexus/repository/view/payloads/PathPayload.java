@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.view.Payload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A {@link Payload} backed by a {@link Path}
@@ -37,7 +37,7 @@ public class PathPayload
   private final String contentType;
 
   public PathPayload(final Path path, @Nullable final String contentType) {
-    this.path = checkNotNull(path);
+    this.path = requireNonNull(path);
     this.contentType = contentType;
   }
 

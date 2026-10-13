@@ -41,7 +41,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
 const selectors = {
   ...TestUtils.selectors,
   ...TestUtils.tableSelectors,
-  emptyMessage: () => screen.getByText(LABELS.EMPTY_LIST),
+  emptyMessage: () => screen.findByText(LABELS.EMPTY_LIST),
   filter: () => screen.queryByPlaceholderText(UIStrings.FILTER),
   createButton: () => screen.getByText(LABELS.CREATE_BUTTON),
 };
@@ -85,7 +85,7 @@ describe('TasksList', function() {
     await renderAndWaitForLoad();
 
     expect(createButton()).not.toHaveClass('disabled');
-    expect(emptyMessage()).toBeInTheDocument();
+    expect(await emptyMessage()).toBeInTheDocument();
   });
 
   it('renders the resolved data', async function() {

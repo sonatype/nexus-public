@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Repository view servlet.
@@ -96,10 +96,10 @@ public class ViewServlet
       final DescriptionRenderer descriptionRenderer)
   {
 
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.httpResponseSenderSelector = checkNotNull(httpResponseSenderSelector);
-    this.descriptionHelper = checkNotNull(descriptionHelper);
-    this.descriptionRenderer = checkNotNull(descriptionRenderer);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.httpResponseSenderSelector = requireNonNull(httpResponseSenderSelector);
+    this.descriptionHelper = requireNonNull(descriptionHelper);
+    this.descriptionRenderer = requireNonNull(descriptionRenderer);
   }
 
   @Override
@@ -204,7 +204,8 @@ public class ViewServlet
   /**
    * Build view request from {@link HttpServletRequest}.
    */
-  private Request buildRequest(final HttpServletRequest httpRequest, final String path) {
+  @VisibleForTesting
+  Request buildRequest(final HttpServletRequest httpRequest, final String path) {
     Request.Builder builder = new Request.Builder()
         .headers(new HttpHeadersAdapter(httpRequest))
         .action(httpRequest.getMethod())
@@ -221,6 +222,12 @@ public class ViewServlet
     while (attributes.hasMoreElements()) {
       String name = attributes.nextElement();
       builder.attribute(name, httpRequest.getAttribute(name));
+    }
+
+    // set after attribute copy so the servlet-derived value always wins over any upstream filter attribute
+    String rawQueryString = httpRequest.getQueryString();
+    if (rawQueryString != null) {
+      builder.attribute(Request.RAW_QUERY_STRING_ATTR, rawQueryString);
     }
 
     return builder.build();

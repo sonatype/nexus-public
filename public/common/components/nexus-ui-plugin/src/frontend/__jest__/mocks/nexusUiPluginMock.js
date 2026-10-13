@@ -152,7 +152,7 @@ export const mockExtJS = {
   // Authentication
   signOut: jest.fn(),
   // Edition helpers
-  isProEdition: jest.fn().mockReturnValue(true),
+  isLicensedEdition: jest.fn().mockReturnValue(true),
   isCommunityEdition: jest.fn().mockReturnValue(false),
   isOssEdition: jest.fn().mockReturnValue(false),
   // Status hook
@@ -564,6 +564,9 @@ export const mockUtils = {
  */
 export const createNexusUiPluginMock = (overrides = {}) => ({
   ExtJS: { ...mockExtJS, ...(overrides.ExtJS || {}) },
+  // Edition helper — mirrors mockExtJS.isLicensedEdition so components calling the hook directly
+  // (not via ExtJS.isLicensedEdition()) still get a sensible default.
+  useIsLicensedEdition: overrides.useIsLicensedEdition || jest.fn().mockReturnValue(true),
   Permissions: { ...mockPermissions, ...(overrides.Permissions || {}) },
   APIConstants: { ...mockAPIConstants, ...(overrides.APIConstants || {}) },
   ExtAPIUtils: { ...mockExtAPIUtils, ...(overrides.ExtAPIUtils || {}) },
@@ -586,7 +589,7 @@ export const createNexusUiPluginMock = (overrides = {}) => ({
   // Page hash utility
   isPageHashIncluding: overrides.isPageHashIncluding || jest.fn().mockReturnValue(false),
   // Login components
-  LoginPage: overrides.LoginPage || jest.fn().mockImplementation(({ logoConfig: _logoConfig }) =>
+  LoginPage: overrides.LoginPage || jest.fn().mockImplementation(() =>
     require('react').createElement('div', { 'data-testid': 'login-page' }, 'LoginPage')
   ),
   // XState form infrastructure (used by form machines)

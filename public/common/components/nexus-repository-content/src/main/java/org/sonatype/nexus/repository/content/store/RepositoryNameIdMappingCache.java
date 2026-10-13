@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REPOSITORY_SIZE_ENABLED;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
@@ -66,9 +66,9 @@ public class RepositoryNameIdMappingCache
       final DatabaseCheck databaseCheck)
   {
     this.contentRepositoryStore =
-        Iterables.get(checkNotNull(formatStoreManagers), 0).contentRepositoryStore(DEFAULT_DATASTORE_NAME);
-    this.formatNames = checkNotNull(formats).stream().map(Format::getValue).collect(Collectors.toList());
-    this.databaseCheck = checkNotNull(databaseCheck);
+        Iterables.get(requireNonNull(formatStoreManagers), 0).contentRepositoryStore(DEFAULT_DATASTORE_NAME);
+    this.formatNames = requireNonNull(formats).stream().map(Format::getValue).collect(Collectors.toList());
+    this.databaseCheck = requireNonNull(databaseCheck);
   }
 
   @Subscribe

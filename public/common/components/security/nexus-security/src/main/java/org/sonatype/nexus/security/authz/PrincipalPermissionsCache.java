@@ -69,18 +69,23 @@ public class PrincipalPermissionsCache
 
   /**
    * Bundles the expanded permission collection for a principal with indexed lookups.
-   * Separates exact permissions (no wildcards) for O(1) HashSet lookup from wildcard
-   * permissions that need iterative matching (NEXUS-52583 optimization).
+   *
+   * <p>
+   * Grants are split by whether {@link WildcardPermission#implies} can be answered for them by a prefix lookup rather
+   * than a scan. Those that can are indexed into a hash set (see {@link PermissionsState#getPrefixKey}); the rest
+   * - an interior wildcard, comma-form actions, or a custom {@link Permission} type - keep the linear scan
+   * (NEXUS-52583, NEXUS-54434).
    */
   private static final class PermissionsState
   {
-    // Exact single-action permission strings (lowercase) → fast-path for an exact-equality TRUE.
+    // Grant strings (lowercase) that a prefix lookup can answer in full - see getPrefixKey. A check is implied
+    // when this set contains the checked permission or any of its colon-prefixes.
     final Set<String> exactPermissions;
 
-    // ALL granted permissions — the authoritative source for implies() matching. A wildcard-free grant such as
-    // "nexus:foo" must still imply a longer check like "nexus:foo:read" (Shiro treats missing trailing parts as
-    // wildcards), so every grant participates here; exactPermissions is only an O(1) shortcut, never the sole source.
-    final List<Permission> allPermissions;
+    // Grants a prefix lookup cannot answer, and so must be matched by a full implies() scan: grants with an interior
+    // '*' or a comma-form action list, plus any non-WildcardPermission implementation. Keeping the prefix-answerable
+    // ones out of here is what makes this list short, and the scan therefore cheap.
+    final List<Permission> generalPermissions;
 
     // Bounded-LRU result memo (Permission -> Boolean): recently-checked results stay hot while cold, one-shot
     // (resource-parameterised) permissions evict, so a flood of unique checks cannot permanently starve repeated hot
@@ -93,37 +98,122 @@ public class PrincipalPermissionsCache
     PermissionsState(final Collection<Permission> permissions, final long generation) {
       this.generation = generation;
       this.exactPermissions = new HashSet<>();
-      this.allPermissions = new ArrayList<>(permissions.size());
+      this.generalPermissions = new ArrayList<>();
 
       for (Permission perm : permissions) {
-        allPermissions.add(perm);
-        if (perm instanceof WildcardPermission) {
-          String permStr = perm.toString().toLowerCase();
-          // Only single-action, wildcard-free grants qualify for the exact-equality fast path. Comma-form
-          // ("nexus:settings:read,update") and '*' grants must be matched via WildcardPermission.implies() below.
-          if (!permStr.contains("*") && !permStr.contains(",")) {
-            exactPermissions.add(permStr);
-          }
+        String prefixKey = getPrefixKey(perm);
+        if (prefixKey != null) {
+          exactPermissions.add(prefixKey);
+        }
+        else {
+          generalPermissions.add(perm);
         }
       }
     }
 
     /**
-     * Check if this state implies the given permission. Fast path returns TRUE on exact string equality; otherwise
-     * every granted permission is evaluated via {@link Permission#implies} so Shiro wildcard semantics (including
-     * shorter-implies-longer) are preserved.
+     * The string to index {@code perm} under in {@link #exactPermissions}, or {@code null} if a prefix lookup cannot
+     * answer it and it needs the {@code implies()} scan instead.
+     *
+     * <p>
+     * A prefix lookup suffices when the grant has no {@code '*'} and no comma-form action list, because Shiro's
+     * {@link WildcardPermission#implies} then returns true exactly when the grant equals the checked permission or is a
+     * colon-prefix of it. A {@code '*'} means one grant can match permissions that share no common prefix with it, and
+     * a comma-form list ({@code "nexus:users:create,read"} - the shape of every built-in CRUD privilege, see
+     * {@code SecurityContributorSupport.ACTION_CREATE}) must satisfy set containment rather than equality. Neither is
+     * expressible as a prefix, so both keep the scan.
+     *
+     * <p>
+     * Note that being a {@link WildcardPermission} does not imply the grant contains a wildcard. That class is simply
+     * Shiro's representation of colon-and-comma structured permissions; {@code "nexus:settings:read"} is one, and holds
+     * no {@code '*'} at all. Hence the explicit character check.
+     */
+    private static String getPrefixKey(final Permission perm) {
+      if (!(perm instanceof WildcardPermission)) {
+        return null;
+      }
+      String permStr = dropTrailingWildcards(perm.toString().toLowerCase());
+      return permStr.indexOf('*') < 0 && permStr.indexOf(',') < 0 ? permStr : null;
+    }
+
+    /**
+     * Strips trailing {@code ":*"} parts, which Shiro treats as redundant: a grant implies everything below the point
+     * where it runs out of parts, so {@code "nexus:foo:*"} and {@code "nexus:foo"} imply exactly the same permissions.
+     *
+     * <p>
+     * Worth doing because the all-actions variant of every auto-created repository privilege takes this form
+     * ({@code "nexus:repository-view:raw:releases:*"}). Without normalising, a user granted all actions on a thousand
+     * repositories would hold a thousand grants that no prefix lookup could answer, and the scan those force back
+     * dominated the permission load (NEXUS-54434).
+     */
+    private static String dropTrailingWildcards(final String permStr) {
+      String result = permStr;
+      while (result.length() > 2 && result.endsWith(":*")) {
+        result = result.substring(0, result.length() - 2);
+      }
+      return result;
+    }
+
+    /**
+     * Check if this state implies the given permission.
+     *
+     * <p>
+     * Shiro's {@link WildcardPermission#implies} returns true for a wildcard-free, comma-free grant exactly when that
+     * grant equals the checked permission or is a colon-prefix of it - a grant that runs out of parts implies
+     * everything below it ("nexus:foo" implies "nexus:foo:read"), and a longer grant cannot imply a shorter permission
+     * unless its extra parts are wildcards, which by construction these do not have. So every such grant is answered
+     * by probing {@link #exactPermissions} for the checked permission and each of its colon-prefixes, and only
+     * {@link #generalPermissions} needs the linear {@code implies()} scan.
+     *
+     * <p>
+     * That matters because the UI permission load checks the entire privilege catalogue, and a DENIED answer used to
+     * cost a full scan of the user's grants. On an instance with tens of thousands of privileges (the catalogue grows
+     * by 11 per repository) and a user holding thousands of per-repository grants, that product dominated the load;
+     * the prefix lookup removes it (NEXUS-54434).
+     *
+     * <p>
+     * Worked example. Suppose {@code exactPermissions} holds
+     * 
+     * <pre>
+     *   "nexus:settings:read"
+     *   "nexus:repository-view:raw:releases:read"
+     * </pre>
+     * 
+     * Checking {@code "nexus:repository-view:raw:releases:read"} hits on the first probe. Checking
+     * {@code "nexus:repository-view:raw:other:read"} walks its colon-prefixes longest-first:
+     * 
+     * <pre>
+     *   "nexus:repository-view:raw:other:read"   miss
+     *   "nexus:repository-view:raw:other"        miss
+     *   "nexus:repository-view:raw"              miss
+     *   "nexus:repository-view"                  miss
+     *   "nexus"                                  miss
+     * </pre>
+     * 
+     * and falls through to the scan.
+     *
+     * <p>
+     * The probe is not conditional on the checked permission being wildcard-free, unlike the earlier fast path: a
+     * wildcard-free grant CAN imply a wildcarded check, because Shiro returns true as soon as the grant runs out of
+     * parts ("nexus:repository-view" implies "nexus:repository-view:*:*:*"). Prefixes containing '*' or ',' simply
+     * never match, since exactPermissions holds neither.
      */
     boolean implies(final Permission permission) {
-      // Fast path: an exact-equality grant always implies the checked permission.
-      if (permission instanceof WildcardPermission) {
+      if (!exactPermissions.isEmpty() && permission instanceof WildcardPermission) {
         String permStr = permission.toString().toLowerCase();
-        if (!permStr.contains("*") && exactPermissions.contains(permStr)) {
-          return true;
+        // Walk the colon-prefixes longest-first. substring(0, length()) returns the same instance, so the
+        // full-length probe - which is the one that hits whenever the grant is held outright - allocates nothing.
+        int end = permStr.length();
+        while (end > 0) {
+          if (exactPermissions.contains(permStr.substring(0, end))) {
+            return true;
+          }
+          end = permStr.lastIndexOf(':', end - 1);
         }
       }
 
-      // Authoritative path: full Shiro implies() over every granted permission.
-      for (Permission granted : allPermissions) {
+      // Grants with an interior wildcard, comma-form actions, or a custom Permission type still need full matching.
+      for (Permission granted : generalPermissions) {
         if (granted.implies(permission)) {
           return true;
         }

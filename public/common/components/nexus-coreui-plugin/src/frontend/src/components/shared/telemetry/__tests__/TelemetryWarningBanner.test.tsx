@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import TelemetryWarningBanner from '../TelemetryWarningBanner';
 
 // Mock ExtJS + SystemAlert (SystemAlert is re-rendered here as a lightweight stub so we can assert props)
@@ -15,6 +15,10 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     useState: jest.fn((fn) => fn()),
     state: jest.fn(),
   },
+  // Use the real hook so the banner's links follow the actual URL hash
+  useIsPreviewUI: jest.requireActual(
+    '../../../../../../../../nexus-ui-plugin/src/frontend/src/components/preview/shared/Navigation/useIsPreviewUI'
+  ).useIsPreviewUI,
   SystemAlert: ({tier, title, message, dismissable}: any) => (
     <div
       data-testid="nxrm-system-alert"
@@ -28,28 +32,19 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ),
 }));
 
-// Mock API modules
-jest.mock('@/utils/api', () => ({
-  restClient: {
-    get: jest.fn(),
-  },
-  urlBuilder: {
-    tasks: {
-      list: jest.fn(() => '/service/rest/v1/tasks'),
-    },
-  },
-}));
-
 const HELPER_LINK_TEXT = 'base telemetry';
 const HELPER_LINK_HREF = 'https://links.sonatype.com/products/nxrm3/nexus-telemetry';
 
 describe('TelemetryWarningBanner', () => {
   const { ExtJS } = require('@sonatype/nexus-ui-plugin');
-  const { restClient } = require('@/utils/api');
 
   beforeEach(() => {
     jest.clearAllMocks();
-    restClient.get.mockResolvedValue({ items: [] });
+    window.location.hash = '';
+  });
+
+  afterEach(() => {
+    window.location.hash = '';
   });
 
   it('does not render for non-admin users', () => {
@@ -62,7 +57,7 @@ describe('TelemetryWarningBanner', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders when showWarning is true', async () => {
+  it('renders when showWarning is true', () => {
     ExtJS.useUser.mockReturnValue({ administrator: true });
     ExtJS.state.mockReturnValue({
       getValue: jest.fn().mockReturnValue({ showWarning: true }),
@@ -104,16 +99,6 @@ describe('TelemetryWarningBanner', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('does not fetch tasks when banner is hidden', () => {
-    ExtJS.useUser.mockReturnValue({ administrator: true });
-    ExtJS.state.mockReturnValue({
-      getValue: jest.fn().mockReturnValue({ showWarning: false, readOnly: false, introducedWarning: false }),
-    });
-
-    render(<TelemetryWarningBanner />);
-    expect(restClient.get).not.toHaveBeenCalled();
-  });
-
   it('renders with warning tier when showWarning is true', () => {
     ExtJS.useUser.mockReturnValue({ administrator: true });
     ExtJS.state.mockReturnValue({
@@ -134,115 +119,54 @@ describe('TelemetryWarningBanner', () => {
     expect(screen.getByTestId('nxrm-system-alert')).toHaveAttribute('data-tier', 'error');
   });
 
-  it('renders with warning tier when introducedWarning is true', () => {
-    ExtJS.useUser.mockReturnValue({ administrator: true });
-    ExtJS.state.mockReturnValue({
-      getValue: jest.fn().mockReturnValue({ introducedWarning: true }),
-    });
+  describe('keeps the current UI', () => {
+    const BANNERS = [
+      { banner: 'Warning Banner', health: { showWarning: true }, title: 'Baseline Telemetry Upload Issue' },
+      { banner: 'Read-Only Mode Banner', health: { readOnly: true }, title: 'Read-Only Mode Enabled' },
+    ];
 
-    render(<TelemetryWarningBanner />);
-    expect(screen.getByTestId('nxrm-system-alert')).toHaveAttribute('data-tier', 'warning');
-  });
+    const UIS = [
+      { ui: 'Preview UI', hash: '#preview/browse/welcome', tasksHref: '#preview/admin/system/tasks' },
+      { ui: 'Classic UI', hash: '#browse/welcome', tasksHref: '#admin/system/tasks' },
+    ];
 
-  it('links to tasks list when no telemetry task exists', async () => {
-    ExtJS.useUser.mockReturnValue({ administrator: true });
-    ExtJS.state.mockReturnValue({
-      getValue: jest.fn().mockReturnValue({ showWarning: true }),
-    });
-    restClient.get.mockResolvedValue({ items: [] });
-
-    render(<TelemetryWarningBanner />);
-
-    await waitFor(() => {
-      const link = screen.getByRole('link', { name: /Go to Tasks/ });
-      expect(link).toHaveAttribute('href', '#admin/system/tasks');
-    });
-  });
-
-  it('links to tasks list when multiple telemetry tasks exist', async () => {
-    ExtJS.useUser.mockReturnValue({ administrator: true });
-    ExtJS.state.mockReturnValue({
-      getValue: jest.fn().mockReturnValue({ showWarning: true }),
-    });
-    restClient.get.mockResolvedValue({
-      items: [
-        { id: 'task1', name: 'Telemetry Task 1', type: 'telemetry.upload.retry' },
-        { id: 'task2', name: 'Telemetry Task 2', type: 'telemetry.upload.retry' },
-      ],
-    });
-
-    render(<TelemetryWarningBanner />);
-
-    await waitFor(() => {
-      const link = screen.getByRole('link', { name: /Go to Tasks/ });
-      expect(link).toHaveAttribute('href', '#admin/system/tasks');
-    });
-  });
-
-  it('links to specific task when exactly one telemetry task exists', async () => {
-    ExtJS.useUser.mockReturnValue({ administrator: true });
-    ExtJS.state.mockReturnValue({
-      getValue: jest.fn().mockReturnValue({ showWarning: true }),
-    });
-    restClient.get.mockResolvedValue({
-      items: [
-        { id: 'abc123', name: 'Telemetry Upload Retry', type: 'telemetry.upload.retry' },
-        { id: 'xyz789', name: 'Some Other Task', type: 'other.type' },
-      ],
-    });
-
-    render(<TelemetryWarningBanner />);
-
-    await waitFor(() => {
-      const link = screen.getByRole('link', { name: /Go to Tasks/ });
-      expect(link).toHaveAttribute('href', '#admin/system/tasks:abc123');
-    });
-  });
-
-  it('links to tasks list on API error', async () => {
-    ExtJS.useUser.mockReturnValue({ administrator: true });
-    ExtJS.state.mockReturnValue({
-      getValue: jest.fn().mockReturnValue({ showWarning: true }),
-    });
-    restClient.get.mockRejectedValue(new Error('Network error'));
-
-    render(<TelemetryWarningBanner />);
-
-    await waitFor(() => {
-      const link = screen.getByRole('link', { name: /Go to Tasks/ });
-      expect(link).toHaveAttribute('href', '#admin/system/tasks');
-    });
-  });
-
-  describe('failedReportDays placeholder', () => {
-    it('displays failed report days count in warning message', () => {
+    function renderBanner(health: object, hash: string) {
+      window.location.hash = hash;
       ExtJS.useUser.mockReturnValue({ administrator: true });
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue({ introducedWarning: true, failedReportDays: 7 }),
+      ExtJS.state.mockReturnValue({ getValue: jest.fn().mockReturnValue(health) });
+      return render(<TelemetryWarningBanner />);
+    }
+
+    describe.each(BANNERS)('$banner', ({ health, title }) => {
+      describe.each(UIS)('from the $ui', ({ hash, tasksHref }) => {
+        it('links "Go to Tasks" to the tasks list in the same UI', () => {
+          renderBanner(health, hash);
+
+          expect(screen.getByText(title)).toBeInTheDocument();
+          expect(screen.getByRole('link', { name: /Go to Tasks/ })).toHaveAttribute('href', tasksHref);
+        });
+
+        it('leaves the external "base telemetry" link unchanged', () => {
+          renderBanner(health, hash);
+
+          const helperLink = screen.getByRole('link', { name: HELPER_LINK_TEXT });
+          expect(helperLink).toHaveAttribute('href', HELPER_LINK_HREF);
+          expect(helperLink).toHaveAttribute('target', '_blank');
+          expect(helperLink).toHaveAttribute('rel', 'noopener noreferrer');
+        });
+      });
+    });
+
+    it('updates "Go to Tasks" when the user switches UI while the banner is shown', () => {
+      renderBanner({ showWarning: true }, '#browse/welcome');
+      expect(screen.getByRole('link', { name: /Go to Tasks/ })).toHaveAttribute('href', '#admin/system/tasks');
+
+      act(() => {
+        window.location.hash = '#preview/browse/welcome';
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
       });
 
-      render(<TelemetryWarningBanner />);
-      expect(screen.getByText(/past 7 days/)).toBeInTheDocument();
-    });
-
-    it('displays default of 0 when failedReportDays is undefined', () => {
-      ExtJS.useUser.mockReturnValue({ administrator: true });
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue({ introducedWarning: true }),
-      });
-
-      render(<TelemetryWarningBanner />);
-      expect(screen.getByText(/past 0 days/)).toBeInTheDocument();
-    });
-
-    it('displays custom count in introducedWarning mode', () => {
-      ExtJS.useUser.mockReturnValue({ administrator: true });
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue({ introducedWarning: true, failedReportDays: 10 }),
-      });
-
-      render(<TelemetryWarningBanner />);
-      expect(screen.getByText(/past 10 days/)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /Go to Tasks/ })).toHaveAttribute('href', '#preview/admin/system/tasks');
     });
   });
 
@@ -270,19 +194,6 @@ describe('TelemetryWarningBanner', () => {
   });
 
   describe('description content', () => {
-    it('renders reachability guidance in introducedWarning mode', () => {
-      ExtJS.useUser.mockReturnValue({ administrator: true });
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue({ introducedWarning: true }),
-      });
-
-      render(<TelemetryWarningBanner />);
-      expect(
-        screen.getByText(/Check that your server can reach the Sonatype telemetry service/)
-      ).toBeInTheDocument();
-      expect(screen.getByText(/contact Sonatype Support/)).toBeInTheDocument();
-    });
-
     it('renders shared description in standard warning mode', () => {
       ExtJS.useUser.mockReturnValue({ administrator: true });
       ExtJS.state.mockReturnValue({
@@ -303,42 +214,6 @@ describe('TelemetryWarningBanner', () => {
       render(<TelemetryWarningBanner />);
       expect(screen.getByText(/network configuration/)).toBeInTheDocument();
       expect(screen.getByText(/could not be uploaded within the grace period/)).toBeInTheDocument();
-    });
-  });
-
-  describe('introducedWarning mode', () => {
-    it('renders warning banner when introducedWarning is true', () => {
-      ExtJS.useUser.mockReturnValue({ administrator: true });
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue({ introducedWarning: true, failedReportDays: 3 }),
-      });
-
-      render(<TelemetryWarningBanner />);
-      expect(screen.getByRole('link', { name: HELPER_LINK_TEXT })).toBeInTheDocument();
-      expect(screen.getByText('Baseline Telemetry Upload Issue')).toBeInTheDocument();
-      expect(screen.getByText(/past 3 days/)).toBeInTheDocument();
-    });
-
-    it('renders with warning tier (not error)', () => {
-      ExtJS.useUser.mockReturnValue({ administrator: true });
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue({ introducedWarning: true }),
-      });
-
-      render(<TelemetryWarningBanner />);
-      const alert = screen.getByTestId('nxrm-system-alert');
-      expect(alert).toHaveAttribute('data-tier', 'warning');
-      expect(alert).not.toHaveAttribute('data-tier', 'error');
-    });
-
-    it('does not render when introducedWarning is false', () => {
-      ExtJS.useUser.mockReturnValue({ administrator: true });
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue({ introducedWarning: false }),
-      });
-
-      const { container } = render(<TelemetryWarningBanner />);
-      expect(container.firstChild).toBeNull();
     });
   });
 
@@ -371,16 +246,6 @@ describe('TelemetryWarningBanner', () => {
       ExtJS.useUser.mockReturnValue({ administrator: true });
       ExtJS.state.mockReturnValue({
         getValue: jest.fn().mockReturnValue({ showWarning: true }),
-      });
-
-      render(<TelemetryWarningBanner />);
-      expect(screen.getByTestId('nxrm-system-alert')).toHaveAttribute('data-dismissable', 'true');
-    });
-
-    it('is dismissable in introducedWarning mode', () => {
-      ExtJS.useUser.mockReturnValue({ administrator: true });
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue({ introducedWarning: true }),
       });
 
       render(<TelemetryWarningBanner />);
@@ -425,20 +290,6 @@ describe('TelemetryWarningBanner', () => {
       ExtJS.useUser.mockReturnValue({ administrator: true });
       ExtJS.state.mockReturnValue({
         getValue: jest.fn().mockReturnValue({ showWarning: true }),
-      });
-
-      render(<TelemetryWarningBanner />);
-      const helperLink = screen.getByRole('link', { name: HELPER_LINK_TEXT });
-      expect(helperLink).toBeInTheDocument();
-      expect(helperLink).toHaveAttribute('href', HELPER_LINK_HREF);
-      expect(helperLink).toHaveAttribute('data-analytics-id', 'nxrm-telemetry-message-link');
-      expect(screen.getByText('Baseline Telemetry Upload Issue')).toBeInTheDocument();
-    });
-
-    it('renders "base telemetry" as a link in the message for introducedWarning mode', () => {
-      ExtJS.useUser.mockReturnValue({ administrator: true });
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue({ introducedWarning: true }),
       });
 
       render(<TelemetryWarningBanner />);

@@ -30,8 +30,8 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.apache.shiro.authz.Permission;
 import org.springframework.context.annotation.Lazy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.security.BreadActions.ADD;
@@ -59,9 +59,9 @@ public class RoutingRuleHelperImpl
       @Lazy final RepositoryManager repositoryManager,
       @Lazy final RepositoryPermissionChecker repositoryPermissionChecker)
   {
-    this.routingRuleCache = checkNotNull(routingRuleCache);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.routingRuleCache = requireNonNull(routingRuleCache);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
   }
 
   @Override

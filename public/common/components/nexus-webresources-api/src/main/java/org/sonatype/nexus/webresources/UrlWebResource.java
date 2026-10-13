@@ -19,7 +19,7 @@ import java.net.URLConnection;
 
 import com.google.common.base.Strings;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * URL-based {@link WebResource} implementation.
@@ -46,8 +46,8 @@ public class UrlWebResource
   }
 
   public UrlWebResource(final URL url, final String path, final String contentType, final boolean cacheable) {
-    this.url = checkNotNull(url);
-    this.path = checkNotNull(path);
+    this.url = requireNonNull(url);
+    this.path = requireNonNull(path);
     this.cacheable = cacheable;
 
     // open connection to get details about the resource

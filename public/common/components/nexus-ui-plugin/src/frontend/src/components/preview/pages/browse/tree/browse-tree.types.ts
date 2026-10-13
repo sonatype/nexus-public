@@ -60,6 +60,25 @@ export interface TreeNodeState {
 }
 
 /**
+ * Why an auto-expansion walk stopped.
+ *
+ * Distinguishing these matters because only `branch-point` means the walk
+ * actually reached the first branching folder; the others mean it gave up early
+ * and the branch point may still lie below the deepest opened node.
+ */
+export type AutoExpandStopReason =
+  /** The chain genuinely branched (or ended) — auto-expansion is complete. */
+  | 'branch-point'
+  /** {@link AUTO_EXPAND_MAX_LEVELS} reached; deeper levels were NOT opened. */
+  | 'safety-limit'
+  /** The server returned a chain that loops back on itself. */
+  | 'cycle'
+  /** A fetch below the first level failed; levels above it are still applied. */
+  | 'error'
+  /** The repository changed (or the tree reloaded) mid-walk. */
+  | 'aborted';
+
+/**
  * State for the entire browse tree.
  */
 export interface BrowseTreeState {
@@ -75,6 +94,23 @@ export interface BrowseTreeState {
   readonly focusedNodeId?: string;
   /** Currently selected node ID */
   readonly selectedNodeId?: string;
+  /**
+   * IDs of nodes the user explicitly collapsed.
+   *
+   * Auto-expansion of single-child folder chains must never re-open a branch the
+   * user deliberately closed, so every collapse records the node here and every
+   * explicit expand removes it again.
+   */
+  readonly userCollapsedNodeIds: readonly string[];
+  /**
+   * Outcome of the most recent auto-expansion walk, or undefined when none has
+   * finished for the current repository.
+   *
+   * Surfaced on state so a bounded stop is never mistaken for having reached the
+   * branch point: anything other than `'branch-point'` means auto-expansion is
+   * incomplete and the user must keep expanding manually.
+   */
+  readonly autoExpandStopReason?: AutoExpandStopReason;
 }
 
 /**
@@ -109,14 +145,34 @@ export interface BrowseTreeNodeProps {
   onToggle: (nodeId: string) => void;
   /** Callback when node is selected */
   onSelect?: (node: BrowseNode) => void;
-  /** Whether this node is focused (for keyboard navigation) */
-  isFocused: boolean;
+  /**
+   * Explicit focus override. Optional because the tree does not pass it: focus is
+   * derived from {@link focusedNodeId} so that nested nodes resolve it the same
+   * way root-level ones do.
+   */
+  isFocused?: boolean;
+  /**
+   * Node that currently owns keyboard focus, or undefined while the user has not
+   * yet driven focus into the tree. Passed down the recursion so nested nodes can
+   * receive DOM focus — without it only root-level nodes are reachable.
+   */
+  focusedNodeId?: string;
+  /**
+   * Node that holds the roving tab stop. Defaults to the first visible node so
+   * the tree is reachable with a single Tab press; owning the tab stop does *not*
+   * imply DOM focus, which only {@link focusedNodeId} grants.
+   */
+  tabStopNodeId?: string;
   /** Currently selected node ID (for folder icon: FolderOpen when expanded or selected) */
   selectedNodeId?: string;
   /** Callback for keyboard navigation */
   onKeyDown: (event: React.KeyboardEvent, nodeId: string) => void;
   /** Base URL for node links */
   baseUrl: string;
+  /** Number of siblings at this level (for aria-setsize) */
+  siblingCount?: number;
+  /** 1-based position among siblings (for aria-posinset) */
+  siblingIndex?: number;
 }
 
 /**
@@ -125,6 +181,10 @@ export interface BrowseTreeNodeProps {
 export interface BrowseTreeActions {
   /** Toggle node expansion */
   toggle: (nodeId: string) => Promise<void>;
+  /** Expand a node (no-op when already expanded); auto-expands single-child chains */
+  expand: (nodeId: string) => Promise<void>;
+  /** Collapse a node (no-op when already collapsed); records an explicit user collapse */
+  collapse: (nodeId: string) => void;
   /** Select a node */
   select: (nodeId: string) => void;
   /** Refresh the tree */
@@ -133,14 +193,32 @@ export interface BrowseTreeActions {
   expandToPath: (path: string) => Promise<void>;
   /** Remove a node from the tree, preserving expanded state of all other nodes */
   removeNode: (nodeId: string) => Promise<void>;
-  /** Navigate focus to the next visible node */
-  focusNext: () => void;
-  /** Navigate focus to the previous visible node */
-  focusPrevious: () => void;
-  /** Navigate focus to the parent node */
-  focusParent: () => void;
-  /** Navigate focus to the first child node */
-  focusFirstChild: () => void;
+  /**
+   * Re-read the level containing a node from the server without removing
+   * anything, dropping the node only if the server no longer lists it.
+   *
+   * The rejected-delete counterpart to {@link removeNode}: a delete that failed
+   * may still have partially succeeded, so the tree reconciles with the server
+   * instead of either trusting the error or dropping the node optimistically.
+   */
+  reconcileNode: (nodeId: string) => Promise<void>;
+  /**
+   * Navigate focus to the next visible node.
+   *
+   * `fromNodeId` is the traversal origin; pass the node that received the key
+   * event so navigation works before focus has ever been set (the first visible
+   * node holds the tab stop implicitly, so it can receive keys while
+   * `focusedNodeId` is still undefined).
+   */
+  focusNext: (fromNodeId?: string) => void;
+  /** Navigate focus to the previous visible node; see {@link focusNext} for `fromNodeId` */
+  focusPrevious: (fromNodeId?: string) => void;
+  /** Navigate focus to the parent node; see {@link focusNext} for `fromNodeId` */
+  focusParent: (fromNodeId?: string) => void;
+  /** Navigate focus to the first child node; see {@link focusNext} for `fromNodeId` */
+  focusFirstChild: (fromNodeId?: string) => void;
+  /** Move focus to a specific node without changing the selection */
+  focusNode: (nodeId: string) => void;
 }
 
 /**
@@ -192,5 +270,7 @@ export interface BrowseTreeRef {
   scrollToNode: (nodeId: string) => void;
   /** Remove a node from the tree, preserving expanded state of all other nodes */
   removeNode: (nodeId: string) => Promise<void>;
+  /** Re-read the level containing a node, dropping it only if the server has */
+  reconcileNode: (nodeId: string) => Promise<void>;
 }
 

@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
 import static org.sonatype.nexus.repository.FacetSupport.State.DELETED;
 import static org.sonatype.nexus.repository.FacetSupport.State.DESTROYED;
@@ -60,7 +60,7 @@ public abstract class FacetSupport
 
   @Autowired
   public void installDependencies(final EventManager eventManager) {
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Autowired
@@ -69,7 +69,7 @@ public abstract class FacetSupport
   }
 
   protected EventManager getEventManager() {
-    return checkNotNull(eventManager);
+    return requireNonNull(eventManager);
   }
 
   protected RepositoryAttributeService repositoryAttributeService() {
@@ -79,7 +79,7 @@ public abstract class FacetSupport
   private Repository repository;
 
   protected Repository getRepository() {
-    return checkNotNull(repository);
+    return requireNonNull(repository);
   }
 
   //
@@ -124,7 +124,7 @@ public abstract class FacetSupport
   @Override
   @Transitions(from = NEW, to = ATTACHED)
   public void attach(final Repository repository) throws Exception {
-    this.repository = checkNotNull(repository);
+    this.repository = requireNonNull(repository);
   }
 
   @Override
@@ -271,7 +271,7 @@ public abstract class FacetSupport
    * @param cacheToken the cache token to synchronize
    */
   public void postCacheTokenEvent(final Repository repository, final String cacheToken) {
-    checkNotNull(repository);
+    requireNonNull(repository);
     if (!EventHelper.isReplicating()) {
       // Store cache token as repository attribute if the attribute storage service is available
       if (repositoryAttributeService() != null) {

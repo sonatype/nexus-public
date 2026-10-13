@@ -29,7 +29,7 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -56,8 +56,8 @@ public class ReEncryptTask
       final SecretsStore secretsStore,
       @Value("${nexus.distributed.events.fetch.interval.seconds:5}") final int pollInterval)
   {
-    this.secretsService = checkNotNull(secretsService);
-    this.secretsStore = checkNotNull(secretsStore);
+    this.secretsService = requireNonNull(secretsService);
+    this.secretsStore = requireNonNull(secretsStore);
     this.delayTimeMs = Duration.ofSeconds(pollInterval).toMillis() * 2;
   }
 

@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.sonatype.nexus.common.failure.MultipleFailures.MultipleFailuresException;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -45,11 +46,16 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CreateSearchTextPatternOpsIndexTaskTest
 {
-  private static final String CHECK_INDEX_EXISTS_SQL = "SELECT 1 FROM pg_indexes WHERE indexname = ?";
+  private static final String CHECK_TABLE_EXISTS_SQL = "SELECT to_regclass(?);";
+
+  private static final String CHECK_INDEX_EXISTS_SQL =
+      "SELECT 1 FROM pg_index i JOIN pg_class ic ON ic.oid = i.indexrelid"
+          + " WHERE i.indrelid = to_regclass(?)"
+          + "   AND UPPER(ic.relname) = ?";
 
   private static final String CHECK_INDEX_INVALID_SQL =
       "SELECT 1 FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid "
-          + "WHERE c.relname = ? AND NOT i.indisvalid";
+          + "WHERE i.indrelid = to_regclass(?) AND c.relname = ? AND NOT i.indisvalid";
 
   @Mock
   private DataSessionSupplier dataSessionSupplier;
@@ -172,7 +178,7 @@ class CreateSearchTextPatternOpsIndexTaskTest
 
   private CreateSearchTextPatternOpsIndexTask createTask() throws SQLException {
     when(dataSessionSupplier.openConnection("nexus")).thenReturn(connection);
-    return new CreateSearchTextPatternOpsIndexTask(dataSessionSupplier);
+    return new CreateSearchTextPatternOpsIndexTask(dataSessionSupplier, new DatabaseMigrationUtility());
   }
 
   private void setupConnection(final String databaseProductName) throws SQLException {
@@ -198,14 +204,14 @@ class CreateSearchTextPatternOpsIndexTaskTest
       executedStatements.add(sql);
       PreparedStatement stmt = mock(PreparedStatement.class);
 
-      if (sql.contains("to_regclass")) {
-        mockTableExistsStatement(stmt, tableExists);
-      }
-      else if (sql.equals(CHECK_INDEX_EXISTS_SQL)) {
+      if (sql.equals(CHECK_INDEX_EXISTS_SQL)) {
         mockIndexExistsStatement(stmt, existingIndexes);
       }
       else if (sql.equals(CHECK_INDEX_INVALID_SQL)) {
         mockAlwaysFalseQuery(stmt);
+      }
+      else if (sql.equals(CHECK_TABLE_EXISTS_SQL)) {
+        mockTableExistsStatement(stmt, tableExists);
       }
       else if (sql.startsWith("CREATE INDEX CONCURRENTLY") && failOnIndex != null
           && sql.contains(failOnIndex)) {
@@ -243,7 +249,8 @@ class CreateSearchTextPatternOpsIndexTaskTest
     }).when(stmt).setString(anyInt(), anyString());
     when(stmt.executeQuery()).thenAnswer(inv -> {
       ResultSet rs = mock(ResultSet.class);
-      when(rs.next()).thenReturn(existingIndexes.contains(paramValue.get()));
+      when(rs.next()).thenReturn(
+          existingIndexes.stream().anyMatch(index -> index.equalsIgnoreCase(paramValue.get())));
       return rs;
     });
   }

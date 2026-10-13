@@ -56,13 +56,37 @@ public interface Blob
 
   /**
    * Provides a URL for direct access (i.e. not through Nexus Repository) to the blob's content.
+   * <p>
+   * Implementations that want to honour {@code globalDistributionEnabled} MUST override this
+   * four-argument method; overriding only the three-argument variant will silently ignore the flag
+   * because the default here bridges by discarding it.
+   *
+   * @param globalDistributionEnabled {@code true} if the caller allows this blob store to return a
+   *          globally-distributed URL (e.g. CloudFront). Blob stores that do not implement a
+   *          global distribution generator ignore this flag.
    */
+  default Optional<URL> getRedirectUrl(
+      final String action,
+      final String name,
+      @Nullable final String contentType,
+      final boolean globalDistributionEnabled)
+  {
+    return getRedirectUrl(action, name, contentType);
+  }
+
+  /**
+   * @deprecated Kept only for binary compatibility with implementations compiled before the
+   *             {@code globalDistributionEnabled} flag was introduced. All in-tree callers use the
+   *             4-arg form {@link #getRedirectUrl(String, String, String, boolean)}. This overload
+   *             will be removed once no external implementation still ships an override of it.
+   */
+  @Deprecated
   default Optional<URL> getRedirectUrl(final String action, final String name, @Nullable final String contentType) {
     return Optional.empty();
   }
 
   /**
-   * @return if this payload would return a URL when calling getRedirectUrl
+   * @return if this blob would return a URL when calling getRedirectUrl
    */
   default boolean hasRedirect() {
     return false;

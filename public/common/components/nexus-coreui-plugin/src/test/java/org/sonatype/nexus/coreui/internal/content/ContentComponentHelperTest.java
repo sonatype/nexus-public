@@ -30,6 +30,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.search.ComponentFinder;
 import org.sonatype.nexus.repository.content.security.AssetPermissionChecker;
@@ -78,6 +79,9 @@ public class ContentComponentHelperTest
 {
   @Mock
   MaintenanceService maintenanceService;
+
+  @Mock
+  ContentDeletionService contentDeletionService;
 
   @Mock
   ComponentFinder componentFinder;
@@ -140,6 +144,7 @@ public class ContentComponentHelperTest
 
     ContentComponentHelper underTest = new ContentComponentHelper(
         maintenanceService,
+        contentDeletionService,
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
@@ -165,6 +170,7 @@ public class ContentComponentHelperTest
 
     ContentComponentHelper underTest = new ContentComponentHelper(
         maintenanceService,
+        contentDeletionService,
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
@@ -188,6 +194,7 @@ public class ContentComponentHelperTest
   public void readComponentAssets_usesPermittingRepositoryForAssetUrl() {
     ContentComponentHelper underTest = new ContentComponentHelper(
         maintenanceService,
+        contentDeletionService,
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
@@ -257,6 +264,7 @@ public class ContentComponentHelperTest
 
     ContentComponentHelper underTest = new ContentComponentHelper(
         maintenanceService,
+        contentDeletionService,
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
@@ -294,6 +302,7 @@ public class ContentComponentHelperTest
 
     ContentComponentHelper underTest = new ContentComponentHelper(
         maintenanceService,
+        contentDeletionService,
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
@@ -319,6 +328,7 @@ public class ContentComponentHelperTest
   public void previewAssets_emptyPermittedSet_noContentFacetInteractions() {
     ContentComponentHelper underTest = new ContentComponentHelper(
         maintenanceService,
+        contentDeletionService,
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
@@ -349,6 +359,7 @@ public class ContentComponentHelperTest
   public void previewAssets_dropsUnpermittedInputBeforeGroupExpansion() {
     ContentComponentHelper underTest = new ContentComponentHelper(
         maintenanceService,
+        contentDeletionService,
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
@@ -427,6 +438,7 @@ public class ContentComponentHelperTest
 
     ContentComponentHelper underTest = new ContentComponentHelper(
         maintenanceService,
+        contentDeletionService,
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,

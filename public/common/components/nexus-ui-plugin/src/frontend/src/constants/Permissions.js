@@ -65,6 +65,13 @@ const Permissions = {
   SERVICE_ACCOUNTS: generatePermissions('service-accounts', [READ, CREATE, DELETE]),
   TAGS: generatePermissions('tags', [READ, CREATE, DELETE]),
   HEALTHCHECK: generatePermissions('healthcheck', [READ, UPDATE]),
+  // Governs the security-alert and license-threat data inside a health check response, separately
+  // from HEALTHCHECK above, which governs the response as a whole.
+  //
+  // READ additionally guards the per-asset Sonatype Lifecycle report: both
+  // HealthCheckFileDetailResource and Classic's NX.proui.controller.HealthCheckAssetDetail gate on
+  // nexus:healthcheckalerts:read, which is a different permission from the UPDATE used above.
+  HEALTHCHECK_ALERTS: generatePermissions('healthcheckalerts', [READ, UPDATE]),
   IQ_VIOLATION_SUMMARY: generatePermissions('iq-violation-summary', [READ]),
   COMPONENT: generatePermissions('component', [CREATE]),
   SEARCH: generatePermissions('search', [READ]),

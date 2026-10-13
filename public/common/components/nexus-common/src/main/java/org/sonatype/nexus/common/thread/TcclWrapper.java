@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.thread;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to create wrappers around components to ensure that the TCCL is properly configured.
@@ -33,9 +33,9 @@ public class TcclWrapper
    */
   @SuppressWarnings("unchecked")
   public static <T> T create(final Class<T> type, final T target, final ClassLoader classLoader) {
-    checkNotNull(type);
-    checkNotNull(target);
-    checkNotNull(classLoader);
+    requireNonNull(type);
+    requireNonNull(target);
+    requireNonNull(classLoader);
 
     InvocationHandler handler = (proxy, method, args) -> {
       try (TcclBlock tccl = TcclBlock.begin(classLoader)) {

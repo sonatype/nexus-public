@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
+import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource;
@@ -33,8 +35,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,12 +54,32 @@ class LogCustomizerTest
   @Mock
   private ApplicationDirectories mockApplicationDirectories;
 
+  @Mock
+  private NexusEditionSelector mockNexusEditionSelector;
+
+  @Mock
+  private NexusEdition mockNexusEdition;
+
   private LogCustomizer underTest;
 
   @BeforeEach
   void setup() {
-    when(mockApplicationDirectories.getWorkDirectory()).thenReturn(temporaryWorkDirectory);
-    underTest = new LogCustomizer(mockLogManager, mockApplicationDirectories);
+    lenient().when(mockApplicationDirectories.getWorkDirectory()).thenReturn(temporaryWorkDirectory);
+    lenient().when(mockNexusEditionSelector.getCurrent()).thenReturn(mockNexusEdition);
+    lenient().when(mockNexusEdition.getId()).thenReturn("nexus-professional-edition");
+    underTest = new LogCustomizer(mockLogManager, mockApplicationDirectories, mockNexusEditionSelector);
+  }
+
+  @Test
+  void customizeIsSkippedOnCloudEdition() {
+    when(mockNexusEdition.getId()).thenReturn("nexus-cloud-edition");
+
+    SupportBundle supportBundle = new SupportBundle();
+    underTest.customize(supportBundle);
+
+    assertThat(supportBundle.getSources(), empty());
+    // Cloud edition never reads logs; make sure we never touched the log manager.
+    verifyNoInteractions(mockLogManager);
   }
 
   @Test
@@ -130,6 +155,63 @@ class LogCustomizerTest
     String logContent = "Authorization: Bearer token123 and X-API-Key: secret456\n";
     // With .+, the first match consumes to end of line, so "and X-API-Key: secret456" is also redacted
     testLogRedaction(logContent, "Authorization: Bearer ****");
+  }
+
+  @Test
+  void customizeNexusLogRedactsKeycloakIdentityCookie() throws Exception {
+    String logContent =
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: KEYCLOAK_IDENTITY=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.abc.def; Version=1; Path=/auth; HttpOnly\n";
+    testLogRedaction(logContent,
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: KEYCLOAK_IDENTITY=****; Version=1; Path=/auth; HttpOnly");
+  }
+
+  @Test
+  void customizeNexusLogRedactsKeycloakSessionCookie() throws Exception {
+    String logContent =
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: KEYCLOAK_SESSION=abc123def456; Path=/auth\n";
+    testLogRedaction(logContent,
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: KEYCLOAK_SESSION=****; Path=/auth");
+  }
+
+  @Test
+  void customizeNexusLogRedactsAuthSessionIdCookie() throws Exception {
+    String logContent =
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: AUTH_SESSION_ID=auth-session-value123; Path=/auth\n";
+    testLogRedaction(logContent,
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: AUTH_SESSION_ID=****; Path=/auth");
+  }
+
+  @Test
+  void customizeNexusLogRedactsKeycloakLegacyCookie() throws Exception {
+    String logContent =
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: KEYCLOAK_IDENTITY_LEGACY=legacytoken123; Path=/auth\n";
+    testLogRedaction(logContent,
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: KEYCLOAK_IDENTITY_LEGACY=****; Path=/auth");
+  }
+
+  @Test
+  void customizeNexusLogRedactsCookieCaseInsensitive() throws Exception {
+    String logContent =
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - set-cookie: keycloak_identity=tokenvalue; Path=/auth\n";
+    testLogRedaction(logContent,
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - set-cookie: keycloak_identity=****; Path=/auth");
+  }
+
+  @Test
+  void customizeNexusLogPreservesNonSensitiveCookies() throws Exception {
+    String logContent =
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: JSESSIONID=abc123; Path=/\n";
+    testLogRedaction(logContent,
+        "2024-01-15 10:30:45,123 INFO  [executor-thread-1] response - Set-Cookie: JSESSIONID=abc123; Path=/");
+  }
+
+  @Test
+  void customizeNexusLogRedactsBothAuthHeaderAndCookie() throws Exception {
+    // Set-Cookie appears before Authorization so both redactions apply independently
+    String logContent =
+        "Set-Cookie: KEYCLOAK_IDENTITY=eyJhbGc.abc.def; Path=/auth Authorization: Bearer token123\n";
+    testLogRedaction(logContent,
+        "Set-Cookie: KEYCLOAK_IDENTITY=****; Path=/auth Authorization: Bearer ****");
   }
 
   private void testLogRedaction(final String inputContent, final String expectedOutput) throws Exception {

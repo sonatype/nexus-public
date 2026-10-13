@@ -72,6 +72,10 @@ export default function HostedRepositoriesEvaluation() {
   // Badge count is fetched fresh on component mount (when user navigates to this page)
   const numberOfMonitoredRepositories = current.context.numberOfMonitoredRepositories || 0;
   const existingSettings = current.context.existingSettings;
+  const permissionDenied = current.context.permissionDenied || false;
+  const loadError = permissionDenied
+    ? UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.PERMISSION_DENIED
+    : null;
 
   useEffect(() => {
     if (globalConfigAvailable && existingSettings && !settingsLoaded) {
@@ -172,7 +176,7 @@ export default function HostedRepositoriesEvaluation() {
 
       <ContentBody>
         <Section>
-          <NxLoadWrapper loading={isLoading}>
+          <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={() => send('RETRY')}>
             {!globalConfigAvailable ? (
               <>
                 <ProgressSteps

@@ -44,13 +44,17 @@ jest.mock('../useUsersApi', () => ({
   }),
 }));
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ExtJS: {
-    isProEdition: jest.fn(() => false),
-    checkPermission: jest.fn(() => true),
-    state: jest.fn(() => ({ getValue: jest.fn(() => []) })),
-  },
-}));
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const isProEdition = jest.fn(() => false);
+  return {
+    ExtJS: {
+      isProEdition,
+      checkPermission: jest.fn(() => true),
+      state: jest.fn(() => ({ getValue: jest.fn(() => []) })),
+    },
+    useIsLicensedEdition: isProEdition,
+  };
+});
 
 const mockUseForm = jest.fn();
 jest.mock('../../../../../../../interface/form', () => ({

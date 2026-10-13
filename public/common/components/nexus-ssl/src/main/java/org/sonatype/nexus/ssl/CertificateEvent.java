@@ -14,7 +14,7 @@ package org.sonatype.nexus.ssl;
 
 import java.security.cert.Certificate;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link Certificate} event.
@@ -28,8 +28,8 @@ public abstract class CertificateEvent
   private final Certificate certificate;
 
   public CertificateEvent(final String alias, final Certificate certificate) {
-    this.alias = checkNotNull(alias);
-    this.certificate = checkNotNull(certificate);
+    this.alias = requireNonNull(alias);
+    this.certificate = requireNonNull(certificate);
   }
 
   public String getAlias() {

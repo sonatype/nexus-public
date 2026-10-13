@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Our S3 blob store implementation previously used the S3 expiration policy, this schedules compact tasks
@@ -48,7 +48,7 @@ public class ScheduleS3CompactTasksMigrationStep
 
   @Autowired
   public ScheduleS3CompactTasksMigrationStep(final UpgradeTaskScheduler upgradeTaskScheduler) {
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
+    this.upgradeTaskScheduler = requireNonNull(upgradeTaskScheduler);
   }
 
   @Override

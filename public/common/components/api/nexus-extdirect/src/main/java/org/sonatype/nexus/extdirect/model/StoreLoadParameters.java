@@ -14,7 +14,7 @@ package org.sonatype.nexus.extdirect.model;
 
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Ext Store load parameters.
@@ -96,7 +96,7 @@ public class StoreLoadParameters
   }
 
   public String getFilter(String property) {
-    checkNotNull(property, "property");
+    requireNonNull(property, "property");
     if (filter != null) {
       for (Filter item : filter) {
         if (property.equals(item.getProperty())) {

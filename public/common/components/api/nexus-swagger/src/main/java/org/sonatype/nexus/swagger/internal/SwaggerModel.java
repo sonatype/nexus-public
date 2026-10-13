@@ -44,7 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * OpenAPI model component (formerly Swagger 1.x model).
@@ -77,8 +77,8 @@ public class SwaggerModel
       final List<ModelConverter> converters,
       final List<SwaggerContributor> contributors)
   {
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.contributors = checkNotNull(contributors);
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.contributors = requireNonNull(contributors);
 
     registerConverters(converters);
 

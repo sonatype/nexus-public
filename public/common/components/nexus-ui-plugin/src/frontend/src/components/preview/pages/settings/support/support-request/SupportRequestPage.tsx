@@ -19,7 +19,7 @@ import { ExternalLink, FileArchive, Info } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsFormSection, SettingsButton, SettingsAlert } from '../../../../shared/form';
-import { PageHeader } from '../../../../shared';
+import { PageHeader, useIsLicensedEdition } from '../../../../shared';
 
 import './SupportRequestPage.scss';
 
@@ -47,7 +47,7 @@ export function SupportRequestPage({ className }: SupportRequestPageProps) {
   const canCreate = ExtJS.checkPermission('nexus:atlas:create');
 
   // Check if Pro Edition - use the proper helper method
-  const isPro = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
 
   // Handle external link click
   const handleSubmitRequest = () => {
@@ -60,7 +60,7 @@ export function SupportRequestPage({ className }: SupportRequestPageProps) {
   };
 
   // Show warning if not Pro Edition
-  if (!isPro) {
+  if (!isLicensedEdition) {
     return (
       <Box
         className={`support-request-page ${className || ''}`.trim()}

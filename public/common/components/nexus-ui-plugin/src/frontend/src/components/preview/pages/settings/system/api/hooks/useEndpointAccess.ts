@@ -24,6 +24,7 @@ import {
   getSecurityDirectoryCache,
   invalidateEndpointAccessCache,
 } from './securityDirectoryCache';
+import { permissionLogical } from '../utils/formatEndpointPermissions';
 import type { MergedApiEndpoint } from '../utils/mergeSwaggerPermissions';
 import {
   buildPrivilegeByIdMap,
@@ -69,7 +70,7 @@ export function computeEndpointAccessSummaries(
     return { qualifyingRoles: [], usersWithAccess: [], noMappedPermissions: true };
   }
 
-  const mode = row.permission?.permissions?.[0]?.logical === 'OR' ? 'OR' : 'AND';
+  const mode = permissionLogical(row.permission);
   const roleById = buildRoleByIdMap(roles);
   const privilegeById = buildPrivilegeByIdMap(privileges);
 

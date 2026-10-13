@@ -93,6 +93,8 @@ export default {
       STORAGE_CAPTION: 'Storage',
       BLOB_STORE_LABEL: 'Blob Store',
       CONTENT_VALIDATION_LABEL: 'Strict Content Type Validation',
+      GLOBAL_DISTRIBUTION_LABEL: 'Global Distribution',
+      GLOBAL_DISTRIBUTION_DESCR: 'Distribute this repository through the global content delivery network',
       GROUP_CAPTION: 'Group',
       MEMBERS_LABEL: 'Member Repositories',
       SELECT_FORMAT_OPTION: 'Select a format...',
@@ -279,6 +281,9 @@ export default {
         MODE_AUDIT: 'Audit Only - allow components that violate policy',
         MODE_QUARANTINE: 'Quarantine - block components that violate policy',
         MODE_PCCS: 'PCCS - Quarantine, plus metadata filtering to help clients select a policy compliant version',
+        LAYER_DOWNLOAD_TIMEOUT_LABEL: 'Layer Download Timeout (minutes)',
+        LAYER_DOWNLOAD_TIMEOUT_SUBLABEL: 'Maximum time to wait for each container image layer to download during Firewall scanning.',
+        LAYER_DOWNLOAD_TIMEOUT_HELP: 'Default is 10 minutes. Increase this value if your network has slow proxies or antivirus scanning. Minimum: 1 minute, Maximum: 1440 minutes (24 hours).'
       },
       LEARN_MORE: 'Learn more',
       REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',

@@ -37,7 +37,7 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.apache.ibatis.mapping.SqlCommandType.INSERT;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
@@ -56,7 +56,7 @@ final class EntityExecutor
   private List<HasEntityId> generatedEntityIds;
 
   public EntityExecutor(final Executor delegate) {
-    this.delegate = checkNotNull(delegate);
+    this.delegate = requireNonNull(delegate);
   }
 
   @Override
@@ -252,7 +252,8 @@ final class EntityExecutor
       if (DuplicateKeyException.SQL_STATE.equals(state)) {
         return new DuplicateKeyException(ex);
       }
-      if (SerializedAccessException.SQL_STATE.equals(state)) {
+      if (SerializedAccessException.SQL_STATE.equals(state)
+          || SerializedAccessException.DEADLOCK_SQL_STATE.equals(state)) {
         return new SerializedAccessException(e);
       }
       if (ForeignKeyViolationException.SQL_STATE.equals(state)) {

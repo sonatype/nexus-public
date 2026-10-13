@@ -16,16 +16,24 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
 import org.springframework.stereotype.Component;
 
 /**
- * Duplicates the default methods from DatabaseMigrationStep in order to make a more testable object at runtime
- * 
+ * Implements the schema-inspection helpers exposed as default methods on {@link DatabaseMigrationStep}, as a
+ * testable object usable at runtime.
+ *
  * @see DatabaseMigrationStep
  */
 @Component
 public class DatabaseMigrationUtility
 {
+  /*
+   * Backs the schema-inspection default methods on {@link DatabaseMigrationStep}. Shared because this class
+   * holds no state; collaborators outside this package inject the {@link Component} instead.
+   */
+  static final DatabaseMigrationUtility INSTANCE = new DatabaseMigrationUtility();
+
   public boolean isH2(final Connection conn) throws SQLException {
     return "H2".equals(conn.getMetaData().getDatabaseProductName());
   }
@@ -66,40 +74,50 @@ public class DatabaseMigrationUtility
       final String tableName,
       final String columnName) throws SQLException
   {
-    String sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE UPPER(TABLE_NAME) = ? AND UPPER(COLUMN_NAME) = ?";
-    try (PreparedStatement statement = conn.prepareStatement(sql)) {
-      statement.setString(1, tableName.toUpperCase());
-      statement.setString(2, columnName.toUpperCase());
-      try (ResultSet results = statement.executeQuery()) {
-        return results.next();
-      }
+    if (isPostgresql(conn)) {
+      return exists(conn, "SELECT 1 FROM pg_attribute" +
+          " WHERE attrelid = to_regclass(?)" +
+          "   AND UPPER(attname) = ?" +
+          "   AND attnum > 0" +
+          "   AND NOT attisdropped",
+          tableName, upper(columnName));
     }
+    return exists(conn,
+        "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE UPPER(TABLE_NAME) = ? AND UPPER(COLUMN_NAME) = ?",
+        upper(tableName), upper(columnName));
   }
 
-  public boolean indexExists(final Connection conn, final String indexName) throws SQLException {
+  public boolean constraintExists(
+      final Connection conn,
+      final String tableName,
+      final String constraintName) throws SQLException
+  {
     if (isPostgresql(conn)) {
-      String currentSchema = currentSchema(conn);
-      String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS" +
-          " WHERE UPPER(constraint_name) = ?" +
-          "   AND UPPER(constraint_schema) = ?";
+      return exists(conn, "SELECT 1 FROM pg_constraint WHERE conrelid = to_regclass(?) AND UPPER(conname) = ?",
+          tableName, upper(constraintName));
+    }
+    return exists(conn, "SELECT 1 FROM INFORMATION_SCHEMA.constraint_column_usage" +
+        " WHERE UPPER(table_name) = ?" +
+        "   AND UPPER(constraint_name) = ?",
+        upper(tableName), upper(constraintName));
+  }
 
-      try (PreparedStatement statement = conn.prepareStatement(sql)) {
-        statement.setString(1, indexName.toUpperCase());
-        statement.setString(2, currentSchema.toUpperCase());
-        try (ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
+  public boolean indexExists(
+      final Connection conn,
+      final String tableName,
+      final String indexName) throws SQLException
+  {
+    if (isPostgresql(conn)) {
+      return exists(conn, "SELECT 1 FROM pg_index i JOIN pg_class ic ON ic.oid = i.indexrelid" +
+          " WHERE i.indrelid = to_regclass(?)" +
+          "   AND UPPER(ic.relname) = ?",
+          tableName, upper(indexName));
     }
     else if (isH2(conn)) {
-      String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS" +
-          " WHERE UPPER(constraint_name) = ?";
-      try (PreparedStatement statement = conn.prepareStatement(sql)) {
-        statement.setString(1, indexName.toUpperCase());
-        try (ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
+      return exists(conn, "SELECT 1 FROM INFORMATION_SCHEMA.INDEXES" +
+          " WHERE REGEXP_LIKE(UPPER(index_name), ?)" +
+          "   AND UPPER(TABLE_NAME) = ?",
+          upper(indexName) + DatabaseMigrationStep.H2_REGEX_SUFFIX, upper(tableName));
     }
     throw new UnsupportedOperationException();
   }
@@ -137,5 +155,20 @@ public class DatabaseMigrationUtility
       }
     }
     throw new IllegalStateException("Unable to determine current database schema");
+  }
+
+  private boolean exists(final Connection conn, final String sql, final String... parameters) throws SQLException {
+    try (PreparedStatement statement = conn.prepareStatement(sql)) {
+      for (int i = 0; i < parameters.length; i++) {
+        statement.setString(i + 1, parameters[i]);
+      }
+      try (ResultSet results = statement.executeQuery()) {
+        return results.next();
+      }
+    }
+  }
+
+  private static String upper(final String value) {
+    return value.toUpperCase(Locale.ENGLISH);
   }
 }

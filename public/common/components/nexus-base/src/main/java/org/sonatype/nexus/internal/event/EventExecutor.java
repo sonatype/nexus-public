@@ -40,9 +40,9 @@ import com.google.common.cache.LoadingCache;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.util.concurrent.MoreExecutors.newSequentialExecutor;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.common.event.EventHelper.asReplicating;
 import static org.sonatype.nexus.common.event.EventHelper.isReplicating;
@@ -99,7 +99,7 @@ public class EventExecutor
   {
     this.affinityEnabled = affinityEnabled;
     this.affinityCacheSize = affinityCacheSize;
-    this.affinityTimeout = Time.seconds(checkNotNull(affinityTimeout).getSeconds());
+    this.affinityTimeout = Time.seconds(requireNonNull(affinityTimeout).getSeconds());
     this.singleCoordinator = singleCoordinator;
     this.fairThreading = fairThreading;
   }

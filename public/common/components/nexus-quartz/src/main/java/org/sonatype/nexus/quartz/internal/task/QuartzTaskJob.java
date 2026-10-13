@@ -47,8 +47,8 @@ import org.quartz.UnableToInterruptJobException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.configurationOf;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobData;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
@@ -99,15 +99,15 @@ public class QuartzTaskJob
       final TaskFactory taskFactory,
       final BaseUrlManager baseUrlManager)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.scheduler = checkNotNull(scheduler);
-    this.taskFactory = checkNotNull(taskFactory);
-    this.baseUrlManager = checkNotNull(baseUrlManager);
+    this.eventManager = requireNonNull(eventManager);
+    this.scheduler = requireNonNull(scheduler);
+    this.taskFactory = requireNonNull(taskFactory);
+    this.baseUrlManager = requireNonNull(baseUrlManager);
   }
 
   @Override
   public void execute(final JobExecutionContext context) throws JobExecutionException {
-    this.context = checkNotNull(context);
+    this.context = requireNonNull(context);
     try {
       doExecute();
     }

@@ -11,29 +11,27 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter, useCurrentStateAndParams } from '@uirouter/react';
 import {
   Badge,
   Box,
   Flex,
-  Grid,
-  Heading,
   Tabs,
   Callout,
   Button,
   ScrollArea,
-  Tooltip,
 } from '@radix-ui/themes';
-import { ArrowLeft, Copy, ExternalLink, Package } from 'lucide-react';
+import { ArrowLeft, Package } from 'lucide-react';
 
 import type { GADetailTab } from '../core';
 import { GA_SEARCH_ROUTE_NAMES, TAB_ROUTE_MAP, getTabFromRoute } from '../core';
 import { consumeSearchReturnUrl } from '../unified/useSearchNavigation';
 
 import { Breadcrumbs } from './Breadcrumbs';
-import { buildComponentPath, getMavenCentralUrl } from './detailHelpers';
-import { buildGuideComponentUrlFromGaId } from '../../../../../utils/guideIntegration';
+import { GADetailHeader } from './GADetailHeader';
+import { parseGaId as splitGaId } from './gaIdUtils';
+import { buildBrowseTarget, buildComponentPath } from './detailHelpers';
 import { useGADetail } from './useGADetail';
 import { useComponentVersions } from './useComponentVersions';
 import { useComponentSecurity } from './useComponentSecurity';
@@ -84,7 +82,6 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
 
   // No parseGaId (decodeURIComponent) here: `type: 'path'` already decoded it — see the prop doc.
   const gaId = gaIdParam || '';
-  const [copiedPath, setCopiedPath] = useState(false);
 
   // Which tab is active, from the route name — drives Tabs.Root below. It no longer gates any
   // fetching: every tab's data source is bounded and owns its own lifecycle.
@@ -94,8 +91,8 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
     detail,
     selectedVersion,
     assets,
-    versionLastUpdated,
     assetsLoading,
+    versionLastUpdated,
     selectVersion,
   } = useGADetail({ gaId, initialVersion });
 
@@ -136,12 +133,6 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
     error: repoError,
   } = useGARepositoriesForVersion({ gaId, selectedVersion: effectiveVersion });
 
-
-  // Names only, for the Overview tab's "Repository" row and its snippet registry URL.
-  const overviewRepositories = useMemo(
-    () => repoRows.map((r) => r.repositoryName),
-    [repoRows],
-  );
 
   const securityCount =
     securityResult.data &&
@@ -185,18 +176,84 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
     selectVersion('');
   }, [initialVersion, newestVersion, selectedVersion, selectVersion]);
 
-  const handleCopyPath = useCallback(() => {
-    // `??`, not `||`: '' is the valid selected version of a versionless format, and falling
-    // through it to initialVersion/newestVersion would build a path for the wrong version.
-    const ver = selectedVersion ?? initialVersion ?? newestVersion;
-    if (!ver) return;
-    const path = buildComponentPath(gaId, ver);
-    if (path) {
-      navigator.clipboard.writeText(path);
-      setCopiedPath(true);
-      setTimeout(() => setCopiedPath(false), 2000);
+  /**
+   * Header repository/group facets. SEARCH_REPOSITORIES rows for the selected version are
+   * partitioned by type: group-type rows drive the Group facet, everything else (hosted/proxy)
+   * drives the Repository facet. Seeded from the URL (deep-link support, NEXUS-54428), then
+   * re-defaulted whenever the version (and thus repoRows) changes and the prior selection no
+   * longer serves it.
+   */
+  const routeRepository = (routeParams?.repository as string | null | undefined) ?? null;
+  const routeGroup = (routeParams?.group as string | null | undefined) ?? null;
+  const [selectedRepository, setSelectedRepository] = useState<string | null>(routeRepository);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(routeGroup);
+  useEffect(() => {
+    // Rows arrive asynchronously; until they do, keep whatever the URL seeded so a deep-linked
+    // repository/group is not clobbered to null before it can be validated.
+    if (repoRows.length === 0) {
+      return;
     }
-  }, [gaId, selectedVersion, initialVersion, newestVersion]);
+    const members = repoRows.filter((r) => r.type !== 'group');
+    const groups = repoRows.filter((r) => r.type === 'group');
+    setSelectedRepository((prev) =>
+      prev && members.some((r) => r.repositoryName === prev)
+        ? prev
+        : members[0]?.repositoryName ?? null
+    );
+    setSelectedGroup((prev) =>
+      prev && groups.some((r) => r.repositoryName === prev)
+        ? prev
+        : groups[0]?.repositoryName ?? null
+    );
+  }, [repoRows]);
+
+  /**
+   * Re-adopt the URL's facet params after the initial mount. The useState seeds above run once, so
+   * without this a browser Back/Forward — which changes routeParams and re-renders via
+   * useCurrentStateAndParams — would leave the selectors pinned to the value they were seeded with.
+   *
+   * Runs after the validity effect so that when a Back also changes the version (and thus repoRows,
+   * which arrives in a later async commit), the re-adopted value is still reconciled against the new
+   * rows. Guarded on `!= null`: a URL that carries no facet param must not clobber a selection the
+   * validity effect auto-defaulted, so we only sync a value the URL actually provides.
+   */
+  useEffect(() => {
+    if (routeRepository != null) {
+      setSelectedRepository(routeRepository);
+    }
+    if (routeGroup != null) {
+      setSelectedGroup(routeGroup);
+    }
+  }, [routeRepository, routeGroup]);
+
+  /**
+   * Facet changes update local state and mirror into the URL as dynamic params (replace, not
+   * push, so the selector does not spam browser history). `inherit` keeps gaId/version/tab.
+   */
+  const changeRepository = useCallback(
+    (repository: string) => {
+      setSelectedRepository(repository);
+      router.stateService.go('.', { repository }, { location: 'replace', inherit: true });
+    },
+    [router]
+  );
+  const changeGroup = useCallback(
+    (group: string) => {
+      setSelectedGroup(group);
+      router.stateService.go('.', { group }, { location: 'replace', inherit: true });
+    },
+    [router]
+  );
+
+  /**
+   * Files tab is scoped to the selected repository so it mirrors the header context. The
+   * aggregate walk returns assets across all repositories serving the version; narrow to the
+   * chosen one when set, otherwise show everything.
+   */
+  const filesAssets = useMemo(
+    () => (selectedRepository ? assets.filter((a) => a.repository === selectedRepository) : assets),
+    [assets, selectedRepository]
+  );
 
   // Handle tab change via router
   const handleTabChange = useCallback(
@@ -205,11 +262,11 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
       if (routeName) {
         router.stateService.go(routeName, {
           gaId,
-          version: selectedVersion || undefined,
+          version: effectiveVersion || undefined,
         });
       }
     },
-    [router, gaId, selectedVersion],
+    [router, gaId, effectiveVersion],
   );
 
   /**
@@ -290,11 +347,33 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
     );
   }
 
-  const displayName = detail.displayName;
-  // `??` for the same reason as handleCopyPath: '' is a real selected version, not an absence.
+  // `??`, not `||`: '' is a real selected version of a versionless format, not an absence, so it
+  // must not fall through to initialVersion/newestVersion and build a path for the wrong version.
   const ver = selectedVersion ?? initialVersion ?? newestVersion ?? '';
-  const mavenCentralUrl = getMavenCentralUrl(gaId);
+
+  // Registry path for this component/version, used to deep-link into Browse. Null for unsupported
+  // formats or a versionless component; buildBrowseTarget then falls back to the repository root.
   const componentPath = ver ? buildComponentPath(gaId, ver) : null;
+
+  /**
+   * Router target for the header's "View in Browse" action (NEXUS-54430), which replaced the
+   * copy-path button. It deep-links to this component/version's folder in the new Browse tree via
+   * the shared {@link buildBrowseTarget} helper — the same helper the Files tab uses, so both
+   * resolve to the current edition's Browse URL rather than the Classic UI.
+   *
+   * The repository is the one selected in the header — the same repository the Download action
+   * targets — so a component that lives in several repositories deep-links into the one the user
+   * is actually looking at, and switching the Repository selector re-points the link. Before a
+   * selection resolves it falls back to the first repository the version lives in (repoRows is
+   * ordered by the API). When no repository is known yet — still loading, or the version is in
+   * none — the target is null and the button is hidden. `componentPath` may be null for
+   * unsupported formats or versionless components; buildBrowseTarget then falls back to the
+   * repository root, which is still useful.
+   */
+  const browseTarget = buildBrowseTarget(
+    selectedRepository ?? repoRows[0]?.repositoryName ?? '',
+    componentPath,
+  );
 
   return (
     <ScrollArea scrollbars="vertical" style={{ height: '100%' }}>
@@ -316,65 +395,23 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
             ]}
           />
 
-          {/* Component Header */}
-          <Box p="4">
-            <Grid columns={{ initial: '1', md: '1fr auto' }} gap="6" align="start">
-              <Flex direction="column" gap="3">
-                <Heading size="6">
-                  {displayName} v{ver}
-                </Heading>
-                <Flex align="end" gap="4" wrap="wrap">
-                  {componentPath && (
-                    <Tooltip content={copiedPath ? 'Copied!' : 'Copy path'}>
-                      <Button
-                        variant="soft"
-                        size="2"
-                        color="blue"
-                        onClick={handleCopyPath}
-                      >
-                        <Copy size={14} />
-                        Path
-                      </Button>
-                    </Tooltip>
-                  )}
-                  {mavenCentralUrl && (
-                    <Button
-                      variant="soft"
-                      size="2"
-                      color="gray"
-                      asChild
-                    >
-                      <a href={mavenCentralUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink size={14} />
-                        Registry
-                      </a>
-                    </Button>
-                  )}
-                  {ver &&
-                    detail &&
-                    buildGuideComponentUrlFromGaId(gaId, ver) != null && (
-                    <Button
-                      variant="soft"
-                      size="2"
-                      onClick={() => {
-                        const guideUrl = buildGuideComponentUrlFromGaId(
-                          gaId,
-                          ver,
-                          'search-component-detail'
-                        );
-                        if (guideUrl) {
-                          window.open(guideUrl, '_blank', 'noopener,noreferrer');
-                        }
-                      }}
-                    >
-                      <ExternalLink size={14} />
-                      Research in Guide
-                    </Button>
-                  )}
-                </Flex>
-              </Flex>
-            </Grid>
-          </Box>
+          {/* Component Header: group/repository context, name/version, Download, View in Browse */}
+          <GADetailHeader
+            gaId={gaId}
+            displayName={detail.displayName}
+            coordinate={splitGaId(gaId).group}
+            selectedVersion={effectiveVersion}
+            repoRows={repoRows}
+            selectedRepository={selectedRepository}
+            onRepositoryChange={changeRepository}
+            selectedGroup={selectedGroup}
+            onGroupChange={changeGroup}
+            onViewInBrowse={
+              browseTarget
+                ? () => router.stateService.go(browseTarget.state, browseTarget.params)
+                : undefined
+            }
+          />
 
           {/* Tabs */}
           <Tabs.Root value={currentTab} onValueChange={handleTabChange}>
@@ -403,7 +440,7 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
                       {/* !== null, not truthiness: '' is the valid selected version for
                           versionless formats (raw), and is falsy. */}
                       <Badge color="gray" variant="soft" size="1" radius="full">
-                        {selectedVersion !== null ? assets.length : 0}
+                        {selectedVersion !== null ? filesAssets.length : 0}
                       </Badge>
                     </Flex>
                   </Tabs.Trigger>
@@ -425,21 +462,24 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
                   {/* `??`, not `||`, for selectedVersion: '' is the valid selected version for
                       versionless formats (raw), and is falsy.
 
-                      repositories/lastUpdated come from the per-version sources, not from
+                      selectedRepository/repoRows come from the per-version sources, not from
                       detail.repositories or detail.versions — those were filled by the aggregate
                       walk this ticket removed and are now permanently empty. Sharing repoRows with
                       the Repositories tab keeps the two views in agreement. */}
                   <GAOverviewTab
                     detail={detail}
                     selectedVersion={selectedVersion ?? newestVersion ?? null}
-                    repositories={overviewRepositories}
-                    lastUpdated={versionLastUpdated}
+                    selectedRepository={selectedRepository}
+                    repoRows={repoRows}
+                    versionLastUpdated={versionLastUpdated}
                   />
                 </Tabs.Content>
 
                 <Tabs.Content value="versions">
                   <GAVersionsTab
                     versions={versionsState.versions}
+                    selectedVersion={effectiveVersion}
+                    onSelectVersion={handleVersionSelect}
                     total={versionsState.total}
                     totalPages={versionsState.totalPages}
                     currentPage={versionsState.currentPage}
@@ -454,8 +494,6 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
                     onSortChange={versionsState.onSortChange}
                     onSearchQueryChange={versionsState.onSearchQueryChange}
                     onRetry={versionsState.retry}
-                    selectedVersion={selectedVersion}
-                    onVersionSelect={handleVersionSelect}
                   />
                 </Tabs.Content>
 
@@ -475,8 +513,9 @@ export function GADetailPage({ gaId: gaIdParam, version }: GADetailPageProps) {
                       already correct. Not to be confused with the sibling `repoLoading` above:
                       that is the Repositories tab's own per-version fetch, unrelated to assets. */}
                   <GAFilesTab
-                    assets={assets}
+                    assets={filesAssets}
                     selectedVersion={selectedVersion}
+                    selectedRepository={selectedRepository}
                     loading={assetsLoading}
                   />
                 </Tabs.Content>

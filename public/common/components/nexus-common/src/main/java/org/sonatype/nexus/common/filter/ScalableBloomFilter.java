@@ -19,7 +19,7 @@ import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -50,7 +50,7 @@ public class ScalableBloomFilter<T>
     checkArgument(filterCapacity > 0, "filter capacity must be greater than 0");
     checkArgument(falsePositiveProbability > 0, "fpp must be greater than 0");
 
-    this.funnel = checkNotNull(funnel);
+    this.funnel = requireNonNull(funnel);
     this.filterCapacity = filterCapacity;
     this.falsePositiveProbability = falsePositiveProbability;
   }

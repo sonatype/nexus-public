@@ -19,6 +19,7 @@ import { ROUTE_NAMES } from '../../routerConfig/routeNames/routeNames';
 import { useDefaultAdminRouteName } from './useDefaultAdminRouteName';
 import { useClmDashboardVisibility } from './useClmDashboardVisibility';
 import {
+  ExtJS,
   LeftNavigationMenuItem,
   LeftNavigationMenuCollapsibleItem,
   LeftNavigationMenuCollapsibleChildItem,
@@ -234,6 +235,19 @@ export default function LeftNavigationMenu() {
         icon={UIStrings.BROWSE.MENU.icon}
         params={{ repo: null }}
         data-analytics-id="nxrm-global-navbar-browse"
+      />
+      {/*
+        * Visibility is resolved by the route itself (LeftNavigationMenuItem -> useNavigationLinkState):
+        * the browse.trash route declares statesEnabled [nexus.softDelete.enabled], editions ['PRO'] and
+        * permissions [ADMIN]. A manual gate here is redundant and, because it called the ExtJS.useUser()
+        * hook behind && short-circuits, could add/drop a hook between renders and crash the nav
+        * ("Rendered more hooks than during the previous render") when NX.State resolves asynchronously (NEXUS-51733).
+        */}
+      <LeftNavigationMenuItem
+        name={BROWSE.TRASH.ROOT}
+        text={UIStrings.TRASH.MENU.text}
+        icon={UIStrings.TRASH.MENU.icon}
+        data-analytics-id="nxrm-global-navbar-trash"
       />
       <LeftNavigationMenuItem
         selectedState={BROWSE.UPLOAD.ROOT}

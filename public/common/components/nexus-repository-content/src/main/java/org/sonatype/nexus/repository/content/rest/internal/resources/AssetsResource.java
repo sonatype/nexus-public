@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
-import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.rest.internal.resources.doc.AssetsResourceDoc;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
@@ -47,7 +47,7 @@ import org.apache.shiro.authz.annotation.RequiresUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -74,20 +74,20 @@ public class AssetsResource
 
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
-  private final MaintenanceService maintenanceService;
+  private final ContentDeletionService contentDeletionService;
 
   private final Map<String, AssetXODescriptor> assetDescriptors;
 
   @Autowired
   public AssetsResource(
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
-      final MaintenanceService maintenanceService,
+      final ContentDeletionService contentDeletionService,
       final ContentAuthHelper contentAuthHelper,
       final List<AssetXODescriptor> assetDescriptorsList)
   {
     super(contentAuthHelper);
-    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
-    this.maintenanceService = checkNotNull(maintenanceService);
+    this.repositoryManagerRESTAdapter = requireNonNull(repositoryManagerRESTAdapter);
+    this.contentDeletionService = requireNonNull(contentDeletionService);
     this.assetDescriptors = QualifierUtil.buildQualifierBeanMap(assetDescriptorsList);
   }
 
@@ -125,7 +125,15 @@ public class AssetsResource
 
     DetachedEntityId entityId = new DetachedEntityId(repositoryItemIDXO.getId());
     Asset asset = getAsset(id, repository, entityId);
-    maintenanceService.deleteAsset(repository, asset);
+
+    // The soft-delete-vs-hard-delete decision and the content DELETE authorization are owned by
+    // ContentDeletionService (NEXUS-49147); soft-delete identifier/not-found errors map to 404.
+    try {
+      contentDeletionService.deleteAsset(repository, asset);
+    }
+    catch (IllegalArgumentException | IllegalStateException e) {
+      throw new NotFoundException("Unable to locate asset with id " + id);
+    }
   }
 
   private Asset getAsset(final String id, final Repository repository, final DetachedEntityId entityId) {

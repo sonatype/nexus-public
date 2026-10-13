@@ -11,194 +11,51 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { Box, Button, Flex, Text } from '@radix-ui/themes';
-import { Shield, Plus, ArrowLeft, Trash2, Pencil } from 'lucide-react';
-import { ExtJS } from '../../../../../../interface/ExtJS';
-import Permissions from '../../../../../../constants/Permissions';
+import { Shield, Plus, RotateCcw, AlertTriangle } from 'lucide-react';
 
-import { useToast, PageHeader } from '../../../../shared';
-import { SettingsAlert, ConfirmDialog, WizardForm, SettingsButton } from '../../../../shared/form';
+import { PageHeader } from '../../../../shared';
+import { SettingsAlert, SettingsButton } from '../../../../shared/form';
+import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
 import { RolesList } from './RolesList';
 import { RoleForm } from './RoleForm';
-import { RoleProfilePage } from './RoleProfilePage';
-import { useRolesApi } from './useRolesApi';
-import { Role, isReadOnlyRole, formatRoleSourceDisplay } from './types';
+import { RoleDetail } from './RoleDetail';
+import { formatRoleSourceDisplay } from './types';
+import { BASE_PATH, navigateTo, useRolesPage } from './useRolesPage';
 
 import './RolesPage.scss';
 
-// Base path for role URLs
-const BASE_PATH = 'preview/admin/security/roles';
-
 /**
  * URL-based routing patterns:
- * - /roles           → List page
- * - /roles/create    → Wizard (Step 1)
- * - /roles/{id}      → Edit form
- * - /roles/{id}/profile → Profile page
- */
-type ViewMode = 'list' | 'create' | 'edit' | 'profile';
-
-interface RouteState {
-  viewMode: ViewMode;
-  roleId: string | null;
-}
-
-function parseRoute(hash: string): RouteState {
-  const cleanHash = hash.replace(/^#/, '').replace(/\?.*$/, '');
-  const parts = cleanHash.split('/');
-  const roleIndex = parts.indexOf('roles');
-  
-  if (roleIndex === -1) return { viewMode: 'list', roleId: null };
-
-  const pathAfterRoles = parts.slice(roleIndex + 1);
-  if (pathAfterRoles.length === 0) return { viewMode: 'list', roleId: null };
-
-  if (pathAfterRoles[0] === 'create') {
-    return { viewMode: 'create', roleId: null };
-  }
-
-  const roleId = decodeURIComponent(pathAfterRoles[0]);
-  if (pathAfterRoles.length >= 2 && pathAfterRoles[1] === 'profile') {
-    return { viewMode: 'profile', roleId };
-  }
-
-  return { 
-    viewMode: 'edit', 
-    roleId 
-  };
-}
-
-function navigateTo(path: string) {
-  window.location.hash = path;
-}
-
-/**
- * RolesPage - Main Roles management page for Preview UI
- * 
- * Displays role list with search/filter, and allows creating, editing, and deleting roles.
- * Uses a multi-step wizard for creation and editing.
+ * - /roles           -> List page
+ * - /roles/create    -> Create wizard
+ * - /roles/{id}      -> Role detail (editable or read-only, decided by permissions + role.readOnly)
+ *
+ * All state, effects, and side-actions live in useRolesPage (ViewModel). This component
+ * is presentational: it reads from the hook and renders.
  */
 export function RolesPage() {
-  const [routeState, setRouteState] = useState<RouteState>(() => parseRoute(window.location.hash));
-  const [role, setRole] = useState<Role | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [listDeleteRoleId, setListDeleteRoleId] = useState<string | null>(null);
-  const [listDeleteRoleName, setListDeleteRoleName] = useState<string | null>(null);
-  const [internalWizardStep, setInternalWizardStep] = useState(0);
-
-  // Toast notifications (app-level provider)
-  const toast = useToast();
-
   const {
+    routeState,
+    role,
     loading,
     error,
+    roleLoadErrorType,
+    refreshKey,
+    canCreate,
+    roleCanEdit,
+    roleCanDelete,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
     setError,
-    findRole,
-    deleteRole,
-  } = useRolesApi();
-
-  // Provider-independent, reactive permission checks (NEXUS-54212). ExtJS.checkPermission on
-  // its own evaluates once at render and would briefly disable the Create/Edit/Delete controls
-  // for a permitted non-admin if permissions load asynchronously after mount; ExtJS.usePermission
-  // with a hasUser dependency re-evaluates once the user and their permissions arrive. Matches the
-  // pattern used by ContentSelectorsPage and CapabilityDetail.
-  const hasUser = ExtJS.useUser() ?? false;
-  const canCreate = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.ROLES.CREATE), [hasUser]);
-  const canUpdate = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.ROLES.UPDATE), [hasUser]);
-  const canDelete = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.ROLES.DELETE), [hasUser]);
-
-  // Handle hash changes for routing
-  useEffect(() => {
-    const handleHashChange = () => {
-      const newState = parseRoute(window.location.hash);
-      setRouteState(newState);
-      setError(null);
-      setInternalWizardStep(0);
-    };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [setError]);
-
-  // Load role details when in edit or profile mode
-  useEffect(() => {
-    if ((routeState.viewMode === 'edit' || routeState.viewMode === 'profile') && routeState.roleId) {
-      findRole(routeState.roleId)
-        .then((roleData) => {
-          if (roleData) {
-            setRole(roleData);
-          } else {
-            setError('Role not found');
-            navigateTo(BASE_PATH);
-          }
-        })
-        .catch((err) => {
-          setError(err.message);
-          navigateTo(BASE_PATH);
-        });
-    } else {
-      setRole(null);
-    }
-  }, [routeState.viewMode, routeState.roleId, findRole, setError]);
-
-  const handleCreate = useCallback(() => {
-    navigateTo(`${BASE_PATH}/create`);
-  }, []);
-
-  const handleBack = useCallback(() => {
-    navigateTo(BASE_PATH);
-  }, []);
-
-  const handleWizardStepChange = useCallback((step: number) => {
-    setInternalWizardStep(step);
-  }, []);
-
-  const roleFormSubmitRef = useRef<(() => void) | null>(null);
-  const [isRoleFormValid, setIsRoleFormValid] = useState(false);
-
-  const handleFinalSubmit = useCallback(() => {
-    if (roleFormSubmitRef.current) {
-      roleFormSubmitRef.current();
-    }
-  }, []);
-
-  const handleComplete = useCallback(() => {
-    setRefreshKey((k) => k + 1);
-    navigateTo(BASE_PATH);
-  }, []);
-
-  const handleDelete = useCallback(() => {
-    if (!role) return;
-    setDeleteDialogOpen(true);
-  }, [role]);
-
-  const handleDeleteConfirm = useCallback(async () => {
-    const roleIdToDelete = listDeleteRoleId || role?.id;
-    if (!roleIdToDelete) return;
-    
-    setDeleteDialogOpen(false);
-    setListDeleteRoleId(null);
-    setListDeleteRoleName(null);
-    try {
-      await deleteRole(roleIdToDelete);
-      toast.success(`Role "${listDeleteRoleName || roleIdToDelete}" deleted successfully`);
-      setRefreshKey((k) => k + 1);
-      if (role && role.id === roleIdToDelete) handleBack();
-    } catch (_err) {
-      // Error is set by the API hook
-    }
-  }, [role, listDeleteRoleId, deleteRole, handleBack, toast, listDeleteRoleName]);
-
-  const handleListDelete = useCallback((roleId: string, roleName?: string) => {
-    setListDeleteRoleId(roleId);
-    setListDeleteRoleName(roleName || null);
-    setDeleteDialogOpen(true);
-  }, []);
-
-  // Determine if role can be edited/deleted
-  const _roleCanEdit = canUpdate && role && !isReadOnlyRole(role);
-  const roleCanDelete = canDelete && role && !isReadOnlyRole(role);
+    handleCreate,
+    handleBack,
+    handleComplete,
+    handleDelete,
+    handleDeleteConfirm,
+    retryRoleLoad,
+  } = useRolesPage();
 
   // Header configuration
   const headerProps = useMemo(() => {
@@ -209,66 +66,23 @@ export function RolesPage() {
           title: 'Roles',
           description: 'Manage roles and their privilege assignments',
           actions: (
-            <Button variant="solid" color="blue" highContrast onClick={handleCreate} disabled={!canCreate} data-testid="create-role-button" data-analytics-id="nxrm-role-create">
+            <Button variant="solid" onClick={handleCreate} disabled={!canCreate} data-testid="create-role-button" data-analytics-id="nxrm-role-create">
               <Plus size={16} /> Create Role
             </Button>
           )
         };
-      case 'create': {
-        const createSteps = ['Type', 'Setup', 'Privileges', 'Contained Roles'];
+      case 'create':
         return {
           icon: Shield,
           title: 'Create Role',
-          description: `Step ${internalWizardStep + 1}: ${createSteps[internalWizardStep]}`,
-          actions: (
-            <Button variant="soft" color="gray" onClick={handleBack}>
-              <ArrowLeft size={16} /> Back to List
-            </Button>
-          )
+          description: 'Add a new role with privileges and contained roles',
         };
-      }
-      case 'edit': {
-        // Type step is skipped in edit mode (role type is immutable once persisted),
-        // so the edit wizard runs Setup → Privileges → Contained Roles.
-        const editSteps = ['Setup', 'Privileges', 'Contained Roles'];
+      case 'detail':
         return {
           icon: Shield,
-          title: role ? `Edit ${role.name}` : 'Role Details',
-          description: role
-            ? `Step ${internalWizardStep + 1}: ${editSteps[internalWizardStep]} (Source: ${formatRoleSourceDisplay(role.source)})`
-            : 'Loading...',
-          actions: (
-            <Button variant="soft" color="gray" onClick={handleBack}>
-              <ArrowLeft size={16} /> Back to List
-            </Button>
-          )
+          title: role ? (roleCanEdit ? `Edit ${role.name}` : role.name) : 'Role Details',
+          description: role ? `Source: ${formatRoleSourceDisplay(role.source)}` : 'Loading...',
         };
-      }
-      case 'profile': {
-        const canEditThisRole = canUpdate && role && !isReadOnlyRole(role);
-        return {
-          icon: Shield,
-          title: routeState.roleId || 'Role Profile',
-          description: 'Role operational dashboard and impact analysis',
-          actions: (
-            <Flex gap="2">
-              {canEditThisRole && (
-                <Button
-                  variant="solid"
-                  color="blue"
-                  highContrast
-                  onClick={() => navigateTo(`${BASE_PATH}/${encodeURIComponent(routeState.roleId!)}`)}
-                >
-                  <Pencil size={16} /> Edit Role
-                </Button>
-              )}
-              <Button variant="soft" color="gray" onClick={handleBack}>
-                <ArrowLeft size={16} /> Back to List
-              </Button>
-            </Flex>
-          )
-        };
-      }
       default:
         return {
           icon: Shield,
@@ -276,10 +90,13 @@ export function RolesPage() {
           description: 'Manage roles'
         };
     }
-  }, [routeState.viewMode, role, canCreate, handleCreate, handleBack, internalWizardStep, canUpdate, routeState.roleId]);
+  }, [routeState.viewMode, role, canCreate, handleCreate, roleCanEdit]);
+
+  const showTransientErrorCard =
+    routeState.viewMode === 'detail' && roleLoadErrorType === 'transient' && !role;
 
   return (
-    <Box 
+    <Box
       className="roles-page"
       data-testid="roles-page"
       data-view={routeState.viewMode}
@@ -298,34 +115,64 @@ export function RolesPage() {
       <Box className="roles-page__content">
         {routeState.viewMode === 'list' && (
           <>
-            <PageHeader 
-              icon={headerProps.icon} 
-              title={headerProps.title} 
-              description={headerProps.description} 
-              actions={headerProps.actions} 
-            
-          breadcrumbs={[
-            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-            { label: 'Roles' }
-          ]}
-/>
+            <PageHeader
+              icon={headerProps.icon}
+              title={headerProps.title}
+              description={headerProps.description}
+              actions={headerProps.actions}
+              breadcrumbs={[
+                { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+                { label: 'Roles' },
+              ]}
+            />
             <RolesList
               key={refreshKey}
-              onSelect={(roleId, mode) => {
-                const path = mode === 'edit'
-                  ? `${BASE_PATH}/${encodeURIComponent(roleId)}`
-                  : `${BASE_PATH}/${encodeURIComponent(roleId)}/profile`;
-                navigateTo(path);
-              }}
-              onDelete={canDelete ? handleListDelete : undefined}
+              onSelect={(roleId) => navigateTo(`${BASE_PATH}/${encodeURIComponent(roleId)}`)}
               onCreate={handleCreate}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
             />
           </>
         )}
 
-        {routeState.viewMode === 'profile' && routeState.roleId && (
+        {showTransientErrorCard && (
+          <>
+            <PageHeader
+              icon={Shield}
+              title="Role Details"
+              description="Failed to load"
+              breadcrumbs={[
+                { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+                { label: 'Roles', onClick: handleBack },
+              ]}
+            />
+            <Flex
+              direction="column"
+              align="center"
+              gap="3"
+              className="roles-page__error-card"
+              data-testid="role-load-error"
+              p="6"
+            >
+              <AlertTriangle size={32} />
+              <Text size="3" weight="medium">Unable to load role</Text>
+              <Text size="2" color="gray">{error || 'An unexpected error occurred while loading this role.'}</Text>
+              <Flex gap="2">
+                <SettingsButton
+                  variant="primary"
+                  icon={RotateCcw}
+                  onClick={retryRoleLoad}
+                  testId="role-load-retry"
+                >
+                  Retry
+                </SettingsButton>
+                <SettingsButton variant="secondary" onClick={handleBack}>
+                  Back to List
+                </SettingsButton>
+              </Flex>
+            </Flex>
+          </>
+        )}
+
+        {routeState.viewMode === 'detail' && role && (
           <>
             <PageHeader
               icon={Shield}
@@ -334,116 +181,70 @@ export function RolesPage() {
               breadcrumbs={[
                 { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
                 { label: 'Roles', onClick: handleBack },
-                { label: routeState.roleId || 'Role Profile' },
+                { label: role.name },
               ]}
-              actions={headerProps.actions}
             />
-            <RoleProfilePage 
-              roleName={routeState.roleId} 
-              onBack={handleBack} 
+            <RoleDetail
+              role={role}
+              loading={loading}
+              canEdit={roleCanEdit}
+              canDelete={roleCanDelete}
+              onDelete={handleDelete}
+              onCancel={handleBack}
+              onComplete={handleComplete}
+              error={error || undefined}
             />
           </>
         )}
 
-        {(routeState.viewMode === 'create' || (routeState.viewMode === 'edit' && role)) && (() => {
-          // Edit mode skips the Type step (role type is immutable once persisted),
-          // so the wizard is 3 steps: Setup → Privileges → Contained Roles.
-          // RoleForm still interprets `wizardStep` in its logical sense (0=Type, 1=Setup,
-          // 2=Privileges, 3=Roles), so in edit mode we shift by +1 at the boundary.
-          const isCreateView = routeState.viewMode === 'create';
-          const steps = isCreateView
-            ? [
-                { id: 'type', label: 'Type' },
-                { id: 'setup', label: 'Setup' },
-                { id: 'privileges', label: 'Privileges' },
-                { id: 'roles', label: 'Contained Roles' },
-              ]
-            : [
-                { id: 'setup', label: 'Setup' },
-                { id: 'privileges', label: 'Privileges' },
-                { id: 'roles', label: 'Contained Roles' },
-              ];
-          const setupStepIndex = isCreateView ? 1 : 0;
-          const finalStepIndex = isCreateView ? 3 : 2;
-          const logicalWizardStep = isCreateView ? internalWizardStep : internalWizardStep + 1;
-          return (
-          <WizardForm
-            steps={steps}
-            currentStep={internalWizardStep}
-            onStepChange={handleWizardStepChange}
-            onComplete={handleFinalSubmit}
-            onCancel={handleBack}
-            completeLabel={isCreateView ? 'Create Role' : 'Save'}
-            submitAnalyticsId={isCreateView ? 'nxrm-role-create' : 'nxrm-role-save'}
-            dirty={false}
-            canAdvance={
-              internalWizardStep === setupStepIndex || internalWizardStep === finalStepIndex
-                ? isRoleFormValid
-                : true
-            }
-            loading={loading && internalWizardStep === finalStepIndex}
-            noDirtyTracking={true}
-            title={headerProps.title}
-            description={headerProps.description}
-            footerExtra={
-              <Flex align="center" gap="3">
-                {headerProps.actions}
-                {routeState.viewMode === 'edit' && roleCanDelete && (
-                  <SettingsButton variant="danger" onClick={handleDelete} disabled={loading} icon={Trash2}>
-                    Delete Role
-                  </SettingsButton>
-                )}
-              </Flex>
-            }
-          >
+        {routeState.viewMode === 'create' && (
+          <>
+            <PageHeader
+              icon={Shield}
+              title={headerProps.title}
+              description={headerProps.description}
+              breadcrumbs={[
+                { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+                { label: 'Roles', onClick: handleBack },
+                { label: 'Create' },
+              ]}
+            />
             <RoleForm
-              isCreate={isCreateView}
-              role={role}
+              isCreate
               onCancel={handleBack}
               onComplete={handleComplete}
               loading={loading}
-              onSubmitRef={roleFormSubmitRef}
-              onValidationChange={setIsRoleFormValid}
-              wizardStep={logicalWizardStep}
-              hideActions
             />
-          </WizardForm>
-          );
-        })()}
+          </>
+        )}
       </Box>
 
-      {/* Delete Confirmation Dialog (edit view or list) */}
-      {(roleCanDelete || listDeleteRoleId) && (
-        <ConfirmDialog
+      {roleCanDelete && (
+        <DeleteConfirmationModal
           open={deleteDialogOpen}
-          testId="delete-role-dialog"
-          data-analytics-id="nxrm-role-delete"
-          onOpenChange={(open) => {
-            setDeleteDialogOpen(open);
-            if (!open) setListDeleteRoleId(null);
-          }}
-          title="Delete Role?"
-          message="This action cannot be undone."
-          entityName={listDeleteRoleName || listDeleteRoleId || role?.name}
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
-          variant="danger"
+          onClose={() => setDeleteDialogOpen(false)}
           onConfirm={handleDeleteConfirm}
+          entityName={role?.name}
+          entityType="role"
         >
           {role && (
-            <Box mt="3">
+            <Box>
               <Flex gap="2">
                 <Text size="2" color="gray">Privileges:</Text>
-                <Text size="2">{role.privileges.length === 0 ? 'None' : role.privileges.length === 1 ? '1 privilege' : `${role.privileges.length} privileges`}</Text>
+                <Text size="2">
+                  {role.privileges.length === 0
+                    ? 'None'
+                    : role.privileges.length === 1
+                      ? '1 privilege'
+                      : `${role.privileges.length} privileges`}
+                </Text>
               </Flex>
+              <Text as="p" size="2" color="gray" mt="2">
+                Users assigned to this role will lose access to its privileges.
+              </Text>
             </Box>
           )}
-          <Box mt="3">
-            <Text as="p" size="2" color="gray">
-              Users assigned to this role will lose access to its privileges.
-            </Text>
-          </Box>
-        </ConfirmDialog>
+        </DeleteConfirmationModal>
       )}
     </Box>
   );

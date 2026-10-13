@@ -19,7 +19,7 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 
 /**
@@ -36,7 +36,7 @@ public abstract class ExceptionMapperSupport<E extends Throwable>
 
   @Override
   public Response toResponse(final E exception) {
-    checkNotNull(exception);
+    requireNonNull(exception);
 
     // Generate unique identifier
     final String id = generateFaultId();

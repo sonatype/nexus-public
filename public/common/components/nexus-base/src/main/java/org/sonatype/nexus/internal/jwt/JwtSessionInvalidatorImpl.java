@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
@@ -57,9 +57,9 @@ public class JwtSessionInvalidatorImpl
       final JwtHelper jwtHelper,
       final AuditRecorder auditRecorder)
   {
-    this.revocationService = checkNotNull(revocationService);
-    this.jwtHelper = checkNotNull(jwtHelper);
-    this.auditRecorder = checkNotNull(auditRecorder);
+    this.revocationService = requireNonNull(revocationService);
+    this.jwtHelper = requireNonNull(jwtHelper);
+    this.auditRecorder = requireNonNull(auditRecorder);
   }
 
   @Override

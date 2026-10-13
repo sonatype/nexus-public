@@ -86,4 +86,23 @@ public interface BrowseFacet
    * @return the browse node if found
    */
   Optional<BrowseNode> getByRequestPath(String requestPath);
+
+  /**
+   * Returns the internal node id of the browse node for the given asset, or {@code null} if none
+   * exists. Must be called before the asset is deleted, because ON DELETE SET NULL will clear the
+   * asset_id column in the browse node table once the asset row is removed.
+   *
+   * @param assetId internal asset id
+   * @return node id, or {@code null}
+   */
+  @Nullable
+  Long getNodeIdForAsset(Integer assetId);
+
+  /**
+   * Deletes the browse node with the given node id and cleans up any ancestor nodes that become
+   * empty as a result (PostgreSQL only).
+   *
+   * @param nodeId node id to delete
+   */
+  void deleteByNodeIdAndCleanParents(Long nodeId);
 }

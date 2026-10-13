@@ -36,4 +36,11 @@ public record ComponentVersionQuery(
     String sort,
     SortDirection direction)
 {
+  public ComponentVersionQuery {
+    SearchFilterValidator.validate(format);
+    SearchFilterValidator.validate(namespace);
+    SearchFilterValidator.validate(name);
+    SearchFilterValidator.validate(versionFilter);
+    SearchFilterValidator.validate(sort);
+  }
 }

@@ -18,7 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.view.Parameters;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * HTTP {@link Parameters} adapter.
@@ -29,7 +29,7 @@ class HttpParametersAdapter
     extends Parameters
 {
   public HttpParametersAdapter(final HttpServletRequest request) {
-    checkNotNull(request);
+    requireNonNull(request);
     Enumeration<String> names = request.getParameterNames();
     while (names.hasMoreElements()) {
       String name = names.nextElement();

@@ -12,14 +12,17 @@
  */
 package org.sonatype.nexus.repository.content.browse.store;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
+import org.sonatype.nexus.repository.content.upgrades.SoftDeleteAnchorMigrationStep_2_169;
 import org.sonatype.nexus.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class BrowseNodeStore<T extends BrowseNodeDAO>
     extends ContentStoreSupport<T>
 {
+  /**
+   * Optional dependency serving two independent concerns:
+   * <ul>
+   * <li>{@link #isPostgresql()} — dialect detection for the {@code getByDisplayPath} SQL,
+   * pre-existing.</li>
+   * <li>{@link #softDeleteAvailable()} — gates the {@code deleted_on IS NULL} predicate
+   * behind {@link SoftDeleteAnchorMigrationStep_2_169#VERSION}.</li>
+   * </ul>
+   * Both fall back to {@code false} when this is null (which only happens in unit tests
+   * that construct the store directly without Spring): {@code isPostgresql()} exercises the
+   * H2 code path, and {@code softDeleteAvailable()} returns false — both of which are the
+   * correct defaults for unit-test fixtures.
+   */
+  private DatabaseCheck databaseCheck;
+
+  /** See {@code ComponentStore#softDeleteAvailable}. */
+  private volatile boolean softDeleteAvailable;
+
   @Autowired
   public BrowseNodeStore(
       final DataSessionSupplier sessionSupplier,
@@ -39,6 +60,28 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
       final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
+  }
+
+  /** See the {@link #databaseCheck} field for what consumers this serves. */
+  @Autowired(required = false)
+  public void setDatabaseCheck(final DatabaseCheck databaseCheck) {
+    this.databaseCheck = databaseCheck;
+  }
+
+  private boolean isPostgresql() {
+    return databaseCheck != null && databaseCheck.isPostgresql();
+  }
+
+  /**
+   * See {@code ComponentStore#softDeleteAvailable()}. Disabled for NEXUS-54969 (returns {@code false}
+   * unconditionally); when re-enabled it would again gate on {@link SoftDeleteAnchorMigrationStep_2_169#VERSION}.
+   */
+  protected boolean softDeleteAvailable() {
+    // NEXUS-54969: soft-delete disabled at the DB layer. The _2_169 anchor still advances the schema version, so
+    // the previous isAtLeast() gate would flip true even though the (now no-op) column migration never added
+    // deleted_on to upgraded format tables -- which would cause "column deleted_on does not exist" in the
+    // (conan-only) browse-node join filter. Hardcoded false keeps deleted_on out of every read. One-line revert.
+    return false;
   }
 
   /**
@@ -59,7 +102,7 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().getByDisplayPath(repositoryId, displayPath, limit, filter, filterParams);
+    return dao().getByDisplayPath(repositoryId, displayPath, limit, filter, filterParams, softDeleteAvailable());
   }
 
   /**
@@ -153,7 +196,15 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    */
   @Transactional
   public Long deleteByAssetIdAndPath(final Integer internalAssetId, final String path) {
-    return dao().deleteByAssetIdAndPath(internalAssetId, path);
+    if (isPostgresql()) {
+      return dao().deleteByAssetIdAndPath(internalAssetId, path);
+    }
+    Long parentId = dao().findParentByAssetIdAndPath(internalAssetId, path);
+    if (parentId == null) {
+      return null;
+    }
+    dao().deleteNodeByAssetIdAndPath(internalAssetId, path);
+    return parentId;
   }
 
   /**
@@ -164,7 +215,15 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    */
   @Transactional
   public Long deleteByAssetId(final Integer internalAssetId) {
-    return dao().deleteByAssetId(internalAssetId);
+    if (isPostgresql()) {
+      return dao().deleteByAssetId(internalAssetId);
+    }
+    Long parentId = dao().findParentByAssetId(internalAssetId);
+    if (parentId == null) {
+      return null;
+    }
+    dao().deleteNodeByAssetId(internalAssetId);
+    return parentId;
   }
 
   /**
@@ -175,7 +234,25 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    */
   @Transactional
   public List<BrowseNode> getNodeParents(final Long internalNodeId) {
-    return dao().getNodeParents(internalNodeId);
+    if (isPostgresql()) {
+      return dao().getNodeParents(internalNodeId);
+    }
+    // H2: walk parents iteratively (no recursive CTE on H2). Bounded by tree depth.
+    List<BrowseNode> parents = new ArrayList<>();
+    BrowseNodeData current = dao().getByNodeId(internalNodeId);
+    if (current == null) {
+      return parents;
+    }
+    long parentId = current.getParentId();
+    while (parentId != 0L) {
+      BrowseNodeData parent = dao().getByNodeId(parentId);
+      if (parent == null) {
+        break;
+      }
+      parents.add(parent);
+      parentId = parent.getParentId();
+    }
+    return parents;
   }
 
   /**
@@ -213,5 +290,29 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   @Transactional
   public List<BrowseNode> getChildByParentNodeId(final Long parentNodeId, final int limit, final int offset) {
     return dao().getChildByParentNodeId(parentNodeId, limit, offset);
+  }
+
+  /**
+   * Returns the node id of the browse node for the given asset, or {@code null} if none exists.
+   *
+   * @param assetId the internal asset id
+   * @return the node id, or {@code null}
+   */
+  @Transactional
+  @Nullable
+  public Long getNodeIdForAsset(final int assetId) {
+    return dao().getNodeIdForAsset(assetId);
+  }
+
+  /**
+   * Deletes the browse node with the given node id and returns its parent id (PostgreSQL only).
+   *
+   * @param nodeId the node id to delete
+   * @return the parent node id, or {@code null}
+   */
+  @Transactional
+  @Nullable
+  public Long deleteByNodeIdReturningParentId(final long nodeId) {
+    return dao().deleteByNodeIdReturningParentId(nodeId);
   }
 }

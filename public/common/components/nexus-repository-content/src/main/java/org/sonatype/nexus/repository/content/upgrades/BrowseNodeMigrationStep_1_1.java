@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.content.browse.RebuildBrowseNodesManager;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.sonatype.nexus.upgrade.datastore.UpgradeContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Resolves an issue where multiple browse nodes were created with the same parent and the same display name.
@@ -52,7 +52,7 @@ public class BrowseNodeMigrationStep_1_1
       final UpgradeContext upgradeContext)
   {
     this.formats = formats.stream().map(Format::getValue).collect(Collectors.toList());
-    this.upgradeContext = checkNotNull(upgradeContext);
+    this.upgradeContext = requireNonNull(upgradeContext);
   }
 
   @Override

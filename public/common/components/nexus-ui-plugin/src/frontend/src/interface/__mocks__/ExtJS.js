@@ -62,7 +62,7 @@ export default class ExtJS {
   };
 
   static formatDate = jest.fn((_date, _format) => '2024-01-01');
-  static isProEdition = jest.fn(() => true);
+  static isLicensedEdition = jest.fn(() => true);
   static checkPermission = jest.fn(() => true);
 
   static useUser = jest.fn(() => ({
@@ -100,4 +100,9 @@ export default class ExtJS {
   static waitForExtJs = jest.fn((callback) => callback());
   static arePermissionsReady = jest.fn(() => true);
   static waitForPermissions = jest.fn().mockResolvedValue(undefined);
+  static calculateTimeout = jest.fn().mockReturnValue(10000);
 }
+
+// Mirror the production module's `export { ExtJS }` re-export so consumers using
+// `import { ExtJS } from '.../ExtJS'` resolve to the same mock class as the default import.
+export { ExtJS };

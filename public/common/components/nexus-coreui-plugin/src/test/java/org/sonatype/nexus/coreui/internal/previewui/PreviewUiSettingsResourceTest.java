@@ -18,6 +18,7 @@ import org.sonatype.nexus.kv.KeyValueStore;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,11 +30,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SWITCH_FEEDBACK_DISABLED_KEY;
 
-@ExtendWith({AuthenticationExtension.class, MockitoExtension.class})
+@ExtendWith({AuthenticationExtension.class, MockitoExtension.class, ValidationExtension.class})
 @WithUser
 class PreviewUiSettingsResourceTest
 {
@@ -165,5 +167,57 @@ class PreviewUiSettingsResourceTest
     settings.setDisableSwitchFeedback(false);
 
     assertDoesNotThrow(() -> underTest.update(settings));
+  }
+
+  @Test
+  void shouldReadDefaultToPreviewUiTrueWhenNoStoredPreferenceAndSystemDefaultTrue() {
+    PreviewUiSettingsResource underTest =
+        new PreviewUiSettingsResource(keyValueStore, false, false, true, false, false);
+
+    assertThat(underTest.read().isDefaultToPreviewUi(), is(true));
+  }
+
+  @Test
+  void shouldReadDefaultToPreviewUiFalseWhenNoStoredPreferenceAndSystemDefaultFalse() {
+    PreviewUiSettingsResource underTest =
+        new PreviewUiSettingsResource(keyValueStore, false, false, false, false, false);
+
+    assertThat(underTest.read().isDefaultToPreviewUi(), is(false));
+  }
+
+  @Test
+  void shouldHonorUserExplicitClassicPreferenceEvenWhenSystemDefaultIsPreview() {
+    lenient().when(keyValueStore.getBoolean("preview.ui.default.enabled")).thenReturn(Optional.of(false));
+
+    PreviewUiSettingsResource underTest =
+        new PreviewUiSettingsResource(keyValueStore, false, false, true, false, false);
+
+    assertThat(underTest.read().isDefaultToPreviewUi(), is(false));
+  }
+
+  @Test
+  void shouldHonorUserExplicitPreviewPreferenceEvenWhenSystemDefaultIsClassic() {
+    lenient().when(keyValueStore.getBoolean("preview.ui.default.enabled")).thenReturn(Optional.of(true));
+
+    PreviewUiSettingsResource underTest =
+        new PreviewUiSettingsResource(keyValueStore, false, false, false, false, false);
+
+    assertThat(underTest.read().isDefaultToPreviewUi(), is(true));
+  }
+
+  @Test
+  void shouldReadAnonymousEnabledTrueWhenNoStoredPreferenceAndSystemDefaultTrue() {
+    PreviewUiSettingsResource underTest =
+        new PreviewUiSettingsResource(keyValueStore, true, false, false, false, false);
+
+    assertThat(underTest.read().isAnonymousEnabled(), is(true));
+  }
+
+  @Test
+  void shouldReadLoggedInEnabledTrueWhenNoStoredPreferenceAndSystemDefaultTrue() {
+    PreviewUiSettingsResource underTest =
+        new PreviewUiSettingsResource(keyValueStore, false, true, false, false, false);
+
+    assertThat(underTest.read().isLoggedInEnabled(), is(true));
   }
 }

@@ -30,10 +30,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -74,8 +74,8 @@ public abstract class RepositoryTaskSupport
 
   @Autowired
   public void install(final RepositoryManager repositoryManager, @Qualifier(GroupType.NAME) final Type groupType) {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.groupType = checkNotNull(groupType, "repository group type required");
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.groupType = requireNonNull(groupType, "repository group type required");
   }
 
   @Override

@@ -13,6 +13,19 @@
 
 import { useState, useEffect } from 'react';
 
+/**
+ * Returns `value` after it has stopped changing for `delayMs` (trailing debounce). Use this for
+ * search and filter inputs: bind the input to immediate state so typing stays responsive, and
+ * feed the debounced value to whatever issues the request.
+ *
+ * Pass `APIConstants.DEBOUNCE_DELAY` as the delay unless a screen has a reason to differ — it is
+ * the app-wide interval already used by the list machines and the combobox field factory.
+ *
+ * @example
+ * const [search, setSearch] = useState('');
+ * const debouncedSearch = useDebounced(search, APIConstants.DEBOUNCE_DELAY);
+ * useEffect(() => { fetchResults(debouncedSearch); }, [debouncedSearch]);
+ */
 export function useDebounced<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {

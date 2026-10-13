@@ -57,8 +57,8 @@ import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.arrayWithSize;
@@ -647,7 +647,7 @@ public class KeyStoreManagerImplTest
       private final String keyStoreName;
 
       MemKeyStoreStorage(final String keyStoreName) {
-        this.keyStoreName = checkNotNull(keyStoreName);
+        this.keyStoreName = requireNonNull(keyStoreName);
       }
 
       @Override

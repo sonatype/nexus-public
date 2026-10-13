@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.view.Payload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -51,9 +51,9 @@ public class AptHostedFacet
       final Payload payload,
       final PackageInfo packageInfo) throws IOException
   {
-    checkNotNull(assetPath);
-    checkNotNull(payload);
-    checkNotNull(packageInfo);
+    requireNonNull(assetPath);
+    requireNonNull(payload);
+    requireNonNull(packageInfo);
 
     FluentAsset asset = content().put(assetPath, payload, packageInfo);
     metadata().addPackageMetadata(asset);

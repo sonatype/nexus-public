@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.audit.protect;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Posted on the event bus when Protect-related configuration changes (firewall, health check, cleanup task).
@@ -36,11 +36,11 @@ public class ProtectConfigChangedEvent
       final String fromValue,
       final String toValue)
   {
-    this.domain = checkNotNull(domain);
-    this.type = checkNotNull(type);
-    this.context = checkNotNull(context);
-    this.fromValue = checkNotNull(fromValue);
-    this.toValue = checkNotNull(toValue);
+    this.domain = requireNonNull(domain);
+    this.type = requireNonNull(type);
+    this.context = requireNonNull(context);
+    this.fromValue = requireNonNull(fromValue);
+    this.toValue = requireNonNull(toValue);
   }
 
   public String getDomain() {

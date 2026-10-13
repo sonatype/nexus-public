@@ -45,7 +45,7 @@ import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.asList;
 import static jakarta.ws.rs.core.MediaType.TEXT_HTML;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
@@ -90,13 +90,13 @@ public class RepositoryBrowseResource
       final TemplateHelper templateHelper,
       final SecurityHelper securityHelper)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.browseNodeQueryService = checkNotNull(browseNodeQueryService);
-    this.configuration = checkNotNull(configuration);
-    this.templateHelper = checkNotNull(templateHelper);
-    this.securityHelper = checkNotNull(securityHelper);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.browseNodeQueryService = requireNonNull(browseNodeQueryService);
+    this.configuration = requireNonNull(configuration);
+    this.templateHelper = requireNonNull(templateHelper);
+    this.securityHelper = requireNonNull(securityHelper);
     this.template = getClass().getResource(TEMPLATE_RESOURCE);
-    checkNotNull(template);
+    requireNonNull(template);
   }
 
   @GET

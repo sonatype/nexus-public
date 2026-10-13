@@ -28,8 +28,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -51,7 +51,7 @@ public class LocalAuthTicketCache
 
   @Autowired
   public LocalAuthTicketCache(@Value(EXPIRE_VALUE) final Duration expireAfter) {
-    this.expireAfter = checkNotNull(expireAfter);
+    this.expireAfter = requireNonNull(expireAfter);
     log.debug("Expire after: {}", expireAfter);
   }
 

@@ -37,7 +37,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Maven 2 repository metadata updater.
@@ -62,7 +62,7 @@ public abstract class AbstractMetadataUpdater
    */
   public AbstractMetadataUpdater(final boolean update, final Repository repository) {
     this.update = update;
-    this.repository = checkNotNull(repository);
+    this.repository = requireNonNull(repository);
     this.repositoryMetadataMerger = new RepositoryMetadataMerger();
     this.rebuildChecksums = false;
   }
@@ -78,7 +78,7 @@ public abstract class AbstractMetadataUpdater
       final boolean rebuildChecksums)
   {
     this.update = update;
-    this.repository = checkNotNull(repository);
+    this.repository = requireNonNull(repository);
     this.repositoryMetadataMerger = new RepositoryMetadataMerger();
     this.rebuildChecksums = rebuildChecksums;
   }
@@ -184,8 +184,8 @@ public abstract class AbstractMetadataUpdater
   protected void update(final MavenPath mavenPath, final Maven2Metadata metadata) {
     log.debug("Updating Metadata in {}", mavenPath.getPath());
     try {
-      checkNotNull(mavenPath);
-      checkNotNull(metadata);
+      requireNonNull(mavenPath);
+      requireNonNull(metadata);
 
       final Optional<Metadata> oldMetadata = safeRead(mavenPath);
       if (oldMetadata.isPresent()) {
@@ -210,8 +210,8 @@ public abstract class AbstractMetadataUpdater
   protected void replace(final MavenPath mavenPath, final Maven2Metadata metadata) {
     log.debug("Replacing Metadata in {}", mavenPath.getPath());
     try {
-      checkNotNull(mavenPath);
-      checkNotNull(metadata);
+      requireNonNull(mavenPath);
+      requireNonNull(metadata);
 
       final Optional<Metadata> oldMetadata = safeRead(mavenPath);
       if (oldMetadata.isPresent()) {

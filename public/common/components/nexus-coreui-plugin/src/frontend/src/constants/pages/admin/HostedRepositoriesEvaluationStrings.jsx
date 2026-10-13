@@ -113,6 +113,12 @@ export default {
     INCOMPLETE_MODAL: {
       MESSAGE: 'You have not selected any repositories for monitoring. Please select at least one repository or go back to modify settings.',
     },
+    UNSUPPORTED_FORMAT: {
+      TAG: 'Not supported',
+      ENABLE_BLOCKED: (repositories, supportedFormats) =>
+        `Monitoring can't be enabled for ${repositories}. ` +
+        `Hosted repository evaluation only supports these formats: ${supportedFormats}.`
+    },
     ERROR_MODAL: {
       TITLE: 'Save Failed',
       MESSAGE: 'An error occurred while saving the settings. Please try again.',

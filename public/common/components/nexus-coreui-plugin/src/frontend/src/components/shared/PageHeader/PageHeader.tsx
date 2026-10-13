@@ -128,16 +128,9 @@ export function PageHeader({
 
       {/* Main Header */}
       <Flex align="center" justify="between" gap="4">
-        <Flex align="center" gap="2">
-          <Heading as="h1" size="6" weight="bold">
-            {title}
-          </Heading>
-          {description && (
-            <RadixText size="2" color="gray">
-              {description}
-            </RadixText>
-          )}
-        </Flex>
+        <Heading as="h1" size="6" weight="bold">
+          {title}
+        </Heading>
 
         {/* Actions */}
         {actions && (
@@ -146,6 +139,12 @@ export function PageHeader({
           </Flex>
         )}
       </Flex>
+
+      {description && (
+        <RadixText as="p" size="2" color="gray" mt="1">
+          {description}
+        </RadixText>
+      )}
 
       {/* Children (e.g., filters, search inputs) */}
       {children && <Box mt="3">{children}</Box>}

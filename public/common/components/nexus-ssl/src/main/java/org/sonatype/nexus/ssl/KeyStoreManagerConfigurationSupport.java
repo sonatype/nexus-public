@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.time.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Mutable {@link KeyStoreManagerConfiguration}.
@@ -56,7 +56,7 @@ public class KeyStoreManagerConfigurationSupport
   private boolean fipsEnabled;
 
   public void setKeyStoreType(final String keyStoreType) {
-    this.keyStoreType = checkNotNull(keyStoreType);
+    this.keyStoreType = requireNonNull(keyStoreType);
     log.debug("Key-store type: {}", keyStoreType);
   }
 
@@ -66,7 +66,7 @@ public class KeyStoreManagerConfigurationSupport
   }
 
   public void setKeyAlgorithm(final String keyAlgorithm) {
-    this.keyAlgorithm = checkNotNull(keyAlgorithm);
+    this.keyAlgorithm = requireNonNull(keyAlgorithm);
     log.debug("Key algorithm: {}", keyAlgorithm);
   }
 
@@ -96,7 +96,7 @@ public class KeyStoreManagerConfigurationSupport
   }
 
   public void setSignatureAlgorithm(final String signatureAlgorithm) {
-    this.signatureAlgorithm = checkNotNull(signatureAlgorithm);
+    this.signatureAlgorithm = requireNonNull(signatureAlgorithm);
     log.debug("Signature algorithm: {}", signatureAlgorithm);
   }
 
@@ -106,7 +106,7 @@ public class KeyStoreManagerConfigurationSupport
   }
 
   public void setKeyManagerAlgorithm(String keyManagerAlgorithm) {
-    checkNotNull(keyManagerAlgorithm);
+    requireNonNull(keyManagerAlgorithm);
     if (keyManagerAlgorithm.equals(DEFAULT)) {
       this.keyManagerAlgorithm = KeyManagerFactory.getDefaultAlgorithm();
     }
@@ -122,7 +122,7 @@ public class KeyStoreManagerConfigurationSupport
   }
 
   public void setTrustManagerAlgorithm(final String trustManagerAlgorithm) {
-    checkNotNull(trustManagerAlgorithm);
+    requireNonNull(trustManagerAlgorithm);
     if (trustManagerAlgorithm.equals(DEFAULT)) {
       this.trustManagerAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
     }

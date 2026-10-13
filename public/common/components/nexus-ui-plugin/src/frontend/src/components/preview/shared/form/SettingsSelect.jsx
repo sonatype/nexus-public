@@ -62,13 +62,10 @@ export function SettingsSelect({
     value: option.value === '' ? NONE_VALUE : option.value,
   }));
 
-  // For the Root's value: if the consumer included an empty-valued option
-  // (which we mapped to NONE_VALUE), use NONE_VALUE so that option stays
-  // selectable. Otherwise pass `undefined` so Radix shows the placeholder
-  // when nothing is selected.
+  // Empty state passes "" (not undefined) so Radix's useControllableState stays controlled from mount.
   const hasNoneOption = normalizedOptions.some((o) => o.value === NONE_VALUE);
   const isEmpty = value === '' || value === undefined;
-  const normalizedValue = isEmpty ? (hasNoneOption ? NONE_VALUE : undefined) : value;
+  const normalizedValue = isEmpty ? (hasNoneOption ? NONE_VALUE : '') : value;
 
   const handleChange = (newValue) => {
     if (onChange) {

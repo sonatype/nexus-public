@@ -21,7 +21,7 @@ import org.sonatype.nexus.transaction.TransactionalStore;
 import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public abstract class TransactionalStoreSupport<DAO>
     extends StateGuardLifecycleSupport
@@ -39,8 +39,8 @@ public abstract class TransactionalStoreSupport<DAO>
       final String storeName,
       final Class<? extends TransactionalStoreSupport> storeParentClass)
   {
-    this.sessionSupplier = checkNotNull(sessionSupplier);
-    this.storeName = checkNotNull(storeName);
+    this.sessionSupplier = requireNonNull(sessionSupplier);
+    this.storeName = requireNonNull(storeName);
     this.daoClass = (Class) Iterables.getOnlyElement(TypeUtils.getTypeArguments(getClass(), storeParentClass).values());
   }
 
@@ -51,8 +51,8 @@ public abstract class TransactionalStoreSupport<DAO>
       final Class<? extends TransactionalStoreSupport> storeParentClass,
       final Class<DAO> daoClass)
   {
-    this.sessionSupplier = checkNotNull(sessionSupplier);
-    this.storeName = checkNotNull(storeName);
+    this.sessionSupplier = requireNonNull(sessionSupplier);
+    this.storeName = requireNonNull(storeName);
     this.daoClass = daoClass;
   }
 

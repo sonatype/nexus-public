@@ -21,15 +21,19 @@ const mockStateValues = {
   'anonymousEnabled': true,
   'loggedInEnabled': true,
   'disableSwitchFeedback': false,
+  'editionId': 'nexus-professional-edition',
 };
 
 const mockUseUser = jest.fn(() => ({ authenticated: false }));
-const mockUseStatus = jest.fn(() => ({ edition: 'PRO' }));
+const mockUseStatus = jest.fn(() => ({ edition: 'PRO', version: '3.78.0' }));
 const mockCheckPermission = jest.fn(() => true);
 const mockRestClientPost = jest.fn(() => Promise.resolve({ data: {} }));
 const mockState = jest.fn(() => ({
   getValue: jest.fn((key, defaultVal) => mockStateValues[key] ?? defaultVal),
 }));
+// Promoted to a jest.fn so individual tests can override behavior (e.g. simulate the
+// early-bootstrap window where ExtJS.useState is not yet attached and returns undefined).
+const mockUseState = jest.fn((fn) => fn());
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -37,6 +41,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     useStatus: (...args) => mockUseStatus(...args),
     useUser: (...args) => mockUseUser(...args),
     state: (...args) => mockState(...args),
+    useState: (...args) => mockUseState(...args),
     checkPermission: (...args) => mockCheckPermission(...args),
     isExtJsRendered: jest.fn(() => false),
     refresh: jest.fn(),
@@ -46,6 +51,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     post: (...args) => mockRestClientPost(...args),
   },
   useSideNavbarOpenState: () => [true],
+  HelpMenu: () => <div data-testid="help-menu" />,
 }));
 
 jest.mock('@uirouter/react', () => ({
@@ -58,7 +64,6 @@ jest.mock('../../../contexts/ThemeContext', () => ({
 
 jest.mock('../SearchRadix', () => () => <div data-testid="search-radix" />);
 jest.mock('../SystemStatusRadix', () => () => <div data-testid="system-status" />);
-jest.mock('../HelpMenuRadix', () => () => <div data-testid="help-menu" />);
 jest.mock('../LoginAndUserButtonRadix', () => () => <div data-testid="login-button" />);
 jest.mock('../../ThemeSwitcher/ThemeSwitcher', () => () => null);
 
@@ -82,9 +87,12 @@ describe('GlobalHeaderRadix', () => {
     mockStateValues['anonymousEnabled'] = true;
     mockStateValues['loggedInEnabled'] = true;
     mockStateValues['disableSwitchFeedback'] = false;
+    mockStateValues['editionId'] = 'nexus-professional-edition';
     mockState.mockReturnValue({
       getValue: jest.fn((key, defaultVal) => mockStateValues[key] ?? defaultVal),
     });
+    // Default: run the factory just as ExtJS.useState would once state is hydrated.
+    mockUseState.mockImplementation((fn) => fn());
   });
 
   afterEach(() => {
@@ -145,6 +153,45 @@ describe('GlobalHeaderRadix', () => {
     expect(screen.getByLabelText('Refresh')).toBeInTheDocument();
   });
 
+  describe('edition badge', () => {
+    it('renders the edition badge when editionId resolves to a known edition', () => {
+      renderHeader();
+      // 'nexus-professional-edition' → 'Pro' via getEditionDisplayName.
+      expect(screen.getByText('Pro')).toBeInTheDocument();
+    });
+
+    it('does not render an empty badge when editionId is an empty string', () => {
+      // Regression guard for the {editionId && <Badge/>} falsy render — a bare
+      // string '' from state would otherwise leave a blank text node in the flex row.
+      mockStateValues['editionId'] = '';
+
+      const { container } = renderHeader();
+
+      // The badge (Radix root class) must not be present when there is no edition to show.
+      expect(container.querySelector('.rt-Badge')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('bootstrap resilience', () => {
+    it('does not throw when ExtJS.useState returns undefined during early boot', () => {
+      // Simulate the pre-hydration window where the useState hook has not yet resolved
+      // a value from Rapture state. The header must degrade rather than throw — this is
+      // what the `ExtJS.useState?.(...)` optional-chain guard defends against, and this
+      // test locks the guarded path so it cannot silently regress.
+      mockUseState.mockImplementation(() => undefined);
+
+      expect(() => renderHeader()).not.toThrow();
+    });
+
+    it('does not render the edition badge before editionId resolves at bootstrap', () => {
+      mockUseState.mockImplementation(() => undefined);
+
+      const { container } = renderHeader();
+
+      expect(container.querySelector('.rt-Badge')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Classic UI fallback (unmapped routes)', () => {
     it('shows "Not Available in Classic UI" dialog without sending feedback on unmapped Preview routes', async () => {
       window.location.hash = 'preview/experimental/feature';
@@ -168,6 +215,34 @@ describe('GlobalHeaderRadix', () => {
       expect(screen.getByText(/This view is only available in the Nexus One UI/)).toBeInTheDocument();
       expect(screen.getByText('Stay on Nexus One UI')).toBeInTheDocument();
       expect(screen.getByText('Go to Classic Dashboard')).toBeInTheDocument();
+    });
+  });
+
+  describe('switch destination', () => {
+    // The switch lands on the Classic home page rather than the Classic equivalent of the
+    // current route: a deep Preview route maps to e.g. "admin/repository/repositories:my-repo",
+    // and we deliberately do not follow that mapping any more.
+    it('lands on the Classic home page from a deep Preview route', () => {
+      window.location.hash = 'preview/admin/repository/repositories/my-repo';
+      mockUseUser.mockReturnValue({ authenticated: true, userId: 'admin' });
+      mockStateValues['disableSwitchFeedback'] = true;
+
+      renderHeader();
+
+      fireEvent.click(screen.getByText('Switch to Classic UI'));
+
+      expect(window.location.hash).toBe('#browse/welcome');
+    });
+
+    it('lands on the Nexus One home page from a deep Classic route', () => {
+      window.location.hash = 'admin/repository/repositories:my-repo';
+      mockUseUser.mockReturnValue({ authenticated: true, userId: 'admin' });
+
+      renderHeader();
+
+      fireEvent.click(screen.getByText('Switch to Nexus One UI'));
+
+      expect(window.location.hash).toBe('#preview/browse/welcome');
     });
   });
 
@@ -245,7 +320,7 @@ describe('GlobalHeaderRadix', () => {
       expect(mockRestClientPost).toHaveBeenCalledTimes(1);
       const [url, body] = mockRestClientPost.mock.calls[0];
       expect(url).toBe('/service/rest/internal/ui/switch-feedback');
-      expect(body.edition).toBe('PRO');
+      expect(body.edition).toBe('nexus-professional-edition');
       expect(body.version).toBe('3.78.0');
       expect(body.feedback).toBe('Love the new UI!');
     });

@@ -59,6 +59,12 @@ interface HealthCheckListEntry extends HealthCheckStatus {
   repositoryName: string;
 }
 
+/**
+ * Caller responsibility: only mount this component when isFirewallSupportedFormat(format)
+ * is true for proxy repositories — there is no internal format guard.
+ * See NEXUS-54536.
+ */
+
 export function RepositoryFirewallConfigTab({
   repositoryName,
   hasFirewallLicense = true,

@@ -43,7 +43,7 @@ import org.sonatype.nexus.common.text.Strings2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.text.Strings2.MASK;
 import org.springframework.stereotype.Component;
 
@@ -87,12 +87,12 @@ public class SystemInformationGeneratorImpl
       final DeploymentAccess deploymentAccess,
       final List<SystemInformationHelper> systemInformationHelpersList)
   {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.nexusProperties = checkNotNull(nexusProperties);
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.deploymentAccess = checkNotNull(deploymentAccess);
-    this.systemInformationHelpers = QualifierUtil.buildQualifierBeanMap(checkNotNull(systemInformationHelpersList));
+    this.applicationDirectories = requireNonNull(applicationDirectories);
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.nexusProperties = requireNonNull(nexusProperties);
+    this.nodeAccess = requireNonNull(nodeAccess);
+    this.deploymentAccess = requireNonNull(deploymentAccess);
+    this.systemInformationHelpers = QualifierUtil.buildQualifierBeanMap(requireNonNull(systemInformationHelpersList));
   }
 
   @Override

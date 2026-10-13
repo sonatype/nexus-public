@@ -13,6 +13,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { restClient, parseApiError, ENDPOINTS } from '../../../../../../interface/api';
+import type { FieldError } from '../../../../../../interface/api';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import FeatureFlags from '../../../../../../constants/FeatureFlags';
 import {
@@ -25,6 +26,20 @@ import {
   CleanupPolicy,
   HealthCheckStatus,
 } from './types';
+
+/**
+ * Error subclass that preserves field-level validation details from API responses,
+ * allowing callers to display errors inline on the relevant form fields.
+ */
+export class ApiRequestError extends Error {
+  fieldErrors?: FieldError[];
+
+  constructor(message: string, fieldErrors?: FieldError[]) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.fieldErrors = fieldErrors;
+  }
+}
 
 const { NUGET_SYMBOL_SERVER_ENABLED } = FeatureFlags;
 
@@ -50,6 +65,40 @@ function getApiFormatPath(format: string): string {
     'maven2': 'maven',
   };
   return formatMapping[format] || format;
+}
+
+/**
+ * Strip a KEYLESS cosign enforcement out of an outbound request body.
+ *
+ * The server rejects `cosign.enforcement = KEYLESS` unconditionally on every OCI recipe
+ * (`OciCosignConfigurationConverters#rejectKeylessUntilVerifierShips`, HTTP 400) because the
+ * shipped verifier is a no-op stub. A repository saved before that rejection landed still reads
+ * back as KEYLESS, so any write that echoes the value it just read — a form save, or the
+ * Online/Offline toggle, which PUTs the whole GET response back — would fail for exactly those
+ * repositories. Downgrading to NONE is what keeps them editable; OciFacet's legacy-keyless notice
+ * tells the operator this will happen before they save.
+ *
+ * Every write path must funnel through here so the invariant "KEYLESS never goes on the wire"
+ * holds in one place rather than being re-derived per caller. Revert alongside the server-side
+ * rejection when NEXUS-53140 ships the real sigstore-java verifier.
+ */
+export function sanitizeCosignForWrite<T extends Record<string, unknown>>(body: T): T {
+  const cosign = body.cosign as
+    | { enforcement?: string; identityRegex?: string | null; issuerRegex?: string | null }
+    | undefined;
+  if (cosign?.enforcement !== 'KEYLESS') {
+    return body;
+  }
+  return {
+    ...body,
+    cosign: {
+      ...cosign,
+      enforcement: 'NONE',
+      // Regexes only carry meaning under KEYLESS, and the server drops them on NONE.
+      identityRegex: null,
+      issuerRegex: null,
+    },
+  };
 }
 
 /**
@@ -170,7 +219,7 @@ export function useRepositoriesApi() {
     } catch (err: unknown) {
       const apiError = parseApiError(err);
       setError(apiError.message);
-      throw new Error(apiError.message);
+      throw new ApiRequestError(apiError.message, apiError.fieldErrors);
     } finally {
       setLoading(false);
     }
@@ -191,7 +240,7 @@ export function useRepositoriesApi() {
     } catch (err: unknown) {
       const apiError = parseApiError(err);
       setError(apiError.message);
-      throw new Error(apiError.message);
+      throw new ApiRequestError(apiError.message, apiError.fieldErrors);
     } finally {
       setLoading(false);
     }
@@ -280,7 +329,10 @@ export function useRepositoriesApi() {
         if (!fullConfig) {
           throw new Error('Could not fetch repository configuration for update');
         }
-        await restClient.put(url, { ...fullConfig, online });
+        // Sanitised because this echoes the GET response straight back: a legacy KEYLESS
+        // cosign policy would otherwise round-trip to a server that rejects it, making the
+        // Online/Offline toggle fail with a 400 on those repositories.
+        await restClient.put(url, sanitizeCosignForWrite({ ...fullConfig, online }));
       } catch (err: unknown) {
         const apiError = parseApiError(err);
         setError(apiError.message);
@@ -512,6 +564,8 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     config.storage = {
       blobStoreName: data.storage.blobStoreName || 'default',
       strictContentTypeValidation: data.storage.strictContentTypeValidation ?? true,
+      // Omitted for editions whose API strips the field
+      globalDistribution: data.storage.globalDistribution,
       writePolicy: data.storage.writePolicy,
     };
   }
@@ -604,6 +658,54 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     };
   }
 
+  // OCI: `oci` is required on every recipe (hosted, proxy and group) and both
+  // `v1Enabled` and `forceBasicAuth` are @NotNull server-side, so the block is
+  // emitted unconditionally with defaults rather than gated on the user having
+  // opened the section. Omitting it produced
+  // `request.oci: must not be null` (HTTP 400) and no repository was created.
+  //
+  // forceBasicAuth defaults to true to match the REST model default (the cloud
+  // converter also rejects `false` outright). Cloud-specific clearing of the
+  // connector fields happens in OciFacet, which knows `isCloud`; this builder is
+  // edition-agnostic and simply forwards whatever the form holds.
+  if (data.format === 'oci') {
+    config.oci = {
+      v1Enabled: data.oci?.v1Enabled ?? false,
+      forceBasicAuth: data.oci?.forceBasicAuth ?? true,
+      httpPort: data.oci?.httpPort || null,
+      httpsPort: data.oci?.httpsPort || null,
+      subdomain: data.oci?.subdomain || null,
+      pathEnabled: data.oci?.pathEnabled ?? true,
+    };
+
+    if (data.type === 'proxy') {
+      // `useTrustStoreForIndexAccess` is intentionally not emitted: it is a
+      // UI-only affordance with no field on the REST model OciProxyAttributes.
+      config.ociProxy = {
+        indexType: data.ociProxy?.indexType ?? 'REGISTRY',
+        indexUrl: data.ociProxy?.indexUrl || null,
+        cacheForeignLayers: data.ociProxy?.cacheForeignLayers ?? false,
+        foreignLayerUrlWhitelist: data.ociProxy?.foreignLayerUrlWhitelist || [],
+      };
+    }
+
+    // Cosign is a top-level sibling of `oci` (OciCosignConfiguration), not nested under it.
+    //
+    // Emitting it only when an enforcement is set just keeps the payload minimal; it does NOT
+    // preserve anything server-side. The converter builds a brand-new Configuration and
+    // `applyCosignAttributes(configuration, null)` writes enforcement = NONE and removes both
+    // regexes, so omitting the block and sending NONE are indistinguishable to the server.
+    //
+    // KEYLESS is downgraded to NONE rather than emitted — see sanitizeCosignForWrite.
+    if (data.cosign?.enforcement) {
+      config.cosign = {
+        enforcement: data.cosign.enforcement,
+        identityRegex: data.cosign.identityRegex || null,
+        issuerRegex: data.cosign.issuerRegex || null,
+      };
+    }
+  }
+
   if (data.format === 'apt' || data.apt) {
     config.apt = {
       distribution: data.apt?.distribution || '',
@@ -658,6 +760,19 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     }
   }
 
+  // Terraform hosted repositories require GPG signing: TerraformHostedRepositoryApiRequest
+  // marks `terraformSigning` @NotNull and TerraformSigningAttributes marks `keypair`
+  // @NotBlank. Always emit the block for hosted so a missing key is reported as a
+  // keypair violation rather than a bare "must not be null" on the whole object;
+  // the form also validates this client-side before submit. Proxy and group Terraform
+  // repositories have no signing configuration and must not send the attribute.
+  if (data.format === 'terraform' && data.type === 'hosted') {
+    config.terraformSigning = {
+      keypair: data.terraformSigning?.keypair?.trim() || '',
+      passphrase: data.terraformSigning?.passphrase?.trim() || null,
+    };
+  }
+
   if (data.raw) {
     config.raw = {
       contentDisposition: data.raw.contentDisposition ?? 'ATTACHMENT',
@@ -704,6 +819,17 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     };
   }
 
+  // NEXUS-48685: HuggingFace proxy XET toggle. Emit only when the form
+  // actually carries an `xet` block; when the toggle is untouched (or the
+  // feature flag hides the section) the payload must NOT include `xet`,
+  // so the backend converter's null-branch preserves whatever defaults
+  // the recipe resolves at route-wiring time.
+  if (data.format === 'huggingface' && data.type === 'proxy' && data.xet) {
+    config.xet = {
+      enabled: data.xet.enabled,
+    };
+  }
+
   if (data.format === 'pypi' && data.type === 'proxy') {
     // Always emit the `pypi` block for pypi proxies. Guarding on `data.pypi`
     // here meant a create where the user never opened the PyPI section sent
@@ -721,7 +847,8 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     };
   }
 
-  return config;
+  // Single choke point for the KEYLESS downgrade, shared with setRepositoryOnline.
+  return sanitizeCosignForWrite(config);
 }
 
 export default useRepositoriesApi;

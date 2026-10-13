@@ -16,7 +16,7 @@ import {useMachine} from '@xstate/react';
 import {
   NxTile,
 } from '@sonatype/react-shared-components';
-import {ExtJS, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, ValidationUtils, useIsLicensedEdition} from '@sonatype/nexus-ui-plugin';
 
 import {
   ContentBody,
@@ -59,7 +59,7 @@ export default function UsersDetails({itemId, onDone}) {
 
   const isEdit = ValidationUtils.notBlank(id);
   const showReadOnly = isEdit && !canEdit;
-  const isPro = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
 
   return <div className="nxrm-user">
     <PageHeader>
@@ -75,7 +75,7 @@ export default function UsersDetails({itemId, onDone}) {
             : <UsersForm service={service} onDone={onDone}/>
         }
       </NxTile>
-      {isPro && isEdit &&
+      {isLicensedEdition && isEdit &&
         <NxTile>
           <UsersToken service={service} />
         </NxTile>

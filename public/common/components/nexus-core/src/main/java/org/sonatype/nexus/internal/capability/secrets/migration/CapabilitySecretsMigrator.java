@@ -23,7 +23,7 @@ import org.sonatype.nexus.formfields.Encrypted;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.security.secrets.SecretsMigrator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -40,7 +40,7 @@ public class CapabilitySecretsMigrator
 
   @Autowired
   public CapabilitySecretsMigrator(final CapabilityRegistry capabilityRegistry) {
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
   }
 
   @Override

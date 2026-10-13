@@ -63,8 +63,9 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
         flex: 1,
         dataIndex: 'label',
         renderer: function(value, metaData) {
-          metaData.tdAttr = 'data-qtip="' + value + '"';
-          return value;
+          var encoded = Ext.String.htmlEncode(value);
+          metaData.tdAttr = 'data-qtip="' + Ext.String.htmlEncode(encoded) + '"';
+          return encoded;
         }
       },
       {

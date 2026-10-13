@@ -49,7 +49,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -89,9 +89,9 @@ public class BlobStoreResource
       final BlobStoreQuotaService quotaService,
       final List<ConnectionChecker> connectionCheckersList)
   {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.store = checkNotNull(store);
-    this.quotaService = checkNotNull(quotaService);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.store = requireNonNull(store);
+    this.quotaService = requireNonNull(quotaService);
     this.connectionCheckers = QualifierUtil.buildQualifierBeanMap(connectionCheckersList);
   }
 
@@ -151,7 +151,7 @@ public class BlobStoreResource
   @Validate
   public void verifyConnection(final @NotNull @Valid BlobStoreConnectionXO blobStoreConnectionXO) {
     try {
-      ConnectionChecker conChecker = checkNotNull(connectionCheckers.get(blobStoreConnectionXO.getType()));
+      ConnectionChecker conChecker = requireNonNull(connectionCheckers.get(blobStoreConnectionXO.getType()));
       conChecker.verifyConnection(blobStoreConnectionXO.getName(), blobStoreConnectionXO.getAttributes());
     }
     catch (BlobStoreConnectionException ce) { // NOSONAR

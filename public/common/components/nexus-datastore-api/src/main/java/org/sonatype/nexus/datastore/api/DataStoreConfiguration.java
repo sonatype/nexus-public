@@ -19,7 +19,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Maps.transformEntries;
 import static java.util.regex.Pattern.compile;
 import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
@@ -52,7 +52,7 @@ public class DataStoreConfiguration
   }
 
   public void setName(final String name) {
-    this.name = checkNotNull(name);
+    this.name = requireNonNull(name);
   }
 
   public String getType() {
@@ -60,7 +60,7 @@ public class DataStoreConfiguration
   }
 
   public void setType(final String type) {
-    this.type = checkNotNull(type);
+    this.type = requireNonNull(type);
   }
 
   public String getSource() {
@@ -68,7 +68,7 @@ public class DataStoreConfiguration
   }
 
   public void setSource(final String source) {
-    this.source = checkNotNull(source);
+    this.source = requireNonNull(source);
   }
 
   public Map<String, String> getAttributes() {
@@ -76,7 +76,7 @@ public class DataStoreConfiguration
   }
 
   public void setAttributes(final Map<String, String> attributes) {
-    this.attributes = checkNotNull(attributes);
+    this.attributes = requireNonNull(attributes);
   }
 
   /**

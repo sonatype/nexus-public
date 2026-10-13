@@ -24,7 +24,7 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 
 @Component
@@ -41,9 +41,9 @@ public class ConditionallyAppliedHealthCheckRegistrar
       final HealthCheckRegistry healthCheckRegistry,
       final List<ConditionallyAppliedHealthCheck> conditionallyAppliedHealthChecksList)
   {
-    this.healthCheckRegistry = checkNotNull(healthCheckRegistry);
+    this.healthCheckRegistry = requireNonNull(healthCheckRegistry);
     this.conditionallyAppliedHealthChecks =
-        QualifierUtil.buildQualifierBeanMap(checkNotNull(conditionallyAppliedHealthChecksList));
+        QualifierUtil.buildQualifierBeanMap(requireNonNull(conditionallyAppliedHealthChecksList));
   }
 
   @Override

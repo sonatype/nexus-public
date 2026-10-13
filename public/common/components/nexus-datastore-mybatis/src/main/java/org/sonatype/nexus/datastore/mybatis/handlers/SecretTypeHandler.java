@@ -26,7 +26,7 @@ import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -37,7 +37,7 @@ public class SecretTypeHandler
 
   @Autowired
   public SecretTypeHandler(final SecretsFactory factory) {
-    this.factory = checkNotNull(factory);
+    this.factory = requireNonNull(factory);
   }
 
   @Override

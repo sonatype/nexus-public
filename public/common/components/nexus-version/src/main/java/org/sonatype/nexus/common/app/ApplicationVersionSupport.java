@@ -92,9 +92,9 @@ public abstract class ApplicationVersionSupport
 
   @Override
   public String getBrandedEditionAndVersion() {
-    String edition = getEdition();
-    String version = getVersion();
-    return ("OSS".equals(edition) ? edition + " " : "") + version;
+    // No edition reports the "OSS" short name today (the open-source build reports "CORE"), so the branded value is
+    // just the version. The dead "OSS" prefix branch was removed with NEXUS-54791.
+    return getVersion();
   }
 
   @Override

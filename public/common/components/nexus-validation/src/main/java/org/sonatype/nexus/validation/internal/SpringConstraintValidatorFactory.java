@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Allow {@link ConstraintValidator validators} to be enhanced.
@@ -41,7 +41,7 @@ public final class SpringConstraintValidatorFactory
 
   @Autowired
   public SpringConstraintValidatorFactory(final ApplicationContext applicationContext) {
-    this.applicationContext = checkNotNull(applicationContext);
+    this.applicationContext = requireNonNull(applicationContext);
   }
 
   @Override

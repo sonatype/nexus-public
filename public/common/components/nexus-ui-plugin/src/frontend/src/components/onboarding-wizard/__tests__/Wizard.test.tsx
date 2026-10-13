@@ -280,53 +280,38 @@ describe('Wizard', () => {
     });
   });
 
-  describe('9. setupComplete state', () => {
-    it('renders Setup Complete content with success icon and Complete Setup button', () => {
+  describe('9. verificationFailed state (verify-error retry landing)', () => {
+    it('renders Verification failed heading and Retry button on network error', () => {
       const submit = jest.fn();
       mockedUseWizard.mockReturnValue({
         ...defaultMocks,
-        state: 'setupComplete',
+        state: 'verificationFailed',
         currentIndex: 1,
+        errorMessage: 'Network failed',
+        errorKind: 'network',
         isCurrentStepValid: true,
         submit,
       });
 
       renderWithTheme(<Wizard />);
 
-      expect(screen.getByRole('heading', { name: 'Setup Complete' })).toBeInTheDocument();
-      expect(screen.getByText('Your Nexus Repository is ready to use.')).toBeInTheDocument();
-      expect(screen.getByTestId('onboarding-wizard__success-icon')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Verification failed' })).toBeInTheDocument();
+      expect(screen.getByTestId('onboarding-wizard__network-error')).toBeInTheDocument();
+      expect(screen.getByText('A network error occurred. Please try again.')).toBeInTheDocument();
+      expect(screen.getByTestId('onboarding-wizard__warning-icon')).toBeInTheDocument();
+      expect(screen.queryByTestId('onboarding-wizard__success-icon')).not.toBeInTheDocument();
 
       const button = screen.getByTestId('onboarding-wizard__action');
-      expect(button).toHaveTextContent('Complete Setup');
+      expect(button).toHaveTextContent('Retry');
 
       fireEvent.click(button);
       expect(submit).toHaveBeenCalledTimes(1);
     });
 
-    it('displays network error message and warning icon when errorKind=network', () => {
+    it('renders Verification failed heading and still-required callout on stillRequired error', () => {
       mockedUseWizard.mockReturnValue({
         ...defaultMocks,
-        state: 'setupComplete',
-        currentIndex: 1,
-        errorMessage: 'Network failed',
-        errorKind: 'network',
-        isCurrentStepValid: true,
-      });
-
-      renderWithTheme(<Wizard />);
-
-      expect(screen.getByTestId('onboarding-wizard__network-error')).toBeInTheDocument();
-      expect(screen.getByText('A network error occurred. Please try again.')).toBeInTheDocument();
-      // Warning icon replaces success icon while an error is active
-      expect(screen.getByTestId('onboarding-wizard__warning-icon')).toBeInTheDocument();
-      expect(screen.queryByTestId('onboarding-wizard__success-icon')).not.toBeInTheDocument();
-    });
-
-    it('displays still-required message and warning icon when errorKind=stillRequired', () => {
-      mockedUseWizard.mockReturnValue({
-        ...defaultMocks,
-        state: 'setupComplete',
+        state: 'verificationFailed',
         currentIndex: 1,
         errorMessage: 'Onboarding still required',
         errorKind: 'stillRequired',
@@ -335,6 +320,7 @@ describe('Wizard', () => {
 
       renderWithTheme(<Wizard />);
 
+      expect(screen.getByRole('heading', { name: 'Verification failed' })).toBeInTheDocument();
       expect(screen.getByTestId('onboarding-wizard__still-required')).toBeInTheDocument();
       expect(
         screen.getByText(
@@ -343,13 +329,50 @@ describe('Wizard', () => {
       ).toBeInTheDocument();
       expect(screen.getByTestId('onboarding-wizard__warning-icon')).toBeInTheDocument();
       expect(screen.queryByTestId('onboarding-wizard__success-icon')).not.toBeInTheDocument();
+      expect(screen.getByTestId('onboarding-wizard__action')).toHaveTextContent('Retry');
     });
 
-    it('does not display stepper on Setup Complete screen', () => {
+    it('renders generic callout when errorKind is null on verificationFailed state', () => {
       mockedUseWizard.mockReturnValue({
         ...defaultMocks,
-        state: 'setupComplete',
+        state: 'verificationFailed',
         currentIndex: 1,
+        errorMessage: null,
+        errorKind: null,
+        isCurrentStepValid: true,
+      });
+
+      renderWithTheme(<Wizard />);
+
+      expect(screen.getByRole('heading', { name: 'Verification failed' })).toBeInTheDocument();
+      expect(screen.getByTestId('onboarding-wizard__generic-error')).toBeInTheDocument();
+      expect(screen.getByText('Setup could not be verified. Please try again.')).toBeInTheDocument();
+      expect(screen.queryByTestId('onboarding-wizard__network-error')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('onboarding-wizard__still-required')).not.toBeInTheDocument();
+      expect(screen.getByTestId('onboarding-wizard__action')).toHaveTextContent('Retry');
+    });
+
+    it('does not render Setup Complete success body on verificationFailed state', () => {
+      mockedUseWizard.mockReturnValue({
+        ...defaultMocks,
+        state: 'verificationFailed',
+        currentIndex: 1,
+        errorKind: 'network',
+        isCurrentStepValid: true,
+      });
+
+      renderWithTheme(<Wizard />);
+
+      expect(screen.queryByRole('heading', { name: 'Setup Complete' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Your Nexus Repository is ready to use.')).not.toBeInTheDocument();
+    });
+
+    it('does not display stepper on verificationFailed state', () => {
+      mockedUseWizard.mockReturnValue({
+        ...defaultMocks,
+        state: 'verificationFailed',
+        currentIndex: 1,
+        errorKind: 'network',
         isCurrentStepValid: true,
       });
 
@@ -511,26 +534,26 @@ describe('Wizard', () => {
   });
 
   describe('accessibility', () => {
-    it('focuses Complete Setup button when Setup Complete screen appears', async () => {
+    it('focuses Finish button when done state appears', async () => {
       mockedUseWizard.mockReturnValue({
         ...defaultMocks,
-        state: 'setupComplete',
+        state: 'done',
         currentIndex: 1,
         isCurrentStepValid: true,
       });
 
       renderWithTheme(<Wizard />);
 
-      const completeBtn = screen.getByRole('button', { name: 'Complete Setup' });
+      const finishBtn = screen.getByRole('button', { name: 'Finish' });
       await waitFor(() => {
-        expect(completeBtn).toHaveFocus();
+        expect(finishBtn).toHaveFocus();
       });
     });
 
-    it('screen reader announces title on Setup Complete', () => {
+    it('screen reader announces Setup Complete on done state', () => {
       mockedUseWizard.mockReturnValue({
         ...defaultMocks,
-        state: 'setupComplete',
+        state: 'done',
         currentIndex: 1,
         isCurrentStepValid: true,
       });
@@ -556,10 +579,10 @@ describe('Wizard', () => {
       expect(ariaLive).toHaveTextContent('Issue Occurred');
     });
 
-    it('screen reader announces error title on Setup Complete with errorKind', () => {
+    it('screen reader announces Verification failed with network detail on verificationFailed state', () => {
       mockedUseWizard.mockReturnValue({
         ...defaultMocks,
-        state: 'setupComplete',
+        state: 'verificationFailed',
         currentIndex: 1,
         errorMessage: 'Network failed',
         errorKind: 'network',
@@ -569,9 +592,27 @@ describe('Wizard', () => {
       renderWithTheme(<Wizard />);
 
       const ariaLive = screen.getByTestId('onboarding-wizard__aria-live');
-      // Should NOT announce "Setup Complete" when there's an error, to avoid
-      // a contradictory announcement alongside the warning callout.
-      expect(ariaLive).toHaveTextContent('Issue Occurred');
+      expect(ariaLive).toHaveTextContent(
+        'Verification failed. A network error occurred. Please try again.',
+      );
+    });
+
+    it('screen reader announces Verification failed with still-required detail on verificationFailed state', () => {
+      mockedUseWizard.mockReturnValue({
+        ...defaultMocks,
+        state: 'verificationFailed',
+        currentIndex: 1,
+        errorMessage: 'Still required',
+        errorKind: 'stillRequired',
+        isCurrentStepValid: true,
+      });
+
+      renderWithTheme(<Wizard />);
+
+      const ariaLive = screen.getByTestId('onboarding-wizard__aria-live');
+      expect(ariaLive).toHaveTextContent(
+        'Verification failed. Some onboarding steps still need to be completed. Please re-finalize your choices.',
+      );
     });
 
     it('focuses Dismiss button when Issue Occurred screen appears', async () => {
@@ -591,14 +632,10 @@ describe('Wizard', () => {
       });
     });
 
-    it('does not autoFocus Complete Setup when re-rendered with an errorKind', async () => {
-      // On a verify failure the machine returns to setupComplete with errorKind
-      // set; re-focusing the action button here would pre-empt the aria-live
-      // error announcement on many screen readers. Leave focus alone so assistive
-      // tech can finish speaking the error before the user tabs to the button.
+    it('does not autoFocus Retry button on Verification failed state', async () => {
       mockedUseWizard.mockReturnValue({
         ...defaultMocks,
-        state: 'setupComplete',
+        state: 'verificationFailed',
         currentIndex: 1,
         errorMessage: 'Network failed',
         errorKind: 'network',
@@ -607,10 +644,9 @@ describe('Wizard', () => {
 
       renderWithTheme(<Wizard />);
 
-      const completeBtn = screen.getByRole('button', { name: 'Complete Setup' });
-      // Give React one paint tick to run any autoFocus effects.
+      const retryBtn = screen.getByRole('button', { name: 'Retry' });
       await new Promise((resolve) => setTimeout(resolve, 0));
-      expect(completeBtn).not.toHaveFocus();
+      expect(retryBtn).not.toHaveFocus();
     });
   });
 });
@@ -643,13 +679,11 @@ describe('complete verification flow', () => {
     errorSpy.mockRestore();
   });
 
-  it('clicking Complete Setup verifies and closes on success', async () => {
+  it('happy path shows Setup Complete only once: Welcome -> verifying -> done -> Finish', async () => {
     const handleDone = jest.fn();
     const mockGetStarted = jest.fn();
-    const mockSubmit = jest.fn();
     const mockFinish = jest.fn().mockImplementation(() => handleDone());
 
-    // Start at welcome screen
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
       state: 'stepReady',
@@ -664,20 +698,16 @@ describe('complete verification flow', () => {
       </Theme>
     );
 
-    // Verify we're on Welcome screen
     expect(screen.getByRole('button', { name: 'Get Started' })).toBeInTheDocument();
 
-    // Click "Get Started" - simulates transition to setupComplete (no steps)
     fireEvent.click(screen.getByRole('button', { name: 'Get Started' }));
     expect(mockGetStarted).toHaveBeenCalled();
 
-    // Simulate state transition to setupComplete
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
-      state: 'setupComplete',
+      state: 'verifying',
       currentIndex: 0,
       isCurrentStepValid: true,
-      submit: mockSubmit,
     });
     rerender(
       <Theme>
@@ -685,16 +715,12 @@ describe('complete verification flow', () => {
       </Theme>
     );
 
-    // Verify Setup Complete screen with "Complete Setup" button
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Setup Complete' })).toBeInTheDocument();
+      expect(screen.getByText('Verifying setup...')).toBeInTheDocument();
     });
+    expect(screen.queryByRole('heading', { name: 'Setup Complete' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Complete Setup' })).not.toBeInTheDocument();
 
-    // Click "Complete Setup" - simulates transition through verifying to done
-    fireEvent.click(screen.getByRole('button', { name: 'Complete Setup' }));
-    expect(mockSubmit).toHaveBeenCalled();
-
-    // Simulate state transition to done
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
       state: 'done',
@@ -708,22 +734,20 @@ describe('complete verification flow', () => {
       </Theme>
     );
 
-    // Verify Finish button appears
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Finish' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Setup Complete' })).toBeInTheDocument();
     });
+    expect(screen.getByRole('button', { name: 'Finish' })).toBeInTheDocument();
 
-    // Click "Finish" - calls onDone
     fireEvent.click(screen.getByRole('button', { name: 'Finish' }));
     expect(mockFinish).toHaveBeenCalled();
     expect(handleDone).toHaveBeenCalled();
   });
 
-  it('shows still-required warning on Setup Complete when verification reports steps remain', async () => {
+  it('shows Verification failed with still-required callout when verify reports steps remain', async () => {
     const mockGetStarted = jest.fn();
     const mockSubmit = jest.fn();
 
-    // Start at welcome screen
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
       state: 'stepReady',
@@ -738,16 +762,13 @@ describe('complete verification flow', () => {
       </Theme>
     );
 
-    // Click "Get Started"
     fireEvent.click(screen.getByRole('button', { name: 'Get Started' }));
 
-    // Simulate transition to setupComplete
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
-      state: 'setupComplete',
+      state: 'verifying',
       currentIndex: 0,
       isCurrentStepValid: true,
-      submit: mockSubmit,
     });
     rerender(
       <Theme>
@@ -756,17 +777,12 @@ describe('complete verification flow', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Setup Complete' })).toBeInTheDocument();
+      expect(screen.getByText('Verifying setup...')).toBeInTheDocument();
     });
 
-    // Click "Complete Setup" - verify reports remaining steps
-    fireEvent.click(screen.getByRole('button', { name: 'Complete Setup' }));
-
-    // Machine catches OnboardingStillRequired and stays on setupComplete with
-    // errorKind='stillRequired' so the user can retry (or fix their choices).
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
-      state: 'setupComplete',
+      state: 'verificationFailed',
       currentIndex: 0,
       errorMessage: 'Error: Onboarding still required',
       errorKind: 'stillRequired',
@@ -780,10 +796,10 @@ describe('complete verification flow', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('onboarding-wizard__still-required')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Verification failed' })).toBeInTheDocument();
     });
-    // The primary CTA remains "Complete Setup" so the user can retry.
-    expect(screen.getByRole('button', { name: 'Complete Setup' })).toBeEnabled();
+    expect(screen.getByTestId('onboarding-wizard__still-required')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
   });
 
   it('shows Issue Occurred when initial fetchSteps fails', async () => {
@@ -813,11 +829,10 @@ describe('complete verification flow', () => {
     expect(mockSkip).toHaveBeenCalled();
   });
 
-  it('shows network error banner on verify transport failure and allows retry', async () => {
+  it('shows Verification failed with network callout on transport failure and allows retry', async () => {
     const mockGetStarted = jest.fn();
     const mockSubmit = jest.fn();
 
-    // Start at welcome screen
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
       state: 'stepReady',
@@ -832,16 +847,13 @@ describe('complete verification flow', () => {
       </Theme>
     );
 
-    // Click "Get Started"
     fireEvent.click(screen.getByRole('button', { name: 'Get Started' }));
 
-    // Simulate transition to setupComplete
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
-      state: 'setupComplete',
+      state: 'verifying',
       currentIndex: 0,
       isCurrentStepValid: true,
-      submit: mockSubmit,
     });
     rerender(
       <Theme>
@@ -850,16 +862,12 @@ describe('complete verification flow', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Setup Complete' })).toBeInTheDocument();
+      expect(screen.getByText('Verifying setup...')).toBeInTheDocument();
     });
 
-    // Click "Complete Setup" - first attempt fails with network error
-    fireEvent.click(screen.getByRole('button', { name: 'Complete Setup' }));
-
-    // Simulate setupComplete with network error (verify failed but returned to setupComplete)
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
-      state: 'setupComplete',
+      state: 'verificationFailed',
       currentIndex: 0,
       errorMessage: 'Error: Request failed',
       errorKind: 'network',
@@ -872,19 +880,16 @@ describe('complete verification flow', () => {
       </Theme>
     );
 
-    // Verify network error banner is shown
     await waitFor(() => {
-      expect(screen.getByTestId('onboarding-wizard__network-error')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Verification failed' })).toBeInTheDocument();
     });
+    expect(screen.getByTestId('onboarding-wizard__network-error')).toBeInTheDocument();
 
-    // Complete Setup button should still be enabled for retry
-    const completeBtn = screen.getByRole('button', { name: 'Complete Setup' });
-    expect(completeBtn).toBeEnabled();
+    const retryBtn = screen.getByRole('button', { name: 'Retry' });
+    expect(retryBtn).toBeEnabled();
+    fireEvent.click(retryBtn);
+    expect(mockSubmit).toHaveBeenCalled();
 
-    // Retry - click Complete Setup again
-    fireEvent.click(completeBtn);
-
-    // Simulate successful verification (done state)
     const mockFinish = jest.fn();
     mockedUseWizard.mockReturnValue({
       ...defaultMocks,
@@ -899,9 +904,9 @@ describe('complete verification flow', () => {
       </Theme>
     );
 
-    // Verify "Finish" button appears (setup complete after retry)
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Finish' })).toBeInTheDocument();
     });
+    expect(screen.getByRole('heading', { name: 'Setup Complete' })).toBeInTheDocument();
   });
 });

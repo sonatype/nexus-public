@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,7 +47,7 @@ public class HealthCheckStateContributor
 
   @Autowired
   public HealthCheckStateContributor(final SystemCheckService systemCheckService) {
-    this.systemCheckService = checkNotNull(systemCheckService);
+    this.systemCheckService = requireNonNull(systemCheckService);
   }
 
   @Nullable

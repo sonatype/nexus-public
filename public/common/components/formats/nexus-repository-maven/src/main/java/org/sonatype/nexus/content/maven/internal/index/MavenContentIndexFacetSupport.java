@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher;
 
 import org.joda.time.DateTime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link MavenIndexFacet} support.
@@ -37,7 +37,7 @@ public abstract class MavenContentIndexFacetSupport
   final MavenIndexPublisher mavenIndexPublisher;
 
   protected MavenContentIndexFacetSupport(final MavenIndexPublisher mavenIndexPublisher) {
-    this.mavenIndexPublisher = checkNotNull(mavenIndexPublisher);
+    this.mavenIndexPublisher = requireNonNull(mavenIndexPublisher);
   }
 
   @Nullable

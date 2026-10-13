@@ -15,15 +15,16 @@ import React, { useCallback } from 'react';
 import {
   Box,
   Callout,
-  DropdownMenu,
   Flex,
   IconButton,
-  Spinner,
+  Link,
+  Skeleton,
   Table,
   Text,
   Tooltip,
 } from '@radix-ui/themes';
-import { Copy, MoreHorizontal, X } from 'lucide-react';
+import { Copy, X } from 'lucide-react';
+import { useRouter } from '@uirouter/react';
 
 import type { Repository, HealthCheckStatus, FirewallStatus } from './repository-list.types';
 import { HealthCheckCell } from '../../../shared/security/HealthCheckCell';
@@ -35,6 +36,7 @@ import {
 } from '../../../shared';
 import { FORMAT_LABELS } from '../../settings/repository/repositories/types';
 import { ensureTrailingSlash } from '../../../../../utils/url';
+import { BROWSE_ROUTE_STATES } from '../browse.routes';
 
 import './RepositoryListTable.scss';
 
@@ -45,7 +47,7 @@ const STRINGS = {
   columns: {
     name: 'Name',
     type: 'Type',
-    format: 'Ecosystem',
+    format: 'Format',
     status: 'Status',
     url: 'URL',
     healthCheck: 'Health Check',
@@ -56,16 +58,25 @@ const STRINGS = {
   copyUrlTitle: 'Copy URL to Clipboard',
   urlCopiedMessage: 'URL Copied to Clipboard',
   urlCopyFailedMessage: 'Failed to copy URL to clipboard',
-  loadingMessage: 'Loading repositories...',
-  browseRepositoryAction: 'Browse Repository',
-  copyUrlAction: 'Copy URL',
 };
+
+/**
+ * Skeleton rows rendered while the first page is loading, matching the NexusOne
+ * table row skeleton pattern: headers stay visible, placeholders mirror the content.
+ */
+const SKELETON_ROW_COUNT = 5;
 
 export interface RepositoryListTableProps {
   /** Repositories to display */
   repositories: readonly Repository[];
   /** Loading state */
   loading?: boolean;
+  /**
+   * Whether the first repository-list request has settled. Distinguishes a first load from a
+   * refetch; without it an empty result would look like a first load on every subsequent filter
+   * change and the empty state would be replaced by skeleton rows.
+   */
+  hasLoadedOnce?: boolean;
   /** Error message */
   error?: string;
   /** Callback when a repository is selected */
@@ -104,6 +115,7 @@ export interface RepositoryListTableProps {
 export function RepositoryListTable({
   repositories,
   loading = false,
+  hasLoadedOnce = false,
   error,
   onSelect,
   healthCheck = {},
@@ -130,22 +142,26 @@ export function RepositoryListTable({
     [onSort],
   );
 
-  // Handle row click
-  const handleRowClick = (name: string) => () => {
-    onSelect?.(name);
-  };
+  const router = useRouter();
 
-  // Handle row keyboard navigation
-  const handleRowKeyDown = (name: string) => (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onSelect?.(name);
-    }
-  };
+  /**
+   * A plain primary click routes through the existing `onSelect` handler, so the router
+   * navigation and its route construction stay where they already live. Modifier and
+   * non-primary clicks fall through untouched, letting the anchor's `href` give the browser
+   * its normal open-in-new-tab/window behaviour. So does a missing `onSelect`: cancelling
+   * the default without a handler to replace it would leave a link that goes nowhere.
+   */
+  const handleSelectRepository =
+    (name: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!onSelect || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      event.preventDefault();
+      onSelect(name);
+    };
 
   // Handle copy URL
-  const handleCopyUrl = (url: string) => (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCopyUrl = (url: string) => () => {
     const urlWithSlash = ensureTrailingSlash(url);
     navigator.clipboard.writeText(urlWithSlash)
       .then(() => {
@@ -155,16 +171,6 @@ export function RepositoryListTable({
         toast.error(STRINGS.urlCopyFailedMessage);
       });
   };
-
-  // Loading state
-  if (loading) {
-    return (
-      <Flex direction="column" align="center" justify="center" gap="3" p="9">
-        <Spinner size="3" />
-        <Text color="gray">{STRINGS.loadingMessage}</Text>
-      </Flex>
-    );
-  }
 
   // Error state
   if (error) {
@@ -180,11 +186,26 @@ export function RepositoryListTable({
     );
   }
 
-  // Column count for empty state: name, type, format, status, url, + optional (health, IQ), + actions.
-  const colCount = 6 + (showHealthCheck ? 1 : 0) + (showIqPolicyViolations ? 1 : 0);
+  // Column count for the empty and skeleton states: name, type, format, status, url,
+  // + optional (health, IQ).
+  const colCount = 5 + (showHealthCheck ? 1 : 0) + (showIqPolicyViolations ? 1 : 0);
+
+  // Filtering must not collapse the table. Only the very first load — before any response has
+  // arrived — gets skeleton rows; every later request keeps whatever is on screen (rows, or the
+  // empty state) mounted and is signalled with aria-busy instead. This keys off request
+  // lifecycle rather than `repositories.length`, which cannot tell a first load from a refetch
+  // after a filter matched nothing, and so would swap that empty state for skeleton rows.
+  const isInitialLoad = loading && !hasLoadedOnce;
+  const isRefreshing = loading && hasLoadedOnce;
 
   return (
-    <Table.Root className="repository-list-table" variant="surface" size="2">
+    <Table.Root
+      className={`repository-list-table${isRefreshing ? ' repository-list-table--refreshing' : ''}`}
+      variant="surface"
+      size="2"
+      data-testid="repository-list-table"
+      aria-busy={loading}
+    >
       <Table.Header>
         <Table.Row>
           {onSort ? (
@@ -232,21 +253,9 @@ export function RepositoryListTable({
               {STRINGS.columns.format}
             </Table.ColumnHeaderCell>
           )}
-          {onSort ? (
-            <SortableTableHeader
-              sortKey="status"
-              currentSortKey={sortKey}
-              currentSortDirection={sortDirection}
-              onSort={handleSort}
-              align="left"
-            >
-              {STRINGS.columns.status}
-            </SortableTableHeader>
-          ) : (
-            <Table.ColumnHeaderCell>
-              {STRINGS.columns.status}
-            </Table.ColumnHeaderCell>
-          )}
+          <Table.ColumnHeaderCell>
+            {STRINGS.columns.status}
+          </Table.ColumnHeaderCell>
           <Table.ColumnHeaderCell>
             {STRINGS.columns.url}
           </Table.ColumnHeaderCell>
@@ -260,16 +269,20 @@ export function RepositoryListTable({
               {STRINGS.columns.iqPolicyViolations}
             </Table.ColumnHeaderCell>
           )}
-          {/* paddingRight: 32 matches the Rapture-safe right gutter used across list tables (see EntityTable.scss). */}
-          <Table.ColumnHeaderCell
-            width="80px"
-            justify="end"
-            aria-label="Row actions"
-          />
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {repositories.length === 0 ? (
+        {isInitialLoad ? (
+          Array.from({ length: SKELETON_ROW_COUNT }).map((_, rowIndex) => (
+            <Table.Row key={`skeleton-${rowIndex}`} data-testid="repository-list-skeleton-row">
+              {Array.from({ length: colCount }).map((__, cellIndex) => (
+                <Table.Cell key={`skeleton-${rowIndex}-${cellIndex}`}>
+                  <Skeleton height="18px" />
+                </Table.Cell>
+              ))}
+            </Table.Row>
+          ))
+        ) : repositories.length === 0 ? (
           <Table.Row>
             <Table.Cell colSpan={colCount}>
               <Flex justify="center" p="6">
@@ -283,18 +296,33 @@ export function RepositoryListTable({
           repositories.map((repo) => (
             <Table.Row
               key={repo.name}
-              className="repository-list-table__row repository-list-table__row--clickable"
-              onClick={handleRowClick(repo.name)}
-              onKeyDown={handleRowKeyDown(repo.name)}
-              tabIndex={0}
-              role="button"
-              aria-label={`Browse ${repo.name}`}
-              data-analytics-id="nxrm-browse-select-repository"
+              className="repository-list-table__row repository-list-table__row--hoverable"
             >
               <Table.Cell>
-                <Text size="2" weight="medium" color="blue">
+                {/*
+                  The colour is applied inline deliberately. Nexus One resets bare anchors
+                  with a high-specificity App.scss rule
+                  (`.nxrm-main-content > .radix-themes:not(:has(.nxrm-ext-js-wrapper))
+                  a:not([class*="x-"])` -> color: inherit), which outranks every
+                  :where()-wrapped Radix rule and would otherwise leave this link looking
+                  like plain dark table text. `color="blue"` stamps data-accent-color, so
+                  var(--accent-a11) resolves to blue; that is the same token Radix applies
+                  to `<Text color="blue">`, which is how this column has always looked.
+                  No underline: this list has never underlined repository names.
+                */}
+                <Link
+                  color="blue"
+                  size="2"
+                  weight="medium"
+                  style={{ color: 'var(--accent-a11)' }}
+                  href={router.stateService.href(BROWSE_ROUTE_STATES.repo, {
+                    repoName: repo.name,
+                  })}
+                  onClick={handleSelectRepository(repo.name)}
+                  data-analytics-id="nxrm-browse-select-repository"
+                >
                   {repo.name}
-                </Text>
+                </Link>
               </Table.Cell>
               <Table.Cell>
                 <Text size="2">{repo.type}</Text>
@@ -341,38 +369,6 @@ export function RepositoryListTable({
                   />
                 </Table.Cell>
               )}
-              <Table.Cell justify="end">
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger>
-                    <IconButton
-                      variant="ghost"
-                      color="gray"
-                      size="1"
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`Actions for ${repo.name}`}
-                    >
-                      <MoreHorizontal size={16} />
-                    </IconButton>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Content align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu.Item
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelect?.(repo.name);
-                      }}
-                      data-analytics-id="nxrm-browse-repository-menu"
-                    >
-                      {STRINGS.browseRepositoryAction}
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onClick={handleCopyUrl(repo.url)}
-                      data-analytics-id="nxrm-repository-copy-url-menu"
-                    >
-                      {STRINGS.copyUrlAction}
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Root>
-              </Table.Cell>
             </Table.Row>
           ))
         )}

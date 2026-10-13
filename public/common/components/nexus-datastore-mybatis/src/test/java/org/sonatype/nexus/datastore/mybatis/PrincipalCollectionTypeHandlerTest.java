@@ -18,6 +18,8 @@ import java.sql.ResultSet;
 
 import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.datastore.mybatis.handlers.PrincipalCollectionTypeHandler;
+import org.sonatype.nexus.security.NexusSimplePrincipalCollection;
+import org.sonatype.nexus.security.RealmCaseMapping;
 
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
@@ -136,5 +138,20 @@ public class PrincipalCollectionTypeHandlerTest
     final PrincipalCollection result = principalCollectionTypeHandler.getNullableResult(callableStatement, AN_INDEX);
 
     assertThat(result, is(principalCollection));
+  }
+
+  @Test
+  public void shouldRoundTripLegacyOrientPrincipalCollection() throws Exception {
+    NexusSimplePrincipalCollection legacy =
+        new NexusSimplePrincipalCollection("p1", new RealmCaseMapping("r1", true));
+    byte[] legacyBytes = serialize(legacy);
+    when(databaseCipher.decrypt(legacyBytes)).thenReturn(legacyBytes);
+    when(resultSet.getBytes(AN_INDEX)).thenReturn(legacyBytes);
+
+    PrincipalCollection result = principalCollectionTypeHandler.getNullableResult(resultSet, AN_INDEX);
+
+    assertThat(result, is(legacy));
+    // and it is interchangeable with what a modern login produces
+    assertThat(result, is(new SimplePrincipalCollection("p1", "r1")));
   }
 }

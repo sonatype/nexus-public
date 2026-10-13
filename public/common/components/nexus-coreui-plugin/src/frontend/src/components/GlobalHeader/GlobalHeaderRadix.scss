@@ -22,7 +22,10 @@
   padding-top: var(--space-3);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--gray-6);
-  background-color: var(--color-surface);
+  // --color-panel-solid, not --color-surface: surface is a translucent overlay
+  // (rgba(255,255,255,0.85) light / rgba(0,0,0,0.25) dark) and the 25%-opacity
+  // black leaks the page ground through in dark mode, painting the banner gray.
+  background-color: var(--color-panel-solid);
 }
 
 .nxrm-global-header-radix__row {
@@ -61,7 +64,7 @@
   max-width: 100%;
   overflow: visible; // Changed from hidden to allow autocomplete dropdown to show
   box-sizing: border-box;
-  background-color: var(--color-surface);
+  background-color: var(--color-panel-solid);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
@@ -134,7 +137,7 @@
   }
   
   [data-theme="dark"] & {
-    background-color: var(--color-surface);
+    background-color: var(--color-panel-solid);
     border-bottom-color: var(--color-border);
   }
 }

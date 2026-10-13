@@ -21,7 +21,7 @@ import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.upgrade.UpgradeCapabilityStorage;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -32,7 +32,7 @@ public class SettingsCapabilityMigrationStep_1_28
 
   @Autowired
   public SettingsCapabilityMigrationStep_1_28(final UpgradeCapabilityStorage capabilityStorage) {
-    this.capabilityStorage = checkNotNull(capabilityStorage);
+    this.capabilityStorage = requireNonNull(capabilityStorage);
   }
 
   @Override

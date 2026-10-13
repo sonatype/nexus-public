@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Theme } from '@radix-ui/themes';
 
@@ -20,6 +20,7 @@ import { StorageFacet } from '../../facets/StorageFacet';
 
 const BLOB_STORE_SELECT_TESTID = 'select-storage-blobStoreName';
 const CONTENT_VALIDATION_TESTID = 'checkbox-storage-strictContentTypeValidation';
+const GLOBAL_DISTRIBUTION_TESTID = 'checkbox-global-distribution';
 const STORAGE_HEADING = 'Storage';
 
 const mockBlobStores = [
@@ -37,6 +38,13 @@ const defaultFormData = {
     strictContentTypeValidation: true,
   },
 };
+
+function withGlobalDistribution(globalDistribution: boolean) {
+  return {
+    ...defaultFormData,
+    storage: { ...defaultFormData.storage, globalDistribution },
+  };
+}
 
 function renderStorageFacet(props: Partial<Parameters<typeof StorageFacet>[0]> = {}) {
   const defaultProps = {
@@ -130,6 +138,41 @@ describe('StorageFacet', () => {
       renderStorageFacet({ formData: { ...defaultFormData, format: 'terraform' } });
 
       expect(screen.getByTestId(CONTENT_VALIDATION_TESTID)).toBeInTheDocument();
+    });
+  });
+  describe('global distribution', () => {
+    it('shouldNotRenderGlobalDistributionCheckboxWhenApiOmitsField', () => {
+      renderStorageFacet({ formData: defaultFormData });
+
+      expect(screen.queryByTestId(GLOBAL_DISTRIBUTION_TESTID)).not.toBeInTheDocument();
+    });
+
+    it('shouldRenderGlobalDistributionCheckboxWhenApiReturnsField', () => {
+      renderStorageFacet({
+        formData: withGlobalDistribution(false),
+      });
+
+      expect(screen.getByTestId(GLOBAL_DISTRIBUTION_TESTID)).toBeInTheDocument();
+    });
+
+    it('shouldCheckGlobalDistributionCheckboxWhenEnabled', () => {
+      renderStorageFacet({
+        formData: withGlobalDistribution(true),
+      });
+
+      expect(screen.getByTestId(GLOBAL_DISTRIBUTION_TESTID)).toBeChecked();
+    });
+
+    it('shouldPropagateGlobalDistributionChange', () => {
+      const onNestedChange = jest.fn();
+      renderStorageFacet({
+        formData: withGlobalDistribution(false),
+        onNestedChange,
+      });
+
+      fireEvent.click(screen.getByTestId(GLOBAL_DISTRIBUTION_TESTID));
+
+      expect(onNestedChange).toHaveBeenCalledWith('storage', { globalDistribution: true });
     });
   });
 });

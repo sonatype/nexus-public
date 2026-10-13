@@ -29,6 +29,7 @@ import {
 import { AlertCircle, ExternalLink, Shield } from 'lucide-react';
 import { useRouter } from '@uirouter/react';
 import { SettingsFormSection } from '../../../shared/form';
+import { formatDateTime } from '../../../shared';
 import {
   useComponentSecurity,
   type ComponentSecurityData,
@@ -530,7 +531,7 @@ function GASecurityTabContent({
           </Text>
           {data?.evaluationDate && (
             <Text size="1" color="gray">
-              Evaluated: {data.evaluationDate}
+              Evaluated: {formatDateTime(data.evaluationDate)}
             </Text>
           )}
           {data?.reportUrl && (

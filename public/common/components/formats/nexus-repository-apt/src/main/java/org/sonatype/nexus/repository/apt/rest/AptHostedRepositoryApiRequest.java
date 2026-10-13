@@ -12,26 +12,25 @@
  */
 package org.sonatype.nexus.repository.apt.rest;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-
-import org.sonatype.nexus.repository.apt.api.AptHostedRepositoriesAttributes;
 import org.sonatype.nexus.repository.apt.AptFormat;
+import org.sonatype.nexus.repository.apt.api.AptHostedRepositoriesAttributes;
+import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
-import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 3.20
  */
 @JsonIgnoreProperties({"format", "type"})
 public class AptHostedRepositoryApiRequest
-    extends HostedRepositoryApiRequest
+    extends HostedRepositoryApiRequest<HostedStorageAttributes>
 {
   @NotNull
   @Valid

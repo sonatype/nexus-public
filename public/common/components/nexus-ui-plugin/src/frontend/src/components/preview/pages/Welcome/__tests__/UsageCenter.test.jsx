@@ -16,8 +16,9 @@ import UsageCenter from '../UsageCenter';
 
 jest.mock('../../../../../interface/ExtJS', () => ({
   ExtJS: {
-    isProEdition: jest.fn(),
+    isLicensedEdition: jest.fn(),
     state: jest.fn(),
+    useState: jest.fn((getValue) => getValue()),
   },
 }));
 
@@ -44,7 +45,7 @@ import {ExtJS} from '../../../../../interface/ExtJS';
 import {helperFunctions} from '../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
 
 const mockGetMetricData = helperFunctions.getMetricData;
-const mockIsProEdition = ExtJS.isProEdition;
+const mockIsLicensedEdition = ExtJS.isLicensedEdition;
 const mockState = ExtJS.state;
 
 const METRIC_DATA = {
@@ -80,14 +81,14 @@ describe('UsageCenter', () => {
   });
 
   it('renders nothing when usage data is empty', () => {
-    mockIsProEdition.mockReturnValue(true);
+    mockIsLicensedEdition.mockReturnValue(true);
     mockState.mockReturnValue(makeStateValue('PRO', {contentUsageEvaluationResult: []}));
     const {container} = render(<UsageCenter />);
     expect(container.firstChild).toBeNull();
   });
 
   it('renders nothing when contentUsageEvaluationResult is null', () => {
-    mockIsProEdition.mockReturnValue(true);
+    mockIsLicensedEdition.mockReturnValue(true);
     mockState.mockReturnValue(makeStateValue('PRO', {contentUsageEvaluationResult: null}));
     const {container} = render(<UsageCenter />);
     expect(container.firstChild).toBeNull();
@@ -95,7 +96,7 @@ describe('UsageCenter', () => {
 
   describe('Pro Edition', () => {
     beforeEach(() => {
-      mockIsProEdition.mockReturnValue(true);
+      mockIsLicensedEdition.mockReturnValue(true);
       mockState.mockReturnValue(makeStateValue('PRO'));
     });
 
@@ -149,7 +150,7 @@ describe('UsageCenter', () => {
 
   describe('Community Edition', () => {
     beforeEach(() => {
-      mockIsProEdition.mockReturnValue(false);
+      mockIsLicensedEdition.mockReturnValue(false);
       mockState.mockReturnValue(makeStateValue('COMMUNITY'));
     });
 
@@ -227,14 +228,14 @@ describe('UsageCenter', () => {
     // NEXUS-53863: status badge appears next to the "Usage Center" heading
 
     it('shows "Usage below limits" badge for Pro edition', () => {
-      mockIsProEdition.mockReturnValue(true);
+      mockIsLicensedEdition.mockReturnValue(true);
       mockState.mockReturnValue(makeStateValue('PRO'));
       render(<UsageCenter />);
       expect(screen.getByText('Usage below limits')).toBeInTheDocument();
     });
 
     it('shows "Usage below limits" badge when CE metrics are well under thresholds', () => {
-      mockIsProEdition.mockReturnValue(false);
+      mockIsLicensedEdition.mockReturnValue(false);
       // metricValue 1234 vs thresholdValue 120000 — far below 75%
       mockState.mockReturnValue(makeStateValue('COMMUNITY'));
       render(<UsageCenter />);
@@ -242,7 +243,7 @@ describe('UsageCenter', () => {
     });
 
     it('shows "Usage nearing limits" badge when a CE metric approaches its threshold', () => {
-      mockIsProEdition.mockReturnValue(false);
+      mockIsLicensedEdition.mockReturnValue(false);
       mockState.mockReturnValue(makeStateValue('COMMUNITY'));
       // Override getMetricData: component at 80% of threshold (> 75% PERCENTAGE)
       mockGetMetricData.mockImplementation((_usage, metricName) => {
@@ -256,7 +257,7 @@ describe('UsageCenter', () => {
     });
 
     it('shows "Usage over limits" badge when a CE metric exceeds its threshold', () => {
-      mockIsProEdition.mockReturnValue(false);
+      mockIsLicensedEdition.mockReturnValue(false);
       mockState.mockReturnValue(makeStateValue('COMMUNITY'));
       mockGetMetricData.mockImplementation((_usage, metricName) => {
         if (metricName === 'component_total_count') {
@@ -269,7 +270,7 @@ describe('UsageCenter', () => {
     });
 
     it('"over limits" takes priority over "nearing limits" when both conditions are present', () => {
-      mockIsProEdition.mockReturnValue(false);
+      mockIsLicensedEdition.mockReturnValue(false);
       mockState.mockReturnValue(makeStateValue('COMMUNITY'));
       mockGetMetricData.mockImplementation((_usage, metricName) => {
         if (metricName === 'component_total_count') {

@@ -64,7 +64,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static com.softwarementors.extjs.djn.router.RequestType.FORM_UPLOAD_POST;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
@@ -110,8 +110,8 @@ public class ExtDirectServlet
       @Value("${nexus.security.anticsrftoken.enabled:true}") final boolean antiCsrfTokenEnabled)
   {
     super(antiCsrfTokenEnabled, AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, /* Don't allow file uploads */ 0);
-    this.directories = checkNotNull(directories);
-    this.extDirectDispatcher = checkNotNull(extDirectDispatcher);
+    this.directories = requireNonNull(directories);
+    this.extDirectDispatcher = requireNonNull(extDirectDispatcher);
   }
 
   @Override

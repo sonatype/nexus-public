@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.bootstrap.entrypoint;
 
+import java.util.List;
+
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusProperties;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
@@ -20,6 +22,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +36,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
@@ -129,13 +133,13 @@ class ApplicationLauncherTest
     verify(conversionService).addConverter(eq(NexusEdition.class), eq(String.class), any());
   }
 
-  private static org.hamcrest.Matcher<ILoggingEvent> warnLogWithMessage(final String messageFragment) {
-    return org.hamcrest.Matchers.allOf(
+  private static Matcher<ILoggingEvent> warnLogWithMessage(final String messageFragment) {
+    return allOf(
         hasProperty("level", is(Level.WARN)),
         hasProperty("formattedMessage", containsString(messageFragment)));
   }
 
-  private java.util.List<ILoggingEvent> warnEvents() {
+  private List<ILoggingEvent> warnEvents() {
     return logAppender.list.stream()
         .filter(e -> e.getLevel() == Level.WARN)
         .toList();

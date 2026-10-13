@@ -13,6 +13,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import {
+  Badge,
   Box,
   Button,
   Card,
@@ -33,19 +34,35 @@ import {
   Copy,
   Download,
   ExternalLink,
-  Shield,
   Tag,
   Trash2,
 } from 'lucide-react';
 
 import { ExtJS } from '../../../../../interface/ExtJS';
+import Permissions from '../../../../../constants/Permissions';
 import { DeleteDialog } from '../actions/DeleteDialog';
-import { deleteComponent, deleteAsset, deleteFolder, fetchBrowseNodes } from '../browse.api';
+import { deleteComponent, deleteAsset, deleteFolder, fetchBrowseNodes, fetchComponentTags } from '../browse.api';
 import type { DeleteItemInfo } from '../actions/actions.types';
 import type { BrowseNode } from '../tree/browse-tree.types';
-import { formatFileSize, formatDate, getAssetDownloadUrl, sanitizeRegistryUrl } from './detail.utils';
+import {
+  formatFileSize,
+  formatDate,
+  getAssetDownloadUrl,
+  isAssetCached,
+  getLastDownloadedDisplay,
+  sanitizeRegistryUrl,
+} from './detail.utils';
+import { getDependencySnippets } from '../../search/details/dependencySnippets/registry';
+import type {
+  DependencySnippet,
+  SnippetAssetModel,
+  SnippetComponentModel,
+} from '../../search/details/dependencySnippets/types';
+import { useComponentIntelligence } from '../../search/details/useComponentIntelligence';
+import { buildIntelligenceRows, renderIntelligenceValue } from '../../search/details/intelligenceRows';
+import { LifecycleIframe, useLifecycleEntitlement } from './LifecycleIframe';
 import { DeepResearchLink, useToast } from '../../../shared';
-import { isIqServerEnabled } from '../repository-list/useRepositoryList';
+import { useIsLicensedEdition } from '../../../shared/hooks';
 import {
   formatAttributeValue,
   shouldDisplayAttributeFacet,
@@ -82,6 +99,10 @@ const STRINGS = {
     blobCreated: 'Created',
     blobUpdated: 'Updated',
     lastDownloaded: 'Last Downloaded',
+    locallyCached: 'Locally cached',
+    containingRepository: 'Containing repo',
+    uploadedBy: 'Uploader',
+    uploadedIp: "Uploader's IP Address",
     downloadButton: 'Download',
     deleteButton: 'Delete Asset',
     viewButton: 'View',
@@ -178,6 +199,56 @@ function PathRowWithCopy({ label, value }: { label: string; value: string | null
 }
 
 /**
+ * Copyable Package URL (PURL) row. Renders the component's `pkg:` coordinate with a
+ * copy affordance, matching Classic's "component PURL to copy" (NEXUS-54501). Rendered
+ * only when the browse node supplies a `packageUrl`.
+ */
+function PurlRow({ value }: { value: string }): JSX.Element {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [value]);
+
+  return (
+    <Box className="detail-panel__row detail-panel__row--purl" py="2">
+      <Text size="2" color="gray" weight="medium" mb="2" className="detail-panel__label">
+        Package URL
+      </Text>
+      <Box
+        className="detail-panel__purl-box"
+        p="4"
+        style={{ backgroundColor: 'var(--gray-2)', borderRadius: '6px' }}
+      >
+        <Flex align="center" justify="between" gap="2">
+          <Code
+            size="2"
+            color="gray"
+            variant="ghost"
+            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', flex: 1, overflowX: 'auto' }}
+          >
+            {value}
+          </Code>
+          <Tooltip content={copied ? 'Copied!' : 'Copy package URL'}>
+            <Button
+              variant="soft"
+              color="blue"
+              size="2"
+              onClick={handleCopy}
+              aria-label="Copy package URL"
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </Button>
+          </Tooltip>
+        </Flex>
+      </Box>
+    </Box>
+  );
+}
+
+/**
  * Collapsible facet section for attribute groups (Firewall, Npm, Docker, etc.).
  * Adds visual hierarchy with collapsible sections, dividers, and bold headers.
  * Default is closed; call sites explicitly pass defaultOpen for important facets.
@@ -263,12 +334,25 @@ export interface DetailPanelProps {
   error?: string | null;
   /** Callback when item is deleted */
   onDeleted?: () => void;
+  /**
+   * Callback when a delete request was rejected.
+   *
+   * A rejected delete may still have partially succeeded server-side, so the
+   * host re-reads the affected level; unlike {@link onDeleted} it must not remove
+   * the node or navigate away.
+   */
+  onDeleteFailed?: () => void;
   /** Whether user has delete permission */
   canDelete?: boolean;
   /** Active tab from URL (for URL-based navigation) */
   activeTab?: string;
   /** Callback when tab changes (for URL updates) */
   onTabChange?: (tab: string) => void;
+  /** When true, deletes are recoverable soft-deletes (moved to Trash); drives the confirm copy and
+   *  success toast. Set by the parent only for hosted repositories with soft-delete enabled. */
+  softDelete?: boolean;
+  /** Optional retention window (days) surfaced in the soft-delete confirm copy. */
+  retentionDays?: number;
 }
 
 /**
@@ -300,7 +384,10 @@ export interface AssetData {
   downloadUrl?: string;
   blobRef?: string;
   createdBy?: string;
-  createdByIp?: string; // mapped from API but intentionally not rendered — privacy concern
+  /** IP address the asset was uploaded from. Rendered for Classic parity (NEXUS-54501). */
+  createdByIp?: string;
+  /** For group repositories: the member repository that actually holds the asset. */
+  containingRepositoryName?: string;
   checksum?: Record<string, string>;
   /**
    * Format-specific attributes bag from the backend (e.g. `docker.registryUrl`).
@@ -308,6 +395,16 @@ export interface AssetData {
    */
   attributes?: Record<string, unknown>;
   registryUrl?: string;
+  /**
+   * RAW internal id of the component that owns this asset, as returned by ExtDirect
+   * `coreui_Component.readAsset`. Absent for a blob with no owning component.
+   *
+   * This is the only place an asset selection can learn it — asset browse nodes carry
+   * `componentId: null` — and it is deliberately not `componentData.id`, which is the base64
+   * `RepositoryItemIDXO` the REST API returns and the ExtDirect methods reject (NEXUS-54501,
+   * same distinction as `useCanDelete` / NEXUS-54171).
+   */
+  componentId?: string;
 }
 
 /**
@@ -327,9 +424,12 @@ export function DetailPanel({
   loading = false,
   error = null,
   onDeleted,
+  onDeleteFailed,
   canDelete = false,
   activeTab = 'summary',
   onTabChange,
+  softDelete = false,
+  retentionDays,
 }: DetailPanelProps): JSX.Element {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -385,8 +485,16 @@ export function DetailPanel({
    * Handle delete confirmation.
    * Uses Promise.race with a timeout to prevent indefinite hanging when the
    * backend returns a 500 (e.g., missing AptHostedMetadataFacet on cloud).
-   * On error the tree is still refreshed because the delete may have partially
-   * succeeded (asset removed but metadata update failed).
+   *
+   * `onDeleted` is the *successful*-deletion path: BrowsePage removes the node
+   * from the tree and navigates away from it. A rejected delete must therefore
+   * never invoke it, or the UI drops a node the server still holds.
+   * The failure is surfaced as a toast plus an inline reason, and
+   * `onDeleteFailed` re-reads the affected level from the server without removing
+   * anything — a rejected delete can still have partially succeeded (a cloud APT
+   * delete removes the asset and then fails updating format metadata), so the
+   * tree converges on what the server actually holds while the user stays on the
+   * node they tried to delete.
    */
   const handleDeleteConfirm = useCallback(async () => {
     setIsDeleting(true);
@@ -439,7 +547,7 @@ export function DetailPanel({
       await Promise.race([deletePromise, timeoutPromise]);
 
       setDeleteDialogOpen(false);
-      toast.success('Item deleted successfully');
+      toast.success(softDelete ? 'Item moved to Trash' : 'Item deleted successfully');
       if (onDeleted) {
         onDeleted();
       }
@@ -449,15 +557,25 @@ export function DetailPanel({
       toast.error(errorMessage);
       setDeleteError(`Cannot delete: ${errorMessage}`);
       setDeleteDialogOpen(false);
-
-      // Refresh tree - delete may have partially succeeded on the server
-      if (onDeleted) {
-        onDeleted();
+      // Deliberately not onDeleted() — that path removes the node and navigates
+      // away. Reconcile the level with the server instead; see the note above.
+      if (onDeleteFailed) {
+        onDeleteFailed();
       }
     } finally {
       setIsDeleting(false);
     }
-  }, [onDeleted, componentData, assetData, repositoryName, toast, node, deleteAsFolder]);
+  }, [
+    onDeleted,
+    onDeleteFailed,
+    componentData,
+    assetData,
+    repositoryName,
+    toast,
+    node,
+    deleteAsFolder,
+    softDelete,
+  ]);
 
   /**
    * Open delete dialog and clear any previous delete error.
@@ -606,6 +724,8 @@ export function DetailPanel({
         item={getDeleteItemInfo()}
         onConfirm={handleDeleteConfirm}
         isDeleting={isDeleting}
+        softDelete={softDelete}
+        retentionDays={retentionDays}
       />
     </Box>
   );
@@ -697,6 +817,167 @@ function PackageRootDetails({
 }
 
 /**
+ * Repository Health Check component intelligence section: most popular version, age, popularity,
+ * security alert chiclets (CVE counts by severity), and license threat — the same signals and
+ * source the Classic component-details panel uses (NEXUS-54501). Reuses the shared hook and the
+ * shared row builder so the browse panel and the search Overview never diverge.
+ *
+ * Renders nothing (returns null) whenever the shared builder yields no rows — an unsupported
+ * format, a user without `nexus:healthcheck:read`, or nothing requested yet — so it degrades
+ * gracefully with no empty section left behind.
+ */
+function ComponentIntelligenceSection({
+  format,
+  group,
+  name,
+  version,
+}: {
+  format: string | undefined;
+  group: string | null | undefined;
+  name: string | undefined;
+  version: string | null | undefined;
+}): JSX.Element | null {
+  // gaId is `format:group:name` (or `format:name` for group-less formats), the shape
+  // parseGaCoordinates in the hook expects.
+  const gaId = [format, group, name].filter(Boolean).join(':');
+  const { data, status, alertsStatus } = useComponentIntelligence({
+    gaId,
+    format: format ?? '',
+    version: version ?? null,
+    enabled: Boolean(format && name),
+  });
+
+  const rows = buildIntelligenceRows(status, data, alertsStatus);
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <Separator size="4" />
+      <Box p="3">
+        <Heading size="3" mb="3">Component Intelligence</Heading>
+        {rows.map((row) => (
+          <Flex
+            key={row.label}
+            className="detail-panel__row"
+            justify="between"
+            py="2"
+            align="center"
+          >
+            <Text size="2" color="gray" className="detail-panel__label">
+              {row.label}
+            </Text>
+            <Box className="detail-panel__value">{renderIntelligenceValue(row)}</Box>
+          </Flex>
+        ))}
+      </Box>
+    </>
+  );
+}
+
+/**
+ * Whether Component Tags may be shown at all, mirroring Classic's
+ * `NX.proui.controller.ComponentTags.isTaggingEnabled()`: a signed-in user, `nexus:tags:read`,
+ * a non-EVAL edition and a valid license. Every condition is read reactively, so a login,
+ * permission change or license activation re-gates the section instead of leaving a stale one
+ * on screen.
+ *
+ * The Pro-edition check is additional to Classic's ladder, not a substitute for part of it.
+ * Classic can omit it because the whole proui plugin only loads in Pro; this component ships in
+ * every edition, so the edition has to be asserted here.
+ *
+ * This is a single value on purpose — it gates tab availability, the trigger, the content and the
+ * fetch together. Gating the fetch more tightly than the trigger is what produces a visible but
+ * permanently empty tab.
+ */
+function useComponentTagEntitlement(): boolean {
+  const user = ExtJS.useUser();
+  const license = ExtJS.useLicense() as { installed?: boolean; valid?: boolean } | null | undefined;
+  const canReadTags = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.TAGS.READ), []);
+  const isLicensedEdition = useIsLicensedEdition();
+  const edition = ExtJS.state().getEdition();
+  const licenseValid = license?.installed === true && license?.valid === true;
+
+  return Boolean(user) && canReadTags && isLicensedEdition && edition !== 'EVAL' && licenseValid;
+}
+
+/**
+ * True once `NX.State` has published the license, i.e. the entitlement hooks are answering from real
+ * state rather than from "not loaded yet".
+ *
+ * `ExtJS.useLicense()` is backed by `ExtJS.useState`, which returns `undefined` until the state
+ * publishes and then re-renders. Every edition publishes an object — CE and Core publish
+ * `{installed: false, valid: false}` — so `undefined` means unresolved, never "not entitled". The
+ * user cannot serve as the signal here: an anonymous user legitimately has none.
+ */
+function useEntitlementResolved(): boolean {
+  return ExtJS.useLicense() !== undefined;
+}
+
+/**
+ * Loads the tags of one component when entitled, degrading to an empty list on any failure so a
+ * missing tag service never blanks the surrounding panel.
+ *
+ * `componentId` must be the raw ExtDirect id: `readTagListDetails` resolves the component with
+ * `find(new DetachedEntityId(id))` and rejects the encoded REST `RepositoryItemIDXO` form.
+ */
+function useComponentTags(
+  componentId: string | null | undefined,
+  repositoryName: string,
+  entitled: boolean,
+): string[] {
+  const [tags, setTags] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!entitled || !componentId) {
+      setTags([]);
+      return;
+    }
+    let cancelled = false;
+    fetchComponentTags(componentId, repositoryName)
+      .then((loaded) => {
+        if (!cancelled) setTags(loaded);
+      })
+      .catch(() => {
+        if (!cancelled) setTags([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [entitled, componentId, repositoryName]);
+
+  return tags;
+}
+
+/**
+ * The tag badges themselves, shared by the component view (an inline section, as Classic adds a
+ * collapsible tag panel to the component info container) and the asset view (a tab, as Classic
+ * adds a tab to the asset container). Both reach it through the same entitlement.
+ */
+function ComponentTagList({ tags }: { tags: string[] }): JSX.Element {
+  if (tags.length === 0) {
+    return (
+      <Flex direction="column" align="center" justify="center" p="4" gap="2">
+        <Tag size={24} color="var(--gray-9)" />
+        <Text color="gray" size="2">No tags associated with this component.</Text>
+      </Flex>
+    );
+  }
+
+  return (
+    <Flex gap="2" wrap="wrap" data-testid="component-tags">
+      {tags.map((tagName) => (
+        <Badge key={tagName} color="blue" variant="soft" size="2">
+          <Tag size={12} />
+          {tagName}
+        </Badge>
+      ))}
+    </Flex>
+  );
+}
+
+/**
  * Component details view.
  */
 interface ComponentDetailsProps {
@@ -714,6 +995,23 @@ function ComponentDetails({
   canDelete,
   onDeleteClick,
 }: ComponentDetailsProps): JSX.Element {
+  // Component Tags for a component-node selection. Classic reaches the same panel from
+  // `ComponentTags.onComponentInfoUpdated`, so a selected component shows its tags without
+  // needing an asset to be selected first (NEXUS-54501).
+  const tagsEntitled = useComponentTagEntitlement();
+  const tags = useComponentTags(node.componentId, repositoryName, tagsEntitled);
+
+  // Component-level usage snippets via the shared per-format registry (Classic parity,
+  // NEXUS-54501). No asset context at the component level, so classifier/extension/registry
+  // are absent — the generators degrade to the base coordinates. Empty for formats with no
+  // generator, in which case the Usage section is omitted entirely.
+  const usageSnippets = buildUsageSnippets(
+    componentData?.format,
+    componentData?.group,
+    componentData?.name || node.text,
+    componentData?.version,
+  );
+
   return (
     <Card>
       {/* Header — size="5" (one level down from page size="6") */}
@@ -729,7 +1027,48 @@ function ComponentDetails({
         <DetailRow label={STRINGS.component.group} value={componentData?.group} />
         <DetailRow label={STRINGS.component.name} value={componentData?.name || node.text} />
         <DetailRow label={STRINGS.component.version} value={componentData?.version} />
+        {node.packageUrl && <PurlRow value={node.packageUrl} />}
       </Box>
+
+      {/* Repository Health Check intelligence (Classic parity, NEXUS-54501). Renders nothing on
+          unsupported formats or without the healthcheck permission. */}
+      <ComponentIntelligenceSection
+        format={componentData?.format}
+        group={componentData?.group}
+        name={componentData?.name || node.text}
+        version={componentData?.version}
+      />
+
+      {/* Component Tags (Pro, entitled) — Classic's collapsible tag panel on the component info
+          container. Absent entirely when unentitled, so CE and users without nexus:tags:read
+          never see an empty section. */}
+      {tagsEntitled && (
+        <>
+          <Separator size="4" />
+          <Box p="3" data-testid="component-tags-section">
+            <Heading size="3" mb="3">Component Tags</Heading>
+            <ComponentTagList tags={tags} />
+          </Box>
+        </>
+      )}
+
+      {/* Usage snippets — rendered only for formats the registry knows how to build. */}
+      {usageSnippets.length > 0 && (
+        <>
+          <Separator size="4" />
+          <Box p="3">
+            <Heading size="3" mb="3">Usage</Heading>
+            {usageSnippets.map((s) => (
+              <UsageSnippet
+                key={s.displayName}
+                title={s.displayName}
+                code={s.snippetText}
+                description={s.description}
+              />
+            ))}
+          </Box>
+        </>
+      )}
 
       {/* Actions */}
       {canDelete && (
@@ -785,53 +1124,80 @@ interface AssetDetailsProps {
 }
 
 /**
- * Generate usage snippets based on format.
+ * Build the usage snippets for an asset/component using the shared per-format registry
+ * (search/details/dependencySnippets). This gives the Browse detail panel full Classic
+ * parity — all applicable tool snippets for the format, including PURL where the format
+ * provides one — instead of the old hardcoded Maven/Gradle-only subset.
+ *
+ * Returns an empty array for a format with no generator, matching Classic's behavior of
+ * rendering no snippet section.
  */
-function getUsageSnippets(
+function buildUsageSnippets(
   format: string | undefined,
   group: string | null | undefined,
   name: string | undefined,
   version: string | null | undefined,
-  registryUrl?: string | null
-): { title: string; code: string }[] {
+  asset?: AssetData | null,
+): DependencySnippet[] {
   if (!format || !name) return [];
-  const snippets: { title: string; code: string }[] = [];
-  const g = group || '';
-  const v = version || 'LATEST';
-  const dockerPullTarget = sanitizeRegistryUrl(registryUrl) ? `${sanitizeRegistryUrl(registryUrl)}/${name}` : name;
 
-  switch (format.toLowerCase()) {
-    case 'maven2':
-      snippets.push({
-        title: 'Maven',
-        code: `<dependency>\n  <groupId>${g}</groupId>\n  <artifactId>${name}</artifactId>\n  <version>${v}</version>\n</dependency>`,
-      });
-      snippets.push({
-        title: 'Gradle',
-        code: `implementation '${g}:${name}:${v}'`,
-      });
-      break;
-    case 'npm':
-      snippets.push({ title: 'npm', code: `npm install ${name}@${v}` });
-      snippets.push({ title: 'yarn', code: `yarn add ${name}@${v}` });
-      break;
-    case 'pypi':
-      snippets.push({ title: 'pip', code: `pip install ${name}==${v}` });
-      break;
-    case 'nuget':
-      snippets.push({ title: 'NuGet', code: `Install-Package ${name} -Version ${v}` });
-      break;
-    case 'docker':
-      snippets.push({ title: 'Docker', code: `docker pull ${dockerPullTarget}:${v}` });
-      break;
+  const component: SnippetComponentModel = {
+    format,
+    group: group || '',
+    name,
+    version: version || '',
+    repositoryName: asset?.repositoryName,
+  };
+
+  // The maven2 generator reads classifier/extension from the asset's maven2 attributes;
+  // docker/oci read registryUrl/digest. Adapt the loose attributes bag to the typed model.
+  const maven2Attrs = (asset?.attributes?.maven2 ?? undefined) as
+    | { classifier?: string; extension?: string }
+    | undefined;
+  const assetModel: SnippetAssetModel = {
+    attributes: maven2Attrs ? { maven2: maven2Attrs } : undefined,
+    // Sanitized: the docker/oci generators splice this straight into a `docker pull <target>` line
+    // the user is invited to copy into a shell, so anything but a bare host[:port][/path] is dropped.
+    registryUrl: sanitizeRegistryUrl(asset?.registryUrl),
+    digest: readContentDigest(asset),
+  };
+
+  return getDependencySnippets(format, component, assetModel);
+}
+
+/**
+ * The image digest of an OCI/Docker asset, read from the format facet where the backend actually
+ * writes it: `attributes.<format>.content_digest` (`OciAttributes.P_CONTENT_DIGEST` and
+ * `DockerAttributes.P_DOCKER_DIGEST`, both the literal `content_digest`, exposed on the asset by
+ * `OciAssetXODescriptor`). There is no top-level `attributes.digest` — reading that made the OCI
+ * cosign snippet fall back to its `@<digest>` placeholder even for an asset that has a real digest.
+ */
+function readContentDigest(asset?: AssetData | null): string | undefined {
+  const attributes = asset?.attributes;
+  if (!attributes) return undefined;
+
+  for (const facet of ['oci', 'docker'] as const) {
+    const digest = (attributes[facet] as { content_digest?: unknown } | undefined)?.content_digest;
+    if (typeof digest === 'string' && digest) {
+      return digest;
+    }
   }
-  return snippets;
+  return undefined;
 }
 
 /**
  * Copyable code snippet — Usage tab layout with GA copy affordance (icon-only, Tooltip, soft blue).
+ * `title` is the tool/snippet name; `description` is the optional Classic instruction line.
  */
-function UsageSnippet({ title, code }: { title: string; code: string }): JSX.Element {
+function UsageSnippet({
+  title,
+  code,
+  description,
+}: {
+  title: string;
+  code: string;
+  description?: string;
+}): JSX.Element {
   const [copied, setCopied] = useState(false);
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code);
@@ -857,6 +1223,11 @@ function UsageSnippet({ title, code }: { title: string; code: string }): JSX.Ele
           </Button>
         </Tooltip>
       </Flex>
+      {description && (
+        <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>
+          {description}
+        </Text>
+      )}
       <Box className="usage-snippet__code">
         <Code size="2" style={{ whiteSpace: 'pre-wrap', display: 'block', padding: 'var(--space-3)' }}>
           {code}
@@ -877,11 +1248,43 @@ function AssetDetails({
   activeTab = 'summary',
   onTabChange,
 }: AssetDetailsProps): JSX.Element {
-  const iqEnabled = isIqServerEnabled();
-  const isProEdition = ExtJS.isProEdition?.() ?? false;
-  // Top-level registryUrl computed by the backend at read time so the docker pull
-  // snippet becomes `docker pull host:port/image:tag` when present (NEXUS-51972).
-  const dockerRegistryUrl = assetData?.registryUrl;
+  // Raw ExtDirect id, never componentData.id (the encoded REST RepositoryItemIDXO):
+  // readTagListDetails resolves the component with `find(new DetachedEntityId(id))` and rejects
+  // the encoded form. The node fallback covers a component-node selection (NEXUS-54501).
+  const componentId = assetData?.componentId ?? node.componentId;
+
+  // Component Tags entitlement — the full Classic ladder, not just the edition. Gating the tab on
+  // Pro alone showed a permanently empty tab to a Pro user without nexus:tags:read.
+  const tagsEntitled = useComponentTagEntitlement();
+  const tags = useComponentTags(componentId, repositoryName, tagsEntitled);
+
+  // Sonatype Lifecycle is entitled per user/edition/license/component, exactly as Classic gates
+  // adding the panel at all (NEXUS-54501). Both the tab and its content honour it.
+  // Classic reads `asset.get('componentId')` — the id carried by the selected node — not the
+  // separately fetched component. The two normally agree, but `loadNodeDetail` swallows a failed
+  // component fetch, and an unavailable component record is no reason to withhold the report.
+  // Classic's `Boolean(asset.get('componentId'))` gate reads the same value.
+  const lifecycleComponentId = componentId;
+  const lifecycleEntitled = useLifecycleEntitlement(lifecycleComponentId);
+
+  // A tab reached from the URL may not exist for this user — `?tab=lifecycle` or `?tab=tags`
+  // without the matching entitlement. Radix would then render a tab list with nothing selected
+  // and an empty body, so fall back to Summary and correct the URL rather than showing a blank panel.
+  const availableTabs = new Set(['summary', 'usage', 'attributes']);
+  if (tagsEntitled) availableTabs.add('tags');
+  if (lifecycleEntitled) availableTabs.add('lifecycle');
+  const selectedTab = availableTabs.has(activeTab) ? activeTab : 'summary';
+  // Only correct the URL once the license has actually published. Before that both entitlements read
+  // false, so an entitled user deep-linking to `?tab=lifecycle` would have the link rewritten to
+  // `summary` on the first render and never get the tab back. Rendering still falls back to Summary
+  // in the meantime; keeping `activeTab` intact lets the effect settle on it when the state lands.
+  const entitlementResolved = useEntitlementResolved();
+  useEffect(() => {
+    if (!entitlementResolved) return;
+    if (selectedTab !== activeTab) {
+      onTabChange?.(selectedTab);
+    }
+  }, [entitlementResolved, selectedTab, activeTab, onTabChange]);
 
   const DOCKER_ATTR_LABELS: Record<string, string> = {
     os: 'OS',
@@ -901,12 +1304,16 @@ function AssetDetails({
     image_name: 'Image Name',
     image_tag: 'Image Tag',
   };
-  const usageSnippets = getUsageSnippets(
+  // Semantic coordinates only. `node.text` is the asset filename ('maven-3.9.6.pom',
+  // 'NuGet.Core.2.14.0.nupkg'), so falling back to it produced dependency snippets whose
+  // artifactId/package id was a filename and whose group/version were empty. Without a resolved
+  // component there are no coordinates, and buildUsageSnippets correctly returns none (NEXUS-54501).
+  const usageSnippets = buildUsageSnippets(
     assetData?.format,
     componentData?.group,
-    componentData?.name || node.text,
+    componentData?.name,
     componentData?.version,
-    dockerRegistryUrl
+    assetData,
   );
 
   return (
@@ -917,13 +1324,13 @@ function AssetDetails({
       </Box>
 
       {/* Tabs - controlled by URL when onTabChange is provided */}
-      <Tabs.Root value={activeTab} onValueChange={onTabChange}>
+      <Tabs.Root value={selectedTab} onValueChange={onTabChange}>
         <Tabs.List>
           <Tabs.Trigger value="summary">Summary</Tabs.Trigger>
           <Tabs.Trigger value="usage">Usage</Tabs.Trigger>
           <Tabs.Trigger value="attributes">Attributes</Tabs.Trigger>
-          {isProEdition && <Tabs.Trigger value="tags">Component Tags</Tabs.Trigger>}
-          <Tabs.Trigger value="lifecycle">Sonatype Lifecycle</Tabs.Trigger>
+          {tagsEntitled && <Tabs.Trigger value="tags">Component Tags</Tabs.Trigger>}
+          {lifecycleEntitled && <Tabs.Trigger value="lifecycle">Sonatype Lifecycle</Tabs.Trigger>}
         </Tabs.List>
 
         {/* Summary Tab */}
@@ -941,19 +1348,55 @@ function AssetDetails({
             <PathRowWithCopy label={STRINGS.asset.path} value={assetData?.path || assetData?.name} />
             <DetailRow label={STRINGS.asset.contentType} value={assetData?.contentType} />
             <DetailRow label={STRINGS.asset.size} value={formatFileSize(assetData?.size)} />
+            {/* Three separate populated dates (Classic parity, NEXUS-54501) */}
             <DetailRow label={STRINGS.asset.blobCreated} value={formatDate(assetData?.blobCreated)} />
             <DetailRow label={STRINGS.asset.blobUpdated} value={formatDate(assetData?.blobUpdated)} />
-            <DetailRow label={STRINGS.asset.lastDownloaded} value={formatDate(assetData?.lastDownloaded)} />
+            <DetailRow
+              label={STRINGS.asset.lastDownloaded}
+              value={getLastDownloadedDisplay(assetData?.lastDownloaded)}
+            />
+            {/* Locally-cached indicator — for proxy assets, whether content is actually cached */}
+            <DetailRow
+              label={STRINGS.asset.locallyCached}
+              value={isAssetCached(assetData?.contentType, assetData?.size) ? 'Yes' : 'No'}
+            />
             {assetData?.blobRef && <DetailRow label="Blob Reference" value={assetData.blobRef} />}
-            {assetData?.createdBy && <DetailRow label="Uploaded By" value={assetData.createdBy} />}
+            {/* Unconditional, matching Classic: the row is always present, empty when the asset is
+                not served through a group repository. */}
+            <DetailRow
+              label={STRINGS.asset.containingRepository}
+              value={assetData?.containingRepositoryName}
+            />
+            {assetData?.createdBy && (
+              <DetailRow label={STRINGS.asset.uploadedBy} value={assetData.createdBy} />
+            )}
+            {assetData?.createdByIp && (
+              <DetailRow label={STRINGS.asset.uploadedIp} value={assetData.createdByIp} />
+            )}
+            {node.packageUrl && <PurlRow value={node.packageUrl} />}
           </Box>
+          {/* Repository Health Check intelligence (Classic parity, NEXUS-54501). Renders nothing on
+              unsupported formats or without the healthcheck permission. */}
+          <ComponentIntelligenceSection
+            format={assetData?.format}
+            group={componentData?.group}
+            name={componentData?.name || node.text}
+            version={componentData?.version}
+          />
         </Tabs.Content>
 
         {/* Usage Tab */}
         <Tabs.Content value="usage">
           <Box p="3">
             {usageSnippets.length > 0 ? (
-              usageSnippets.map((s) => <UsageSnippet key={s.title} title={s.title} code={s.code} />)
+              usageSnippets.map((s) => (
+                <UsageSnippet
+                  key={s.displayName}
+                  title={s.displayName}
+                  code={s.snippetText}
+                  description={s.description}
+                />
+              ))
             ) : (
               <Text color="gray" size="2">No usage snippets available for this format.</Text>
             )}
@@ -1024,7 +1467,10 @@ function AssetDetails({
                       key={sectionKey}
                       title={sectionKey}
                       testId={`attr-section-${sectionKey}`}
-                      defaultOpen={sectionKey === 'firewall' || sectionKey === 'npm' || sectionKey === 'docker'}
+                      // Classic parity (NEXUS-54501): cache and format-specific attribute
+                      // accordions render expanded by default so their data is visible without
+                      // an extra click. Checksums (above) already defaults open.
+                      defaultOpen={true}
                     >
                       {entries.map(([k, v]) => (
                         <Flex
@@ -1052,52 +1498,31 @@ function AssetDetails({
           </Box>
         </Tabs.Content>
 
-        {/* Component Tags Tab — Pro feature: hidden in CE mode */}
-        {isProEdition && (
+        {/* Component Tags Tab — mounted only when entitled (Pro, signed in, nexus:tags:read,
+            non-EVAL, valid license), so an unentitled user never sees an empty tab. */}
+        {tagsEntitled && (
           <Tabs.Content value="tags">
             <Box p="3">
-              <Flex direction="column" align="center" justify="center" p="4" gap="2">
-                <Tag size={24} color="var(--gray-9)" />
-                <Text color="gray" size="2">No tags associated with this component.</Text>
-              </Flex>
+              <ComponentTagList tags={tags} />
             </Box>
           </Tabs.Content>
         )}
 
-        {/* Sonatype Lifecycle Tab */}
-        <Tabs.Content value="lifecycle">
-          <Flex direction="column" align="center" justify="center" p="6" gap="2">
-            <Shield size={32} color="var(--gray-9)" />
-            {iqEnabled ? (
-              <>
-                <Text color="gray" size="2">Component security analysis available in IQ Server.</Text>
-                {componentData && (
-                  <Button
-                    variant="soft"
-                    size="2"
-                    onClick={() => {
-                      const clm = ExtJS.state()?.getValue?.('clm');
-                      const iqUrl = clm?.url;
-                      if (iqUrl && componentData.name) {
-                        window.open(
-                          `${iqUrl}/assets/index.html#/componentDetails/${encodeURIComponent(componentData.format)}/${encodeURIComponent(componentData.name)}/${encodeURIComponent(componentData.version || '')}`,
-                          '_blank',
-                          'noopener,noreferrer'
-                        );
-                      }
-                    }}
-                    disabled={!ExtJS.state()?.getValue?.('clm')?.url}
-                  >
-                    <ExternalLink size={14} />
-                    View in IQ Server
-                  </Button>
-                )}
-              </>
-            ) : (
-              <Text color="gray" size="2">Sonatype Lifecycle integration not configured.</Text>
-            )}
-          </Flex>
-        </Tabs.Content>
+        {/* Sonatype Lifecycle Tab — embedded IQ Server Health Check report (Classic parity,
+            NEXUS-54501). Mounted only when entitled, so an unentitled user never issues the
+            healthCheckFileDetail request the backend would answer with a 403/licence error page.
+            Uses the containing repository (proxy-cached content lives there) and the asset path,
+            matching Classic HealthCheckAssetDetail. */}
+        {lifecycleEntitled && (
+          <Tabs.Content value="lifecycle">
+            <LifecycleIframe
+              repositoryName={assetData?.containingRepositoryName || assetData?.repositoryName || repositoryName}
+              path={assetData?.path || assetData?.name || node.text}
+              format={assetData?.format || componentData?.format || ''}
+              componentId={lifecycleComponentId}
+            />
+          </Tabs.Content>
+        )}
       </Tabs.Root>
 
       {/* Actions */}

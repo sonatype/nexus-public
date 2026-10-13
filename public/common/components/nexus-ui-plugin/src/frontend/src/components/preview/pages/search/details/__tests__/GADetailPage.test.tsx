@@ -24,7 +24,10 @@ const renderWithProviders = (ui: React.ReactElement) =>
 
 // Mock the router (mutable route name for version-selection tests)
 const mockGo = jest.fn();
-const mockRouterState = { currentName: 'preview.browse.search.component.overview' };
+const mockRouterState: { currentName: string; params: Record<string, unknown> } = {
+  currentName: 'preview.browse.search.component.overview',
+  params: {},
+};
 jest.mock('@uirouter/react', () => ({
   useRouter: () => ({
     stateService: {
@@ -39,8 +42,46 @@ jest.mock('@uirouter/react', () => ({
   }),
   useCurrentStateAndParams: () => ({
     state: { name: mockRouterState.currentName },
-    params: {},
+    params: mockRouterState.params,
   }),
+}));
+
+// Mock the summary header. Its real rendering (breadcrumb, selectors, Download) is covered by
+// GADetailHeader.test.tsx; here we only need to observe the props GADetailPage feeds it and to
+// drive its change callbacks, without Radix Select/portal behavior in jsdom. The h1 keeps the
+// existing "displays GA name" assertion meaningful. The View in Browse button is reproduced with
+// the real component's aria-label so the page-level browseTarget→router wiring stays under test
+// here (its own rendering/accessibility lives in GADetailHeader.test.tsx).
+jest.mock('../GADetailHeader', () => ({
+  GADetailHeader: ({
+    displayName,
+    selectedRepository,
+    selectedGroup,
+    onRepositoryChange,
+    onGroupChange,
+    onViewInBrowse,
+  }: any) => (
+    <div data-testid="ga-detail-header">
+      <h1>{displayName}</h1>
+      <div data-testid="repo-value">{selectedRepository}</div>
+      <div data-testid="group-value">{selectedGroup}</div>
+      <button type="button" onClick={() => onRepositoryChange('maven-releases')}>
+        change-repo
+      </button>
+      <button type="button" onClick={() => onGroupChange('maven-snapshots')}>
+        change-group
+      </button>
+      {onViewInBrowse && (
+        <button
+          type="button"
+          aria-label={`View ${displayName} in Browse`}
+          onClick={onViewInBrowse}
+        >
+          View in Browse
+        </button>
+      )}
+    </div>
+  ),
 }));
 
 // Mock the useGADetail hook
@@ -164,6 +205,9 @@ describe('GADetailPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRouterState.currentName = 'preview.browse.search.component.overview';
+    // Reset router params between tests so a deep-linked repository/group facet from one test
+    // does not leak into the next (GADetailPage seeds its facet state from routeParams).
+    mockRouterState.params = {};
     // Every field of UseGADetailReturn is present here, including versionRepositories, which
     // GADetailPage does not read yet. A per-test override replaces this object wholesale, so
     // anything missing here is what a render path would receive as undefined the moment it
@@ -345,11 +389,12 @@ describe('GADetailPage', () => {
     /**
      * Regression, NEXUS-54219 review: the header's default version used to be
      * `versionsState.versions[0]`, i.e. the first row of whatever page/sort/filter the Versions
-     * tab was showing. Sorting ascending therefore titled the page with the component's OLDEST
-     * version (and pointed copy-path and the Overview default at it). `newestVersion` is latched
-     * from the default-ordered first page instead, so the visible page can move freely.
+     * tab was showing. Sorting ascending therefore defaulted the page to the component's OLDEST
+     * version (and pointed the Overview default at it). `newestVersion` is latched from the
+     * default-ordered first page instead, so the visible page can move freely. The effective
+     * version now surfaces in the breadcrumb (and the header Version selector), not the heading.
      */
-    it('titles the page with the newest version even when the tab is sorted ascending', () => {
+    it('defaults the page to the newest version even when the tab is sorted ascending', () => {
       mockUseGADetail.mockReturnValue({
         detail: mockDetail,
         selectedVersion: null,
@@ -368,9 +413,163 @@ describe('GADetailPage', () => {
 
       renderWithProviders(<GADetailPage gaId={testGaId} />);
 
-      const heading = screen.getAllByRole('heading', { level: 1 })[0];
-      expect(heading.textContent).toContain('9.9.9');
-      expect(heading.textContent).not.toContain('0.0.1');
+      // Surfaced in the breadcrumb (the header, mocked here, receives the same effectiveVersion).
+      expect(screen.getAllByText('9.9.9').length).toBeGreaterThan(0);
+      expect(screen.queryByText('0.0.1')).not.toBeInTheDocument();
+    });
+  });
+
+  // NEXUS-54430: the header's non-useful copy-path button was replaced with a "View in Browse"
+  // action that deep-links into the new Browse tree for this component/version.
+  describe('header View in Browse action', () => {
+    const withRepo = (version: string) => {
+      mockUseGADetail.mockReturnValue({
+        detail: mockDetail,
+        selectedVersion: version,
+        assets: [],
+        versionRepositories: [],
+        versionLastUpdated: null,
+        assetsLoading: false,
+        selectVersion: jest.fn(),
+      });
+      mockUseGARepositoriesForVersion.mockReturnValue({
+        rows: [{ repositoryName: 'maven-central', type: 'proxy', versionCount: 1 }],
+        totalCount: 1,
+        loading: false,
+        error: null,
+        refresh: jest.fn(),
+      });
+    };
+
+    it('no longer renders the old copy-path button', () => {
+      withRepo('3.14.0');
+      renderWithProviders(<GADetailPage gaId={testGaId} />);
+
+      expect(
+        screen.queryByRole('button', { name: /copy path/i }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^Path$/ })).not.toBeInTheDocument();
+    });
+
+    it('navigates to the new Preview Browse route for the component/version', async () => {
+      withRepo('3.14.0');
+      // UI-Router decodes the `gaId` path param before it reaches this prop, so pass the decoded
+      // 'format:group:name' — the encoded testGaId would not split into buildComponentPath parts.
+      renderWithProviders(
+        <GADetailPage gaId="maven:org.apache.commons:commons-lang3" />,
+      );
+
+      const button = screen.getByRole('button', {
+        name: 'View maven-core in Browse',
+      });
+      await userEvent.click(button);
+
+      expect(mockGo).toHaveBeenCalledWith('preview.browse.browse.repo.path', {
+        repoName: 'maven-central',
+        path: 'org/apache/commons/commons-lang3/3.14.0',
+        tab: 'summary',
+      });
+    });
+
+    it('deep-links to the repository selected in the header, not merely the first the API returned', async () => {
+      // A component in several repositories must resolve to the one the user picked in the header
+      // (the same repo the Download action targets), so switching the selector re-points the link
+      // (NEXUS-54430).
+      mockUseGADetail.mockReturnValue({
+        detail: mockDetail,
+        selectedVersion: '3.14.0',
+        assets: [],
+        versionRepositories: [],
+        versionLastUpdated: null,
+        assetsLoading: false,
+        selectVersion: jest.fn(),
+      });
+      mockUseGARepositoriesForVersion.mockReturnValue({
+        rows: [
+          { repositoryName: 'maven-central', type: 'proxy', versionCount: 1 },
+          { repositoryName: 'maven-releases', type: 'hosted', versionCount: 1 },
+        ],
+        totalCount: 2,
+        loading: false,
+        error: null,
+        refresh: jest.fn(),
+      });
+
+      renderWithProviders(
+        <GADetailPage gaId="maven:org.apache.commons:commons-lang3" />,
+      );
+
+      // The mocked header's "change-repo" control switches the selection to maven-releases.
+      await userEvent.click(screen.getByRole('button', { name: 'change-repo' }));
+      await userEvent.click(
+        screen.getByRole('button', { name: 'View maven-core in Browse' }),
+      );
+
+      expect(mockGo).toHaveBeenLastCalledWith('preview.browse.browse.repo.path', {
+        repoName: 'maven-releases',
+        path: 'org/apache/commons/commons-lang3/3.14.0',
+        tab: 'summary',
+      });
+    });
+
+    it('falls back to the repository root when the format has no computable component path', async () => {
+      // A docker component has no buildComponentPath mapping, so componentPath is null and
+      // buildBrowseTarget targets the repo root (repoName only, no path/tab) rather than hiding
+      // the affordance — the repository is still a useful place to land.
+      withRepo('1.25');
+      renderWithProviders(<GADetailPage gaId="docker:library/nginx" />);
+
+      const button = screen.getByRole('button', { name: /in Browse/i });
+      await userEvent.click(button);
+
+      expect(mockGo).toHaveBeenCalledWith('preview.browse.browse.repo', {
+        repoName: 'maven-central',
+      });
+    });
+
+    it('binds the accessible name to the component displayName, not a fixed string', () => {
+      // Use a displayName that appears nowhere else in the fixture so a match proves the aria-label
+      // is interpolated from detail.displayName rather than coinciding with 'maven-core'.
+      mockUseGADetail.mockReturnValue({
+        detail: { ...mockDetail, displayName: 'zzz-distinct-artifact' },
+        selectedVersion: '3.14.0',
+        assets: [],
+        versionRepositories: [],
+        versionLastUpdated: null,
+        assetsLoading: false,
+        selectVersion: jest.fn(),
+      });
+      mockUseGARepositoriesForVersion.mockReturnValue({
+        rows: [{ repositoryName: 'maven-central', type: 'proxy', versionCount: 1 }],
+        totalCount: 1,
+        loading: false,
+        error: null,
+        refresh: jest.fn(),
+      });
+
+      renderWithProviders(<GADetailPage gaId={testGaId} />);
+
+      expect(
+        screen.getByRole('button', { name: 'View zzz-distinct-artifact in Browse' }),
+      ).toBeInTheDocument();
+    });
+
+    it('is hidden while no repository is known for the version', () => {
+      mockUseGADetail.mockReturnValue({
+        detail: mockDetail,
+        selectedVersion: '3.14.0',
+        assets: [],
+        versionRepositories: [],
+        versionLastUpdated: null,
+        assetsLoading: false,
+        selectVersion: jest.fn(),
+      });
+      // Default beforeEach mock already returns zero rows; assert the affordance stays hidden.
+      renderWithProviders(<GADetailPage gaId={testGaId} />);
+
+      expect(
+        screen.queryByRole('button', { name: /in Browse/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -516,7 +715,9 @@ describe('GADetailPage', () => {
       expect(mockSelectVersion).toBeDefined();
     });
 
-    it('when on versions route, row click keeps versions state and passes version param', async () => {
+    it('switches versions on a Versions-tab row click (switching restored to the tab)', async () => {
+      // NEXUS-54428 (revised): version switching lives in the Versions tab again. Clicking a row
+      // selects that version and navigates so the header and other tabs follow.
       mockRouterState.currentName = 'preview.browse.search.component.versions';
       const mockSelectVersion = jest.fn();
       mockUseGADetail.mockReturnValue({
@@ -533,28 +734,143 @@ describe('GADetailPage', () => {
       await userEvent.click(versionCell.closest('tr')!);
 
       expect(mockSelectVersion).toHaveBeenCalledWith('3.9.5');
-      expect(mockGo).toHaveBeenCalledWith(
-        'preview.browse.search.component.versions',
-        expect.objectContaining({
-          gaId: testGaId,
-          version: '3.9.5',
-        }),
-      );
+      expect(mockGo).toHaveBeenCalled();
     });
   });
 
-  describe('files tab requirements', () => {
-    it('requires version selection for files tab', () => {
+  describe('header facets from the URL (NEXUS-54428)', () => {
+    it('seeds the Repository and Group selectors from the route params', () => {
+      mockRouterState.params = {
+        gaId: testGaId,
+        version: '3.9.5',
+        repository: 'maven-central',
+        group: 'maven-public',
+      };
       mockUseGADetail.mockReturnValue({
         detail: mockDetail,
-        selectedVersion: null, // No version selected
+        selectedVersion: null,
         assets: [],
         assetsLoading: false,
         selectVersion: jest.fn(),
       });
+      mockUseGARepositoriesForVersion.mockReturnValue({
+        rows: [
+          { repositoryName: 'maven-central', type: 'proxy', versionCount: 1 },
+          { repositoryName: 'maven-public', type: 'group', versionCount: 1 },
+        ],
+        totalCount: 2,
+        loading: false,
+        error: null,
+        refresh: jest.fn(),
+      });
 
-      // When rendering files tab without version, should show message
-      // This is tested in GAFilesTab.test.tsx
+      renderWithProviders(<GADetailPage gaId={testGaId} />);
+
+      expect(screen.getByTestId('repo-value').textContent).toBe('maven-central');
+      expect(screen.getByTestId('group-value').textContent).toBe('maven-public');
+    });
+
+    it('mirrors a repository change into the URL as a replace, dynamic param', async () => {
+      mockRouterState.params = { gaId: testGaId, version: '3.9.5' };
+      mockUseGADetail.mockReturnValue({
+        detail: mockDetail,
+        selectedVersion: null,
+        assets: [],
+        loading: false,
+        assetsLoading: false,
+        error: null,
+        selectVersion: jest.fn(),
+      });
+      mockUseGARepositoriesForVersion.mockReturnValue({
+        rows: [
+          { repositoryName: 'maven-central', type: 'proxy', versionCount: 1 },
+          { repositoryName: 'maven-releases', type: 'hosted', versionCount: 1 },
+        ],
+        totalCount: 2,
+        loading: false,
+        error: null,
+        refresh: jest.fn(),
+      });
+
+      renderWithProviders(<GADetailPage gaId={testGaId} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'change-repo' }));
+
+      expect(mockGo).toHaveBeenCalledWith(
+        '.',
+        { repository: 'maven-releases' },
+        { location: 'replace', inherit: true }
+      );
+    });
+
+    it('re-adopts the repository from the URL on Back/Forward navigation', () => {
+      // useState only seeds the selection on mount. Browser Back/Forward changes the route params
+      // (useCurrentStateAndParams re-renders), so the selection must re-sync to the new URL value
+      // rather than stay pinned to whatever it was seeded with.
+      mockRouterState.params = { gaId: testGaId, version: '3.9.5', repository: 'maven-central' };
+      mockUseGADetail.mockReturnValue({
+        detail: mockDetail,
+        selectedVersion: null,
+        assets: [],
+        assetsLoading: false,
+        selectVersion: jest.fn(),
+      });
+      mockUseGARepositoriesForVersion.mockReturnValue({
+        rows: [
+          { repositoryName: 'maven-central', type: 'proxy', versionCount: 1 },
+          { repositoryName: 'maven-releases', type: 'hosted', versionCount: 1 },
+        ],
+        totalCount: 2,
+        loading: false,
+        error: null,
+        refresh: jest.fn(),
+      });
+
+      const { rerender } = renderWithProviders(<GADetailPage gaId={testGaId} />);
+      expect(screen.getByTestId('repo-value').textContent).toBe('maven-central');
+
+      // Simulate the browser Back landing on the prior entry, whose URL carried maven-releases.
+      mockRouterState.params = { gaId: testGaId, version: '3.9.5', repository: 'maven-releases' };
+      rerender(
+        <Theme>
+          <GADetailPage gaId={testGaId} />
+        </Theme>,
+      );
+
+      expect(screen.getByTestId('repo-value').textContent).toBe('maven-releases');
+    });
+
+    it('re-adopts the group from the URL on Back/Forward navigation', () => {
+      mockRouterState.params = { gaId: testGaId, version: '3.9.5', group: 'maven-public' };
+      mockUseGADetail.mockReturnValue({
+        detail: mockDetail,
+        selectedVersion: null,
+        assets: [],
+        assetsLoading: false,
+        selectVersion: jest.fn(),
+      });
+      mockUseGARepositoriesForVersion.mockReturnValue({
+        rows: [
+          { repositoryName: 'maven-public', type: 'group', versionCount: 1 },
+          { repositoryName: 'maven-mirror', type: 'group', versionCount: 1 },
+        ],
+        totalCount: 2,
+        loading: false,
+        error: null,
+        refresh: jest.fn(),
+      });
+
+      const { rerender } = renderWithProviders(<GADetailPage gaId={testGaId} />);
+      expect(screen.getByTestId('group-value').textContent).toBe('maven-public');
+
+      mockRouterState.params = { gaId: testGaId, version: '3.9.5', group: 'maven-mirror' };
+      rerender(
+        <Theme>
+          <GADetailPage gaId={testGaId} />
+        </Theme>,
+      );
+
+      expect(screen.getByTestId('group-value').textContent).toBe('maven-mirror');
     });
   });
 

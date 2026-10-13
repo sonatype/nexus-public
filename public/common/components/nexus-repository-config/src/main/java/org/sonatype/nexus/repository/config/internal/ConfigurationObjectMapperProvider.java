@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Provides {@link ObjectMapper} for repository configuration.
@@ -46,7 +46,7 @@ public class ConfigurationObjectMapperProvider
 
   @Autowired
   public ConfigurationObjectMapperProvider(final List<ConfigurationObjectMapperCustomizer> customizersList) {
-    this.customizers = checkNotNull(customizersList);
+    this.customizers = requireNonNull(customizersList);
   }
 
   @Override

@@ -21,7 +21,7 @@ import org.sonatype.nexus.capability.condition.NexusConditions;
 
 import org.springframework.context.annotation.Lazy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -46,9 +46,9 @@ public class ConditionsImpl
       @Lazy final CapabilityConditions capabilityConditions,
       @Lazy final NexusConditions nexusConditions)
   {
-    this.logicalConditions = checkNotNull(logicalConditions);
-    this.capabilityConditions = checkNotNull(capabilityConditions);
-    this.nexusConditions = checkNotNull(nexusConditions);
+    this.logicalConditions = requireNonNull(logicalConditions);
+    this.capabilityConditions = requireNonNull(capabilityConditions);
+    this.nexusConditions = requireNonNull(nexusConditions);
   }
 
   @Override

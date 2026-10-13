@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-coreui-plugin</artifactId>
@@ -31,6 +31,11 @@
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-api-extdirect-common</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-ui-plugin</artifactId>
@@ -54,7 +59,6 @@
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-repository-content</artifactId>
-      <optional>true</optional>
     </dependency>
 
     <dependency>

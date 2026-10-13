@@ -15,7 +15,7 @@ package org.sonatype.nexus.webhooks;
 
 import org.sonatype.nexus.common.event.EventManager;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Event to queue up and send {@link WebhookRequest} asynchronously.
@@ -29,7 +29,7 @@ public class WebhookRequestSendEvent
   private final WebhookRequest request;
 
   public WebhookRequestSendEvent(final WebhookRequest request) {
-    this.request = checkNotNull(request);
+    this.request = requireNonNull(request);
   }
 
   public WebhookRequest getRequest() {

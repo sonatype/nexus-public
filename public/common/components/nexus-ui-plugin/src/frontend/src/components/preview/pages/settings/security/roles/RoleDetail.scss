@@ -98,13 +98,27 @@
     }
   }
 
-  &__actions {
-    margin-top: var(--space-4, 16px);
-    padding-top: var(--space-4, 16px);
-    border-top: 1px solid var(--gray-6, #e4e4e7);
+  &__picker-row {
+    padding: var(--space-2, 8px) 0;
+  }
+
+  &__effective-item {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    background: var(--gray-2, #f9f9fb);
+    border-radius: var(--radius-2, 6px);
 
     [data-theme='dark'] & {
-      border-top-color: var(--gray-6, #3d3d43);
+      background: var(--gray-3, #222225);
+    }
+  }
+
+  &__assigned-item {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    background: var(--gray-2, #f9f9fb);
+    border-radius: var(--radius-2, 6px);
+
+    [data-theme='dark'] & {
+      background: var(--gray-3, #222225);
     }
   }
 }

@@ -15,8 +15,10 @@ package org.sonatype.nexus.repository.internal.blobstore;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -47,6 +49,8 @@ import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.cooperation2.Cooperation2;
+import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -69,9 +73,9 @@ import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Provider;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -113,6 +117,29 @@ public abstract class BaseBlobStoreManager
 
   private final SecretsService secretService;
 
+  private final NodeAccess nodeAccess;
+
+  /**
+   * Deduplicates concurrent materialization of the same blob store: a {@link #get} read-miss, a replicated
+   * create replayed by the configuration event handlers, and an origin {@link #create} all funnel through
+   * {@link #doCreate}. The lead thread tracks and starts the blob store once; cooperating threads receive its
+   * result instead of racing to start (and leak) a duplicate instance. Local (single-node) concurrency
+   * controls only -- cross-node convergence is handled by the shared configuration store.
+   */
+  private final Cooperation2 configureCooperation = new DefaultCooperation2Factory().configure()
+      .majorTimeout(Duration.ofSeconds(60))
+      .minorTimeout(Duration.ofSeconds(30))
+      .threadsPerKey(100)
+      .build(BaseBlobStoreManager.class);
+
+  /**
+   * Blob stores currently being configured on the calling thread, mapped to their in-progress instance. A
+   * re-entrant read-through {@link #get} (e.g. from a subscriber firing during materialization, before the store
+   * is tracked) returns that instance rather than re-entering {@link #doCreate}, which would make the thread
+   * wait on its own in-flight cooperation future.
+   */
+  private final ThreadLocal<Map<String, BlobStore>> configuringOnThread = ThreadLocal.withInitial(HashMap::new);
+
   protected BaseBlobStoreManager(
       final EventManager eventManager, // NOSONAR
       final BlobStoreConfigurationStore store,
@@ -127,16 +154,17 @@ public abstract class BaseBlobStoreManager
       final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager,
       final SecretsService secretService)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.store = checkNotNull(store);
-    this.blobStoreDescriptors = QualifierUtil.buildQualifierBeanMap(checkNotNull(blobStoreDescriptorsList));
-    this.blobStorePrototypes = QualifierUtil.buildQualifierBeanMap(checkNotNull(blobStorePrototypesList));
-    this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
-    this.blobStoreTaskService = checkNotNull(blobStoreTaskService);
+    this.eventManager = requireNonNull(eventManager);
+    this.store = requireNonNull(store);
+    this.blobStoreDescriptors = QualifierUtil.buildQualifierBeanMap(requireNonNull(blobStoreDescriptorsList));
+    this.blobStorePrototypes = QualifierUtil.buildQualifierBeanMap(requireNonNull(blobStorePrototypesList));
+    this.repositoryManagerProvider = requireNonNull(repositoryManagerProvider);
+    this.blobStoreTaskService = requireNonNull(blobStoreTaskService);
     this.blobStoreOverrideProvider = blobStoreOverrideProvider;
-    this.replicationBlobStoreStatusManager = checkNotNull(replicationBlobStoreStatusManager);
+    this.replicationBlobStoreStatusManager = requireNonNull(replicationBlobStoreStatusManager);
     this.blobstoreProvider = blobstoreProvider;
-    this.secretService = checkNotNull(secretService);
+    this.secretService = requireNonNull(secretService);
+    this.nodeAccess = requireNonNull(nodeAccess);
 
     if (provisionDefaults != null) {
       // explicit true/false setting, so honour that
@@ -227,6 +255,10 @@ public abstract class BaseBlobStoreManager
     log.debug("Starting BlobStore: {}", name);
     try {
       blobStore.start();
+      // NEXUS-54370: blob stores start in the STORAGE phase, before the EVENTS phase brings the EventManager
+      // up, so this start event is dropped and its BlobStoreAuditor audit record is not written at boot. This
+      // audit-trail gap is accepted by design (audit-only subscriber, no data-path impact); the drop is logged
+      // at DEBUG and summarized once by EventManagerImpl rather than warned per event.
       eventManager.post(new BlobStoreStartedEvent(blobStore));
     }
     catch (Exception e) {
@@ -256,6 +288,9 @@ public abstract class BaseBlobStoreManager
       BlobStore store = entry.getValue();
       log.debug("Stopping blob-store: {}", name);
       store.stop();
+      // NEXUS-54370: STORAGE stops after EVENTS in the reversed shutdown order, so the EventManager is already
+      // stopped here and this stop event is dropped (BlobStoreAuditor audit record not written at shutdown).
+      // Accepted by design, same rationale as the start event in startBlobStore.
       eventManager.post(new BlobStoreStoppedEvent(store));
     }
 
@@ -271,7 +306,7 @@ public abstract class BaseBlobStoreManager
   @Override
   @Guarded(by = STARTED)
   public BlobStore create(final BlobStoreConfiguration configuration) throws Exception {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
     log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(), configuration);
     validateConfiguration(configuration, true);
     List<Secret> encryptedAttributes = encryptSensitiveAttributes(newConfiguration(), configuration);
@@ -294,10 +329,10 @@ public abstract class BaseBlobStoreManager
         }
       }
 
-      doCreate(blobStore, configuration);
+      BlobStore created = doCreate(blobStore, configuration);
       log.debug("BlobStore: {} saved into local cache", configuration.getName());
       eventManager.post(new BlobStoreDistributedConfigurationEvent(configuration.getName(), EventType.CREATED));
-      return blobStore;
+      return created;
     }
     catch (Exception e) {
       encryptedAttributes.forEach(this::removeSecret);
@@ -315,22 +350,66 @@ public abstract class BaseBlobStoreManager
     return blobStore;
   }
 
-  private void doCreate(final BlobStore blobStore, final BlobStoreConfiguration configuration) throws Exception {
-    checkNotNull(blobStore, "blobStore param is NULL");
-    checkNotNull(configuration, "configuration param is NULL");
+  private BlobStore doCreate(final BlobStore blobStore, final BlobStoreConfiguration configuration) throws Exception {
+    requireNonNull(blobStore, "blobStore param is NULL");
+    requireNonNull(configuration, "configuration param is NULL");
     final String blobStoreName = configuration.getName();
-    if (!stores.containsKey(blobStoreName)) {
-      track(blobStoreName, blobStore);
-      blobStore.start();
-      eventManager.post(new BlobStoreCreatedEvent(blobStore));
-      eventManager.post(new BlobStoreStartedEvent(blobStore));
+
+    // A get() read-miss, a replicated create (either configuration event handler) and an origin create can all
+    // reach here concurrently for the same name. Funnel the track+start through a cooperation point keyed by
+    // name so the blob store is materialized exactly once; the containsKey guard keeps the lead idempotent too
+    // (e.g. a failover re-run, or a replayed event after the store was already materialized).
+    Map<String, BlobStore> configuring = configuringOnThread.get();
+    if (configuring.containsKey(blobStoreName)) {
+      // Re-entrant materialization for a blob store already being configured on this thread (e.g. a facet or
+      // subscriber that resolves it during start(), possibly via get() with a differently-cased name that the
+      // get()-level guard missed). Never re-enter the cooperation point -- that would make this thread wait on
+      // its own in-flight materialization future. Return the in-progress instance keyed by its canonical name.
+      return configuring.get(blobStoreName);
+    }
+    configuring.put(blobStoreName, blobStore);
+    try {
+      return configureCooperation.on(() -> {
+        if (!stores.containsKey(blobStoreName)) {
+          track(blobStoreName, blobStore);
+          try {
+            blobStore.start();
+          }
+          catch (RuntimeException e) {
+            // start() failed: remove the tracked-but-unstarted instance so the cooperation checkFunction does
+            // not return this broken store on every subsequent create()/get(), silently blocking retries.
+            untrack(blobStoreName);
+            throw e;
+          }
+          catch (Exception e) {
+            untrack(blobStoreName);
+            throw new IOException(e);
+          }
+          eventManager.post(new BlobStoreCreatedEvent(blobStore));
+          eventManager.post(new BlobStoreStartedEvent(blobStore));
+        }
+        return stores.get(blobStoreName);
+      })
+          .checkFunction(() -> Optional.ofNullable(stores.get(blobStoreName)))
+          .cooperate("create", blobStoreName);
+    }
+    catch (IOException e) {
+      // A checked non-IO failure from blobStore.start() was wrapped above; restore the original cause.
+      Throwable cause = e.getCause();
+      if (cause instanceof Exception) {
+        throw (Exception) cause;
+      }
+      throw e;
+    }
+    finally {
+      configuring.remove(blobStoreName);
     }
   }
 
   @Override
   @Guarded(by = STARTED)
   public BlobStore update(final BlobStoreConfiguration configuration) throws Exception {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
     validateConfiguration(configuration, false);
     BlobStore blobStore = getBlobStoreForUpdate(configuration);
 
@@ -355,7 +434,7 @@ public abstract class BaseBlobStoreManager
 
   private BlobStore getBlobStoreForUpdate(final BlobStoreConfiguration configuration) throws Exception {
     BlobStore blobStore = get(configuration.getName());
-    checkNotNull(blobStore);
+    requireNonNull(blobStore);
     blobStore.validateCanCreateAndUpdate();
     log.debug("Updating BlobStore: {} with attributes: {}", configuration.getName(),
         configuration);
@@ -422,18 +501,24 @@ public abstract class BaseBlobStoreManager
   @Guarded(by = STARTED)
   @Nullable
   public BlobStore get(final String name) {
-    checkNotNull(name);
+    requireNonNull(name);
 
     BlobStore blobStore = stores.get(name);
     if (blobStore == null) {
+      Map<String, BlobStore> configuring = configuringOnThread.get();
+      if (configuring.containsKey(name)) {
+        // Re-entrant read-miss for a blob store already being configured on this thread: return the in-progress
+        // instance instead of re-entering doCreate, which would make the thread wait on its own in-flight
+        // materialization future.
+        return configuring.get(name);
+      }
       final BlobStoreConfiguration configuration = store.read(name);
       if (Objects.isNull(configuration)) {
         return null;
       }
       try {
         BlobStore validBS = getBlobStoreForCreate(configuration);
-        doCreate(validBS, configuration);
-        blobStore = stores.get(name);
+        blobStore = doCreate(validBS, configuration);
       }
       catch (Exception e) {
         throw new BlobStoreException("Could not start blobstore: " + name + ", reason: " + e.getMessage(), e, null);
@@ -446,7 +531,7 @@ public abstract class BaseBlobStoreManager
   @Override
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
-    checkNotNull(name);
+    requireNonNull(name);
     if (hasConflictingTasks(name)) {
       throw new IllegalStateException("BlobStore " + name + " is in use by a Change Repository Blob Store task");
     }
@@ -466,7 +551,7 @@ public abstract class BaseBlobStoreManager
   @Override
   @Guarded(by = STARTED)
   public void forceDelete(final String name) throws Exception {
-    checkNotNull(name);
+    requireNonNull(name);
     log.debug("Deleting BlobStore: {}", name);
     BlobStore blobStore = doForceDelete(name);
 
@@ -496,7 +581,14 @@ public abstract class BaseBlobStoreManager
 
   @Override
   public boolean exists(final String name) {
-    return stores.keySet().stream().anyMatch(key -> key.equalsIgnoreCase(name));
+    if (stores.keySet().stream().anyMatch(key -> key.equalsIgnoreCase(name))) {
+      return true;
+    }
+    // Cross-node visibility (clustered only): a blob store created on another node is committed to the shared
+    // store but may not yet be materialized in this node's in-memory map (the create->use window). Consult the
+    // shared store so existence checks -- e.g. validating a repository's blobStoreName reference during a
+    // repository create routed to a peer -- see it. On a single node the in-memory map is authoritative.
+    return nodeAccess.isClustered() && store.read(name) != null;
   }
 
   @VisibleForTesting
@@ -626,7 +718,7 @@ public abstract class BaseBlobStoreManager
 
   @Override
   public void validateConfiguration(final BlobStoreConfiguration configuration, final boolean sanitize) {
-    checkNotNull(configuration, "configuration param is NULL");
+    requireNonNull(configuration, "configuration param is NULL");
     BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
     if (sanitize) {
       blobStoreDescriptor.sanitizeConfig(configuration);
@@ -648,9 +740,9 @@ public abstract class BaseBlobStoreManager
 
   @Override
   public Blob copyBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
-    checkNotNull(blobId);
-    checkNotNull(srcBlobStore);
-    checkNotNull(destBlobStore);
+    requireNonNull(blobId);
+    requireNonNull(srcBlobStore);
+    requireNonNull(destBlobStore);
 
     BlobAttributes srcBlobAttributes = srcBlobStore.getBlobAttributes(blobId);
     if (srcBlobAttributes == null) {
@@ -671,8 +763,8 @@ public abstract class BaseBlobStoreManager
 
   @Override
   public Blob moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
-    checkNotNull(srcBlobStore);
-    checkNotNull(destBlobStore);
+    requireNonNull(srcBlobStore);
+    requireNonNull(destBlobStore);
 
     BlobAttributes srcBlobAttributes = srcBlobStore.getBlobAttributes(blobId);
     boolean isSrcDeleted = srcBlobAttributes.isDeleted();

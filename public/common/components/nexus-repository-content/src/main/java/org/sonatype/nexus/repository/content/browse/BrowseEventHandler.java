@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
-import java.io.IOException;
-import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,11 +20,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.cooperation2.Cooperation2;
-import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.content.browse.capability.BrowseTrimService;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -52,11 +49,12 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.Striped;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.parseInt;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -88,6 +86,8 @@ public class BrowseEventHandler
 
   private static final String NO_PURGE_DELAY_KEY = HANDLER_KEY_PREFIX + "noPurgeDelay";
 
+  private static final String BROWSE_LOCK_STRIPES_KEY = HANDLER_KEY_PREFIX + "lockStripes";
+
   private final PeriodicJobService periodicJobService;
 
   private final EventManager eventManager;
@@ -108,9 +108,9 @@ public class BrowseEventHandler
 
   private final AtomicBoolean needsTrim = new AtomicBoolean();
 
-  private final Cooperation2 cooperation;
+  private final Striped<Lock> browseLocks;
 
-  private Object flushMutex = new Object();
+  private final Object flushMutex = new Object();
 
   private PeriodicJob flushTask;
 
@@ -123,33 +123,26 @@ public class BrowseEventHandler
 
   @Autowired
   public BrowseEventHandler(
-      final Cooperation2Factory cooperation2Factory,
       final PeriodicJobService periodicJobService,
       final EventManager eventManager,
-      @Value("${nexus.browse.cooperation.enabled:true}") final boolean cooperationEnabled,
-      @Value("${nexus.browse.cooperation.majorTimeout:0s}") final Duration majorTimeout,
-      @Value("${nexus.browse.cooperation.minorTimeout:30s}") final Duration minorTimeout,
       @Value("${" + FLUSH_ON_COUNT_KEY + ":100}") final int flushOnCount,
       @Value("${" + FLUSH_ON_SECONDS_KEY + ":2}") final int flushOnSeconds,
       @Value("${" + NO_PURGE_DELAY_KEY + ":true}") final boolean noPurgeDelay,
+      @Value("${" + BROWSE_LOCK_STRIPES_KEY + ":256}") final int browseLockStripes,
       final DatabaseCheck databaseCheck,
       final BrowseTrimService browseTrimService)
   {
-    this.cooperation = checkNotNull(cooperation2Factory).configure()
-        .majorTimeout(majorTimeout)
-        .minorTimeout(minorTimeout)
-        .enabled(cooperationEnabled)
-        .build(getClass());
-
-    this.periodicJobService = checkNotNull(periodicJobService);
-    this.eventManager = checkNotNull(eventManager);
+    this.periodicJobService = requireNonNull(periodicJobService);
+    this.eventManager = requireNonNull(eventManager);
     checkArgument(flushOnCount > 0, FLUSH_ON_COUNT_KEY + " must be positive");
     this.flushOnCount = flushOnCount;
     checkArgument(flushOnSeconds > 0, FLUSH_ON_SECONDS_KEY + " must be positive");
     this.flushOnSeconds = flushOnSeconds;
     this.noPurgeDelay = noPurgeDelay;
-    this.databaseCheck = checkNotNull(databaseCheck);
-    this.browseTrimService = checkNotNull(browseTrimService);
+    checkArgument(browseLockStripes > 0, BROWSE_LOCK_STRIPES_KEY + " must be positive");
+    this.browseLocks = Striped.lazyWeakLock(browseLockStripes);
+    this.databaseCheck = requireNonNull(databaseCheck);
+    this.browseTrimService = requireNonNull(browseTrimService);
 
     eventManager.register(flushEventReceiver);
   }
@@ -365,25 +358,34 @@ public class BrowseEventHandler
         requestsByRepository.put(entry.getValue(), assetId(entry.getKey()));
         itr.remove();
       }
-
-      // deliver requests to the relevant repositories
-      requestsByRepository.asMap().forEach((repository, assetIds) -> {
-        try {
-          cooperation.on(() -> {
-            repository.optionalFacet(BrowseFacet.class)
-                .ifPresent(browseFacet -> browseFacet.addPathsToAssets(assetIds));
-            return null;
-          })
-              // We always need to process our assets regardless of what the remote node did
-              .checkFunction(Optional::empty)
-              .cooperate(repository.getName());
-        }
-        catch (IOException e) {
-          logWarning("An error occurred while processing browse nodes for {}", repository, e);
-        }
-      });
     }
 
+    // deliver requests to the relevant repositories OUTSIDE the flushMutex so a slow or contended
+    // browse-node write for one repository cannot block browse updates for other repositories.
+    // A per-repository lock (striped by repository name) serializes concurrent writes for the SAME
+    // repository without collapsing distinct batches, so no pending asset request is ever dropped.
+    requestsByRepository.asMap().forEach((repository, assetIds) -> {
+      Lock lock = browseLocks.get(repository.getName());
+      lock.lock();
+      try {
+        repository.optionalFacet(BrowseFacet.class)
+            .ifPresent(browseFacet -> browseFacet.addPathsToAssets(assetIds));
+      }
+      catch (IllegalStateException e) {
+        // Repository was stopped/deleted (e.g. a concurrent delete) between enqueue and flush; its browse
+        // facet is @Guarded(by = STARTED) and throws InvalidStateException. Skip it -- dropping this repo's
+        // pending browse work is correct because it is going away -- and keep flushing the other
+        // repositories in this batch rather than aborting the whole periodic flush. See NEXUS-54229.
+        log.debug("Skipping browse flush for stopped/deleted repository {}: {}", repository.getName(),
+            e.getMessage());
+      }
+      catch (RuntimeException e) {
+        logWarning("An error occurred while processing browse nodes for {}", repository, e);
+      }
+      finally {
+        lock.unlock();
+      }
+    });
   }
 
   /**
@@ -398,18 +400,23 @@ public class BrowseEventHandler
       while (itr.hasNext()) {
         Repository nextRepository = itr.next();
         itr.remove(); // do the removal first so other threads can add the same repository to the set to trim
+        Lock lock = browseLocks.get(nextRepository.getName());
+        lock.lock();
         try {
-          cooperation.on(() -> {
-            nextRepository.optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
-            return null;
-          })
-              // In order to guarantee the repository is trimmed we return an empty result if another thread initially
-              // won
-              .checkFunction(Optional::empty)
-              .cooperate(nextRepository.getName());
+          nextRepository.optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
         }
-        catch (IOException e) {
+        catch (IllegalStateException e) {
+          // Repository was stopped/deleted between selection and trim; trimBrowseNodes() is @Guarded(by =
+          // STARTED) and throws InvalidStateException. Skip it -- a going-away repo needs no trim -- rather than
+          // logging an expected condition as a warning. Mirrors the flushAssets() guard. See NEXUS-54229.
+          log.debug("Skipping browse-node trim for stopped/deleted repository {}: {}", nextRepository.getName(),
+              e.getMessage());
+        }
+        catch (RuntimeException e) {
           logWarning("An error occurred while trying to trim {}", nextRepository, e);
+        }
+        finally {
+          lock.unlock();
         }
       }
     }

@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Generates notification messages for tasks with no class specific generator.
@@ -49,7 +49,7 @@ public class DefaultTaskNotificationMessageGenerator
 
   @Autowired
   public DefaultTaskNotificationMessageGenerator(final TemplateHelper templateHelper) {
-    this.templateHelper = checkNotNull(templateHelper);
+    this.templateHelper = requireNonNull(templateHelper);
   }
 
   public String completed(final TaskInfo taskInfo) {

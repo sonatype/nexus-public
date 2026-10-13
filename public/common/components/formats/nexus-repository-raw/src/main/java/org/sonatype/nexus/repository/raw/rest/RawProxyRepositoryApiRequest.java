@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.ReplicationAttributes;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
-import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
+import org.sonatype.nexus.swagger.EditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * @since 3.24
  */
-@JsonFilter(SwaggerEditionVisibility.NAME)
+@JsonFilter(EditionVisibility.NAME)
 @JsonIgnoreProperties({"format", "type"})
 public class RawProxyRepositoryApiRequest
     extends ProxyRepositoryApiRequest

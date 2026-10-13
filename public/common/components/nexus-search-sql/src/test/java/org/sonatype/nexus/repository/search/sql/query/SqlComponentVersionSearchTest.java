@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -199,5 +200,54 @@ class SqlComponentVersionSearchTest
   private ComponentVersionQuery query(final String sort, final int page, final int size) {
     return new ComponentVersionQuery("maven2", "org.test", "artifact", null, page, size, sort,
         SortDirection.DESC);
+  }
+
+  /*
+   * NEXUS-54105 - ComponentVersionQuery compact constructor rejects NUL bytes in all string fields.
+   */
+  @Test
+  void componentVersionQuery_withNulByteInVersionFilter_throwsValidationErrors() {
+    assertThat(catchThrowable(() -> new ComponentVersionQuery("maven2", "org.test", "artifact", "1.0\u0000x",
+        0, 20, "version", SortDirection.DESC)))
+            .isInstanceOf(org.sonatype.nexus.rest.ValidationErrorsException.class);
+  }
+
+  @Test
+  void componentVersionQuery_withNulByteInSort_throwsValidationErrors() {
+    assertThat(catchThrowable(() -> new ComponentVersionQuery("maven2", "org.test", "artifact", null,
+        0, 20, "version\u0000x", SortDirection.DESC)))
+            .isInstanceOf(org.sonatype.nexus.rest.ValidationErrorsException.class);
+  }
+
+  @Test
+  void componentVersionQuery_withNulByteInFormat_throwsValidationErrors() {
+    assertThat(catchThrowable(() -> new ComponentVersionQuery("maven2\u0000", "org.test", "artifact", null,
+        0, 20, "version", SortDirection.DESC)))
+            .isInstanceOf(org.sonatype.nexus.rest.ValidationErrorsException.class);
+  }
+
+  @Test
+  void componentVersionQuery_withNulByteInName_throwsValidationErrors() {
+    assertThat(catchThrowable(() -> new ComponentVersionQuery("maven2", "org.test", "artifact\u0000", null,
+        0, 20, "version", SortDirection.DESC)))
+            .isInstanceOf(org.sonatype.nexus.rest.ValidationErrorsException.class);
+  }
+
+  @Test
+  void componentVersionQuery_withNulByteInNamespace_throwsValidationErrors() {
+    assertThat(catchThrowable(() -> new ComponentVersionQuery("maven2", "org.test\u0000", "artifact", null,
+        0, 20, "version", SortDirection.DESC)))
+            .isInstanceOf(org.sonatype.nexus.rest.ValidationErrorsException.class);
+  }
+
+  /*
+   * NEXUS-54105 - toVersionLikePattern must strip NUL bytes itself as defense-in-depth, consistent
+   * with tsEscape() in SearchTokenizer and QuotingTypeHandler. This protects callers that build a
+   * LIKE pattern without first routing through SearchFilterValidator.
+   */
+  @Test
+  void toVersionLikePattern_stripsNulByteFromPattern() {
+    assertThat(SqlComponentVersionSearch.toVersionLikePattern("1.0\u00000"))
+        .isEqualTo("%1.00%");
   }
 }

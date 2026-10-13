@@ -73,7 +73,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -122,12 +122,12 @@ public class SelectorManagerImpl
       final CacheHelper cacheHelper,
       @Value("${nexus.shiro.cache.defaultTimeToLive:2m}") final Time userCacheTimeout)
   {
-    this.store = checkNotNull(store);
-    this.securitySystem = checkNotNull(securitySystem);
+    this.store = requireNonNull(store);
+    this.securitySystem = requireNonNull(securitySystem);
     this.cacheHelper = cacheHelper;
     this.userCacheTimeout = new Duration(userCacheTimeout.getUnit(), userCacheTimeout.getValue());
 
-    checkNotNull(selectorFactory);
+    requireNonNull(selectorFactory);
     selectorCache = CacheBuilder.newBuilder().softValues().build(CacheLoader.from(config -> {
       String type = config.getType();
       String expression = config.getAttributes().get(SelectorConfiguration.EXPRESSION);
@@ -157,7 +157,7 @@ public class SelectorManagerImpl
   @Override
   @Guarded(by = STARTED)
   public List<SelectorConfiguration> browse(final String selectorType) {
-    checkNotNull(selectorType);
+    requireNonNull(selectorType);
     return browse().stream().filter(config -> selectorType.equals(config.getType())).collect(toList());
   }
 

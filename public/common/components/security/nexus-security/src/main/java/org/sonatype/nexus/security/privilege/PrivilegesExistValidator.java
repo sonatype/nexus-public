@@ -25,7 +25,7 @@ import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -47,11 +47,14 @@ public class PrivilegesExistValidator
 
   @Autowired
   public PrivilegesExistValidator(final SecuritySystem securitySystem) {
-    this.securitySystem = checkNotNull(securitySystem);
+    this.securitySystem = requireNonNull(securitySystem);
   }
 
   @Override
   public boolean isValid(final Collection<?> value, final ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
     log.trace("Validating privileges exist: {}", value);
     Set<String> ids = new HashSet<>();
     for (Privilege privilege : securitySystem.listPrivileges()) {

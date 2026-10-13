@@ -15,6 +15,41 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 /**
+ * Strip a matched outer pair of RFC 3986 URI brackets from the network portion
+ * of an IPv6 literal (e.g. `[::1]` -> `::1`, `[2001:db8::]/32` -> `2001:db8::/32`).
+ * Structurally mirrors the Java validator: split on `/` first, strip brackets
+ * from the network portion only, rejoin.
+ *
+ * Half-bracketed forms (`[::1`, `::1]`), empty brackets (`[]`), and whole-CIDR
+ * brackets (`[2001:db8::/32]`) are left intact so the underlying regexes reject
+ * them and stay in sync with the Java server-side validator. Only strips when
+ * the stripped content contains a colon -- brackets are the URI-authority
+ * disambiguator for IPv6, and RFC 3986 does not permit them around IPv4
+ * literals. Mirrors the Java-side stripIpv6UriBrackets helper on
+ * IpAddressValidator (NEXUS-54702).
+ *
+ * @param {string} value - already-trimmed candidate
+ * @returns {string} bare form, or the original value if brackets are not matched
+ */
+export const stripUriBrackets = (value) => {
+  // Fast path: >99% of real input is plain (bare IPv4/IPv6/CIDR) and never bracketed.
+  // Also null-safe so external callers can't crash on undefined.
+  if (!value || !value.startsWith('[')) {
+    return value;
+  }
+  const slashIdx = value.indexOf('/');
+  const head = slashIdx === -1 ? value : value.slice(0, slashIdx);
+  const tail = slashIdx === -1 ? '' : value.slice(slashIdx);
+  if (head.length >= 2 && head.endsWith(']')) {
+    const inner = head.slice(1, -1);
+    if (inner.includes(':')) {
+      return inner + tail;
+    }
+  }
+  return value;
+};
+
+/**
  * Validates IPv4, IPv6, and CIDR notation for IP addresses.
  *
  * Supported formats:
@@ -25,6 +60,7 @@
  * - IPv6 Localhost: ::1
  * - IPv6 CIDR: 2001:db8::/32
  * - IPv4-mapped IPv6: ::ffff:192.168.1.1
+ * - URI-bracketed IPv6 (leniency): [::1], [2001:db8::1], [2001:db8::]/32
  *
  * @param {string} ip - IP address to validate
  * @returns {boolean} true if valid IPv4 or IPv6 address/CIDR
@@ -34,7 +70,7 @@ export const isValidIP = (ip) => {
     return false;
   }
 
-  const trimmedIp = ip.trim();
+  const trimmedIp = stripUriBrackets(ip.trim());
 
   // IPv4 address pattern - rejects leading zeros (e.g., 192.168.001.001)
   // Each octet must be: 0, or 1-9 followed by optional digits (no leading zeros)
@@ -228,7 +264,7 @@ export const validateAndNormalize = (ip) => {
     return { isValid: false, normalized: null, error: 'Invalid IP address format' };
   }
 
-  const trimmed = ip.trim();
+  const trimmed = stripUriBrackets(ip.trim());
 
   // Check if it's CIDR notation
   if (trimmed.includes('/')) {

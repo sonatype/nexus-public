@@ -15,10 +15,23 @@ package org.sonatype.nexus.cleanup.internal.rest;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.sonatype.nexus.cleanup.service.CleanupService;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.thread.NexusExecutorService;
+import org.sonatype.nexus.validation.Validate;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -30,12 +43,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-
-import org.sonatype.nexus.cleanup.service.CleanupService;
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.rest.Resource;
-
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
@@ -43,15 +50,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.cleanup.internal.rest.CleanupExecutionResource.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -74,7 +73,8 @@ public class CleanupExecutionResource
 
   private final RepositoryManager repositoryManager;
 
-  private final ExecutorService executorService = Executors.newCachedThreadPool();
+  private final NexusExecutorService executorService =
+      NexusExecutorService.forCurrentSubject(Executors.newCachedThreadPool());
 
   /**
    * Bounded, time-expiring store of execution statuses. Terminal entries (COMPLETED/FAILED) need
@@ -94,8 +94,8 @@ public class CleanupExecutionResource
       final CleanupService cleanupService,
       final RepositoryManager repositoryManager)
   {
-    this.cleanupService = checkNotNull(cleanupService);
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.cleanupService = requireNonNull(cleanupService);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @POST
@@ -131,6 +131,7 @@ public class CleanupExecutionResource
               + "the response body is the existing execution's status",
           content = @Content(schema = @Schema(implementation = CleanupExecutionStatusXO.class)))
   })
+  @Validate
   public Response runCleanup(@Valid final CleanupExecutionRequestXO request) {
     String repositoryName = request.getRepository();
     Repository repository = repositoryManager.get(repositoryName);

@@ -55,8 +55,13 @@ export interface SearchResultsProps {
   onSelect: (result: SearchResult) => void;
   /** Optional: callback to retry after error */
   onRetry?: () => void;
-  /** Total count of results loaded so far */
+  /** Count of results loaded so far */
   totalCount: number;
+  /**
+   * True server-side match count for the whole query. When known it is shown
+   * exactly — never as a "+"-suffixed cap — and stays stable across load-more.
+   */
+  total?: number;
   /** Current sort field */
   sortField?: SortField;
   /** Current sort direction */
@@ -82,6 +87,7 @@ export function SearchResults({
   onSelect,
   onRetry,
   totalCount,
+  total,
   sortField = DEFAULT_SORT_FIELD,
   sortDirection = DEFAULT_SORT_DIRECTION,
   onSortChange,
@@ -178,9 +184,26 @@ export function SearchResults({
     [onNameFilterChange, localFilterValue]
   );
 
-  const displayTotal = hasMore
-    ? `${totalCount.toLocaleString()}+`
-    : totalCount.toLocaleString();
+  // Prefer the authoritative server-side match count when it is known: it is
+  // exact and stable across load-more, so it is shown as-is with no "+" cap.
+  // Only when no true total is available do we fall back to the loaded count,
+  // suffixed with "+" while more pages remain to signal it is a lower bound.
+  const displayTotal =
+    total !== undefined
+      ? total.toLocaleString()
+      : hasMore
+        ? `${totalCount.toLocaleString()}+`
+        : totalCount.toLocaleString();
+
+  // Announce the result count to assistive technology. A single polite live
+  // region (rendered once, not per responsive header copy) reports the count
+  // without stealing focus, so screen-reader users hear the count update as
+  // searches complete and pages load.
+  const countAnnouncement = loading
+    ? 'Searching for components'
+    : results.length === 0
+      ? 'Your search returned no results'
+      : `${displayTotal} components found`;
 
   /* Desktop search - fixed 300px (matches ux-lab ComponentsHeader) */
   const desktopSearchInput = (
@@ -345,6 +368,23 @@ export function SearchResults({
 
   const resultsHeader = (
     <>
+      <Box
+        role="status"
+        aria-live="polite"
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {countAnnouncement}
+      </Box>
       {mobileHeader}
       {tabletHeader}
       {desktopHeader}
@@ -417,7 +457,7 @@ export function SearchResults({
             <SearchResultCard
               key={result.id}
               result={result}
-              onClick={() => onSelect(result)}
+              onSelect={onSelect}
             />
           ))}
         </Flex>

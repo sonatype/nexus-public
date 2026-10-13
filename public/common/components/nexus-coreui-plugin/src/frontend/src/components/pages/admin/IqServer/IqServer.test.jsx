@@ -564,6 +564,54 @@ describe('IqServer', () => {
         );
       });
 
+      it('hands off the saved config to the just-saved cache before navigating', async () => {
+        const {peekJustSavedIqConfig, setJustSavedIqConfig} =
+            require('./iqServerJustSavedCache');
+        setJustSavedIqConfig(null);
+
+        ExtJS.state.mockReturnValue({
+          getValue: jest.fn().mockReturnValue(true),
+          setValue: jest.fn()
+        });
+
+        const configuredData = {
+          enabled: true,
+          url: 'https://iq.example.com',
+          authenticationType: 'PKI',
+          username: null,
+          password: null,
+          useTrustStoreForUrl: false,
+          timeoutSeconds: null,
+          properties: null,
+          showLink: false,
+          hasFirewall: false,
+          licensedSolutions: [{id: 'lifecycle', url: '/ui/links/lifecycle'}]
+        };
+
+        when(Axios.get).calledWith('service/rest/v1/iq').mockResolvedValue({
+          data: {...DEFAULT_RESPONSE, enabled: false, authenticationType: null}
+        });
+        when(Axios.put).calledWith('service/rest/v1/iq', expect.anything()).mockResolvedValue({
+          data: configuredData
+        });
+
+        render(<IqServer/>);
+        await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+        await TestUtils.changeField(selectors.getUrlInput, 'https://iq.example.com');
+        userEvent.selectOptions(selectors.getAuthenticationMethodSelect(), 'PKI');
+        userEvent.click(selectors.querySubmitButton());
+
+        await waitFor(() =>
+          expect(mockRouter.stateService.go).toHaveBeenCalledWith('admin.iqconnected')
+        );
+
+        const handoff = peekJustSavedIqConfig();
+        expect(handoff).not.toBeNull();
+        expect(handoff.url).toBe('https://iq.example.com');
+        expect(handoff.enabled).toBe(true);
+      });
+
       // REMOVED: Failing test - does not navigate to Connected after save when IQ Server is disabled
 
       // REMOVED: Failing test - does not navigate to Connected after save when feature flag is disabled

@@ -20,7 +20,7 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.LastRunState;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Abstract super class for task related events.
@@ -39,7 +39,7 @@ public abstract class TaskEvent
 
   public TaskEvent(final TaskInfo taskInfo) {
     this.eventDate = new Date();
-    this.taskInfo = checkNotNull(taskInfo);
+    this.taskInfo = requireNonNull(taskInfo);
     this.currentState = taskInfo.getCurrentState();
     this.lastRunState = taskInfo.getLastRunState();
   }

@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.view;
 
+import java.net.URL;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -19,6 +22,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("resource")
@@ -38,6 +44,24 @@ class ContentTest
 
     underTest.setDisableRedirect();
     assertThat(underTest.hasRedirect(), is(false));
+  }
 
+  @Test
+  void getRedirectUrl_delegatesToPayload() throws Exception {
+    URL url = new URL("https://s3/underlying");
+    lenient().when(payload.hasRedirect()).thenReturn(true);
+    lenient().when(payload.getRedirectUrl("GET", "n")).thenReturn(Optional.of(url));
+
+    Content content = new Content(payload);
+    assertEquals(Optional.of(url), content.getRedirectUrl("GET", "n"));
+  }
+
+  @Test
+  void disableRedirect_shortCircuitsPayloadRedirect() throws Exception {
+    lenient().when(payload.hasRedirect()).thenReturn(true);
+    Content content = new Content(payload);
+    content.setDisableRedirect();
+    assertFalse(content.hasRedirect());
+    assertEquals(Optional.empty(), content.getRedirectUrl("GET", "n"));
   }
 }

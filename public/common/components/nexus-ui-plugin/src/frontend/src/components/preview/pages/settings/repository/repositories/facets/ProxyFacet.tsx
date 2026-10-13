@@ -32,8 +32,8 @@ import UIStrings from '../../../../../../../constants/pages/admin/repository/Rep
 
 import {
   RepositoryFormData,
-  RepositoryFormErrors,
 } from '../types';
+import { type FacetErrors, resolveError } from './resolveError';
 
 const REPLICATION_FEATURE = 'replicationFeatureEnabled';
 const REPLICATION_FORMATS = 'replicationSupportedFormats';
@@ -46,7 +46,9 @@ interface ProxyFacetProps {
     key: K,
     updates: Partial<RepositoryFormData[K]>
   ) => void;
-  errors?: RepositoryFormErrors;
+  // errors may be either a nested RepositoryFormErrors object or a flat Record<string, string>
+  // from the form machine's validationErrors (dot-notation keys) — see FacetErrors.
+  errors?: FacetErrors;
   format?: string;
   originChangeWarning?: boolean;
 }
@@ -59,6 +61,7 @@ const REMOTE_URL_EXAMPLES: Record<string, string> = {
   npm: 'e.g., https://registry.npmjs.org/',
   pypi: 'e.g., https://pypi.org/',
   docker: 'e.g., https://registry-1.docker.io',
+  oci: 'e.g., https://ghcr.io',
   raw: 'e.g., https://example.com/files/',
   yum: 'e.g., https://mirror.stream.centos.org/',
   ansiblegalaxy: 'e.g., https://galaxy.ansible.com',
@@ -206,7 +209,7 @@ export function ProxyFacet({
         label={UIStrings.PROXY.REMOTE_STORAGE.label}
         value={formData.proxy?.remoteUrl || ''}
         onChange={handleRemoteUrlChange}
-        error={errors?.proxy?.remoteUrl}
+        error={resolveError(errors, 'proxy.remoteUrl', (e) => e.proxy?.remoteUrl)}
         required
         placeholder={UIStrings.PROXY.REMOTE_STORAGE.placeholder}
         helpText={remoteUrlHelpText}
@@ -330,7 +333,7 @@ export function ProxyFacet({
         onChange={handleContentMaxAgeChange}
         type="number"
         helpText={UIStrings.PROXY.CONTENT_MAX_AGE.helpText}
-        error={errors?.proxy?.contentMaxAge}
+        error={resolveError(errors, 'proxy.contentMaxAge', (e) => e.proxy?.contentMaxAge)}
       />
 
       <SettingsTextInput
@@ -340,7 +343,7 @@ export function ProxyFacet({
         onChange={handleMetadataMaxAgeChange}
         type="number"
         helpText={UIStrings.PROXY.METADATA_MAX_AGE.helpText}
-        error={errors?.proxy?.metadataMaxAge}
+        error={resolveError(errors, 'proxy.metadataMaxAge', (e) => e.proxy?.metadataMaxAge)}
       />
     </SettingsFormSection>
   );

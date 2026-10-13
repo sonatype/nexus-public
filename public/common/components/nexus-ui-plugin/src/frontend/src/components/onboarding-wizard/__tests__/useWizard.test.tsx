@@ -409,11 +409,7 @@ describe('useWizard', () => {
   });
 
   describe('onDone', () => {
-    it('does NOT fire onDone automatically when the machine reaches done — finish() is the sole trigger', async () => {
-      // Regression guard for the auto-fire race: firing onDone on machine
-      // entry to done clears onboarding.required, unmounting the wizard
-      // before the user can see or click Finish. finish() must be the only
-      // path that invokes onDone.
+    it('does NOT fire onDone automatically when the machine reaches done, finish() is the sole trigger', async () => {
       const mockFetchSteps = jest.fn().mockResolvedValue([]);
       const onDoneSpy = jest.fn();
 
@@ -429,35 +425,22 @@ describe('useWizard', () => {
         expect(result.current.state).toBe('stepReady');
       });
 
-      // With empty steps, getStarted goes to setupComplete
-      act(() => {
-        result.current.getStarted();
-      });
-
-      await waitFor(() => {
-        expect(result.current.state).toBe('setupComplete');
-      });
-
-      // Submit goes to verifying then done
       await act(async () => {
-        result.current.submit();
+        result.current.getStarted();
       });
 
       await waitFor(() => {
         expect(result.current.state).toBe('done');
       });
 
-      // onDone must NOT have fired just from reaching done
       expect(onDoneSpy).not.toHaveBeenCalled();
 
-      // Now the user clicks Finish — that's what fires onDone
       act(() => {
         result.current.finish();
       });
 
       expect(onDoneSpy).toHaveBeenCalledTimes(1);
 
-      // Calling finish() again is idempotent
       act(() => {
         result.current.finish();
       });
@@ -499,11 +482,14 @@ describe('useWizard', () => {
   });
 
   describe('isCurrentStepValid on special states', () => {
-    it('isCurrentStepValid is true on setupComplete', async () => {
+    it('isCurrentStepValid is true on verificationFailed after verify failure', async () => {
       const mockFetchSteps = jest.fn().mockResolvedValue([]);
+      const mockVerify = jest.fn().mockRejectedValue(new Error('network'));
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <WizardProvider fetchSteps={mockFetchSteps}>{children}</WizardProvider>
+        <WizardProvider fetchSteps={mockFetchSteps} verify={mockVerify}>
+          {children}
+        </WizardProvider>
       );
 
       const { result } = renderHook(() => useWizard(), { wrapper });
@@ -517,7 +503,8 @@ describe('useWizard', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.state).toBe('setupComplete');
+        expect(result.current.state).toBe('verificationFailed');
+        expect(result.current.errorKind).toBe('network');
         expect(result.current.isCurrentStepValid).toBe(true);
       });
     });
@@ -544,14 +531,6 @@ describe('useWizard', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.state).toBe('setupComplete');
-      });
-
-      act(() => {
-        result.current.submit();
-      });
-
-      await waitFor(() => {
         expect(result.current.state).toBe('verifying');
         expect(result.current.isCurrentStepValid).toBe(true);
       });
@@ -572,6 +551,147 @@ describe('useWizard', () => {
         expect(result.current.state).toBe('issueOccurred');
         expect(result.current.errorMessage).toBe('Error: fetch failed');
         expect(result.current.isCurrentStepValid).toBe(true);
+      });
+    });
+  });
+
+  describe('machine transitions (NEXUS-54849)', () => {
+    it('no-steps GET_STARTED transitions to verifying, not verificationFailed', async () => {
+      const mockFetchSteps = jest.fn().mockResolvedValue([]);
+      const verifyPromise = new Promise<void>((resolve) => setTimeout(resolve, 100));
+      const mockVerify = jest.fn().mockReturnValue(verifyPromise);
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <WizardProvider fetchSteps={mockFetchSteps} verify={mockVerify}>
+          {children}
+        </WizardProvider>
+      );
+
+      const { result } = renderHook(() => useWizard(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('stepReady');
+      });
+
+      act(() => {
+        result.current.getStarted();
+      });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('verifying');
+      });
+    });
+
+    it('last-step STEP_ADVANCED transitions to verifying, not verificationFailed', async () => {
+      const steps: OnboardingStep[] = [{ type: 'admin-password' }];
+      const mockFetchSteps = jest.fn().mockResolvedValue(steps);
+      const verifyPromise = new Promise<void>((resolve) => setTimeout(resolve, 100));
+      const mockVerify = jest.fn().mockReturnValue(verifyPromise);
+      const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <WizardProvider fetchSteps={mockFetchSteps} verify={mockVerify}>
+          {children}
+        </WizardProvider>
+      );
+
+      const { result } = renderHook(() => useWizard(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('stepReady');
+      });
+
+      act(() => {
+        result.current.getStarted();
+      });
+
+      await waitFor(() => {
+        expect(result.current.currentIndex).toBe(0);
+      });
+
+      act(() => {
+        result.current.registerStep({
+          valid: true,
+          onSubmit: mockOnSubmit,
+        });
+      });
+
+      await act(async () => {
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('verifying');
+      });
+    });
+
+    it('verify onError from verifying lands on verificationFailed with errorKind set', async () => {
+      const mockFetchSteps = jest.fn().mockResolvedValue([]);
+      const mockVerify = jest.fn().mockRejectedValue(new Error('boom'));
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <WizardProvider fetchSteps={mockFetchSteps} verify={mockVerify}>
+          {children}
+        </WizardProvider>
+      );
+
+      const { result } = renderHook(() => useWizard(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('stepReady');
+      });
+
+      act(() => {
+        result.current.getStarted();
+      });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('verificationFailed');
+        expect(result.current.errorKind).toBe('network');
+      });
+    });
+
+    it('SUBMIT from verificationFailed error-retry landing returns to verifying and clears errorKind', async () => {
+      const mockFetchSteps = jest.fn().mockResolvedValue([]);
+      let shouldFail = true;
+      const mockVerify = jest
+        .fn()
+        .mockImplementation(() =>
+          shouldFail
+            ? Promise.reject(new Error('boom'))
+            : new Promise<void>((resolve) => setTimeout(resolve, 100)),
+        );
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <WizardProvider fetchSteps={mockFetchSteps} verify={mockVerify}>
+          {children}
+        </WizardProvider>
+      );
+
+      const { result } = renderHook(() => useWizard(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('stepReady');
+      });
+
+      act(() => {
+        result.current.getStarted();
+      });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('verificationFailed');
+        expect(result.current.errorKind).toBe('network');
+      });
+
+      shouldFail = false;
+
+      act(() => {
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('verifying');
+        expect(result.current.errorKind).toBeNull();
       });
     });
   });

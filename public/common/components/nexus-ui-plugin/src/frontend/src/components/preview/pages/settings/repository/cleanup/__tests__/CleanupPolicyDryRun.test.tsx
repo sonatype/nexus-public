@@ -156,7 +156,7 @@ describe('CleanupPolicyDryRun', () => {
       expect(mockFetchRepositories).not.toHaveBeenCalled();
     });
 
-    it('shows empty dropdown when no Applied Repositories and format supports per-repo application', async () => {
+    it('fetches all repos when no Applied Repositories and format supports per-repo application', async () => {
       const goFormatPolicy: CleanupPolicyFormData = {
         ...mockPolicyDataWithCriteria,
         format: 'go',
@@ -167,19 +167,50 @@ describe('CleanupPolicyDryRun', () => {
         { wrapper: TestWrapper }
       );
 
-      // For formats using the Applied Repositories dual-list, we must NOT fall back
-      // to fetching every repository — the dropdown stays empty.
-      await Promise.resolve();
-      expect(mockFetchRepositories).not.toHaveBeenCalled();
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('go');
+      });
     });
 
-    it('falls back to fetching all repos when format does not support per-repo application', async () => {
+    it('populates dropdown identically for npm and maven2 when no Applied Repositories are set', async () => {
+      const npmPolicy: CleanupPolicyFormData = {
+        ...mockPolicyDataWithCriteria,
+        format: 'npm',
+      };
+
+      render(
+        <CleanupPolicyDryRun policyData={npmPolicy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('npm');
+      });
+
+      jest.clearAllMocks();
+      mockFetchRepositories.mockResolvedValue(mockRepositories);
+
+      const maven2Policy: CleanupPolicyFormData = {
+        ...mockPolicyDataWithCriteria,
+        format: 'maven2',
+      };
+
+      render(
+        <CleanupPolicyDryRun policyData={maven2Policy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('maven2');
+      });
+    });
+
+    it('fetches all repos for maven2 when no Applied Repositories are set', async () => {
       render(
         <CleanupPolicyDryRun policyData={mockPolicyDataWithCriteria} selectedRepositories={[]} />,
         { wrapper: TestWrapper }
       );
 
-      // maven2 is NOT in REPOSITORIES_FIELD_SUPPORTED_FORMATS, so behavior is preserved.
       await waitFor(() => {
         expect(mockFetchRepositories).toHaveBeenCalledWith('maven2');
       });

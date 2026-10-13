@@ -122,7 +122,7 @@ import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Splitter.onPattern;
 import static java.lang.String.format;
@@ -212,6 +212,8 @@ public class MyBatisDataStore
 
   private final boolean internalMetricsEnabled;
 
+  private final boolean immediateConsistencyEnabled;
+
   @Autowired
   public MyBatisDataStore(
       @Qualifier("mybatis") final PbeCipher databaseCipher,
@@ -221,20 +223,22 @@ public class MyBatisDataStore
       @Lazy final List<TransactionalStoreSupport> declaredAccessTypes,
       @Lazy final List<TypeHandler> declaredTypeHandlers,
       @Value(FeatureFlags.ORIENT_WARNING_NAMED_VALUE) final boolean orientWarning,
-      @Value(FeatureFlags.METRICS_INTERNAL_ENABLED_NAMED_VALUE) final boolean internalMetricsEnabled)
+      @Value(FeatureFlags.METRICS_INTERNAL_ENABLED_NAMED_VALUE) final boolean internalMetricsEnabled,
+      @Value(FeatureFlags.CLUSTER_IMMEDIATE_CONSISTENCY_ENABLED_NAMED_VALUE) final boolean immediateConsistencyEnabled)
   {
     checkState(databaseCipher instanceof MyBatisCipher);
-    this.databaseCipher = checkNotNull(databaseCipher);
-    this.passwordHelper = checkNotNull(passwordHelper);
-    this.directories = checkNotNull(directories);
-    this.logManager = checkNotNull(logManager);
+    this.databaseCipher = requireNonNull(databaseCipher);
+    this.passwordHelper = requireNonNull(passwordHelper);
+    this.directories = requireNonNull(directories);
+    this.logManager = requireNonNull(logManager);
 
     useMyBatisClassLoaderForEntityProxies();
 
-    this.declaredAccessTypes = checkNotNull(declaredAccessTypes);
-    this.declaredTypeHandlers = checkNotNull(declaredTypeHandlers);
+    this.declaredAccessTypes = requireNonNull(declaredAccessTypes);
+    this.declaredTypeHandlers = requireNonNull(declaredTypeHandlers);
     this.orientWarning = orientWarning;
     this.internalMetricsEnabled = internalMetricsEnabled;
+    this.immediateConsistencyEnabled = immediateConsistencyEnabled;
   }
 
   @VisibleForTesting
@@ -255,6 +259,7 @@ public class MyBatisDataStore
     this.declaredTypeHandlers = List.of();
     this.orientWarning = false;
     this.internalMetricsEnabled = true;
+    this.immediateConsistencyEnabled = false;
   }
 
   @Override
@@ -482,7 +487,7 @@ public class MyBatisDataStore
 
   @Autowired
   public void setManagedLifecycleManager(@Lazy final ManagedLifecycleManager managedLifecycleManager) {
-    this.managedLifecycleManager = checkNotNull(managedLifecycleManager);
+    this.managedLifecycleManager = requireNonNull(managedLifecycleManager);
   }
 
   private void verifyOrientDatabaseDoesNotExist() throws Exception {
@@ -612,7 +617,8 @@ public class MyBatisDataStore
    * <ul>
    * <li>Driver class name</li>
    * <li>Data source properties for string type handling</li>
-   * <li>Default maximum pool size (100)</li>
+   * <li>Default maximum pool size (100), plus two extra slots when immediate cross-node consistency is enabled
+   * (the distributed-event LISTEN/NOTIFY listener + publisher reserve a spare connection each)</li>
    * <li>Default initialization timeout (10 seconds)</li>
    * <li>Unique pool name for metrics isolation</li>
    * <li>Metric registry with cleanup of stale metrics</li>
@@ -626,9 +632,20 @@ public class MyBatisDataStore
     // workaround https://github.com/pgjdbc/pgjdbc/issues/265
     hikariConfig.addDataSourceProperty("stringtype", "unspecified");
 
-    if (!properties.containsKey("maximumPoolSize")) {
-      hikariConfig.setMaximumPoolSize(DEFAULT_CONTENT_STORE_MAX_POOL_SIZE);
+    // Determine the effective pool size: the operator-provided value if set, otherwise our PostgreSQL default.
+    int maximumPoolSize = properties.containsKey("maximumPoolSize")
+        ? hikariConfig.getMaximumPoolSize() // already parsed from properties by the HikariConfig(properties) ctor
+        : DEFAULT_CONTENT_STORE_MAX_POOL_SIZE;
+    if (immediateConsistencyEnabled) {
+      // Immediate cross-node consistency runs a per-node distributed-event LISTEN/NOTIFY listener that holds one
+      // dedicated pooled connection for the node's lifetime, plus the publisher borrows one more transiently per
+      // nudge. Reserve two extra slots on top of the configured size so those never starve request traffic
+      // (see DistributedEventNotifyListener). NEXUS-54229.
+      maximumPoolSize += 2;
+      log.info("Immediate cross-node consistency enabled: reserved 2 extra PostgreSQL pool connections "
+          + "(maximumPoolSize={}) for the distributed-event LISTEN/NOTIFY listener and publisher", maximumPoolSize);
     }
+    hikariConfig.setMaximumPoolSize(maximumPoolSize);
 
     if (!properties.containsKey("initializationFailTimeout")) {
       // Allow more time for database connectivity during startup, especially in cloud environments

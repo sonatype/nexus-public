@@ -150,7 +150,7 @@ class RawHostedRepositoryApiRequestToConfigurationConverterTest
 
   private RawHostedRepositoryApiRequest createRequest(ContentDisposition contentDisposition) {
     RawAttributes raw = new RawAttributes(contentDisposition);
-    HostedStorageAttributes storage = new HostedStorageAttributes("default", true, "ALLOW_ONCE");
+    HostedStorageAttributes storage = new HostedStorageAttributes("default", true, false, "ALLOW_ONCE");
 
     return new RawHostedRepositoryApiRequest(
         "raw-hosted",
@@ -162,7 +162,7 @@ class RawHostedRepositoryApiRequestToConfigurationConverterTest
   }
 
   private RawHostedRepositoryApiRequest createRequestWithNullRaw() {
-    HostedStorageAttributes storage = new HostedStorageAttributes("default", true, "ALLOW_ONCE");
+    HostedStorageAttributes storage = new HostedStorageAttributes("default", true, false, "ALLOW_ONCE");
 
     return new RawHostedRepositoryApiRequest(
         "raw-hosted",

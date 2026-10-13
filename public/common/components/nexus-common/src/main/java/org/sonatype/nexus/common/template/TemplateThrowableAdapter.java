@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.template;
 import com.google.common.base.Throwables;
 import org.apache.commons.text.StringEscapeUtils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to deal with {@link Throwable} instances in a template.
@@ -28,7 +28,7 @@ public class TemplateThrowableAdapter
   private final Throwable cause;
 
   public TemplateThrowableAdapter(final Throwable cause) {
-    this.cause = checkNotNull(cause);
+    this.cause = requireNonNull(cause);
   }
 
   public Throwable getCause() {

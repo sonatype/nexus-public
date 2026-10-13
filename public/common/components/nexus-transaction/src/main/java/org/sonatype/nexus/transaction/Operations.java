@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.transaction.TransactionIsolation.STANDARD;
 import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
 import static org.sonatype.nexus.transaction.UnitOfWork.openSession;
@@ -143,7 +143,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
    * Assumes the lambda may throw the given checked exception.
    */
   public <X extends Exception> Operations<X, ?> throwing(final Class<X> exceptionType) {
-    return copy(spec, checkNotNull(exceptionType), store);
+    return copy(spec, requireNonNull(exceptionType), store);
   }
 
   /**
@@ -161,7 +161,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
    * @since 3.19
    */
   public final B withStore(final TransactionalStore<?> _store) {
-    return (B) copy(spec, throwing, checkNotNull(_store));
+    return (B) copy(spec, throwing, requireNonNull(_store));
   }
 
   /**
@@ -195,7 +195,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
       @Nullable final Class<E> throwing,
       @Nullable final TransactionalStore<?> store)
   {
-    this.spec = checkNotNull(spec);
+    this.spec = requireNonNull(spec);
     this.throwing = throwing;
     this.store = store;
   }
@@ -252,7 +252,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
    */
   private static <T> T[] deepCheckNotNull(final T[] elements) {
     for (T e : elements) {
-      checkNotNull(e);
+      requireNonNull(e);
     }
     return elements;
   }

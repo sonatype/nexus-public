@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Event sent whenever a large number of {@link Component}s are purged along with their assets.
@@ -35,7 +35,7 @@ public class ComponentPurgedEvent
 
   public ComponentPurgedEvent(final int contentRepositoryId, final int[] componentIds) { // NOSONAR
     super(contentRepositoryId);
-    this.componentIds = checkNotNull(componentIds);
+    this.componentIds = requireNonNull(componentIds);
     this.assets = null;
   }
 
@@ -45,8 +45,8 @@ public class ComponentPurgedEvent
       final List<FluentAsset> assets)
   {
     super(contentRepositoryId);
-    this.componentIds = checkNotNull(componentIds);
-    this.assets = checkNotNull(assets);
+    this.componentIds = requireNonNull(componentIds);
+    this.assets = requireNonNull(assets);
   }
 
   public int[] getComponentIds() {

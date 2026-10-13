@@ -20,7 +20,7 @@ import java.io.Writer;
 
 import org.apache.maven.plugin.logging.Log;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * File appender.
@@ -34,8 +34,8 @@ public class FileAppender
   protected final Writer output;
 
   public FileAppender(final Log log, final Writer output) {
-    this.log = checkNotNull(log);
-    this.output = checkNotNull(output);
+    this.log = requireNonNull(log);
+    this.output = requireNonNull(output);
   }
 
   protected File source;
@@ -43,7 +43,7 @@ public class FileAppender
   protected long linenum;
 
   public void append(final File source) throws IOException {
-    this.source = checkNotNull(source);
+    this.source = requireNonNull(source);
     this.linenum = 0;
 
     log.debug("Appending: " + source);

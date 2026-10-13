@@ -25,7 +25,7 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
@@ -42,8 +42,8 @@ public class BlobStoreExistenceValidator
       final BlobStoreManager blobStoreManager,
       final ConstraintViolationFactory constraintViolationFactory)
   {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
   }
 
   @Nullable

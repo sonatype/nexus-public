@@ -57,6 +57,7 @@ import RecoveryModeAlertStrings from './RecoveryModeAlertStrings';
 import MaliciousRiskStrings from '../../../../../nexus-ui-plugin/src/frontend/src/components/preview/constants/pages/maliciousrisk/MaliciousRiskStrings';
 import SearchStrings from './pages/browse/search/SearchStrings';
 import PreviewUiStrings from "./pages/admin/system/PreviewUiStrings";
+import TrashStrings from "./pages/admin/system/TrashStrings";
 import RepositoryDirectoryStrings from './pages/admin/repository/RepositoryDirectoryStrings';
 import AdminSecurityDirectoryStrings from './pages/admin/repository/AdminSecurityDirectoryStrings';
 import AdminSystemDirectoryStrings from './pages/admin/system/AdminSystemDirectoryStrings';
@@ -137,6 +138,7 @@ export default {
   ...ZDUMarketingModalStrings,
   ...RecoveryModeAlertStrings,
 
+  ...TrashStrings,
   ...RepositoryDirectoryStrings,
   ...AdminSecurityDirectoryStrings,
   ...AdminSystemDirectoryStrings,

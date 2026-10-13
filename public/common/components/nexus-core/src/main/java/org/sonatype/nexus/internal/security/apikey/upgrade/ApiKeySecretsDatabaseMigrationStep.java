@@ -19,7 +19,7 @@ import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DefinedUpgradeRound;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,7 +33,7 @@ public class ApiKeySecretsDatabaseMigrationStep
 
   @Autowired
   public ApiKeySecretsDatabaseMigrationStep(final UpgradeTaskScheduler scheduler) {
-    this.scheduler = checkNotNull(scheduler);
+    this.scheduler = requireNonNull(scheduler);
   }
 
   @Override

@@ -46,7 +46,7 @@ import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.scheduling.internal.upgrade.datastore.UpgradeTaskData.BLOCK_QUEUE_KEY;
@@ -87,14 +87,14 @@ public class QueuingUpgradeTaskScheduler
       final Cooperation2Selector cooperation2Selector,
       @Qualifier("distributed") @Nullable final Cooperation2Selector distributedCooperationSelector)
   {
-    this.periodicJobService = checkNotNull(periodicJobService);
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.upgradeTaskStore = checkNotNull(upgradeTaskStore);
+    this.periodicJobService = requireNonNull(periodicJobService);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.upgradeTaskStore = requireNonNull(upgradeTaskStore);
     this.checkRequiresMigration = checkRequiresMigration;
-    this.delayOnStart = checkNotNull(delayOnStart);
+    this.delayOnStart = requireNonNull(delayOnStart);
     Cooperation2Selector selector =
         distributedCooperationSelector != null ? distributedCooperationSelector : cooperation2Selector;
-    this.cooperation = checkNotNull(selector.select()).configure().build("reschedule-upgrade-task");
+    this.cooperation = requireNonNull(selector.select()).configure().build("reschedule-upgrade-task");
   }
 
   @Override

@@ -29,7 +29,7 @@ import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -58,9 +58,9 @@ public class UploadService
       final UploadManager uploadManager,
       final RepositoryCacheInvalidationService repositoryCacheInvalidationService)
   {
-    this.uploadManager = checkNotNull(uploadManager);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
+    this.uploadManager = requireNonNull(uploadManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.repositoryCacheInvalidationService = requireNonNull(repositoryCacheInvalidationService);
   }
 
   /**
@@ -81,10 +81,10 @@ public class UploadService
    * @throws IOException
    */
   public String upload(final String repositoryName, final HttpServletRequest request) throws IOException {
-    checkNotNull(repositoryName);
-    checkNotNull(request);
+    requireNonNull(repositoryName);
+    requireNonNull(request);
 
-    Repository repository = checkNotNull(repositoryManager.get(repositoryName), "Specified repository is missing");
+    Repository repository = requireNonNull(repositoryManager.get(repositoryName), "Specified repository is missing");
 
     UploadResponse uploadResponse = uploadManager.handle(repository, request);
 

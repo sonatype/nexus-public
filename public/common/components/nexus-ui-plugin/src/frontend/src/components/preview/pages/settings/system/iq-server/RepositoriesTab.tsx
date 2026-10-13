@@ -27,20 +27,24 @@ import {
   Table,
   Text,
   TextField,
+  Tooltip,
 } from '@radix-ui/themes';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Info, Search, X } from 'lucide-react';
 
-import { FORMAT_LABELS, useToast } from '../../../../shared';
+import { useToast } from '../../../../shared';
 import { SortableTableHeader, type SortDirection } from '../../../../shared/SortableTableHeader/SortableTableHeader';
 import {
   DashboardRepository,
   GlobalEvaluationSettings,
   useHostedRepoEvaluation,
 } from './useHostedRepoEvaluation';
+import { MONITORING_FILTER_OPTIONS, type MonitoringFilter } from './types';
 import {
-  MONITORING_FILTER_OPTIONS,
-  type MonitoringFilter,
-} from './types';
+  HRS_SUPPORTED_FORMAT_NAMES,
+  hostedRepoEvaluationFormatLabel as formatLabel,
+  hostedRepoEvaluationUnsupportedMessage,
+  isHostedRepoEvaluationSupportedFormat,
+} from '../../../../../../utils/hostedRepoEvaluationFormats';
 import { useDebounced } from '../../../../shared/hooks';
 
 import './HostedRepoEvaluationSetupPage.scss';
@@ -48,7 +52,14 @@ import './HostedRepoEvaluationSetupPage.scss';
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 500; // matches Classic UI search debounce
 
-const formatLabel = (f: string) => FORMAT_LABELS[f] || f;
+/** Shown on rows whose format can't be monitored. */
+const notSupportedTooltip = (format: string) => hostedRepoEvaluationUnsupportedMessage(formatLabel(format));
+
+/** How many unsupported repositories the Enable error names before summarising the rest. */
+const MAX_LISTED_UNSUPPORTED = 5;
+
+/** Selected rows are remembered across pages, so keep what the Enable check needs. */
+type SelectedRow = { isMonitored: boolean; name: string; format: string };
 
 type QueryState = {
   page: number;
@@ -116,7 +127,7 @@ export function RepositoriesTab({
   const [totalCount, setTotalCount] = useState(0);
   const [monitoredCount, setMonitoredCount] = useState(0);
   const [searchInput, setSearchInput] = useState('');
-  const [selection, setSelection] = useState<Map<string, boolean>>(new Map());
+  const [selection, setSelection] = useState<Map<string, SelectedRow>>(new Map());
   const [applyingAction, setApplyingAction] = useState(false);
   const [repoSaveError, setRepoSaveError] = useState<string | null>(null);
   const loadRepoPageRequestIdRef = useRef(0);
@@ -176,43 +187,52 @@ export function RepositoriesTab({
   }, [rows, query.sortBy, query.sortDir]);
 
   const pageRowIds = useMemo(() => sortedRows.map(r => r.id), [sortedRows]);
-  const allOnPageSelected = pageRowIds.length > 0 && pageRowIds.every(id => selection.has(id));
+  // Select all skips rows that can't be enabled (unmonitored, unsupported format), so a page-wide Enable works.
+  const selectableRows = useMemo(
+    () => sortedRows.filter(r => r.isMonitored || isHostedRepoEvaluationSupportedFormat(r.format)),
+    [sortedRows]
+  );
+  const allOnPageSelected = selectableRows.length > 0 && selectableRows.every(r => selection.has(r.id));
   const someOnPageSelected = pageRowIds.some(id => selection.has(id)) && !allOnPageSelected;
 
   // All-Enabled → Disable only; All-Disabled → Enable only; Mixed → both.
   const hasMonitoredInSelection = useMemo(() => {
-    for (const v of selection.values()) if (v) return true;
+    for (const v of selection.values()) if (v.isMonitored) return true;
     return false;
   }, [selection]);
   const hasUnmonitoredInSelection = useMemo(() => {
-    for (const v of selection.values()) if (!v) return true;
+    for (const v of selection.values()) if (!v.isMonitored) return true;
     return false;
   }, [selection]);
   const showEnableAction = hasUnmonitoredInSelection;
   const showDisableAction = hasMonitoredInSelection;
 
-  const toggleRow = useCallback((id: string, isMonitored: boolean) => {
+  // The Enable error describes the selection it was raised for, so every selection change drops it.
+  const toggleRow = useCallback((row: DashboardRepository) => {
+    setRepoSaveError(null);
     setSelection(prev => {
       const next = new Map(prev);
-      if (next.has(id)) next.delete(id);
-      else next.set(id, isMonitored);
+      if (next.has(row.id)) next.delete(row.id);
+      else next.set(row.id, { isMonitored: row.isMonitored, name: row.name, format: row.format });
       return next;
     });
   }, []);
 
   const toggleSelectAllOnPage = useCallback(() => {
+    setRepoSaveError(null);
     setSelection(prev => {
       const next = new Map(prev);
       if (allOnPageSelected) {
         pageRowIds.forEach(id => next.delete(id));
       } else {
-        for (const r of sortedRows) next.set(r.id, r.isMonitored);
+        for (const r of selectableRows) next.set(r.id, { isMonitored: r.isMonitored, name: r.name, format: r.format });
       }
       return next;
     });
-  }, [allOnPageSelected, pageRowIds, sortedRows]);
+  }, [allOnPageSelected, pageRowIds, selectableRows]);
 
   const handleClearSelection = useCallback(() => {
+    setRepoSaveError(null);
     setSelection(new Map());
   }, []);
 
@@ -226,6 +246,25 @@ export function RepositoriesTab({
             setRepoSaveError('You have not selected any repositories for monitoring. Please select at least one repository.');
           }
           return;
+        }
+        // All-or-nothing: if any repository to enable is in an unsupported format, send nothing and say why.
+        if (action === 'enable') {
+          const unsupported = [...selection.values()]
+            .filter(r => !r.isMonitored && !isHostedRepoEvaluationSupportedFormat(r.format));
+          if (unsupported.length > 0) {
+            const listed = unsupported.slice(0, MAX_LISTED_UNSUPPORTED)
+              .map(r => `${r.name} (${formatLabel(r.format)})`)
+              .join(', ');
+            const more = unsupported.length - MAX_LISTED_UNSUPPORTED;
+            const repos = more > 0 ? `${listed} and ${more} more` : listed;
+            setRepoSaveError(
+              `Monitoring can't be enabled for ${repos}. ` +
+              `Hosted repository evaluation only supports these formats: ${HRS_SUPPORTED_FORMAT_NAMES}.`
+            );
+            // The details callout sits above the table; the toast makes sure the user notices it.
+            toast.error('Some selected repositories use a format that is not supported for evaluation');
+            return;
+          }
         }
         setRepoSaveError(null);
 
@@ -273,10 +312,10 @@ export function RepositoriesTab({
               : 'All hosted repositories start as Disabled. Enable monitoring on the ones you want covered by global evaluation.'}
           </Text>
 
-          {/* Gap 2: inline error when Enable clicked with 0 repos selected on first-time */}
+          {/* Inline error from Enable: nothing selected on first-time setup, or unsupported formats selected */}
           {repoSaveError && (
             <Box mb="3">
-              <Callout.Root color="red" variant="soft" size="1">
+              <Callout.Root color="red" variant="soft" size="1" role="alert">
                 <Callout.Icon>
                   <Info size={16} aria-hidden="true" />
                 </Callout.Icon>
@@ -398,12 +437,14 @@ export function RepositoriesTab({
                 ) : (
                   sortedRows.map(row => {
                     const checked = selection.has(row.id);
+                    // Already-monitored rows keep their Enabled badge so they can still be found and disabled.
+                    const notSupported = !row.isMonitored && !isHostedRepoEvaluationSupportedFormat(row.format);
                     return (
                       <Table.Row key={row.id}>
                         <Table.Cell>
                           <Checkbox
                             checked={checked}
-                            onCheckedChange={() => toggleRow(row.id, row.isMonitored)}
+                            onCheckedChange={() => toggleRow(row)}
                             aria-label={`Select ${row.name}`}
                           />
                         </Table.Cell>
@@ -433,13 +474,28 @@ export function RepositoriesTab({
                           <Text size="2" color="gray">{row.componentCount != null && row.componentCount > 0 ? row.componentCount : '—'}</Text>
                         </Table.Cell>
                         <Table.Cell>
-                          <Badge
-                            size="1"
-                            variant={row.isMonitored ? 'soft' : 'outline'}
-                            color={row.isMonitored ? 'green' : 'gray'}
-                          >
-                            {row.isMonitored ? 'Enabled' : 'Disabled'}
-                          </Badge>
+                          {notSupported ? (
+                            <Tooltip content={notSupportedTooltip(row.format)}>
+                              <Badge
+                                size="1"
+                                variant="outline"
+                                color="gray"
+                                tabIndex={0}
+                                style={{ cursor: 'help' }}
+                                aria-label={`Not supported: ${notSupportedTooltip(row.format)}`}
+                              >
+                                Not supported
+                              </Badge>
+                            </Tooltip>
+                          ) : (
+                            <Badge
+                              size="1"
+                              variant={row.isMonitored ? 'soft' : 'outline'}
+                              color={row.isMonitored ? 'green' : 'gray'}
+                            >
+                              {row.isMonitored ? 'Enabled' : 'Disabled'}
+                            </Badge>
+                          )}
                         </Table.Cell>
                       </Table.Row>
                     );

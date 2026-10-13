@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Lifecycle-safe, generic registry for one-shot signals and context data raised by UPGRADE-phase
@@ -60,28 +60,28 @@ public class UpgradeContext
    * Raises a one-shot boolean signal under the given key.
    */
   public void setFlag(final String key) {
-    attributes.put(checkNotNull(key), Boolean.TRUE);
+    attributes.put(requireNonNull(key), Boolean.TRUE);
   }
 
   /**
    * Returns {@code true} if the boolean signal under the given key has been raised.
    */
   public boolean isFlagSet(final String key) {
-    return Boolean.TRUE.equals(attributes.get(checkNotNull(key)));
+    return Boolean.TRUE.equals(attributes.get(requireNonNull(key)));
   }
 
   /**
    * Stores an arbitrary value under the given key.
    */
   public void put(final String key, final Object value) {
-    attributes.put(checkNotNull(key), checkNotNull(value));
+    attributes.put(requireNonNull(key), requireNonNull(value));
   }
 
   /**
    * Returns the value stored under the given key, if any.
    */
   public Optional<Object> get(final String key) {
-    return Optional.ofNullable(attributes.get(checkNotNull(key)));
+    return Optional.ofNullable(attributes.get(requireNonNull(key)));
   }
 
   /**

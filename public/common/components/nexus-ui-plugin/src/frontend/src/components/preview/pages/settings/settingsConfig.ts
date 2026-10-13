@@ -21,13 +21,19 @@
  * Repository → Security → Support → System
  */
 
+import {
+  PRO_AND_COMMUNITY_EDITIONS,
+  PRO_FAMILY_EDITIONS,
+  type EditionId,
+} from '../../../../interface/editionUtils';
+
 export interface VisibilityRequirements {
   permissions?: string[];
   requiresPermission?: string;
   requiresAnyPermission?: string[];
   permissionPrefix?: string;
   permissionPrefixes?: string[];
-  editions?: string[];
+  editions?: readonly EditionId[];
   requiresUser?: boolean;
   /** Required active bundle/plugin (matches isVisible bundle check). */
   bundle?: string;
@@ -58,7 +64,7 @@ export interface SettingCard {
   cloudExcluded?: boolean;
   /** If true, this card is shown ONLY on Cloud deployments (hidden on self-hosted) */
   cloudOnly?: boolean;
-  /** If true, this card is hidden on CE/OSS self-hosted (requires PRO or Cloud edition) */
+  /** If true, this card is hidden on unlicensed editions (CE/OSS), independent of deployment */
   proOnly?: boolean;
   /** If true, this card is hidden from non-admin users */
   adminOnly?: boolean;
@@ -163,7 +169,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         visibilityRequirements: {
           requiresPermission: 'nexus:*',
           bundle: 'nexus-pro-datastore-plugin',
-          editions: ['PRO', 'COMMUNITY'],
+          editions: PRO_AND_COMMUNITY_EDITIONS,
         },
       },
       {
@@ -244,7 +250,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         visibilityRequirements: {
           requiresPermission: 'nexus:*',
           bundle: 'nexus-saml-plugin',
-          editions: ['PRO'],
+          editions: PRO_FAMILY_EDITIONS,
         },
       },
       {
@@ -260,7 +266,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         visibilityRequirements: {
           requiresPermission: 'nexus:*',
           bundle: 'nexus-oauth2-plugin',
-          editions: ['PRO'],
+          editions: PRO_FAMILY_EDITIONS,
           statesEnabled: [{ key: 'oauth2Available', defaultValue: false }],
         },
       },
@@ -311,7 +317,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         // shows on PRO installs whose license does not include user tokens and then dead-ends.
         visibilityRequirements: {
           requiresPermission: 'nexus:usertoken-settings:read',
-          editions: ['PRO'],
+          editions: PRO_FAMILY_EDITIONS,
           licenseValid: [{ key: 'usertoken', defaultValue: false }],
         },
       },
@@ -323,11 +329,10 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['service account', 'sat', 'ci', 'cd', 'automation', 'token', 'bearer'],
         proOnly: true,
         // NEXUS-54019: match Classic/Default UI (adminRoutes.js SERVICEACCOUNTTOKENS.ROOT) —
-        // service-accounts:read + PRO edition + the serviceAccountEnabled state.
+        // service-accounts:read + PRO edition.
         visibilityRequirements: {
           requiresPermission: 'nexus:service-accounts:read',
-          editions: ['PRO'],
-          statesEnabled: [{ key: 'serviceAccountEnabled', defaultValue: false }],
+          editions: PRO_FAMILY_EDITIONS,
         },
       },
       {
@@ -422,7 +427,10 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         // NEXUS-54019: match Classic/Default UI (adminRoutes.js SUPPORTREQUEST.ROOT) — atlas:create
         // gated to PRO. Preview previously gated on atlas:read, which showed the tile to users who
         // lack the create permission the page actually requires.
-        visibilityRequirements: { requiresPermission: 'nexus:atlas:create', editions: ['PRO'] },
+        visibilityRequirements: {
+          requiresPermission: 'nexus:atlas:create',
+          editions: PRO_FAMILY_EDITIONS,
+        },
       },
     ],
   },

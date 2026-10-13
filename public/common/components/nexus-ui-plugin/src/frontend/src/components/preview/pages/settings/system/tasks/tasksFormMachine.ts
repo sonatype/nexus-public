@@ -64,9 +64,11 @@ export const CLOUD_BLOBSTORE_REMOVAL_TYPE_ID = 'nexus.cloud.blobstore.removal';
 // =============================================================================
 
 /**
- * Fill in 'false' for any checkbox field that is recognized in TASK_FIELD_UI but
- * absent from the current properties map. Mirrors Classic/ExtJS behavior: unchecked
- * checkboxes always serialize as 'false', never as absent.
+ * Fill in a default for any checkbox field that is recognized in TASK_FIELD_UI but
+ * absent from the current properties map. Uses the field's initialValue when declared
+ * (e.g. onlyNotify defaults to 'true'); falls back to 'false' for checkboxes with no
+ * declared default, mirroring Classic/ExtJS behavior where unchecked checkboxes always
+ * serialize as 'false', never as absent.
  *
  * Only iterates formFields supplied by the API template — never synthesizes a checkbox
  * for a task type that does not declare it.
@@ -80,7 +82,10 @@ function normalizeCheckboxProperties(
   const normalized = { ...properties };
   for (const field of formFields) {
     if (resolveTaskFieldMeta(taskTypeId, field.id)?.type === 'checkbox' && !(field.id in normalized)) {
-      normalized[field.id] = 'false';
+      normalized[field.id] =
+        field.initialValue !== undefined && field.initialValue !== null && field.initialValue !== ''
+          ? String(field.initialValue)
+          : 'false';
     }
   }
   return normalized;

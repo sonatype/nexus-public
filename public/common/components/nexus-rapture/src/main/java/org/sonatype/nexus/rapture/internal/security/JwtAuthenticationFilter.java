@@ -30,7 +30,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
@@ -53,7 +53,7 @@ public class JwtAuthenticationFilter
 
   @Autowired
   public JwtAuthenticationFilter(final JwtHelper jwtHelper) {
-    this.jwtHelper = checkNotNull(jwtHelper);
+    this.jwtHelper = requireNonNull(jwtHelper);
   }
 
   @Override

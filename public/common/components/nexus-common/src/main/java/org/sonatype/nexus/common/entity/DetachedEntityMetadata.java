@@ -16,8 +16,7 @@ import java.io.Serializable;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Detached {@link EntityMetadata}.
@@ -34,8 +33,8 @@ public class DetachedEntityMetadata
   private final DetachedEntityVersion version;
 
   public DetachedEntityMetadata(final DetachedEntityId id, final DetachedEntityVersion version) {
-    this.id = checkNotNull(id);
-    this.version = checkNotNull(version);
+    this.id = requireNonNull(id);
+    this.version = requireNonNull(version);
   }
 
   @Override

@@ -63,6 +63,11 @@ public class AcknowledgeAnalyticsStateContributor
     return properties;
   }
 
+  // NEXUS-54791: this gate is dormant today - getEdition() never reports "OSS", so applies() is
+  // always false. It is deliberately left unchanged: converting the edition string to an
+  // isCommunityEdition()/capability check would switch this onboarding acknowledgement on for
+  // Community/unlicensed installs, which the acceptance criteria require to stay exactly as-is.
+  // Flagged for review rather than silently altered.
   private boolean applies() {
     return OSS.equals(applicationVersion.getEdition()) && analyticsCapabilityAbsent();
   }

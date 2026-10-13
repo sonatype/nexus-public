@@ -12,53 +12,23 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { RoleForm } from '../RoleForm';
 import { useRolesApi } from '../useRolesApi';
 import { useRolesForm } from '../useRolesForm';
 import { Role, NEXUS_SOURCE, isExternalRole } from '../types';
 
-// Mock hooks
 jest.mock('../useRolesApi');
 jest.mock('../useRolesForm');
 
 const mockUseRolesForm = useRolesForm as jest.MockedFunction<typeof useRolesForm>;
-
-function createMockForm(data: any = {}, validationErrors: Record<string, string> = {}) {
-  return {
-    field: jest.fn((name: string) => {
-      const keys = name.split('.');
-      let value = data;
-      for (const key of keys) {
-        value = value?.[key];
-      }
-      return { name, value: value != null ? String(value) : '', onChange: jest.fn(), onBlur: jest.fn(), error: undefined };
-    }),
-    data,
-    isPristine: true,
-    isSaving: false,
-    isLoading: false,
-    isDeleting: false,
-    saveError: null,
-    validationErrors,
-    state: {
-      matches: jest.fn(() => false),
-      context: { data, allPrivileges: mockPrivilegeRefs, allRoles: mockRoleRefs, allSources: [] },
-    },
-    send: jest.fn(),
-    submit: jest.fn(),
-    checkbox: jest.fn(() => ({ name: '', checked: false, onChange: jest.fn() })),
-    select: jest.fn(() => ({ name: '', value: '', onChange: jest.fn() })),
-  } as any;
-}
-
 const mockUseRolesApi = useRolesApi as jest.MockedFunction<typeof useRolesApi>;
 
 const mockPrivilegeRefs = [
-  { id: 'nx-all', name: 'nx-all' },
-  { id: 'nx-search-read', name: 'nx-search-read' },
-  { id: 'nx-repository-view-*', name: 'nx-repository-view-*' },
+  { id: 'nx-all', name: 'nx-all', description: 'All privileges' },
+  { id: 'nx-search-read', name: 'nx-search-read', description: 'Read search' },
+  { id: 'nx-repository-view-*', name: 'nx-repository-view-*', description: 'Read repos' },
 ];
 
 const mockRoleRefs = [
@@ -77,28 +47,91 @@ const mockRole: Role = {
   roles: ['nx-anonymous'],
 };
 
-const renderWithTheme = (component: React.ReactNode) => {
+function createMockForm(
+  data: any = {},
+  validationErrors: Record<string, string> = {},
+  isPristine = true,
+) {
+  return {
+    field: jest.fn((name: string) => {
+      const keys = name.split('.');
+      let value: any = data;
+      for (const key of keys) {
+        value = value?.[key];
+      }
+      return {
+        name,
+        value: value != null ? String(value) : '',
+        onChange: jest.fn(),
+        onBlur: jest.fn(),
+        error: undefined,
+      };
+    }),
+    data,
+    isPristine,
+    isSaving: false,
+    isLoading: false,
+    isDeleting: false,
+    saveError: null,
+    validationErrors,
+    state: {
+      matches: jest.fn(() => false),
+      context: {
+        data,
+        allPrivileges: mockPrivilegeRefs,
+        allRoles: mockRoleRefs,
+        allSources: [],
+      },
+    },
+    send: jest.fn(),
+    submit: jest.fn(),
+    checkbox: jest.fn(() => ({ name: '', checked: false, onChange: jest.fn() })),
+    select: jest.fn(() => ({ name: '', value: '', onChange: jest.fn() })),
+  } as any;
+}
+
+function mockFormFor(role: Role | null, extraFormData: any = {}, isPristine = true) {
+  const external = role ? isExternalRole(role.source || NEXUS_SOURCE) : false;
+  const formData = role
+    ? {
+        id: role.id,
+        name: role.name,
+        description: role.description || '',
+        privileges: role.privileges || [],
+        roles: role.roles || [],
+        source: role.source || NEXUS_SOURCE,
+        roleType: external ? 'external' : 'nexus',
+        externalSource: external ? role.source : undefined,
+        ...extraFormData,
+      }
+    : {
+        id: '',
+        name: '',
+        description: '',
+        privileges: [],
+        roles: [],
+        source: NEXUS_SOURCE,
+        roleType: 'nexus',
+        ...extraFormData,
+      };
+  mockUseRolesForm.mockReturnValue({
+    form: createMockForm(formData, {}, isPristine),
+    role,
+    isCreate: !role,
+  } as any);
+}
+
+function renderWithTheme(component: React.ReactNode) {
   return render(<Theme>{component}</Theme>);
-};
+}
 
 describe('RoleForm', () => {
   const mockOnCancel = jest.fn();
-  const mockOnValidationChange = jest.fn();
+  const mockOnComplete = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseRolesForm.mockImplementation(({ role }: any) => {
-      // Mirror rolesFormMachine's load service: derive roleType/externalSource
-      // from role.source when a role is present.
-      const external = role ? isExternalRole(role.source || NEXUS_SOURCE) : false;
-      const formData = role ? {
-        id: role.id, name: role.name, description: role.description || '',
-        privileges: role.privileges || [], roles: role.roles || [], source: role.source || NEXUS_SOURCE,
-        roleType: external ? 'external' : 'nexus',
-        externalSource: external ? role.source : undefined,
-      } : { id: '', name: '', description: '', privileges: [], roles: [], source: NEXUS_SOURCE };
-      return { form: createMockForm(formData), role: role || null, isCreate: !role } as any;
-    });
+    mockFormFor(null);
     mockUseRolesApi.mockReturnValue({
       loading: false,
       error: null,
@@ -107,258 +140,152 @@ describe('RoleForm', () => {
       fetchRoleReferences: jest.fn().mockResolvedValue(mockRoleRefs),
       fetchRoleSources: jest.fn().mockResolvedValue([]),
       fetchRolesFromSource: jest.fn().mockResolvedValue([]),
+      searchRoles: jest.fn().mockResolvedValue([]),
       fetchPrivilegeReferences: jest.fn().mockResolvedValue(mockPrivilegeRefs),
       findRole: jest.fn().mockResolvedValue(null),
       createRole: jest.fn(),
       updateRole: jest.fn(),
       deleteRole: jest.fn(),
-    });
+    } as any);
   });
 
-  describe('Wizard Steps', () => {
-    it('should render Step 0: Role Type', async () => {
-      renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={0} />
-      );
+  describe('flat form layout', () => {
+    it('renders every section inline in Create mode without any wizard step gating', () => {
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
 
-      await waitFor(() => {
-        expect(screen.getByText('Role Type')).toBeInTheDocument();
-        expect(screen.queryByText('Role Setup')).not.toBeInTheDocument();
-      });
+      expect(screen.getByText('Role Type')).toBeInTheDocument();
+      expect(screen.getByText('Role Setup')).toBeInTheDocument();
+      expect(screen.getByText('Privileges')).toBeInTheDocument();
+      expect(screen.getByText('Contained Roles')).toBeInTheDocument();
     });
 
-    it('should render Step 1: Setup', async () => {
+    it('omits the Role Type section in Edit mode (type is immutable)', () => {
+      mockFormFor(mockRole);
       renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={1} />
+        <RoleForm isCreate={false} role={mockRole} onCancel={mockOnCancel} onComplete={mockOnComplete} />,
       );
 
-      await waitFor(() => {
-        expect(screen.getByText('Role Setup')).toBeInTheDocument();
-        expect(screen.getByLabelText(/ID/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Name/i)).toBeInTheDocument();
-        expect(screen.queryByText('Privileges')).not.toBeInTheDocument();
-      });
-    });
-
-    it('should render Step 2: Privileges', async () => {
-      renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={2} />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('Privileges')).toBeInTheDocument();
-        expect(screen.getByTestId('combobox-privileges')).toBeInTheDocument();
-        expect(screen.queryByText('Role Setup')).not.toBeInTheDocument();
-      });
-    });
-
-    it('should render Step 3: Contained Roles', async () => {
-      renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={3} />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('Contained Roles')).toBeInTheDocument();
-        expect(screen.queryByText('Privileges')).not.toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Validation', () => {
-    it('should call onValidationChange with false if Step 1 is invalid', async () => {
-      const mockForm = createMockForm({ id: '', name: '' });
-      mockUseRolesForm.mockReturnValue({ form: mockForm, role: null, isCreate: true } as any);
-
-      renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={1} onValidationChange={mockOnValidationChange} />
-      );
-
-      await waitFor(() => {
-        expect(mockOnValidationChange).toHaveBeenCalledWith(false);
-      });
-    });
-
-    it('should call onValidationChange with true if Step 1 is valid', async () => {
-      const mockForm = createMockForm({ id: 'test', name: 'Test Role' });
-      mockUseRolesForm.mockReturnValue({ form: mockForm, role: null, isCreate: true } as any);
-
-      renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={1} onValidationChange={mockOnValidationChange} />
-      );
-
-      await waitFor(() => {
-        expect(mockOnValidationChange).toHaveBeenCalledWith(true);
-      });
-    });
-
-    it('should show warning when no privileges or roles are selected on step 3 after attempt', async () => {
-      const mockForm = createMockForm({
-        id: 'test', name: 'Test Role', description: '',
-        privileges: [], roles: [], source: NEXUS_SOURCE,
-      });
-      mockForm.isPristine = false;
-      mockUseRolesForm.mockReturnValue({ form: mockForm, role: null, isCreate: true } as any);
-
-      // Use onSubmitRef to simulate WizardForm calling submit (button is disabled)
-      const submitRef = React.createRef<(() => void) | null>();
-      renderWithTheme(
-        <RoleForm
-          isCreate={true}
-          onCancel={mockOnCancel}
-          wizardStep={3}
-          onSubmitRef={submitRef}
-          hideActions
-        />
-      );
-
-      // Wait for submitRef to be set, then simulate WizardForm calling it
-      await waitFor(() => {
-        expect(submitRef.current).toBeDefined();
-      });
-      act(() => {
-        submitRef.current!();
-      });
-
-      await waitFor(() => {
-        expect(screen.getByTestId('privilege-warning')).toBeInTheDocument();
-        expect(screen.getByText(/Select at least one privilege or contained role/i)).toBeInTheDocument();
-      });
-    });
-
-    it('should validate role ID format', async () => {
-      const mockForm = createMockForm({ id: 'invalid role!', name: 'Test', description: '', privileges: [], roles: [], source: NEXUS_SOURCE });
-      mockForm.validationErrors = { id: 'Role ID can only contain letters, numbers, underscores, and hyphens' };
-      mockForm.isPristine = false;
-      mockUseRolesForm.mockReturnValue({ form: mockForm, role: null, isCreate: true } as any);
-
-      renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={1} />
-      );
-
-      expect(mockForm.field).toHaveBeenCalledWith('id');
-    });
-
-    it('should require at least one privilege or role on step 3', async () => {
-      const mockForm = createMockForm({ id: 'test-role', name: 'Test Role', description: '', privileges: [], roles: [], source: NEXUS_SOURCE });
-      mockForm.validationErrors = { privileges: 'At least one privilege or contained role must be assigned' };
-      mockForm.isPristine = false;
-      mockUseRolesForm.mockReturnValue({ form: mockForm, role: null, isCreate: true } as any);
-
-      // Render on step 3 with no privileges - button should be disabled
-      renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={3} />
-      );
-
-      // Verify the Create button is disabled when no privileges selected (P0 requirement)
-      const createBtn = screen.getByRole('button', { name: /create/i });
-      expect(createBtn).toBeDisabled();
-    });
-
-    it('should call onCancel when Cancel is clicked', async () => {
-      renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={1} />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('Cancel')).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByText('Cancel'));
-      expect(mockOnCancel).toHaveBeenCalled();
-    });
-  });
-
-  describe('Edit Mode', () => {
-    it('should disable ID field in edit mode (Step 1)', async () => {
-      renderWithTheme(
-        <RoleForm
-          role={mockRole}
-          isCreate={false}
-          onCancel={mockOnCancel}
-          wizardStep={1}
-        />
-      );
-
-      await waitFor(() => {
-        const idInput = screen.getByDisplayValue('test-role');
-        expect(idInput).toBeDisabled();
-      });
-    });
-
-    // Edit mode skips Step 0 (Role Type) entirely — the wizard starts on Setup.
-    // The RolesPage-level test covers that behaviour; RoleForm's Step 0 render is
-    // now guarded by `isCreate` so it renders nothing in edit mode if wizardStep=0
-    // is somehow passed.
-    it('renders no Type section in edit mode when wizardStep=0 (defense-in-depth)', async () => {
-      renderWithTheme(
-        <RoleForm role={mockRole} isCreate={false} onCancel={mockOnCancel} wizardStep={0} />
-      );
       expect(screen.queryByText('Role Type')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('select-roleType')).not.toBeInTheDocument();
+      expect(screen.getByText('Role Setup')).toBeInTheDocument();
+    });
+
+    it('renders the External Source section in Create when roleType=external', () => {
+      mockFormFor(null, { roleType: 'external', externalSource: 'LDAP' });
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
+
+      expect(screen.getByRole('heading', { name: 'External Source' })).toBeInTheDocument();
+    });
+
+    it('hides the External Source section in Create when roleType=nexus', () => {
+      mockFormFor(null, { roleType: 'nexus' });
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
+
+      expect(screen.queryByRole('heading', { name: 'External Source' })).not.toBeInTheDocument();
+    });
+
+    it('renders the External Source section in Edit when the role is external', () => {
+      const externalRole = { ...mockRole, source: 'LDAP' };
+      mockFormFor(externalRole);
+      renderWithTheme(
+        <RoleForm isCreate={false} role={externalRole} onCancel={mockOnCancel} onComplete={mockOnComplete} />,
+      );
+
+      expect(screen.getByRole('heading', { name: 'External Source' })).toBeInTheDocument();
     });
   });
 
-  describe('Create with no privilege - P0 validation', () => {
-    it('shows validation error when Save clicked with no privileges on step 3', async () => {
-      const formData = { id: 'test-role', name: 'Test Role', privileges: [], roles: [], source: NEXUS_SOURCE };
-      const validationErrors = { privileges: 'Select at least one privilege or contained role' };
-      const mockForm = createMockForm(formData, validationErrors);
-      mockUseRolesForm.mockReturnValue({
-        form: mockForm,
-        role: null,
-        isCreate: true,
-      } as any);
+  describe('privilege + role selection summary', () => {
+    it('shows a zero-count selection summary in Create', () => {
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
 
-      const submitRef = React.createRef<(() => void) | null>();
-      renderWithTheme(
-        <RoleForm
-          isCreate={true}
-          onCancel={mockOnCancel}
-          wizardStep={3}
-          onSubmitRef={submitRef}
-          hideActions
-        />
-      );
-
-      expect(screen.queryByTestId('privilege-warning')).not.toBeInTheDocument();
-
-      // Wait for useEffect to set submitRef, then simulate parent (WizardForm) calling it
-      await waitFor(() => {
-        expect(submitRef.current).toBeDefined();
-      });
-      act(() => {
-        submitRef.current!();
-      });
-
-      await waitFor(() => {
-        expect(screen.getByTestId('privilege-warning')).toBeInTheDocument();
-        expect(screen.getByText('Select at least one privilege or contained role')).toBeInTheDocument();
-      });
-      // P0: Submit is guarded when no privileges - does not call form.submit() to avoid hang
-      expect(mockForm.submit).not.toHaveBeenCalled();
+      expect(screen.getByTestId('role-form-privileges-count')).toHaveTextContent('0 privileges selected');
+      expect(screen.getByTestId('role-form-roles-count')).toHaveTextContent('0 roles selected');
     });
 
-    it('does not show privilege warning when privileges are selected', async () => {
-      const formData = {
-        id: 'test-role',
-        name: 'Test Role',
-        privileges: ['nx-search-read'],
-        roles: [],
-        source: NEXUS_SOURCE,
-      };
-      const mockForm = createMockForm(formData, {});
-      mockUseRolesForm.mockReturnValue({
-        form: mockForm,
-        role: null,
-        isCreate: true,
-      } as any);
+    it('reflects the current form-data counts', () => {
+      mockFormFor(null, { privileges: ['a', 'b', 'c'], roles: ['x'] });
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
 
+      expect(screen.getByTestId('role-form-privileges-count')).toHaveTextContent('3 privileges selected');
+      expect(screen.getByTestId('role-form-roles-count')).toHaveTextContent('1 role selected');
+    });
+
+    it('opens the privileges picker when Edit Privileges is clicked', () => {
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
+
+      expect(screen.queryByTestId('privileges-picker')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('role-form-open-privileges'));
+      expect(screen.getByTestId('privileges-picker')).toBeInTheDocument();
+    });
+
+    it('opens the contained-roles picker when Edit Contained Roles is clicked', () => {
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
+
+      expect(screen.queryByTestId('contained-roles-picker')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('role-form-open-contained-roles'));
+      expect(screen.getByTestId('contained-roles-picker')).toBeInTheDocument();
+    });
+  });
+
+  describe('save gating', () => {
+    it('disables Save when neither privileges nor contained roles are selected', () => {
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
+
+      const submit = screen.getByTestId('form-submit');
+      expect(submit).toBeDisabled();
+      expect(screen.getByTestId('privilege-warning')).toBeInTheDocument();
+    });
+
+    it('enables Save when at least one privilege is selected', () => {
+      mockFormFor(null, { privileges: ['nx-search-read'] }, /* isPristine */ false);
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
+
+      expect(screen.getByTestId('form-submit')).not.toBeDisabled();
+      expect(screen.queryByTestId('privilege-warning')).not.toBeInTheDocument();
+    });
+
+    it('enables Save when at least one contained role is selected', () => {
+      mockFormFor(null, { roles: ['nx-anonymous'] }, /* isPristine */ false);
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
+
+      expect(screen.getByTestId('form-submit')).not.toBeDisabled();
+    });
+  });
+
+  describe('edit mode locking', () => {
+    it('disables the ID field in Edit mode', () => {
+      mockFormFor(mockRole);
       renderWithTheme(
-        <RoleForm isCreate={true} onCancel={mockOnCancel} wizardStep={3} hideActions />
+        <RoleForm isCreate={false} role={mockRole} onCancel={mockOnCancel} onComplete={mockOnComplete} />,
       );
 
-      expect(screen.queryByTestId('privilege-warning')).not.toBeInTheDocument();
-      expect(screen.queryByText(/select at least one privilege/i)).not.toBeInTheDocument();
+      const idInput = screen.getByLabelText(/^ID/) as HTMLInputElement;
+      expect(idInput).toBeDisabled();
+    });
+
+    it('disables every input when the role is backend-flagged readOnly', () => {
+      const readOnlyRole = { ...mockRole, readOnly: true };
+      mockFormFor(readOnlyRole);
+      renderWithTheme(
+        <RoleForm isCreate={false} role={readOnlyRole} onCancel={mockOnCancel} onComplete={mockOnComplete} />,
+      );
+
+      expect(screen.getByLabelText(/^Name/)).toBeDisabled();
+      expect(screen.getByLabelText(/^Description/)).toBeDisabled();
+      // Picker triggers are also disabled
+      expect(screen.getByTestId('role-form-open-privileges')).toBeDisabled();
+      expect(screen.getByTestId('role-form-open-contained-roles')).toBeDisabled();
+    });
+  });
+
+  describe('cancel', () => {
+    it('fires onCancel when the Cancel button is clicked', () => {
+      renderWithTheme(<RoleForm isCreate onCancel={mockOnCancel} onComplete={mockOnComplete} />);
+
+      const cancelButtons = screen.getAllByRole('button', { name: /^Cancel$/ });
+      // First "Cancel" is the form's; picker cancels only mount when open.
+      fireEvent.click(cancelButtons[0]);
+      expect(mockOnCancel).toHaveBeenCalled();
     });
   });
 });

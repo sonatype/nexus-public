@@ -20,7 +20,7 @@ import org.apache.ibatis.session.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.collect.ImmutableMap.of;
 import static java.lang.String.format;
@@ -54,7 +54,7 @@ enum PlaceholderTypes
   private final Map<String, String> defaults;
 
   private PlaceholderTypes(Map<String, String> defaults) {
-    this.defaults = checkNotNull(defaults);
+    this.defaults = requireNonNull(defaults);
   }
 
   /**

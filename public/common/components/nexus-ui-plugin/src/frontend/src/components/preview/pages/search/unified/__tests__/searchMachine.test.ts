@@ -117,26 +117,25 @@ describe('searchMachine', () => {
     // These are the TRICKY mappings where the filter ID differs from the API param.
     // If anyone changes these, the test fails immediately.
     const TRICKY_MAPPINGS: Array<{ format: SearchFormat; filterId: string; expectedApiParam: string }> = [
-      // npm scope maps to 'group', NOT 'npm.scope'
-      { format: 'npm', filterId: 'scope', expectedApiParam: 'group' },
       // npm author maps to 'npm.author'
       { format: 'npm', filterId: 'author', expectedApiParam: 'npm.author' },
       // NuGet nugetId maps to 'nuget.id', NOT 'nuget.nugetId'
       { format: 'nuget', filterId: 'nugetId', expectedApiParam: 'nuget.id' },
       // Yum yumName maps to 'yum.name', NOT 'yum.yumName'
       { format: 'yum', filterId: 'yumName', expectedApiParam: 'yum.name' },
-      // Docker imageName maps correctly
-      { format: 'docker', filterId: 'imageName', expectedApiParam: 'docker.imageName' },
-      // Maven groupId maps correctly
-      { format: 'maven', filterId: 'groupId', expectedApiParam: 'maven.groupId' },
       // Git LFS sha256 maps to 'sha256' (no prefix)
       { format: 'gitlfs', filterId: 'sha256', expectedApiParam: 'sha256' },
       // P2 pluginName maps to 'p2.pluginName'
       { format: 'p2', filterId: 'pluginName', expectedApiParam: 'p2.pluginName' },
-      // Swift scope maps to 'swift.scope'
+      // Swift scope maps to 'swift.scope' (distinct FF1, NOT an alias of generic group)
       { format: 'swift', filterId: 'scope', expectedApiParam: 'swift.scope' },
       // Terraform provider maps to 'terraform.provider'
       { format: 'terraform', filterId: 'provider', expectedApiParam: 'terraform.provider' },
+      // Generic filters always map to unprefixed API params on every format
+      { format: 'maven', filterId: 'group', expectedApiParam: 'group' },
+      { format: 'maven', filterId: 'name', expectedApiParam: 'name' },
+      { format: 'docker', filterId: 'name', expectedApiParam: 'name' },
+      { format: 'pypi', filterId: 'version', expectedApiParam: 'version' },
     ];
 
     it.each(TRICKY_MAPPINGS)(
@@ -186,11 +185,11 @@ describe('searchMachine', () => {
     const EXPECTED_SIMPLE = ['all', 'alpine', 'apt', 'cargo', 'cocoapods', 'conda', 'go', 'helm', 'huggingface', 'pub', 'r', 'raw'];
     const EXPECTED_CUSTOM = ['ansiblegalaxy', 'composer', 'conan', 'docker', 'gitlfs', 'maven', 'npm', 'nuget', 'oci', 'p2', 'pypi', 'rubygems', 'swift', 'terraform', 'yum'];
 
-    it.each(EXPECTED_SIMPLE)('format %s is classified as simple (repository only)', (format) => {
+    it.each(EXPECTED_SIMPLE)('format %s is classified as simple (only generic baseline)', (format) => {
       expect(SIMPLE_FORMATS).toContain(format);
     });
 
-    it.each(EXPECTED_CUSTOM)('format %s is classified as having custom filters', (format) => {
+    it.each(EXPECTED_CUSTOM)('format %s is classified as having distinct format-specific filters', (format) => {
       expect(FORMATS_WITH_CUSTOM_FILTERS).toContain(format);
     });
 
@@ -204,109 +203,109 @@ describe('searchMachine', () => {
   // =============================================================================
 
   describe('format-specific filter declarations', () => {
-    it('Maven declares groupId, artifactId, baseVersion, classifier, extension', () => {
+    it('Maven declares generics plus baseVersion, classifier, extension', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'maven' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'groupId', 'artifactId', 'baseVersion', 'classifier', 'extension',
+        'group', 'name', 'version', 'baseVersion', 'classifier', 'extension',
       ]);
 
       service.stop();
     });
 
-    it('npm declares scope, author, description, keywords, license', () => {
+    it('npm declares generics plus author, description, keywords, license', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'npm' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'scope', 'author', 'description', 'keywords', 'license',
+        'group', 'name', 'version', 'author', 'description', 'keywords', 'license',
       ]);
 
       service.stop();
     });
 
-    it('Docker declares imageName, imageTag, layerId, contentDigest', () => {
+    it('Docker declares generics plus layerId, contentDigest', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'docker' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'imageName', 'imageTag', 'layerId', 'contentDigest',
+        'group', 'name', 'version', 'layerId', 'contentDigest',
       ]);
 
       service.stop();
     });
 
-    it('NuGet declares nugetId, tags, title, authors, description, summary', () => {
+    it('NuGet declares generics plus nugetId, tags, title, authors, description, summary', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'nuget' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'nugetId', 'tags', 'title', 'authors', 'description', 'summary',
+        'group', 'name', 'version', 'nugetId', 'tags', 'title', 'authors', 'description', 'summary',
       ]);
 
       service.stop();
     });
 
-    it('PyPI declares classifiers, description, keywords, summary', () => {
+    it('PyPI declares generics plus classifiers, description, keywords, summary', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'pypi' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'classifiers', 'description', 'keywords', 'summary',
+        'group', 'name', 'version', 'classifiers', 'description', 'keywords', 'summary',
       ]);
 
       service.stop();
     });
 
-    it('Conan declares baseVersion, channel, revision, packageId, packageRevision', () => {
+    it('Conan declares generics plus baseVersion, channel, revision, packageId, packageRevision', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'conan' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'baseVersion', 'channel', 'revision', 'packageId', 'packageRevision',
+        'group', 'name', 'version', 'baseVersion', 'channel', 'revision', 'packageId', 'packageRevision',
       ]);
 
       service.stop();
     });
 
-    it('Yum declares yumName, architecture', () => {
+    it('Yum declares generics plus yumName, architecture', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'yum' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'yumName', 'architecture',
+        'group', 'name', 'version', 'yumName', 'architecture',
       ]);
 
       service.stop();
     });
 
-    it('Composer declares vendor, package, description, keywords', () => {
+    it('Composer declares generics plus description, keywords', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'composer' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'vendor', 'package', 'description', 'keywords',
+        'group', 'name', 'version', 'description', 'keywords',
       ]);
 
       service.stop();
     });
 
-    it('RubyGems declares description, platform, summary', () => {
+    it('RubyGems declares generics plus description, platform, summary', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'rubygems' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'description', 'platform', 'summary',
+        'group', 'name', 'version', 'description', 'platform', 'summary',
       ]);
 
       service.stop();
@@ -318,20 +317,19 @@ describe('searchMachine', () => {
   // =============================================================================
 
   describe('format switching', () => {
-    it('clears filters when switching formats', () => {
+    it('clears format-specific distinct filters when switching formats', () => {
       const service = startMachine();
 
-      // Set some Maven filters
+      // Set a Maven-specific distinct filter (baseVersion), which is not preserved.
       service.send({ type: 'SELECT_FORMAT', format: 'maven' });
-      service.send({ type: 'UPDATE_FILTER', name: 'groupId', value: 'org.apache' });
-      service.send({ type: 'UPDATE_FILTER', name: 'artifactId', value: 'commons-lang3' });
+      service.send({ type: 'UPDATE_FILTER', name: 'baseVersion', value: '1.0.0' });
+      service.send({ type: 'UPDATE_FILTER', name: 'classifier', value: 'sources' });
 
-      expect(service.getSnapshot().context.filters.groupId).toBe('org.apache');
+      expect(service.getSnapshot().context.filters.baseVersion).toBe('1.0.0');
 
-      // Switch to Docker
+      // Switch to Docker — Maven-only distinct keys are dropped.
       service.send({ type: 'SELECT_FORMAT', format: 'docker' });
 
-      // Maven filters should be cleared
       expect(service.getSnapshot().context.filters).toEqual({});
       expect(service.getSnapshot().context.format).toBe('docker');
 
@@ -529,6 +527,52 @@ describe('searchMachine', () => {
       const state = service.getSnapshot();
       expect(state.context.results).toHaveLength(2);
       expect(state.context.continuationToken).toBeUndefined();
+
+      service.stop();
+    });
+
+    it('stores the backend total from the search response', async () => {
+      const service = startMachine({
+        search: () => Promise.resolve({
+          results: [{ id: '1', name: 'a', format: 'maven2', repository: 'r', version: '1' }],
+          continuationToken: 'token-1',
+          total: 4888,
+        }),
+      });
+
+      service.send({ type: 'SEARCH' });
+      await waitFor(service, (s) => s.matches({ lifecycle: 'results' }));
+
+      expect(service.getSnapshot().context.total).toBe(4888);
+
+      service.stop();
+    });
+
+    it('keeps the backend total stable across LOAD_MORE (not the loaded subset)', async () => {
+      const service = startMachine({
+        search: () => Promise.resolve({
+          results: [{ id: '1', name: 'a', format: 'maven2', repository: 'r', version: '1' }],
+          continuationToken: 'token-1',
+          total: 4888,
+        }),
+        loadMore: () => Promise.resolve({
+          results: [{ id: '2', name: 'b', format: 'maven2', repository: 'r', version: '2' }],
+          continuationToken: undefined,
+          total: 4888,
+        }),
+      });
+
+      service.send({ type: 'SEARCH' });
+      await waitFor(service, (s) => s.matches({ lifecycle: 'results' }));
+
+      service.send({ type: 'LOAD_MORE' });
+      await waitFor(service, (s) =>
+        s.matches({ lifecycle: 'results' }) && s.context.results.length === 2
+      );
+
+      const state = service.getSnapshot();
+      expect(state.context.total).toBe(4888);
+      expect(state.context.results).toHaveLength(2);
 
       service.stop();
     });
@@ -766,6 +810,98 @@ describe('searchMachine', () => {
       const ctx = service.getSnapshot().context;
       expect(ctx.sortField).toBe('lastUpdated');
       expect(ctx.sortDirection).toBe('desc');
+
+      service.stop();
+    });
+  });
+
+  // =============================================================================
+  // GENERIC FILTER PRESERVATION ACROSS SELECT_FORMAT
+  // =============================================================================
+
+  describe('generic filter preservation', () => {
+    it('preserves format-agnostic filters across all → maven → docker → pypi → all', () => {
+      const service = startMachine();
+
+      // Pre-set the format-agnostic keys with distinct values
+      service.send({ type: 'UPDATE_FILTER', name: 'group', value: 'org.example' });
+      service.send({ type: 'UPDATE_FILTER', name: 'name', value: 'my-library' });
+      service.send({ type: 'UPDATE_FILTER', name: 'version', value: '1.2.3' });
+      service.send({ type: 'UPDATE_FILTER', name: 'nameOrVersion', value: 'my-lib:1.0' });
+
+      // Drive the full format chain
+      service.send({ type: 'SELECT_FORMAT', format: 'maven' });
+      service.send({ type: 'SELECT_FORMAT', format: 'docker' });
+      service.send({ type: 'SELECT_FORMAT', format: 'pypi' });
+      service.send({ type: 'SELECT_FORMAT', format: 'all' });
+
+      const filters = service.getSnapshot().context.filters;
+      expect(filters.group).toBe('org.example');
+      expect(filters.name).toBe('my-library');
+      expect(filters.version).toBe('1.2.3');
+      expect(filters.nameOrVersion).toBe('my-lib:1.0');
+
+      service.stop();
+    });
+
+    it('clears repository on SELECT_FORMAT because repositories are format-scoped', () => {
+      // A repository name only makes sense for the format it belongs to;
+      // carrying `docker-hosted` into a maven search returns 0 hits with no
+      // error message.  Explicitly drop it on every format change.
+      const service = startMachine();
+
+      service.send({ type: 'SELECT_FORMAT', format: 'docker' });
+      service.send({ type: 'UPDATE_FILTER', name: 'repository', value: 'docker-hosted' });
+      service.send({ type: 'UPDATE_FILTER', name: 'group', value: 'org.example' });
+
+      expect(service.getSnapshot().context.filters.repository).toBe('docker-hosted');
+
+      service.send({ type: 'SELECT_FORMAT', format: 'maven' });
+
+      const filters = service.getSnapshot().context.filters;
+      expect(filters.repository).toBeUndefined();
+      // Format-agnostic keys still survive the same transition.
+      expect(filters.group).toBe('org.example');
+
+      service.stop();
+    });
+
+    it('drops the outgoing format\'s distinct filter values on SELECT_FORMAT', () => {
+      const service = startMachine();
+
+      // Set a Maven-only filter alongside a preserved key
+      service.send({ type: 'SELECT_FORMAT', format: 'maven' });
+      service.send({ type: 'UPDATE_FILTER', name: 'baseVersion', value: '1.0-SNAPSHOT' });
+      service.send({ type: 'UPDATE_FILTER', name: 'group', value: 'org.example' });
+
+      expect(service.getSnapshot().context.filters.baseVersion).toBe('1.0-SNAPSHOT');
+      expect(service.getSnapshot().context.filters.group).toBe('org.example');
+
+      // Switch to Docker — Maven-only key must be dropped, generic key must survive
+      service.send({ type: 'SELECT_FORMAT', format: 'docker' });
+
+      const filters = service.getSnapshot().context.filters;
+      expect(filters.baseVersion).toBeUndefined();
+      expect(filters.group).toBe('org.example');
+
+      service.stop();
+    });
+
+    it('RESET clears every filter including preserved keys', () => {
+      const service = startMachine();
+
+      // Set all five preserved keys
+      service.send({ type: 'UPDATE_FILTER', name: 'group', value: 'org.example' });
+      service.send({ type: 'UPDATE_FILTER', name: 'name', value: 'my-library' });
+      service.send({ type: 'UPDATE_FILTER', name: 'version', value: '1.2.3' });
+      service.send({ type: 'UPDATE_FILTER', name: 'repository', value: 'my-repo' });
+      service.send({ type: 'UPDATE_FILTER', name: 'nameOrVersion', value: 'my-lib:1.0' });
+
+      // RESET must clear everything
+      service.send({ type: 'RESET' });
+
+      expect(service.getSnapshot().context.filters).toEqual({});
+      expect(service.getSnapshot().context.format).toBe('all');
 
       service.stop();
     });

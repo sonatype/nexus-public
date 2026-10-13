@@ -15,6 +15,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { ExtAPIUtils } from '../../../../../interface/ExtAPIUtils';
 import { APIConstants } from '../../../../../constants/APIConstants';
 import type {
+  AutoExpandStopReason,
   BrowseNode,
   BrowseTreeState,
   TreeNodeState,
@@ -25,6 +26,28 @@ import { isMockMode } from '../../../config/featureFlags';
 import { getMockBrowseNodes } from '../mockData';
 
 const { EXT: { BROWSE: { ACTION, METHODS: { READ } } } } = APIConstants;
+
+/**
+ * Maximum number of levels a single auto-expansion walk will open.
+ *
+ * Auto-expansion of a lone-folder chain is inherently sequential — each level's
+ * children have to arrive before we know whether to descend — so an unbounded
+ * walk turns one repository selection into an unbounded series of round trips.
+ * A visited-id set stops *cycles*, but a chain of unique ids (deeply nested
+ * group folders, or generated content) is not a cycle and would keep going.
+ *
+ * 50 is far beyond any real layout (Maven group paths bottom out around ten
+ * segments) while keeping the worst case bounded. Reaching it is reported as
+ * {@link AutoExpandStopReason} `'safety-limit'`, never as `'branch-point'`, so
+ * a bounded stop is never presented as a completed walk.
+ */
+export const AUTO_EXPAND_MAX_LEVELS = 50;
+
+/** Result of one {@link collectSingleChildChain} walk. */
+interface ChainWalk {
+  readonly expansions: Expansion[];
+  readonly stopReason: AutoExpandStopReason;
+}
 
 /**
  * Fetch children for a node from the API.
@@ -76,6 +99,49 @@ function nodesToState(nodes: BrowseNode[]): TreeNodeState[] {
 }
 
 /**
+ * Fold a freshly fetched level into the level already held in state.
+ *
+ * A re-read after a delete must reflect what the server now holds *without*
+ * discarding what the user already opened: replacing the level with
+ * {@link nodesToState} would reset every surviving sibling to
+ * `expanded: false, children: null`, collapsing subtrees that auto-expansion or
+ * the user had opened — a delete undoing auto-expansion.
+ *
+ * Surviving nodes therefore keep their `expanded` flag and loaded `children`
+ * while taking the server's fresh payload; nodes the server no longer lists are
+ * dropped, and nodes it has added arrive collapsed.
+ */
+function mergeFetchedLevel(
+  previous: readonly TreeNodeState[],
+  fetched: BrowseNode[]
+): TreeNodeState[] {
+  const existing = new Map(previous.map((state) => [state.node.id, state]));
+  return nodesToState(fetched).map((incoming) => {
+    const prior = existing.get(incoming.node.id);
+    return prior ? { ...prior, node: incoming.node, loading: false } : incoming;
+  });
+}
+
+
+/** One fetched level of a chain expansion, applied as a single state update. */
+type Expansion = { expandId: string; expandChildren: TreeNodeState[] };
+
+/**
+ * Whether a node may participate in single-child auto-expansion.
+ *
+ * `!leaf` is the same predicate the tree itself uses to decide whether a node
+ * is expandable (see `BrowseTreeNode`'s `aria-expanded` and toggle handling),
+ * so auto-expansion covers exactly the nodes the user could have opened by
+ * hand. `type` is deliberately *not* consulted: formats model intermediate
+ * containers with whatever type suits them -- npm returns package and version
+ * containers as `{type: 'asset', leaf: false}` -- and a container holding a
+ * single child is not a branch point regardless of its type.
+ */
+function isAutoExpandable(node: BrowseNode): boolean {
+  return !node.leaf;
+}
+
+/**
  * Recursively find a node in the tree by ID.
  */
 function findNodeById(nodes: readonly TreeNodeState[], nodeId: string): TreeNodeState | null {
@@ -86,6 +152,30 @@ function findNodeById(nodes: readonly TreeNodeState[], nodeId: string): TreeNode
     if (node.children) {
       const found = findNodeById(node.children, nodeId);
       if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Find the structural parent of a node by walking the loaded tree.
+ *
+ * Preferred over deriving the parent from the node id: ids are opaque server
+ * strings and `lastIndexOf('/')` breaks for formats whose child ids are not
+ * path-suffixes of their parent (Docker tags, npm tarballs, Go `@v` paths).
+ */
+function findParentNodeId(
+  nodes: readonly TreeNodeState[],
+  nodeId: string,
+  parentId: string | null = null,
+): string | null {
+  for (const node of nodes) {
+    if (node.node.id === nodeId) {
+      return parentId;
+    }
+    if (node.children) {
+      const found = findParentNodeId(node.children, nodeId, node.node.id);
+      if (found !== null) return found;
     }
   }
   return null;
@@ -217,15 +307,6 @@ function findNodeByVersionFuzzy(
 }
 
 /**
- * Get the parent node ID from a node ID (path-like).
- */
-function getParentId(nodeId: string): string | null {
-  const lastSlash = nodeId.lastIndexOf('/');
-  if (lastSlash <= 0) return null;
-  return nodeId.substring(0, lastSlash);
-}
-
-/**
  * Get all visible node IDs in order (for keyboard navigation).
  */
 function getVisibleNodeIds(nodes: readonly TreeNodeState[], result: string[] = []): string[] {
@@ -236,6 +317,43 @@ function getVisibleNodeIds(nodes: readonly TreeNodeState[], result: string[] = [
     }
   }
   return result;
+}
+
+/**
+ * Pick the node that should hold focus after `lostId` stops being a visible row.
+ *
+ * Deleting the focused row must not drop DOM focus to `<body>`: that loses the
+ * user's place and forces them to Tab back in and re-descend the whole branch,
+ * which on a deep tree is the same usability failure keyboard navigation exists
+ * to prevent. The fallback is deterministic — the next surviving visible row,
+ * else the nearest preceding one (which is the parent when the
+ * deleted node was an only child) — and returns undefined only when nothing is
+ * left to focus.
+ *
+ * `lostId` is the node that *held focus*, which is not necessarily the node that
+ * was deleted: deleting a folder also removes its descendants, and one of those
+ * may have owned the roving tab stop.
+ *
+ * `before` and `after` are the visible orders either side of the removal, so the
+ * returned id is guaranteed to still be present and visible.
+ */
+function focusFallbackAfterRemoval(
+  before: readonly TreeNodeState[],
+  after: readonly TreeNodeState[],
+  lostId: string
+): string | undefined {
+  const previousOrder = getVisibleNodeIds(before);
+  const index = previousOrder.indexOf(lostId);
+  if (index === -1) return undefined;
+
+  const survivors = new Set(getVisibleNodeIds(after));
+  for (let i = index + 1; i < previousOrder.length; i++) {
+    if (survivors.has(previousOrder[i])) return previousOrder[i];
+  }
+  for (let i = index - 1; i >= 0; i--) {
+    if (survivors.has(previousOrder[i])) return previousOrder[i];
+  }
+  return undefined;
 }
 
 /**
@@ -280,36 +398,111 @@ export function useBrowseTree(
     loading: true,
     focusedNodeId: undefined,
     selectedNodeId: undefined,
+    userCollapsedNodeIds: [],
   });
 
   const isInitialPathExpandedRef = useRef(false);
   const prevRepoRef = useRef(repositoryName);
 
-  // Reset auto-expand flag when repository changes
+  /**
+   * Generation of the currently-relevant set of requests.
+   *
+   * `ExtAPIUtils.extAPIRequest` takes no axios config, so there is no
+   * `AbortSignal` to hand the transport: an in-flight HTTP request cannot be
+   * cancelled. Cancellation is therefore implemented one level up, at the
+   * *sequence* level — a multi-step walk checks the generation between steps and
+   * stops issuing further requests — and combined with this latest-request
+   * generation guard, which discards the *result* of any request belonging to a
+   * superseded generation. Together they guarantee that a late response for
+   * repository A can neither continue fetching nor write to state after the tree
+   * has moved to repository B.
+   */
+  const generationRef = useRef(0);
+
+  // Reset auto-expand flag and supersede every in-flight request when the
+  // repository changes. Done during render, before any effect for the new
+  // repository runs, so nothing from the previous one can slip through.
   if (prevRepoRef.current !== repositoryName) {
     prevRepoRef.current = repositoryName;
     isInitialPathExpandedRef.current = false;
+    generationRef.current += 1;
   }
+
+  /** Whether `gen` is still the latest generation (i.e. results may be used). */
+  const isCurrent = useCallback((gen: number): boolean => generationRef.current === gen, []);
+
+  /**
+   * Generation of the most recently requested path walk.
+   *
+   * {@link generationRef} above is bumped only when the *repository* changes, so
+   * it cannot separate two walks within one repository — and those race, because
+   * a walk fetches one level at a time and a later, shallower path can finish
+   * first. Both walks end by selecting their final node, so without this the
+   * slower older walk would have the last word and pull the selection, the URL
+   * and the detail panel back to the path the user already left.
+   */
+  const pathGenerationRef = useRef(0);
 
   // Ref to always have the latest nodes (avoids stale closures in async operations)
   const nodesRef = useRef(state.nodes);
   nodesRef.current = state.nodes;
 
+  // Ref mirror of the explicit-collapse set, so the async chain walk can honour
+  // a collapse the user performed while children were still in flight.
+  const userCollapsedRef = useRef(state.userCollapsedNodeIds);
+  userCollapsedRef.current = state.userCollapsedNodeIds;
+
+  /**
+   * In-flight {@link expandToPath} walks, keyed `${repositoryName}::${path}`, so
+   * concurrent callers for the same target join one walk instead of duplicating
+   * every request along the path.
+   */
+  const inFlightPathsRef = useRef<Map<string, Promise<void>>>(new Map());
+
   /**
    * Load root level nodes.
    */
   const loadRoot = useCallback(async () => {
-    setState((prev) => ({ ...prev, loading: true, error: undefined }));
+    // Any request still in flight belongs to a previous root load; supersede it
+    // so its response cannot land on top of this one.
+    generationRef.current += 1;
+    const gen = generationRef.current;
+
+    // Switching repository must drop the previous repository's nodes, selection
+    // and collapse history immediately, so nothing downstream (auto-expansion,
+    // detail panel, delete gating) can act on stale data.
+    setState((prev) =>
+      prev.repositoryName === repositoryName
+        ? { ...prev, loading: true, error: undefined }
+        : {
+            ...prev,
+            nodes: [],
+            loading: true,
+            error: undefined,
+            focusedNodeId: undefined,
+            selectedNodeId: undefined,
+            userCollapsedNodeIds: [],
+            autoExpandStopReason: undefined,
+          }
+    );
 
     try {
       const children = await fetchChildren(repositoryName, '/');
+      // A superseded load must not publish nodes, clear `loading`, or reset the
+      // collapse history for whatever repository is current now.
+      if (!isCurrent(gen)) return [];
       setState((prev) => ({
         ...prev,
+        repositoryName,
         nodes: nodesToState(children),
         loading: false,
+        error: undefined,
+        userCollapsedNodeIds: [],
       }));
       return children;
     } catch (err) {
+      // Likewise a superseded failure is not the current repository's error.
+      if (!isCurrent(gen)) return [];
       const errorMessage = err instanceof Error ? err.message : 'Unknown error loading browse tree';
       setState((prev) => ({
         ...prev,
@@ -318,191 +511,270 @@ export function useBrowseTree(
       }));
       return [];
     }
-  }, [repositoryName]);
+  }, [repositoryName, isCurrent]);
 
   /**
-   * Auto-expand single-child folder chains from a starting node.
-   * Fetches children iteratively, expanding each level, until hitting
-   * a node with multiple children or a leaf. This makes the tree
-   * show content immediately like the Default UI.
+   * Walk a chain of single-child containers, fetching each level, and return the
+   * expansions to apply.
    *
-   * Uses immutable state updates via updateNodeInTree to avoid
-   * mutation bugs and race conditions with other state updates.
+   * Shared by the mount-time auto-expansion (open collapsed
+   * single-child folder chains up to the first branch point) and by `expand`,
+   * so both agree on the stop condition. The chain stops at the first node that
+   * is not "exactly one expandable child":
+   *
+   * - zero children (empty directory)      -> stop
+   * - one leaf child                       -> stop (nothing to open)
+   * - one folder + one file                -> stop (2 children = branch point)
+   * - more than one child                  -> stop (branch point)
+   * - the user explicitly collapsed it     -> stop (never re-open)
+   *
+   * The first fetch is allowed to throw so the caller can surface a node-level
+   * error; a failure deeper in the chain just ends the walk, leaving the levels
+   * already collected intact.
+   *
+   * Safety and cancellation model — the walk is bounded three ways, and reports
+   * which one stopped it so a bounded stop is never mistaken for a completed one:
+   *
+   * - a visited-id set ends cyclic server data          -> `'cycle'`
+   * - {@link AUTO_EXPAND_MAX_LEVELS} bounds a chain of
+   *   unique ids, which is not a cycle and would
+   *   otherwise issue unboundedly many sequential
+   *   requests                                          -> `'safety-limit'`
+   * - the generation guard ends the walk as soon as the
+   *   repository changes or the tree reloads, so no
+   *   further requests are issued for a tree nobody is
+   *   looking at any more                               -> `'aborted'`
+   *
+   * Only `'branch-point'` means auto-expansion actually reached the first
+   * branching folder.
    */
-  const autoExpandSingleChildren = useCallback(async (startNodeId?: string) => {
-    if (!startNodeId) return;
+  const collectSingleChildChain = useCallback(
+    async (startNodeId: string, gen: number): Promise<ChainWalk> => {
+      const expansions: Expansion[] = [];
+      const visited = new Set<string>();
+      let nodeId: string | null = startNodeId;
+      let first = true;
 
-    const startNode = findNodeById(nodesRef.current, startNodeId);
-    if (!startNode || startNode.node.leaf) return;
+      while (nodeId) {
+        // Cycle guard: a node that has already been expanded in this walk means
+        // the server data loops back on itself. Stop rather than fetch forever.
+        if (visited.has(nodeId)) return { expansions, stopReason: 'cycle' };
+        // Depth guard: bound the number of sequential round trips one selection
+        // can trigger. The levels already collected are still applied.
+        if (expansions.length >= AUTO_EXPAND_MAX_LEVELS) {
+          return { expansions, stopReason: 'safety-limit' };
+        }
+        // Sequence-level cancellation: stop before spending another request on a
+        // tree that has been superseded.
+        if (!isCurrent(gen)) return { expansions, stopReason: 'aborted' };
+        visited.add(nodeId);
 
-    let nodeId: string | null = startNodeId;
-    const MAX_AUTO_EXPAND = 50;
-    const expansions: Array<{ expandId: string; expandChildren: TreeNodeState[] }> = [];
-
-    for (let depth = 0; depth < MAX_AUTO_EXPAND && nodeId; depth++) {
-      try {
-        const children = await fetchChildren(repositoryName, nodeId);
-        const childStates = nodesToState(children);
+        let childStates: TreeNodeState[];
+        try {
+          childStates = nodesToState(await fetchChildren(repositoryName, nodeId));
+        } catch (err) {
+          if (first) throw err;
+          return { expansions, stopReason: 'error' };
+        }
+        // The response arrived after the tree moved on — discard it rather than
+        // descending further or applying it.
+        if (!isCurrent(gen)) return { expansions, stopReason: 'aborted' };
+        first = false;
 
         expansions.push({ expandId: nodeId, expandChildren: childStates });
 
-        if (childStates.length === 1 && !childStates[0].node.leaf) {
-          nodeId = childStates[0].node.id;
-        } else {
-          nodeId = null;
-        }
-      } catch {
-        break;
+        const onlyChild = childStates.length === 1 ? childStates[0] : undefined;
+        nodeId =
+          onlyChild &&
+          isAutoExpandable(onlyChild.node) &&
+          !userCollapsedRef.current.includes(onlyChild.node.id)
+            ? onlyChild.node.id
+            : null;
       }
-    }
 
-    if (expansions.length > 0) {
-      setState((prev) => {
-        let newNodes = prev.nodes;
-        for (const { expandId, expandChildren } of expansions) {
-          newNodes = updateNodeInTree(newNodes, expandId, (n) => ({
-            ...n,
-            children: expandChildren,
-            expanded: true,
-            loading: false,
-          }));
-        }
-        return { ...prev, nodes: newNodes };
-      });
-    }
-  }, [repositoryName]);
+      return { expansions, stopReason: 'branch-point' };
+    },
+    [repositoryName, isCurrent]
+  );
 
   /**
-   * Toggle expansion of a node.
-   * On first expand, loads children from API.
-   * Auto-expands single child folders by fetching the entire chain
-   * and applying all expansions in one immutable state update.
+   * Apply a set of fetched expansions in a single immutable state update, and
+   * drop the expanded ids from the explicit-collapse set.
    */
-  const toggle = useCallback(async (nodeId: string): Promise<void> => {
-    // Read from ref to avoid stale closure issues
-    const currentNode = findNodeById(nodesRef.current, nodeId);
-    if (!currentNode) return;
-
-    // If collapsing, just toggle
-    if (currentNode.expanded) {
-      setState((prev) => ({
-        ...prev,
-        nodes: updateNodeInTree(prev.nodes, nodeId, (n) => ({
+  const applyExpansions = useCallback((expansions: readonly Expansion[], gen: number): void => {
+    if (expansions.length === 0) return;
+    // A superseded walk must not graft its children onto the current tree: node
+    // ids can collide across repositories, so this is not merely wasted work.
+    if (!isCurrent(gen)) return;
+    setState((prev) => {
+      let newNodes = prev.nodes;
+      for (const { expandId, expandChildren } of expansions) {
+        newNodes = updateNodeInTree(newNodes, expandId, (n) => ({
           ...n,
-          expanded: false,
-        })),
-      }));
-      return;
-    }
-
-    // If already has children loaded, expand and auto-expand single-child chains.
-    // When a cached child hasn't loaded ITS children yet, fetch deeper levels
-    // so the tree matches the Default UI's cascading actor expansion depth.
-    if (currentNode.children !== null) {
-      let walkNode: TreeNodeState | null = currentNode;
-      const pendingExpands: string[] = [nodeId];
-
-      while (
-        walkNode?.children &&
-        walkNode.children.length === 1 &&
-        !walkNode.children[0].node.leaf
-      ) {
-        pendingExpands.push(walkNode.children[0].node.id);
-
-        if (walkNode.children[0].children === null) {
-          // Child hasn't loaded yet -- fall through to the fetch path
-          // to continue the single-child chain deeper
-          setState((prev) => {
-            let newNodes = prev.nodes;
-            for (const id of pendingExpands) {
-              newNodes = updateNodeInTree(newNodes, id, (n) => ({
-                ...n,
-                expanded: true,
-              }));
-            }
-            return { ...prev, nodes: newNodes };
-          });
-
-          // Fetch deeper levels for the unloaded child
-          await autoExpandSingleChildren(walkNode.children[0].node.id);
-          return;
-        }
-
-        walkNode = walkNode.children[0];
-      }
-
-      setState((prev) => {
-        let newNodes = prev.nodes;
-        for (const id of pendingExpands) {
-          newNodes = updateNodeInTree(newNodes, id, (n) => ({
-            ...n,
-            expanded: true,
-          }));
-        }
-        return { ...prev, nodes: newNodes };
-      });
-      return;
-    }
-
-    // Load children for the first time
-    setState((prev) => ({
-      ...prev,
-      nodes: updateNodeInTree(prev.nodes, nodeId, (n) => ({
-        ...n,
-        loading: true,
-        error: undefined,
-      })),
-    }));
-
-    try {
-      const children = await fetchChildren(repositoryName, currentNode.node.id);
-      const childStates = nodesToState(children);
-
-      // Build auto-expand chain: keep fetching single non-leaf children (capped at MAX_AUTO_EXPAND for depth fix)
-      const MAX_AUTO_EXPAND = 50;
-      const expansions: Array<{ expandId: string; expandChildren: TreeNodeState[] }> = [
-        { expandId: nodeId, expandChildren: childStates },
-      ];
-
-      let deepChildren = childStates;
-      let depth = 0;
-      while (depth < MAX_AUTO_EXPAND && deepChildren.length === 1 && !deepChildren[0].node.leaf) {
-        depth++;
-        try {
-          const nextChildren = await fetchChildren(repositoryName, deepChildren[0].node.id);
-          const nextChildStates = nodesToState(nextChildren);
-          expansions.push({ expandId: deepChildren[0].node.id, expandChildren: nextChildStates });
-          deepChildren = nextChildStates;
-        } catch {
-          break;
-        }
-      }
-
-      // Apply all expansions in one immutable state update (browse tree depth fix)
-      setState((prev) => {
-        let newNodes = prev.nodes;
-        for (const { expandId, expandChildren } of expansions) {
-          newNodes = updateNodeInTree(newNodes, expandId, (n) => ({
-            ...n,
-            children: expandChildren,
-            expanded: true,
-            loading: false,
-          }));
-        }
-        return { ...prev, nodes: newNodes };
-      });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error loading children';
-      setState((prev) => ({
-        ...prev,
-        nodes: updateNodeInTree(prev.nodes, nodeId, (n) => ({
-          ...n,
+          children: expandChildren,
+          expanded: true,
           loading: false,
-          error: errorMessage,
+          error: undefined,
+        }));
+      }
+      const expandedIds = new Set(expansions.map((e) => e.expandId));
+      return {
+        ...prev,
+        nodes: newNodes,
+        userCollapsedNodeIds: prev.userCollapsedNodeIds.filter((id) => !expandedIds.has(id)),
+      };
+    });
+  }, [isCurrent]);
+
+  /**
+   * Auto-expand the single-child folder chain hanging off the root.
+   *
+   * Runs once per repository after the root children land, and only when the
+   * root itself has exactly one auto-expandable folder — so a repository that
+   * branches at the top level stays fully collapsed and costs no extra request.
+   * Deliberately touches neither `selectedNodeId` nor `focusedNodeId`: expansion
+   * must not steal focus or override a user's selection while children load.
+   */
+  const autoExpandRootChain = useCallback(async (): Promise<void> => {
+    const roots = nodesRef.current;
+    if (roots.length !== 1) return;
+
+    const only = roots[0];
+    if (!isAutoExpandable(only.node)) return;
+    if (userCollapsedRef.current.includes(only.node.id)) return;
+    // Already opened (e.g. by a user click that raced the effect) - nothing to do.
+    if (only.expanded) return;
+
+    const gen = generationRef.current;
+    try {
+      const { expansions, stopReason } = await collectSingleChildChain(only.node.id, gen);
+      applyExpansions(expansions, gen);
+      if (isCurrent(gen)) {
+        setState((prev) => ({ ...prev, autoExpandStopReason: stopReason }));
+      }
+    } catch {
+      // Root chain is best-effort: a failed first fetch leaves the tree
+      // collapsed rather than showing an error the user did not ask for.
+      if (isCurrent(gen)) {
+        setState((prev) => ({ ...prev, autoExpandStopReason: 'error' }));
+      }
+    }
+  }, [applyExpansions, collectSingleChildChain, isCurrent]);
+
+  /**
+   * Expand a node, loading its children on first open.
+   *
+   * Distinct from {@link toggle} so keyboard ArrowRight can expand without ever
+   * collapsing. Expanding a node whose children are already
+   * cached opens *only* that node: descendants keep whatever expanded state they
+   * had, so a branch the user deliberately closed is not cascaded back open.
+   */
+  const expand = useCallback(
+    async (nodeId: string): Promise<void> => {
+      const currentNode = findNodeById(nodesRef.current, nodeId);
+      if (!currentNode || currentNode.node.leaf) return;
+
+      // Already open: nothing to load, but the node is no longer user-collapsed.
+      if (currentNode.expanded) {
+        setState((prev) => ({
+          ...prev,
+          userCollapsedNodeIds: prev.userCollapsedNodeIds.filter((id) => id !== nodeId),
+        }));
+        return;
+      }
+
+      // Children cached from a previous open - reveal them without refetching.
+      if (currentNode.children !== null) {
+        setState((prev) => ({
+          ...prev,
+          nodes: updateNodeInTree(prev.nodes, nodeId, (n) => ({ ...n, expanded: true })),
+          userCollapsedNodeIds: prev.userCollapsedNodeIds.filter((id) => id !== nodeId),
+        }));
+        return;
+      }
+
+      setState((prev) => ({
+        ...prev,
+        nodes: updateNodeInTree(prev.nodes, nodeId, (n) => ({
+          ...n,
+          loading: true,
+          error: undefined,
         })),
       }));
-    }
-  }, [repositoryName, autoExpandSingleChildren]);
+
+      const gen = generationRef.current;
+      try {
+        const { expansions, stopReason } = await collectSingleChildChain(nodeId, gen);
+        applyExpansions(expansions, gen);
+        if (isCurrent(gen)) {
+          setState((prev) => ({ ...prev, autoExpandStopReason: stopReason }));
+        }
+      } catch (err) {
+        if (!isCurrent(gen)) return;
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error loading children';
+        setState((prev) => ({
+          ...prev,
+          nodes: updateNodeInTree(prev.nodes, nodeId, (n) => ({
+            ...n,
+            loading: false,
+            error: errorMessage,
+          })),
+        }));
+      }
+    },
+    [applyExpansions, collectSingleChildChain, isCurrent]
+  );
+
+  /**
+   * Collapse a node and record the collapse as explicit user intent.
+   *
+   * The recorded id is what stops auto-expansion from re-opening a branch the
+   * user deliberately closed. Cached children are kept so re-expanding costs no
+   * request.
+   */
+  const collapse = useCallback((nodeId: string): void => {
+    const currentNode = findNodeById(nodesRef.current, nodeId);
+    if (!currentNode || !currentNode.expanded) return;
+
+    setState((prev) => {
+      const nodes = updateNodeInTree(prev.nodes, nodeId, (n) => ({ ...n, expanded: false }));
+
+      // Collapsing unmounts the whole subtree. The tree carries a single roving
+      // tab stop, so if it was on a node inside that subtree the tree would be
+      // left with no tabbable row at all — Tab would skip it and only a mouse
+      // could recover it. Move it up to the node the user just collapsed, which
+      // is where the user's attention already is.
+      const focusStillVisible =
+        !prev.focusedNodeId || getVisibleNodeIds(nodes).includes(prev.focusedNodeId);
+
+      return {
+        ...prev,
+        nodes,
+        focusedNodeId: focusStillVisible ? prev.focusedNodeId : nodeId,
+        userCollapsedNodeIds: prev.userCollapsedNodeIds.includes(nodeId)
+          ? prev.userCollapsedNodeIds
+          : [...prev.userCollapsedNodeIds, nodeId],
+      };
+    });
+  }, []);
+
+  /**
+   * Toggle expansion of a node (chevron click, double-click, Enter on a folder).
+   * Thin wrapper over {@link expand} / {@link collapse} so all three entry
+   * points share one state model.
+   */
+  const toggle = useCallback(
+    async (nodeId: string): Promise<void> => {
+      const currentNode = findNodeById(nodesRef.current, nodeId);
+      if (!currentNode) return;
+      if (currentNode.expanded) {
+        collapse(nodeId);
+        return;
+      }
+      await expand(nodeId);
+    },
+    [collapse, expand]
+  );
 
   /**
    * Select a node.
@@ -523,12 +795,13 @@ export function useBrowseTree(
   }, [loadRoot]);
 
   /**
-   * Expand the tree to a specific path.
-   * GitHub-style: Fetch all needed children in one go, then apply all expansions in ONE setState.
-   * No waiting, no polling - let React handle the render cycle.
+   * One deep-link path walk. Always go through {@link expandToPath}, which adds
+   * the in-flight join; calling this directly duplicates concurrent walks.
    */
-  const expandToPath = useCallback(async (path: string): Promise<void> => {
-    if (!path) return;
+  const expandToPathUncached = useCallback(async (path: string): Promise<void> => {
+    const gen = generationRef.current;
+    pathGenerationRef.current += 1;
+    const pathGen = pathGenerationRef.current;
 
     // Filter out segments that browse node generators strip from the display
     // tree.  Both NPM and Docker filter the literal "-" directory; keeping it
@@ -566,8 +839,12 @@ export function useBrowseTree(
 
       // If node is a folder and not yet expanded, fetch its children
       if (!node.node.leaf && !node.expanded && node.children === null) {
+        // Sequence-level cancellation: a path walk for a superseded repository
+        // stops instead of fetching the rest of the path.
+        if (!isCurrent(gen)) return;
         try {
           const children = await fetchChildren(repositoryName, currentPath);
+          if (!isCurrent(gen)) return;
           const childStates = nodesToState(children);
           expansions.push({ expandId: currentPath, expandChildren: childStates });
 
@@ -583,6 +860,11 @@ export function useBrowseTree(
         }
       }
     }
+
+    // A superseded walk must touch neither the tree nor the selection: `select`
+    // moves both selection and focus, so a late path expansion would otherwise
+    // yank the user out of the repository they just switched to.
+    if (!isCurrent(gen)) return;
 
     // Apply ALL expansions in ONE setState (GitHub style - no waiting between)
     if (expansions.length > 0) {
@@ -602,18 +884,57 @@ export function useBrowseTree(
 
     const finalNodeId = currentPath || path;
 
+    // A newer path was requested while this walk was fetching: its selection is
+    // the one the user asked for, so this walk stops here. The expansions above
+    // are kept — they are correct children either way, and discarding them would
+    // only force the newer walk to refetch the levels the two paths share.
+    if (pathGenerationRef.current !== pathGen) return;
+
     // Select the final node (use currentPath which tracks the actual node id after encoding resolution)
     select(finalNodeId);
-  }, [repositoryName, select]);
+  }, [repositoryName, select, isCurrent]);
+
+  /**
+   * Expand the tree to a specific path.
+   * GitHub-style: Fetch all needed children in one go, then apply all expansions in ONE setState.
+   * No waiting, no polling - let React handle the render cycle.
+   *
+   * Two independent owners request the initial deep link — this hook's own
+   * post-root effect and BrowseTree's `initialPath` effect — and they can race,
+   * because neither has applied its expansions yet when the other starts. Left
+   * alone that walks and fetches every path level twice. The in-flight map below
+   * makes the second caller join the first walk instead, so each level is
+   * requested exactly once; the entry is keyed by repository *and* path and is
+   * cleared when the walk settles, so a genuinely new path still expands.
+   */
+  const expandToPath = useCallback(async (path: string): Promise<void> => {
+    if (!path) return;
+
+    const inFlightKey = `${repositoryName}::${path}`;
+    const joined = inFlightPathsRef.current.get(inFlightKey);
+    if (joined) return joined;
+
+    const walk = expandToPathUncached(path);
+    inFlightPathsRef.current.set(inFlightKey, walk);
+    try {
+      await walk;
+    } finally {
+      inFlightPathsRef.current.delete(inFlightKey);
+    }
+  }, [repositoryName, expandToPathUncached]);
 
   /**
    * Move focus to the next visible node.
    */
-  const focusNext = useCallback((): void => {
+  const focusNext = useCallback((fromNodeId?: string): void => {
     const visibleIds = getVisibleNodeIds(state.nodes);
-    const currentIndex = state.focusedNodeId
-      ? visibleIds.indexOf(state.focusedNodeId)
-      : -1;
+    const origin = fromNodeId ?? state.focusedNodeId;
+    const currentIndex = origin ? visibleIds.indexOf(origin) : -1;
+
+    // An origin that is not in the visible list (stale id, node removed or just
+    // hidden by a collapse) must not silently teleport focus to the first or last
+    // row: there is no meaningful neighbour to move to, so nothing moves.
+    if (origin && currentIndex === -1) return;
 
     const nextIndex = currentIndex < visibleIds.length - 1 ? currentIndex + 1 : currentIndex;
     if (nextIndex >= 0 && nextIndex < visibleIds.length) {
@@ -624,11 +945,15 @@ export function useBrowseTree(
   /**
    * Move focus to the previous visible node.
    */
-  const focusPrevious = useCallback((): void => {
+  const focusPrevious = useCallback((fromNodeId?: string): void => {
     const visibleIds = getVisibleNodeIds(state.nodes);
-    const currentIndex = state.focusedNodeId
-      ? visibleIds.indexOf(state.focusedNodeId)
-      : visibleIds.length;
+    const origin = fromNodeId ?? state.focusedNodeId;
+    const currentIndex = origin ? visibleIds.indexOf(origin) : visibleIds.length;
+
+    // An origin that is not in the visible list (stale id, node removed or just
+    // hidden by a collapse) must not silently teleport focus to the first or last
+    // row: there is no meaningful neighbour to move to, so nothing moves.
+    if (origin && currentIndex === -1) return;
 
     const prevIndex = currentIndex > 0 ? currentIndex - 1 : 0;
     if (prevIndex >= 0 && prevIndex < visibleIds.length) {
@@ -638,23 +963,39 @@ export function useBrowseTree(
 
   /**
    * Move focus to the parent node.
+   *
+   * Resolved from the loaded tree rather than from the node id, because child
+   * ids are not reliably path-suffixes of their parent id across formats.
    */
-  const focusParent = useCallback((): void => {
-    if (!state.focusedNodeId) return;
+  const focusParent = useCallback((fromNodeId?: string): void => {
+    const origin = fromNodeId ?? state.focusedNodeId;
+    if (!origin) return;
 
-    const parentId = getParentId(state.focusedNodeId);
+    const parentId = findParentNodeId(state.nodes, origin);
     if (parentId) {
       setState((prev) => ({ ...prev, focusedNodeId: parentId }));
     }
-  }, [state.focusedNodeId]);
+  }, [state.nodes, state.focusedNodeId]);
+
+  /**
+   * Move focus to a specific node without changing the selection.
+   *
+   * Focus and selection are coupled on {@link select} (clicking a node both
+   * selects it and takes the roving tab stop), but arrow-key traversal must move
+   * focus alone so browsing the tree does not churn the detail panel.
+   */
+  const focusNode = useCallback((nodeId: string): void => {
+    setState((prev) => ({ ...prev, focusedNodeId: nodeId }));
+  }, []);
 
   /**
    * Move focus to the first child node.
    */
-  const focusFirstChild = useCallback((): void => {
-    if (!state.focusedNodeId) return;
+  const focusFirstChild = useCallback((fromNodeId?: string): void => {
+    const origin = fromNodeId ?? state.focusedNodeId;
+    if (!origin) return;
 
-    const currentNode = findNodeById(state.nodes, state.focusedNodeId);
+    const currentNode = findNodeById(state.nodes, origin);
     if (currentNode?.expanded && currentNode.children && currentNode.children.length > 0) {
       setState((prev) => ({
         ...prev,
@@ -668,92 +1009,187 @@ export function useBrowseTree(
     loadRoot();
   }, [loadRoot]);
 
-  // Handle initial path expansion after root is loaded.
-  // Only expand when deep-linking (initialPath present); otherwise all folders start collapsed.
+  // Handle expansion after root children land: deep-link path when one was
+  // requested, otherwise the single-child folder chain.
+  //
+  // Guarded on state.repositoryName so this never runs against the previous
+  // repository's nodes after a repository switch, and on the ref so it runs once
+  // per repository rather than on every rerender.
   useEffect(() => {
-    if (
-      !isInitialPathExpandedRef.current &&
-      state.nodes.length > 0 &&
-      !state.loading
-    ) {
-      isInitialPathExpandedRef.current = true;
+    if (isInitialPathExpandedRef.current) return;
+    if (state.repositoryName !== repositoryName) return;
+    if (state.loading || state.nodes.length === 0) return;
 
-      if (initialPath) {
-        expandToPath(initialPath);
-      }
-      // No auto-expand when there's no initialPath — folders start collapsed
+    isInitialPathExpandedRef.current = true;
+
+    if (initialPath) {
+      expandToPath(initialPath);
+      return;
     }
-  }, [initialPath, state.nodes, state.loading, expandToPath]);
+    autoExpandRootChain();
+  }, [
+    initialPath,
+    state.nodes,
+    state.loading,
+    state.repositoryName,
+    repositoryName,
+    expandToPath,
+    autoExpandRootChain,
+  ]);
 
   /**
-   * Remove a node from the tree by ID, preserving the expanded state of all other nodes.
-   * After removal, reloads the parent folder's children from the API to reflect server-side state.
+   * Re-read one level of the tree from the server and fold it into state.
+   *
+   * `parentId` is `null` for the root level. Surviving siblings keep their
+   * expansion and loaded children (see {@link mergeFetchedLevel}); a selection or
+   * focus left pointing at a node the server no longer lists is cleared or moved
+   * to a neighbour rather than left dangling.
+   *
+   * Generation-guarded like every other fetch here, so a late response cannot
+   * write the previous repository's contents into the tree after a switch.
+   * A failed re-read is a no-op: the tree keeps showing what
+   * it already had.
    */
-  const removeNode = useCallback(async (nodeId: string): Promise<void> => {
-    // Find the parent path so we can reload its children
-    const parentId = getParentId(nodeId);
+  const reloadLevel = useCallback(
+    async (parentId: string | null, gen: number): Promise<void> => {
+      let children: BrowseNode[];
+      try {
+        children = await fetchChildren(repositoryName, parentId ?? '/');
+      } catch {
+        return;
+      }
+      if (!isCurrent(gen)) return;
 
-    // Remove the node in-place from the tree
-    const removeFromNodes = (nodes: readonly TreeNodeState[]): TreeNodeState[] => {
-      const filtered = nodes.filter((n) => n.node.id !== nodeId);
-      return filtered.map((n) => {
-        if (n.children) {
-          return { ...n, children: removeFromNodes(n.children) };
-        }
-        return n;
+      setState((prev) => {
+        const nodes = parentId
+          ? updateNodeInTree(prev.nodes, parentId, (n) => ({
+              ...n,
+              children: mergeFetchedLevel(n.children ?? [], children),
+              loading: false,
+            }))
+          : mergeFetchedLevel(prev.nodes, children);
+
+        return {
+          ...prev,
+          nodes,
+          selectedNodeId:
+            prev.selectedNodeId && !findNodeById(nodes, prev.selectedNodeId)
+              ? undefined
+              : prev.selectedNodeId,
+          focusedNodeId:
+            prev.focusedNodeId && !findNodeById(nodes, prev.focusedNodeId)
+              ? focusFallbackAfterRemoval(prev.nodes, nodes, prev.focusedNodeId)
+              : prev.focusedNodeId,
+        };
       });
-    };
+    },
+    [repositoryName, isCurrent]
+  );
 
-    setState((prev) => ({
-      ...prev,
-      nodes: removeFromNodes(prev.nodes),
-      // Clear selection if the deleted node was selected
-      selectedNodeId: prev.selectedNodeId === nodeId ? undefined : prev.selectedNodeId,
-      focusedNodeId: prev.focusedNodeId === nodeId ? undefined : prev.focusedNodeId,
-    }));
+  /**
+   * Re-read the level containing `nodeId` without removing anything.
+   *
+   * Used when a delete was *rejected*: the request may still have partially
+   * succeeded server-side — a cloud/APT delete can remove the asset and then fail
+   * updating format metadata — so the tree has to converge on what the server
+   * actually holds. Because the merged level comes from the server's own listing,
+   * the node stays if the server still has it and disappears if it does not, and
+   * nothing is dropped optimistically either way. The caller does not navigate:
+   * a rejected delete leaves the user on the node they tried to delete.
+   */
+  const reconcileNode = useCallback(
+    async (nodeId: string): Promise<void> => {
+      const parentId = findParentNodeId(nodesRef.current, nodeId);
+      await reloadLevel(parentId, generationRef.current);
+    },
+    [reloadLevel]
+  );
 
-    // Reload the parent folder's children from the API to reflect server-side state
-    if (parentId) {
-      try {
-        const children = await fetchChildren(repositoryName, parentId);
-        const childStates = nodesToState(children);
-        setState((prev) => ({
+  /**
+   * Remove a node from the tree by ID, preserving the expanded state of all other
+   * nodes, then re-read the containing level so the tree reflects server-side
+   * state — including a delete that did less than it reported.
+   */
+  const removeNode = useCallback(
+    async (nodeId: string): Promise<void> => {
+      // Resolve the level to re-read *before* the node leaves the tree, and
+      // resolve it structurally: node ids are opaque server strings, so slicing
+      // at the last `/` names a node that does not exist for every format whose
+      // child ids are not path-suffixes of their parent's (npm tarballs served
+      // from `-/`, Docker `sha256:` digests, Go `@v` paths). `null` means the
+      // node sat at the root level.
+      const parentId = findParentNodeId(nodesRef.current, nodeId);
+
+      // Remove the node in-place from the tree
+      const removeFromNodes = (nodes: readonly TreeNodeState[]): TreeNodeState[] => {
+        const filtered = nodes.filter((n) => n.node.id !== nodeId);
+        return filtered.map((n) => {
+          if (n.children) {
+            return { ...n, children: removeFromNodes(n.children) };
+          }
+          return n;
+        });
+      };
+
+      setState((prev) => {
+        const remaining = removeFromNodes(prev.nodes);
+        const stillVisible = new Set(getVisibleNodeIds(remaining));
+        return {
           ...prev,
-          nodes: updateNodeInTree(prev.nodes, parentId, (n) => ({
-            ...n,
-            children: childStates,
-          })),
-        }));
-      } catch {
-        // Parent reload failed — the optimistic removal is still valid
-      }
-    } else {
-      // Deleted a root-level node — reload root
-      try {
-        const children = await fetchChildren(repositoryName, '/');
-        setState((prev) => ({
-          ...prev,
-          nodes: nodesToState(children),
-        }));
-      } catch {
-        // Root reload failed — the optimistic removal is still valid
-      }
-    }
-  }, [repositoryName]);
+          nodes: remaining,
+          // Clear selection if the deleted node was selected
+          selectedNodeId: prev.selectedNodeId === nodeId ? undefined : prev.selectedNodeId,
+          // Keyboard focus moves to a surviving neighbour rather than vanishing.
+          // Keyed on whether the *focused* node survived, not on whether it was
+          // the one deleted: selection and focus diverge (click a folder, then
+          // arrow into a child), and deleting the folder takes that child with
+          // it. A focused id with no rendered row leaves the whole tree
+          // untabbable, because the roving tab stop follows `focusedNodeId`.
+          focusedNodeId:
+            prev.focusedNodeId && !stillVisible.has(prev.focusedNodeId)
+              ? focusFallbackAfterRemoval(prev.nodes, remaining, prev.focusedNodeId)
+              : prev.focusedNodeId,
+        };
+      });
+
+      const gen = generationRef.current;
+      if (!isCurrent(gen)) return;
+      await reloadLevel(parentId, gen);
+    },
+    [isCurrent, reloadLevel]
+  );
 
   const actions: BrowseTreeActions = useMemo(
     () => ({
       toggle,
+      expand,
+      collapse,
       select,
       refresh,
       expandToPath,
       removeNode,
+      reconcileNode,
       focusNext,
       focusPrevious,
       focusParent,
       focusFirstChild,
+      focusNode,
     }),
-    [toggle, select, refresh, expandToPath, removeNode, focusNext, focusPrevious, focusParent, focusFirstChild]
+    [
+      toggle,
+      expand,
+      collapse,
+      select,
+      refresh,
+      expandToPath,
+      removeNode,
+      reconcileNode,
+      focusNext,
+      focusPrevious,
+      focusParent,
+      focusFirstChild,
+      focusNode,
+    ]
   );
 
   return { state, actions };

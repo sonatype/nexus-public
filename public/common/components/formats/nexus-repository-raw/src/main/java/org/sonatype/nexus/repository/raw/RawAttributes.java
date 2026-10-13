@@ -14,7 +14,8 @@ package org.sonatype.nexus.repository.raw;
 
 import java.util.List;
 
-import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
+import org.sonatype.nexus.swagger.DistributionVisibility;
+import org.sonatype.nexus.swagger.EditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
@@ -24,10 +25,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 
-@JsonFilter(SwaggerEditionVisibility.NAME)
+@JsonFilter(EditionVisibility.NAME)
 public class RawAttributes
 {
-  @SwaggerEditionVisibility(cloud = false, note = "Remove content-disposition from cloud")
+  @DistributionVisibility(cloud = false, note = "Remove content-disposition from cloud")
   @Schema(description = "Content Disposition", example = "ATTACHMENT")
   @NotEmpty
   private final String contentDisposition;

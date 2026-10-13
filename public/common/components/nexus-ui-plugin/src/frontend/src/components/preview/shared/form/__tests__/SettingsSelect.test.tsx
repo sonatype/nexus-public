@@ -150,5 +150,29 @@ describe('SettingsSelect', () => {
       expect(select).toHaveFocus();
     });
   });
+
+  describe('controlled state', () => {
+    it('passes an empty string to Radix Root when value is empty and no NONE option', () => {
+      render(<SettingsSelect {...defaultProps} value="" />);
+      expect(screen.getByTestId('select-root')).toHaveAttribute('data-value', '');
+    });
+
+    it('passes an empty string to Radix Root when value is undefined and no NONE option', () => {
+      const { value: _omit, ...propsWithoutValue } = defaultProps;
+      render(<SettingsSelect {...propsWithoutValue} />);
+      expect(screen.getByTestId('select-root')).toHaveAttribute('data-value', '');
+    });
+
+    it('passes NONE_VALUE to Radix Root when empty and a NONE option exists', () => {
+      const optionsWithNone = [{ value: '', label: 'None' }, ...defaultOptions];
+      render(<SettingsSelect {...defaultProps} options={optionsWithNone} value="" />);
+      expect(screen.getByTestId('select-root')).toHaveAttribute('data-value', '__NONE__');
+    });
+
+    it('passes the raw value to Radix Root when a real value is selected', () => {
+      render(<SettingsSelect {...defaultProps} value="option2" />);
+      expect(screen.getByTestId('select-root')).toHaveAttribute('data-value', 'option2');
+    });
+  });
 });
 

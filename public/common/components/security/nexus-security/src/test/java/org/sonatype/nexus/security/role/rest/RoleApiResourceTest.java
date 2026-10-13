@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import jakarta.ws.rs.core.MediaType;
+import java.util.Set;
 
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.ErrorMessageUtil;
@@ -34,13 +34,16 @@ import org.sonatype.nexus.security.role.RoleAssignabilityChecker;
 import org.sonatype.nexus.security.role.RoleContainsItselfException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
+import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -48,14 +51,16 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
-@ExtendWith({MockitoExtension.class, AuthenticationExtension.class})
+@ExtendWith({MockitoExtension.class, ValidationExtension.class, AuthenticationExtension.class})
 @WithUser
 class RoleApiResourceTest
 {
@@ -381,6 +386,108 @@ class RoleApiResourceTest
     verify(authorizationManager).updateRole(argument.capture());
     assertRole(argument.getValue(), "default", "id1", "role2", "role2", Arrays.asList("role3", "role4"),
         Arrays.asList("priv3", "priv4"));
+  }
+
+  /**
+   * BDD: a caller holding only nexus:roles:update must not be able to grant nx-admin to a role they can edit
+   * (NEXUS-53397 / SVH-280).
+   */
+  @Test
+  void testUpdateRole_forbiddenWhenCallerCannotGrantAnAddedChildRole() {
+    Role role = createRole("default", "id1", "role1", "role1", Collections.singleton("nx-viewer"),
+        Collections.emptyList());
+    when(authorizationManager.getRole("id1")).thenReturn(role);
+    when(roleAssignabilityChecker.findUngrantableAdditions(any(), any())).thenReturn(Set.of("nx-admin"));
+
+    RoleXORequest roleXo = createApiRole("id1", "role1", "role1", Arrays.asList("nx-viewer", "nx-admin"),
+        Collections.emptySet());
+
+    try {
+      underTest.update("id1", DEFAULT_SOURCE, roleXo);
+      fail("Should have failed update because the caller cannot grant nx-admin.");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(403));
+      assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
+      assertThat(e.getResponse().getEntity().toString(), containsString("nx-admin"));
+    }
+    verify(authorizationManager, never()).updateRole(any());
+  }
+
+  @Test
+  void testUpdateRole_forbiddenWhenCallerCannotGrantAnAddedPrivilege() {
+    Role role = createRole("default", "id1", "role1", "role1", Collections.emptyList(), Collections.emptyList());
+    when(authorizationManager.getRole("id1")).thenReturn(role);
+    when(roleAssignabilityChecker.findUngrantableAdditions(any(), any())).thenReturn(Set.of("nx-all"));
+
+    RoleXORequest roleXo = createApiRole("id1", "role1", "role1", Collections.emptySet(),
+        Collections.singleton("nx-all"));
+
+    try {
+      underTest.update("id1", DEFAULT_SOURCE, roleXo);
+      fail("Should have failed update because the caller cannot grant nx-all.");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(403));
+      assertThat(e.getResponse().getEntity().toString(), containsString("nx-all"));
+    }
+    verify(authorizationManager, never()).updateRole(any());
+  }
+
+  /**
+   * The pre-update snapshot passed to the checker must be the role as it exists now, so that only genuine additions are
+   * treated as new grants.
+   */
+  @Test
+  void testUpdateRole_checksAdditionsAgainstThePreUpdateSnapshot() {
+    Role current = createRole("default", "id1", "role1", "role1", Collections.singleton("role1"),
+        Collections.singleton("priv1"));
+    when(authorizationManager.getRole("id1")).thenReturn(current);
+    when(roleAssignabilityChecker.findUngrantableAdditions(any(), any())).thenReturn(Collections.emptySet());
+
+    RoleXORequest roleXo = createApiRole("id1", "role1", "role1", Collections.singleton("role2"),
+        Collections.singleton("priv2"));
+
+    underTest.update("id1", DEFAULT_SOURCE, roleXo);
+
+    ArgumentCaptor<Role> desired = ArgumentCaptor.forClass(Role.class);
+    ArgumentCaptor<Role> snapshot = ArgumentCaptor.forClass(Role.class);
+    verify(roleAssignabilityChecker).findUngrantableAdditions(desired.capture(), snapshot.capture());
+    assertThat(desired.getValue().getRoles(), containsInAnyOrder("role2"));
+    assertThat(snapshot.getValue().getRoles(), containsInAnyOrder("role1"));
+    assertThat(snapshot.getValue().getPrivileges(), containsInAnyOrder("priv1"));
+  }
+
+  @Test
+  void testCreateRole_forbiddenWhenCallerCannotGrantARequestedAuthority() throws Exception {
+    when(roleAssignabilityChecker.findUngrantableAdditions(any(), any())).thenReturn(Set.of("nx-admin"));
+
+    RoleXORequest roleXo = createApiRole("roleId", "roleName", "description", Collections.singleton("nx-admin"),
+        Collections.emptySet());
+
+    try {
+      underTest.create(DEFAULT_SOURCE, roleXo);
+      fail("Should have failed create because the caller cannot grant nx-admin.");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(403));
+      assertThat(e.getResponse().getEntity().toString(), containsString("nx-admin"));
+    }
+    verify(authorizationManager, never()).addRole(any());
+  }
+
+  /**
+   * On create there is no prior state, so the checker must be told so explicitly.
+   */
+  @Test
+  void testCreateRole_passesNoSnapshotToTheChecker() throws Exception {
+    when(roleAssignabilityChecker.findUngrantableAdditions(any(), any())).thenReturn(Collections.emptySet());
+    when(authorizationManager.addRole(any())).thenReturn(new Role());
+
+    underTest.create(DEFAULT_SOURCE,
+        createApiRole("roleId", "roleName", "description", Collections.emptySet(), Collections.emptySet()));
+
+    verify(roleAssignabilityChecker).findUngrantableAdditions(any(), isNull());
   }
 
   @Test

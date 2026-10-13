@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.internal.softdeleted;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -70,6 +71,11 @@ public interface SoftDeletedBlobsDAO
   void deleteRecord(
       @Param("sourceBlobStoreName") String sourceBlobStoreName,
       @Param("blobId") String blobId);
+
+  /** Bulk delete by BlobId; {@code blobIds} MUST be non-empty (SQL {@code IN ()} is invalid). */
+  void deleteRecords(
+      @Param("sourceBlobStoreName") String sourceBlobStoreName,
+      @Param("blobIds") Collection<String> blobIds);
 
   /**
    * Delete all records related to provided blobstore name

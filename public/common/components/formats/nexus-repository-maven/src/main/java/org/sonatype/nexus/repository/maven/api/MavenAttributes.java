@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven.api;
 
-import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
+import org.sonatype.nexus.swagger.DistributionVisibility;
+import org.sonatype.nexus.swagger.EditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
@@ -26,7 +27,7 @@ import jakarta.validation.constraints.Pattern;
  *
  * @since 3.20
  */
-@JsonFilter(SwaggerEditionVisibility.NAME)
+@JsonFilter(EditionVisibility.NAME)
 public class MavenAttributes
 {
   @Schema(description = "What type of artifacts does this repository store?",
@@ -42,7 +43,7 @@ public class MavenAttributes
   protected final String layoutPolicy;
 
   @Schema(description = "Content Disposition", example = "ATTACHMENT")
-  @SwaggerEditionVisibility(cloud = false, note = "Remove content-disposition from cloud")
+  @DistributionVisibility(cloud = false, note = "Remove content-disposition from cloud")
   @Pattern(regexp = "INLINE|ATTACHMENT", message = "must be one of INLINE, ATTACHMENT")
   private final String contentDisposition;
 

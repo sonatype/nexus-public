@@ -24,7 +24,7 @@ import org.sonatype.nexus.security.authc.NexusAuthenticationEvent;
 
 import com.google.common.eventbus.Subscribe;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -45,8 +45,8 @@ public class AuthenticationEventSubscriber
       final Provider<EventManager> eventManager,
       final Provider<ClientInfoProvider> clientInfoProvider)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.clientInfoProvider = checkNotNull(clientInfoProvider);
+    this.eventManager = requireNonNull(eventManager);
+    this.clientInfoProvider = requireNonNull(clientInfoProvider);
   }
 
   @Subscribe

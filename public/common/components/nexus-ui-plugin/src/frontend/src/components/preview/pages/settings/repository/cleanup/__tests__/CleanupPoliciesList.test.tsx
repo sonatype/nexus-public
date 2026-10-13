@@ -289,19 +289,22 @@ describe('CleanupPoliciesList', () => {
     expect(screen.getByTestId('policy-row-npm-cleanup')).toBeInTheDocument();
   });
 
-  it('renders search bar below the help section with toolbar class for spacing', async () => {
+  it('renders help section below the table (NEXUS-54308)', async () => {
     const { container } = render(
       <CleanupPoliciesList onSelect={mockOnSelect} onCreate={mockOnCreate} />,
       { wrapper: TestWrapper }
     );
 
     await waitFor(() => {
-      expect(screen.getByText('What is a cleanup policy?')).toBeInTheDocument();
+      expect(screen.getByTestId('policy-row-maven-cleanup')).toBeInTheDocument();
     });
 
-    const toolbar = container.querySelector('.cleanup-policies-list__toolbar');
-    expect(toolbar).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Filter by name, format, or description...')).toBeInTheDocument();
+    const table = container.querySelector('.cleanup-policies-list__table');
+    const help = screen.getByTestId('help-section');
+    expect(table).toBeInTheDocument();
+    expect(
+      table && table.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });
 

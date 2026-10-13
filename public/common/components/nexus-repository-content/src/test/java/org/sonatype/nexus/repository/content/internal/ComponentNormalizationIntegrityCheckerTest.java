@@ -191,10 +191,10 @@ public class ComponentNormalizationIntegrityCheckerTest
   private void mockTableExistsButColumnsNeedCreation() throws SQLException {
     when(databaseMigrationUtility.tableExists(connection, MAVEN2_TABLE.toUpperCase())).thenReturn(true);
     when(databaseMigrationUtility.tableExists(connection, RAW_TABLE.toUpperCase())).thenReturn(true);
-    when(databaseMigrationUtility.columnExists(connection, MAVEN2_TABLE, COLUMN_NAME)).thenReturn(false);
-    when(databaseMigrationUtility.columnExists(connection, RAW_TABLE, COLUMN_NAME)).thenReturn(false);
-    when(databaseMigrationUtility.indexExists(connection, MAVEN2_INDEX)).thenReturn(false);
-    when(databaseMigrationUtility.indexExists(connection, RAW_INDEX)).thenReturn(false);
+    when(databaseMigrationUtility.columnExists(connection, MAVEN2_TABLE.toUpperCase(), COLUMN_NAME)).thenReturn(false);
+    when(databaseMigrationUtility.columnExists(connection, RAW_TABLE.toUpperCase(), COLUMN_NAME)).thenReturn(false);
+    when(databaseMigrationUtility.indexExists(connection, MAVEN2_TABLE.toUpperCase(), MAVEN2_INDEX)).thenReturn(false);
+    when(databaseMigrationUtility.indexExists(connection, RAW_TABLE.toUpperCase(), RAW_INDEX)).thenReturn(false);
   }
 
   private void mockTableMissing() throws SQLException {

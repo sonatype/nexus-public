@@ -23,8 +23,8 @@ import org.sonatype.nexus.common.event.EventManager;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A condition that delegates to provided {@link Evaluable} for checking if the condition is satisfied.
@@ -46,7 +46,7 @@ public class EvaluableCondition
       final Evaluable evaluable)
   {
     super(eventManager, false);
-    this.evaluable = checkNotNull(evaluable);
+    this.evaluable = requireNonNull(evaluable);
   }
 
   @Override

@@ -47,6 +47,15 @@ const APIConstants = {
         ENABLE_ALL: 'enableAll'
       }
     },
+    // Component-level Repository Health Check intelligence (most popular version, age,
+    // popularity, and — on an entitled edition — security alerts and license threat).
+    // Distinct from HEALTH_CHECK above, which is repository-level status.
+    HEALTH_CHECK_INFO: {
+      ACTION: 'healthcheck_Info',
+      METHODS: {
+        READ: 'read'
+      }
+    },
     FIREWALL_REPOSITORY_STATUS: {
       ACTION: 'firewall_RepositoryStatus',
       METHODS: {

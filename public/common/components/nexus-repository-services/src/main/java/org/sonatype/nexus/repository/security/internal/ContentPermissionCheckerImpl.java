@@ -36,7 +36,7 @@ import org.apache.shiro.authz.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -67,8 +67,8 @@ public class ContentPermissionCheckerImpl
       final SecurityHelper securityHelper,
       final SelectorManager selectorManager)
   {
-    this.securityHelper = checkNotNull(securityHelper);
-    this.selectorManager = checkNotNull(selectorManager);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.selectorManager = requireNonNull(selectorManager);
   }
 
   @Override

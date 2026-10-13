@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
@@ -34,7 +35,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A {@link RawContentFacet} that persists to a {@link ContentFacet}.
@@ -48,11 +49,15 @@ public class RawContentFacetImpl
     extends ContentFacetSupport
     implements RawContentFacet
 {
+  private final ContentDeletionService contentDeletionService;
+
   @Autowired
   public RawContentFacetImpl(
-      @Qualifier(RawFormat.NAME) final FormatStoreManager formatStoreManager)
+      @Qualifier(RawFormat.NAME) final FormatStoreManager formatStoreManager,
+      final ContentDeletionService contentDeletionService)
   {
     super(formatStoreManager);
+    this.contentDeletionService = requireNonNull(contentDeletionService);
   }
 
   @Override
@@ -95,7 +100,15 @@ public class RawContentFacetImpl
   public boolean delete(final String path) throws IOException {
     return assets().path(path)
         .find()
-        .map(asset -> repository().facet(ContentMaintenanceFacet.class).deleteAsset(asset).contains(path))
+        .map(asset -> {
+          // Route client-protocol deletes through the soft-delete decision. When the repository is
+          // eligible (soft-delete enabled + hosted + format allow-listed) the asset is soft-deleted and
+          // recoverable from Trash; otherwise fall back to the original hard delete unchanged.
+          if (contentDeletionService.softDeleteAssetIfEligible(repository(), asset)) {
+            return true;
+          }
+          return repository().facet(ContentMaintenanceFacet.class).deleteAsset(asset).contains(path);
+        })
         .orElse(false);
   }
 }

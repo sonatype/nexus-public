@@ -10,34 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import { render, screen, within, fireEvent } from '@testing-library/react';
+import { screen, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Theme } from '@radix-ui/themes';
 
-import GARepositoriesTab from '../GARepositoriesTab';
-import type { RepoRow } from '../gaRepositoriesMachine';
 import * as exportToCsvModule from '../../../../shared/utils/exportToCsv';
+import { REPO_ROWS as ROWS, makeRenderTab } from './gaRepositoriesTestHelpers';
 
-const ROWS: RepoRow[] = [
-  { repositoryName: 'maven-central', type: 'proxy',  versionCount: 42 },
-  { repositoryName: 'maven-releases', type: 'hosted', versionCount:  3 },
-  { repositoryName: 'maven-public',   type: 'group',  versionCount:  0 },
-];
-
-function renderTab(props: Partial<React.ComponentProps<typeof GARepositoriesTab>> = {}) {
-  return render(
-    <Theme>
-      <GARepositoriesTab
-        rows={ROWS}
-        loading={false}
-        error={null}
-        selectedVersion="1.2.3"
-        {...props}
-      />
-    </Theme>,
-  );
-}
+const renderTab = makeRenderTab(ROWS);
 
 describe('GARepositoriesTab', () => {
   it('renders one row per repository with correct name, type, and version count', () => {

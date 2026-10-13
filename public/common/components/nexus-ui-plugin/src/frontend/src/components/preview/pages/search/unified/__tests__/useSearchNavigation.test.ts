@@ -157,6 +157,46 @@ describe('useSearchNavigation', () => {
         })
       );
     });
+
+    it('passes the result repository so the detail URL opens the same repository', () => {
+      const { result } = renderHook(() => useSearchNavigation());
+
+      act(() => {
+        result.current.navigateToDetail({
+          id: '1',
+          name: 'commons-lang3',
+          format: 'maven2',
+          group: 'org.apache.commons',
+          version: '3.12.0',
+          repository: 'maven-central',
+        });
+      });
+
+      expect(mockGo).toHaveBeenCalledWith(
+        'preview.browse.search.component',
+        expect.objectContaining({ repository: 'maven-central' })
+      );
+    });
+
+    it('does not send the Maven coordinate group as the group-repository route param', () => {
+      // result.group is the coordinate groupId (already encoded in gaId), NOT a group-type
+      // repository name — the route's `group` param selects a group repository, so it must stay unset.
+      const { result } = renderHook(() => useSearchNavigation());
+
+      act(() => {
+        result.current.navigateToDetail({
+          id: '1',
+          name: 'commons-lang3',
+          format: 'maven2',
+          group: 'org.apache.commons',
+          version: '3.12.0',
+          repository: 'maven-central',
+        });
+      });
+
+      const params = mockGo.mock.calls[0][1] as Record<string, unknown>;
+      expect(params.group).toBeUndefined();
+    });
   });
 
   describe('getDetailRoute', () => {
@@ -364,6 +404,7 @@ describe('useSearchNavigation', () => {
         keyword: 'lodash',
         gaId: 'npm:lodash',
         version: '4.17.21',
+        repository: 'npm-proxy',
       });
     });
 

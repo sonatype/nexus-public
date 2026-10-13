@@ -44,7 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.sonatype.nexus.common.app.VersionComparator.version;
 
@@ -143,8 +143,8 @@ public class RepositoryMetadataMerger
     private final Metadata data;
 
     public Envelope(final String origin, final Metadata data) {
-      this.origin = checkNotNull(origin);
-      this.data = checkNotNull(data);
+      this.origin = requireNonNull(origin);
+      this.data = requireNonNull(data);
     }
 
     @Nonnull
@@ -185,8 +185,8 @@ public class RepositoryMetadataMerger
    * Test metadata for equality. Note timestamp is not considered.
    */
   public boolean metadataEquals(final Metadata md1, final Metadata md2) {
-    checkNotNull(md1);
-    checkNotNull(md2);
+    requireNonNull(md1);
+    requireNonNull(md2);
     return stringEquals(md1.getGroupId(), md2.getGroupId()) && // NOSONAR
         stringEquals(md1.getArtifactId(), md2.getArtifactId()) &&
         stringEquals(md1.getVersion(), md2.getVersion()) &&
@@ -269,7 +269,7 @@ public class RepositoryMetadataMerger
    */
   @Nullable
   public Metadata merge(final Iterable<Envelope> metadatas) {
-    checkNotNull(metadatas);
+    requireNonNull(metadatas);
     Metadata result = null;
     for (Envelope envelope : metadatas) {
       if (result == null) {

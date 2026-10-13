@@ -27,7 +27,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 
 /**
@@ -69,7 +69,7 @@ public class ForwardedRequestCapability
 
   @Autowired
   public ForwardedRequestCapability(final ForwardedRequestCustomizerManager manager) {
-    this.manager = checkNotNull(manager);
+    this.manager = requireNonNull(manager);
   }
 
   @Override

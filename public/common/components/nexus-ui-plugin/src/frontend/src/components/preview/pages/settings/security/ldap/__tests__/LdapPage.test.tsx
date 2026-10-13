@@ -227,6 +227,28 @@ describe('LdapPage', () => {
     expect(screen.getByText('Servers: 2')).toBeInTheDocument();
   });
 
+  it('renders exactly one help section in list view (NEXUS-54308)', async () => {
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
+    });
+
+    expect(screen.getAllByTestId('help-section')).toHaveLength(1);
+  });
+
+  it('renders help section below the LDAP list (NEXUS-54308)', async () => {
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
+    });
+
+    const list = screen.getByTestId('ldap-list');
+    const help = screen.getByTestId('help-section');
+    expect(list.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('shows create button in list view', async () => {
     render(<LdapPage />, { wrapper: TestWrapper });
 

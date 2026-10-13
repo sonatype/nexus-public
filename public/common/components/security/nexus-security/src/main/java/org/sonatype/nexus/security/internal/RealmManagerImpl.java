@@ -26,6 +26,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.UserPrincipalsExpiredDistributedEvent;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.authc.UserPasswordChanged;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
@@ -55,7 +56,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -95,13 +96,13 @@ public class RealmManagerImpl
       final List<Realm> availableRealmsList,
       @Value("${nexus.security.enableAuthorizationRealmManagement:false}") final boolean enableAuthorizationRealmManagement)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.store = checkNotNull(store);
+    this.eventManager = requireNonNull(eventManager);
+    this.store = requireNonNull(store);
     log.debug("Store: {}", store);
-    this.defaults = checkNotNull(defaults);
+    this.defaults = requireNonNull(defaults);
     log.debug("Defaults: {}", defaults);
-    this.realmSecurityManager = checkNotNull(realmSecurityManager);
-    this.availableRealms = QualifierUtil.buildQualifierBeanMap(checkNotNull(availableRealmsList));
+    this.realmSecurityManager = requireNonNull(realmSecurityManager);
+    this.availableRealms = QualifierUtil.buildQualifierBeanMap(requireNonNull(availableRealmsList));
     this.enableAuthorizationRealmManagement = enableAuthorizationRealmManagement;
   }
 
@@ -156,7 +157,7 @@ public class RealmManagerImpl
       model = defaults.get();
 
       // default config must not be null
-      checkNotNull(model);
+      requireNonNull(model);
 
       log.info("Using default configuration: {}", model);
     }
@@ -187,7 +188,7 @@ public class RealmManagerImpl
   }
 
   private void setConfiguration(final RealmConfiguration configuration) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     // Defence-in-depth guard: refuse to persist realm-configuration changes while the JVM is
     // shutting down. Capability passivation runs during the CAPABILITIES lifecycle phase, and a
@@ -267,7 +268,7 @@ public class RealmManagerImpl
 
   @Override
   public boolean isRealmEnabled(final String realmName) {
-    checkNotNull(realmName);
+    requireNonNull(realmName);
     return getConfigurationInternal().getRealmNames().contains(realmName);
   }
 
@@ -283,7 +284,7 @@ public class RealmManagerImpl
 
   @Override
   public void enableRealm(final String realmName) {
-    checkNotNull(realmName);
+    requireNonNull(realmName);
 
     log.debug("Enabling realm: {}", realmName);
     RealmConfiguration model = getConfiguration();
@@ -317,7 +318,7 @@ public class RealmManagerImpl
 
   @Override
   public void disableRealm(final String realmName) {
-    checkNotNull(realmName);
+    requireNonNull(realmName);
 
     if (!enableAuthorizationRealmManagement && AuthorizingRealmImpl.NAME.equals(realmName)) {
       log.error("Cannot disable the {} realm", AuthorizingRealmImpl.NAME);
@@ -426,6 +427,15 @@ public class RealmManagerImpl
   public void on(final UserPasswordChangedDistributedEvent event) {
     if (!event.isLocal() && event.isClearCache()) {
       clearAuthcRealmCacheForUserId(event.getUserId());
+    }
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void onEvent(final UserPrincipalsExpiredDistributedEvent event) {
+    if (EventHelper.isReplicating()) {
+      clearAuthcRealmCaches();
+      clearAuthorizationCaches();
     }
   }
 

@@ -16,8 +16,8 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.FacetSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -36,7 +36,7 @@ public class ConfigurableViewFacet
   private Router router;
 
   public void configure(final Router router) {
-    checkNotNull(router);
+    requireNonNull(router);
     checkState(this.router == null, "Router already configured");
     this.router = router;
   }

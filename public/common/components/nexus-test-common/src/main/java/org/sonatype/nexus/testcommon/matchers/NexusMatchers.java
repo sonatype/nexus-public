@@ -94,7 +94,8 @@ public class NexusMatchers
 
       @Override
       protected boolean matchesSafely(final ILoggingEvent item) {
-        return expected.equals(List.of(item.getArgumentArray()));
+        return expected.isEmpty() && item.getArgumentArray() == null
+            || expected.equals(List.of(item.getArgumentArray()));
       }
     };
   }

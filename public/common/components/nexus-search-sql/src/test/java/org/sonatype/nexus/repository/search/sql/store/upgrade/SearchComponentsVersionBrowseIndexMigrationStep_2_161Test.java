@@ -156,7 +156,7 @@ class SearchComponentsVersionBrowseIndexMigrationStep_2_161Test
 
     underTest.migrate(connection);
 
-    assertThat(executedSql, hasItem(containsString("pg_indexes")));
+    assertThat(executedSql, hasItem(containsString("indexrelid")));
     assertThat(executedSql, not(hasItem(containsString("CREATE INDEX"))));
   }
 
@@ -169,7 +169,7 @@ class SearchComponentsVersionBrowseIndexMigrationStep_2_161Test
     underTest.migrate(connection);
 
     assertThat(executedSql, hasItem(containsString("to_regclass")));
-    assertThat(executedSql, not(hasItem(containsString("pg_indexes"))));
+    assertThat(executedSql, not(hasItem(containsString("indexrelid"))));
     assertThat(executedSql, not(hasItem(containsString("CREATE INDEX"))));
   }
 
@@ -212,8 +212,7 @@ class SearchComponentsVersionBrowseIndexMigrationStep_2_161Test
         when(results.next()).thenReturn(tablePresent);
         when(statement.executeQuery()).thenReturn(results);
       }
-      else if (sql.contains("INFORMATION_SCHEMA.TABLE_CONSTRAINTS")
-          || sql.contains("information_schema.indexes")) {
+      else if (sql.contains("INFORMATION_SCHEMA.INDEXES")) {
         ResultSet results = mock(ResultSet.class);
         when(results.next()).thenReturn(indexPresent);
         when(statement.executeQuery()).thenReturn(results);
@@ -244,21 +243,16 @@ class SearchComponentsVersionBrowseIndexMigrationStep_2_161Test
       executedSql.add(sql);
       PreparedStatement statement = mock(PreparedStatement.class);
 
-      if (sql.contains("to_regclass")) {
+      if (sql.contains("indexrelid")) {
+        // indexExists check; its query also contains to_regclass, so it must be matched first
+        ResultSet results = mock(ResultSet.class);
+        when(results.next()).thenReturn(indexPresent);
+        when(statement.executeQuery()).thenReturn(results);
+      }
+      else if (sql.contains("to_regclass")) {
         ResultSet results = mock(ResultSet.class);
         when(results.next()).thenReturn(tablePresent);
         when(results.getObject(1)).thenReturn(tablePresent ? TABLE_NAME : null);
-        when(statement.executeQuery()).thenReturn(results);
-      }
-      else if (sql.contains("current_schema")) {
-        ResultSet results = mock(ResultSet.class);
-        when(results.next()).thenReturn(true);
-        when(results.getString(1)).thenReturn("public");
-        when(statement.executeQuery()).thenReturn(results);
-      }
-      else if (sql.contains("pg_indexes")) {
-        ResultSet results = mock(ResultSet.class);
-        when(results.next()).thenReturn(indexPresent);
         when(statement.executeQuery()).thenReturn(results);
       }
 

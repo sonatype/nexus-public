@@ -14,7 +14,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { isVisible } from './NavigationUtils';
+import { isVisible, meetsEditionRequirement } from './NavigationUtils';
+import {
+  EDITION_ID_STATE_KEY,
+  EDITION_ENTERPRISE,
+  EDITION_PRO,
+  EDITION_PRO_PLUS,
+  EDITION_COMMUNITY,
+} from './editionUtils';
 
 describe('NavigationUtils', () => {
   let mockNX;
@@ -32,8 +39,13 @@ describe('NavigationUtils', () => {
           if (key === 'browseableformats') {
             return ['maven2', 'npm', 'docker'];
           }
+          if (key === EDITION_ID_STATE_KEY) {
+            return EDITION_PRO;
+          }
           return defaultValue;
         }),
+        // Retained so meetsEditionRequirement's fallback (when the backend omits editionId)
+        // has a value to map from; the primary path reads editionId via getValue above.
         getEdition: jest.fn(() => 'PRO'),
       },
       Permissions: {
@@ -323,6 +335,70 @@ describe('NavigationUtils', () => {
       });
 
       expect(result).toBe(false);
+    });
+  });
+
+  // NEXUS-54783: `editions` gates on the stable editionId identifier (e.g.
+  // 'nexus-enterprise-edition') published by StatusStateContributor / EditionStateContributor,
+  // with a fallback to the always-published short-name edition so gated routes stay visible
+  // when StatusStateContributor's try/catch swallows the primary publish.
+  describe('meetsEditionRequirement', () => {
+    it('matches when editionId is published by the backend', () => {
+      mockNX.State.getValue.mockImplementation((key) =>
+          key === EDITION_ID_STATE_KEY ? EDITION_PRO : undefined,
+      );
+      expect(meetsEditionRequirement([EDITION_PRO])).toBe(true);
+      expect(meetsEditionRequirement([EDITION_COMMUNITY])).toBe(false);
+    });
+
+    it('falls back to the getEdition() short name when editionId is absent', () => {
+      mockNX.State.getValue.mockReturnValue(undefined);
+      mockNX.State.getEdition.mockReturnValue('PRO');
+      expect(meetsEditionRequirement([EDITION_PRO])).toBe(true);
+
+      mockNX.State.getEdition.mockReturnValue('COMMUNITY');
+      expect(meetsEditionRequirement([EDITION_COMMUNITY])).toBe(true);
+      expect(meetsEditionRequirement([EDITION_PRO])).toBe(false);
+    });
+  });
+
+  // The `editions` field on a visibilityRequirements block must gate against the specific
+  // tier declared, not collapse Pro / Pro+ / Enterprise together. These tests exercise the
+  // full isVisible() pipeline (rather than meetsEditionRequirement directly) so a regression
+  // in the wiring — a dropped guard, a missing check — is caught here.
+  describe('editions tier gating (via isVisible)', () => {
+    it('returns true when editionId matches one of the allowed identifiers', () => {
+      mockNX.State.getValue = jest.fn((key, defaultValue) => {
+        if (key === EDITION_ID_STATE_KEY) return EDITION_ENTERPRISE;
+        return defaultValue;
+      });
+
+      expect(isVisible({ editions: [EDITION_ENTERPRISE] })).toBe(true);
+    });
+
+    it('returns false when editionId does not match', () => {
+      mockNX.State.getValue = jest.fn((key, defaultValue) => {
+        if (key === EDITION_ID_STATE_KEY) return EDITION_PRO;
+        return defaultValue;
+      });
+
+      expect(isVisible({ editions: [EDITION_ENTERPRISE] })).toBe(false);
+    });
+
+    it('returns false when neither editionId nor the getEdition() short name resolves', () => {
+      mockNX.State.getValue = jest.fn((_key, defaultValue) => defaultValue);
+      mockNX.State.getEdition = jest.fn(() => undefined);
+
+      expect(isVisible({ editions: [EDITION_ENTERPRISE] })).toBe(false);
+    });
+
+    it('returns true when editionId matches any identifier in the list', () => {
+      mockNX.State.getValue = jest.fn((key, defaultValue) => {
+        if (key === EDITION_ID_STATE_KEY) return EDITION_PRO_PLUS;
+        return defaultValue;
+      });
+
+      expect(isVisible({ editions: [EDITION_PRO_PLUS, EDITION_ENTERPRISE] })).toBe(true);
     });
   });
 

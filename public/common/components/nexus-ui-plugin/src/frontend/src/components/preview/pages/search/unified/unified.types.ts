@@ -97,6 +97,14 @@ export interface FilterDefinition {
 }
 
 /**
+ * Alias labels for the three generic filters (group / name / version).
+ * A format that uses domain-specific vocabulary (e.g. Maven "Group ID",
+ * Docker "Image Name") sets the keys it wants to relabel.  The sidebar
+ * renders the alias label instead of the generic default.
+ */
+export type GenericAliasLabels = Partial<Record<'group' | 'name' | 'version', string>>;
+
+/**
  * Current filter values.
  */
 export interface FilterValues {
@@ -109,8 +117,23 @@ export interface FilterValues {
 export interface FormatFilterConfig {
   /** Format info */
   format: FormatInfo;
-  /** Filters available for this format */
+  /** Filters available for this format (always starts with repository + generic group/name/version) */
   filters: readonly FilterDefinition[];
+  /**
+   * Optional alias labels for the three generic filters.
+   * When a format uses domain-specific vocabulary (e.g. Maven "Group ID" for
+   * group, Docker "Image Name" for name) set only the keys that differ from
+   * the generic defaults.  The sidebar reads this map and relabels the generic
+   * input in place — no duplicate rows are rendered.
+   */
+  aliasLabels?: GenericAliasLabels;
+  /**
+   * Optional placeholder overrides paired with `aliasLabels`.  When the alias
+   * label uses format-specific vocabulary the generic placeholder text (e.g.
+   * "e.g., commons-lang3" for the Name field) can contradict the label; set
+   * this map to display placeholders that match the aliased label.
+   */
+  aliasPlaceholders?: GenericAliasLabels;
 }
 
 // =============================================================================
@@ -151,8 +174,10 @@ export interface SearchResult {
 export interface SearchResponse {
   /** Results */
   items: SearchResult[];
-  /** Total count (if available) */
+  /** Count of results in this response */
   totalCount?: number;
+  /** True server-side match count for the whole query (if available) */
+  total?: number;
   /** Continuation token for pagination */
   continuationToken?: string;
 }
@@ -205,8 +230,10 @@ export interface UnifiedSearchState {
   filters: FilterValues;
   /** Search results */
   results: SearchResult[];
-  /** Total result count */
+  /** Count of results loaded so far */
   totalCount: number;
+  /** True server-side match count for the whole query (undefined until known) */
+  total?: number;
   /** Loading state */
   loading: boolean;
   /** Error message */
@@ -271,8 +298,10 @@ export interface SearchResultsProps {
   loading: boolean;
   /** Error message */
   error?: string;
-  /** Total count for display */
+  /** Count of results loaded so far */
   totalCount: number;
+  /** True server-side match count; shown exactly when known, never as a cap */
+  total?: number;
   /** Whether more results are available */
   hasMore: boolean;
   /** Callback to load more results */
@@ -289,7 +318,11 @@ export interface SearchResultsProps {
 export interface SearchResultCardProps {
   /** The result to display */
   result: SearchResult;
-  /** Callback when card is clicked */
-  onClick: () => void;
+  /**
+   * Callback when the card is selected, by click or by keyboard. Receives the
+   * result so one stable handler can serve every card, which is what allows
+   * `memo` to skip unchanged cards.
+   */
+  onSelect: (result: SearchResult) => void;
 }
 

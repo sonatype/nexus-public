@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.AUDIT_EVENTS_CLEANUP_TASK_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.AUDIT_EVENTS_CLEANUP_TASK_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
@@ -58,8 +58,8 @@ public class AuditEventCleanupTaskManager
       @Value("${nexus.audit.events.cleanup.cron:0 30 3 * * ?}") final String cleanupCron,
       @Value(AUDIT_EVENTS_CLEANUP_TASK_ENABLED_NAMED_VALUE) final boolean enabled)
   {
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.cleanupCron = checkNotNull(cleanupCron);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.cleanupCron = requireNonNull(cleanupCron);
     this.enabled = enabled;
   }
 

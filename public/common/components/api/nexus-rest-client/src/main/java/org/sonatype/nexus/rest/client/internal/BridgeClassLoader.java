@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.rest.client.internal;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * ClassLoader which bridges two classloaders into a single classloader view.
@@ -25,8 +25,8 @@ class BridgeClassLoader
   private final ClassLoader secondary;
 
   public BridgeClassLoader(final ClassLoader primary, final ClassLoader secondary) {
-    super(checkNotNull(primary));
-    this.secondary = checkNotNull(secondary);
+    super(requireNonNull(primary));
+    this.secondary = requireNonNull(secondary);
   }
 
   @Override

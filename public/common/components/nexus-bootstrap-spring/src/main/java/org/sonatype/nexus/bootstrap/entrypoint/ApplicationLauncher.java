@@ -30,7 +30,7 @@ import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Component
 public class ApplicationLauncher
@@ -55,10 +55,10 @@ public class ApplicationLauncher
       final NexusProperties nexusProperties)
 
   {
-    this.nexusEditionSelector = checkNotNull(nexusEditionSelector);
-    this.context = checkNotNull(context);
-    this.springComponentScan = checkNotNull(springComponentScan);
-    this.nexusProperties = checkNotNull(nexusProperties);
+    this.nexusEditionSelector = requireNonNull(nexusEditionSelector);
+    this.context = requireNonNull(context);
+    this.springComponentScan = requireNonNull(springComponentScan);
+    this.nexusProperties = requireNonNull(nexusProperties);
   }
 
   @PostConstruct

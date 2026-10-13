@@ -25,6 +25,7 @@ import {
   Settings,
   ShieldAlert,
   Tags,
+  Trash2,
 } from 'lucide-react';
 import { useIsActive, useSref } from '@uirouter/react';
 import { NavItemBox, PreviewUIContext, useContextAwareRouteName } from '@sonatype/nexus-ui-plugin';
@@ -183,7 +184,7 @@ export function SearchCollapsibleNav({ isCollapsed }: SearchCollapsibleNavProps)
  */
 export default function LeftNavigationMenuRadix() {
   const { BROWSE, ADMIN } = ROUTE_NAMES;
-  const { isCollapsed, isPreviewUI, adminInitialRouteName, isSettingsVisible, showTestHub, isProEdition } =
+  const { isCollapsed, isPreviewUI, adminInitialRouteName, isSettingsVisible, showTestHub, isLicensedEdition } =
     useLeftNavigationMenu();
 
   const malwareRiskRouteName = isPreviewUI
@@ -222,6 +223,15 @@ export default function LeftNavigationMenuRadix() {
                 params={isPreviewUI ? {} : { repo: null }}
               />
 
+              {/* Trash */}
+              <NavItemBox
+                name={isPreviewUI ? 'preview.browse.trash' : BROWSE.TRASH.ROOT}
+                visibilityRoute={isPreviewUI ? 'preview.browse.trash' : BROWSE.TRASH.ROOT}
+                text="Trash"
+                icon={Trash2}
+                isCollapsed={isCollapsed}
+              />
+
               {/* Upload */}
               <NavItemBox
                 name={BROWSE.UPLOAD.LIST}
@@ -233,7 +243,7 @@ export default function LeftNavigationMenuRadix() {
               />
 
               {/* Tags — Pro feature: hidden in CE mode */}
-              {isProEdition && (
+              {isLicensedEdition && (
                 <NavItemBox
                   name={BROWSE.TAGS.ROOT}
                   text="Tags"

@@ -24,6 +24,7 @@ jest.mock('@uirouter/react', () => {
 });
 
 import { HostedRepoEvaluationSetupPage } from '../HostedRepoEvaluationSetupPage';
+import { RepositoriesTab } from '../RepositoriesTab';
 import * as useHostedRepoEvaluationModule from '../useHostedRepoEvaluation';
 import { ToastProvider } from '../../../../../shared';
 
@@ -815,6 +816,218 @@ describe('HostedRepoEvaluationSetupPage - Repositories Tab', () => {
         jest.advanceTimersByTime(5000);
       });
       expect(screen.queryByText('Monitoring enabled')).toBeNull();
+    });
+  });
+
+  describe('Unsupported formats on Enable (CLM-53820)', () => {
+    const reposWithUnsupported = [
+      { id: 'repo-1', name: 'maven-releases', format: 'maven2', size: 1024, componentCount: 1, isMonitored: false },
+      { id: 'repo-2', name: 'raw-files', format: 'raw', size: 2048, componentCount: 2, isMonitored: false },
+      { id: 'repo-3', name: 'raw-legacy', format: 'raw', size: 4096, componentCount: 3, isMonitored: true },
+    ];
+
+    function renderWithRepos(applySelectionDelta = jest.fn().mockResolvedValue({ ok: true })) {
+      const mockApi = createMockApi({
+        applySelectionDelta,
+        fetchRepositories: jest.fn().mockResolvedValue({
+          rows: reposWithUnsupported,
+          totalCount: 3,
+          monitoredCount: 1,
+          page: 1,
+          pageSize: 25,
+        }),
+      });
+      jest.spyOn(useHostedRepoEvaluationModule, 'useHostedRepoEvaluation').mockReturnValue(mockApi);
+      renderWithTheme(<HostedRepoEvaluationSetupPage />);
+      return mockApi;
+    }
+
+    it('blocks enabling an unsupported-format repository and lists the supported formats', async () => {
+      const mockApi = renderWithRepos();
+      await screen.findByText('raw-files');
+
+      fireEvent.click(screen.getByLabelText('Select maven-releases'));
+      fireEvent.click(screen.getByLabelText('Select raw-files'));
+      fireEvent.click(await screen.findByTestId('hr-action-enable'));
+
+      const message = await screen.findByText(/Monitoring can't be enabled for raw-files \(Raw\)/);
+      expect(message).toHaveTextContent('Hosted repository evaluation only supports these formats:');
+      expect(message).toHaveTextContent('Maven');
+      expect(message).not.toHaveTextContent('maven-releases');
+      expect(await screen.findByText('Some selected repositories use a format that is not supported for evaluation'))
+        .toBeInTheDocument();
+      expect(mockApi.applySelectionDelta).not.toHaveBeenCalled();
+      expect(mockApi.putSettingsWithRepos).not.toHaveBeenCalled();
+    });
+
+    it('blocks formats outside the supported list and names exactly the supported formats', async () => {
+      const applySelectionDelta = jest.fn().mockResolvedValue({ ok: true });
+      const mockApi = createMockApi({
+        applySelectionDelta,
+        fetchRepositories: jest.fn().mockResolvedValue({
+          rows: [{ id: 'repo-9', name: 'docker-hosted', format: 'docker', size: 1, componentCount: 1, isMonitored: false }],
+          totalCount: 1,
+          monitoredCount: 0,
+          page: 1,
+          pageSize: 25,
+        }),
+      });
+      jest.spyOn(useHostedRepoEvaluationModule, 'useHostedRepoEvaluation').mockReturnValue(mockApi);
+      renderWithTheme(<HostedRepoEvaluationSetupPage />);
+      await screen.findByText('docker-hosted');
+
+      fireEvent.click(screen.getByLabelText('Select docker-hosted'));
+      fireEvent.click(await screen.findByTestId('hr-action-enable'));
+
+      expect(await screen.findByText(/Monitoring can't be enabled for docker-hosted/)).toHaveTextContent(
+        'Hosted repository evaluation only supports these formats: ' +
+        'Maven, npm, PyPI, RubyGems, NuGet, Conda, R, Go, Pub (Dart), Helm.'
+      );
+      expect(applySelectionDelta).not.toHaveBeenCalled();
+    });
+
+    it('enables supported repositories as before', async () => {
+      const applySelectionDelta = jest.fn().mockResolvedValue({ ok: true });
+      renderWithRepos(applySelectionDelta);
+      await screen.findByText('maven-releases');
+
+      fireEvent.click(screen.getByLabelText('Select maven-releases'));
+      fireEvent.click(await screen.findByTestId('hr-action-enable'));
+
+      await waitFor(() => {
+        expect(applySelectionDelta).toHaveBeenCalledWith({ addRepositoryIds: ['repo-1'] });
+      });
+      expect(screen.queryByText(/Monitoring can't be enabled/)).not.toBeInTheDocument();
+    });
+
+    it('marks unmonitored unsupported repositories as Not supported, with the reason', async () => {
+      renderWithRepos();
+      await screen.findByText('raw-files');
+
+      const badges = screen.getAllByText('Not supported');
+      // raw-files only: raw-legacy is already monitored and keeps its Enabled badge.
+      expect(badges).toHaveLength(1);
+      expect(badges[0]).toHaveAttribute(
+        'aria-label',
+        expect.stringContaining('Hosted repository evaluation is not available for Raw repositories.')
+      );
+      expect(badges[0]).toHaveAttribute('aria-label', expect.stringContaining('Supported formats: Maven, npm'));
+    });
+
+    it('announces the error and clears it when the selection changes', async () => {
+      renderWithRepos();
+      await screen.findByText('raw-files');
+
+      fireEvent.click(screen.getByLabelText('Select raw-files'));
+      fireEvent.click(await screen.findByTestId('hr-action-enable'));
+      expect(await screen.findByRole('alert')).toHaveTextContent(/Monitoring can't be enabled for raw-files/);
+
+      fireEvent.click(screen.getByLabelText('Select raw-files'));
+      await waitFor(() => {
+        expect(screen.queryByText(/Monitoring can't be enabled/)).not.toBeInTheDocument();
+      });
+    });
+
+    it('lists at most five unsupported repositories and summarises the rest', async () => {
+      const rows = Array.from({ length: 7 }, (_, i) => ({
+        id: `raw-${i}`, name: `raw-${i}`, format: 'raw', size: 1, componentCount: 1, isMonitored: false,
+      }));
+      const applySelectionDelta = jest.fn().mockResolvedValue({ ok: true });
+      const mockApi = createMockApi({
+        applySelectionDelta,
+        fetchRepositories: jest.fn().mockResolvedValue({
+          rows, totalCount: 7, monitoredCount: 0, page: 1, pageSize: 25,
+        }),
+      });
+      jest.spyOn(useHostedRepoEvaluationModule, 'useHostedRepoEvaluation').mockReturnValue(mockApi);
+      renderWithTheme(<HostedRepoEvaluationSetupPage />);
+      await screen.findByText('raw-6');
+
+      rows.forEach(r => fireEvent.click(screen.getByLabelText(`Select ${r.name}`)));
+      fireEvent.click(await screen.findByTestId('hr-action-enable'));
+
+      const message = await screen.findByText(/Monitoring can't be enabled for/);
+      expect(message).toHaveTextContent('raw-4 (Raw) and 2 more.');
+      expect(message).not.toHaveTextContent('raw-5');
+      expect(applySelectionDelta).not.toHaveBeenCalled();
+    });
+
+    it('select all on page skips unmonitored unsupported repositories, so Enable works', async () => {
+      const applySelectionDelta = jest.fn().mockResolvedValue({ ok: true });
+      renderWithRepos(applySelectionDelta);
+      await screen.findByText('raw-files');
+
+      fireEvent.click(screen.getByLabelText('Select all on page'));
+
+      expect(screen.getByLabelText('Select maven-releases')).toBeChecked();
+      expect(screen.getByLabelText('Select raw-legacy')).toBeChecked();
+      expect(screen.getByLabelText('Select raw-files')).not.toBeChecked();
+      expect(screen.getByLabelText('Select all on page')).toBeChecked();
+
+      fireEvent.click(await screen.findByTestId('hr-action-enable'));
+
+      await waitFor(() => {
+        expect(applySelectionDelta).toHaveBeenCalledWith({ addRepositoryIds: ['repo-1', 'repo-3'] });
+      });
+      expect(screen.queryByText(/Monitoring can't be enabled/)).not.toBeInTheDocument();
+    });
+
+    it('blocks a first-time setup that includes an unsupported repository', async () => {
+      const putSettingsWithRepos = jest.fn().mockResolvedValue({ ok: true });
+      const mockApi = createMockApi({
+        putSettingsWithRepos,
+        fetchRepositories: jest.fn().mockResolvedValue({
+          rows: reposWithUnsupported, totalCount: 3, monitoredCount: 0, page: 1, pageSize: 25,
+        }),
+      });
+      jest.spyOn(useHostedRepoEvaluationModule, 'useHostedRepoEvaluation').mockReturnValue(mockApi);
+      renderWithTheme(
+        <RepositoriesTab
+          hasExistingConfig={false}
+          setHasExistingConfig={jest.fn()}
+          pristineSettings={useHostedRepoEvaluationModule.DEFAULT_SETTINGS}
+          setSettingsStaged={jest.fn()}
+          formats={['maven2', 'raw']}
+          onMonitoredCountChange={jest.fn()}
+          isActiveTab
+        />
+      );
+      await screen.findByText('raw-files');
+
+      fireEvent.click(screen.getByLabelText('Select maven-releases'));
+      fireEvent.click(screen.getByLabelText('Select raw-files'));
+      fireEvent.click(await screen.findByTestId('hr-action-enable'));
+
+      expect(await screen.findByText(/Monitoring can't be enabled for raw-files/)).toBeInTheDocument();
+      expect(putSettingsWithRepos).not.toHaveBeenCalled();
+    });
+
+    it('allows enabling a supported repository alongside an already-monitored unsupported one', async () => {
+      const applySelectionDelta = jest.fn().mockResolvedValue({ ok: true });
+      renderWithRepos(applySelectionDelta);
+      await screen.findByText('raw-legacy');
+
+      fireEvent.click(screen.getByLabelText('Select maven-releases'));
+      fireEvent.click(screen.getByLabelText('Select raw-legacy'));
+      fireEvent.click(await screen.findByTestId('hr-action-enable'));
+
+      await waitFor(() => {
+        expect(applySelectionDelta).toHaveBeenCalledWith({ addRepositoryIds: ['repo-1', 'repo-3'] });
+      });
+      expect(screen.queryByText(/Monitoring can't be enabled/)).not.toBeInTheDocument();
+    });
+
+    it('still allows disabling an already-monitored unsupported repository', async () => {
+      const applySelectionDelta = jest.fn().mockResolvedValue({ ok: true });
+      renderWithRepos(applySelectionDelta);
+      await screen.findByText('raw-legacy');
+
+      fireEvent.click(screen.getByLabelText('Select raw-legacy'));
+      fireEvent.click(await screen.findByTestId('hr-action-disable'));
+
+      await waitFor(() => {
+        expect(applySelectionDelta).toHaveBeenCalledWith({ removeRepositoryIds: ['repo-3'] });
+      });
     });
   });
 });

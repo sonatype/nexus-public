@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.httpbridge.internal;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -47,6 +48,7 @@ import static jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
@@ -249,6 +251,32 @@ class ViewServletTest
     assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
     assertThat(log.logs(), not(hasItem(logLevel(Level.ERROR))));
     assertThat(log.logs(), hasItem(logLevel(Level.DEBUG)));
+  }
+
+  @Test
+  void buildRequest_withQueryString_setsRawQueryStringAttr() throws Exception {
+    when(httpServletRequest.getMethod()).thenReturn("GET");
+    when(httpServletRequest.getQueryString()).thenReturn("flag&query=hello");
+    when(httpServletRequest.getHeaderNames()).thenReturn(Collections.emptyEnumeration());
+    when(httpServletRequest.getParameterNames()).thenReturn(Collections.emptyEnumeration());
+    when(httpServletRequest.getAttributeNames()).thenReturn(Collections.emptyEnumeration());
+
+    Request result = underTest.buildRequest(httpServletRequest, "/path");
+
+    assertThat(result.getAttributes().get(Request.RAW_QUERY_STRING_ATTR), is("flag&query=hello"));
+  }
+
+  @Test
+  void buildRequest_withNullQueryString_doesNotSetRawQueryStringAttr() throws Exception {
+    when(httpServletRequest.getMethod()).thenReturn("GET");
+    when(httpServletRequest.getQueryString()).thenReturn(null);
+    when(httpServletRequest.getHeaderNames()).thenReturn(Collections.emptyEnumeration());
+    when(httpServletRequest.getParameterNames()).thenReturn(Collections.emptyEnumeration());
+    when(httpServletRequest.getAttributeNames()).thenReturn(Collections.emptyEnumeration());
+
+    Request result = underTest.buildRequest(httpServletRequest, "/path");
+
+    assertThat(result.getAttributes().contains(Request.RAW_QUERY_STRING_ATTR), is(false));
   }
 
   private void facetThrowsException(final boolean facetThrowsException) throws Exception {

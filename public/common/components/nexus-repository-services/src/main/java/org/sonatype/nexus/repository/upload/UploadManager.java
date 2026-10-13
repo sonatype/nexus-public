@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.importtask.ImportStreamConfiguration;
 import org.sonatype.nexus.repository.importtask.ImportResult;
 import org.sonatype.nexus.repository.view.Content;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.7
@@ -89,8 +89,8 @@ public interface UploadManager
     private final List<String> assetPaths;
 
     public UIUploadEvent(final Repository repository, final List<String> assetPaths) {
-      this.repository = checkNotNull(repository);
-      this.assetPaths = checkNotNull(assetPaths);
+      this.repository = requireNonNull(repository);
+      this.assetPaths = requireNonNull(assetPaths);
     }
 
     public Repository getRepository() {

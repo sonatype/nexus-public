@@ -41,7 +41,7 @@ import org.springframework.context.annotation.Primary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.38
@@ -62,14 +62,14 @@ public class DefaultCleanupComponentBrowse
       final List<ComponentCleanupEvaluator> componentCriteriaList,
       final List<AssetCleanupEvaluator> assetCriteriaList)
   {
-    this.componentCriteria = QualifierUtil.buildQualifierBeanMap(checkNotNull(componentCriteriaList));
-    this.assetCriteria = QualifierUtil.buildQualifierBeanMap(checkNotNull(assetCriteriaList));
+    this.componentCriteria = QualifierUtil.buildQualifierBeanMap(requireNonNull(componentCriteriaList));
+    this.assetCriteria = QualifierUtil.buildQualifierBeanMap(requireNonNull(assetCriteriaList));
   }
 
   @Override
   public Stream<FluentComponent> browse(final CleanupPolicy policy, final Repository repository) {
-    checkNotNull(policy);
-    checkNotNull(repository);
+    requireNonNull(policy);
+    requireNonNull(repository);
 
     return Continuations.streamOf(getComponentBrowser(repository, policy)::browse)
         .filter(createComponentFilter(repository, policy));
@@ -87,11 +87,11 @@ public class DefaultCleanupComponentBrowse
       final Repository repository,
       final QueryOptions options)
   {
-    checkNotNull(policy);
-    checkNotNull(repository);
-    checkNotNull(options);
-    checkNotNull(options.getStart());
-    checkNotNull(options.getLimit());
+    requireNonNull(policy);
+    requireNonNull(repository);
+    requireNonNull(options);
+    requireNonNull(options.getStart());
+    requireNonNull(options.getLimit());
 
     Predicate<FluentComponent> componentFilter = createComponentFilter(repository, policy);
 

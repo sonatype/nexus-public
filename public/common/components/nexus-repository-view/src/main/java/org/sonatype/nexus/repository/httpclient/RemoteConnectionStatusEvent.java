@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.httpclient;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryEvent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a change in repository status.
@@ -29,7 +29,7 @@ public class RemoteConnectionStatusEvent
 
   public RemoteConnectionStatusEvent(final RemoteConnectionStatus status, final Repository repository) {
     super(repository);
-    this.status = checkNotNull(status);
+    this.status = requireNonNull(status);
   }
 
   public RemoteConnectionStatus getStatus() {

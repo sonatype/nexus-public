@@ -125,7 +125,7 @@ describe('CleanupPolicyPreview', () => {
       expect(mockFetchRepositories).not.toHaveBeenCalled();
     });
 
-    it('shows empty dropdown when no Applied Repositories and format supports per-repo application', async () => {
+    it('fetches all repos when no Applied Repositories and format supports per-repo application', async () => {
       const goFormatPolicy: CleanupPolicyFormData = { ...mockPolicyData, format: 'go' };
 
       render(
@@ -133,8 +133,36 @@ describe('CleanupPolicyPreview', () => {
         { wrapper: TestWrapper }
       );
 
-      await Promise.resolve();
-      expect(mockFetchRepositories).not.toHaveBeenCalled();
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('go');
+      });
+    });
+
+    it('populates dropdown identically for npm and maven2 when no Applied Repositories are set', async () => {
+      const npmPolicy: CleanupPolicyFormData = { ...mockPolicyData, format: 'npm' };
+
+      render(
+        <CleanupPolicyPreview policyData={npmPolicy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('npm');
+      });
+
+      jest.clearAllMocks();
+      mockFetchRepositories.mockResolvedValue(mockRepositories);
+
+      const maven2Policy: CleanupPolicyFormData = { ...mockPolicyData, format: 'maven2' };
+
+      render(
+        <CleanupPolicyPreview policyData={maven2Policy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('maven2');
+      });
     });
 
     it('renders preview button', () => {

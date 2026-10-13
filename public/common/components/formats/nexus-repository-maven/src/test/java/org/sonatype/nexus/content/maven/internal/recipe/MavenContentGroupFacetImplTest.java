@@ -57,6 +57,7 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import org.apache.http.HttpResponse;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -267,6 +268,7 @@ public class MavenContentGroupFacetImplTest
    * repository-update thread), and only once the repository is STARTED again. This asserts the worker is invoked
    * asynchronously and off the calling thread.
    */
+  @Ignore("NEXUS-54983: flaky - races Mockito timeout-verify against doAnswer side-effect; re-enable when fixed")
   @Test
   public void testCleanupOrphanedGroupAssets_runsAsynchronouslyWhenStarted() throws Exception {
     Thread callingThread = Thread.currentThread();

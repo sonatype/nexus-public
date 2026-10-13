@@ -16,7 +16,7 @@ import java.util.Objects;
 
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Describes an asset/component property which is exposed as a query term for search APIs and internally maps these
@@ -82,12 +82,12 @@ public class SearchMapping
       final boolean exactMatch,
       final FilterType filterType)
   {
-    this.alias = checkNotNull(alias);
-    this.attribute = checkNotNull(attribute);
-    this.description = checkNotNull(description);
-    this.field = checkNotNull(field);
+    this.alias = requireNonNull(alias);
+    this.attribute = requireNonNull(attribute);
+    this.description = requireNonNull(description);
+    this.field = requireNonNull(field);
     this.exactMatch = exactMatch;
-    this.filterType = checkNotNull(filterType);
+    this.filterType = requireNonNull(filterType);
   }
 
   /**

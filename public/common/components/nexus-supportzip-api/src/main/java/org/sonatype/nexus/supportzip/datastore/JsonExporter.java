@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS;
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.REPLACEMENT;
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.SENSITIVE_FIELD_NAMES;
 import org.springframework.stereotype.Component;
@@ -85,7 +85,7 @@ public class JsonExporter
    * @throws IOException for any issue during writing a file.
    */
   public <T> void exportToJson(final List<T> objects, final File file) throws IOException {
-    checkNotNull(file);
+    requireNonNull(file);
     if (objects == null || objects.isEmpty()) {
       writeEmptyJson(file);
     }
@@ -106,7 +106,7 @@ public class JsonExporter
    * @throws IOException for any issue during writing a file.
    */
   public <T> void exportObjectToJson(final T object, final File file) throws IOException {
-    checkNotNull(file);
+    requireNonNull(file);
     if (object == null) {
       writeEmptyJson(file);
     }
@@ -128,8 +128,8 @@ public class JsonExporter
    * @throws IOException for any issue during reading a file.
    */
   public <T> List<T> importFromJson(final File file, final Class<T> clazz) throws IOException {
-    checkNotNull(file);
-    checkNotNull(clazz);
+    requireNonNull(file);
+    requireNonNull(clazz);
     try (FileInputStream inputStream = new FileInputStream(file)) {
       String jsonData = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
       if (StringUtils.isNotBlank(jsonData) && !jsonData.equals(EMPTY_JSON)) {
@@ -150,8 +150,8 @@ public class JsonExporter
    * @throws IOException for any issue during reading a file.
    */
   public <T> Optional<T> importObjectFromJson(final File file, final Class<T> clazz) throws IOException {
-    checkNotNull(file);
-    checkNotNull(clazz);
+    requireNonNull(file);
+    requireNonNull(clazz);
     try (FileInputStream inputStream = new FileInputStream(file)) {
       String jsonData = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
       if (StringUtils.isNotBlank(jsonData) && !jsonData.equals(EMPTY_JSON)) {

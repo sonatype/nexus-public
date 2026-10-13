@@ -83,7 +83,9 @@
         ${format}_browse_node B
     <if test="isConanFormat">
       LEFT JOIN ${format}_component C ON B.component_id = C.component_id
+        <if test="softDeleteAvailable">AND C.deleted_on IS NULL</if>
       LEFT JOIN ${format}_asset A ON B.asset_id = A.asset_id
+        <if test="softDeleteAvailable">AND A.deleted_on IS NULL</if>
     </if>
     WHERE 0 = <foreach collection="displayPath" index="i" item="name">
               B${i}.parent_id AND B${i}.repository_id = #{repositoryId} AND B${i}.display_name = #{name} AND B${i}.node_id =
@@ -188,6 +190,13 @@
       asset_id = #{internalAssetId}
       RETURNING parent_id;
   </select>
+  <select id="getNodeIdForAsset" resultType="Long" databaseId="PostgreSQL">
+    SELECT node_id FROM ${format}_browse_node WHERE asset_id = #{assetId};
+  </select>
+  <select id="deleteByNodeIdReturningParentId" resultType="Long" databaseId="PostgreSQL">
+    DELETE FROM ${format}_browse_node WHERE node_id = #{nodeId}
+    RETURNING parent_id;
+  </select>
   <select id="getNodeParents" resultMap="browseNodeResult" databaseId="PostgreSQL">
     WITH total as (
       WITH RECURSIVE parent_nodes AS (
@@ -217,6 +226,32 @@
              parent.asset_id, parent.package_url
     order by parent.request_path desc;
   </select>
+  <!-- H2 companions for the Postgres-only deleteByAssetIdAndPath/deleteByAssetId/getNodeParents
+       above. Routed via BrowseNodeStore based on DatabaseCheck.isPostgresql(). -->
+
+  <select id="findParentByAssetIdAndPath" resultType="Long">
+    SELECT parent_id FROM ${format}_browse_node
+    WHERE asset_id = #{internalAssetId} AND request_path = #{path};
+  </select>
+
+  <select id="findParentByAssetId" resultType="Long">
+    SELECT parent_id FROM ${format}_browse_node
+    WHERE asset_id = #{internalAssetId};
+  </select>
+
+  <delete id="deleteNodeByAssetIdAndPath">
+    DELETE FROM ${format}_browse_node
+    WHERE asset_id = #{internalAssetId} AND request_path = #{path};
+  </delete>
+
+  <delete id="deleteNodeByAssetId">
+    DELETE FROM ${format}_browse_node WHERE asset_id = #{internalAssetId};
+  </delete>
+
+  <select id="getByNodeId" resultMap="browseNodeResult">
+    SELECT * FROM ${format}_browse_node WHERE node_id = #{internalNodeId};
+  </select>
+
   <delete id="delete">
     DELETE FROM ${format}_browse_node WHERE
         node_id = #{internalNodeId};

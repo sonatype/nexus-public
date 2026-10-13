@@ -15,7 +15,9 @@ import { useMemo, useCallback } from 'react';
 import { useMachine } from '@xstate/react';
 
 import { createRepositoryUsageMachine } from './repositoryUsageMachine';
-import type { RepositoryUsageContext, RepositoryUsageKind } from './repositoryUsageMachine';
+import type { RepositoryUsageContext, RepositoryUsageKind, GroupMember } from './repositoryUsageMachine';
+
+export type { GroupMember };
 
 export interface UseRepositorySettingsUsageTabReturn {
   metrics: RepositoryUsageContext['metrics'];

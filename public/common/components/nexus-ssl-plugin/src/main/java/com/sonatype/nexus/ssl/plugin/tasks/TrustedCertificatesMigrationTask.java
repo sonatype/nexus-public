@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLogType.NEXUS_LOG_ONLY;
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
@@ -42,7 +42,7 @@ public class TrustedCertificatesMigrationTask
 
   @Autowired
   public TrustedCertificatesMigrationTask(final TrustedCertificateMigrationService trustedCertificateMigrationService) {
-    this.trustedCertificateMigrationService = checkNotNull(trustedCertificateMigrationService);
+    this.trustedCertificateMigrationService = requireNonNull(trustedCertificateMigrationService);
   }
 
   @Override

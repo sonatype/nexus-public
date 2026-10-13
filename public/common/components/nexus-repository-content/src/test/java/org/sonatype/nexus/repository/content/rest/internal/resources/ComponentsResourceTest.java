@@ -34,7 +34,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.FluentContinuation;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
-import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.rest.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
@@ -122,7 +122,7 @@ class ComponentsResourceTest
   private RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
   @Mock
-  private MaintenanceService maintenanceService;
+  private ContentDeletionService contentDeletionService;
 
   @Mock
   private UploadManager uploadManager;
@@ -154,7 +154,7 @@ class ComponentsResourceTest
 
     underTest = new ComponentsResource(
         repositoryManagerRESTAdapter,
-        maintenanceService,
+        contentDeletionService,
         uploadManager,
         componentXOFactory,
         contentAuthHelper,
@@ -395,7 +395,7 @@ class ComponentsResourceTest
 
     underTest.deleteComponent(encodedId);
 
-    verify(maintenanceService).deleteComponent(repository, component);
+    verify(contentDeletionService).deleteComponent(repository, component);
   }
 
   @WithUser(isAuthenticated = false)
@@ -435,7 +435,7 @@ class ComponentsResourceTest
 
     assertThrows(NotFoundException.class, () -> underTest.deleteComponent(encodedId));
 
-    verify(maintenanceService, never()).deleteComponent(any(), any());
+    verify(contentDeletionService, never()).deleteComponent(any(), any());
   }
 
   @Test
@@ -591,7 +591,7 @@ class ComponentsResourceTest
 
     ComponentsResource resourceWithMultipleExtensions = new ComponentsResource(
         repositoryManagerRESTAdapter,
-        maintenanceService,
+        contentDeletionService,
         uploadManager,
         componentXOFactory,
         contentAuthHelper,
@@ -619,7 +619,7 @@ class ComponentsResourceTest
   void fromComponent_worksWithNoExtensions() {
     ComponentsResource resourceWithNoExtensions = new ComponentsResource(
         repositoryManagerRESTAdapter,
-        maintenanceService,
+        contentDeletionService,
         uploadManager,
         componentXOFactory,
         contentAuthHelper,
@@ -685,7 +685,8 @@ class ComponentsResourceTest
     componentData.setName(COMPONENT_NAME);
     componentData.setNamespace(COMPONENT_NAMESPACE);
     componentData.setVersion(COMPONENT_VERSION);
-    return new FluentComponentImpl(contentFacetSupport, componentData, Collections.emptyList());
+    return new FluentComponentImpl(contentFacetSupport, componentData,
+        Collections.emptyList());
   }
 
   private FluentComponent aFluentComponentWithAsset() {
@@ -706,7 +707,8 @@ class ComponentsResourceTest
     componentData.setNamespace(COMPONENT_NAMESPACE);
     componentData.setVersion(COMPONENT_VERSION);
 
-    return new FluentComponentImpl(contentFacetSupport, componentData, List.of(fluentAsset));
+    return new FluentComponentImpl(contentFacetSupport, componentData,
+        List.of(fluentAsset));
   }
 
   private static String encodeId(final String repositoryName, final String id) {

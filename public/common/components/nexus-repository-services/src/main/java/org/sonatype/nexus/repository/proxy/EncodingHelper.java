@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.proxy;
 
 import org.sonatype.nexus.common.template.EscapeHelper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper class for encoding URLs based on configured encoding mode.
@@ -35,7 +35,7 @@ public class EncodingHelper
    * @param escapeHelper the escape helper for standard encoding
    */
   public EncodingHelper(final EscapeHelper escapeHelper) {
-    this.escapeHelper = checkNotNull(escapeHelper);
+    this.escapeHelper = requireNonNull(escapeHelper);
   }
 
   /**
@@ -47,20 +47,20 @@ public class EncodingHelper
    * @return the encoded URL
    */
   public String encodeUrlSegments(final String url) {
-    checkNotNull(url);
+    requireNonNull(url);
     return encodeSpecialChars(url, false);
   }
 
   /**
    * Variant of {@link #encodeUrlSegments(String)} that preserves trailing empty segments so a URL
-   * like {@code simple/flask/} keeps its trailing slash after encoding. Only needed by callers that
-   * resolve relative links against the resulting base URI (e.g. PEP 503 PyPI simple-index proxies).
+   * like {@code simple/flask/} keeps its trailing slash after encoding. Use it for outbound request paths
+   * and for base URIs that relative links are resolved against (e.g. PEP 503 PyPI simple-index proxies).
    *
    * @param url the URL to encode
    * @return the encoded URL with trailing slashes preserved
    */
   public String encodeUrlSegmentsPreserveTrailing(final String url) {
-    checkNotNull(url);
+    requireNonNull(url);
     return encodeSpecialChars(url, true);
   }
 

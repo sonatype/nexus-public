@@ -20,7 +20,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Factory that provides the appropriate {@link SearchConditionFactory} implementation based on the detected database
@@ -44,8 +44,8 @@ public class SearchConditionFactoryImpl
       final DatabaseTypeDetector databaseTypeDetector,
       final ApplicationContext context)
   {
-    this.databaseTypeDetector = checkNotNull(databaseTypeDetector);
-    this.context = checkNotNull(context);
+    this.databaseTypeDetector = requireNonNull(databaseTypeDetector);
+    this.context = requireNonNull(context);
   }
 
   /**

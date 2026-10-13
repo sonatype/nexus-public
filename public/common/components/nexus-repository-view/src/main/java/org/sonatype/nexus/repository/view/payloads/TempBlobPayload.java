@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.view.Payload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
 /**
@@ -34,12 +34,12 @@ public class TempBlobPayload
   private final TempBlob tempBlob;
 
   public TempBlobPayload(final TempBlob tempBlob, @Nullable final String contentType) {
-    this.tempBlob = checkNotNull(tempBlob);
+    this.tempBlob = requireNonNull(tempBlob);
     this.contentType = contentType;
   }
 
   public TempBlobPayload(final TempBlob tempBlob) {
-    this.tempBlob = checkNotNull(tempBlob);
+    this.tempBlob = requireNonNull(tempBlob);
     this.contentType = tempBlob.getBlob().getHeaders().get(CONTENT_TYPE_HEADER);
   }
 

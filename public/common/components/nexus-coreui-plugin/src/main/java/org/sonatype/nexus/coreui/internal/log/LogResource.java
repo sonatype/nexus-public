@@ -26,7 +26,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 import org.springframework.stereotype.Component;
 
@@ -50,7 +50,7 @@ public class LogResource
 
   @Autowired
   public LogResource(final LogMarker logMarker) {
-    this.logMarker = checkNotNull(logMarker);
+    this.logMarker = requireNonNull(logMarker);
   }
 
   /**

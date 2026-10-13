@@ -19,7 +19,7 @@ import java.util.List;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.search.sql.SearchResult;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link SearchResult} data backed by the content data store.
@@ -107,11 +107,11 @@ public class SearchResultData
   }
 
   public void setAttributes(final NestedAttributesMap attributes) {
-    this.attributes = checkNotNull(attributes);
+    this.attributes = requireNonNull(attributes);
   }
 
   public void setLastModified(final OffsetDateTime lastModified) {
-    this.lastModified = checkNotNull(lastModified);
+    this.lastModified = requireNonNull(lastModified);
   }
 
   public void setComponentId(final Integer componentId) {

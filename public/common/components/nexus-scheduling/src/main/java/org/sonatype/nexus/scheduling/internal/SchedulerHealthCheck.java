@@ -20,7 +20,7 @@ import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import com.codahale.metrics.health.HealthCheck;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -48,7 +48,7 @@ public class SchedulerHealthCheck
 
   @Autowired
   public SchedulerHealthCheck(final Provider<SchedulerSPI> scheduler) {
-    this.scheduler = checkNotNull(scheduler);
+    this.scheduler = requireNonNull(scheduler);
   }
 
   @Override

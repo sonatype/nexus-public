@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUESTS_LOG_ONLY;
@@ -107,16 +107,16 @@ public class HttpClientManagerImpl
       final SharedHttpClientConnectionManager sharedConnectionManager,
       final DefaultsCustomizer defaultsCustomizer)
   {
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
 
-    this.store = checkNotNull(store);
+    this.store = requireNonNull(store);
     log.debug("Store: {}", store);
 
-    this.defaults = checkNotNull(defaults);
+    this.defaults = requireNonNull(defaults);
     log.debug("Defaults: {}", defaults);
 
-    this.sharedConnectionManager = checkNotNull(sharedConnectionManager);
-    this.defaultsCustomizer = checkNotNull(defaultsCustomizer);
+    this.sharedConnectionManager = requireNonNull(sharedConnectionManager);
+    this.defaultsCustomizer = requireNonNull(defaultsCustomizer);
   }
 
   //
@@ -148,7 +148,7 @@ public class HttpClientManagerImpl
       model = defaults.get();
 
       // default config must not be null
-      checkNotNull(model);
+      requireNonNull(model);
 
       log.info("Using default configuration: {}", model);
     }
@@ -185,7 +185,7 @@ public class HttpClientManagerImpl
   @Override
   @Guarded(by = STARTED)
   public void setConfiguration(final HttpClientConfiguration configuration) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     HttpClientConfiguration model = configuration.copy();
     log.info("Saving configuration: {}", model);

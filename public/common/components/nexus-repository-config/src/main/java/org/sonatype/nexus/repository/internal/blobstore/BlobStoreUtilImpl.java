@@ -30,7 +30,6 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import com.google.common.hash.HashCode;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.size;
 import static java.util.function.Function.identity;
 import static org.apache.commons.io.FilenameUtils.separatorsToSystem;
@@ -49,7 +48,7 @@ public class BlobStoreUtilImpl
 
   @Autowired
   public BlobStoreUtilImpl(@Lazy final RepositoryManager repositoryManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Override

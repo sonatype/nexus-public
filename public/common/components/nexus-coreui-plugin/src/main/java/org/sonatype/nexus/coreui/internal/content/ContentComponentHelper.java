@@ -43,6 +43,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.search.ComponentFinder;
 import org.sonatype.nexus.repository.content.security.AssetPermissionChecker;
@@ -66,7 +67,7 @@ import org.apache.shiro.authz.AuthorizationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.internal.uploadermetadata.UploaderMetadataSecurityContributor.UPLOADER_METADATA_READ_PERMISSION;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -107,9 +108,12 @@ public class ContentComponentHelper
 
   private final Map<String, AssetXODescriptor> assetDescriptors;
 
+  private final ContentDeletionService contentDeletionService;
+
   @Autowired
   public ContentComponentHelper(
       final MaintenanceService maintenanceService,
+      final ContentDeletionService contentDeletionService,
       final List<ComponentFinder> componentFindersList,
       final AssetPermissionChecker assetPermissionChecker,
       final SelectorFactory selectorFactory,
@@ -117,14 +121,15 @@ public class ContentComponentHelper
       final RepositoryPermissionChecker repositoryPermissionChecker,
       final List<AssetXODescriptor> assetDescriptorsList)
   {
-    this.maintenanceService = checkNotNull(maintenanceService);
-    this.componentFinders = QualifierUtil.buildQualifierBeanMap(checkNotNull(componentFindersList));
-    this.assetPermissionChecker = checkNotNull(assetPermissionChecker);
+    this.maintenanceService = requireNonNull(maintenanceService);
+    this.contentDeletionService = requireNonNull(contentDeletionService);
+    this.componentFinders = QualifierUtil.buildQualifierBeanMap(requireNonNull(componentFindersList));
+    this.assetPermissionChecker = requireNonNull(assetPermissionChecker);
     this.defaultComponentFinder =
-        checkNotNull(componentFinders.get("default"));
-    this.selectorFactory = checkNotNull(selectorFactory);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+        requireNonNull(componentFinders.get("default"));
+    this.selectorFactory = requireNonNull(selectorFactory);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
     this.assetDescriptors = QualifierUtil.buildQualifierBeanMap(assetDescriptorsList);
   }
 
@@ -257,7 +262,7 @@ public class ContentComponentHelper
   @Override
   public Set<String> deleteComponent(final Repository repository, final ComponentXO model) {
     return findComponentsByModel(repository, model)
-        .flatMap(component -> maintenanceService.deleteComponent(repository, component).stream())
+        .flatMap(component -> contentDeletionService.deleteComponent(repository, component).stream())
         .collect(toSet());
   }
 
@@ -294,7 +299,7 @@ public class ContentComponentHelper
   @Override
   public Set<String> deleteAsset(final Repository repository, final EntityId assetId) {
     return findAssetById(repository, assetId)
-        .map(asset -> maintenanceService.deleteAsset(repository, asset))
+        .map(asset -> contentDeletionService.deleteAsset(repository, asset))
         .orElse(ImmutableSet.of());
   }
 

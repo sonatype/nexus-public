@@ -16,7 +16,7 @@ import java.nio.file.Path;
 
 import org.sonatype.nexus.blobstore.AttributesLocation;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Location for FileBlobStore attributes files
@@ -29,7 +29,7 @@ public class FileAttributesLocation
   private final Path path;
 
   public FileAttributesLocation(final Path path) {
-    this.path = checkNotNull(path);
+    this.path = requireNonNull(path);
   }
 
   @Override

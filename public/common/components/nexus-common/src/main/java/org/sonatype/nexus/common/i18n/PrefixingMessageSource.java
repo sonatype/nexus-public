@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.common.i18n;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A message source which prefixes message codes.
@@ -26,12 +26,12 @@ public class PrefixingMessageSource
   private final String prefix;
 
   public PrefixingMessageSource(final MessageSource messages, final String prefix) {
-    this.messages = checkNotNull(messages);
-    this.prefix = checkNotNull(prefix);
+    this.messages = requireNonNull(messages);
+    this.prefix = requireNonNull(prefix);
   }
 
   protected String createCode(final String code) {
-    checkNotNull(code);
+    requireNonNull(code);
     return prefix + code;
   }
 

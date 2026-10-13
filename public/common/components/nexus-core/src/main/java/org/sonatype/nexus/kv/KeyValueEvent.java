@@ -14,7 +14,7 @@ package org.sonatype.nexus.kv;
 
 import org.sonatype.nexus.common.event.EventWithSource;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An event fired when a value is set via {@link GlobalKeyValueStore}
@@ -31,7 +31,7 @@ public class KeyValueEvent
   }
 
   public KeyValueEvent(final String key, final Object value) {
-    this.key = checkNotNull(key);
+    this.key = requireNonNull(key);
     this.value = value;
   }
 

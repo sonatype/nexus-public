@@ -25,8 +25,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
 
@@ -47,9 +47,9 @@ public class S3PropertiesFile
   private final String key;
 
   public S3PropertiesFile(final EncryptingS3Client s3, final String bucket, final String key) {
-    this.s3 = checkNotNull(s3);
-    this.bucket = checkNotNull(bucket);
-    this.key = checkNotNull(key);
+    this.s3 = requireNonNull(s3);
+    this.bucket = requireNonNull(bucket);
+    this.key = requireNonNull(key);
   }
 
   public void load() throws IOException {

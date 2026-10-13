@@ -19,8 +19,8 @@ import org.sonatype.nexus.common.entity.Continuation;
 import com.google.common.base.Function;
 import com.google.common.collect.ForwardingCollection;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Collections2.transform;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Fluent {@link Continuation}s.
@@ -36,7 +36,7 @@ public class FluentContinuation<E, T>
   private final Collection<E> fluentCollection;
 
   public FluentContinuation(final Continuation<T> continuation, final Function<T, E> toFluent) {
-    this.continuation = checkNotNull(continuation);
+    this.continuation = requireNonNull(continuation);
     this.fluentCollection = transform(continuation, toFluent);
   }
 

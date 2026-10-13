@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 
@@ -44,8 +44,8 @@ public abstract class KeyValueFacetSupport<DAO extends KeyValueDAO, STORE extend
   protected STORE dataStore;
 
   protected KeyValueFacetSupport(final FormatStoreManager formatStoreManager, final Class<DAO> daoClass) {
-    this.formatStoreManager = checkNotNull(formatStoreManager);
-    this.daoClass = checkNotNull(daoClass);
+    this.formatStoreManager = requireNonNull(formatStoreManager);
+    this.daoClass = requireNonNull(daoClass);
   }
 
   @Override

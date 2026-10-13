@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.inject.Provider;
@@ -52,7 +53,16 @@ public class ObjectMapperProvider
         .enable(SerializationFeature.INDENT_OUTPUT)
         .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        // A model annotated @JsonFilter cannot be serialised at all unless the filter id resolves, so a mapper with no
+        // FilterProvider throws InvalidDefinitionException rather than merely skipping the filtering. Several REST
+        // models carry @JsonFilter(EditionVisibility.NAME), and the bean supplying that filter lives in
+        // nexus-api-rest-common-private, which the OSS assembly bans outright (bannedDependencies,
+        // com.sonatype.nexus*).
+        // Degrade to "no filtering" when the id is unresolvable, matching CommonConfiguration#jsonMapper. Distributions
+        // that do package the filter are unaffected: JacksonEditionWriteInterceptor replaces the provider per response
+        // via ObjectWriter#with, so real filtering still happens there.
+        .setFilterProvider(new SimpleFilterProvider().setFailOnUnknownId(false));
     mapper.registerModule(new JavaTimeModule());
     mapper.registerModule(new JodaModule());
     mapper.registerModule(new SimpleModule()

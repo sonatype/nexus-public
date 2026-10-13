@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.REQUIRED;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SYSINFO;
 import org.springframework.stereotype.Component;
@@ -49,7 +49,7 @@ public class SystemInformationCustomizer
 
   @Autowired
   public SystemInformationCustomizer(final SystemInformationGenerator systemInformationGenerator) {
-    this.systemInformationGenerator = checkNotNull(systemInformationGenerator);
+    this.systemInformationGenerator = requireNonNull(systemInformationGenerator);
     this.objectMapper = new ObjectMapper();
   }
 

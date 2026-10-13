@@ -36,6 +36,7 @@ export default ListMachineUtils.buildListMachine({
         createdToken: null,
         roles: [],
         rolesError: null,
+        revokingTokenName: null,
       },
       states: {
         loaded: {
@@ -45,6 +46,7 @@ export default ListMachineUtils.buildListMachine({
             },
             REVOKE_TOKEN: {
               target: 'revoking',
+              actions: ['setRevokingTokenName'],
             },
             CLEAR_CREATED_TOKEN: {
               target: 'loading',
@@ -102,6 +104,9 @@ export default ListMachineUtils.buildListMachine({
     clearCreatedToken: assign({
       createdToken: () => null,
     }),
+    setRevokingTokenName: assign({
+      revokingTokenName: (_, event) => event.tokenName,
+    }),
     onCreateSuccess: (_, event) => {
       ExtJS.showSuccessMessage(MESSAGES.CREATE_SUCCESS(event.data?.data?.name));
     },
@@ -111,8 +116,8 @@ export default ListMachineUtils.buildListMachine({
     onRevokeSuccess: (_, event) => {
       ExtJS.showSuccessMessage(MESSAGES.REVOKE_SUCCESS(event.data?.tokenName));
     },
-    onRevokeError: (_, event) => {
-      ExtJS.showErrorMessage(mapRevokeError(event));
+    onRevokeError: ({revokingTokenName}, event) => {
+      ExtJS.showErrorMessage(mapRevokeError(event, revokingTokenName));
     },
   },
   services: {

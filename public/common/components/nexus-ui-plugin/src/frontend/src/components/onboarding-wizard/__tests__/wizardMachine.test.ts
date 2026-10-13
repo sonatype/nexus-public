@@ -74,12 +74,11 @@ describe('wizardMachine', () => {
   });
 
   describe('GET_STARTED', () => {
-    it('with empty steps transitions to setupComplete (not stepReady)', () => {
+    it('with empty steps transitions to verifying (not stepReady)', () => {
       const machine = createWizardMachine({
         fetchSteps: async () => [],
       });
 
-      // Start at stepReady with empty steps
       let state = machine
         .withContext({
           steps: [],
@@ -89,7 +88,7 @@ describe('wizardMachine', () => {
         })
         .transition('stepReady', { type: 'GET_STARTED' });
 
-      expect(state.value).toBe('setupComplete');
+      expect(state.value).toBe('verifying');
       expect(state.context.currentIndex).toBe(0);
     });
 
@@ -118,7 +117,7 @@ describe('wizardMachine', () => {
   });
 
   describe('STEP_ADVANCED', () => {
-    it('at index N-1 (last step) transitions to setupComplete', () => {
+    it('at index N-1 (last step) transitions to verifying', () => {
       const steps: OnboardingStep[] = [
         { type: 'admin-password' },
         { type: 'anonymous-access' },
@@ -128,7 +127,6 @@ describe('wizardMachine', () => {
         fetchSteps: async () => steps,
       });
 
-      // currentIndex is 2 (last of 3 steps: 0, 1, 2)
       let state = machine
         .withContext({
           steps,
@@ -138,7 +136,7 @@ describe('wizardMachine', () => {
         })
         .transition('stepReady', { type: 'STEP_ADVANCED' });
 
-      expect(state.value).toBe('setupComplete');
+      expect(state.value).toBe('verifying');
       expect(state.context.currentIndex).toBe(3);
     });
 
@@ -202,15 +200,19 @@ describe('wizardMachine', () => {
   });
 
   describe('SUBMIT and verify', () => {
-    it('SUBMIT from setupComplete transitions to verifying; verify resolving transitions to done', async () => {
+    it('SUBMIT from verificationFailed-error-retry transitions to verifying; verify resolving transitions to done', async () => {
+      let shouldFail = true;
       const machine = createWizardMachine({
         fetchSteps: async () => [{ type: 'admin-password' }],
-        verify: async () => {},
+        verify: async () => {
+          if (shouldFail) {
+            throw new Error('transient');
+          }
+        },
       });
 
       const service = interpret(machine).start();
 
-      // Wait for the machine to reach stepReady (from initial loading -> fetchSteps)
       await new Promise<void>((resolve) => {
         service.onTransition((state) => {
           if (state.matches('stepReady')) {
@@ -219,25 +221,20 @@ describe('wizardMachine', () => {
         });
       });
 
-      // Now at stepReady with 1 step, currentIndex = -1
-      // Send STEP_ADVANCED to advance from Welcome (index -1) to first step (index 0)
-      // Then again from index 0 to setupComplete
-      service.send({ type: 'GET_STARTED' }); // moves from -1 to 0
-      service.send({ type: 'STEP_ADVANCED' }); // moves from 0 to 1, since 1 >= steps.length, goes to setupComplete
+      service.send({ type: 'GET_STARTED' });
+      service.send({ type: 'STEP_ADVANCED' });
 
-      // Wait for setupComplete
       await new Promise<void>((resolve) => {
         service.onTransition((state) => {
-          if (state.matches('setupComplete')) {
+          if (state.matches('verificationFailed') && state.context.errorKind === 'network') {
             resolve();
           }
         });
       });
 
-      // Now send SUBMIT to trigger verify
+      shouldFail = false;
       service.send({ type: 'SUBMIT' });
 
-      // Wait for done
       await new Promise<void>((resolve) => {
         service.onTransition((state) => {
           if (state.matches('done')) {
@@ -250,7 +247,7 @@ describe('wizardMachine', () => {
       service.stop();
     });
 
-    it('verify rejecting with generic error classifies as network and returns to setupComplete', async () => {
+    it('verify rejecting with generic error classifies as network and returns to verificationFailed', async () => {
       const machine = createWizardMachine({
         fetchSteps: async () => [{ type: 'admin-password' }],
         verify: async () => {
@@ -269,13 +266,13 @@ describe('wizardMachine', () => {
         });
       });
 
-      // Navigate to setupComplete
+      // Navigate to verificationFailed
       service.send({ type: 'GET_STARTED' });
       service.send({ type: 'STEP_ADVANCED' });
 
       await new Promise<void>((resolve) => {
         service.onTransition((state) => {
-          if (state.matches('setupComplete')) {
+          if (state.matches('verificationFailed')) {
             resolve();
           }
         });
@@ -285,14 +282,14 @@ describe('wizardMachine', () => {
 
       await new Promise<void>((resolve) => {
         service.onTransition((state) => {
-          if (state.matches('setupComplete') && state.context.errorMessage) {
+          if (state.matches('verificationFailed') && state.context.errorMessage) {
             resolve();
           }
         });
       });
 
       const snapshot = service.getSnapshot();
-      expect(snapshot.matches('setupComplete')).toBe(true);
+      expect(snapshot.matches('verificationFailed')).toBe(true);
       expect(snapshot.context.errorMessage).toBe('Error: Verification failed');
       expect(snapshot.context.errorKind).toBe('network');
 
@@ -324,7 +321,7 @@ describe('wizardMachine', () => {
 
       await new Promise<void>((resolve) => {
         service.onTransition((state) => {
-          if (state.matches('setupComplete')) {
+          if (state.matches('verificationFailed')) {
             resolve();
           }
         });
@@ -334,26 +331,26 @@ describe('wizardMachine', () => {
 
       await new Promise<void>((resolve) => {
         service.onTransition((state) => {
-          if (state.matches('setupComplete') && state.context.errorMessage) {
+          if (state.matches('verificationFailed') && state.context.errorMessage) {
             resolve();
           }
         });
       });
 
       const snapshot = service.getSnapshot();
-      expect(snapshot.matches('setupComplete')).toBe(true);
+      expect(snapshot.matches('verificationFailed')).toBe(true);
       expect(snapshot.context.errorKind).toBe('stillRequired');
 
       service.stop();
     });
 
-    it('SUBMIT from setupComplete clears prior error before verifying', () => {
+    it('SUBMIT from verificationFailed clears prior error before verifying', () => {
       const machine = createWizardMachine({
         fetchSteps: async () => [],
         verify: async () => {},
       });
 
-      // Simulate a previously-failed verify: sitting on setupComplete with an error.
+      // Simulate a previously-failed verify: sitting on verificationFailed with an error.
       const state = machine
         .withContext({
           steps: [],
@@ -361,17 +358,17 @@ describe('wizardMachine', () => {
           errorMessage: 'Error: Previous failure',
           errorKind: 'network',
         })
-        .transition('setupComplete', { type: 'SUBMIT' });
+        .transition('verificationFailed', { type: 'SUBMIT' });
 
       expect(state.value).toBe('verifying');
       expect(state.context.errorMessage).toBeNull();
       expect(state.context.errorKind).toBeNull();
     });
 
-    it('verifying falls back to setupComplete when verify hangs past the timeout', async () => {
+    it('verifying falls back to verificationFailed when verify hangs past the timeout', async () => {
       // A verify that never resolves or rejects would otherwise strand the user on
       // the verifying screen (footer hidden, Escape suppressed). The `after` guard
-      // in the machine bails out to setupComplete so the user can retry or dismiss.
+      // in the machine bails out to verificationFailed so the user can retry or dismiss.
       jest.useFakeTimers();
       try {
         const machine = createWizardMachine({
@@ -381,7 +378,7 @@ describe('wizardMachine', () => {
 
         const service = interpret(machine).start();
 
-        // Drain the fetchSteps microtask so the machine reaches setupComplete
+        // Drain the fetchSteps microtask so the machine reaches verificationFailed
         // (empty steps means we land there directly from loading via stepReady).
         await Promise.resolve();
         await Promise.resolve();
@@ -393,7 +390,7 @@ describe('wizardMachine', () => {
         jest.advanceTimersByTime(VERIFY_TIMEOUT_MS);
 
         const snapshot = service.getSnapshot();
-        expect(snapshot.matches('setupComplete')).toBe(true);
+        expect(snapshot.matches('verificationFailed')).toBe(true);
         expect(snapshot.context.errorKind).toBe('network');
         expect(snapshot.context.errorMessage).toBe('Verification timed out');
 
@@ -428,11 +425,8 @@ describe('wizardMachine', () => {
         });
       });
 
-      // Transition to setupComplete
+      // With no steps, GET_STARTED goes straight to verifying via the noSteps guard.
       service.send({ type: 'GET_STARTED' });
-
-      // Transition to verifying
-      service.send({ type: 'SUBMIT' });
 
       await new Promise<void>((resolve) => {
         service.onTransition((state) => {

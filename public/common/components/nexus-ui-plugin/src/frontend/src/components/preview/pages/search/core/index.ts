@@ -103,6 +103,7 @@ export { fetchComponentVersions } from './componentVersionsApi';
 
 // Component Version Detail API (single version, Files tab)
 export { fetchComponentVersionDetail, MAX_DETAIL_PAGES } from './componentVersionDetailApi';
+export { deriveFileType, UNKNOWN_FILE_TYPE } from './fileType';
 
 // Shared Search Utilities (for all formats)
 export {

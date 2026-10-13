@@ -31,7 +31,7 @@ export default function ServiceAccountTokensRevokeModal({tokenName, onConfirm, o
   const [confirmation, setConfirmation] = useState('');
   const isPristine = confirmation.length === 0;
   const isMatch = confirmation === tokenName;
-  const validationErrors = !isPristine && !isMatch ? LABELS.VALIDATION_ERROR : null;
+  const validationErrors = !isPristine && !isMatch ? LABELS.VALIDATION_ERROR(tokenName) : null;
   const submitDisabled = !isMatch || isRevoking;
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function ServiceAccountTokensRevokeModal({tokenName, onConfirm, o
         >
           {LABELS.WARNING(tokenName)}
         </NxWarningAlert>
-        <NxFormGroup label={LABELS.LABEL} sublabel={LABELS.SUBLABEL(tokenName)} isRequired>
+        <NxFormGroup label={LABELS.LABEL(tokenName)} isRequired>
           <NxTextInput
             id="revokeConfirmationString"
             name="revokeConfirmationString"

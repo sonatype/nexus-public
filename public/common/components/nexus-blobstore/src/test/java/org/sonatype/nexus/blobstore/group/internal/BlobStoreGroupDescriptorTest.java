@@ -95,6 +95,7 @@ public class BlobStoreGroupDescriptorTest
     when(blobStoreManager.getParent(anyString())).thenReturn(Optional.empty());
     when(blobStoreUtil.usageCount(anyString())).thenReturn(0);
     when(blobStoreGroupService.isEnabled()).thenReturn(true);
+    when(blobStoreGroupService.canCreate()).thenReturn(true);
   }
 
   @Test
@@ -200,6 +201,39 @@ public class BlobStoreGroupDescriptorTest
     assertThat(exception.getMessage(), is(
         "Blob Store 'nonEmptyStore' cannot be removed from Blob Store Group 'group1', " +
             "use 'Admin - Remove a member from a blob store group' task instead"));
+  }
+
+  @Test
+  public void validateConfig_throwsWhenCannotCreateNewGroupBlobStore() {
+    // canCreate() returns false (CE without license), and the blob store doesn't exist yet (new creation)
+    when(blobStoreGroupService.canCreate()).thenReturn(false);
+    when(blobStoreManager.exists("newGroup")).thenReturn(false);
+
+    BlobStoreConfiguration config =
+        buildBlobStoreConfiguration("newGroup", singletonList("store1"), WriteToFirstMemberFillPolicy.TYPE);
+
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> blobStoreGroupDescriptor.validateConfig(config));
+    assertThat(exception.getMessage(), is("Creating Blob Store Groups requires Sonatype Nexus Repository Pro"));
+  }
+
+  @Test
+  public void validateConfig_allowsUpdateEvenWhenCannotCreate() {
+    // canCreate() returns false, but the blob store already exists (update path skips canCreate check)
+    when(blobStoreGroupService.canCreate()).thenReturn(false);
+    when(blobStoreManager.exists("existingGroup")).thenReturn(true);
+
+    BlobStore store1 = mockBlobStore("store1", FILE);
+    blobStores.put("store1", store1);
+
+    BlobStoreGroup existingGroupStore = mockBlobStoreGroup(singletonList(store1));
+    blobStores.put("existingGroup", existingGroupStore);
+
+    BlobStoreConfiguration config =
+        buildBlobStoreConfiguration("existingGroup", singletonList("store1"), WriteToFirstMemberFillPolicy.TYPE);
+
+    // Should not throw — updating an existing group is allowed on CE
+    blobStoreGroupDescriptor.validateConfig(config);
   }
 
   @Test

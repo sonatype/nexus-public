@@ -33,7 +33,7 @@ import org.sonatype.nexus.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
@@ -54,7 +54,7 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
       final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
-    this.contentFacetFinder = checkNotNull(contentFacetFinder);
+    this.contentFacetFinder = requireNonNull(contentFacetFinder);
   }
 
   /**

@@ -14,7 +14,7 @@ package org.sonatype.nexus.common.io;
 
 import com.google.common.io.BaseEncoding;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * HEX encoding helpers.
@@ -40,7 +40,7 @@ public class Hex
    * HEX decode string to bytes.
    */
   public static byte[] decode(final String encoded) {
-    checkNotNull(encoded);
+    requireNonNull(encoded);
     return HEX.decode(encoded.toLowerCase());
   }
 }

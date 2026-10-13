@@ -41,9 +41,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
@@ -79,12 +79,12 @@ public class SearchRecordProducer
       final DatabaseTypeDetector databaseTypeDetector)
   {
     this.searchCustomFieldContributors =
-        QualifierUtil.buildQualifierBeanMap(checkNotNull(searchCustomFieldContributorsList));
-    this.versionNormalizerService = checkNotNull(versionNormalizerService);
-    this.formatToReleaseEvaluators = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatToReleaseEvaluatorsList));
-    this.formatToValidatePath = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatToValidatePathList));
-    this.searchTableDataExtensions = checkNotNull(searchTableDataExtensions);
-    this.databaseTypeDetector = checkNotNull(databaseTypeDetector);
+        QualifierUtil.buildQualifierBeanMap(requireNonNull(searchCustomFieldContributorsList));
+    this.versionNormalizerService = requireNonNull(versionNormalizerService);
+    this.formatToReleaseEvaluators = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatToReleaseEvaluatorsList));
+    this.formatToValidatePath = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatToValidatePathList));
+    this.searchTableDataExtensions = requireNonNull(searchTableDataExtensions);
+    this.databaseTypeDetector = requireNonNull(databaseTypeDetector);
   }
 
   public Optional<SearchRecordData> createSearchRecord(

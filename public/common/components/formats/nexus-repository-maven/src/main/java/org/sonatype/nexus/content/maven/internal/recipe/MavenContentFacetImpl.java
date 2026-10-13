@@ -50,6 +50,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -81,7 +82,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -134,6 +135,8 @@ public class MavenContentFacetImpl
 
   private MetadataRebuilder metadataRebuilder;
 
+  private final ContentDeletionService contentDeletionService;
+
   static class Config
   {
     @NotNull(groups = {HostedType.ValidationGroup.class, ProxyType.ValidationGroup.class})
@@ -158,13 +161,15 @@ public class MavenContentFacetImpl
       final MetadataRebuilder metadataRebuilder,
       final MavenMetadataContentValidator metadataValidator,
       final EventManager eventManager,
+      final ContentDeletionService contentDeletionService,
       @Value("${nexus.maven.metadata.validation.enabled:true}") final boolean metadataValidationEnabled)
   {
     super(formatStoreManager);
-    this.mavenPathParser = checkNotNull(mavenPathParser);
-    this.metadataRebuilder = checkNotNull(metadataRebuilder);
+    this.mavenPathParser = requireNonNull(mavenPathParser);
+    this.metadataRebuilder = requireNonNull(metadataRebuilder);
     this.metadataValidator = metadataValidator;
     this.eventManager = eventManager;
+    this.contentDeletionService = requireNonNull(contentDeletionService);
     this.metadataValidationEnabled = metadataValidationEnabled;
   }
 
@@ -348,6 +353,14 @@ public class MavenContentFacetImpl
   @Override
   public boolean delete(final MavenPath mavenPath) {
     log.trace("DELETE {} : {}", getRepository().getName(), mavenPath);
+    // Route client-protocol deletes through the soft-delete decision. When eligible (soft-delete
+    // enabled + hosted + format allow-listed) the asset is soft-deleted (recoverable from Trash) and
+    // the component cascade + metadata rebuild are handled by the soft-delete hooks — so we must NOT
+    // run the hard maybeDeleteComponent cleanup below. Otherwise fall back to the original hard delete.
+    Optional<FluentAsset> asset = findAsset(assetPath(mavenPath));
+    if (asset.isPresent() && contentDeletionService.softDeleteAssetIfEligible(getRepository(), asset.get())) {
+      return true;
+    }
     boolean assetIsDeleted = deleteAsset(mavenPath);
     if (assetIsDeleted && mavenPath.getCoordinates() != null) {
       maybeDeleteComponent(mavenPath.getCoordinates());
@@ -480,9 +493,9 @@ public class MavenContentFacetImpl
       final String artifactId,
       final String baseVersion)
   {
-    checkNotNull(groupId);
-    checkNotNull(artifactId);
-    checkNotNull(baseVersion);
+    requireNonNull(groupId);
+    requireNonNull(artifactId);
+    requireNonNull(baseVersion);
 
     List<String[]> metadataCoordinatesToDelete = new ArrayList<>();
     ImmutableMap<String, Object> gabvQueryParameters =
@@ -574,7 +587,7 @@ public class MavenContentFacetImpl
       return assets().path(assetName).kind(assetKind).save();
     }
     else {
-      Coordinates coordinates = checkNotNull(mavenPath.getCoordinates());
+      Coordinates coordinates = requireNonNull(mavenPath.getCoordinates());
 
       FluentComponent component = createOrGetComponent(coordinates);
 

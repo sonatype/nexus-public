@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
@@ -101,6 +102,9 @@ class RepositoryInternalResourceTest
   @BeforeEach
   void setup() {
     lenient().when(repositoryMetricsService.list()).thenReturn(java.util.Collections.emptyList());
+    // getRepositoryDetails[Filtered]() resolve sizes via RepositoryMetricsService.listByName();
+    // run the real default so the list() stub above drives it (NEXUS-53722).
+    lenient().when(repositoryMetricsService.listByName()).thenCallRealMethod();
     underTest = new RepositoryInternalResource(
         formats,
         repositoryManager,
@@ -424,6 +428,40 @@ class RepositoryInternalResourceTest
   }
 
   @Test
+  void shouldTolerateProxyInInvalidStateWhenBuildingDetails() {
+    // A proxy whose HttpClientFacet is not STARTED (e.g., being deleted concurrently) must not fail the
+    // whole details response with a 500. The repo is returned with online from config and null remote
+    // status, mirroring the classic UI (RepositoryUiService#buildStatus).
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository healthyProxy = mockRepository("maven-central", maven2, proxyType,
+        "http://localhost:8081/repository/maven-central/", true,
+        Map.of(HttpClientFacet.class, mockHttpFacet("Ready to Connect", null)));
+    Repository deletingProxy = mockRepository("dying-proxy", maven2, proxyType,
+        "http://localhost:8081/repository/dying-proxy/", true,
+        Map.of(HttpClientFacet.class, mockHttpFacetThrowingInvalidState()));
+
+    List<Repository> repositories = List.of(healthyProxy, deletingProxy);
+    repositories.forEach(
+        repo -> when(repositoryPermissionChecker.userHasRepositoryAdminPermission(repo, READ)).thenReturn(true));
+    when(repositoryManager.browse()).thenReturn(repositories);
+
+    List<RepositoryDetailXO> details = underTest.getRepositoryDetails();
+
+    assertThat(details.size(), is(2));
+    RepositoryDetailXO healthy =
+        details.stream().filter(d -> d.getName().equals("maven-central")).findFirst().orElseThrow();
+    assertThat(healthy.getStatus().getDescription(), is("Ready to Connect"));
+    // the transitioning proxy is tolerated: online from config, no remote status, no exception thrown
+    RepositoryDetailXO dying =
+        details.stream().filter(d -> d.getName().equals("dying-proxy")).findFirst().orElseThrow();
+    assertThat(dying.getStatus().isOnline(), is(true));
+    assertThat(dying.getStatus().getDescription(), is(nullValue()));
+    assertThat(dying.getStatus().getReason(), is(nullValue()));
+  }
+
+  @Test
   void shouldReturnEmptyDetailsWhenNoRepositoriesExist() {
     when(repositoryManager.browse()).thenReturn(Collections.emptyList());
 
@@ -524,6 +562,13 @@ class RepositoryInternalResourceTest
     lenient().when(facet.getStatus()).thenReturn(status);
     lenient().when(status.getDescription()).thenReturn(description);
     lenient().when(status.getReason()).thenReturn(reason);
+    return facet;
+  }
+
+  private static Facet mockHttpFacetThrowingInvalidState() {
+    HttpClientFacet facet = mock(HttpClientFacet.class);
+    lenient().when(facet.getStatus())
+        .thenThrow(new InvalidStateException("DELETED", new String[]{"STARTED"}));
     return facet;
   }
 }

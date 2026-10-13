@@ -31,7 +31,7 @@ import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeWildcardRequest;
 import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -79,7 +79,7 @@ public class WildcardPrivilegeDescriptor
 
   @Override
   public Permission createPermission(final CPrivilege privilege) {
-    checkNotNull(privilege);
+    requireNonNull(privilege);
     String pattern = readProperty(privilege, P_PATTERN);
     return new WildcardPermission2(pattern);
   }

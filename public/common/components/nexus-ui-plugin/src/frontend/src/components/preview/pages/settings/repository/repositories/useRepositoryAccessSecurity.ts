@@ -18,7 +18,7 @@ import type {
   RoleInfo,
   UserWithAccess,
   AnonymousAccess,
-} from '../profile/types';
+} from './profileTypes';
 
 const PRIVILEGES_URL = '/service/rest/v1/security/privileges';
 const ROLES_URL = '/service/rest/v1/security/roles';

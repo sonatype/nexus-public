@@ -377,6 +377,36 @@ public class QueuingUpgradeTaskSchedulerTest
   }
 
   /*
+   * Verify that a failed task is re-run in the same startup when another upgrade task completes, not only on the next
+   * startup as the failure log says.
+   */
+  @Test
+  public void testOn_taskCompleted_reRunsAFailedTaskInTheSameStartup() throws Exception {
+    startQueuingUpgradeTaskScheduler();
+
+    TaskInfo failedTaskInfo = mock(TaskInfo.class);
+    when(failedTaskInfo.getId()).thenReturn(TASK_ID_2);
+    when(taskScheduler.getTaskById(TASK_ID_2)).thenReturn(failedTaskInfo);
+    when(taskScheduler.toExternalTaskState(failedTaskInfo))
+        .thenReturn(new ExternalTaskState(TaskState.FAILED, null, null, null, null, null));
+
+    // a non-blocking task that failed, still queued behind one that is about to finish
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID, TASK_CONFIG));
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID_2, NON_BLOCKING_TASK_CONFIG));
+    underTest.on(new TaskEventStoppedFailed(failedTaskInfo, null));
+    assertThat(upgradeTaskStore.browse()
+        .filter(task -> TASK_ID_2.equals(task.getTaskId()))
+        .findFirst()
+        .map(UpgradeTaskData::getStatus)
+        .orElse(null), is("failed"));
+
+    underTest.on(new TaskEventStoppedDone(taskInfo));
+
+    verify(failedTaskInfo).runNow();
+    assertThat(upgradeTaskStore.browse().count(), is(1L));
+  }
+
+  /*
    * Verify that a non-blocking task that is running does not prevent the next task in the queue from starting.
    */
   @Test

@@ -28,12 +28,7 @@ public class ComponentAttributes
   protected Boolean proprietaryComponents;
 
   @JsonCreator
-  public ComponentAttributes(
-      @JsonProperty(value = "proprietaryComponents" /*
-                                                     * NEXUS-46395 TODO: defaultValue moved to @Schema in OpenAPI
-                                                     * 3.x: @Parameter(schema = @Schema(defaultValue = "false"))
-                                                     */) final Boolean proprietaryComponents)
-  {
+  public ComponentAttributes(@JsonProperty(value = "proprietaryComponents") final Boolean proprietaryComponents) {
     this.proprietaryComponents = proprietaryComponents;
   }
 

@@ -27,18 +27,15 @@ export interface EndpointDetailProps {
   access: EndpointAccessDot;
 }
 
-function formatPermissions(row: MergedApiEndpoint): string {
-  const reqs = row.permission?.permissions ?? [];
-  if (reqs.length === 0) {
-    return row.permission?.authenticated ? 'None mapped (see documentation)' : 'None (may allow anonymous)';
-  }
-  const logical = reqs[0]?.logical === 'OR' ? 'OR' : 'AND';
-  const parts = reqs.map((r) => r.permission);
-  return logical === 'OR' ? parts.join(' OR ') : parts.join(' AND ');
-}
-
 export function EndpointDetail({ row, fullSwagger, access }: EndpointDetailProps) {
-  const { tab, hasSecurityDirectoryRead, hasGrantAccess, selectTab } = useEndpointDetail();
+  const {
+    tab,
+    hasSecurityDirectoryRead,
+    hasGrantAccess,
+    requiredPermissionsText,
+    isAccessDenied,
+    selectTab,
+  } = useEndpointDetail({ row, access });
 
   if (!row) {
     return (
@@ -82,8 +79,6 @@ export function EndpointDetail({ row, fullSwagger, access }: EndpointDetailProps
     );
   }
 
-  const accessDenied = access === 'denied' || access === 'partial';
-
   return (
     <Box className="api-endpoint-detail" aria-live="polite" data-testid="api-endpoint-detail">
       <Tabs.Root value={tab} onValueChange={selectTab}>
@@ -98,7 +93,7 @@ export function EndpointDetail({ row, fullSwagger, access }: EndpointDetailProps
               </Text>
             </Flex>
             <Text size="2" color="gray" mb="1">
-              Required: {formatPermissions(row)}
+              Required: {requiredPermissionsText}
             </Text>
             {row.summary && (
               <Text size="2" mt="2">
@@ -114,7 +109,7 @@ export function EndpointDetail({ row, fullSwagger, access }: EndpointDetailProps
         </Box>
         <Tabs.Content value="try">
           <Box pt="3">
-            <TryItTab fullSwagger={fullSwagger} row={row} accessDenied={accessDenied} />
+            <TryItTab fullSwagger={fullSwagger} row={row} accessDenied={isAccessDenied} />
           </Box>
         </Tabs.Content>
         {hasSecurityDirectoryRead && (

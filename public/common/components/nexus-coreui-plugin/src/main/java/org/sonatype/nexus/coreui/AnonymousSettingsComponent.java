@@ -28,7 +28,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -43,7 +43,7 @@ public class AnonymousSettingsComponent
 
   @Autowired
   public AnonymousSettingsComponent(final AnonymousManager anonymousManager) {
-    this.anonymousManager = checkNotNull(anonymousManager);
+    this.anonymousManager = requireNonNull(anonymousManager);
   }
 
   /**

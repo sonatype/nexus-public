@@ -16,31 +16,37 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
-import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
-
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiSoftQuota;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiAdvancedBucketConnection;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketSecurity;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiCloudFront;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiEncryption;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiGlobalDistributionType.S3BlobStoreApiGlobalDistribution;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiTransferAcceleration;
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
+import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.rapture.PasswordPlaceholder;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -50,13 +56,16 @@ import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_DISTRIBUTION_URL_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY_PAIR_ID_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_PRIVATE_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.TRANSFER_ACCELERATION_ENABLED_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.PRE_SIGNED_URL_ENABLED;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class S3BlobStoreApiConfigurationMapperTest
 {
   private static final String BLOB_STORE_NAME = "anS3BlobStore";
@@ -103,7 +112,7 @@ public class S3BlobStoreApiConfigurationMapperTest
   private Function<BlobStoreConfiguration, S3BlobStoreApiModel> underTest =
       S3BlobStoreApiConfigurationMapper::map;
 
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
     resetS3BlobStoreConfigHelper();
 
@@ -121,7 +130,7 @@ public class S3BlobStoreApiConfigurationMapperTest
     regionProviderMock.when(DefaultAwsRegionProviderChain::builder).thenReturn(mockBuilder);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     if (regionProviderMock != null) {
       regionProviderMock.close();
@@ -170,6 +179,32 @@ public class S3BlobStoreApiConfigurationMapperTest
     assertBucketEncryptionDetails(bucketConfiguration.getEncryption());
     assertBucketAdvancedConnectionDetails(bucketConfiguration.getAdvancedBucketConnection());
     assertThat(bucketConfiguration.getActiveRegion(), is(AWS_REGION));
+  }
+
+  @Test
+  public void testConvertConfigurationToModel_globalDistribution() {
+    BlobStoreConfiguration configuration = aFullySetBlobStoreConfiguration();
+
+    // Test with transfer acceleration
+    configuration.attributes(CONFIG_KEY).set(TRANSFER_ACCELERATION_ENABLED_KEY, true);
+    S3BlobStoreApiModel model = underTest.apply(configuration);
+    S3BlobStoreApiGlobalDistribution globalDistribution = model.getGlobalDistribution();
+    assertThat(globalDistribution, instanceOf(S3BlobStoreApiTransferAcceleration.class));
+
+    // Test with CloudFront, xfer acceleration left set to show precedence
+    NestedAttributesMap cloudFrontAttributes = configuration.attributes(CONFIG_KEY).child(CLOUDFRONT_KEY);
+    cloudFrontAttributes.set(CLOUDFRONT_DISTRIBUTION_URL_KEY, "http://cloud.example.org");
+    cloudFrontAttributes.set(CLOUDFRONT_KEY_PAIR_ID_KEY, "abcd-key-pair");
+    cloudFrontAttributes.set(CLOUDFRONT_PRIVATE_KEY_KEY, "a-pem-key");
+    model = underTest.apply(configuration);
+
+    globalDistribution = model.getGlobalDistribution();
+    assertThat(globalDistribution, instanceOf(S3BlobStoreApiCloudFront.class));
+    S3BlobStoreApiCloudFront cloudFront = (S3BlobStoreApiCloudFront) globalDistribution;
+    assertThat(cloudFront.distributionUrl(), is("http://cloud.example.org"));
+    assertThat(cloudFront.keyId(), is("abcd-key-pair"));
+    assertThat(cloudFront.privateKey(), is(PasswordPlaceholder.get()));
+
   }
 
   @Test

@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
+import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SearchResponse;
@@ -32,6 +33,8 @@ import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.SearchUtils;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
+import org.sonatype.nexus.rest.Page;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
@@ -54,6 +57,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -149,6 +153,46 @@ class SearchResourceTest
 
   @WithUser(isAuthenticated = false)
   @Test
+  void search_exposesTotalHitsAsPageTotal() {
+    // The search service already computes an exact COUNT for every query and
+    // stores it as totalHits; the REST layer must surface it as Page.total so
+    // the UI can show a true, pagination-stable count (NEXUS-54423).
+    SearchResponse response = new SearchResponse();
+    response.setSearchResults(List.of());
+    response.setTotalHits(4888L);
+    when(searchService.search(any())).thenReturn(response);
+
+    Page<ComponentXO> page = underTest.search(null, null, null, null, defaultUriInfo);
+
+    assertThat(page.getTotal(), is(4888L));
+  }
+
+  @WithUser(isAuthenticated = false)
+  @Test
+  void search_omitsTotalWhenAssetParamsPresent() {
+    // getTotalHits() is the pre-filter row count from the search backend, but the returned
+    // components are filtered afterwards: components in deleted repositories are dropped, and
+    // with asset parameters present, components with no matching assets are dropped too. That
+    // count is therefore unreachable by paging and must not be surfaced as an "exact" page
+    // total when asset filters are in play (NEXUS-54423).
+    UriInfo uriInfo = mock(UriInfo.class);
+    MultivaluedMap<String, String> params = new MultivaluedHashMap<>();
+    params.add("maven.groupId", "com.example");
+    when(uriInfo.getQueryParameters()).thenReturn(params);
+    when(searchUtils.isAssetSearchParam("maven.groupId")).thenReturn(true);
+
+    SearchResponse response = new SearchResponse();
+    response.setSearchResults(List.of());
+    response.setTotalHits(4888L);
+    when(searchService.search(any())).thenReturn(response);
+
+    Page<ComponentXO> page = underTest.search(null, null, null, null, uriInfo);
+
+    assertThat(page.getTotal(), is(nullValue()));
+  }
+
+  @WithUser(isAuthenticated = false)
+  @Test
   void searchAndDownloadAssets_noResult() {
     SearchResponse response = new SearchResponse();
     response.setSearchResults(List.of());
@@ -197,6 +241,37 @@ class SearchResourceTest
     WebApplicationMessageException e =
         assertThrows(WebApplicationMessageException.class,
             () -> underTest.doSearch(null, null, "INVALID", null, defaultUriInfo));
+    assertThat(e.getResponse().getStatus(), is(400));
+  }
+
+  /*
+   * NEXUS-54105 - crafted URLs containing a NUL byte (%00) in the continuationToken,
+   * sort or direction parameter must be rejected with HTTP 400 before reaching the
+   * datastore, where they would otherwise surface as an unhandled 500 (PSQLException:
+   * invalid byte sequence for encoding "UTF8": 0x00).
+   */
+  @Test
+  void doSearch_withNulByteInContinuationToken_throwsBadRequest() {
+    assertThrows(ValidationErrorsException.class,
+        () -> underTest.doSearch("valid\u0000token", null, "ASC", null, defaultUriInfo));
+  }
+
+  @Test
+  void doSearch_withNulByteInSort_throwsBadRequest() {
+    assertThrows(ValidationErrorsException.class,
+        () -> underTest.doSearch(null, "field\u0000x", "ASC", null, defaultUriInfo));
+  }
+
+  @Test
+  void doSearch_withNulByteInDirection_throwsBadRequest() {
+    // "ASC\u0000" does not equal "ASC" case-insensitively, so SortDirection.parse (called from
+    // SearchResource.parseSortDirection) returns empty and the resource throws
+    // WebApplicationMessageException before a SearchRequest is ever built. This is the standard
+    // "invalid direction" 400 path — not the NUL-byte 400 path in SearchRequest.build() — and it
+    // is the reason this test asserts WebApplicationMessageException rather than
+    // BadRequestException like the other NUL-byte tests above.
+    WebApplicationMessageException e = assertThrows(WebApplicationMessageException.class,
+        () -> underTest.doSearch(null, null, "ASC\u0000", null, defaultUriInfo));
     assertThat(e.getResponse().getStatus(), is(400));
   }
 
@@ -455,6 +530,38 @@ class SearchResourceTest
     underTest.searchRepositoriesForVersion("raw", "", "some-file.zip", "");
 
     verify(searchService).search(argThat(hasVersionFilter("")));
+  }
+
+  /*
+   * NEXUS-54105 - this endpoint constructs SearchFilter objects directly from @QueryParams
+   * without going through SearchUtils.convertParameters, so it needs its own NUL-byte guard.
+   */
+  @Test
+  @WithUser("admin")
+  void searchRepositoriesForVersion_withNulByteInFormat_throwsBadRequest() {
+    assertThrows(ValidationErrorsException.class,
+        () -> underTest.searchRepositoriesForVersion("maven2\u0000", "org.example", "widget", "1.0.0"));
+  }
+
+  @Test
+  @WithUser("admin")
+  void searchRepositoriesForVersion_withNulByteInNamespace_throwsBadRequest() {
+    assertThrows(ValidationErrorsException.class,
+        () -> underTest.searchRepositoriesForVersion("maven2", "org.example\u0000", "widget", "1.0.0"));
+  }
+
+  @Test
+  @WithUser("admin")
+  void searchRepositoriesForVersion_withNulByteInName_throwsBadRequest() {
+    assertThrows(ValidationErrorsException.class,
+        () -> underTest.searchRepositoriesForVersion("maven2", "org.example", "widget\u0000", "1.0.0"));
+  }
+
+  @Test
+  @WithUser("admin")
+  void searchRepositoriesForVersion_withNulByteInVersion_throwsBadRequest() {
+    assertThrows(ValidationErrorsException.class,
+        () -> underTest.searchRepositoriesForVersion("maven2", "org.example", "widget", "1.0.0\u0000"));
   }
 
   @Test

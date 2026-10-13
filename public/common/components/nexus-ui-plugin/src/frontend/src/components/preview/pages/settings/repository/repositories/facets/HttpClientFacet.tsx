@@ -25,10 +25,10 @@ import {
 
 import {
   RepositoryFormData,
-  RepositoryFormErrors,
   HttpClientAuthenticationConfig,
 } from '../types';
 import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
+import { type FacetErrors, resolveError } from './resolveError';
 
 import './HttpClientFacet.scss';
 
@@ -40,30 +40,14 @@ interface HttpClientFacetProps {
     updates: Partial<RepositoryFormData[K]>
   ) => void;
   // errors may be either a nested RepositoryFormErrors object or a flat Record<string, string>
-  // from the form machine's validationErrors (dot-notation keys).
-  errors?: RepositoryFormErrors | Record<string, string | undefined>;
+  // from the form machine's validationErrors (dot-notation keys) — see FacetErrors.
+  errors?: FacetErrors;
   showPreemptiveAuth?: boolean;
   originalRemoteUrl?: string;
   isEdit?: boolean;
   hadAuthOnLoad?: boolean;
   onOriginChangeWarning?: (warning: boolean) => void;
   format?: string;
-}
-
-/**
- * Resolve an error value from either a flat dot-notation errors map or a nested errors object.
- */
-function resolveError(
-  errors: RepositoryFormErrors | Record<string, string | undefined> | undefined,
-  flatKey: string,
-  nested: (e: RepositoryFormErrors) => string | undefined
-): string | undefined {
-  if (!errors) return undefined;
-  // Try flat key first (form machine produces flat dot-notation keys)
-  const flat = (errors as Record<string, string | undefined>)[flatKey];
-  if (flat) return flat;
-  // Fall back to nested access
-  return nested(errors as RepositoryFormErrors);
 }
 
 // Matches ECR registry hostnames: 123456789012.dkr.ecr.us-east-1.amazonaws.com

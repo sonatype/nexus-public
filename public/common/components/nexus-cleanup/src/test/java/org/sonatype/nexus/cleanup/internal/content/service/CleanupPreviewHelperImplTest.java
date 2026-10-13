@@ -90,7 +90,7 @@ class CleanupPreviewHelperImplTest
   @BeforeEach
   void setup() {
     when(cleanupPolicyStorage.newCleanupPolicy()).thenReturn(new CleanupPolicyData());
-    when(browseServiceFactory.getPreviewService()).thenReturn(cleanupComponentBrowse);
+    when(browseServiceFactory.getPreviewService(any(Format.class))).thenReturn(cleanupComponentBrowse);
     underTest = new CleanupPreviewHelperImpl(cleanupPolicyStorage, previewTimeout, browseServiceFactory, false);
   }
 
@@ -111,7 +111,7 @@ class CleanupPreviewHelperImplTest
 
     verify(previewTimeout).toMillis();
     verify(cleanupPolicyStorage).newCleanupPolicy();
-    verify(browseServiceFactory).getPreviewService();
+    verify(browseServiceFactory).getPreviewService(any(Format.class));
     verify(cleanupComponentBrowse).browseByPage(cleanPolicyCaptor.capture(), eq(repository), eq(queryOptions));
 
     assertCleanupPolicy(cleanPolicyCaptor.getValue());
@@ -157,7 +157,7 @@ class CleanupPreviewHelperImplTest
         underTest.getSearchResultsStream(cleanupPolicyPreviewXO, repository, createQueryOptions());
 
     verify(cleanupPolicyStorage).newCleanupPolicy();
-    verify(browseServiceFactory).getPreviewService();
+    verify(browseServiceFactory).getPreviewService(any(Format.class));
     verify(cleanupComponentBrowse).browseIncludingAssets(cleanPolicyCaptor.capture(), eq(repository));
 
     assertCleanupPolicy(cleanPolicyCaptor.getValue());
@@ -197,7 +197,7 @@ class CleanupPreviewHelperImplTest
         underTest.getSearchResultsStream(cleanupPolicyPreviewXO, repository, createQueryOptions());
 
     verify(cleanupPolicyStorage).newCleanupPolicy();
-    verify(browseServiceFactory).getPreviewService();
+    verify(browseServiceFactory).getPreviewService(any(Format.class));
     verify(cleanupComponentBrowse).browseIncludingAssets(cleanPolicyCaptor.capture(), eq(repository));
 
     assertCleanupPolicy(cleanPolicyCaptor.getValue());

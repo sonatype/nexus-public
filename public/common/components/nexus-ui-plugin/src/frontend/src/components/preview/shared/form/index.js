@@ -43,4 +43,6 @@ export { SettingsTransferList } from './SettingsTransferList';
 export { WizardForm } from './WizardForm';
 export { ConfirmDialog } from './ConfirmDialog';
 export { RequiredMark } from './RequiredMark';
+export { SettingsSelectionModal } from './SettingsSelectionModal';
+export { useSettingsSelectionModal } from './useSettingsSelectionModal';
 

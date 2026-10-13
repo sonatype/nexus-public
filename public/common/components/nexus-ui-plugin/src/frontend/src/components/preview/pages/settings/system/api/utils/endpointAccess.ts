@@ -13,6 +13,7 @@
 
 import type { ApiEndpointPermissionDto } from '../types';
 
+import { permissionLogical } from './formatEndpointPermissions';
 import { userImpliesPermission } from './shiroWildcardImplies';
 
 export type EndpointAccessDot = 'granted' | 'denied' | 'partial' | 'unknown';
@@ -35,7 +36,7 @@ export function computeEndpointAccess(
     return 'unknown';
   }
 
-  const logical = reqs[0]?.logical === 'OR' ? 'OR' : 'AND';
+  const logical = permissionLogical(meta);
   const checks = reqs.map((r) =>
     userImpliesPermission((r.permission || '').toLowerCase(), userPermissionMap)
   );

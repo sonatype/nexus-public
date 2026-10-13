@@ -48,7 +48,7 @@ import com.google.common.net.HttpHeaders;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * <p>
@@ -83,7 +83,7 @@ public abstract class MergingGroupHandlerSupport
       final Duration minorTimeout,
       final int threadsPerKey)
   {
-    this.cooperation = checkNotNull(cooperationFactory).configure()
+    this.cooperation = requireNonNull(cooperationFactory).configure()
         .enabled(cooperationEnabled)
         .majorTimeout(majorTimeout)
         .minorTimeout(minorTimeout)

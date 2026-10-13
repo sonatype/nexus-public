@@ -19,7 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Logical NOT matcher.
@@ -37,12 +37,12 @@ public class NotMatcher
 
   @VisibleForTesting
   public NotMatcher(final Matcher matcher) {
-    this.matcher = checkNotNull(matcher);
+    this.matcher = requireNonNull(matcher);
   }
 
   @Override
   public boolean matches(final Context context) {
-    checkNotNull(context);
+    requireNonNull(context);
     log.debug("Matching: NOT {}", matcher);
     return !matcher.matches(context);
   }

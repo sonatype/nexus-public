@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { parseApiError } from '../error-handler';
+import { parseApiError, wrapApiError } from '../error-handler';
 import { AxiosError } from 'axios';
 
 function makeAxiosError(status: number, data: unknown): AxiosError {
@@ -158,5 +158,32 @@ describe('quoted message unwrapping (via parseApiError)', () => {
     const data = { id: '*', message: '"unterminated' };
     const result = parseApiError(makeAxiosError(409, data));
     expect(result.message).toBe('"unterminated');
+  });
+});
+
+describe('wrapApiError', () => {
+  it('returns an Error whose message matches the parsed message', () => {
+    const wrapped = wrapApiError(new Error('boom'));
+    expect(wrapped).toBeInstanceOf(Error);
+    expect(wrapped.message).toBe('boom');
+  });
+
+  it('preserves status/code/fieldErrors/requestId from the parsed ApiError', () => {
+    const axiosError = makeAxiosError(400, [
+      { id: 'PARAMETER name', message: 'Name is required' },
+    ]);
+    (axiosError.response as any).headers = { 'x-request-id': 'req-123' };
+    const wrapped = wrapApiError(axiosError);
+    expect(wrapped.status).toBe(400);
+    expect(wrapped.code).toBe('VALIDATION_ERROR');
+    expect(wrapped.fieldErrors).toEqual([{ field: 'name', message: 'Name is required' }]);
+    expect(wrapped.requestId).toBe('req-123');
+  });
+
+  it('omits undefined optional fields rather than assigning undefined', () => {
+    const wrapped = wrapApiError(new Error('plain'));
+    expect(Object.prototype.hasOwnProperty.call(wrapped, 'code')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(wrapped, 'fieldErrors')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(wrapped, 'requestId')).toBe(false);
   });
 });

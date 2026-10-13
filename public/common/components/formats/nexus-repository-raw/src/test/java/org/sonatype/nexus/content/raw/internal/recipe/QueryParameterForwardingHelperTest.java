@@ -15,6 +15,7 @@ package org.sonatype.nexus.content.raw.internal.recipe;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.sonatype.nexus.repository.view.Parameters;
 
@@ -441,5 +442,83 @@ class QueryParameterForwardingHelperTest
 
     // 51 values on one key still exceeds the limit
     assertThrows(BadRequestException.class, () -> helper.buildQueryString(parameters));
+  }
+
+  @Test
+  void buildQueryString_valuelessParam_servletEmptyString_withValuelessSet_noEqualsSign() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("flag", ""); // Servlet API gives "" for ?flag (valueless)
+    parameters.set("query", "hello");
+
+    String result = helper.buildQueryString(parameters, Set.of("flag"));
+
+    assertThat(result, is("flag&query=hello"));
+  }
+
+  @Test
+  void buildQueryString_emptyValueParam_notInValuelessSet_preservesEqualsSign() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("empty", ""); // ?empty= (genuinely empty value)
+    parameters.set("flag", ""); // ?flag (valueless)
+    parameters.set("query", "hello world"); // Servlet decodes + to space
+
+    String result = helper.buildQueryString(parameters, Set.of("flag"));
+
+    assertThat(result, is("empty=&flag&query=hello+world")); // URLEncoder encodes space as +
+  }
+
+  @Test
+  void buildQueryString_mixedValuelessAndValuedSameKey_bothHandledCorrectly() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("flag", "", "hello"); // ?flag&flag=hello — one valueless, one with value
+    parameters.set("query", "world");
+
+    String result = helper.buildQueryString(parameters, Set.of("flag"));
+
+    assertThat(result, containsString("flag&flag=hello"));
+    assertThat(result, containsString("query=world"));
+  }
+
+  @Test
+  void buildQueryString_ampersandInValue_percentEncoded() {
+    // Servlet decodes %26 to &; URLEncoder then re-encodes & to %26.
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("special", "a&b");
+
+    String result = helper.buildQueryString(parameters);
+
+    assertThat(result, is("special=a%26b"));
+  }
+
+  @Test
+  void buildQueryString_slashInValue_percentEncoded() {
+    // Servlet decodes %2F to /; URLEncoder then re-encodes / to %2F.
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("path", "/foo/bar");
+
+    String result = helper.buildQueryString(parameters);
+
+    assertThat(result, is("path=%2Ffoo%2Fbar"));
+  }
+
+  @Test
+  void buildQueryString_spaceInValue_encodedAsPlus() {
+    // Servlet decodes %20 to a space before passing values to Parameters.
+    // URLEncoder encodes space as +, which is form-encoding semantics.
+    helper.updateConfig(true, Collections.emptyList());
+    Parameters parameters = new Parameters();
+    parameters.set("q", "hello world");
+    String result = helper.buildQueryString(parameters);
+    assertThat(result, is("q=hello+world"));
   }
 }

@@ -12,7 +12,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { restClient, parseApiError, ENDPOINTS, urlBuilder, API_INTERNAL_UI } from '../../../../../../interface/api';
+import { restClient, wrapApiError, ENDPOINTS, urlBuilder, API_INTERNAL_UI } from '../../../../../../interface/api';
 import { Role, RoleReference, PrivilegeReference, RoleSource, RoleFormData, NEXUS_SOURCE, DEFAULT_SOURCE } from './types';
 
 /**
@@ -105,8 +105,7 @@ export function useRolesApi() {
       return restRoles.map(restToRole);
     } catch (err: unknown) {
       console.error('Failed to fetch roles:', err);
-      const apiError = parseApiError(err);
-      throw new Error(apiError.message);
+      throw wrapApiError(err);
     }
   }, []);
 
@@ -121,8 +120,7 @@ export function useRolesApi() {
       return restRoles.map((r) => ({ id: r.id, name: r.name }));
     } catch (err: unknown) {
       console.error('Failed to fetch role references:', err);
-      const apiError = parseApiError(err);
-      throw new Error(apiError.message);
+      throw wrapApiError(err);
     }
   }, []);
 
@@ -140,8 +138,7 @@ export function useRolesApi() {
       return sources;
     } catch (err: unknown) {
       console.error('Failed to fetch role sources:', err);
-      const apiError = parseApiError(err);
-      throw new Error(apiError.message);
+      throw wrapApiError(err);
     }
   }, []);
 
@@ -156,8 +153,7 @@ export function useRolesApi() {
       return restRoles.map(restToRole);
     } catch (err: unknown) {
       console.error('Failed to fetch roles from source:', err);
-      const apiError = parseApiError(err);
-      throw new Error(apiError.message);
+      throw wrapApiError(err);
     }
   }, []);
 
@@ -174,8 +170,7 @@ export function useRolesApi() {
       return restRoles.map(restToRole);
     } catch (err: unknown) {
       console.error('Failed to search roles:', err);
-      const apiError = parseApiError(err);
-      throw new Error(apiError.message);
+      throw wrapApiError(err);
     }
   }, []);
 
@@ -188,8 +183,7 @@ export function useRolesApi() {
       return restPrivileges.map((p) => ({ id: p.name, name: p.name, description: p.description }));
     } catch (err: unknown) {
       console.error('Failed to fetch privilege references:', err);
-      const apiError = parseApiError(err);
-      throw new Error(apiError.message);
+      throw wrapApiError(err);
     }
   }, []);
 
@@ -202,13 +196,13 @@ export function useRolesApi() {
       const restRole = await restClient.get<RestRole>(url);
       return restToRole(restRole);
     } catch (err: unknown) {
-      const apiError = parseApiError(err);
-      // Return null for 404 (not found) instead of throwing
-      if (apiError.status === 404) {
+      const wrapped = wrapApiError(err);
+      // Return null for 404 (not found) instead of throwing.
+      if (wrapped.status === 404) {
         return null;
       }
       console.error('Failed to find role:', err);
-      throw new Error(apiError.message);
+      throw wrapped;
     }
   }, []);
 
@@ -230,9 +224,9 @@ export function useRolesApi() {
       const restRole = await restClient.post<RestRole>(url, payload);
       return restToRole(restRole);
     } catch (err: unknown) {
-      const apiError = parseApiError(err);
-      setError(apiError.message);
-      throw new Error(apiError.message);
+      const wrapped = wrapApiError(err);
+      setError(wrapped.message);
+      throw wrapped;
     } finally {
       setLoading(false);
     }
@@ -256,9 +250,9 @@ export function useRolesApi() {
       const restRole = await restClient.put<RestRole>(url, payload);
       return restToRole(restRole);
     } catch (err: unknown) {
-      const apiError = parseApiError(err);
-      setError(apiError.message);
-      throw new Error(apiError.message);
+      const wrapped = wrapApiError(err);
+      setError(wrapped.message);
+      throw wrapped;
     } finally {
       setLoading(false);
     }
@@ -274,9 +268,9 @@ export function useRolesApi() {
       const url = urlBuilder.roles.delete(roleId);
       await restClient.delete(url);
     } catch (err: unknown) {
-      const apiError = parseApiError(err);
-      setError(apiError.message);
-      throw new Error(apiError.message);
+      const wrapped = wrapApiError(err);
+      setError(wrapped.message);
+      throw wrapped;
     } finally {
       setLoading(false);
     }

@@ -92,7 +92,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -176,21 +176,21 @@ public class CleanupPolicyResource
       final CleanupPolicyRepositoryAssociator repositoryAssociator,
       @Value(CLEANUP_RETAIN_ALL_FORMATS_NAMED_VALUE) final boolean retainAllFormatsEnabled)
   {
-    this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
-    this.formats = checkNotNull(formats);
+    this.cleanupPolicyStorage = requireNonNull(cleanupPolicyStorage);
+    this.formats = requireNonNull(formats);
     this.formatNames = formats.stream().map(Format::getValue).collect(Collectors.toList());
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
     this.formatNames.add(ALL_FORMATS);
     this.cleanupFormatConfigurationMap =
-        QualifierUtil.buildQualifierBeanMap(checkNotNull(cleanupFormatConfigurationList));
+        QualifierUtil.buildQualifierBeanMap(requireNonNull(cleanupFormatConfigurationList));
     this.defaultCleanupFormatConfiguration =
-        checkNotNull(this.cleanupFormatConfigurationMap.get(DefaultCleanupPolicyConfiguration.NAME));
-    this.cleanupPreviewHelper = checkNotNull(cleanupPreviewHelper);
-    this.repositoryManager = checkNotNull(repositoryManager);
+        requireNonNull(this.cleanupFormatConfigurationMap.get(DefaultCleanupPolicyConfiguration.NAME));
+    this.cleanupPreviewHelper = requireNonNull(cleanupPreviewHelper);
+    this.repositoryManager = requireNonNull(repositoryManager);
     this.isPreviewEnabled = isPreviewEnabled;
-    this.csvCleanupPreviewContentWriter = checkNotNull(csvCleanupPreviewContentWriter);
-    this.cleanupPolicyValidators = checkNotNull(cleanupPolicyValidators);
-    this.repositoryAssociator = checkNotNull(repositoryAssociator);
+    this.csvCleanupPreviewContentWriter = requireNonNull(csvCleanupPreviewContentWriter);
+    this.cleanupPolicyValidators = requireNonNull(cleanupPolicyValidators);
+    this.repositoryAssociator = requireNonNull(repositoryAssociator);
     this.retainAllFormatsEnabled = retainAllFormatsEnabled;
   }
 

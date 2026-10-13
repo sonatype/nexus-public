@@ -28,7 +28,7 @@ import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Base class for {@link BlobStoreMetricsService} implementations.
@@ -55,8 +55,8 @@ public abstract class DatastoreBlobStoreMetricsServiceSupport<B extends BlobStor
       final BlobStoreMetricsStore blobStoreMetricsStore)
   {
     this.metricsFlushPeriodSeconds = metricsFlushPeriodSeconds;
-    this.jobService = checkNotNull(jobService);
-    this.blobStoreMetricsStore = checkNotNull(blobStoreMetricsStore);
+    this.jobService = requireNonNull(jobService);
+    this.blobStoreMetricsStore = requireNonNull(blobStoreMetricsStore);
 
     this.datastoreBlobStoreMetricsContainer = new DatastoreBlobStoreMetricsContainer();
   }

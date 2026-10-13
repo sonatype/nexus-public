@@ -382,7 +382,7 @@ describe('GASecurityTab', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows evaluation date when provided', () => {
+    it('shows the evaluation date with date, time and timezone', () => {
       mockHookResult = {
         ...defaultHookResult,
         iqConnected: true,
@@ -398,7 +398,16 @@ describe('GASecurityTab', () => {
       };
       renderTab();
 
-      expect(screen.getByText(/2026-03-04T12:00:00Z/)).toBeInTheDocument();
+      /*
+       * The raw ISO string is no longer shown: it goes through the shared formatter (NEXUS-54427).
+       * Matched by shape, not by exact wall clock — the offset depends on the timezone of the
+       * machine running the suite. Exact per-zone output is pinned in
+       * shared/__tests__/dateFormat.test.ts.
+       */
+      expect(
+        screen.getByText(/^Evaluated: Mar \d{1,2}, 2026, \d{2}:\d{2} GMT/),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/2026-03-04T12:00:00Z/)).not.toBeInTheDocument();
     });
 
     it('does NOT show evaluation date when absent', () => {

@@ -23,6 +23,7 @@ import {
   SettingsAlert,
   SettingsButton
 } from '../../../../shared/form';
+import { useIsLicensedEdition } from '../../../../shared/hooks';
 import { useS3DropdownValues } from './useBlobStores';
 import type { BlobStoreFormData, S3BlobStoreConfig, } from './types';
 import './S3BlobStoreSettings.scss';
@@ -138,7 +139,7 @@ export default function S3BlobStoreSettings({
 }: S3BlobStoreSettingsProps) {
   const { values: dropdownValues, loading: dropdownLoading } = useS3DropdownValues();
 
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const isFailoverAvailable = ExtJS.state().getValue('S3FailoverEnabled', false);
 
   const config: S3BlobStoreConfig = (data.bucketConfiguration as S3BlobStoreConfig) || {
@@ -247,7 +248,7 @@ export default function S3BlobStoreSettings({
           disabled={disabled}
         />
 
-        {isProEdition && (
+        {isLicensedEdition && (
           <SettingsCheckbox
             name="s3-presigned"
             label={STRINGS.BASIC.PRESIGNED.label}

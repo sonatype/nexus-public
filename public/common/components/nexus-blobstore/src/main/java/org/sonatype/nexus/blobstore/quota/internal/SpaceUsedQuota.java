@@ -23,7 +23,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.common.text.UnitFormatter.formatStorage;
 
@@ -48,7 +48,7 @@ public class SpaceUsedQuota
 
   @Override
   public BlobStoreQuotaResult check(final BlobStore blobStore) {
-    checkNotNull(blobStore);
+    requireNonNull(blobStore);
 
     long usedSpace = blobStore.getMetrics().getTotalSize();
     long limit = getLimit(blobStore.getBlobStoreConfiguration());

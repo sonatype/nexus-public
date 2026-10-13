@@ -49,6 +49,7 @@ export type {
 // Error handling
 export {
   parseApiError,
+  wrapApiError,
   getErrorMessage,
   getFieldError,
   hasFieldErrors,
@@ -61,6 +62,7 @@ export {
   isServerError,
   isNetworkError,
 } from './error-handler';
+export type { ThrownApiError } from './error-handler';
 
 // REST client
 export {

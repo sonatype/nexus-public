@@ -32,7 +32,6 @@ import {
   MalwareRiskPageSuper,
   BrowsePage,
   AuditLogPage,
-  RepositoryProfilePage,
   TagsPage,
   TagDetailPage,
   UploadPage,
@@ -42,7 +41,12 @@ import {
   GADetailPage,
   CustomSearchPage,
   UnifiedSearchPage,
+  TrashPage as TrashPageRaw,
+  withFeatureGate,
+  PRO_FAMILY_EDITIONS,
 } from '@sonatype/nexus-ui-plugin';
+
+const TrashPage = withFeatureGate(TrashPageRaw, 'system.trash', 'Trash');
 
 export const previewBrowseRoutes = [
   // =============================================================================
@@ -300,33 +304,6 @@ export const previewBrowseRoutes = [
   },
 
   // =============================================================================
-  // REPOSITORY PROFILE (Browse Context) - IMPLEMENTED ✅
-  // Uses SAME component as Settings profile, but rendered without Settings sidebar
-  // This is a sibling route so it replaces BrowsePage entirely
-  // =============================================================================
-  {
-    name: 'preview.browse.repository-profile',
-    url: '/repository-profile/:repositoryName?tab',
-    component: RepositoryProfilePage,
-    params: {
-      repositoryName: { type: 'string', dynamic: true },
-      tab: { value: null, type: 'string', dynamic: true },
-    },
-    resolve: [
-      {
-        token: 'repositoryName',
-        deps: ['$stateParams'],
-        resolveFn: ($stateParams) => $stateParams.repositoryName,
-      },
-      {
-        token: 'context',
-        resolveFn: () => 'browse', // Tells component to show "Back to Browse"
-      },
-    ],
-    data: { title: 'Repository Profile' },
-  },
-
-  // =============================================================================
   // UPLOAD - IMPLEMENTED ✅
   // =============================================================================
   // Base upload route - abstract container
@@ -375,11 +352,11 @@ export const previewBrowseRoutes = [
     component: TagsPage,
     data: {
       title: 'Tags',
-      // Mirrors Default UI BROWSE.TAGS.ROOT (browseRoutes.js). The isProEdition gate in
-      // LeftNavigationMenuRadix.tsx remains (now redundant with editions: ['PRO'], but harmless).
+      // Mirrors Default UI BROWSE.TAGS.ROOT (browseRoutes.js). The isLicensedEdition gate in
+      // LeftNavigationMenuRadix.tsx remains (now redundant with the editions gate, but harmless).
       visibilityRequirements: {
         permissions: [Permissions.TAGS.READ],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
     },
   },
@@ -398,7 +375,20 @@ export const previewBrowseRoutes = [
       // redirects to the dashboard instead of loading and failing with a 403 (NEXUS-54048).
       visibilityRequirements: {
         permissions: [Permissions.TAGS.READ],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
+      },
+    },
+  },
+  {
+    name: 'preview.browse.trash',
+    url: '/trash',
+    component: TrashPage,
+    data: {
+      title: 'Trash',
+      visibilityRequirements: {
+        statesEnabled: [{ key: 'nexus.softDelete.enabled', defaultValue: false }],
+        permissions: [Permissions.ADMIN],
+        editions: PRO_FAMILY_EDITIONS,
       },
     },
   },
@@ -495,7 +485,7 @@ export const previewBrowseRoutes = [
   // =============================================================================
   {
     name: 'preview.browse.search.component',
-    url: '/component/:gaId?version',
+    url: '/component/:gaId?version&repository&group',
     component: GADetailPage,
     params: {
       // 'path' (/[^/]*/), not 'string' (/.*/): the default string pattern matches across `/`, so
@@ -507,6 +497,11 @@ export const previewBrowseRoutes = [
       gaId: { type: 'path' },
       // dynamic: without it, changing `version` re-enters the state and remounts the page.
       version: { type: 'string', value: null, squash: true, dynamic: true },
+      // Header facets (NEXUS-54428): persisted so the group/repository context survives
+      // deep-links and back/forward. dynamic so updating them re-runs no resolves and does
+      // not remount GADetailPage — the header's selectors just re-render.
+      repository: { type: 'string', value: null, squash: true, dynamic: true },
+      group: { type: 'string', value: null, squash: true, dynamic: true },
     },
     resolve: [
       { token: 'gaId', deps: ['$stateParams'], resolveFn: ($stateParams) => $stateParams.gaId },

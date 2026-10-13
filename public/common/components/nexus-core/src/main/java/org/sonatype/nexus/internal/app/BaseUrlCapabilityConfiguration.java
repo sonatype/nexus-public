@@ -19,7 +19,7 @@ import org.sonatype.nexus.validation.constraint.UrlString;
 
 import jakarta.validation.constraints.NotBlank;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link BaseUrlCapability} configuration.
@@ -36,7 +36,7 @@ public class BaseUrlCapabilityConfiguration
   private String url;
 
   public BaseUrlCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
+    requireNonNull(properties);
     this.url = properties.get(URL);
   }
 

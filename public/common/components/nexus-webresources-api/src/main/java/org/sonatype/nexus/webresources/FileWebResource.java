@@ -18,7 +18,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * File-based {@link WebResource}.
@@ -37,9 +37,9 @@ public class FileWebResource
   private final boolean cachable;
 
   public FileWebResource(final File file, final String path, final String contentType, final boolean cachable) {
-    this.file = checkNotNull(file);
-    this.path = checkNotNull(path);
-    this.contentType = checkNotNull(contentType);
+    this.file = requireNonNull(file);
+    this.path = requireNonNull(path);
+    this.contentType = requireNonNull(contentType);
     this.cachable = cachable;
   }
 

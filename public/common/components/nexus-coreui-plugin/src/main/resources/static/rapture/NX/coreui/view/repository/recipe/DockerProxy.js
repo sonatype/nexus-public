@@ -51,7 +51,7 @@ Ext.define('NX.coreui.view.repository.recipe.DockerProxy', {
     me.items = [
       {xtype: 'nx-coreui-repository-docker-connector-facet'},
       {xtype: 'nx-coreui-repository-docker-v1-facet'},
-      {xtype: 'nx-coreui-repository-firewall-facet'},
+      {xtype: 'nx-coreui-repository-firewall-facet', dockerProxy: true},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},

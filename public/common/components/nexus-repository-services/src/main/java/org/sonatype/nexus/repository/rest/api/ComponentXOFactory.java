@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,7 +30,7 @@ public class ComponentXOFactory
 
   @Autowired
   public ComponentXOFactory(final Set<ComponentXODecorator> componentXODecorators) {
-    this.componentXODecorators = checkNotNull(componentXODecorators);
+    this.componentXODecorators = requireNonNull(componentXODecorators);
   }
 
   public ComponentXO createComponentXO() {

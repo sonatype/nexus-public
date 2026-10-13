@@ -35,7 +35,7 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link AuthenticatingRealm} that maps bearer tokens to valid {@link Subject}s. This class provides format agnostic
@@ -66,16 +66,16 @@ public abstract class BearerTokenRealm
       final UserPrincipalsHelper principalsHelper,
       final String format)
   {
-    this.keyStore = checkNotNull(keyStore);
-    this.principalsHelper = checkNotNull(principalsHelper);
-    this.format = checkNotNull(format);
+    this.keyStore = requireNonNull(keyStore);
+    this.principalsHelper = requireNonNull(principalsHelper);
+    this.format = requireNonNull(format);
     setName(format);
     setAuthenticationCachingEnabled(true);
   }
 
   @Autowired
   protected void setRequestProvider(final Provider<HttpServletRequest> requestProvider) {
-    this.requestProvider = checkNotNull(requestProvider);
+    this.requestProvider = requireNonNull(requestProvider);
   }
 
   @Override
@@ -85,7 +85,7 @@ public abstract class BearerTokenRealm
 
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token) {
-    checkNotNull(token);
+    requireNonNull(token);
     return getPrincipals(token).map(principals -> {
       try {
         if (anonymousAndSupported(principals) || principalsHelper.getUserStatus(principals).isActive()) {

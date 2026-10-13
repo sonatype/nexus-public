@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -48,8 +48,8 @@ public class RepositoryCacheInvalidationService
       final RepositoryManager repositoryManager,
       final EventManager eventManager)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.eventManager = checkNotNull(eventManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   public void processCachesInvalidation(final Repository repository) {
@@ -62,7 +62,7 @@ public class RepositoryCacheInvalidationService
    * This is a no-op for hosted repositories.
    */
   private void invalidateCaches(final Repository repository, final boolean isTriggeredByCurrentNode) {
-    checkNotNull(repository);
+    requireNonNull(repository);
     if (GroupType.NAME.equals(repository.getType().getValue())) {
       invalidateGroupCaches(repository);
     }
@@ -78,7 +78,7 @@ public class RepositoryCacheInvalidationService
    * Invalidates the group caches for given repository.
    */
   private static void invalidateGroupCaches(final Repository repository) {
-    checkNotNull(repository);
+    requireNonNull(repository);
     checkArgument(GroupType.NAME.equals(repository.getType().getValue()));
     GroupFacet groupFacet = repository.facet(GroupFacet.class);
     groupFacet.invalidateGroupCaches();
@@ -88,7 +88,7 @@ public class RepositoryCacheInvalidationService
    * Invalidates the proxy and negative caches for given repository.
    */
   private static void invalidateProxyAndNegativeCaches(final Repository repository) {
-    checkNotNull(repository);
+    requireNonNull(repository);
     checkArgument(ProxyType.NAME.equals(repository.getType().getValue()));
     ProxyFacet proxyFacet = repository.facet(ProxyFacet.class);
     proxyFacet.invalidateProxyCaches();
@@ -104,6 +104,11 @@ public class RepositoryCacheInvalidationService
 
   @Subscribe
   public void on(final RepositoryCacheInvalidationEvent event) {
-    invalidateCaches(repositoryManager.get(event.getRepositoryName()), false);
+    // The repository may not be materialized on this node yet (e.g. an in-flight create); there is then no
+    // in-memory cache to invalidate -- skip rather than NPE.
+    Repository repository = repositoryManager.get(event.getRepositoryName());
+    if (repository != null) {
+      invalidateCaches(repository, false);
+    }
   }
 }

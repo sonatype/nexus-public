@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Standard {@link WebApplicationException} exception mapper.
@@ -67,7 +67,7 @@ public class WebappExceptionMapper
 
   @Override
   public Response toResponse(final WebApplicationException exception) {
-    checkNotNull(exception);
+    requireNonNull(exception);
 
     // Generate unique identifier
     final String id = generateFaultId();

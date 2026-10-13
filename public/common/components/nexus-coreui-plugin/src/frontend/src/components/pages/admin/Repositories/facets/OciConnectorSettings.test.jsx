@@ -20,27 +20,31 @@ import {render, screen} from '@testing-library/react';
 import OciConnectorSettings from './OciConnectorSettings';
 import UIStrings from '../../../../../constants/UIStrings';
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
-    isProEdition: jest.fn().mockReturnValue(true)
-  },
-  FormUtils: {
-    checkboxProps: jest.fn(() => ({isChecked: false})),
-    handleUpdate: jest.fn(() => jest.fn()),
-    fieldProps: jest.fn(() => ({value: ''})),
-    selectProps: jest.fn((name, state) => {
-      // Walk the dotted path so the cosign.enforcement select renders the right option.
-      const path = name.split('.');
-      let value = state?.context?.data;
-      for (const segment of path) {
-        value = value?.[segment];
-        if (value === undefined) break;
-      }
-      return {value: value ?? ''};
-    })
-  }
-}));
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const isProEdition = jest.fn().mockReturnValue(true);
+  return {
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+    ExtJS: {
+      isProEdition
+    },
+    useIsLicensedEdition: (...args) => isProEdition(...args),
+    FormUtils: {
+      checkboxProps: jest.fn(() => ({isChecked: false})),
+      handleUpdate: jest.fn(() => jest.fn()),
+      fieldProps: jest.fn(() => ({value: ''})),
+      selectProps: jest.fn((name, state) => {
+        // Walk the dotted path so the cosign.enforcement select renders the right option.
+        const path = name.split('.');
+        let value = state?.context?.data;
+        for (const segment of path) {
+          value = value?.[segment];
+          if (value === undefined) break;
+        }
+        return {value: value ?? ''};
+      })
+    }
+  };
+});
 
 const {CONNECTORS, COSIGN} = UIStrings.REPOSITORIES.EDITOR.OCI;
 

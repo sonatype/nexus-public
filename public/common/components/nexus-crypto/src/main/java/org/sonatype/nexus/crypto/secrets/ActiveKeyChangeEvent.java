@@ -17,7 +17,7 @@ import org.sonatype.nexus.common.event.EventWithSource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An event fired when the active secret encryption key is changed.
@@ -37,7 +37,7 @@ public class ActiveKeyChangeEvent
       @JsonProperty("previousKeyId") final String previousKeyId,
       @JsonProperty("userId") final String userId)
   {
-    this.newKeyId = checkNotNull(newKeyId);
+    this.newKeyId = requireNonNull(newKeyId);
     this.previousKeyId = previousKeyId;
     this.userId = userId;
   }

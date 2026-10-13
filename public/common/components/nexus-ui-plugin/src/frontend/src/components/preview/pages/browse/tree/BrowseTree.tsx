@@ -72,7 +72,10 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
     const selector = `[data-node-id="${CSS.escape(nodeId)}"]`;
     const nodeElement = treeRef.current.querySelector(selector);
 
-    if (nodeElement) {
+    // The scroll is scheduled on the next frame, so it can run after the row has
+    // gone, and not every host implements scrollIntoView. Neither case is worth
+    // failing over: scrolling is a convenience, not part of the tree's contract.
+    if (typeof nodeElement?.scrollIntoView === 'function') {
       nodeElement.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
@@ -94,6 +97,7 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
       },
       scrollToNode,
       removeNode: (nodeId: string) => actions.removeNode(nodeId),
+      reconcileNode: (nodeId: string) => actions.reconcileNode(nodeId),
     }),
     [actions, scrollToNode]
   );
@@ -124,11 +128,10 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
 
       lastExpandedPathRef.current = initialPath;
 
-      // Small delay to let the route fully settle
-      const timer = setTimeout(() => {
-        actions.expandToPath(initialPath);
-      }, 50);
-      return () => clearTimeout(timer);
+      // expandToPath is async and its own guards (lastExpandedPathRef above,
+      // plus the loading/selection checks) make it safe to start immediately —
+      // no timer needed to "let the route settle".
+      actions.expandToPath(initialPath);
     }
   }, [initialPath, state.nodes.length, state.loading, actions, state.selectedNodeId]);
 
@@ -212,22 +215,51 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
    */
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent, nodeId: string) => {
+      // Never hijack arrow keys from a nested control (row action menu, link,
+      // text input). Those own their own key handling; the tree only reacts when
+      // the row itself has focus.
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        target !== event.currentTarget &&
+        target.closest('input, textarea, select, [contenteditable="true"], [role="menu"], [role="menuitem"], a[href], button')
+      ) {
+        return;
+      }
+
+      const nodeState = findNodeInState(state.nodes, nodeId);
+
       switch (event.key) {
         case 'ArrowDown':
+          // The row that received the key is the traversal origin, so navigation
+          // works on the first press too (before any node has taken focus).
           event.preventDefault();
-          actions.focusNext();
+          actions.focusNext(nodeId);
           break;
         case 'ArrowUp':
           event.preventDefault();
-          actions.focusPrevious();
+          actions.focusPrevious(nodeId);
           break;
         case 'ArrowRight':
+          // Expand a closed branch; on an already-open branch move inwards.
+          // ArrowRight must never collapse.
           event.preventDefault();
-          actions.toggle(nodeId);
+          if (nodeState && !nodeState.node.leaf) {
+            if (nodeState.expanded) {
+              actions.focusFirstChild(nodeId);
+            } else {
+              actions.expand(nodeId);
+            }
+          }
           break;
         case 'ArrowLeft':
+          // Close an open branch; from a closed node step out to the parent.
           event.preventDefault();
-          actions.focusParent();
+          if (nodeState && !nodeState.node.leaf && nodeState.expanded) {
+            actions.collapse(nodeId);
+          } else {
+            actions.focusParent(nodeId);
+          }
           break;
         case 'Enter':
         case ' ': {
@@ -254,6 +286,11 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
 
   // Build the base URL for node links
   const fullBaseUrl = `${baseUrl}/${repositoryName}`;
+
+  // Roving tab stop: until the user drives focus into the tree, the first
+  // visible node is the single tabbable item (WAI-ARIA tree pattern). Holding
+  // the tab stop does not move DOM focus, so nothing is stolen on mount.
+  const tabStopNodeId = state.focusedNodeId ?? state.nodes[0]?.node.id;
 
   // Loading state
   if (state.loading && state.nodes.length === 0) {
@@ -317,7 +354,7 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
       aria-label={`${repositoryName} contents`}
       data-testid="browse-tree"
     >
-      {state.nodes.map((nodeState) => (
+      {state.nodes.map((nodeState, index) => (
         <BrowseTreeNode
           key={nodeState.node.id}
           nodeState={nodeState}
@@ -325,10 +362,13 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
           depth={0}
           onToggle={handleToggle}
           onSelect={handleSelect}
-          isFocused={state.focusedNodeId === nodeState.node.id}
+          focusedNodeId={state.focusedNodeId}
+          tabStopNodeId={tabStopNodeId}
           selectedNodeId={state.selectedNodeId}
           onKeyDown={handleKeyDown}
           baseUrl={fullBaseUrl}
+          siblingCount={state.nodes.length}
+          siblingIndex={index + 1}
         />
       ))}
     </Box>
@@ -340,7 +380,7 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
  * Tree node IDs contain URL-encoded segments (e.g. %40v for @v, %21data%21dog for !data!dog)
  * while initialPath from the URL is already decoded. This helper normalizes both for comparison.
  */
-function safeDecodeURI(value: string | undefined): string | undefined {
+export function safeDecodeURI(value: string | undefined): string | undefined {
   if (!value) return value;
   try {
     return decodeURIComponent(value);
@@ -353,9 +393,9 @@ function safeDecodeURI(value: string | undefined): string | undefined {
  * Helper to find a node in the tree state by ID.
  */
 function findNodeInState(
-  nodes: readonly { node: BrowseNode; children: readonly any[] | null }[],
+  nodes: readonly { node: BrowseNode; children: readonly any[] | null; expanded?: boolean }[],
   nodeId: string
-): { node: BrowseNode } | null {
+): { node: BrowseNode; expanded?: boolean } | null {
   for (const nodeState of nodes) {
     if (nodeState.node.id === nodeId) {
       return nodeState;

@@ -15,6 +15,13 @@
   &__membership-item {
     background: var(--gray-2);
     border-radius: var(--radius-2);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+
+    &:hover {
+      background: var(--gray-3);
+    }
   }
 
   &__membership-placeholder {

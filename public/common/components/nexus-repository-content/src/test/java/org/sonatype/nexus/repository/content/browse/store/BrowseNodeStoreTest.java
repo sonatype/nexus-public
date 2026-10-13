@@ -240,8 +240,50 @@ class BrowseNodeStoreTest
     }
   }
 
+  // --- NEXUS-51733: H2 parity for soft-delete browse-node cleanup ---
+
+  @DatabaseTest
+  void deleteByAssetIdAndPath_returnsParentAndRemovesRow() {
+    Integer assetId = internalAssetId(asset1);
+    String path = gammaOneAlpha.getPath();
+    Long expectedParent = gammaOne.getNodeId();
+
+    Long actualParent = browseNodeStore.deleteByAssetIdAndPath(assetId, path);
+
+    assertThat(actualParent, is(expectedParent));
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+      assertThat(dao.getByRequestPath(1, path).isEmpty(), is(true));
+    }
+  }
+
+  @DatabaseTest
+  void deleteByAssetId_returnsParentAndRemovesRow() {
+    Integer assetId = internalAssetId(asset2);
+    Long expectedParent = beta.getNodeId();
+
+    Long actualParent = browseNodeStore.deleteByAssetId(assetId);
+
+    assertThat(actualParent, is(expectedParent));
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+      assertThat(dao.getByRequestPath(1, betaThree.getPath()).isEmpty(), is(true));
+    }
+  }
+
+  @DatabaseTest
+  void getNodeParents_returnsAncestors() {
+    List<BrowseNode> parents = browseNodeStore.getNodeParents(gammaOneAlpha.getNodeId());
+
+    // Walks up: gammaOneAlpha -> gammaOne -> gamma (root parent_id == 0).
+    // BrowseNode interface has no getNodeId(); the resultMap returns BrowseNodeData.
+    assertThat(parents.size(), is(2));
+    assertThat(((BrowseNodeData) parents.get(0)).getNodeId(), is(gammaOne.getNodeId()));
+    assertThat(((BrowseNodeData) parents.get(1)).getNodeId(), is(gamma.getNodeId()));
+  }
+
   private static List<BrowseNode> getListing(final BrowseNodeDAO dao, final String... paths) {
-    List<BrowseNode> listing = dao.getByDisplayPath(1, asList(paths), 100, null, null);
+    List<BrowseNode> listing = dao.getByDisplayPath(1, asList(paths), 100, null, null, true);
     listing.sort(byName);
     return listing;
   }

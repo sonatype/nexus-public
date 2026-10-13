@@ -24,7 +24,7 @@ import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.scheduling.Task;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -44,8 +44,8 @@ public class H2BackupTask
 
   @Autowired
   public H2BackupTask(final DataStoreManager dataStoreManager, final ApplicationDirectories applicationDirectories) {
-    this.dataStoreManager = checkNotNull(dataStoreManager);
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.dataStoreManager = requireNonNull(dataStoreManager);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
   }
 
   @Override
@@ -60,7 +60,7 @@ public class H2BackupTask
             "Unable to locate datastore with name " + DEFAULT_DATASTORE_NAME));
 
     // Trim whitespace from location to prevent silent failures
-    String configuredLocation = checkNotNull(
+    String configuredLocation = requireNonNull(
         getConfiguration().getString(H2BackupTaskDescriptor.LOCATION),
         "Backup location not configured");
     String trimmedLocation = configuredLocation.trim();

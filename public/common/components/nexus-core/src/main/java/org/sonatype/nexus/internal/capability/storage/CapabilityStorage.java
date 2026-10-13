@@ -66,6 +66,14 @@ public interface CapabilityStorage
   Map<CapabilityIdentity, CapabilityStorageItem> getAll();
 
   /**
+   * Retrieves only the stored capabilities of the given {@code type}, so a caller that needs a single
+   * capability type does not read the entire table.
+   *
+   * @return capabilities of that type (never null)
+   */
+  Map<CapabilityIdentity, CapabilityStorageItem> getAllByType(String type);
+
+  /**
    * @since 3.20
    */
   CapabilityStorageItem newStorageItem(

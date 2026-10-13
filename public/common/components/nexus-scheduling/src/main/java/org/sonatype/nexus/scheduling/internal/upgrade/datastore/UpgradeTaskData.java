@@ -14,7 +14,7 @@ package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
 
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class UpgradeTaskData
 {
@@ -37,8 +37,8 @@ public class UpgradeTaskData
   }
 
   public UpgradeTaskData(final String taskId, final Map<String, String> configuration) {
-    this.taskId = checkNotNull(taskId);
-    this.configuration = checkNotNull(configuration);
+    this.taskId = requireNonNull(taskId);
+    this.configuration = requireNonNull(configuration);
   }
 
   /**

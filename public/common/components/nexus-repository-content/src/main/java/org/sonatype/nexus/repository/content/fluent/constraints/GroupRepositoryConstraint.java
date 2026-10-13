@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.group.GroupFacet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 
 /**
@@ -33,7 +33,7 @@ public class GroupRepositoryConstraint
   private final GroupRepositoryLocation groupRepositoryLocation;
 
   public GroupRepositoryConstraint(final GroupRepositoryLocation groupRepositoryLocation) {
-    this.groupRepositoryLocation = checkNotNull(groupRepositoryLocation);
+    this.groupRepositoryLocation = requireNonNull(groupRepositoryLocation);
   }
 
   @Override

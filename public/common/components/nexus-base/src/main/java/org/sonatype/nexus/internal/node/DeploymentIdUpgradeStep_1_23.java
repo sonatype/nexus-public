@@ -22,7 +22,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -40,8 +40,8 @@ public class DeploymentIdUpgradeStep_1_23
       final UpgradeDeploymentIdStore deploymentIdStore,
       final UpgradeNodeIdStore nodeIdStore)
   {
-    this.nodeIdStore = checkNotNull(nodeIdStore);
-    this.deploymentIdStore = checkNotNull(deploymentIdStore);
+    this.nodeIdStore = requireNonNull(nodeIdStore);
+    this.deploymentIdStore = requireNonNull(deploymentIdStore);
   }
 
   @Override

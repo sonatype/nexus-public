@@ -31,7 +31,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.toInternalToken;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.trim;
@@ -61,8 +61,8 @@ abstract class ComponentsResourceSupport
       final ContentAuthHelper contentAuthHelper,
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter)
   {
-    this.contentAuthHelper = checkNotNull(contentAuthHelper);
-    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
+    this.contentAuthHelper = requireNonNull(contentAuthHelper);
+    this.repositoryManagerRESTAdapter = requireNonNull(repositoryManagerRESTAdapter);
   }
 
   @VisibleForTesting

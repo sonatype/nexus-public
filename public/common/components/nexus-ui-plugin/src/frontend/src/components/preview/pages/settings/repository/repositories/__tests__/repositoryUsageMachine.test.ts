@@ -36,16 +36,21 @@ jest.mock('../../../../../../../interface/api', () => ({
   ENDPOINTS: {},
 }));
 
-const mockMetricsData = [
-  {
-    name: 'test-maven-repo',
-    componentCount: 10,
-    assetCount: 25,
-    size: 1024000,
-  },
-];
+const mockMetricsPage = {
+  pageData: [
+    {
+      name: 'test-maven-repo',
+      componentCount: 10,
+      assetCount: 25,
+      size: 1024000,
+    },
+  ],
+  totalCount: 1,
+  page: 1,
+  pageSize: 1,
+};
 
-const mockGroupRepository = {
+const mockGroupRepositoryDetail = {
   name: 'test-group',
   type: 'group',
   format: 'maven2',
@@ -54,10 +59,14 @@ const mockGroupRepository = {
   },
 };
 
-const mockAllRepositories = [
+// Bare /v1/repositories list — used to find where-used candidate groups. This DTO carries `type`,
+// unlike the internal /internal/ui/repositories list used previously.
+const mockV1RepositoriesList = [
   { name: 'group1', type: 'group', format: 'maven2' },
   { name: 'group2', type: 'group', format: 'maven2' },
   { name: 'test-hosted', type: 'hosted', format: 'maven2' },
+  { name: 'repo1', type: 'hosted', format: 'maven2' },
+  { name: 'repo2', type: 'proxy', format: 'maven2' },
 ];
 
 async function runUntil(
@@ -90,17 +99,17 @@ describe('repositoryUsageMachine', () => {
     jest.clearAllMocks();
 
     mockRestClient.get.mockImplementation((url: string) => {
-      if (url.includes('/internal/ui/repositories/details')) {
-        return Promise.resolve(mockMetricsData);
+      if (url.includes('/internal/ui/repositories/details/filtered')) {
+        return Promise.resolve(mockMetricsPage);
       }
-      if (url.includes('/v1/repositories/')) {
+      if (url.includes('/internal/ui/repositories/repository/')) {
         if (url.includes('test-group')) {
-          return Promise.resolve(mockGroupRepository);
+          return Promise.resolve(mockGroupRepositoryDetail);
         }
         return Promise.resolve({ name: 'test-repo', type: 'hosted', format: 'maven2' });
       }
-      if (url.includes('/internal/ui/repositories') && !url.includes('/details')) {
-        return Promise.resolve(mockAllRepositories);
+      if (url.endsWith('/v1/repositories')) {
+        return Promise.resolve(mockV1RepositoriesList);
       }
       return Promise.resolve({});
     });
@@ -131,7 +140,7 @@ describe('repositoryUsageMachine', () => {
   });
 
   describe('loading -> loaded', () => {
-    it('fetches metrics data', async () => {
+    it('fetches metrics data via /details/filtered with a nameFilter', async () => {
       const machine = createRepositoryUsageMachine({
         repositoryName: 'test-maven-repo',
         repositoryType: 'hosted',
@@ -140,44 +149,54 @@ describe('repositoryUsageMachine', () => {
       expect(state.context.metrics?.componentCount).toBe(10);
       expect(state.context.metrics?.assetCount).toBe(25);
       expect(state.context.metrics?.totalSize).toBe(1024000);
+
+      const metricsCall = mockRestClient.get.mock.calls.find(([url]) =>
+        (url as string).includes('/details/filtered'));
+      expect(metricsCall?.[0]).toContain('nameFilter=test-maven-repo');
     });
 
-    it('fetches group members for group repository', async () => {
+    it('fetches group members via /internal/ui/repositories/repository/{name} for a group repository', async () => {
       const machine = createRepositoryUsageMachine({
         repositoryName: 'test-group',
         repositoryType: 'group',
       });
       const state = await runUntil(machine, (s) => s.matches('loaded'));
-      expect(state.context.groupMembers).toContain('repo1');
-      expect(state.context.groupMembers).toContain('repo2');
+      expect(state.context.groupMembers).toContainEqual({ name: 'repo1', type: 'hosted' });
+      expect(state.context.groupMembers).toContainEqual({ name: 'repo2', type: 'proxy' });
+
+      const memberCall = mockRestClient.get.mock.calls.find(([url]) =>
+        (url as string).includes('/internal/ui/repositories/repository/test-group'));
+      expect(memberCall).toBeTruthy();
+      // Must NOT use the public v1 endpoint, which never populates group.memberNames for
+      // GroupType/HostedType (RepositoryXO.attributes() only populates for ProxyType).
+      const v1Call = mockRestClient.get.mock.calls.find(([url]) =>
+        (url as string).includes('/v1/repositories/test-group'));
+      expect(v1Call).toBeUndefined();
     });
 
-    it('fetches where-used for hosted repository', async () => {
+    it('fetches where-used for hosted repository by listing /v1/repositories (which carries type) then checking each group\'s members', async () => {
       mockRestClient.get.mockImplementation((url: string) => {
-        if (url.includes('/internal/ui/repositories/details')) {
-          return Promise.resolve(mockMetricsData);
+        if (url.includes('/internal/ui/repositories/details/filtered')) {
+          return Promise.resolve(mockMetricsPage);
         }
-        if (url.includes('/v1/repositories/')) {
-          if (url.includes('group1')) {
-            return Promise.resolve({
-              name: 'group1',
-              type: 'group',
-              format: 'maven2',
-              group: { memberNames: ['test-maven-repo', 'other-repo'] },
-            });
-          }
-          if (url.includes('group2')) {
-            return Promise.resolve({
-              name: 'group2',
-              type: 'group',
-              format: 'maven2',
-              group: { memberNames: ['other-repo'] },
-            });
-          }
-          return Promise.resolve({ name: 'test-repo', type: 'hosted', format: 'maven2' });
+        if (url.includes('/internal/ui/repositories/repository/group1')) {
+          return Promise.resolve({
+            name: 'group1',
+            type: 'group',
+            format: 'maven2',
+            group: { memberNames: ['test-maven-repo', 'other-repo'] },
+          });
         }
-        if (url.includes('/internal/ui/repositories') && !url.includes('/details')) {
-          return Promise.resolve(mockAllRepositories);
+        if (url.includes('/internal/ui/repositories/repository/group2')) {
+          return Promise.resolve({
+            name: 'group2',
+            type: 'group',
+            format: 'maven2',
+            group: { memberNames: ['other-repo'] },
+          });
+        }
+        if (url.endsWith('/v1/repositories')) {
+          return Promise.resolve(mockV1RepositoriesList);
         }
         return Promise.resolve({});
       });
@@ -191,12 +210,44 @@ describe('repositoryUsageMachine', () => {
       expect(state.context.whereUsed).not.toContain('group2');
     });
 
+    it('excludes a candidate group from where-used (without failing) when that single group lookup is denied', async () => {
+      mockRestClient.get.mockImplementation((url: string) => {
+        if (url.includes('/internal/ui/repositories/details/filtered')) {
+          return Promise.resolve(mockMetricsPage);
+        }
+        if (url.includes('/internal/ui/repositories/repository/group1')) {
+          return Promise.reject(new Error('403 Forbidden'));
+        }
+        if (url.includes('/internal/ui/repositories/repository/group2')) {
+          return Promise.resolve({
+            name: 'group2',
+            type: 'group',
+            format: 'maven2',
+            group: { memberNames: ['test-maven-repo'] },
+          });
+        }
+        if (url.endsWith('/v1/repositories')) {
+          return Promise.resolve(mockV1RepositoriesList);
+        }
+        return Promise.resolve({});
+      });
+
+      const machine = createRepositoryUsageMachine({
+        repositoryName: 'test-maven-repo',
+        repositoryType: 'hosted',
+      });
+      const state = await runUntil(machine, (s) => s.matches('loaded'));
+      expect(state.context.whereUsed).toContain('group2');
+      expect(state.context.whereUsed).not.toContain('group1');
+      expect(state.context.membershipError).toBeNull();
+    });
+
     it('preserves undefined metric fields returned by API (does not coerce to 0)', async () => {
       mockRestClient.get.mockImplementation((url: string) => {
-        if (url.includes('/internal/ui/repositories/details')) {
-          return Promise.resolve([{ name: 'test-maven-repo' }]);
+        if (url.includes('/internal/ui/repositories/details/filtered')) {
+          return Promise.resolve({ pageData: [{ name: 'test-maven-repo' }], totalCount: 1, page: 1, pageSize: 1 });
         }
-        if (url.includes('/internal/ui/repositories') && !url.includes('/details')) {
+        if (url.endsWith('/v1/repositories')) {
           return Promise.resolve([]);
         }
         return Promise.resolve({});
@@ -216,8 +267,8 @@ describe('repositoryUsageMachine', () => {
   describe('partial-failure handling (Promise.allSettled)', () => {
     it('surfaces metrics + membership error when membership fetch fails (hosted)', async () => {
       mockRestClient.get.mockImplementation((url: string) => {
-        if (url.includes('/internal/ui/repositories/details')) {
-          return Promise.resolve(mockMetricsData);
+        if (url.includes('/internal/ui/repositories/details/filtered')) {
+          return Promise.resolve(mockMetricsPage);
         }
         return Promise.reject(new Error('Where-used fetch failed'));
       });
@@ -235,8 +286,13 @@ describe('repositoryUsageMachine', () => {
 
     it('surfaces metrics + membership error when group-members fetch fails (group)', async () => {
       mockRestClient.get.mockImplementation((url: string) => {
-        if (url.includes('/internal/ui/repositories/details')) {
-          return Promise.resolve([{ name: 'test-group', componentCount: 10, assetCount: 25, size: 1024000 }]);
+        if (url.includes('/internal/ui/repositories/details/filtered')) {
+          return Promise.resolve({
+            pageData: [{ name: 'test-group', componentCount: 10, assetCount: 25, size: 1024000 }],
+            totalCount: 1,
+            page: 1,
+            pageSize: 1,
+          });
         }
         return Promise.reject(new Error('Group members fetch failed'));
       });
@@ -254,12 +310,15 @@ describe('repositoryUsageMachine', () => {
 
     it('renders membership + metrics-error when metrics fetch fails', async () => {
       mockRestClient.get.mockImplementation((url: string) => {
-        if (url.includes('/internal/ui/repositories/details')) {
+        if (url.includes('/internal/ui/repositories/details/filtered')) {
           return Promise.reject(new Error('Metrics fetch failed'));
         }
-        if (url.includes('/v1/repositories/')) {
-          if (url.includes('test-group')) return Promise.resolve(mockGroupRepository);
+        if (url.includes('/internal/ui/repositories/repository/')) {
+          if (url.includes('test-group')) return Promise.resolve(mockGroupRepositoryDetail);
           return Promise.resolve({ name: 'test-repo', type: 'hosted', format: 'maven2' });
+        }
+        if (url.endsWith('/v1/repositories')) {
+          return Promise.resolve(mockV1RepositoriesList);
         }
         return Promise.resolve([]);
       });
@@ -271,7 +330,7 @@ describe('repositoryUsageMachine', () => {
       const state = await runUntil(machine, (s) => s.matches('loaded'));
       expect(state.context.metrics).toBeNull();
       expect(state.context.error).toBeTruthy();
-      expect(state.context.groupMembers).toEqual(['repo1', 'repo2']);
+      expect(state.context.groupMembers).toEqual([{ name: 'repo1', type: 'hosted' }, { name: 'repo2', type: 'proxy' }]);
       expect(state.context.membershipError).toBeNull();
     });
 
@@ -320,7 +379,7 @@ describe('repositoryUsageMachine', () => {
         if (callCount <= 2) {
           return Promise.reject(new Error('Network error'));
         }
-        return Promise.resolve(mockMetricsData);
+        return Promise.resolve(mockMetricsPage);
       });
 
       const machine = createRepositoryUsageMachine({

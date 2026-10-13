@@ -39,8 +39,6 @@ import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
-import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.util.ThreadContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,16 +89,12 @@ class ReNormalizeComponentVersionTaskTest
   @Mock
   private ComponentStore<?> npmComponentStore;
 
-  @Mock
-  private SecurityManager securityManager;
-
   private MockedStatic<QualifierUtil> qualifierUtilMock;
 
   private ReNormalizeComponentVersionTask underTest;
 
   @BeforeEach
   void setUp() {
-    ThreadContext.bind(securityManager);
     qualifierUtilMock = mockStatic(QualifierUtil.class);
   }
 
@@ -108,7 +102,6 @@ class ReNormalizeComponentVersionTaskTest
   void tearDown() {
     qualifierUtilMock.close();
     CancelableHelper.remove();
-    ThreadContext.unbindSecurityManager();
   }
 
   private ReNormalizeComponentVersionTask create(

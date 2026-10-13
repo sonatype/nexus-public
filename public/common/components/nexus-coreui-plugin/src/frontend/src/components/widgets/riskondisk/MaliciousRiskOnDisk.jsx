@@ -74,7 +74,7 @@ export default function MaliciousRiskOnDisk({ toggle, onSizeChanged, className }
     return null;
   }
 
-  return <MaliciousRiskOnDiskContent user={user} toggle={toggle} onSizeChanged={onSizeChanged} />;
+  return <MaliciousRiskOnDiskContent toggle={toggle} onSizeChanged={onSizeChanged} />;
 }
 
 function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
@@ -95,7 +95,6 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
   const user = ExtJS.useUser();
 
   const isAdmin = user?.administrator;
-  const isProEdition = ExtJS.isProEdition();
   const isIqServerEnabled = ExtJS.state().getValue(CLM)?.enabled;
   const isMalwareRiskEnabled = ExtJS.state().getValue(MALWARE_RISK_ENABLED);
   const isOnBrowseOrSearch = isPageHashIncluding(['#browse/browse', '#browse/search']);

@@ -25,7 +25,6 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 
 import static java.lang.String.format;
@@ -49,8 +48,8 @@ public class BlobStoreQuotaHealthCheck
       final Provider<BlobStoreManager> blobStoreManagerProvider,
       final Provider<BlobStoreQuotaService> quotaServiceProvider)
   {
-    this.blobStoreManagerProvider = Preconditions.checkNotNull(blobStoreManagerProvider);
-    this.quotaServiceProvider = Preconditions.checkNotNull(quotaServiceProvider);
+    this.blobStoreManagerProvider = Objects.requireNonNull(blobStoreManagerProvider);
+    this.quotaServiceProvider = Objects.requireNonNull(quotaServiceProvider);
   }
 
   @Override

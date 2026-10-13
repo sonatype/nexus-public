@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -28,19 +28,10 @@
   <packaging>pom</packaging>
 
   <properties>
-    <!--
-       Updates to AWS or Azure SDKs should also examine their expected netty dependencies, and potentially adjust
-       the netty BOM import
-    -->
-    <aws-java-sdk.version>2.33.5</aws-java-sdk.version>
+    <!-- aws-java-sdk.version is defined in the root nexus-parent pom.xml (shared with the private
+         common buildsupport BOM). See that property's comment for the CVE-2026-68498 / NEXUS-55381
+         context and the netty-BOM caveat. -->
     <woodstox-core.version>6.7.0</woodstox-core.version>
-    <!--
-      IMPORTANT: When upgrading azure-storage-blob.version check if the security override
-      of azure-core-http-netty can be removed from dependencyManagement below.
-     -->
-    <azure-storage-blob.version>12.31.2</azure-storage-blob.version>
-    <azure-identity.version>1.18.0</azure-identity.version>
-    <azure-json.version>1.5.0</azure-json.version>
     <!-- NEXUS-46395: jakarta-mail.version is now unused. The runtime Mail implementation is
          com.sun.mail:jakarta.mail:2.0.2 (pulled in by commons-email2-jakarta), pinned
          explicitly below to address NEXUS-50522 (CVE-2025-7962). The Eclipse Angus pin
@@ -123,12 +114,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.hdrhistogram</groupId>
-        <artifactId>HdrHistogram</artifactId>
-        <version>2.2.1</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.apache.tika</groupId>
         <artifactId>tika-core</artifactId>
         <version>3.2.2</version>
@@ -197,12 +182,6 @@
         </exclusions>
       </dependency>
 
-      <dependency>
-        <groupId>com.vividsolutions</groupId>
-        <artifactId>jts</artifactId>
-        <version>1.13</version>
-      </dependency>
-
       <!-- javax.transaction-api retained for nexus-repository-services test scope only;
            the distribution-level enforcer ban prevents this from leaking into runtime. -->
       <dependency>
@@ -260,64 +239,20 @@
         <version>1.2.3</version>
       </dependency>
 
-      <!-- 2.3.35 is the first release fixing the localized-lookup path traversal (CVE-2026-84939); do not lower. -->
-      <dependency>
-        <groupId>org.freemarker</groupId>
-        <artifactId>freemarker</artifactId>
-        <version>2.3.35</version>
-      </dependency>
-
       <dependency>
         <groupId>org.mozilla</groupId>
         <artifactId>rhino</artifactId>
         <version>1.7.15.1</version>
       </dependency>
 
-      <dependency>
-        <groupId>com.atlassian.crowd.client</groupId>
-        <artifactId>atlassian-crowd-rest-client</artifactId>
-        <version>1.1</version>
-        <exclusions>
-          <!-- We provide an http client 4 implementation -->
-          <exclusion>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-          </exclusion>
-          <!-- Exclude dependencies which are provided by NX core. -->
-          <exclusion>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.redline-rpm</groupId>
-        <artifactId>redline</artifactId>
-        <version>1.2.5</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.ant</groupId>
-            <artifactId>ant</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpg-jdk15on</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.google.jimfs</groupId>
-        <artifactId>jimfs</artifactId>
-        <version>1.1</version>
-      </dependency>
-
       <!--
+        NEXUS-55072: Upgrade netty-bom to 4.2.18.Final to resolve the Security-High
+        advisories flagged against 4.2.17.Final across all four IQ applications:
+        - sonatype-2026-008023 (CVSS 8.2), -008020 and -008024 (CVSS 7.5) in codec-http2
+        - sonatype-2026-008016, -008017, -008019, -008020, -008021, -008022 (CVSS 7.5) in codec-http3
+        - sonatype-2026-008031 (CVSS 7.5) in codec-classes-quic
+        Sonatype Guide reports 4.2.18.Final as policy compliant with no known
+        vulnerabilities; it also clears the Security-Medium findings in codec-http.
         NEXUS-54504: Upgrade netty-bom to 4.2.17.Final to resolve the netty-handler
         hostname verification bypass on the OpenSSL client path (Java 25+), the SNI
         routing bypass via fragmented ClientHello, CVE-2026-59902 (transport-sctp)
@@ -337,17 +272,43 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
-        <version>4.2.17.Final</version>
+        <version>4.2.18.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
 
+      <!--
+        Keep reactor-bom at 2025.0.7 or later so reactor-netty stays at 1.3.7+. Earlier
+        release trains ship reactor-netty 1.3.6, which carries four Security-Medium CVEs and
+        reaches the distribution transitively through
+        nexus-blobstore-azure-cloud -> azure-core-http-netty:
+        - CVE-2026-47874 (reactor-netty-http, CVSS 6.9) unbounded pipelined-request queue in
+          HttpTrafficHandler.doPipeline - memory-exhaustion DoS
+        - CVE-2026-47845 (reactor-netty-http, CVSS 6.3) HAProxy protocol loses the real client
+          IP after the first request on a reused connection - IP ACL / rate-limit bypass
+        - CVE-2026-47848 (reactor-netty-http, CVSS 6.0) WebSocket handshake skips cross-origin
+          redirect header stripping - Authorization / Cookie leak
+        - CVE-2026-47843 (reactor-netty-core, CVSS 6.3) NameResolverProvider equals/hashCode
+          omit hostsFileEntriesResolver - DNS resolver reused across differing client configs
+        2025.0.7 also carries reactor-core 3.8.7. The root pom pins reactor-core explicitly
+        and that pin wins over this import, so the two must stay in step: any future bump here
+        must not drop reactor-core below the version pinned in the root pom.
+      -->
       <dependency>
         <groupId>io.projectreactor</groupId>
         <artifactId>reactor-bom</artifactId>
-        <version>2025.0.6</version>
+        <version>2025.0.7</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <!-- NEXUS-55141: manage the SDK's shaded jackson-core explicitly. It is never declared
+           directly, only pulled in behind the artifacts below, so without an entry here its
+           version floor is left to nearest-wins mediation (see property above). -->
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>third-party-jackson-core</artifactId>
+        <version>${aws-java-sdk.version}</version>
       </dependency>
 
       <dependency>
@@ -376,20 +337,8 @@
 
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
-        <artifactId>jmespath-java</artifactId>
-        <version>2.0.0-preview-2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
         <artifactId>cloudwatch</artifactId>
         <version>${aws-java-sdk.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>cloudwatchmetrics</artifactId>
-        <version>2.0.0-preview-2</version>
       </dependency>
 
       <dependency>
@@ -400,7 +349,7 @@
 
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
-        <artifactId>ecr</artifactId>
+        <artifactId>cloudfront</artifactId>
         <version>${aws-java-sdk.version}</version>
       </dependency>
 
@@ -423,54 +372,9 @@
       </dependency>
 
       <dependency>
-        <groupId>org.apache.santuario</groupId>
-        <artifactId>xmlsec</artifactId>
-        <version>2.3.4</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.servicemix.specs</groupId>
-        <artifactId>org.apache.servicemix.specs.activation-api-1.1</artifactId>
-        <version>2.9.0</version>
-      </dependency>
-
-      <dependency>
         <groupId>com.fasterxml.woodstox</groupId>
         <artifactId>woodstox-core</artifactId>
         <version>${woodstox-core.version}</version>
-      </dependency>
-
-      <!-- Azure dependencies for blob storage functionality -->
-      <dependency>
-        <groupId>com.azure</groupId>
-        <artifactId>azure-storage-blob</artifactId>
-        <version>${azure-storage-blob.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.azure</groupId>
-        <artifactId>azure-identity</artifactId>
-        <version>${azure-identity.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.azure</groupId>
-        <artifactId>azure-json</artifactId>
-        <version>${azure-json.version}</version>
-      </dependency>
-
-      <!--
-        Security fix: azure-storage-blob 12.31.2 depends on azure-core-http-netty 1.16.0,
-        which includes vulnerable netty-codec and netty-codec-http (version 4.1.124.Final).
-        Overriding to 1.16.1 to address these vulnerabilities.
-
-        TODO: Remove this override after azure-storage-blob updates its dependency to 1.16.1 or higher.
-              Check for updates when upgrading azure-storage-blob.version above.
-      -->
-      <dependency>
-        <groupId>com.azure</groupId>
-        <artifactId>azure-core-http-netty</artifactId>
-        <version>1.16.2</version>
       </dependency>
 
       <!-- NEXUS-46395 + NEXUS-50522 (CVE-2025-7962): pin com.sun.mail:jakarta.mail to the
@@ -499,22 +403,6 @@
         <scope>import</scope>
       </dependency>
 
-      <dependency>
-        <groupId>dev.sigstore</groupId>
-        <artifactId>sigstore-java</artifactId>
-        <version>2.2.0</version>
-        <!--
-          Consider updating grpc-bom when updating the version
-
-          Remove grpc-bom if removing this dependency
-         -->
-        <exclusions>
-          <exclusion>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-netty-shaded</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 

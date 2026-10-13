@@ -34,7 +34,7 @@ import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.collect.ImmutableList;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -60,10 +60,10 @@ public class AssetPermissionChecker
       final ContentPermissionChecker contentPermissionChecker,
       final VariableResolverAdapterManager variableResolverAdapterManager)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.contentFacetFinder = checkNotNull(contentFacetFinder);
-    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
-    this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.contentFacetFinder = requireNonNull(contentFacetFinder);
+    this.contentPermissionChecker = requireNonNull(contentPermissionChecker);
+    this.variableResolverAdapterManager = requireNonNull(variableResolverAdapterManager);
   }
 
   /**

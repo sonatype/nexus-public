@@ -50,11 +50,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 import static org.apache.maven.index.reader.Utils.allGroups;
 import static org.apache.maven.index.reader.Utils.descriptor;
 import static org.apache.maven.index.reader.Utils.rootGroup;
@@ -100,7 +100,7 @@ public abstract class MavenIndexPublisher
    * Deletes index files from given repository, returns {@code true} if there was index in repository.
    */
   public boolean unpublishIndexFiles(final Repository repository) throws IOException {
-    checkNotNull(repository);
+    requireNonNull(repository);
     return delete(repository, INDEX_PROPERTY_FILE)
         && delete(repository, INDEX_MAIN_CHUNK_FILE);
   }
@@ -177,8 +177,8 @@ public abstract class MavenIndexPublisher
       final List<Repository> repositories,
       final DuplicateDetectionStrategy<Record> duplicateDetectionStrategy) throws IOException
   {
-    checkNotNull(target);
-    checkNotNull(repositories);
+    requireNonNull(target);
+    requireNonNull(repositories);
     Closer closer = Closer.create();
     try (WritableResourceHandler resourceHandler = getResourceHandler(target);
         IndexWriter indexWriter = new IndexWriter(resourceHandler, target.getName(), false)) {
@@ -201,7 +201,7 @@ public abstract class MavenIndexPublisher
    * Returns the {@link DateTime} when index of the given repository was last published.
    */
   public DateTime lastPublished(final Repository repository) throws IOException {
-    checkNotNull(repository);
+    requireNonNull(repository);
     try (ResourceHandler resourceHandler = getResourceHandler(repository)) {
       try (IndexReader indexReader = new IndexReader(null, resourceHandler)) {
         return new DateTime(indexReader.getPublishedTimestamp().getTime());
@@ -219,7 +219,7 @@ public abstract class MavenIndexPublisher
    * types. Returns {@code true} if successfully prefetched files (they exist on remote and are locally cached).
    */
   public boolean prefetchIndexFiles(final Repository repository) throws IOException {
-    checkNotNull(repository);
+    requireNonNull(repository);
     checkArgument(ProxyType.NAME.equals(repository.getType().getValue()));
     MavenPathParser mavenPathParser = getMavenPathParser(repository);
     return prefetch(repository, INDEX_PROPERTY_FILE, mavenPathParser)

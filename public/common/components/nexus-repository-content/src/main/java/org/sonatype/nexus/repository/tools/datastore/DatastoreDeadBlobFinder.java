@@ -48,7 +48,7 @@ import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 import static org.sonatype.nexus.repository.tools.ResultState.ASSET_DELETED;
 import static org.sonatype.nexus.repository.tools.ResultState.DELETED;
@@ -88,8 +88,8 @@ public class DatastoreDeadBlobFinder
       final int batchSize,
       final Consumer<DeadBlobResult<Asset>> resultProcessor)
   {
-    checkNotNull(repository);
-    checkNotNull(resultProcessor);
+    requireNonNull(repository);
+    requireNonNull(resultProcessor);
 
     FluentAssets fluentAssets = repository.facet(ContentFacet.class).assets();
     Continuation<FluentAsset> assets = fluentAssets.browse(batchSize, null);
@@ -122,7 +122,7 @@ public class DatastoreDeadBlobFinder
    */
   @Override
   public List<DeadBlobResult<Asset>> find(@NotNull final Repository repository, final boolean ignoreMissingBlobRefs) {
-    checkNotNull(repository);
+    requireNonNull(repository);
 
     FluentAssets fluentAssets = repository.facet(ContentFacet.class).assets();
 

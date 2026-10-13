@@ -14,8 +14,8 @@ package org.sonatype.nexus.common.entity;
 
 import javax.annotation.Nonnull;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link Entity} helpers.
@@ -32,7 +32,7 @@ public class EntityHelper
    * Check if given entity has metadata.
    */
   public static boolean hasMetadata(final Entity entity) {
-    checkNotNull(entity);
+    requireNonNull(entity);
     return entity.getEntityMetadata() != null;
   }
 
@@ -41,7 +41,7 @@ public class EntityHelper
    */
   @Nonnull
   public static EntityMetadata metadata(final Entity entity) {
-    checkNotNull(entity);
+    requireNonNull(entity);
     EntityMetadata metadata = entity.getEntityMetadata();
     checkState(metadata != null, "Missing entity-metadata");
     return metadata;

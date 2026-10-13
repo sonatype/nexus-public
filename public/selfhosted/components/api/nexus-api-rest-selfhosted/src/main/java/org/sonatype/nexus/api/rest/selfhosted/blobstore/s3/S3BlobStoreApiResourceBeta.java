@@ -12,19 +12,19 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.blobstore.s3;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.ws.rs.Path;
-
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiUpdateValidation;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
+import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.ws.rs.Path;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.api.rest.selfhosted.blobstore.s3.S3BlobStoreApiResourceBeta.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
-import org.springframework.stereotype.Component;
 
 /**
  * beta endpoint for S3 BlobStore REST API
@@ -39,15 +39,18 @@ import org.springframework.stereotype.Component;
 public class S3BlobStoreApiResourceBeta
     extends S3BlobStoreApiResource
 {
+  @Deprecated
   static final String RESOURCE_URI = BETA_API_PREFIX + "/blobstores/s3";
 
+  @Deprecated
   @Autowired
   public S3BlobStoreApiResourceBeta(
       final BlobStoreManager blobStoreManager,
       final S3BlobStoreApiUpdateValidation validation,
       final SecretsFactory secretsFactory,
-      final ApplicationVersion applicationVersion)
+      final ApplicationVersion applicationVersion,
+      final ConstraintViolationFactory constraintViolationFactory)
   {
-    super(blobStoreManager, validation, secretsFactory, applicationVersion);
+    super(blobStoreManager, validation, secretsFactory, applicationVersion, constraintViolationFactory);
   }
 }

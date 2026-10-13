@@ -16,25 +16,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.validation.Validator;
-
-import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.coreui.search.BrowseableFormatXO;
 import org.sonatype.nexus.coreui.service.RepositoryUiService;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
+import org.sonatype.nexus.repository.manager.RepositoryDeletionService;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -55,18 +51,17 @@ import static org.mockito.Mockito.when;
 @WithUser
 class RepositoryComponentTest
 {
-  @ValidationExecutor
-  private final Validator validator =
-      new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
-
   @Mock
   private RepositoryUiService repositoryUiService;
+
+  @Mock
+  private RepositoryDeletionService repositoryDeletionService;
 
   private RepositoryComponent underTest;
 
   @BeforeEach
   void setUp() {
-    underTest = new RepositoryComponent(repositoryUiService);
+    underTest = new RepositoryComponent(repositoryUiService, repositoryDeletionService);
   }
 
   @Test
@@ -189,10 +184,12 @@ class RepositoryComponentTest
   }
 
   @Test
-  void testRemove_delegatesToService() throws Exception {
+  void remove_delegatesToDeletionService() throws Exception {
+    // The soft-delete-vs-hard-delete decision now lives in RepositoryDeletionService
+    // (covered by RepositoryDeletionServiceTest); the component just delegates.
     underTest.remove("my-repo");
 
-    verify(repositoryUiService).remove("my-repo");
+    verify(repositoryDeletionService).delete("my-repo");
   }
 
   @Test

@@ -14,8 +14,10 @@
 import { createMachine, assign } from 'xstate';
 
 import { restClient, parseApiError } from '../../../../../../interface/api';
+import { fetchRepositoryMetricsDetail } from '../../../../shared/hooks/fetchRepositoryMetricsDetail';
+import type { RepositoryTypeKind } from './repositoryTypeIcon';
 
-export type RepositoryUsageKind = 'hosted' | 'proxy' | 'group';
+export type RepositoryUsageKind = RepositoryTypeKind;
 
 export interface RepositoryMetrics {
   componentCount: number | undefined;
@@ -23,11 +25,16 @@ export interface RepositoryMetrics {
   totalSize: number | undefined;
 }
 
+export interface GroupMember {
+  name: string;
+  type: 'hosted' | 'proxy';
+}
+
 export interface RepositoryUsageContext {
   repositoryName: string;
   repositoryType: RepositoryUsageKind;
   metrics: RepositoryMetrics | null;
-  groupMembers: string[];
+  groupMembers: GroupMember[];
   whereUsed: string[];
   error: string | null;
   membershipError: string | null;
@@ -37,20 +44,22 @@ export type RepositoryUsageEvent =
   | { type: 'REFRESH' }
   | { type: 'RETRY' };
 
-const REPOSITORIES_DETAILS_URL = '/service/rest/internal/ui/repositories/details';
 const REPOSITORIES_REST_URL = '/service/rest/v1/repositories';
-const REPOSITORIES_LIST_URL = '/service/rest/internal/ui/repositories';
+const REPOSITORY_DETAIL_URL = (name: string) =>
+  `/service/rest/internal/ui/repositories/repository/${encodeURIComponent(name)}`;
+
+interface RepositoryDetail {
+  name: string;
+  type: string;
+  group?: { memberNames?: string[] };
+}
+
+async function fetchRepositoryDetail(repositoryName: string): Promise<RepositoryDetail> {
+  return restClient.get<RepositoryDetail>(REPOSITORY_DETAIL_URL(repositoryName));
+}
 
 async function fetchMetrics(repositoryName: string): Promise<RepositoryMetrics> {
-  const details = await restClient.get<Array<{
-    name: string;
-    componentCount?: number;
-    assetCount?: number;
-    size?: number;
-  }>>(
-    `${REPOSITORIES_DETAILS_URL}?name=${encodeURIComponent(repositoryName)}`
-  );
-  const detail = Array.isArray(details) ? details.find((r) => r.name === repositoryName) : null;
+  const detail = await fetchRepositoryMetricsDetail(repositoryName);
 
   return {
     componentCount: detail?.componentCount,
@@ -59,21 +68,51 @@ async function fetchMetrics(repositoryName: string): Promise<RepositoryMetrics> 
   };
 }
 
-async function fetchGroupMembers(repositoryName: string): Promise<string[]> {
-  const repo = await restClient.get<{
+async function fetchGroupMembers(repositoryName: string): Promise<GroupMember[]> {
+  const repo = await fetchRepositoryDetail(repositoryName);
+  const memberNames = repo?.group?.memberNames || [];
+
+  if (memberNames.length === 0) {
+    return [];
+  }
+
+  // Fetch all repositories to build a name→type lookup
+  const allRepos = await restClient.get<Array<{
     name: string;
     type: string;
-    group?: { memberNames?: string[] };
-  }>(`${REPOSITORIES_REST_URL}/${encodeURIComponent(repositoryName)}`);
+  }>>(REPOSITORIES_REST_URL);
 
-  return repo?.group?.memberNames || [];
+  if (!Array.isArray(allRepos)) {
+    return memberNames.map(name => ({ name, type: 'hosted' as const })); // fallback default
+  }
+
+  // Build a Map for O(1) lookup
+  const repoTypeMap = new Map<string, string>();
+  for (const r of allRepos) {
+    repoTypeMap.set(r.name, r.type);
+  }
+
+  // Enrich member names with their types
+  return memberNames.map(name => {
+    const type = repoTypeMap.get(name);
+    // Defensive: if type is missing or not hosted/proxy, default to hosted
+    if (type !== 'hosted' && type !== 'proxy') {
+      console.warn(`repositoryUsageMachine: unexpected member type "${type}" for "${name}", defaulting to hosted`);
+    }
+    const safeType: 'hosted' | 'proxy' = (type === 'hosted' || type === 'proxy') ? type : 'hosted';
+    return { name, type: safeType };
+  });
 }
 
+// N+1: fetches every group's detail individually to check membership, after listing all
+// repos. Acceptable for now — sharing one repository across a large number of groups is
+// rare in practice — but a dedicated where-used endpoint would avoid this if it becomes
+// a real cost on large instances.
 async function fetchWhereUsed(repositoryName: string): Promise<string[]> {
   const allRepos = await restClient.get<Array<{
     name: string;
     type: string;
-  }>>(REPOSITORIES_LIST_URL);
+  }>>(REPOSITORIES_REST_URL);
 
   if (!Array.isArray(allRepos)) {
     return [];
@@ -81,14 +120,11 @@ async function fetchWhereUsed(repositoryName: string): Promise<string[]> {
 
   const groups = allRepos.filter(r => r.type === 'group');
 
-  const groupDetails = await Promise.all(
-    groups.map(g => restClient.get<{
-      name: string;
-      group?: { memberNames?: string[] };
-    }>(`${REPOSITORIES_REST_URL}/${encodeURIComponent(g.name)}`))
-  );
+  const groupDetailResults = await Promise.allSettled(groups.map(g => fetchRepositoryDetail(g.name)));
 
-  return groupDetails
+  return groupDetailResults
+    .filter((result): result is PromiseFulfilledResult<RepositoryDetail> => result.status === 'fulfilled')
+    .map(result => result.value)
     .filter(detail => detail?.group?.memberNames?.includes(repositoryName) ?? false)
     .map(detail => detail.name);
 }
@@ -101,7 +137,7 @@ export interface RepositoryUsageMachineOptions {
 interface FetchDataResult {
   metrics: RepositoryMetrics | null;
   metricsError: string | null;
-  groupMembers: string[];
+  groupMembers: GroupMember[];
   whereUsed: string[];
   membershipError: string | null;
 }
@@ -154,7 +190,7 @@ export function createRepositoryUsageMachine(options: RepositoryUsageMachineOpti
     {
       services: {
         fetchData: async (): Promise<FetchDataResult> => {
-          const membershipPromise: Promise<string[]> = repositoryType === 'group'
+          const membershipPromise: Promise<GroupMember[] | string[]> = repositoryType === 'group'
             ? fetchGroupMembers(repositoryName)
             : fetchWhereUsed(repositoryName);
 
@@ -176,8 +212,8 @@ export function createRepositoryUsageMachine(options: RepositoryUsageMachineOpti
           return {
             metrics,
             metricsError,
-            groupMembers: repositoryType === 'group' ? membershipValue : [],
-            whereUsed: repositoryType === 'group' ? [] : membershipValue,
+            groupMembers: repositoryType === 'group' ? (membershipValue as GroupMember[]) : [],
+            whereUsed: repositoryType === 'group' ? [] : (membershipValue as string[]),
             membershipError,
           };
         },

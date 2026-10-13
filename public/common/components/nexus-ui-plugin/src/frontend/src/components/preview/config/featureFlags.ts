@@ -110,7 +110,8 @@ export const PREVIEW_FEATURE_FLAGS = {
   'system.licensing': true,
   'system.nodes': true,
   'system.upgrade': false,       // Coming Soon
-  'system.api': true,
+  'system.api': true,             // Sprint 12 - ENABLED
+  'system.trash': true,  // NEXUS-51733 - Trash / Logical Deletion Recovery
 
   // =============================================================================
   // IQ SERVER - ENABLED
@@ -126,13 +127,6 @@ export const PREVIEW_FEATURE_FLAGS = {
   // WELCOME PAGE - Tab visibility
   // =============================================================================
   'welcome.usageMetrics': true,   // Enabled — NEXUS-54200
-
-  // =============================================================================
-  // REPOSITORY SETTINGS - Tab visibility
-  // =============================================================================
-  // Coming Soon — NEXUS-53941 shipped the Usage tab, but member-list, where-used,
-  // and H2 metrics gaps remain. Flip to true when the follow-up ticket lands.
-  'repository.settings.usageTab': false,
 };
 
 /**

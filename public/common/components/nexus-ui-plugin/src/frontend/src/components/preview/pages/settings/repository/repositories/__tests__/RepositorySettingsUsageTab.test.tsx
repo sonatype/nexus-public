@@ -25,9 +25,24 @@ jest.mock('@radix-ui/themes', () => ({
   TooltipProvider: ({ children }: any) => <div>{children}</div>,
 }));
 
+const mockExtState: Record<string, unknown> = { 'datastore.isPostgresql': true };
+
+jest.mock('../../../../../../../interface/ExtJS', () => ({
+  ExtJS: {
+    state: () => ({
+      getValue: (key: string) => mockExtState[key],
+    }),
+  },
+}));
+
+interface GroupMember {
+  name: string;
+  type: 'hosted' | 'proxy';
+}
+
 interface HookOverrides {
   metrics?: { componentCount?: number; assetCount?: number; totalSize?: number } | null;
-  groupMembers?: string[];
+  groupMembers?: GroupMember[];
   whereUsed?: string[];
   loading?: boolean;
   loaded?: boolean;
@@ -66,6 +81,7 @@ function mockHook(overrides: HookOverrides = {}): jest.Mock {
 describe('RepositorySettingsUsageTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockExtState['datastore.isPostgresql'] = true;
   });
 
   describe('loading state', () => {
@@ -167,7 +183,7 @@ describe('RepositorySettingsUsageTab', () => {
 
   describe('loaded state - group members', () => {
     it('displays group members for group repository', () => {
-      mockHook({ groupMembers: ['repo1', 'repo2'] });
+      mockHook({ groupMembers: [{ name: 'repo1', type: 'hosted' }, { name: 'repo2', type: 'proxy' }] });
 
       render(
         <RepositorySettingsUsageTab
@@ -178,6 +194,63 @@ describe('RepositorySettingsUsageTab', () => {
 
       expect(screen.getByText('repo1')).toBeInTheDocument();
       expect(screen.getByText('repo2')).toBeInTheDocument();
+    });
+
+    it('renders Database icon for hosted members and Cloud icon for proxy members', () => {
+      mockHook({ groupMembers: [{ name: 'hosted-repo', type: 'hosted' }, { name: 'proxy-repo', type: 'proxy' }] });
+
+      const { container } = render(
+        <RepositorySettingsUsageTab
+          repositoryName="test-group"
+          repositoryType="group"
+        />
+      );
+
+      // Check for lucide-database (hosted) and lucide-cloud (proxy) icons
+      const databaseIcon = container.querySelector('.lucide-database');
+      const cloudIcon = container.querySelector('.lucide-cloud');
+
+      expect(databaseIcon).toBeTruthy();
+      expect(cloudIcon).toBeTruthy();
+    });
+
+    it('makes the entire member repository row clickable (icon and text are within the same link)', () => {
+      mockHook({ groupMembers: [{ name: 'hosted-repo', type: 'hosted' }] });
+
+      const { container } = render(
+        <RepositorySettingsUsageTab
+          repositoryName="test-group"
+          repositoryType="group"
+        />
+      );
+
+      // The link element with accessible name 'hosted-repo'
+      const link = screen.getByRole('link', { name: 'hosted-repo' });
+
+      // The icon should be a DOM descendant of the link (whole row is clickable)
+      const databaseIcon = container.querySelector('.lucide-database');
+      expect(databaseIcon).toBeTruthy();
+      expect(link.contains(databaseIcon)).toBe(true);
+    });
+
+    it('links each member repository name to its own repository edit page', () => {
+      mockHook({ groupMembers: [{ name: 'repo1', type: 'hosted' }, { name: 'repo2', type: 'proxy' }] });
+
+      render(
+        <RepositorySettingsUsageTab
+          repositoryName="test-group"
+          repositoryType="group"
+        />
+      );
+
+      expect(screen.getByRole('link', { name: 'repo1' })).toHaveAttribute(
+        'href',
+        '#preview/admin/repository/repositories/repo1'
+      );
+      expect(screen.getByRole('link', { name: 'repo2' })).toHaveAttribute(
+        'href',
+        '#preview/admin/repository/repositories/repo2'
+      );
     });
 
     it('shows empty state for group with no members', () => {
@@ -230,6 +303,77 @@ describe('RepositorySettingsUsageTab', () => {
       expect(screen.getByText('group2')).toBeInTheDocument();
     });
 
+    it('renders FolderTree icon for group membership items', () => {
+      mockHook({
+        metrics: { componentCount: 5, assetCount: 10, totalSize: 512000 },
+        whereUsed: ['group1', 'group2'],
+      });
+
+      const { container } = render(
+        <RepositorySettingsUsageTab
+          repositoryName="hosted-repo"
+          repositoryType="hosted"
+        />
+      );
+
+      // Check for lucide-folder-tree icon (groups)
+      const folderTreeIcons = container.querySelectorAll('.lucide-folder-tree');
+      expect(folderTreeIcons.length).toBeGreaterThan(0);
+
+      // Should NOT have database, cloud, or globe icons in group membership section
+      const databaseIcon = container.querySelector('.lucide-database');
+      const cloudIcon = container.querySelector('.lucide-cloud');
+      const globeIcon = container.querySelector('.lucide-globe');
+      expect(databaseIcon).toBeFalsy();
+      expect(cloudIcon).toBeFalsy();
+      expect(globeIcon).toBeFalsy();
+    });
+
+    it('makes the entire group membership row clickable (icon and text are within the same link)', () => {
+      mockHook({
+        metrics: { componentCount: 5, assetCount: 10, totalSize: 512000 },
+        whereUsed: ['group1'],
+      });
+
+      const { container } = render(
+        <RepositorySettingsUsageTab
+          repositoryName="hosted-repo"
+          repositoryType="hosted"
+        />
+      );
+
+      // The link element with accessible name 'group1'
+      const link = screen.getByRole('link', { name: 'group1' });
+
+      // The icon should be a DOM descendant of the link (whole row is clickable)
+      const folderTreeIcon = container.querySelector('.lucide-folder-tree');
+      expect(folderTreeIcon).toBeTruthy();
+      expect(link.contains(folderTreeIcon)).toBe(true);
+    });
+
+    it('links each group name to its own repository edit page', () => {
+      mockHook({
+        metrics: { componentCount: 5, assetCount: 10, totalSize: 512000 },
+        whereUsed: ['group1', 'group2'],
+      });
+
+      render(
+        <RepositorySettingsUsageTab
+          repositoryName="hosted-repo"
+          repositoryType="hosted"
+        />
+      );
+
+      expect(screen.getByRole('link', { name: 'group1' })).toHaveAttribute(
+        'href',
+        '#preview/admin/repository/repositories/group1'
+      );
+      expect(screen.getByRole('link', { name: 'group2' })).toHaveAttribute(
+        'href',
+        '#preview/admin/repository/repositories/group2'
+      );
+    });
+
     it('shows empty state when not in any groups', () => {
       mockHook({
         metrics: { componentCount: 5, assetCount: 10, totalSize: 512000 },
@@ -262,6 +406,40 @@ describe('RepositorySettingsUsageTab', () => {
 
       expect(screen.getByText('5')).toBeInTheDocument();
       expect(screen.getByText(/failed to load group membership/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('H2 vs Postgres stat card gating', () => {
+    it('renders the Repository Size and Assets cards on Postgres', () => {
+      mockExtState['datastore.isPostgresql'] = true;
+      mockHook({ metrics: { componentCount: 10, assetCount: 25, totalSize: 1024000 } });
+
+      render(
+        <RepositorySettingsUsageTab
+          repositoryName="test-repo"
+          repositoryType="hosted"
+        />
+      );
+
+      expect(screen.getByText('Repository Size')).toBeInTheDocument();
+      expect(screen.getByText('Assets')).toBeInTheDocument();
+      expect(screen.getByText('Components')).toBeInTheDocument();
+    });
+
+    it('hides the Repository Size and Assets cards on H2, but keeps Components', () => {
+      mockExtState['datastore.isPostgresql'] = false;
+      mockHook({ metrics: { componentCount: 10, assetCount: 25, totalSize: 1024000 } });
+
+      render(
+        <RepositorySettingsUsageTab
+          repositoryName="test-repo"
+          repositoryType="hosted"
+        />
+      );
+
+      expect(screen.queryByText('Repository Size')).not.toBeInTheDocument();
+      expect(screen.queryByText('Assets')).not.toBeInTheDocument();
+      expect(screen.getByText('Components')).toBeInTheDocument();
     });
   });
 

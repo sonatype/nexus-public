@@ -15,8 +15,8 @@ package org.sonatype.nexus.blobstore;
 import org.sonatype.nexus.blobstore.api.BlobId;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link LocationStrategy} for resolving locations to
@@ -33,7 +33,7 @@ public class DirectPathLocationStrategy
 
   @Override
   public String location(final BlobId blobId) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
     String realBlobIdPath = blobId.asUniqueString().replace(DIRECT_PATH_PREFIX, "");
     checkArgument(!realBlobIdPath.contains(".."), "Traversal not allowed with direct blobs");
     return format("%s/%s", DIRECT_PATH_ROOT, realBlobIdPath);

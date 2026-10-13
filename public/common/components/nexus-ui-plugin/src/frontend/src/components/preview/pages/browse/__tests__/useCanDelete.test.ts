@@ -100,21 +100,21 @@ describe('useCanDelete (NEXUS-53861)', () => {
   it('returns false and skips the server call when the user is not authenticated', () => {
     anonymous();
 
-    const { result } = renderHook(() => useCanDelete(ASSET_NODE, REPO_NAME, null));
+    const { result } = renderHook(() => useCanDelete(ASSET_NODE, REPO_NAME, null, 'hosted'));
 
     expect(result.current).toBe(false);
     expect(mockCanDeleteAsset).not.toHaveBeenCalled();
   });
 
   it('returns false and skips the server call when no node is selected', () => {
-    const { result } = renderHook(() => useCanDelete(null, REPO_NAME, null));
+    const { result } = renderHook(() => useCanDelete(null, REPO_NAME, null, 'hosted'));
 
     expect(result.current).toBe(false);
     expect(mockCanDeleteAsset).not.toHaveBeenCalled();
   });
 
   it('returns false and skips the server call when no repository is selected', () => {
-    const { result } = renderHook(() => useCanDelete(ASSET_NODE, undefined, null));
+    const { result } = renderHook(() => useCanDelete(ASSET_NODE, undefined, null, 'hosted'));
 
     expect(result.current).toBe(false);
     expect(mockCanDeleteAsset).not.toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe('useCanDelete (NEXUS-53861)', () => {
   it('calls canDeleteAsset for an asset node and returns the server verdict', async () => {
     mockCanDeleteAsset.mockResolvedValue(true);
 
-    const { result } = renderHook(() => useCanDelete(ASSET_NODE, REPO_NAME, null));
+    const { result } = renderHook(() => useCanDelete(ASSET_NODE, REPO_NAME, null, 'hosted'));
 
     await waitFor(() => expect(result.current).toBe(true));
     expect(mockCanDeleteAsset).toHaveBeenCalledWith('asset-42', REPO_NAME);
@@ -134,7 +134,7 @@ describe('useCanDelete (NEXUS-53861)', () => {
   it('returns false when the server denies delete on the asset', async () => {
     mockCanDeleteAsset.mockResolvedValue(false);
 
-    const { result } = renderHook(() => useCanDelete(ASSET_NODE, REPO_NAME, null));
+    const { result } = renderHook(() => useCanDelete(ASSET_NODE, REPO_NAME, null, 'hosted'));
 
     // Give the effect + promise a chance to flush.
     await waitFor(() => expect(mockCanDeleteAsset).toHaveBeenCalled());
@@ -144,14 +144,14 @@ describe('useCanDelete (NEXUS-53861)', () => {
   it('skips the asset call when the node has no assetId', async () => {
     const nodeWithoutId: BrowseNode = { ...ASSET_NODE, assetId: null };
 
-    const { result } = renderHook(() => useCanDelete(nodeWithoutId, REPO_NAME, null));
+    const { result } = renderHook(() => useCanDelete(nodeWithoutId, REPO_NAME, null, 'hosted'));
 
     expect(result.current).toBe(false);
     expect(mockCanDeleteAsset).not.toHaveBeenCalled();
   });
 
   it('returns false for a component node while componentData is still loading', () => {
-    const { result } = renderHook(() => useCanDelete(COMPONENT_NODE, REPO_NAME, null));
+    const { result } = renderHook(() => useCanDelete(COMPONENT_NODE, REPO_NAME, null, 'hosted'));
 
     expect(result.current).toBe(false);
     expect(mockCanDeleteComponent).not.toHaveBeenCalled();
@@ -165,7 +165,7 @@ describe('useCanDelete (NEXUS-53861)', () => {
     mockCanDeleteComponent.mockResolvedValue(true);
 
     const { result } = renderHook(() =>
-      useCanDelete(COMPONENT_NODE, REPO_NAME, COMPONENT_DATA)
+      useCanDelete(COMPONENT_NODE, REPO_NAME, COMPONENT_DATA, 'hosted')
     );
 
     await waitFor(() => expect(result.current).toBe(true));
@@ -192,7 +192,7 @@ describe('useCanDelete (NEXUS-53861)', () => {
     const nodeWithoutComponentId: BrowseNode = { ...COMPONENT_NODE, componentId: undefined };
 
     const { result } = renderHook(() =>
-      useCanDelete(nodeWithoutComponentId, REPO_NAME, COMPONENT_DATA)
+      useCanDelete(nodeWithoutComponentId, REPO_NAME, COMPONENT_DATA, 'hosted')
     );
 
     expect(result.current).toBe(false);
@@ -207,7 +207,7 @@ describe('useCanDelete (NEXUS-53861)', () => {
       version: null,
     };
 
-    renderHook(() => useCanDelete(COMPONENT_NODE, REPO_NAME, dataWithNulls));
+    renderHook(() => useCanDelete(COMPONENT_NODE, REPO_NAME, dataWithNulls, 'hosted'));
 
     await waitFor(() => expect(mockCanDeleteComponent).toHaveBeenCalled());
     expect(mockCanDeleteComponent).toHaveBeenCalledWith(
@@ -218,7 +218,7 @@ describe('useCanDelete (NEXUS-53861)', () => {
   it('calls canDeleteFolder for a folder node using the node id as path', async () => {
     mockCanDeleteFolder.mockResolvedValue(true);
 
-    const { result } = renderHook(() => useCanDelete(FOLDER_NODE, REPO_NAME, null));
+    const { result } = renderHook(() => useCanDelete(FOLDER_NODE, REPO_NAME, null, 'hosted'));
 
     await waitFor(() => expect(result.current).toBe(true));
     expect(mockCanDeleteFolder).toHaveBeenCalledWith(FOLDER_NODE.id, REPO_NAME);
@@ -228,7 +228,7 @@ describe('useCanDelete (NEXUS-53861)', () => {
     mockCanDeleteAsset.mockResolvedValue(true);
 
     const { result, rerender } = renderHook(
-      ({ node }: { node: BrowseNode | null }) => useCanDelete(node, REPO_NAME, null),
+      ({ node }: { node: BrowseNode | null }) => useCanDelete(node, REPO_NAME, null, 'hosted'),
       { initialProps: { node: ASSET_NODE as BrowseNode | null } }
     );
 
@@ -262,7 +262,7 @@ describe('useCanDelete (NEXUS-53861)', () => {
     };
 
     const { result, rerender } = renderHook(
-      ({ node }: { node: BrowseNode }) => useCanDelete(node, REPO_NAME, null),
+      ({ node }: { node: BrowseNode }) => useCanDelete(node, REPO_NAME, null, 'hosted'),
       { initialProps: { node: ASSET_NODE } }
     );
 

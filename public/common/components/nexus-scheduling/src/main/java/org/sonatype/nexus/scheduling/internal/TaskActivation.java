@@ -22,7 +22,7 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -46,7 +46,7 @@ public class TaskActivation
 
   @Autowired
   public TaskActivation(final SchedulerSPI scheduler) {
-    this.scheduler = checkNotNull(scheduler);
+    this.scheduler = requireNonNull(scheduler);
   }
 
   @Override

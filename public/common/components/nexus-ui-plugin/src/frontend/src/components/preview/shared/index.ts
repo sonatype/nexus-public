@@ -106,12 +106,14 @@ export {
   clearDirtyState,
   hasUnsavedChanges,
   useIsCloud,
+  useIsLicensedEdition,
   useHasFirewallLicense,
   useUnreadStatusFailure,
   resetUnreadStatusFailure,
   STATUS_BELL_ACK_STORAGE_KEY,
   useBlobStoreInfo,
   useRepositoryMetrics,
+  useDebounced,
 } from './hooks';
 export type {
   UseUnreadStatusFailureReturn,
@@ -244,6 +246,13 @@ export {
 // exportToCsv - Trigger a browser CSV file download from tabular data
 export { exportToCsv } from './utils/exportToCsv';
 
+// formatDateTime - Single date/time formatter for Search and Component Details (NEXUS-54427)
+export {
+  formatDateTime,
+  type FormatDateTimeOptions,
+  NO_DATE,
+} from './utils/dateFormat';
+
 // SystemAlerts - Application-scoped banner host (Preview UI only)
 export {
   SystemAlerts,
@@ -254,3 +263,17 @@ export {
   type SystemAlertAction,
   CELimitsAlert,
 } from './SystemAlerts';
+
+// HelpMenu - Shared global-header help menu for self-hosted and cloud (NEXUS-54847)
+export {
+  HelpMenu,
+  DocumentationUTMparams,
+  ReleaseNotesUTMparams,
+  KnowledgeBaseUTMparams,
+  SonatypeGuidesUTMparams,
+  CommunityUTMparams,
+  IssueTrackerUTMparams,
+  SupportUTMparams,
+} from './HelpMenu';
+
+// Edition name mapping moved to interface/editionUtils in NEXUS-54782 (edition identifier -> display name).

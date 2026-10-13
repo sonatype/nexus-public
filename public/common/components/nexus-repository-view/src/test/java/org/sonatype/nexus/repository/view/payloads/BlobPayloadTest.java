@@ -21,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("resource")
@@ -36,5 +38,24 @@ public class BlobPayloadTest
 
     when(blob.hasRedirect()).thenReturn(true);
     assertThat(new BlobPayload(blob, null).hasRedirect(), is(true));
+  }
+
+  @Test
+  void byDefault_forwardsGlobalDistributionEnabledTrueToBlob() {
+    BlobPayload payload = new BlobPayload(blob, "text/plain");
+
+    payload.getRedirectUrl("GET", "name");
+
+    verify(blob).getRedirectUrl(eq("GET"), eq("name"), eq("text/plain"), eq(true));
+  }
+
+  @Test
+  void afterDisableGlobalDistribution_forwardsGlobalDistributionEnabledFalseToBlob() {
+    BlobPayload payload = new BlobPayload(blob, "text/plain");
+    payload.disableGlobalDistribution();
+
+    payload.getRedirectUrl("GET", "name");
+
+    verify(blob).getRedirectUrl(eq("GET"), eq("name"), eq("text/plain"), eq(false));
   }
 }

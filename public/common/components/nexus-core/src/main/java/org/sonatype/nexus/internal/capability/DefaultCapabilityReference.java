@@ -31,7 +31,7 @@ import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Collections.unmodifiableMap;
 
@@ -88,19 +88,19 @@ public class DefaultCapabilityReference
       final Capability capability,
       final SecretsService secretsService)
   {
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.eventQueue = checkNotNull(eventQueue);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
+    this.eventQueue = requireNonNull(eventQueue);
 
-    this.id = checkNotNull(id);
-    this.type = checkNotNull(type);
-    this.descriptor = checkNotNull(descriptor);
-    this.capability = checkNotNull(capability);
+    this.id = requireNonNull(id);
+    this.type = requireNonNull(type);
+    this.descriptor = requireNonNull(descriptor);
+    this.capability = requireNonNull(capability);
     capabilityProperties = EMPTY_MAP;
 
     state = new NewState();
     stateLock = new ReentrantReadWriteLock();
-    activationHandler = checkNotNull(activationListenerFactory).create(this);
-    validityHandler = checkNotNull(validityConditionHandlerFactory).create(this);
+    activationHandler = requireNonNull(activationListenerFactory).create(this);
+    validityHandler = requireNonNull(validityConditionHandlerFactory).create(this);
 
     capability.init(this, secretsService);
   }
@@ -388,8 +388,8 @@ public class DefaultCapabilityReference
   void setFailure(final String action, final Exception e) {
     try {
       stateLock.writeLock().lock();
-      failure = checkNotNull(e);
-      failingAction = checkNotNull(action);
+      failure = requireNonNull(e);
+      failingAction = requireNonNull(action);
       log.error("Could not {} capability {} ({})", action.toLowerCase(), capability, id, e);
       eventQueue.post(new CallbackFailure(this, action, e));
     }

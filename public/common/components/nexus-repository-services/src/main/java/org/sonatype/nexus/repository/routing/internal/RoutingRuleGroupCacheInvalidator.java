@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Invalidates group repository caches when a routing rule change affects any of their members.
@@ -74,8 +74,8 @@ public class RoutingRuleGroupCacheInvalidator
       final RepositoryManager repositoryManager,
       final GroupMemberMappingCache groupMemberMappingCache)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.groupMemberMappingCache = checkNotNull(groupMemberMappingCache);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.groupMemberMappingCache = requireNonNull(groupMemberMappingCache);
   }
 
   /**

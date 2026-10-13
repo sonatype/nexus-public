@@ -43,7 +43,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptyList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -63,8 +63,8 @@ public class RoutingRulesApiResource
 
   @Autowired
   public RoutingRulesApiResource(final RoutingRuleStore routingRuleStore, final RoutingRuleHelper routingRuleHelper) {
-    this.routingRuleStore = checkNotNull(routingRuleStore);
-    this.routingRuleHelper = checkNotNull(routingRuleHelper);
+    this.routingRuleStore = requireNonNull(routingRuleStore);
+    this.routingRuleHelper = requireNonNull(routingRuleHelper);
   }
 
   @Override

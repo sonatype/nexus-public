@@ -34,17 +34,19 @@ import { Box, Flex, Text, Card, Button, Spinner } from '@radix-ui/themes';
 import { ShieldCheck, ShieldOff, ExternalLink, AlertCircle } from 'lucide-react';
 import { useMalwareStatus, type MalwareStatus } from './useMalwareStatus';
 import { useIqConnectionStatus } from '../../shared/security/useIqConnectionStatus';
+import { FIREWALL_AVAILABLE_STATE_KEY } from '../../shared/security/firewallTier';
+import { IQ_SERVER_SETTINGS_HREF, FIREWALL_INFO_HREF } from '../../constants/firewallLinks';
+import { ExtJS } from '../../../../interface/ExtJS';
 
 import './FirewallCard.scss';
-
-const IQ_SERVER_SETTINGS_HREF = '#preview/admin/iq';
-const LEARN_MORE_HREF = 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall';
 
 /**
  * Display component for FirewallCard.
  * Exported for testing with mock state.
  */
-export function FirewallCardDisplay({ status }: { status: MalwareStatus }): React.ReactElement {
+export function FirewallCardDisplay(
+  { status, includedInLicense = false }: { status: MalwareStatus; includedInLicense?: boolean }
+): React.ReactElement {
   // Title based on tier
   const title = status.firewallTier === 'enterprise'
     ? 'Firewall Enterprise'
@@ -94,7 +96,16 @@ export function FirewallCardDisplay({ status }: { status: MalwareStatus }): Reac
     );
   }
 
-  // Not configured: show marketing/upgrade prompt
+  // Not configured. Two audiences:
+  // - Pro+/Enterprise: Firewall is already included in the licence (always-on capability), so there is
+  //   nothing to buy — the message is "included in your license" and the primary CTA configures IQ Server.
+  // - Everyone else (plain Pro, unlicensed): keep the marketing upgrade prompt.
+  const headline = includedInLicense ? `${title} included in your license` : `Upgrade to ${title}`;
+  const subtext = includedInLicense
+    ? 'Repository Firewall is part of your edition. Connect IQ Server to start blocking malicious components before they enter your repositories.'
+    : 'Keep bad code out of your repository. Blocks malicious and vulnerable components before they ever enter your repo.';
+  const configureLabel = includedInLicense ? 'Configure Firewall' : 'Configure';
+
   return (
     <Card className="nxrm-firewall-card nxrm-firewall-card--upsell" size="1">
       <Flex align="center" justify="between" gap="3">
@@ -104,28 +115,35 @@ export function FirewallCardDisplay({ status }: { status: MalwareStatus }): Reac
           </Box>
           <Box className="nxrm-firewall-card__content">
             <Flex align="center" gap="2" mb="1">
-              <Text size="3" weight="medium">Upgrade to {title}</Text>
+              <Text size="3" weight="medium">{headline}</Text>
             </Flex>
             <Text size="2" color="gray" className="nxrm-firewall-card__status">
-              Keep bad code out of your repository. Blocks malicious and vulnerable components before they ever enter your repo.
+              {subtext}
             </Text>
           </Box>
         </Flex>
         <Flex gap="2" wrap="wrap" justify="end">
+          {/*
+            When Firewall is included in the licence, configuring IQ Server is the real next step, so
+            "Configure Firewall" is the prominent primary CTA and "Learn more" is secondary. In the
+            upgrade case the marketing "Learn more" leads instead. Prominence is expressed through
+            variant only; both footer buttons stay size="2" on purpose so they render at the same
+            height side by side — size is intentionally not conditional.
+          */}
           <Button
-            variant="soft"
-            size="1"
+            variant={includedInLicense ? 'solid' : 'soft'}
+            size="2"
             onClick={() => {
               window.location.hash = IQ_SERVER_SETTINGS_HREF;
             }}
           >
-            Configure
+            {configureLabel}
           </Button>
           <Button
             variant="surface"
             size="2"
             onClick={() => {
-              window.open(LEARN_MORE_HREF, '_blank', 'noopener,noreferrer');
+              window.open(FIREWALL_INFO_HREF, '_blank', 'noopener,noreferrer');
             }}
           >
             <Flex align="center" gap="2">
@@ -207,6 +225,13 @@ export default function FirewallCard(): React.ReactElement {
   // Check IQ Server connection status
   const iqConnection = useIqConnectionStatus();
 
+  // When Firewall is available under the current licence, the not-configured card should say so
+  // instead of pitching an upgrade. Reactive read of the backend capability flag so the card updates
+  // live as state changes.
+  const includedInLicense = Boolean(
+    ExtJS.useState(() => ExtJS.state()?.getValue?.(FIREWALL_AVAILABLE_STATE_KEY))
+  );
+
   let status: MalwareStatus;
   try {
     status = useMalwareStatus();
@@ -237,5 +262,5 @@ export default function FirewallCard(): React.ReactElement {
   }
 
   // Normal display (connected or not configured)
-  return <FirewallCardDisplay status={status} />;
+  return <FirewallCardDisplay status={status} includedInLicense={includedInLicense} />;
 }

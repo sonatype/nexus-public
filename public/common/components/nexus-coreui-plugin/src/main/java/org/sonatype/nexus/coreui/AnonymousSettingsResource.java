@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.coreui;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import org.sonatype.nexus.security.anonymous.AnonymousManager;
+import org.sonatype.nexus.validation.Validate;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -20,19 +24,15 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-
-import org.sonatype.nexus.rest.Resource;
-import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
-import org.sonatype.nexus.security.anonymous.AnonymousManager;
-
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @since 3.19
@@ -52,7 +52,7 @@ public class AnonymousSettingsResource
 
   @Autowired
   public AnonymousSettingsResource(final AnonymousManager anonymousManager) {
-    this.anonymousManager = checkNotNull(anonymousManager);
+    this.anonymousManager = requireNonNull(anonymousManager);
   }
 
   @GET
@@ -71,6 +71,7 @@ public class AnonymousSettingsResource
   @PUT
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
+  @Validate
   public void update(@NotNull @Valid final AnonymousSettingsXO anonymousXO) {
     AnonymousConfiguration configuration = anonymousManager.newConfiguration();
     configuration.setEnabled(anonymousXO.getEnabled());

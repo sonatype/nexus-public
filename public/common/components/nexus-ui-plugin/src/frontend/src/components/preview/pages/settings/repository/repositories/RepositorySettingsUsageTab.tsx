@@ -13,13 +13,16 @@
 
 import React from 'react';
 import { Box, Flex, Text, Card, Grid, Tooltip } from '@radix-ui/themes';
-import { HardDrive, Package, FileBox, FolderTree } from 'lucide-react';
+import { HardDrive, Package, FileBox } from 'lucide-react';
 
 import { LoadingState, ErrorState } from '../../../../shared';
 import HumanReadableUtils from '../../../../../../interface/HumanReadableUtils';
+import { ExtJS } from '../../../../../../interface/ExtJS';
 import UIStrings from '../../../../../../constants/UIStrings';
-import { useRepositorySettingsUsageTab } from './useRepositorySettingsUsageTab';
+import { useRepositorySettingsUsageTab, type GroupMember } from './useRepositorySettingsUsageTab';
 import type { RepositoryUsageKind } from './repositoryUsageMachine';
+import { REPOSITORY_SETTINGS_USAGE_TAB_STRINGS as Strings } from './RepositorySettingsUsageTabStrings';
+import { RepositoryTypeIcon } from './repositoryTypeIcon';
 
 import './RepositorySettingsUsageTab.scss';
 
@@ -40,14 +43,34 @@ function formatNumber(value: number | undefined | null): string {
 
 interface MembershipSectionProps {
   title: string;
-  items: string[];
+  items: Array<string | GroupMember>;
   emptyMessage: string;
   error: string | null;
+  itemType: 'group' | 'member';
 }
 
-function MembershipSection({ title, items, emptyMessage, error }: MembershipSectionProps): JSX.Element {
+function MembershipSection({ title, items, emptyMessage, error, itemType }: MembershipSectionProps): JSX.Element {
   const showPlaceholder = error !== null || items.length === 0;
   const placeholderMessage = error ?? emptyMessage;
+
+  function renderIcon(item: string | GroupMember): JSX.Element {
+    if (itemType === 'group') {
+      // Group Membership section - all items are groups
+      return <RepositoryTypeIcon type="group" size={16} />;
+    }
+
+    // Member Repositories section - items are {name, type}
+    const member = item as GroupMember;
+    return <RepositoryTypeIcon type={member.type} size={16} />;
+  }
+
+  function getItemName(item: string | GroupMember): string {
+    return typeof item === 'string' ? item : item.name;
+  }
+
+  function getRepositoryHref(name: string): string {
+    return `#preview/admin/repository/repositories/${encodeURIComponent(name)}`;
+  }
 
   return (
     <Box>
@@ -66,18 +89,17 @@ function MembershipSection({ title, items, emptyMessage, error }: MembershipSect
         </Flex>
       ) : (
         <Flex direction="column" gap="2">
-          {items.map((name) => (
-            <Flex
-              key={name}
-              align="center"
-              gap="2"
-              py="2"
-              px="3"
+          {items.map((item) => (
+            <a
+              key={getItemName(item)}
+              href={getRepositoryHref(getItemName(item))}
               className="repository-settings-usage-tab__membership-item"
             >
-              <FolderTree size={16} color="var(--blue-9)" />
-              <Text weight="medium">{name}</Text>
-            </Flex>
+              <Flex align="center" gap="2" py="2" px="3">
+                {renderIcon(item)}
+                <Text weight="medium">{getItemName(item)}</Text>
+              </Flex>
+            </a>
           ))}
         </Flex>
       )}
@@ -104,79 +126,91 @@ export function RepositorySettingsUsageTab({
   } = useRepositorySettingsUsageTab(repositoryName, repositoryType);
 
   if (loading && !loaded) {
-    return <LoadingState message="Loading usage data..." />;
+    return <LoadingState message={Strings.LOADING} />;
   }
 
   if (error && !loaded) {
     return (
       <ErrorState
         message={error}
-        retryText="Retry"
+        retryText={Strings.RETRY}
         onRetry={retry}
       />
     );
   }
 
   const showGroupMembers = repositoryType === 'group';
+  // Repository Size and Assets are populated by RepositoryMetricsFeatureCheck, which requires
+  // Postgres (+ license + a finished CopyBlobSizeTask). On H2 those metrics never exist, so we
+  // hide the cards instead of showing a permanently-pending "not yet calculated" tooltip that
+  // reads as broken. Components is unaffected: the backend never populates componentCount on any
+  // DB/edition yet, so it always shows its own pending tooltip regardless of this gate.
+  const isPostgresql = Boolean(ExtJS.state().getValue('datastore.isPostgresql'));
 
   return (
     <Flex direction="column" gap="5" p="4">
       <Box>
         <Text size="3" weight="bold" as="div" mb="3">
-          Storage Metrics
+          {Strings.STORAGE_METRICS.TITLE}
         </Text>
-        <Grid columns="3" gap="4">
-          <Card size="2">
-            <Flex direction="column" gap="2" align="center" py="2">
-              <HardDrive size={22} color="var(--accent-9)" />
-              <Tooltip content={totalSizePending ? "Repository size not yet calculated. The repository metrics task runs periodically." : "Total size of all assets in this repository"}>
-                <Text size="5" weight="bold">
-                  {formatBytes(metrics?.totalSize)}
-                </Text>
-              </Tooltip>
-              <Text size="1" color="gray">Repository Size</Text>
-            </Flex>
-          </Card>
+        <Grid columns={isPostgresql ? '3' : '1'} gap="4">
+          {isPostgresql && (
+            <Card size="2">
+              <Flex direction="column" gap="2" align="center" py="2">
+                <HardDrive size={22} color="var(--accent-9)" />
+                <Tooltip content={totalSizePending ? Strings.STORAGE_METRICS.SIZE_PENDING_TOOLTIP : Strings.STORAGE_METRICS.SIZE_TOOLTIP}>
+                  <Text size="5" weight="bold">
+                    {formatBytes(metrics?.totalSize)}
+                  </Text>
+                </Tooltip>
+                <Text size="1" color="gray">{Strings.STORAGE_METRICS.REPOSITORY_SIZE}</Text>
+              </Flex>
+            </Card>
+          )}
 
           <Card size="2">
             <Flex direction="column" gap="2" align="center" py="2">
               <Package size={22} color="var(--accent-9)" />
-              <Tooltip content={componentCountPending ? "Component count not yet calculated. The repository metrics task runs periodically." : undefined}>
+              <Tooltip content={componentCountPending ? Strings.STORAGE_METRICS.COMPONENT_COUNT_PENDING_TOOLTIP : undefined}>
                 <Text size="5" weight="bold">
                   {formatNumber(metrics?.componentCount)}
                 </Text>
               </Tooltip>
-              <Text size="1" color="gray">Components</Text>
+              <Text size="1" color="gray">{Strings.STORAGE_METRICS.COMPONENTS}</Text>
             </Flex>
           </Card>
 
-          <Card size="2">
-            <Flex direction="column" gap="2" align="center" py="2">
-              <FileBox size={22} color="var(--accent-9)" />
-              <Tooltip content={assetCountPending ? "Asset count not yet calculated. The repository metrics task runs periodically." : undefined}>
-                <Text size="5" weight="bold">
-                  {formatNumber(metrics?.assetCount)}
-                </Text>
-              </Tooltip>
-              <Text size="1" color="gray">Assets</Text>
-            </Flex>
-          </Card>
+          {isPostgresql && (
+            <Card size="2">
+              <Flex direction="column" gap="2" align="center" py="2">
+                <FileBox size={22} color="var(--accent-9)" />
+                <Tooltip content={assetCountPending ? Strings.STORAGE_METRICS.ASSET_COUNT_PENDING_TOOLTIP : undefined}>
+                  <Text size="5" weight="bold">
+                    {formatNumber(metrics?.assetCount)}
+                  </Text>
+                </Tooltip>
+                <Text size="1" color="gray">{Strings.STORAGE_METRICS.ASSETS}</Text>
+              </Flex>
+            </Card>
+          )}
         </Grid>
       </Box>
 
       {showGroupMembers ? (
         <MembershipSection
-          title="Member Repositories"
+          title={Strings.MEMBER_REPOSITORIES.TITLE}
           items={groupMembers}
-          emptyMessage="This group has no member repositories."
+          emptyMessage={Strings.MEMBER_REPOSITORIES.EMPTY_MESSAGE}
           error={membershipError}
+          itemType="member"
         />
       ) : (
         <MembershipSection
-          title="Group Membership"
+          title={Strings.GROUP_MEMBERSHIP.TITLE}
           items={whereUsed}
-          emptyMessage="This repository is not a member of any groups."
+          emptyMessage={Strings.GROUP_MEMBERSHIP.EMPTY_MESSAGE}
           error={membershipError}
+          itemType="group"
         />
       )}
     </Flex>

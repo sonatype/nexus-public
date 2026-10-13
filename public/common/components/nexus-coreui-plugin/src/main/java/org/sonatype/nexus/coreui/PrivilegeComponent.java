@@ -22,6 +22,7 @@ import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
+import org.sonatype.nexus.api.extdirect.common.FormFieldXO;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
@@ -53,7 +54,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 import org.springframework.stereotype.Component;
 
@@ -79,9 +80,9 @@ public class PrivilegeComponent
       final SecurityHelper securityHelper,
       final List<PrivilegeDescriptor> privilegeDescriptors)
   {
-    this.securitySystem = checkNotNull(securitySystem);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
+    this.securitySystem = requireNonNull(securitySystem);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.privilegeDescriptors = requireNonNull(privilegeDescriptors);
     this.privilegeDescriptorsByType = QualifierUtil.buildQualifierBeanMap(privilegeDescriptors);
   }
 
@@ -235,7 +236,8 @@ public class PrivilegeComponent
           "Unknown privilege type '" + privilege.getType() + "'; cannot determine effective permission.");
     }
     Permission resolved = descriptor.createPermission(toCPrivilege(privilege));
-    checkNotNull(resolved, "PrivilegeDescriptor for type '%s' returned a null permission", privilege.getType());
+    requireNonNull(resolved,
+        String.format("PrivilegeDescriptor for type '%s' returned a null permission", privilege.getType()));
     securityHelper.ensurePermitted(resolved);
   }
 

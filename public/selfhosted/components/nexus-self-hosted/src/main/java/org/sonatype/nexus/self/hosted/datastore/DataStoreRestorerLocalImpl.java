@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link DataStoreRestorer} implementation which restores databases found in zip archives in
@@ -50,7 +50,7 @@ public class DataStoreRestorerLocalImpl
 
   @Autowired
   public DataStoreRestorerLocalImpl(final ApplicationDirectories applicationDirectories) {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
   }
 
   @Override

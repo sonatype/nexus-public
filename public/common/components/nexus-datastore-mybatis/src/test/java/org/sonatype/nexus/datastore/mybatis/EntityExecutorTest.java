@@ -139,12 +139,26 @@ public class EntityExecutorTest
     assertThrows(SQLException.class, () -> underTest.update(ms, null));
   }
 
+  @Test
+  public void testDeadlockIsMappedToSerializedAccessException() throws SQLException {
+    MappedStatement ms = mock(MappedStatement.class);
+
+    // PostgreSQL reports a detected deadlock with SQLState 40P01; it is transient and the transaction should
+    // be retried, so it must surface as the retryable SerializedAccessException (not a generic SQLException).
+    when(delegate.update(ms, null)).thenThrow(deadlockException());
+    assertThrows(SerializedAccessException.class, () -> underTest.update(ms, null));
+  }
+
   private static SQLException duplicateKeyException() {
     return new SQLException("Duplicate Key", DuplicateKeyException.SQL_STATE);
   }
 
   private static SQLException serializedAccessException() {
     return new SQLException("Isolation", SerializedAccessException.SQL_STATE);
+  }
+
+  private static SQLException deadlockException() {
+    return new SQLException("deadlock detected", SerializedAccessException.DEADLOCK_SQL_STATE);
   }
 
   private static SQLException foreignKeyViolationException() {

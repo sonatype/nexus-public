@@ -16,7 +16,7 @@ import java.util.Map;
 
 import org.apache.shiro.util.ThreadContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Runnable that properly sets MDC context before invoking the delegate. The delegate will execute in a
@@ -42,7 +42,7 @@ public class MDCAwareRunnable
   private final Map<Object, Object> threadContextResources;
 
   public MDCAwareRunnable(final Runnable delegate) {
-    this.delegate = checkNotNull(delegate);
+    this.delegate = requireNonNull(delegate);
     this.mdcContext = MDCUtils.getCopyOfContextMap();
     // ThreadContext.getResources() returns a defensive copy of the submitting thread's resource map,
     // so this captures a point-in-time snapshot of the submit-time security context: a later mutation

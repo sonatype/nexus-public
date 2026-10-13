@@ -17,7 +17,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -38,7 +38,7 @@ public class CleanupCapabilityDuplicatesMigrationStep_1_27
 
   @Autowired
   public CleanupCapabilityDuplicatesMigrationStep_1_27(final CleanupCapabilityDuplicatesService cleanupService) {
-    this.cleanupService = checkNotNull(cleanupService);
+    this.cleanupService = requireNonNull(cleanupService);
   }
 
   @Override

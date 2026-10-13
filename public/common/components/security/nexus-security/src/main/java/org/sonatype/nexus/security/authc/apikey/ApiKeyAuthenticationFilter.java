@@ -32,7 +32,7 @@ import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.core.annotation.Order;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 // FIXME: This isn't basic-auth, so shouldn't extend from that base-class?
 
@@ -54,7 +54,7 @@ public class ApiKeyAuthenticationFilter
 
   @Autowired
   public ApiKeyAuthenticationFilter(final List<ApiKeyExtractor> apiKeysList) {
-    this.apiKeys = QualifierUtil.buildQualifierBeanMap(checkNotNull(apiKeysList));
+    this.apiKeys = QualifierUtil.buildQualifierBeanMap(requireNonNull(apiKeysList));
   }
 
   @Override

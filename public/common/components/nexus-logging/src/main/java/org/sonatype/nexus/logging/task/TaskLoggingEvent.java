@@ -14,7 +14,7 @@ package org.sonatype.nexus.logging.task;
 
 import org.slf4j.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.copyOf;
 
 /**
@@ -35,8 +35,8 @@ public class TaskLoggingEvent
   }
 
   public TaskLoggingEvent(final Logger logger, final String message, final Object[] args) {
-    this.logger = checkNotNull(logger);
-    this.message = checkNotNull(message);
+    this.logger = requireNonNull(logger);
+    this.message = requireNonNull(message);
     this.args = args == null ? null : copyOf(args, args.length);
   }
 

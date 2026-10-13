@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
@@ -51,7 +51,7 @@ public class SeparateTaskLogTaskLogger
 
   SeparateTaskLogTaskLogger(final Logger log, final TaskLogInfo taskLogInfo) {
     super(log);
-    this.taskLogInfo = checkNotNull(taskLogInfo);
+    this.taskLogInfo = requireNonNull(taskLogInfo);
 
     // Set per-thread logback property via MDC (see logback.xml)
     taskLogIdentifier = format("%s-%s", taskLogInfo.getTypeId(),

@@ -20,11 +20,14 @@
     Browses Package index metadata assets for a given repository and distribution.
     Returns all assets with paths matching /dists/{distribution}/main/binary-% that have no component_id.
   -->
+  <!-- NEXUS-54969: explicit columns via the core AssetDAO.xml assetColumns fragment (this mapper body is
+       merged into the core AssetDAO namespace, so the fragment resolves here). -->
   <select id="browsePackageIndexAssets" resultMap="assetResult">
-    SELECT * FROM apt_asset
+    SELECT <include refid="assetColumns"/> FROM apt_asset
     WHERE repository_id = #{repositoryId}
       AND path LIKE #{pathPattern}
       AND component_id IS NULL
+      <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
       <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
     ORDER BY asset_id
     LIMIT #{limit}

@@ -23,7 +23,7 @@ import org.sonatype.nexus.thread.internal.MDCAwareRunnable;
 import org.apache.shiro.concurrent.SubjectAwareScheduledExecutorService;
 import org.apache.shiro.subject.Subject;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A modification of Shiro's {@link SubjectAwareScheduledExecutorService} that in turn returns always the same, supplied
@@ -38,8 +38,8 @@ public class NexusScheduledExecutorService
   private final Supplier<Subject> subjectSupplier;
 
   public NexusScheduledExecutorService(final ScheduledExecutorService target, final Supplier<Subject> subjectSupplier) {
-    super(checkNotNull(target));
-    this.subjectSupplier = checkNotNull(subjectSupplier);
+    super(requireNonNull(target));
+    this.subjectSupplier = requireNonNull(subjectSupplier);
   }
 
   /**

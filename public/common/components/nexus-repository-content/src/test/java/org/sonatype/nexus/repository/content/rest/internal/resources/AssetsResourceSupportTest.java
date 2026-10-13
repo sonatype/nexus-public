@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.fluent.FluentContinuation;
-import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
@@ -101,7 +101,7 @@ public class AssetsResourceSupportTest
   private RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
   @Mock
-  private MaintenanceService maintenanceService;
+  private ContentDeletionService contentDeletionService;
 
   private AssetsResource underTest;
 
@@ -110,7 +110,7 @@ public class AssetsResourceSupportTest
     mockRepository();
     mockContentFacet();
     mockFluentAssets();
-    underTest = new AssetsResource(repositoryManagerRESTAdapter, maintenanceService, contentAuthHelper, null);
+    underTest = new AssetsResource(repositoryManagerRESTAdapter, contentDeletionService, contentAuthHelper, null);
   }
 
   @Test

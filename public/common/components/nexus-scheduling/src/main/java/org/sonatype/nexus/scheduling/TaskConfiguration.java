@@ -30,8 +30,8 @@ import org.joda.time.DateTime;
 import org.joda.time.base.AbstractInstant;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * The task configuration backed by plain map.
@@ -118,7 +118,7 @@ public class TaskConfiguration
   }
 
   public TaskConfiguration(final TaskConfiguration configuration) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
     this.configuration = new HashMap<>(configuration.configuration);
     validate();
   }
@@ -137,7 +137,7 @@ public class TaskConfiguration
    * Copy configuration from given to self.
    */
   public TaskConfiguration apply(final TaskConfiguration from) {
-    checkNotNull(from);
+    requireNonNull(from);
     from.validate();
     configuration.putAll(from.configuration);
     return this;
@@ -162,7 +162,7 @@ public class TaskConfiguration
   }
 
   public void setId(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
     setString(ID_KEY, id);
   }
 
@@ -172,7 +172,7 @@ public class TaskConfiguration
   }
 
   public void setName(final String name) {
-    checkNotNull(name);
+    requireNonNull(name);
     setString(NAME_KEY, name);
   }
 
@@ -182,7 +182,7 @@ public class TaskConfiguration
   }
 
   public void setTypeId(final String typeId) {
-    checkNotNull(typeId);
+    requireNonNull(typeId);
     setString(TYPE_ID_KEY, typeId);
   }
 
@@ -191,7 +191,7 @@ public class TaskConfiguration
   }
 
   public void setTypeName(final String typeName) {
-    checkNotNull(typeName);
+    requireNonNull(typeName);
     setString(TYPE_NAME_KEY, typeName);
   }
 
@@ -251,7 +251,7 @@ public class TaskConfiguration
   }
 
   public void setCreated(final Date date) {
-    checkNotNull(date);
+    requireNonNull(date);
     setDate(CREATED_KEY, date);
   }
 
@@ -261,7 +261,7 @@ public class TaskConfiguration
   }
 
   public void setUpdated(final Date date) {
-    checkNotNull(date);
+    requireNonNull(date);
     setDate(UPDATED_KEY, date);
   }
 
@@ -310,9 +310,9 @@ public class TaskConfiguration
       final Date runScheduled,
       final long runDuration)
   {
-    checkNotNull(endState);
-    checkNotNull(runStarted);
-    checkNotNull(runScheduled);
+    requireNonNull(endState);
+    requireNonNull(runStarted);
+    requireNonNull(runScheduled);
     checkArgument(runDuration >= 0);
 
     setString(LAST_RUN_STATE_END_STATE, endState.name());
@@ -401,7 +401,7 @@ public class TaskConfiguration
   }
 
   public String getString(final String key, final String defaultValue) {
-    checkNotNull(key);
+    requireNonNull(key);
     return configuration.getOrDefault(key, defaultValue);
   }
 
@@ -410,7 +410,7 @@ public class TaskConfiguration
   }
 
   <T> void setString(final String key, final T value, Function<T, String> f) {
-    checkNotNull(key);
+    requireNonNull(key);
     if (value == null || Strings.isNullOrEmpty(f.apply(value))) {
       configuration.remove(key);
     }
@@ -423,7 +423,7 @@ public class TaskConfiguration
    * @since 3.2
    */
   public boolean containsKey(final String key) {
-    checkNotNull(key);
+    requireNonNull(key);
     return configuration.containsKey(key);
   }
 

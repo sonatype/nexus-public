@@ -36,7 +36,7 @@ import com.google.common.eventbus.Subscribe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -61,7 +61,7 @@ public class RoutingRuleCache
 
   @Autowired
   public RoutingRuleCache(final RoutingRuleStore routingRuleStore) {
-    this.routingRuleStore = checkNotNull(routingRuleStore);
+    this.routingRuleStore = requireNonNull(routingRuleStore);
   }
 
   /**
@@ -123,7 +123,21 @@ public class RoutingRuleCache
   @AllowConcurrentEvents
   @Subscribe
   public void handle(final RoutingRuleInvalidatedEvent event) {
-    routingRuleCache.invalidate(new EntityUUID(UUID.fromString(event.getRoutingRuleId())));
+    // A no-arg RoutingRuleInvalidatedEvent (e.g. Jackson deserialization) carries a null id, and a distributed
+    // event replayed from the outbox could carry a malformed one; guard both so this shared event-bus handler
+    // never throws on UUID.fromString (a malformed id is skipped rather than logged as a handler error).
+    String routingRuleId = event.getRoutingRuleId();
+    if (routingRuleId == null) {
+      return;
+    }
+    try {
+      routingRuleCache.invalidate(new EntityUUID(UUID.fromString(routingRuleId)));
+    }
+    catch (IllegalArgumentException e) {
+      // strip control chars from the untrusted id so a crafted distributed-event row cannot forge log lines
+      log.warn("Ignoring RoutingRuleInvalidatedEvent with malformed routing rule id '{}'",
+          routingRuleId.replaceAll("\\p{Cntrl}", "_"), e);
+    }
   }
 
   private static class RepositoryMappingCacheLoader

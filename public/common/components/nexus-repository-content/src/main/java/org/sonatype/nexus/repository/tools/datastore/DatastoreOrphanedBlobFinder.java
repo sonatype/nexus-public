@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
@@ -64,8 +64,8 @@ public class DatastoreOrphanedBlobFinder
       final RepositoryManager repositoryManager,
       final BlobStoreManager blobStoreManager)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
   }
 
   /**

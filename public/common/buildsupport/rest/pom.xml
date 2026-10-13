@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-rest</artifactId>
@@ -28,12 +28,22 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.22.2</jackson2.version>
+    <!-- 2.22.3 is a security floor: jackson-core through 2.22.2 carries CVE-2026-89407
+         (ReDoS in NumberInput.looksLikeValidNumber via PATTERN_FLOAT, CWE-1333) and
+         CVE-2026-89425 (uncontrolled resource consumption), both CVSS 7.5, first fixed
+         in 2.22.3. The same bump also clears CVE-2026-91776 / CVE-2026-91777 (CVSS 6.9)
+         on jackson-databind. This property imports jackson-bom, so it governs the whole
+         Jackson 2.x family. Do not downgrade below 2.22.3; this floor is superseded only
+         by a later 2.x release that also carries the fixes for those CVEs. -->
+    <jackson2.version>2.22.3</jackson2.version>
     <!-- NEXUS-46395: Jakarta XML Binding 4.0 for Jakarta EE 10 (was 2.3.3). -->
     <jaxb.version>4.0.5</jaxb.version>
     <!-- NEXUS-46395: RESTEasy 7.x is the Jakarta EE 10 / JAX-RS 3.1 line.
          Artifact rename: resteasy-jaxrs → resteasy-core. -->
-    <resteasy.version>7.0.0.Final</resteasy.version>
+    <!-- 7.0.5.Final is a security floor: resteasy-core through 7.0.4.Final carries
+         CVE-2026-89058 (permissive CORS in CorsFilter, CWE-942), first fixed in
+         7.0.5.Final. Do not downgrade below 7.0.5.Final. -->
+    <resteasy.version>7.0.5.Final</resteasy.version>
     <!-- NEXUS-46395: Swagger 1.x → OpenAPI 3.x (swagger-core 2.2.x).
          The -jakarta classifier variants are required when running on Jakarta JAX-RS 3.1.
          Swagger 1.x is incompatible with jakarta.ws.rs.* and must be replaced. -->
@@ -96,49 +106,6 @@
 
       <!-- NEXUS-46395: jakarta.validation-api 3.0.x is required by RESTEasy 7. The version
            is pinned in buildsupport/other/pom.xml. -->
-
-      <dependency>
-        <groupId>org.jsoup</groupId>
-        <artifactId>jsoup</artifactId>
-        <version>1.23.1</version>
-      </dependency>
-
-      <!--
-      FIXME: Remove all xstream?
-      -->
-      <dependency>
-        <groupId>com.thoughtworks.xstream</groupId>
-        <artifactId>xstream</artifactId>
-        <version>1.4.21</version>
-        <exclusions>
-          <exclusion>
-            <groupId>xmlpull</groupId>
-            <artifactId>xmlpull</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>xpp3</groupId>
-            <artifactId>xpp3_min</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.servicemix.bundles</groupId>
-        <artifactId>org.apache.servicemix.bundles.xpp3</artifactId>
-        <version>1.1.4c_7</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sun.xml.fastinfoset</groupId>
-        <artifactId>FastInfoset</artifactId>
-        <version>1.2.18</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.ning</groupId>
-        <artifactId>compress-lzf</artifactId>
-        <version>1.1.2</version>
-      </dependency>
 
       <dependency>
         <groupId>org.yaml</groupId>
@@ -270,12 +237,13 @@
         <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-jackson2-provider</artifactId>
         <version>${resteasy.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-validator-provider</artifactId>
-        <version>${resteasy.version}</version>
+        <exclusions>
+          <exclusion>
+            <!-- RESTEasy tracing is unused and includes copyleft licensing -->
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-tracing-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <!--
@@ -298,10 +266,16 @@
            declares it would once again pull javax.xml.bind onto the runtime classpath
            and trigger the NoClassDefFoundError on XmlElement seen at startup. -->
 
+      <!-- Jackson 3.x line. 3.2.3 is a security floor: tools.jackson.core:jackson-core
+           through 3.2.2 carries CVE-2026-89425 (uncontrolled resource consumption,
+           CVSS 7.5), the same defect fixed on the 2.x line in 2.22.3. The bump also
+           clears CVE-2026-91777 (CVSS 6.9) on tools.jackson.core:jackson-databind.
+           Do not downgrade below 3.2.3; this floor is superseded only by a later 3.x
+           release that also carries the fixes for those CVEs. -->
       <dependency>
         <groupId>tools.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
-        <version>3.2.1</version>
+        <version>3.2.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

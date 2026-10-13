@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 import com.google.common.collect.Maps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Ordered regular-expression {@link MimeRulesSource} implementation.
@@ -35,7 +35,7 @@ public class RegexpMimeRulesSource
   }
 
   public void addRule(final Pattern pattern, final String mimeType) {
-    rules.put(checkNotNull(pattern), new MimeRule(false, mimeType));
+    rules.put(requireNonNull(pattern), new MimeRule(false, mimeType));
   }
 
   @Override

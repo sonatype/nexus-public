@@ -27,12 +27,11 @@ import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeApplication;
 import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeApplicationRequest;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED_VALUE;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -112,7 +111,7 @@ public class ApplicationPrivilegeDescriptor
 
   @Override
   public Permission createPermission(final CPrivilege privilege) {
-    checkNotNull(privilege);
+    requireNonNull(privilege);
     String domain = readProperty(privilege, P_DOMAIN, ALL);
     List<String> actions = readListProperty(privilege, P_ACTIONS, ALL);
     return new ApplicationPermission(domain, actions);
@@ -133,7 +132,7 @@ public class ApplicationPrivilegeDescriptor
   //
 
   public static String id(final String domain, final String... actions) {
-    return String.format("%s-%s", domain, Joiner.on(',').join(actions));
+    return String.format("%s-%s", domain, String.join(",", actions));
   }
 
   public static CPrivilege privilege(final String domain, final String... actions) {

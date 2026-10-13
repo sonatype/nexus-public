@@ -15,16 +15,6 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.Collection;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.ConstraintViolation;
-import jakarta.ws.rs.BeanParam;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.core.Response;
-
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -40,8 +30,17 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import com.google.common.collect.Sets;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.ConstraintViolation;
+import jakarta.ws.rs.BeanParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
@@ -61,7 +60,7 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
 
   @Autowired
   public void setConstraintViolationFactory(final ConstraintViolationFactory constraintViolationFactory) {
-    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
+    this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
   }
 
   @Autowired
@@ -84,7 +83,6 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
   @POST
   @Override
   public Response createRepository(final T request) {
-    validateRequest(request);
     return super.createRepository(request);
   }
 
@@ -95,33 +93,40 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
       final T request,
       @PathParam("repositoryName") final String repositoryName)
   {
-    validateRequest(request);
     return super.updateRepository(request, repositoryName);
   }
 
-  private void validateRequest(T request) {
+  @Override
+  protected void validateRequest(final T request) {
+    super.validateRequest(request);
+
     String groupFormat = request.getFormat();
     Set<ConstraintViolation<?>> violations = Sets.newHashSet();
-    Collection<String> memberNames = request.getGroup().getMemberNames();
-    for (String repositoryName : memberNames) {
-      Repository repository = repositoryManager.get(repositoryName);
-      if (nonNull(repository)) {
-        String memberFormat = repository.getFormat().getValue();
-        if (!memberFormat.equals(groupFormat)) {
-          violations.add(constraintViolationFactory.createViolation("memberNames",
-              "Member repository format does not match group repository format: " + repositoryName));
+    GroupAttributes groupAttributes = request.getGroup();
+    if (groupAttributes != null) {
+      Collection<String> memberNames = groupAttributes.getMemberNames();
+      if (memberNames != null) {
+        for (String repositoryName : memberNames) {
+          Repository repository = repositoryManager.get(repositoryName);
+          if (nonNull(repository)) {
+            String memberFormat = repository.getFormat().getValue();
+            if (!memberFormat.equals(groupFormat)) {
+              violations.add(constraintViolationFactory.createViolation("memberNames",
+                  "Member repository format does not match group repository format: " + repositoryName));
+            }
+          }
+          else {
+            violations.add(constraintViolationFactory.createViolation("memberNames",
+                "Member repository does not exist: " + repositoryName));
+          }
         }
-      }
-      else {
-        violations.add(constraintViolationFactory.createViolation("memberNames",
-            "Member repository does not exist: " + repositoryName));
       }
     }
     validateGroupDeploy(request, violations);
     maybePropagate(violations, log);
   }
 
-  private void validateGroupDeploy(T request, Set<ConstraintViolation<?>> violations) {
+  private void validateGroupDeploy(final T request, final Set<ConstraintViolation<?>> violations) {
     GroupAttributes group = request.getGroup();
     if (group instanceof GroupDeployAttributes) {
       GroupDeployAttributes groupDeployAttributes = (GroupDeployAttributes) group;
@@ -130,7 +135,7 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
         return;
       }
       Repository writableMemberRepository = repositoryManager.get(writableMember);
-      if (!"PRO".equals(applicationVersion.getEdition())) {
+      if (!applicationVersion.isAnyProEdition()) {
         violations.add(constraintViolationFactory.createViolation(
             WRITABLE_MEMBER,
             GroupHandler.INSUFFICIENT_LICENSE));

@@ -16,7 +16,7 @@ import java.util.Collection;
 
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Fired to denote a search has occurred.
@@ -35,8 +35,8 @@ public class SearchEvent
       final Collection<SearchFilter> searchFilters,
       final SearchEventSource source)
   {
-    this.searchFilters = checkNotNull(searchFilters);
-    this.source = checkNotNull(source);
+    this.searchFilters = requireNonNull(searchFilters);
+    this.source = requireNonNull(source);
   }
 
   public SearchEventSource getSource() {

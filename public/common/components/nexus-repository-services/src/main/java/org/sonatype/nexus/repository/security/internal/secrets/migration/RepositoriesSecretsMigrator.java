@@ -38,7 +38,7 @@ import org.sonatype.nexus.security.secrets.SecretsMigratorSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -79,7 +79,7 @@ public class RepositoriesSecretsMigrator
   @Autowired
   public RepositoriesSecretsMigrator(final SecretsService secretsService, final RepositoryManager repositoryManager) {
     super(secretsService);
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Override

@@ -14,7 +14,7 @@ package org.sonatype.nexus.common.text;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to render plural strings.
@@ -33,8 +33,8 @@ public final class Plural
       final String singular,
       @Nullable final String plural)
   {
-    checkNotNull(buff);
-    checkNotNull(singular);
+    requireNonNull(buff);
+    requireNonNull(singular);
     buff.append(value).append(" ");
     if (value == 1) {
       buff.append(singular);

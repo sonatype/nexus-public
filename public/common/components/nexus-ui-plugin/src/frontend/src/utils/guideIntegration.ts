@@ -78,6 +78,29 @@ export function guidePackageNameFromGaId(gaId: string): string | null {
 }
 
 /**
+ * Derive the Guide "package" path segment from a search result's separate `format`, `group` and
+ * `name` fields — the card's equivalent of {@link guidePackageNameFromGaId}, which works from a
+ * joined GA id. Kept here (rather than inline in the card) so both surfaces resolve the package
+ * the same way.
+ *
+ * Maven Guide packages are `group:artifact` coordinates. npm scoped packages are `@scope/name`,
+ * and search results store the scope in `group` (`@scope`) and the bare package in `name`, so the
+ * two are rejoined with a slash. Every other ecosystem uses the bare name.
+ */
+export function guidePackageName(format: string, group: string | undefined, name: string): string {
+  const fmt = format.toLowerCase();
+  if ((fmt === 'maven' || fmt === 'maven2') && group) {
+    return `${group}:${name}`;
+  }
+  // npm scoped: rejoin `@scope` (group) and the bare package (name) as `@scope/name`. Guard against
+  // a name that already carries the scope, so a `@scope` + `@scope/name` pair is not doubled.
+  if (fmt === 'npm' && group && !name.startsWith(`${group}/`)) {
+    return `${group}/${name}`;
+  }
+  return name;
+}
+
+/**
  * Build a Guide component URL from a Nexus GA id (`format:group:name` or `format:name`)
  * and version.
  */

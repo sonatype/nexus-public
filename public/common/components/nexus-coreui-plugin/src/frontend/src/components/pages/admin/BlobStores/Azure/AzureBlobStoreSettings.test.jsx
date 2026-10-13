@@ -29,24 +29,28 @@ jest.mock('./AzureBlobStoreSettingsMachine', () => ({
   default: {}
 }));
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  FormUtils: {
-    fieldProps: jest.fn((path, state) => ({
-      value: path.reduce((obj, key) => obj?.[key], state.context.data) ?? '',
-      isPristine: false,
-      validationErrors: state.context.errors
-    })),
-    checkboxProps: jest.fn((fieldName, state) => ({
-      isChecked: state.context.data.bucketConfiguration?.[fieldName] ?? false,
-      isPristine: false,
-      validationErrors: state.context.errors
-    })),
-    handleUpdate: jest.fn(() => jest.fn())
-  },
-  ExtJS: {
-    isProEdition: jest.fn(() => true)
-  }
-}));
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const isProEdition = jest.fn(() => true);
+  return {
+    FormUtils: {
+      fieldProps: jest.fn((path, state) => ({
+        value: path.reduce((obj, key) => obj?.[key], state.context.data) ?? '',
+        isPristine: false,
+        validationErrors: state.context.errors
+      })),
+      checkboxProps: jest.fn((fieldName, state) => ({
+        isChecked: state.context.data.bucketConfiguration?.[fieldName] ?? false,
+        isPristine: false,
+        validationErrors: state.context.errors
+      })),
+      handleUpdate: jest.fn(() => jest.fn())
+    },
+    ExtJS: {
+      isProEdition
+    },
+    useIsLicensedEdition: (...args) => isProEdition(...args),
+  };
+});
 
 const ExtJS = require('@sonatype/nexus-ui-plugin').ExtJS;
 const {useMachine} = require('@xstate/react');

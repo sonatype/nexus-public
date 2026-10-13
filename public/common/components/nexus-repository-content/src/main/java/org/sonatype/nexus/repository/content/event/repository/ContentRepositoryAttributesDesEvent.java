@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.content.ContentRepository;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Event sent whenever a {@link ContentRepository}'s attributes change between all nodes.
@@ -30,7 +30,7 @@ public class ContentRepositoryAttributesDesEvent
 
   @JsonCreator
   public ContentRepositoryAttributesDesEvent(@JsonProperty("repoName") final String repoName) {
-    this.repoName = checkNotNull(repoName);
+    this.repoName = requireNonNull(repoName);
   }
 
   public String getRepoName() {

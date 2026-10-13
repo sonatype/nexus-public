@@ -16,7 +16,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A mutable combo-box {@link FormField}.
@@ -100,7 +100,7 @@ public class ComboboxFormField<V>
    * @since 3.0
    */
   public ComboboxFormField<V> withStoreApi(final String storeApi) {
-    this.storeApi = checkNotNull(storeApi);
+    this.storeApi = requireNonNull(storeApi);
     return this;
   }
 
@@ -112,7 +112,7 @@ public class ComboboxFormField<V>
    * @since 3.0
    */
   public Combobox<V> withStoreFilter(final String property, final String value) {
-    storeFilters.put(checkNotNull(property, "property"), checkNotNull(value, "value"));
+    storeFilters.put(requireNonNull(property, "property"), requireNonNull(value, "value"));
     return this;
   }
 

@@ -40,6 +40,7 @@ const mockUseRepositoriesApi = useRepositoriesApi as jest.MockedFunction<typeof 
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     checkPermission: jest.fn().mockReturnValue(true),
+    isLicensedEdition: jest.fn().mockReturnValue(false),
     showSuccessMessage: jest.fn(),
     showErrorMessage: jest.fn(),
     state: jest.fn().mockReturnValue({
@@ -49,6 +50,7 @@ jest.mock('../../../../../../../interface/ExtJS', () => ({
     // (NEXUS-54212); delegate to the getter so tests keep driving behavior via checkPermission.
     usePermission: jest.fn((getValue: () => boolean) => getValue()),
     useUser: jest.fn(() => ({ id: 'admin' })),
+    useState: jest.fn((getValue: () => unknown) => getValue()),
   },
 }));
 

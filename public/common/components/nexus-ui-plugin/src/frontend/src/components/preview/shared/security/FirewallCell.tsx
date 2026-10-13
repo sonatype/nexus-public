@@ -87,6 +87,13 @@ export function FirewallCell({
   // Unsupported proxy formats (e.g. terraform, helm, apt, gitlfs, swift) show N/A
   // This must come BEFORE the type check so proxy repos with unsupported formats
   // never fall through to the Unprotected/Protected paths.
+  //
+  // FIRE-956, deliberate: this stays on the visibility gate (isFirewallSupportedFormat) so the cell
+  // reports the repository's real Firewall mode. Using the capability check instead would render
+  // "Not supported" over a Helm proxy that is actively quarantining downloads under the override,
+  // which is a worse inaccuracy than showing the mode it is running in. The proper fix is FIRE-895's
+  // "Component Unknown policy support only" disclosure, which can state the reduced capability
+  // without contradicting that mode. Do not "correct" this to the capability check on its own.
   if (repository.type === 'proxy' && !isFirewallSupportedFormat(repository.format)) {
     return (
       <FirewallNotSupportedEmptyState
@@ -195,7 +202,7 @@ export function FirewallCell({
           }}
           onConfigureFirewall={() => {
             setShowModal(false);
-            router?.stateService.go('preview.browse.repository-profile', { repositoryName: repository.name, tab: 'firewall' });
+            router?.stateService.go('preview.admin.repository.repositories.detail', { repositoryName: repository.name, tab: 'firewall' });
           }}
           firewallStatus={
             isUnprotected

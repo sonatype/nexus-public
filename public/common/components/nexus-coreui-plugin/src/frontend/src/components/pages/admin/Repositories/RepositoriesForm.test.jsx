@@ -41,9 +41,8 @@ import {ROUTING_RULES_URL} from './facets/GenericOptionsConfiguration';
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {DOCKER_HUB_URL} from './facets/DockerIndexConfiguration';
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const ExtJS = {
     checkPermission: jest.fn(),
     requestConfirmation: jest.fn(),
     useState: (fn) => fn(),
@@ -59,8 +58,13 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     isProEdition: jest.fn().mockReturnValue(true),
     showSuccessMessage: jest.fn(),
     showErrorMessage: jest.fn(),
-  }
-}));
+  };
+  return {
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+    ExtJS,
+    useIsLicensedEdition: (...args) => ExtJS.isProEdition(...args),
+  };
+});
 
 const REPOSITORIES_SERVICE = [
   {
@@ -312,6 +316,9 @@ describe('RepositoriesForm', () => {
       .mockResolvedValue({data: ROUTING_RULES_RESPONSE});
     when(Axios.get)
       .calledWith('/service/rest/beta/repositories')
+      .mockResolvedValue({data: []});
+    when(Axios.get)
+      .calledWith('service/rest/v1/repositories/firewall/format-capabilities')
       .mockResolvedValue({data: []});
   });
 
@@ -922,7 +929,11 @@ describe('RepositoriesForm', () => {
           indexType: "REGISTRY",
           indexUrl: null,
           cacheForeignLayers: false,
-          foreignLayerUrlWhitelist: []
+          foreignLayerUrlWhitelist: [],
+          layerDownloadTimeoutMinutes: null
+        },
+        firewall: {
+          mode: "DISABLED"
         },
         proxy: {
           remoteUrl: "https://test.com",
@@ -1062,7 +1073,11 @@ describe('RepositoriesForm', () => {
           indexType: 'CUSTOM',
           indexUrl: 'https://custom.index.com/',
           cacheForeignLayers: false,
-          foreignLayerUrlWhitelist: []
+          foreignLayerUrlWhitelist: [],
+          layerDownloadTimeoutMinutes: null
+        },
+        firewall: {
+          mode: 'DISABLED'
         }
       };
       const certificateDetails = {

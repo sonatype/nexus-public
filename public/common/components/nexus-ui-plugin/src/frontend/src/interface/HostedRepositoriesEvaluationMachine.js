@@ -46,7 +46,8 @@ export default FormUtils.buildFormMachine({
       monitoringFilter: 'all',
       offsetPage: 0,
       sortField: 'name',
-      sortDirection: 'asc'
+      sortDirection: 'asc',
+      permissionDenied: false
     },
     states: {
       loading: {
@@ -57,7 +58,7 @@ export default FormUtils.buildFormMachine({
               actions: ['setRepositoryData']
             },
             onError: {
-              actions: ['setLoadError']
+              actions: ['setPermissionDenied', 'setLoadError']
             }
           },
           {
@@ -66,7 +67,7 @@ export default FormUtils.buildFormMachine({
               actions: ['setFormatsData']
             },
             onError: {
-              actions: ['setDefaultFormats']
+              actions: ['setPermissionDenied', 'setDefaultFormats']
             }
           },
           {
@@ -75,7 +76,7 @@ export default FormUtils.buildFormMachine({
               actions: ['setExistingSettings']
             },
             onError: {
-              actions: [assign({
+              actions: ['setPermissionDenied', assign({
                 existingSettings: null,
                 hasSelections: false
               })]
@@ -83,6 +84,10 @@ export default FormUtils.buildFormMachine({
           }
         ],
         always: [
+          {
+            target: 'loaded',
+            cond: (context) => context.permissionDenied
+          },
           {
             target: 'loaded',
             cond: (context) => context.repositories !== undefined && context.formats.length > 0 && context.existingSettings !== undefined
@@ -215,6 +220,11 @@ export default FormUtils.buildFormMachine({
           }
         }
       }
+    },
+    on: {
+      RETRY: {
+        actions: [assign({permissionDenied: false, loadError: null})]
+      }
     }
   })
 }).withConfig({
@@ -271,6 +281,10 @@ export default FormUtils.buildFormMachine({
         const message = event.data?.response?.data?.message || event.data?.message;
         return message ? `${message}` : null;
       }
+    }),
+
+    setPermissionDenied: assign({
+      permissionDenied: (context, event) => context.permissionDenied || event.data?.response?.status === 403
     }),
 
     validate: assign({

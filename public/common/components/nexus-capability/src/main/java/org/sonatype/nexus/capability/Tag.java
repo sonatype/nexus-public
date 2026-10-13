@@ -16,7 +16,7 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A Capability tag (key/value).
@@ -41,8 +41,8 @@ public class Tag
   private final String value;
 
   public Tag(final String key, final String value) {
-    this.key = checkNotNull(key);
-    this.value = checkNotNull(value);
+    this.key = requireNonNull(key);
+    this.value = requireNonNull(value);
   }
 
   public String key() {
@@ -80,7 +80,7 @@ public class Tag
    * Convenience method for creating a set of tags
    */
   public static Set<Tag> tags(final Tag... tags) {
-    return Sets.newHashSet(checkNotNull(tags));
+    return Sets.newHashSet(requireNonNull(tags));
   }
 
   /**

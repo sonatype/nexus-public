@@ -186,4 +186,13 @@ describe('SystemStatusBell', () => {
 
     expect(screen.getByLabelText('System Status')).not.toHaveAttribute('data-analytics-id');
   });
+
+  it('renders the bell IconButton with the outline variant, size 2, and gray accent to match sibling global-header buttons', () => {
+    renderBell();
+
+    const button = screen.getByLabelText('System Status');
+    expect(button).toHaveClass('rt-variant-outline');
+    expect(button).toHaveClass('rt-r-size-2');
+    expect(button).toHaveAttribute('data-accent-color', 'gray');
+  });
 });

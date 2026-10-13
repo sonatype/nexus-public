@@ -16,6 +16,7 @@
  */
 
 import ExtJS from "./ExtJS";
+import { resolveEditionId } from "./editionUtils";
 
 /**
  * This is used to check the visibility of route defined with UIRouter. It expects a visibilityRequirements block
@@ -32,6 +33,11 @@ import ExtJS from "./ExtJS";
  *   permissionPrefixes: string []
  *   editions: string []
  *   requiresUser: boolean
+ *
+ * `editions` values are stable editionId identifiers (e.g. `'nexus-enterprise-edition'`) published
+ * by StatusStateContributor / EditionStateContributor. Prefer the exported edition constants
+ * (`EDITION_PRO`, `EDITION_ENTERPRISE`, …) over inline strings. The predicate falls back to the
+ * short-name edition when the state key is absent so gated routes stay visible.
  *
  * @param visibilityRequirements
  * @returns {boolean}
@@ -125,7 +131,7 @@ export function isVisible(visibilityRequirements) {
     return false;
   }
 
-  // check that edition requirements are met, i.e. must be PRO or COMMUNITY
+  // check that edition requirements are met against the stable editionId identifier
   if (editions && !meetsEditionRequirement(editions)) {
     return false;
   }
@@ -269,10 +275,22 @@ function isTheRequiredCapabilityPresentAndActive(capability) {
   return activeTypes.includes(capability) && createdTypes.includes(capability);
 }
 
-function meetsEditionRequirement(editions) {
-  return editions.some((edition) => {
-    return NX.State.getEdition() === edition;
-  });
+/**
+ * Route-visibility predicate for the `editions` field in a visibilityRequirements block.
+ * Compares each entry against the stable edition identifier published by the backend
+ * ({@code editionId} state key, e.g. {@code nexus-professional-edition}) rather than the
+ * ambiguous short name — self-hosted Pro and cloud both report {@code PRO} as short name.
+ *
+ * Delegates the editionId lookup to {@link resolveEditionId}, which also handles the
+ * short-name fallback used when StatusStateContributor's try/catch swallows the primary
+ * publish.
+ *
+ * Exported so route-parity tests (AT-015) can call the real predicate against real route
+ * configuration instead of reimplementing the filter.
+ */
+export function meetsEditionRequirement(editions) {
+  const currentEditionId = resolveEditionId(NX.State);
+  return editions.some((edition) => currentEditionId === edition);
 }
 
 function isClustered() {

@@ -95,7 +95,7 @@ Ext.define('NX.view.AboutWindow', {
     if (!NX.State.getValue('isCloud')) {
       me.down('#aboutInfo').showInfo({
         'Version': NX.State.getVersion(),
-        'Edition': NX.State.getEdition(),
+        'Edition': NX.State.getEditionDisplayName(),
         'Build Revision': NX.State.getBuildRevision(),
         'Build Timestamp': NX.State.getBuildTimestamp()
       });

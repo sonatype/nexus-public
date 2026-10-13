@@ -12,10 +12,12 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import { SearchResults } from '../SearchResults';
+import * as formatLogos from '../formatLogos';
+import { formatDateTime } from '../../../../shared';
 
 // Helper to wrap components with Radix Theme
 function renderWithTheme(ui) {
@@ -113,11 +115,28 @@ describe('SearchResults', () => {
       expect(countElements.length).toBeGreaterThan(0);
     });
 
-    it('renders total count with + when hasMore is true', () => {
+    it('renders total count with + when hasMore is true and no exact total is known', () => {
       renderWithTheme(
         <SearchResults {...defaultProps} hasMore={true} totalCount={50} />
       );
       expect(screen.getAllByText('50+').length).toBeGreaterThan(0);
+    });
+
+    it('renders the exact backend total without "+" even while more pages remain', () => {
+      // The true match count is authoritative: paging must never reduce the
+      // heading to the loaded subset, and a known exact total is never a cap.
+      renderWithTheme(
+        <SearchResults {...defaultProps} hasMore={true} totalCount={50} total={4888} />
+      );
+      expect(screen.getAllByText('4,888').length).toBeGreaterThan(0);
+      expect(screen.queryByText('4,888+')).not.toBeInTheDocument();
+      expect(screen.queryByText('50+')).not.toBeInTheDocument();
+    });
+
+    it('announces the result count in an aria-live region', () => {
+      renderWithTheme(<SearchResults {...defaultProps} total={4888} />);
+      const status = screen.getByRole('status');
+      expect(status).toHaveTextContent('4,888');
     });
 
     it('renders filter input', () => {
@@ -273,9 +292,12 @@ describe('SearchResults', () => {
       renderWithTheme(<SearchResults {...defaultProps} />);
       await openSortDropdown();
 
-      // Group headings name the field; each option names its direction.
+      // Group headings name the field; each option names its direction. Scope the heading lookup
+      // to the open listbox: the result cards below carry their own "Last updated" label, so an
+      // unscoped getByText would match both the dropdown heading and the cards.
+      const listbox = within(screen.getByRole('listbox'));
       for (const heading of ['Last updated', 'Name', 'Repository']) {
-        expect(screen.getByText(heading)).toBeInTheDocument();
+        expect(listbox.getByText(heading)).toBeInTheDocument();
       }
       for (const direction of ['Newest first', 'Oldest first', 'A-Z', 'Z-A']) {
         expect(screen.getAllByRole('option', { name: direction }).length).toBeGreaterThan(0);
@@ -450,6 +472,84 @@ describe('SearchResults', () => {
       } finally {
         jest.useRealTimers();
       }
+    });
+  });
+
+  describe('result card memoization', () => {
+    // SearchResultCard is memoized. Counting its renders directly would mean
+    // wrapping or mocking the component under test, so instead we spy on
+    // getFormatLogo, which the card body calls exactly once per render. The
+    // spy keeps the real implementation, so the call count is a faithful
+    // render count for the real component.
+    let renderSpy;
+
+    beforeEach(() => {
+      renderSpy = jest.spyOn(formatLogos, 'getFormatLogo');
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    function cardRenderCount() {
+      return renderSpy.mock.calls.length;
+    }
+
+    it('does not re-render result cards when the parent re-renders with the same results', () => {
+      const { rerender } = renderWithTheme(<SearchResults {...defaultProps} />);
+      const afterMount = cardRenderCount();
+      expect(afterMount).toBe(mockResults.length);
+
+      // totalCount is consumed by the results header, not by any card, so a
+      // change to it must not cost a card render.
+      rerender(
+        <Theme>
+          <SearchResults {...defaultProps} totalCount={99} />
+        </Theme>
+      );
+
+      expect(cardRenderCount()).toBe(afterMount);
+    });
+
+    it('does not re-render result cards while the user types in the name filter', () => {
+      jest.useFakeTimers();
+      try {
+        renderWithTheme(<SearchResults {...defaultProps} />);
+        const afterMount = cardRenderCount();
+        const filterInput = screen.getAllByPlaceholderText(/filter by component name/i)[0];
+
+        fireEvent.change(filterInput, { target: { value: 'l' } });
+        fireEvent.change(filterInput, { target: { value: 'lo' } });
+        fireEvent.change(filterInput, { target: { value: 'lod' } });
+
+        expect(cardRenderCount()).toBe(afterMount);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('re-renders the affected card when a result lastUpdated changes', () => {
+      // Cards render through the shared formatter (NEXUS-54427), whose wall clock and offset depend
+      // on the timezone of the machine running the suite — jest.config.js pins none. Expectations
+      // are therefore built with the same formatter rather than hardcoded, which keeps the
+      // assertions exact without making them zone-dependent.
+      const { rerender } = renderWithTheme(<SearchResults {...defaultProps} />);
+      expect(screen.getByText(formatDateTime('2024-01-15T10:00:00Z'))).toBeInTheDocument();
+
+      const updatedResults = [
+        { ...mockResults[0], lastUpdated: '2024-09-20T10:00:00Z' },
+        mockResults[1],
+      ];
+      rerender(
+        <Theme>
+          <SearchResults {...defaultProps} results={updatedResults} />
+        </Theme>
+      );
+
+      expect(screen.getByText(formatDateTime('2024-09-20T10:00:00Z'))).toBeInTheDocument();
+      expect(screen.queryByText(formatDateTime('2024-01-15T10:00:00Z'))).not.toBeInTheDocument();
+      // The untouched result keeps its own timestamp.
+      expect(screen.getByText(formatDateTime('2024-01-10T08:00:00Z'))).toBeInTheDocument();
     });
   });
 });

@@ -42,7 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENABLED;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -74,7 +74,7 @@ public class SuggestResource
 
   @Autowired
   public SuggestResource(final SearchService searchService) {
-    this.searchService = checkNotNull(searchService);
+    this.searchService = requireNonNull(searchService);
   }
 
   @RequiresUser

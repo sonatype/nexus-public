@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.node.DeploymentAccess;
 import org.sonatype.nexus.common.node.NodeAccess;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -35,7 +35,7 @@ public class SimpleDeploymentAccess
 
   @Autowired
   public SimpleDeploymentAccess(final DeploymentIdStore deploymentIdStore) {
-    this.deploymentIdStore = checkNotNull(deploymentIdStore);
+    this.deploymentIdStore = requireNonNull(deploymentIdStore);
   }
 
   @Override

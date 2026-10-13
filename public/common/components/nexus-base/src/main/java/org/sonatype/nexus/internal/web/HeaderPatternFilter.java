@@ -33,7 +33,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.WebFilterPriority;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.core.annotation.Order;
@@ -93,7 +92,7 @@ public class HeaderPatternFilter
       for (Entry<String, Pattern> entry : validHeaderPatterns.entrySet()) {
         if (checkForBadHeader(httpRequest.getHeaders(entry.getKey()), entry.getValue())) {
           log.warn("rejecting request from {} due to invalid header '{}: {}'", request.getRemoteHost(), entry.getKey(),
-              Joiner.on(",").join(Collections.list(httpRequest.getHeaders(entry.getKey()))));
+              String.join(",", Collections.list(httpRequest.getHeaders(entry.getKey()))));
           httpResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
           return;
         }

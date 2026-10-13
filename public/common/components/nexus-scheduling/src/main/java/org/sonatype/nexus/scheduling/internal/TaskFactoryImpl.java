@@ -38,7 +38,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
 /**
@@ -81,9 +81,9 @@ public class TaskFactoryImpl
       final List<TaskDescriptor> descriptors,
       final ApplicationContext context)
   {
-    this.databaseCheck = checkNotNull(databaseCheck);
-    this.descriptors = checkNotNull(descriptors);
-    this.context = checkNotNull(context);
+    this.databaseCheck = requireNonNull(databaseCheck);
+    this.descriptors = requireNonNull(descriptors);
+    this.context = requireNonNull(context);
   }
 
   @Override
@@ -104,8 +104,8 @@ public class TaskFactoryImpl
         final TaskDescriptor descriptor,
         final ObjectProvider<? extends Task> beanEntry)
     {
-      this.descriptor = checkNotNull(descriptor);
-      this.beanEntry = checkNotNull(beanEntry);
+      this.descriptor = requireNonNull(descriptor);
+      this.beanEntry = requireNonNull(beanEntry);
     }
   }
 
@@ -197,7 +197,7 @@ public class TaskFactoryImpl
 
   @Override
   public Task create(final TaskConfiguration config, final TaskInfo taskInfo) {
-    checkNotNull(config);
+    requireNonNull(config);
     log.debug("Creating task instance: {}", config);
 
     // ensure configuration is sane

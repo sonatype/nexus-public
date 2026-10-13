@@ -24,7 +24,7 @@ import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.PrivilegeUtils;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLogType.NEXUS_LOG_ONLY;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,7 @@ public class PrivilegeNxRM2UpgradeTask
 
   @Autowired
   public PrivilegeNxRM2UpgradeTask(final SecurityConfiguration securityConfiguration) {
-    this.securityConfiguration = checkNotNull(securityConfiguration);
+    this.securityConfiguration = requireNonNull(securityConfiguration);
   }
 
   @Override

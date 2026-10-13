@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.scheduling.LastRunState;
 import org.sonatype.nexus.scheduling.TaskState;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class TaskResultState
 {
@@ -41,8 +41,8 @@ public class TaskResultState
       @Nullable final LastRunState lastRunState,
       @Nullable final String progress)
   {
-    this.taskId = checkNotNull(taskId);
-    this.state = checkNotNull(state);
+    this.taskId = requireNonNull(taskId);
+    this.state = requireNonNull(state);
     this.nextFireTime = nextFireTime;
     this.lastRunState = lastRunState;
     this.progress = progress;

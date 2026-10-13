@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.store;
 import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.repository.content.ComponentSet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link ComponentSet} data backed by the content data store.
@@ -43,14 +43,14 @@ public class ComponentSetData
    * Sets the component namespace.
    */
   public void setNamespace(final String namespace) {
-    this.namespace = checkNotNull(namespace);
+    this.namespace = requireNonNull(namespace);
   }
 
   /**
    * Sets the component name.
    */
   public void setName(final String name) {
-    this.name = checkNotNull(name);
+    this.name = requireNonNull(name);
   }
 
   // ContinuationAware

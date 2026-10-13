@@ -26,7 +26,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -41,7 +41,7 @@ public class UploadComponent
 
   @Autowired
   public UploadComponent(final UploadService uploadService) {
-    this.uploadService = checkNotNull(uploadService);
+    this.uploadService = requireNonNull(uploadService);
   }
 
   @DirectMethod

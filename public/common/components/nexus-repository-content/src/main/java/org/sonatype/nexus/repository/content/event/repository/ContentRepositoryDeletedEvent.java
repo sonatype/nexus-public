@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.content.event.repository;
 
 import org.sonatype.nexus.repository.content.ContentRepository;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Event sent whenever a {@link ContentRepository} is deleted.
@@ -28,7 +28,7 @@ public class ContentRepositoryDeletedEvent
 
   public ContentRepositoryDeletedEvent(final ContentRepository contentRepository, final String format) {
     super(contentRepository);
-    this.format = checkNotNull(format);
+    this.format = requireNonNull(format);
   }
 
   @Override

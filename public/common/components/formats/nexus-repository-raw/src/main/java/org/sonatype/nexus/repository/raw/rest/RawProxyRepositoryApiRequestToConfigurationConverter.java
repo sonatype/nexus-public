@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.RAW_QUERYPARAMS_FORWARDING_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
 import static org.sonatype.nexus.repository.raw.rest.RawAttributes.EXCLUDED_QUERY_PARAMETERS;
@@ -47,7 +47,7 @@ public class RawProxyRepositoryApiRequestToConfigurationConverter
       @Value(RAW_QUERYPARAMS_FORWARDING_ENABLED_NAMED_VALUE) final boolean rawQueryParamsForwardingEnabled)
   {
     super(routingRuleStore);
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
     this.rawQueryParamsForwardingEnabled = rawQueryParamsForwardingEnabled;
   }
 

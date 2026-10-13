@@ -14,9 +14,7 @@
 /**
  * Repository List Table Styles
  *
- * Clickable row pattern matches EntityTable / table skill:
- * - cursor: pointer, hover background, focus-visible outline
- * - First data column is link-cell; actions column is last
+ * Rows highlight on hover; the repository name is the navigation target.
  */
 
 .repository-list-table {
@@ -25,27 +23,16 @@
   &__row {
     transition: background-color var(--transition-fast);
 
-    &--clickable {
-      cursor: pointer;
-
-      &:hover {
-        background-color: var(--color-surface-hover);
-      }
-
-      &:focus {
-        outline: 2px solid var(--color-primary);
-        outline-offset: -2px;
-      }
-
-      &:focus:not(:focus-visible) {
-        outline: none;
-      }
-
-      &:focus-visible {
-        outline: 2px solid var(--color-primary);
-        outline-offset: -2px;
-      }
+    &--hoverable:hover {
+      background-color: var(--color-surface-hover);
     }
+  }
+
+  // A filter refetch keeps the current results on screen; they are only dimmed to signal
+  // that a newer set is on its way, so the table never collapses.
+  &--refreshing tbody {
+    opacity: 0.6;
+    transition: opacity var(--transition-fast);
   }
 
   .table-cell-centered {
@@ -56,9 +43,15 @@
 // Dark mode
 :root[data-theme="dark"] {
   .repository-list-table {
-    &__row--clickable:hover {
+    &__row--hoverable:hover {
       background-color: var(--color-surface-hover);
     }
   }
 }
 
+// The dim itself is informational and stays; only the fade to it is motion.
+@media (prefers-reduced-motion: reduce) {
+  .repository-list-table--refreshing tbody {
+    transition: none;
+  }
+}

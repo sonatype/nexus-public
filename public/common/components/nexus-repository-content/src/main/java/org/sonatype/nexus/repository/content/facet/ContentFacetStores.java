@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Persistence stores associated with a repository's {@link ContentFacet}.
@@ -51,11 +51,11 @@ public class ContentFacetStores
       final FormatStoreManager formatStoreManager,
       final String contentStoreName)
   {
-    this.blobStoreName = checkNotNull(blobStoreName);
+    this.blobStoreName = requireNonNull(blobStoreName);
     // We have to use Provider here because the blobstore may be not initialized after conversion to group.
     this.blobStoreProvider = () -> blobStoreManager.get(blobStoreName);
 
-    this.contentStoreName = checkNotNull(contentStoreName);
+    this.contentStoreName = requireNonNull(contentStoreName);
     this.contentRepositoryStore = formatStoreManager.contentRepositoryStore(contentStoreName);
     this.componentStore = formatStoreManager.componentStore(contentStoreName);
     this.assetStore = formatStoreManager.assetStore(contentStoreName);

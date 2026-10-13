@@ -25,4 +25,6 @@ public interface OnboardingItemPriority
   Integer SELECT_LICENSE = 4;
 
   Integer UPLOAD_LICENSE = 5;
+
+  Integer MANDATORY_TELEMETRY_ACKNOWLEDGEMENT_ONBOARDING = 6;
 }

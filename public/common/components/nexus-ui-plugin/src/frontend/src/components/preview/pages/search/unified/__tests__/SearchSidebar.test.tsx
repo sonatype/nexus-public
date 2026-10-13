@@ -243,15 +243,19 @@ describe('SearchSidebar', () => {
 
   describe('external filter changes (browser back/forward)', () => {
     it('updates the input when the filters prop transitions to a new value', () => {
+      // After Task 2, the maven "Artifact ID" filter uses id='name' (generic NAME_FILTER
+      // relabeled via aliasLabels). Prop key is 'name', not 'artifactId'.
+      // Use getByRole('textbox') to avoid matching the clear button's aria-label when
+      // the input has a non-empty value.
       const { rerender } = renderWithTheme(
         <SearchSidebar
           {...defaultProps}
           selectedFormat="maven"
-          filters={{ artifactId: 'guava' }}
+          filters={{ name: 'guava' }}
         />,
       );
 
-      const input = screen.getByLabelText(/Artifact ID/i) as HTMLInputElement;
+      const input = screen.getByRole('textbox', { name: /Artifact ID/i }) as HTMLInputElement;
       expect(input.value).toBe('guava');
 
       // User types a new value (local override diverges from prop)
@@ -266,7 +270,7 @@ describe('SearchSidebar', () => {
           <SearchSidebar
             {...defaultProps}
             selectedFormat="maven"
-            filters={{ artifactId: 'commons-lang3' }}
+            filters={{ name: 'commons-lang3' }}
           />
         </Theme>,
       );
@@ -280,15 +284,15 @@ describe('SearchSidebar', () => {
         <SearchSidebar
           {...defaultProps}
           selectedFormat="maven"
-          filters={{ artifactId: 'commons-lang3' }}
+          filters={{ name: 'commons-lang3' }}
         />,
       );
 
-      const input = screen.getByLabelText(/Artifact ID/i) as HTMLInputElement;
+      const input = screen.getByRole('textbox', { name: /Artifact ID/i }) as HTMLInputElement;
       fireEvent.change(input, { target: { value: 'spring-core' } });
       fireEvent.blur(input);
 
-      // Back to a state with no artifactId filter
+      // Back to a state with no name filter
       rerender(
         <Theme>
           <SearchSidebar {...defaultProps} selectedFormat="maven" filters={{}} />
@@ -303,11 +307,11 @@ describe('SearchSidebar', () => {
         <SearchSidebar
           {...defaultProps}
           selectedFormat="maven"
-          filters={{ artifactId: 'commons-lang3' }}
+          filters={{ name: 'commons-lang3' }}
         />,
       );
 
-      const input = screen.getByLabelText(/Artifact ID/i) as HTMLInputElement;
+      const input = screen.getByRole('textbox', { name: /Artifact ID/i }) as HTMLInputElement;
       input.focus();
       fireEvent.change(input, { target: { value: 'in-progress' } });
       expect(document.activeElement).toBe(input);
@@ -318,7 +322,7 @@ describe('SearchSidebar', () => {
           <SearchSidebar
             {...defaultProps}
             selectedFormat="maven"
-            filters={{ artifactId: 'something-else' }}
+            filters={{ name: 'something-else' }}
           />
         </Theme>,
       );
@@ -391,6 +395,100 @@ describe('SearchSidebar', () => {
     it('disables repository dropdown when disabled', () => {
       renderWithTheme(<SearchSidebar {...defaultProps} disabled={true} />);
       expect(screen.getByTestId('repository-dropdown-trigger')).toBeDisabled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Task 4: generic GNV filters always visible + aliasLabels relabeling
+  // ---------------------------------------------------------------------------
+
+  describe('generic GNV filters (NEXUS-55106)', () => {
+    it('renders Group, Name, Version inputs when no format is selected', () => {
+      renderWithTheme(<SearchSidebar {...defaultProps} selectedFormat="" filters={{}} />);
+      expect(screen.getByLabelText('Group')).toBeInTheDocument();
+      expect(screen.getByLabelText('Name')).toBeInTheDocument();
+      expect(screen.getByLabelText('Version')).toBeInTheDocument();
+    });
+
+    it('relabels to Group ID / Artifact ID for Maven, no duplicate rows', () => {
+      renderWithTheme(
+        <SearchSidebar {...defaultProps} selectedFormat="maven" filters={{}} />,
+      );
+      expect(screen.getByLabelText('Group ID')).toBeInTheDocument();
+      expect(screen.getByLabelText('Artifact ID')).toBeInTheDocument();
+      // No plain "Group" or "Name" inputs — alias replaces, does not duplicate
+      expect(screen.queryByLabelText('Group')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+    });
+
+    it('relabels to Image Name / Image Tag for Docker', () => {
+      renderWithTheme(
+        <SearchSidebar {...defaultProps} selectedFormat="docker" filters={{}} />,
+      );
+      expect(screen.getByLabelText('Image Name')).toBeInTheDocument();
+      expect(screen.getByLabelText('Image Tag')).toBeInTheDocument();
+      // Docker has no group alias — generic "Group" stays
+      expect(screen.getByLabelText('Group')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Version')).not.toBeInTheDocument();
+    });
+
+    it('relabels to Filename for Raw, keeps Group and Version as generic', () => {
+      renderWithTheme(
+        <SearchSidebar {...defaultProps} selectedFormat="raw" filters={{}} />,
+      );
+      expect(screen.getByLabelText('Filename')).toBeInTheDocument();
+      // Raw only aliases name; group and version keep their default labels
+      expect(screen.getByLabelText('Group')).toBeInTheDocument();
+      expect(screen.getByLabelText('Version')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+    });
+
+    it('renders generic Name plus distinct Package ID for NuGet', () => {
+      renderWithTheme(
+        <SearchSidebar {...defaultProps} selectedFormat="nuget" filters={{}} />,
+      );
+      // NuGet has no aliasLabels — generic Name stays "Name"
+      expect(screen.getByLabelText('Name')).toBeInTheDocument();
+      // nugetId is a distinct FORMAT_FIELD_1, not an alias
+      expect(screen.getByLabelText('Package ID')).toBeInTheDocument();
+    });
+
+    it('renders only generics for Cargo (no format-specific fields, no aliases)', () => {
+      renderWithTheme(
+        <SearchSidebar {...defaultProps} selectedFormat="cargo" filters={{}} />,
+      );
+      expect(screen.getByLabelText('Group')).toBeInTheDocument();
+      expect(screen.getByLabelText('Name')).toBeInTheDocument();
+      expect(screen.getByLabelText('Version')).toBeInTheDocument();
+      // No other filter labels beyond the three generics (Cargo has no distinct fields)
+      expect(screen.queryByLabelText('Package ID')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Classifiers')).not.toBeInTheDocument();
+    });
+
+    it('renders generics plus PyPI distinct fields for PyPI', () => {
+      renderWithTheme(
+        <SearchSidebar {...defaultProps} selectedFormat="pypi" filters={{}} />,
+      );
+      // PyPI has no aliasLabels — generic labels stay
+      expect(screen.getByLabelText('Group')).toBeInTheDocument();
+      expect(screen.getByLabelText('Name')).toBeInTheDocument();
+      expect(screen.getByLabelText('Version')).toBeInTheDocument();
+      // PyPI distinct fields
+      expect(screen.getByLabelText('Classifiers')).toBeInTheDocument();
+      expect(screen.getByLabelText('Description')).toBeInTheDocument();
+      expect(screen.getByLabelText('Keywords')).toBeInTheDocument();
+      expect(screen.getByLabelText('Summary')).toBeInTheDocument();
+    });
+
+    it('renders generic Group with default label alongside distinct Collection Name for Ansible Galaxy', () => {
+      renderWithTheme(
+        <SearchSidebar {...defaultProps} selectedFormat="ansiblegalaxy" filters={{}} />,
+      );
+      // Ansible Galaxy has no aliasLabels — generic Group stays "Group"
+      expect(screen.getByLabelText('Group')).toBeInTheDocument();
+      // collectionName is a distinct FORMAT_FIELD_* (renamed from 'name' to avoid collision)
+      expect(screen.getByLabelText('Collection Name')).toBeInTheDocument();
     });
   });
 });

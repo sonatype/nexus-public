@@ -26,7 +26,7 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.DateTime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Content, that is wrapped {@link Payload} with {@link AttributesMap}.
@@ -75,7 +75,7 @@ public class Content
   private boolean disableRedirect = false;
 
   public Content(final Payload payload) {
-    this.payload = checkNotNull(payload);
+    this.payload = requireNonNull(payload);
     this.attributes = new AttributesMap();
   }
 
@@ -83,7 +83,7 @@ public class Content
    * Creates an instance based on the original replacing the payload. Note that attributes are referenced, not copied.
    */
   public Content(final Content originalContent, final Payload payload) {
-    this.payload = checkNotNull(payload);
+    this.payload = requireNonNull(payload);
     this.attributes = originalContent.getAttributes();
   }
 
@@ -91,8 +91,8 @@ public class Content
    * @since 3.4
    */
   protected Content(final Payload payload, final AttributesMap attributes) {
-    this.payload = checkNotNull(payload);
-    this.attributes = checkNotNull(attributes);
+    this.payload = requireNonNull(payload);
+    this.attributes = requireNonNull(attributes);
   }
 
   @Override

@@ -94,6 +94,22 @@ describe('ServiceAccountTokensListMachine filter predicate', () => {
 });
 
 describe('ServiceAccountTokens page', () => {
+  it('renders the empty state message when there are no tokens', async () => {
+    render(<ServiceAccountTokens />);
+
+    expect(await screen.findByText(LABELS.LIST.EMPTY_LIST)).toBeInTheDocument();
+  });
+
+  it('renders the filtered empty state message when the filter matches nothing', async () => {
+    render(<ServiceAccountTokens />);
+    await screen.findByText(LABELS.LIST.EMPTY_LIST);
+
+    fireEvent.change(screen.getByPlaceholderText(LABELS.LIST.FILTER_PLACEHOLDER), {
+      target: {value: 'no-such-token'},
+    });
+
+    expect(await screen.findByText(LABELS.LIST.EMPTY_LIST_FILTERED)).toBeInTheDocument();
+  });
   it('renders about alert with external docs link', async () => {
     render(<ServiceAccountTokens />);
 
@@ -336,7 +352,7 @@ describe('ServiceAccountTokensTokenModal', () => {
   });
 
   it('renders the warning copy', async () => {
-    render(<ServiceAccountTokensTokenModal token="sat.test-token" onClose={jest.fn()} />);
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText(LABELS.TOKEN_MODAL.WARNING)).toBeInTheDocument();
@@ -344,7 +360,7 @@ describe('ServiceAccountTokensTokenModal', () => {
   });
 
   it('renders the auto-close countdown in the footer', async () => {
-    render(<ServiceAccountTokensTokenModal token="sat.test-token" onClose={jest.fn()} />);
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText(LABELS.TOKEN_MODAL.AUTO_CLOSE_NOTICE(60))).toBeInTheDocument();
@@ -352,7 +368,7 @@ describe('ServiceAccountTokensTokenModal', () => {
   });
 
   it('warning has role="alert" for accessibility', async () => {
-    render(<ServiceAccountTokensTokenModal token="sat.test-token" onClose={jest.fn()} />);
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
 
     await waitFor(() => {
       const warning = screen.getByText(LABELS.TOKEN_MODAL.WARNING);
@@ -362,7 +378,7 @@ describe('ServiceAccountTokensTokenModal', () => {
 
   it('auto-closes when countdown reaches 0', async () => {
     const onClose = jest.fn();
-    render(<ServiceAccountTokensTokenModal token="sat.test-token" onClose={onClose} />);
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={onClose} />);
 
     await waitFor(() => {
       expect(screen.getByText(LABELS.TOKEN_MODAL.AUTO_CLOSE_NOTICE(60))).toBeInTheDocument();
@@ -373,6 +389,129 @@ describe('ServiceAccountTokensTokenModal', () => {
     });
 
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('renders Basic username field with the account name', () => {
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    expect(screen.getByTestId('sat-basic-username')).toHaveTextContent('jenkins-prod');
+  });
+
+  it('renders Basic password field with the token', () => {
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    expect(screen.getByTestId('sat-basic-password')).toHaveTextContent('sat.test-token');
+  });
+
+  it('still renders the Bearer token value', () => {
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    expect(screen.getByTestId('sat-token-value')).toHaveTextContent('sat.test-token');
+  });
+
+  it('clicking username copy writes the name to clipboard', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {value: {writeText}, writable: true, configurable: true});
+
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    fireEvent.click(screen.getByTestId('sat-basic-username-copy'));
+
+    await act(async () => { await Promise.resolve(); });
+
+    expect(writeText).toHaveBeenCalledWith('jenkins-prod');
+  });
+
+  it('clicking password copy writes the token to clipboard', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {value: {writeText}, writable: true, configurable: true});
+
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    fireEvent.click(screen.getByTestId('sat-basic-password-copy'));
+
+    await act(async () => { await Promise.resolve(); });
+
+    expect(writeText).toHaveBeenCalledWith('sat.test-token');
+  });
+
+  it('encoded value hidden initially', () => {
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    expect(screen.queryByTestId('sat-basic-encoded-value')).toBeNull();
+    expect(screen.getByTestId('sat-basic-encoded-reveal')).toBeInTheDocument();
+  });
+
+  it('after clicking reveal, shows encoded Authorization header value', () => {
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    fireEvent.click(screen.getByTestId('sat-basic-encoded-reveal'));
+    const expected = `Authorization: Basic ${btoa('jenkins-prod:sat.test-token')}`;
+    expect(screen.getByTestId('sat-basic-encoded-value')).toHaveTextContent(expected);
+  });
+
+  it('AT-074 encoded-once: base64 decodes back to name:token', () => {
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    fireEvent.click(screen.getByTestId('sat-basic-encoded-reveal'));
+    const text = screen.getByTestId('sat-basic-encoded-value').textContent;
+    const base64Part = text.replace('Authorization: Basic ', '');
+    expect(atob(base64Part)).toBe('jenkins-prod:sat.test-token');
+  });
+
+  it('non-ASCII name: encodes correctly via UTF-8 round-trip', () => {
+    const nonAsciiName = 'usér-café-名前';
+    // Documents why safeBtoa is required: a bare btoa on these characters throws.
+    // eslint-disable-next-line no-undef
+    expect(() => btoa(nonAsciiName)).toThrow();
+    render(<ServiceAccountTokensTokenModal name={nonAsciiName} token="sat.test-token" onClose={jest.fn()} />);
+    fireEvent.click(screen.getByTestId('sat-basic-encoded-reveal'));
+    const text = screen.getByTestId('sat-basic-encoded-value').textContent;
+    const base64Part = text.replace('Authorization: Basic ', '');
+    // eslint-disable-next-line no-undef
+    const expected = btoa(unescape(encodeURIComponent(`${nonAsciiName}:sat.test-token`)));
+    expect(base64Part).toBe(expected);
+    expect(base64Part.length).toBeGreaterThan(0);
+  });
+
+  it('clicking encoded copy writes the full Authorization header to clipboard', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {value: {writeText}, writable: true, configurable: true});
+
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    fireEvent.click(screen.getByTestId('sat-basic-encoded-reveal'));
+    fireEvent.click(screen.getByTestId('sat-basic-encoded-copy'));
+
+    await act(async () => { await Promise.resolve(); });
+
+    expect(writeText).toHaveBeenCalledWith(`Authorization: Basic ${btoa('jenkins-prod:sat.test-token')}`);
+  });
+
+  it('shows the copy-failure message when clipboard write rejects', async () => {
+    const writeText = jest.fn().mockRejectedValue(new Error('denied'));
+    Object.defineProperty(navigator, 'clipboard', {value: {writeText}, writable: true, configurable: true});
+
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    fireEvent.click(screen.getByTestId('sat-basic-username-copy'));
+
+    await act(async () => { await Promise.resolve(); });
+
+    expect(screen.getByTestId('sa-token-copy-error')).toHaveTextContent(LABELS.TOKEN_MODAL.COPY_FAILED);
+  });
+
+  it('AT-072 docs link has correct href and text', () => {
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    const link = screen.getByTestId('sat-docs-link');
+    expect(link.tagName.toLowerCase()).toBe('a');
+    expect(link).toHaveAttribute('href', LABELS.TOKEN_MODAL.DOCS_LINK_HREF);
+    expect(link).toHaveTextContent(LABELS.TOKEN_MODAL.DOCS_LINK);
+    expect(link).toHaveAttribute('target', '_blank');
+    // NxTextLink `external` guards against reverse-tabnabbing; noreferrer also implies noopener.
+    expect(link.getAttribute('rel')).toContain('noreferrer');
+  });
+
+  it('username copy button aria-label contains "username"', () => {
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    const btn = screen.getByTestId('sat-basic-username-copy');
+    expect(btn.getAttribute('aria-label').toLowerCase()).toContain('username');
+  });
+
+  it('password copy button aria-label contains "password"', () => {
+    render(<ServiceAccountTokensTokenModal name="jenkins-prod" token="sat.test-token" onClose={jest.fn()} />);
+    const btn = screen.getByTestId('sat-basic-password-copy');
+    expect(btn.getAttribute('aria-label').toLowerCase()).toContain('password');
   });
 });
 
@@ -411,7 +550,7 @@ describe('ServiceAccountTokensRevokeModal', () => {
     const input = await screen.findByRole('textbox');
     fireEvent.change(input, {target: {value: 'oops'}});
 
-    expect(screen.getByText(LABELS.REVOKE_MODAL.VALIDATION_ERROR)).toBeInTheDocument();
+    expect(screen.getByText(LABELS.REVOKE_MODAL.VALIDATION_ERROR('jenkins-prod'))).toBeInTheDocument();
   });
 
   it('renders the loading mask and disables cancel while isRevoking', async () => {
@@ -550,5 +689,35 @@ describe('ServiceAccountTokens permissions gating', () => {
 
     expect(await screen.findByText('jenkins-prod')).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: /Actions/i})).not.toBeInTheDocument();
+  });
+  it('names the token in the revoke error when the token is already gone (404)', async () => {
+    Axios.get.mockImplementation((url) => {
+      if (url.includes('roles')) return Promise.resolve({data: MOCK_ROLES});
+      return Promise.resolve({data: [{
+        id: 't1', name: 'jenkins-prod', roleId: 'nx-deployer', createdBy: 'admin',
+        expiresAt: null, lastUsedAt: null, description: '',
+      }]});
+    });
+    Axios.delete.mockRejectedValue({response: {status: 404}});
+    const showErrorMessage = jest.spyOn(ExtJS, 'showErrorMessage').mockImplementation(() => {});
+
+    render(<ServiceAccountTokens />);
+
+    await screen.findByText('jenkins-prod');
+    fireEvent.click(document.querySelector('.nx-icon-dropdown__toggle'));
+    fireEvent.click(screen.getByRole('button', {name: LABELS.LIST.ACTIONS.REVOKE}));
+    // Full page render, so scope to the confirmation field (the filter is also a textbox).
+    fireEvent.change(document.getElementById('revokeConfirmationString'), {
+      target: {value: 'jenkins-prod'},
+    });
+    fireEvent.click(screen.getByRole('button', {name: LABELS.REVOKE_MODAL.REVOKE_BUTTON}));
+
+    await waitFor(() => {
+      expect(showErrorMessage).toHaveBeenCalledWith(
+        LABELS.MESSAGES.REVOKE_ERROR_NOT_FOUND('jenkins-prod')
+      );
+    });
+    // Guards the context wiring: without it the message would interpolate "undefined".
+    expect(showErrorMessage.mock.calls[0][0]).toContain('jenkins-prod');
   });
 });

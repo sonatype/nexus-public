@@ -25,6 +25,24 @@ export { ROUTE_NAMES as PreviewRouteNames } from './components/preview/constants
 export { DeleteConfirmationModal } from './components/preview/shared/modals/DeleteConfirmationModal';
 
 export { default as ExtJS } from './interface/ExtJS';
+export { useIsLicensedEdition } from './components/preview/shared/hooks/useIsLicensedEdition';
+export { useEditionId } from './components/preview/shared/hooks/useEditionId';
+export {
+  EDITION_ID_STATE_KEY,
+  EDITION_CORE,
+  EDITION_COMMUNITY,
+  EDITION_PRO,
+  EDITION_PRO_PLUS,
+  EDITION_ENTERPRISE,
+  EDITION_CLOUD,
+  PRO_FAMILY_EDITIONS,
+  PRO_AND_COMMUNITY_EDITIONS,
+  EDITION_ID_BY_SHORT_NAME,
+  resolveEditionId,
+  getEditionDisplayName,
+  getEditionLogo,
+  getHeaderWordmarkLogo,
+} from './interface/editionUtils';
 export { default as ExtAPIUtils } from './interface/ExtAPIUtils';
 export { default as configureAxios } from './interface/configureAxios';
 export { default as configureDebugLogging } from './interface/configureDebugLogging';
@@ -59,6 +77,7 @@ export * from './interface/versionUtil';
 export * from './utils/clipboardUtils';
 export * from './utils/loginUtils';
 export * from './utils/devModeUtils';
+export * from './utils/hostedRepoEvaluationFormats';
 
 export * from './hooks/useSideNavbarOpenState';
 
@@ -162,6 +181,14 @@ export {
   SystemAlerts,
   SystemAlert,
   CELimitsAlert,
+  HelpMenu,
+  DocumentationUTMparams,
+  ReleaseNotesUTMparams,
+  KnowledgeBaseUTMparams,
+  SonatypeGuidesUTMparams,
+  CommunityUTMparams,
+  IssueTrackerUTMparams,
+  SupportUTMparams,
 } from './components/preview/shared';
 
 // Preview UI: REST API Utilities
@@ -247,7 +274,6 @@ export const SettingsPageLayoutRadix = React.lazy(() => import('./components/pre
 
 // Settings — Repository
 export const RepositoriesPage       = React.lazy(() => import('./components/preview/pages/settings/repository/repositories/RepositoriesPage'));
-export const RepositoryProfilePage  = React.lazy(() => import('./components/preview/pages/settings/repository/profile/RepositoryProfilePage'));
 export const BlobStoresPage         = React.lazy(() => import('./components/preview/pages/settings/repository/blob-stores/BlobStoresPage'));
 export const ContentSelectorsPage   = React.lazy(() => import('./components/preview/pages/settings/repository/selectors/ContentSelectorsPage'));
 export const CleanupPoliciesPage    = React.lazy(() => import('./components/preview/pages/settings/repository/cleanup/CleanupPoliciesPage'));
@@ -289,6 +315,7 @@ export const LicensingPage          = React.lazy(() => import('./components/prev
 export const NodesPage              = React.lazy(() => import('./components/preview/pages/settings/system/nodes/NodesPage'));
 export const UpgradePage            = React.lazy(() => import('./components/preview/pages/settings/system/upgrade/UpgradePage'));
 export const UsagePage              = React.lazy(() => import('./components/preview/pages/settings/system/usage/UsagePage'));
+export const TrashPage              = React.lazy(() => import('./components/preview/pages/settings/system/trash/TrashPage'));
 export const IqServerOverviewPage   = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/IqServerOverviewPage'));
 export const IqServerConnectedPage  = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/IqServerConnectedPage'));
 export const HostedRepoEvaluationSetupPage = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/HostedRepoEvaluationSetupPage'));

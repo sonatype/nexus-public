@@ -20,6 +20,7 @@ import { WizardForm } from '../../../../../shared/form/WizardForm';
 
 import { NEW_ROLE_ID_PATTERN } from './grantWizardMachine';
 import { useGrantWizard, userDirectoryKey } from './useGrantWizard';
+import { permissionRequirementMode } from '../utils/formatEndpointPermissions';
 import type { MergedApiEndpoint } from '../utils/mergeSwaggerPermissions';
 
 export interface GrantWizardProps {
@@ -87,7 +88,7 @@ export function GrantWizard({ row, active }: GrantWizardProps) {
   const [userFilter, setUserFilter] = useState('');
 
   const permissionReqs = row.permission?.permissions ?? [];
-  const logical = permissionReqs[0]?.logical === 'OR' ? 'OR' : 'AND';
+  const requirementMode = permissionRequirementMode(row.permission);
 
   const filteredUsers = useMemo(() => {
     if (!session) {
@@ -252,7 +253,7 @@ export function GrantWizard({ row, active }: GrantWizardProps) {
         {wizardStep === 0 && (
           <Box>
             <Text size="2" color="gray" mb="2">
-              This operation requires {logical === 'OR' ? 'ANY' : 'ALL'} of:
+              This operation requires {requirementMode} of:
             </Text>
             <Box mb="3">
               {permissionReqs.map((p) => (

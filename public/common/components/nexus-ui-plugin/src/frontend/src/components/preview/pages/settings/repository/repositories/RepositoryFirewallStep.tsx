@@ -50,6 +50,12 @@ export interface RepositoryFirewallStepProps {
   onChoice?: (level: ProtectionLevel) => void;
 }
 
+/**
+ * Caller responsibility: only mount this component when isFirewallSupportedFormat(format)
+ * is true for proxy repositories — there is no internal format guard.
+ * See NEXUS-54536.
+ */
+
 export function RepositoryFirewallStep({
   repositoryName = '',
   hasFirewallLicense = true,

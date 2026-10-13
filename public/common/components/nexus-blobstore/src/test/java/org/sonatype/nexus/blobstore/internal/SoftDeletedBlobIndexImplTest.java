@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.internal;
 
+import java.util.List;
+
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -61,5 +63,15 @@ class SoftDeletedBlobIndexImplTest
 
     // this should not trigger an exception
     underTest.init(blobStore);
+  }
+
+  @Test
+  void deleteRecords_delegatesToStoreWithBlobstoreName() {
+    underTest.init(blobStore);
+
+    List<BlobId> ids = List.of(mock(BlobId.class), mock(BlobId.class));
+    underTest.deleteRecords(ids);
+
+    verify(softDeletedBlobsStore).deleteRecords(eq("a-blobstore"), eq(ids));
   }
 }

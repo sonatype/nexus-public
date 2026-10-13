@@ -18,15 +18,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Response.Status;
-
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecurityHelper;
@@ -43,25 +34,34 @@ import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
+import org.sonatype.nexus.validation.Validate;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.permission.RolePermissionResolver;
 import org.apache.shiro.subject.SimplePrincipalCollection;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENABLED;
 
@@ -98,10 +98,10 @@ public class ApiAccessCheckResource
       final EndpointPermissionRegistry endpointPermissionRegistry,
       final RolePermissionResolver rolePermissionResolver)
   {
-    this.securitySystem = checkNotNull(securitySystem);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.endpointPermissionRegistry = checkNotNull(endpointPermissionRegistry);
-    this.rolePermissionResolver = checkNotNull(rolePermissionResolver);
+    this.securitySystem = requireNonNull(securitySystem);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.endpointPermissionRegistry = requireNonNull(endpointPermissionRegistry);
+    this.rolePermissionResolver = requireNonNull(rolePermissionResolver);
   }
 
   /**
@@ -167,6 +167,7 @@ public class ApiAccessCheckResource
       @ApiResponse(responseCode = "403", description = "Insufficient permissions"),
       @ApiResponse(responseCode = "404", description = "User or role not found")
   })
+  @Validate
   public ApiAccessResultXo checkAccess(
       @Parameter(description = "Access check request", required = true) @NotNull @Valid final ApiAccessCheckXo request)
   {

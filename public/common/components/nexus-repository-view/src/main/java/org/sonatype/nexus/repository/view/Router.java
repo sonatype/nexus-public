@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.view;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -26,8 +27,8 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.view.ViewUtils.copyLocalContextAttributes;
 
 /**
@@ -46,8 +47,8 @@ public class Router
   public static final String LOCAL_ATTRIBUTE_PREFIX = "local.attribute.";
 
   public Router(final List<Route> routes, final DefaultRoute defaultRoute) {
-    this.routes = checkNotNull(routes, "Missing routes");
-    this.defaultRoute = checkNotNull(defaultRoute, "Missing default route");
+    this.routes = requireNonNull(routes, "Missing routes");
+    this.defaultRoute = requireNonNull(defaultRoute, "Missing default route");
   }
 
   /**
@@ -58,8 +59,8 @@ public class Router
       final Request request,
       @Nullable final Context existingContext) throws Exception
   {
-    checkNotNull(repository);
-    checkNotNull(request);
+    requireNonNull(repository);
+    requireNonNull(request);
 
     logRequest(request);
 
@@ -69,6 +70,17 @@ public class Router
     Response response = context.start(route);
     logResponse(response);
     return response;
+  }
+
+  /**
+   * Read-only view of the registered routes, in registration order. Exposed for recipe tests
+   * that need to inspect the wired route list without reflecting into the private {@code routes}
+   * field. Callers must not mutate the returned list; the underlying list is not concurrent and
+   * is read on the dispatch hot path.
+   */
+  @VisibleForTesting
+  public List<Route> getRoutes() {
+    return Collections.unmodifiableList(routes);
   }
 
   @VisibleForTesting
@@ -173,14 +185,14 @@ public class Router
     private DefaultRoute defaultRoute;
 
     public Builder route(final Route route) {
-      checkNotNull(route);
+      requireNonNull(route);
       return addRoute(route);
     }
 
     @Override
     // maps the new bridge interface from repository-config onto the view API
     public Builder route(final org.sonatype.nexus.repository.recipe.Route route) {
-      checkNotNull(route);
+      requireNonNull(route);
       if (route instanceof Route) {
         return addRoute((Route) route);
       }

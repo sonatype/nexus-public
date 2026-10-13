@@ -40,6 +40,7 @@ import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
 import software.amazon.awssdk.core.checksums.ResponseChecksumValidation;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.metrics.publishers.cloudwatch.CloudWatchMetricPublisher;
@@ -50,10 +51,10 @@ import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.time.Duration.ofMillis;
 import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ACCESS_KEY_ID_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ASSUME_ROLE_KEY;
@@ -101,8 +102,8 @@ public class AmazonS3Factory
     this.cloudWatchMetricsEnabled = cloudWatchMetricsEnabled;
     this.cloudWatchMetricsNamespace = cloudWatchMetricsNamespace;
     this.connectionTtl = connectionTtl;
-    this.secretsFactory = checkNotNull(secretsFactory);
-    this.sharedCredentialsProvider = checkNotNull(sharedCredentialsProvider);
+    this.secretsFactory = requireNonNull(secretsFactory);
+    this.sharedCredentialsProvider = requireNonNull(sharedCredentialsProvider);
   }
 
   public EncryptingS3Client create(final BlobStoreConfiguration blobStoreConfiguration) {
@@ -168,6 +169,10 @@ public class AmazonS3Factory
         .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
         .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED);
 
+    // Retry strategy uses SDK default; S3CompactBatcher handles SlowDown inside HTTP-200 partial-failure
+    // responses with manual per-key backoff (compact-only scope) — those are invisible to SDK retry.
+    ClientOverrideConfiguration.Builder overrideBuilder = ClientOverrideConfiguration.builder();
+
     if (cloudWatchMetricsEnabled) {
       // Converted from AWS SDK V1 to V2 according to following this AWS blog
       // https://aws.amazon.com/blogs/developer/using-the-new-client-side-metrics-feature-in-the-aws-sdk-for-java-v2/
@@ -177,9 +182,11 @@ public class AmazonS3Factory
         cloudWatchMetricPublisher.namespace(cloudWatchMetricsNamespace);
       }
 
-      builder.overrideConfiguration(o -> o.addMetricPublisher(cloudWatchMetricPublisher.build()));
+      overrideBuilder.addMetricPublisher(cloudWatchMetricPublisher.build());
       log.info("CloudWatch metrics enabled using namespace {}", cloudWatchMetricsNamespace);
     }
+
+    builder = builder.overrideConfiguration(overrideBuilder.build());
 
     // Use explicit per-blobstore credentials for the presigner when configured; otherwise fall back
     // to the shared singleton provider. This keeps S3Client and S3Presigner on the same credential
@@ -193,7 +200,15 @@ public class AmazonS3Factory
     AwsCredentialsProvider presignerProvider = credentialsProvider != null
         ? new SharedS3CredentialsProvider(credentialsProvider)
         : sharedCredentialsProvider;
-    return new EncryptingS3Client(builder.build(), blobStoreConfiguration, presignerProvider);
+    return newEncryptingS3Client(builder.build(), blobStoreConfiguration, presignerProvider);
+  }
+
+  protected EncryptingS3Client newEncryptingS3Client(
+      final S3Client s3Client,
+      final BlobStoreConfiguration blobStoreConfiguration,
+      final AwsCredentialsProvider presignerCredentialsProvider)
+  {
+    return new EncryptingS3Client(s3Client, blobStoreConfiguration, presignerCredentialsProvider);
   }
 
   private AwsCredentials buildCredentials(

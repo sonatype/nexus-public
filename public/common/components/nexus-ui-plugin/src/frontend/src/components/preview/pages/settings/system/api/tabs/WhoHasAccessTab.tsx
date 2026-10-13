@@ -11,12 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { Box, Flex, Heading, Spinner, Table, Text, TextField } from '@radix-ui/themes';
 
 import { getSourceLabel } from '../../../security/users/types';
-import { useEndpointAccess } from '../hooks/useEndpointAccess';
 import type { MergedApiEndpoint } from '../utils/mergeSwaggerPermissions';
+import { useWhoHasAccessTab } from './useWhoHasAccessTab';
 
 const ROLES_PROFILE_BASE = 'preview/admin/security/roles';
 const USERS_BASE = 'preview/admin/security/users';
@@ -36,36 +36,25 @@ export interface WhoHasAccessTabProps {
 }
 
 export function WhoHasAccessTab({ row, active }: WhoHasAccessTabProps) {
-  const { loading, error, qualifyingRoles, usersWithAccess, noMappedPermissions } = useEndpointAccess(
-    row,
-    active
-  );
-  const [userFilter, setUserFilter] = useState('');
+  const {
+    loading,
+    error,
+    qualifyingRoles,
+    filteredUsers,
+    roleLabelById,
+    isAnonymous,
+    noMappedPermissions,
+    userFilter,
+    setUserFilter,
+    requirementCount,
+    requirementMode,
+  } = useWhoHasAccessTab({ row, active });
 
-  const filteredUsers = useMemo(() => {
-    const q = userFilter.trim().toLowerCase();
-    if (!q) {
-      return usersWithAccess;
-    }
-    return usersWithAccess.filter(({ user: u }) => {
-      const blob = `${u.userId} ${u.firstName} ${u.lastName} ${u.emailAddress}`.toLowerCase();
-      return blob.includes(q);
-    });
-  }, [usersWithAccess, userFilter]);
-
-  const roleLabelById = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const { role } of qualifyingRoles) {
-      m.set(role.id, role.name);
-    }
-    return m;
-  }, [qualifyingRoles]);
-
-  const anonymous = row.permission && !row.permission.authenticated;
+  const requirementLabelSuffix = requirementCount === 1 ? '' : 's';
 
   return (
     <Box className="api-who-has-access-tab" data-testid="api-who-has-access-tab">
-      {anonymous && (
+      {isAnonymous && (
         <Box mb="3" p="2" className="api-who-has-access-tab__banner">
           <Text size="2">
             This endpoint allows anonymous access when anonymous is enabled in Settings → Security → Anonymous Access.
@@ -93,20 +82,19 @@ export function WhoHasAccessTab({ row, active }: WhoHasAccessTabProps) {
         </Flex>
       )}
 
-      {!((loading || error ) || noMappedPermissions ) && qualifyingRoles.length === 0 && (
+      {!(loading || error || noMappedPermissions) && qualifyingRoles.length === 0 && (
         <Text size="2" color="gray" mb="3">
           No roles contain the required privileges for this endpoint.
         </Text>
       )}
 
-      {!(loading || noMappedPermissions ) && qualifyingRoles.length > 0 && (
+      {!(loading || noMappedPermissions) && qualifyingRoles.length > 0 && (
         <>
           <Heading as="h3" size="3" weight="medium" mb="2">
             Roles
           </Heading>
           <Text size="1" color="gray" mb="2">
-            Roles whose privileges satisfy the required permission{row.permission?.permissions?.length === 1 ? '' : 's'}{' '}
-            ({row.permission?.permissions?.[0]?.logical === 'OR' ? 'ANY' : 'ALL'}).
+            Roles whose privileges satisfy the required permission{requirementLabelSuffix} ({requirementMode}).
           </Text>
           <Table.Root variant="surface" mb="4">
             <Table.Header>

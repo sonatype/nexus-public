@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,9 +47,9 @@ public class AssetBlobValidators
       final List<ContentValidator> contentValidatorsList,
       final DefaultContentValidator defaultContentValidator)
   {
-    this.mimeRulesSources = QualifierUtil.buildQualifierBeanMap(checkNotNull(mimeRulesSourcesList));
-    this.contentValidators = QualifierUtil.buildQualifierBeanMap(checkNotNull(contentValidatorsList));
-    this.defaultContentValidator = checkNotNull(defaultContentValidator);
+    this.mimeRulesSources = QualifierUtil.buildQualifierBeanMap(requireNonNull(mimeRulesSourcesList));
+    this.contentValidators = QualifierUtil.buildQualifierBeanMap(requireNonNull(contentValidatorsList));
+    this.defaultContentValidator = requireNonNull(defaultContentValidator);
   }
 
   public AssetBlobValidator selectValidator(final Repository repository) {

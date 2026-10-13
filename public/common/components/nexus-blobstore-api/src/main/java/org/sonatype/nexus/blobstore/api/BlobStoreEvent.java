@@ -13,7 +13,7 @@
 
 package org.sonatype.nexus.blobstore.api;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link BlobStore} event.
@@ -25,7 +25,7 @@ public abstract class BlobStoreEvent
   private final BlobStore blobStore;
 
   public BlobStoreEvent(final BlobStore blobStore) {
-    this.blobStore = checkNotNull(blobStore);
+    this.blobStore = requireNonNull(blobStore);
   }
 
   public BlobStore getBlobStore() {

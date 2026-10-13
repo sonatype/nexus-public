@@ -16,7 +16,7 @@ export type OnboardingStep = { type: string };
 export type WizardStateValue =
   | 'loading'
   | 'stepReady'
-  | 'setupComplete'
+  | 'verificationFailed'
   | 'verifying'
   | 'done'
   | 'issueOccurred'

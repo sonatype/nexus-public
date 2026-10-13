@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.log.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 
 /**
@@ -40,7 +40,7 @@ public class LogXO
   private long lastModified = -1;
 
   public LogXO(Path path) {
-    checkNotNull(path);
+    requireNonNull(path);
     try {
       if (LogManager.TASKS_PREFIX.startsWith(path.getParent().getFileName().toString())) {
         this.fileName = LogManager.TASKS_PREFIX + path.getFileName().toString();

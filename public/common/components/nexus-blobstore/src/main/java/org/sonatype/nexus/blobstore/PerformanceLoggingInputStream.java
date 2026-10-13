@@ -18,7 +18,7 @@ import java.io.IOException;
 
 import com.google.common.io.CountingInputStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A utility to log how fast the input stream was read.
@@ -44,8 +44,8 @@ public class PerformanceLoggingInputStream
       final PerformanceLogger performanceLogger)
   {
     super(countingInputStream);
-    this.countingInputStream = checkNotNull(countingInputStream);
-    this.performanceLogger = checkNotNull(performanceLogger);
+    this.countingInputStream = requireNonNull(countingInputStream);
+    this.performanceLogger = requireNonNull(performanceLogger);
   }
 
   @Override

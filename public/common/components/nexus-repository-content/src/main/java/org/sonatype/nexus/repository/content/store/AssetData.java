@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetBlobId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
@@ -63,6 +63,12 @@ public class AssetData
 
   @Nullable
   private long assetBlobSize;
+
+  @Nullable
+  private OffsetDateTime deletedOn;
+
+  @Nullable
+  private String deletedBy;
 
   /**
    * Flag to track whether this asset was retrieved from an eager query (browseEager).
@@ -144,7 +150,7 @@ public class AssetData
    * @since 3.24
    */
   public void setKind(final String kind) {
-    this.kind = checkNotNull(kind);
+    this.kind = requireNonNull(kind);
   }
 
   /**
@@ -195,6 +201,24 @@ public class AssetData
    */
   public void setFromEagerQuery(final boolean fromEagerQuery) {
     this.fromEagerQuery = fromEagerQuery;
+  }
+
+  @Nullable
+  public OffsetDateTime getDeletedOn() {
+    return deletedOn;
+  }
+
+  public void setDeletedOn(@Nullable final OffsetDateTime deletedOn) {
+    this.deletedOn = deletedOn;
+  }
+
+  @Nullable
+  public String getDeletedBy() {
+    return deletedBy;
+  }
+
+  public void setDeletedBy(@Nullable final String deletedBy) {
+    this.deletedBy = deletedBy;
   }
 
   // Getters to support lazy-loading (MyBatis will intercept them)

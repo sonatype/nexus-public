@@ -27,7 +27,7 @@ import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Component
 public class RemoteUrlSsrfValidator
@@ -46,8 +46,8 @@ public class RemoteUrlSsrfValidator
       final ConstraintViolationFactory constraintViolationFactory,
       final AntiSsrfService antiSsrfService)
   {
-    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
-    this.antiSsrfService = checkNotNull(antiSsrfService);
+    this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
+    this.antiSsrfService = requireNonNull(antiSsrfService);
   }
 
   @Nullable

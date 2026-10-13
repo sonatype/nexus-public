@@ -14,17 +14,13 @@ package org.sonatype.nexus.api.rest.selfhosted.blobstore.file;
 
 import java.util.Set;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
-
 import org.sonatype.nexus.api.rest.common.blobstore.file.model.FileBlobStoreApiCreateRequest;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -33,10 +29,8 @@ import static org.hamcrest.Matchers.is;
 /**
  * Tests for validating FileBlobStoreResource endpoint validation.
  */
-@ExtendWith(ValidationExtension.class)
 class FileBlobStoreResourceValidationTest
 {
-  @ValidationExecutor
   private final Validator validator =
       new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
 

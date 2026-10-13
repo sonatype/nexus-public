@@ -22,7 +22,7 @@ import javax.management.MBeanAttributeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -45,9 +45,9 @@ public class SuppliedMBeanAttribute
       final MBeanAttributeInfo info,
       final Supplier supplier)
   {
-    this.info = checkNotNull(info);
+    this.info = requireNonNull(info);
     this.name = info.getName();
-    this.supplier = checkNotNull(supplier);
+    this.supplier = requireNonNull(supplier);
   }
 
   @Override

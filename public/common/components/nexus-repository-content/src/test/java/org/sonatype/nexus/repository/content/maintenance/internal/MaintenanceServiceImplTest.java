@@ -543,10 +543,12 @@ public class MaintenanceServiceImplTest
     when(variableResolverAdapterManager.get("raw").fromPath(anyString(), anyString()))
         .thenReturn(mock(VariableSource.class));
     when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
+    when(browseFacet.getNodeIdForAsset(42)).thenReturn(101L);
 
     underTest.deleteAsset(repository, assetData);
 
-    verify(browseFacet).deleteByAssetIdAndPath(eq(42), eq("/some/path"));
+    verify(browseFacet).getNodeIdForAsset(eq(42));
+    verify(browseFacet).deleteByNodeIdAndCleanParents(eq(101L));
   }
 
   @Test
@@ -570,11 +572,13 @@ public class MaintenanceServiceImplTest
     when(variableResolverAdapterManager.get("npm").fromPath(anyString(), anyString()))
         .thenReturn(mock(VariableSource.class));
     when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
+    when(browseFacet.getNodeIdForAsset(99)).thenReturn(202L);
 
     // NPM TARBALL kind should NOT be preserved (only PACKAGE_ROOT is preserved)
     underTest.deleteAsset(repository, assetData);
 
-    verify(browseFacet).deleteByAssetIdAndPath(eq(99), eq("/test/-/test-1.0.tgz"));
+    verify(browseFacet).getNodeIdForAsset(eq(99));
+    verify(browseFacet).deleteByNodeIdAndCleanParents(eq(202L));
   }
 
   @Test
@@ -707,17 +711,19 @@ public class MaintenanceServiceImplTest
     when(variableResolverAdapterManager.get("raw").fromPath(anyString(), anyString()))
         .thenReturn(mock(VariableSource.class));
     when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
+    when(browseFacet.getNodeIdForAsset(42)).thenReturn(300L);
 
     Set<String> result = underTest.deleteAsset(repository, assetData);
 
     // Verify return value
     assertEquals(Set.of("/test/asset"), result);
 
-    // Verify ordering: facet must be retrieved BEFORE browse node deletion
-    InOrder inOrder = inOrder(repository, browseFacet, contentMaintenanceFacet);
-    inOrder.verify(repository).facet(ContentMaintenanceFacet.class);
-    inOrder.verify(browseFacet).deleteByAssetIdAndPath(eq(42), eq("/test/asset"));
+    // Verify ordering: node id is pre-fetched (before deletion so ON DELETE SET NULL has not yet
+    // cleared asset_id), then the asset is deleted, then the browse node is cleaned up by node id.
+    InOrder inOrder = inOrder(browseFacet, contentMaintenanceFacet);
+    inOrder.verify(browseFacet).getNodeIdForAsset(eq(42));
     inOrder.verify(contentMaintenanceFacet).deleteAsset(assetData);
+    inOrder.verify(browseFacet).deleteByNodeIdAndCleanParents(eq(300L));
   }
 
   @Test

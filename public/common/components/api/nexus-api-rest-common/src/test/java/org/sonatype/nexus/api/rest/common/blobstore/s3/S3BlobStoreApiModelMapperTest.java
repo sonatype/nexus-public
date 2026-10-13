@@ -12,48 +12,63 @@
  */
 package org.sonatype.nexus.api.rest.common.blobstore.s3;
 
+import java.security.InvalidKeyException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-
-import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.common.app.ApplicationVersion;
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiSoftQuota;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiAdvancedBucketConnection;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketSecurity;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiCloudFront;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiEncryption;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiFailoverBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiTransferAcceleration;
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.common.app.ApplicationVersion;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.ssl.CertificateUtil;
 
-import org.junit.Assert;
-import org.junit.Test;
+import jakarta.ws.rs.BadRequestException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mockStatic;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration.ACTIVE_REGION;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_DISTRIBUTION_URL_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY_PAIR_ID_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_PRIVATE_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.TRANSFER_ACCELERATION_ENABLED_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class S3BlobStoreApiModelMapperTest
 {
   private static final String BLOB_STORE_NAME = "anS3BlobStore";
@@ -114,9 +129,10 @@ public class S3BlobStoreApiModelMapperTest
 
   @Test
   public void shouldSetPreSignedUrlEnabledWhenIsTrueInModelAndEditionIsPro() {
-    S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, aS3BlobStoreBucketConfiguration(true));
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, aS3BlobStoreBucketConfiguration(true), null);
 
-    Mockito.when(applicationVersion.getEdition()).thenReturn("PRO");
+    Mockito.when(applicationVersion.isAnyProEdition()).thenReturn(true);
 
     final MockBlobStoreConfiguration blobStoreConfiguration = new MockBlobStoreConfiguration();
     BlobStoreConfiguration configuration =
@@ -129,12 +145,12 @@ public class S3BlobStoreApiModelMapperTest
   @Test
   public void shouldThrowExceptionWhenPreSignedUrlIsTrueAndEditionIsNotPro() {
     S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null,
-        aS3BlobStoreBucketConfiguration(true));
+        aS3BlobStoreBucketConfiguration(true), null);
 
-    Mockito.when(applicationVersion.getEdition()).thenReturn("NOT PRO");
+    Mockito.when(applicationVersion.isAnyProEdition()).thenReturn(false);
 
     final MockBlobStoreConfiguration blobStoreConfiguration = new MockBlobStoreConfiguration();
-    Assert.assertThrows(PreSignedUrlNotAllowedException.class,
+    assertThrows(PreSignedUrlNotAllowedException.class,
         () -> S3BlobStoreApiModelMapper.map(blobStoreConfiguration, model, applicationVersion));
   }
 
@@ -157,11 +173,88 @@ public class S3BlobStoreApiModelMapperTest
     assertActiveRegion(s3BucketAttributes);
   }
 
+  @Test
+  public void testCloudFront() {
+    S3BlobStoreApiCloudFront dist =
+        new S3BlobStoreApiCloudFront("http://something.example.org", "some-key-id", "a-pem");
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, aS3BlobStoreBucketConfiguration(false), dist);
+
+    BlobStoreConfiguration configuration =
+        S3BlobStoreApiModelMapper.map(new MockBlobStoreConfiguration(), model, applicationVersion);
+
+    NestedAttributesMap s3 = configuration.attributes(CONFIG_KEY);
+
+    assertFalse(s3.get(TRANSFER_ACCELERATION_ENABLED_KEY, Boolean.class));
+    assertTrue(s3.contains(CLOUDFRONT_KEY));
+
+    Map<String, Object> cloudFront = s3.child(CLOUDFRONT_KEY).backing();
+    assertThat(cloudFront, hasEntry(CLOUDFRONT_DISTRIBUTION_URL_KEY, "http://something.example.org"));
+    assertThat(cloudFront, hasEntry(CLOUDFRONT_KEY_PAIR_ID_KEY, "some-key-id"));
+    assertThat(cloudFront, hasEntry(CLOUDFRONT_PRIVATE_KEY_KEY, "a-pem"));
+  }
+
+  @Test
+  public void testCloudFront_decrypt() {
+    S3BlobStoreApiCloudFront dist = new S3BlobStoreApiCloudFront("http://something.example.org", "some-key-id",
+        "an-encrypted-pem", "some-password");
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, aS3BlobStoreBucketConfiguration(false), dist);
+
+    BlobStoreConfiguration configuration;
+    try (MockedStatic<CertificateUtil> certificateUtil = mockStatic(CertificateUtil.class)) {
+      certificateUtil.when(() -> CertificateUtil.removePemPassphrase("an-encrypted-pem", "some-password"))
+          .thenReturn("a-decrypted-pem");
+      configuration = S3BlobStoreApiModelMapper.map(new MockBlobStoreConfiguration(), model, applicationVersion);
+    }
+
+    NestedAttributesMap s3 = configuration.attributes(CONFIG_KEY);
+
+    assertFalse(s3.get(TRANSFER_ACCELERATION_ENABLED_KEY, Boolean.class));
+    assertTrue(s3.contains(CLOUDFRONT_KEY));
+
+    Map<String, Object> cloudFront = s3.child(CLOUDFRONT_KEY).backing();
+    assertThat(cloudFront, hasEntry(CLOUDFRONT_DISTRIBUTION_URL_KEY, "http://something.example.org"));
+    assertThat(cloudFront, hasEntry(CLOUDFRONT_KEY_PAIR_ID_KEY, "some-key-id"));
+    assertThat(cloudFront, hasEntry(CLOUDFRONT_PRIVATE_KEY_KEY, "a-decrypted-pem"));
+  }
+
+  @Test
+  public void testCloudFront_decryptFailure() {
+    S3BlobStoreApiCloudFront dist = new S3BlobStoreApiCloudFront("http://something.example.org", "some-key-id",
+        "an-encrypted-pem", "some-password");
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, aS3BlobStoreBucketConfiguration(false), dist);
+
+    try (MockedStatic<CertificateUtil> certificateUtil = mockStatic(CertificateUtil.class)) {
+      certificateUtil.when(() -> CertificateUtil.removePemPassphrase("an-encrypted-pem", "some-password"))
+          .thenThrow(new InvalidKeyException(""));
+      assertThrows(BadRequestException.class,
+          () -> S3BlobStoreApiModelMapper.map(new MockBlobStoreConfiguration(), model, applicationVersion));
+    }
+  }
+
+  @Test
+  public void testTransferAcceleration() {
+    S3BlobStoreApiTransferAcceleration dist = new S3BlobStoreApiTransferAcceleration();
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, aS3BlobStoreBucketConfiguration(false), dist);
+
+    BlobStoreConfiguration configuration =
+        S3BlobStoreApiModelMapper.map(new MockBlobStoreConfiguration(), model, applicationVersion);
+
+    NestedAttributesMap s3 = configuration.attributes(CONFIG_KEY);
+
+    assertTrue(s3.get(TRANSFER_ACCELERATION_ENABLED_KEY, Boolean.class));
+    assertFalse(s3.contains(CLOUDFRONT_KEY));
+  }
+
   private static S3BlobStoreApiModel aMinimalS3BlobStoreApiModel() {
     return new S3BlobStoreApiModel(BLOB_STORE_NAME,
         null,
         new S3BlobStoreApiBucketConfiguration(anS3BlobStoreBucket(),
-            null, null, null, null, null, null));
+            null, null, null, null, null, null),
+        null);
   }
 
   private static S3BlobStoreApiBucket anS3BlobStoreBucket() {
@@ -172,7 +265,7 @@ public class S3BlobStoreApiModelMapperTest
     BlobStoreApiSoftQuota quota = new BlobStoreApiSoftQuota();
     quota.setType(QUOTA_TYPE);
     quota.setLimit(QUOTA_LIMIT);
-    return new S3BlobStoreApiModel(BLOB_STORE_NAME, quota, aS3BlobStoreBucketConfiguration(null));
+    return new S3BlobStoreApiModel(BLOB_STORE_NAME, quota, aS3BlobStoreBucketConfiguration(null), null);
   }
 
   private static S3BlobStoreApiBucketConfiguration aS3BlobStoreBucketConfiguration(final Boolean preSignedUrlEnabled) {

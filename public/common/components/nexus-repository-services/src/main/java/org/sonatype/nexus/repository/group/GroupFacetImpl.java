@@ -48,7 +48,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.isNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
@@ -104,10 +104,10 @@ public class GroupFacetImpl
       @Qualifier(GroupType.NAME) final Type groupType,
       final RepositoryCacheInvalidationService repositoryCacheInvalidationService)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.groupType = checkNotNull(groupType);
-    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
-    this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.groupType = requireNonNull(groupType);
+    this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
+    this.repositoryCacheInvalidationService = requireNonNull(repositoryCacheInvalidationService);
   }
 
   @Override
@@ -217,14 +217,14 @@ public class GroupFacetImpl
   @Override
   @Guarded(by = STARTED)
   public boolean member(final String repositoryName) {
-    checkNotNull(repositoryName);
+    requireNonNull(repositoryName);
     return config.memberNames.contains(repositoryName);
   }
 
   @Override
   @Guarded(by = STARTED)
   public boolean member(final Repository repository) {
-    checkNotNull(repository);
+    requireNonNull(repository);
     return config.memberNames.contains(repository.getName());
   }
 

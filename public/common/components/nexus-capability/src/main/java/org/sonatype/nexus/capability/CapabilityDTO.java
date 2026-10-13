@@ -22,7 +22,7 @@ import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.Selectable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class CapabilityDTO
 {
@@ -59,10 +59,10 @@ public class CapabilityDTO
   }
 
   public CapabilityDTO(final CapabilityReference reference) {
-    checkNotNull(reference);
-    CapabilityContext context = checkNotNull(reference.context());
-    Capability capability = checkNotNull(reference.capability());
-    CapabilityDescriptor descriptor = checkNotNull(context.descriptor());
+    requireNonNull(reference);
+    CapabilityContext context = requireNonNull(reference.context());
+    Capability capability = requireNonNull(reference.capability());
+    CapabilityDescriptor descriptor = requireNonNull(context.descriptor());
 
     id = context.id().toString();
     type = context.type().toString();

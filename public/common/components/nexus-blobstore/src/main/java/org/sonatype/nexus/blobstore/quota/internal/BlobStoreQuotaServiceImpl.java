@@ -28,7 +28,7 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
@@ -49,7 +49,7 @@ public class BlobStoreQuotaServiceImpl
 
   @Autowired
   public BlobStoreQuotaServiceImpl(final List<BlobStoreQuota> quotasList) {
-    this.quotas = QualifierUtil.buildQualifierBeanMap(checkNotNull(quotasList));
+    this.quotas = QualifierUtil.buildQualifierBeanMap(requireNonNull(quotasList));
   }
 
   @Override
@@ -79,7 +79,7 @@ public class BlobStoreQuotaServiceImpl
   @Nullable
   @Override
   public BlobStoreQuotaResult checkQuota(final BlobStore blobStore) {
-    checkNotNull(blobStore);
+    requireNonNull(blobStore);
     BlobStoreConfiguration config = blobStore.getBlobStoreConfiguration();
 
     return getQuota(config).map(quota -> {

@@ -48,8 +48,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.*;
 import org.springframework.stereotype.Component;
 
@@ -89,8 +89,8 @@ public class SupportZipGeneratorImpl
       final @Value("${atlas.supportZipGenerator.maxFileSize:30mb}") ByteSize maxFileSize,
       final @Value("${atlas.supportZipGenerator.maxZipFileSize:50mb}") ByteSize maxZipFileSize)
   {
-    this.bundleCustomizers = checkNotNull(bundleCustomizers);
-    this.downloadService = checkNotNull(downloadService);
+    this.bundleCustomizers = requireNonNull(bundleCustomizers);
+    this.downloadService = requireNonNull(downloadService);
 
     this.maxFileSize = maxFileSize;
     log.info("Maximum included file size: {}", maxFileSize);
@@ -106,7 +106,7 @@ public class SupportZipGeneratorImpl
 
   @Override
   public Result generate(final SupportZipGeneratorRequest request, final String prefix) {
-    checkNotNull(request);
+    requireNonNull(request);
     setArchivedLogSize(request);
 
     log.info("Generating support ZIP: {}", request);

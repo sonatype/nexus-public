@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-security</artifactId>
@@ -29,14 +29,12 @@
 
   <properties>
     <apache-shiro.version>2.2.1</apache-shiro.version>
-    <bouncycastle.version>1.85</bouncycastle.version>
+    <bouncycastle.version>1.86</bouncycastle.version>
     <bcpkix.fips.version>2.1.12</bcpkix.fips.version>
     <bcpg.fips.version>2.1.13</bcpg.fips.version>
     <bcutil.fips.version>2.1.7</bcutil.fips.version>
     <bc.fips.version>2.1.3</bc.fips.version>
     <java-jwt.version>3.16.0</java-jwt.version>
-    <nimbusds.jwt.version>10.2</nimbusds.jwt.version>
-    <nimbusds.oauth2.version>11.23.1</nimbusds.oauth2.version>
   </properties>
 
   <dependencyManagement>
@@ -48,18 +46,6 @@
         <groupId>com.auth0</groupId>
         <artifactId>java-jwt</artifactId>
         <version>${java-jwt.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.nimbusds</groupId>
-        <artifactId>oauth2-oidc-sdk</artifactId>
-        <version>${nimbusds.oauth2.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.nimbusds</groupId>
-        <artifactId>nimbus-jose-jwt</artifactId>
-        <version>${nimbusds.jwt.version}</version>
       </dependency>
 
       <!-- shiro -->

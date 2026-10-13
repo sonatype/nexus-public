@@ -71,6 +71,7 @@ import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -228,6 +229,84 @@ class BaseBlobStoreManagerTest
   }
 
   @Test
+  public void replicatingCreateAdoptsAlreadyMaterializedBlobStore() throws Exception {
+    BlobStoreConfiguration configuration = createConfig("shared");
+    BaseBlobStoreManager underTest = newBlobStoreManager(false, this::getBlobStoreConfig);
+
+    // First replicated materialization tracks and starts the blob store exactly once.
+    BlobStore first = createReplicating(underTest, configuration);
+    // A second replicated create for the same name (a get() read-miss racing a config event handler) must adopt
+    // the already-tracked instance instead of starting a duplicate that would leak.
+    BlobStore second = createReplicating(underTest, configuration);
+
+    assertThat(first, is(blobStore));
+    assertThat(second, is(blobStore));
+    verify(store, never()).create(any(BlobStoreConfiguration.class)); // replicating: never persisted
+    verify(blobStore, times(1)).start(); // materialized/started exactly once
+  }
+
+  @Test
+  public void createReturnsTheTrackedInstanceWhenAnotherAlreadyMaterializedIt() throws Exception {
+    BlobStoreConfiguration configuration = createConfig("shared");
+    BaseBlobStoreManager underTest = newBlobStoreManager(false, this::getBlobStoreConfig);
+
+    // Successive builds return different instances, so we can tell whether create() returns the instance it
+    // built or the one actually tracked/started.
+    BlobStore firstBuilt = mock(BlobStore.class, "firstBuilt");
+    BlobStore secondBuilt = mock(BlobStore.class, "secondBuilt");
+    when(provider.get()).thenReturn(firstBuilt, secondBuilt);
+
+    BlobStore firstResult = createReplicating(underTest, configuration);
+    // Second create builds secondBuilt but loses the cooperation/containsKey race, so it must return the
+    // already-tracked firstBuilt -- not its own discarded build (finding #2).
+    BlobStore secondResult = createReplicating(underTest, configuration);
+
+    assertThat(firstResult, is(firstBuilt));
+    assertThat("create() must return the tracked instance, not the discarded second build",
+        secondResult, is(firstBuilt));
+    verify(firstBuilt, times(1)).start();
+    verify(secondBuilt, never()).start(); // the losing build is never started or tracked
+  }
+
+  @Test
+  public void reentrantMaterializationDuringStartReturnsInProgressInstanceWithoutSelfWaiting() throws Exception {
+    BlobStoreConfiguration configuration = createConfig("self-ref");
+    BaseBlobStoreManager underTest = newBlobStoreManager(false, this::getBlobStoreConfig);
+
+    // During start(), a subscriber re-enters materialization for the same blob store on this thread (e.g. via a
+    // get() whose differently-cased name missed the name-keyed guard). doCreate() is keyed by the canonical
+    // configuration name, so it must return the in-progress instance instead of re-entering the cooperation
+    // point and waiting on this thread's own in-flight future (a self-wait). Replicating so no double-persist.
+    BlobStore[] reentrant = new BlobStore[1];
+    doAnswer(invocation -> {
+      // already inside the outer asReplicating context on this thread, so call create() directly
+      reentrant[0] = underTest.create(configuration);
+      return null;
+    }).when(blobStore).start();
+
+    BlobStore created = createReplicating(underTest, configuration);
+
+    assertThat(created, is(blobStore));
+    assertThat("re-entrant materialization during start returns the in-progress instance",
+        reentrant[0], is(blobStore));
+    verify(blobStore, times(1)).start(); // started exactly once, no self-wait re-materialize
+  }
+
+  private BlobStore createReplicating(
+      final BaseBlobStoreManager underTest,
+      final BlobStoreConfiguration configuration)
+  {
+    return EventHelper.asReplicating(() -> {
+      try {
+        return underTest.create(configuration);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  @Test
   public void canCreateBlobStoreAndEncryptSensitiveValues() throws Exception {
     when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
     when(provider.get()).thenReturn(blobStore);
@@ -346,6 +425,19 @@ class BaseBlobStoreManagerTest
     }
 
     assertFalse(underTest.browse().iterator().hasNext());
+  }
+
+  @Test
+  public void failedBlobStoreStartIsNotLeftTracked() throws Exception {
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStoreConfiguration configuration = createConfig("retry-me");
+    doThrow(new IllegalStateException("boom")).when(blobStore).start();
+
+    assertThrows(Exception.class, () -> underTest.create(configuration));
+
+    // Regression (NEXUS-54229): a failed start() must untrack the instance, otherwise the cooperation
+    // checkFunction returns the broken unstarted store on every retry, permanently blocking recovery.
+    assertThat(underTest.getByName().containsKey("retry-me"), is(false));
   }
 
   @Test
@@ -1264,5 +1356,42 @@ class BaseBlobStoreManagerTest
     finally {
       eventHelperMockedStatic.close();
     }
+  }
+
+  @Test
+  public void existsReturnsTrueForInMemoryBlobStore() throws Exception {
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig, createConfig("test"));
+
+    assertThat(underTest.exists("test"), is(true));
+    // an in-memory hit short-circuits: no shared-store read
+    verify(store, never()).read("test");
+  }
+
+  @Test
+  public void existsReturnsTrueForClusteredPeerBlobStoreNotYetMaterialized() throws Exception {
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    when(nodeAccess.isClustered()).thenReturn(true);
+    // created on a peer: committed to the shared store but not yet in this node's in-memory map
+    when(store.read("peer-bs")).thenReturn(createConfig("peer-bs"));
+
+    assertThat(underTest.exists("peer-bs"), is(true));
+  }
+
+  @Test
+  public void existsReturnsFalseOnSingleNodeWithoutConsultingStore() throws Exception {
+    BaseBlobStoreManager underTest = newBlobStoreManager(false, this::getBlobStoreConfig);
+
+    // not clustered -> a miss is authoritative; must not consult the shared store
+    assertThat(underTest.exists("peer-bs"), is(false));
+    verify(store, never()).read("peer-bs");
+  }
+
+  @Test
+  public void existsReturnsFalseWhenClusteredButAbsentFromStore() throws Exception {
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    when(nodeAccess.isClustered()).thenReturn(true);
+    when(store.read("absent")).thenReturn(null);
+
+    assertThat(underTest.exists("absent"), is(false));
   }
 }

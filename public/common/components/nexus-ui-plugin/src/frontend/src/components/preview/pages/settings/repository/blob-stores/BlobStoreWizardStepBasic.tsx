@@ -20,7 +20,7 @@ import {
   SettingsTransferList,
   SettingsAlert,
 } from '../../../../shared/form';
-import { useIsClustered } from '../../../../shared/hooks';
+import { useIsClustered, useIsLicensedEdition } from '../../../../shared/hooks';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { useS3DropdownValues, useGroupableBlobStores } from './useBlobStores';
 import { shouldShowHaPathWarning, HA_PATH_WARNING } from './haPathWarning';
@@ -52,7 +52,7 @@ export function BlobStoreWizardStepBasic({
 }: BlobStoreWizardStepBasicProps) {
   const { values: s3Dropdown, loading: s3Loading } = useS3DropdownValues();
   const { blobStores, loading: groupLoading } = useGroupableBlobStores();
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const isClustered = useIsClustered();
   const workDirectory = ExtJS.state()?.getValue?.('nexus.application.workDirectory') || '';
 
@@ -134,7 +134,7 @@ export function BlobStoreWizardStepBasic({
               placeholder="nexus/"
               helpText="Optional path prefix within the bucket"
             />
-            {isProEdition && (
+            {isLicensedEdition && (
               <SettingsCheckbox
                 name="s3-presigned"
                 label="Pre-Signed URL"
@@ -168,7 +168,7 @@ export function BlobStoreWizardStepBasic({
               required
               error={validationErrors['bucketConfiguration.containerName']}
             />
-            {isProEdition && (
+            {isLicensedEdition && (
               <div className="azure-blob-store-settings__sas-section">
                 <SettingsCheckbox
                   name="azure-direct-download"

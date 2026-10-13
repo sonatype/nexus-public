@@ -64,4 +64,41 @@ public class ApplicationVersionSupportTest
   public void testGetVersion_missing() {
     assertThat(underTest.getVersion(), equalTo(ApplicationVersionSupport.UNKNOWN));
   }
+
+  @Test
+  public void isAnyProEdition_trueForProFamilyEditions() {
+    assertThat(versionReporting("PRO").isAnyProEdition(), equalTo(true));
+    assertThat(versionReporting("PROPLUS").isAnyProEdition(), equalTo(true));
+    assertThat(versionReporting("ENTERPRISE").isAnyProEdition(), equalTo(true));
+  }
+
+  @Test
+  public void isAnyProEdition_falseForNonProEditions() {
+    assertThat(versionReporting("COMMUNITY").isAnyProEdition(), equalTo(false));
+    assertThat(versionReporting("CORE").isAnyProEdition(), equalTo(false));
+    assertThat(versionReporting("UNKNOWN").isAnyProEdition(), equalTo(false));
+  }
+
+  @Test
+  public void isCommunityEdition_trueOnlyForCommunity() {
+    assertThat(versionReporting("COMMUNITY").isCommunityEdition(), equalTo(true));
+    assertThat(versionReporting("PRO").isCommunityEdition(), equalTo(false));
+    assertThat(versionReporting("CORE").isCommunityEdition(), equalTo(false));
+    assertThat(versionReporting("UNKNOWN").isCommunityEdition(), equalTo(false));
+  }
+
+  private static ApplicationVersion versionReporting(final String edition) {
+    return new ApplicationVersionSupport()
+    {
+      @Override
+      public Properties getProperties() {
+        return new Properties();
+      }
+
+      @Override
+      public String getEdition() {
+        return edition;
+      }
+    };
+  }
 }

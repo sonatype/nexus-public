@@ -31,7 +31,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 
@@ -59,7 +59,7 @@ public class EhCacheManagerProvider
 
   @Autowired
   public EhCacheManagerProvider(final ApplicationDirectories directories) {
-    checkNotNull(directories);
+    requireNonNull(directories);
     File file = new File(directories.getConfigDirectory("fabric"), CONFIG_FILE);
     if (file.exists()) {
       configUri = file.toURI();

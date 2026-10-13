@@ -109,6 +109,9 @@ public class MavenContentFacetImplTest
   @Mock
   private TempBlob tempBlob;
 
+  @Mock
+  private org.sonatype.nexus.repository.content.maintenance.ContentDeletionService contentDeletionService;
+
   private MavenPathParser mavenPathParser = new Maven2MavenPathParser();
 
   @BeforeEach
@@ -119,6 +122,7 @@ public class MavenContentFacetImplTest
         metadataRebuilder,
         metadataValidator,
         eventManager,
+        contentDeletionService,
         true));
 
     underTest.attach(repository);

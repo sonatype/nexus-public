@@ -16,7 +16,7 @@ import java.util.Collection;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An event fired when a database migration has completed.
@@ -37,7 +37,7 @@ public class UpgradeCompletedEvent
       final String... migrations)
   {
     super(user, schemaVersion, migrations);
-    this.nodeIds = checkNotNull(nodeIds);
+    this.nodeIds = requireNonNull(nodeIds);
   }
 
   /**

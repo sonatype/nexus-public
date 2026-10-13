@@ -397,8 +397,8 @@
   --green-6: #165b28;
   --green-7: #1a6c30;
   --green-8: #197f37;
-  --green-9: #00c751;
-  --green-10: #00bb45;
+  --green-9: #138653;
+  --green-10: #0f7148;
   --green-11: #32da63;
   --green-12: #abf6b5;
 
@@ -417,8 +417,8 @@
 
   --green-contrast: #fff;
   --green-surface: #11251580;
-  --green-indicator: #00c751;
-  --green-track: #00c751;
+  --green-indicator: #138653;
+  --green-track: #138653;
 }
 
 @supports (color: color(display-p3 1 1 1)) {
@@ -432,8 +432,8 @@
       --green-6: oklch(41.5% 0.1054 148.1);
       --green-7: oklch(46.8% 0.1209 148.1);
       --green-8: oklch(52.5% 0.1407 148.1);
-      --green-9: oklch(72.4% 0.2089 148.1);
-      --green-10: oklch(68.7% 0.2089 148.1);
+      --green-9: oklch(52.2% 0.117 148.5);
+      --green-10: oklch(46% 0.108 148.5);
       --green-11: oklch(78% 0.2089 148.1);
       --green-12: oklch(90.8% 0.1161 148.1);
 
@@ -452,8 +452,8 @@
 
       --green-contrast: #fff;
       --green-surface: color(display-p3 0.0784 0.1412 0.0784 / 0.5);
-      --green-indicator: oklch(72.4% 0.2089 148.1);
-      --green-track: oklch(72.4% 0.2089 148.1);
+      --green-indicator: oklch(52.2% 0.117 148.5);
+      --green-track: oklch(52.2% 0.117 148.5);
     }
   }
 }
@@ -467,8 +467,8 @@
   --green-6: #97e1a1;
   --green-7: #6cd37f;
   --green-8: #00c04a;
-  --green-9: #00c751;
-  --green-10: #00bb45;
+  --green-9: #138653;
+  --green-10: #0f7148;
   --green-11: #00801b;
   --green-12: #0a4019;
 
@@ -487,8 +487,8 @@
 
   --green-contrast: #fff;
   --green-surface: #ecf8eccc;
-  --green-indicator: #00c751;
-  --green-track: #00c751;
+  --green-indicator: #138653;
+  --green-track: #138653;
 }
 
 @supports (color: color(display-p3 1 1 1)) {
@@ -502,8 +502,8 @@
       --green-6: oklch(84.4% 0.1147 148.1);
       --green-7: oklch(78.4% 0.1526 148.1);
       --green-8: oklch(70.2% 0.2089 148.1);
-      --green-9: oklch(72.4% 0.2089 148.1);
-      --green-10: oklch(68.7% 0.2089 148.1);
+      --green-9: oklch(52.2% 0.117 148.5);
+      --green-10: oklch(46% 0.108 148.5);
       --green-11: oklch(51.3% 0.2083 148.1);
       --green-12: oklch(32.7% 0.0859 148.1);
 
@@ -522,8 +522,8 @@
 
       --green-contrast: #fff;
       --green-surface: color(display-p3 0.9373 0.9725 0.9333 / 0.8);
-      --green-indicator: oklch(72.4% 0.2089 148.1);
-      --green-track: oklch(72.4% 0.2089 148.1);
+      --green-indicator: oklch(52.2% 0.117 148.5);
+      --green-track: oklch(52.2% 0.117 148.5);
     }
   }
 }

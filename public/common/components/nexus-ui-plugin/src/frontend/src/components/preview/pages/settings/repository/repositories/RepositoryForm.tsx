@@ -39,6 +39,9 @@ import {
   SettingsButton,
 } from '../../../../shared/form';
 
+import { isFirewallSupportedFormat } from '../../../../../../utils/firewallFormats';
+import { isHostedRepoEvaluationSupportedFormat } from '../../../../../../utils/hostedRepoEvaluationFormats';
+
 import { useRepositoryForm } from './useRepositoryForm';
 import { RepositoryFormProps } from './types';
 import { RepositorySummary } from './RepositorySummary';
@@ -54,10 +57,13 @@ import { NegativeCacheFacet } from './facets/NegativeCacheFacet';
 import { CleanupFacet } from './facets/CleanupFacet';
 import { MavenFacet } from './facets/MavenFacet';
 import { DockerFacet } from './facets/DockerFacet';
+import { OciFacet } from './facets/OciFacet';
 import { AptFacet } from './facets/AptFacet';
 import { AlpineFacet } from './facets/AlpineFacet';
 import { YumFacet } from './facets/YumFacet';
+import { TerraformFacet } from './facets/TerraformFacet';
 import { NugetFacet } from './facets/NugetFacet';
+import { HuggingFaceFacet } from './facets/HuggingFaceFacet';
 import { PyPiFacet } from './facets/PyPiFacet';
 import { RawFacet } from './facets/RawFacet';
 import { RoutingRuleFacet } from './facets/RoutingRuleFacet';
@@ -69,9 +75,6 @@ import { RepositoryEvaluationTab } from './RepositoryEvaluationTab';
 import { isEvaluationFeatureEnabled } from './useRepoEvaluationOverride';
 import { RepositorySettingsUsageTab } from './RepositorySettingsUsageTab';
 import type { RepositoryUsageKind } from './repositoryUsageMachine';
-import { isFeatureEnabled } from '../../../../config/featureFlags';
-
-const USAGE_TAB_FLAG = 'repository.settings.usageTab';
 
 import './RepositoryForm.scss';
 
@@ -137,9 +140,11 @@ export function RepositoryForm({
     onDirtyChange,
   });
 
-  // Per-repo Evaluation tab — gated by hostedRepositoryEvaluationEnabled flag.
+  // Per-repo Evaluation tab — gated by hostedRepositoryEvaluationEnabled flag, and hidden for formats HRS can't
+  // monitor. Already-monitored ones can still be disabled from the HRS Repositories tab.
   const showEvaluationTab =
-    !isCreate && !!repository && recipe.type === 'hosted' && isEvaluationFeatureEnabled();
+    !isCreate && !!repository && recipe.type === 'hosted' && isEvaluationFeatureEnabled() &&
+    isHostedRepoEvaluationSupportedFormat(recipe.format);
 
   // Evaluation tab plugs into the page-level "Save Changes" / "Cancel" toolbar
   // when active, so the buttons inside that tab's card stay hidden.
@@ -252,6 +257,16 @@ export function RepositoryForm({
           />
         )}
 
+        {recipe.format === 'oci' && (
+          <OciFacet
+            formData={formData}
+            onNestedChange={handleNestedChange}
+            errors={errors}
+            repoType={recipe.type}
+            isCloud={isCloud}
+          />
+        )}
+
         {recipe.format === 'apt' && (
           <AptFacet
             formData={formData}
@@ -279,6 +294,15 @@ export function RepositoryForm({
           />
         )}
 
+        {recipe.format === 'terraform' && (
+          <TerraformFacet
+            formData={formData}
+            onNestedChange={handleNestedChange}
+            errors={errors}
+            repoType={recipe.type}
+          />
+        )}
+
         {recipe.format === 'nuget' && recipe.type === 'proxy' && (
           <NugetFacet
             formData={formData}
@@ -288,6 +312,13 @@ export function RepositoryForm({
         )}
 
         {/* npm proxies: no format-specific config in new UI. Use Firewall tab's PCCS button instead. */}
+
+        {recipe.format === 'huggingface' && recipe.type === 'proxy' && (
+          <HuggingFaceFacet
+            formData={formData}
+            onNestedChange={handleNestedChange}
+          />
+        )}
 
         {recipe.format === 'pypi' && recipe.type === 'proxy' && (
           <PyPiFacet
@@ -385,7 +416,7 @@ export function RepositoryForm({
             onChange={handleChange}
             onNestedChange={handleNestedChange}
             errors={errors}
-            showPreemptiveAuth={recipe.format === 'maven2' || recipe.format === 'pypi' || recipe.format === 'terraform'}
+            showPreemptiveAuth={recipe.format === 'maven2' || recipe.format === 'pypi' || recipe.format === 'terraform' || recipe.format === 'conda'}
             originalRemoteUrl={pristineData?.proxy?.remoteUrl}
             isEdit={!isCreate}
             hadAuthOnLoad={!!pristineData?.httpClient?.authentication?.type}
@@ -408,16 +439,16 @@ export function RepositoryForm({
             <Tabs.Trigger value="settings">
               <SettingsIcon size={16} /> Settings
             </Tabs.Trigger>
-            {isFeatureEnabled(USAGE_TAB_FLAG) && (
-              <Tabs.Trigger value="usage">
-                <Activity size={16} /> Usage
-              </Tabs.Trigger>
-            )}
+            <Tabs.Trigger value="usage">
+              <Activity size={16} /> Usage
+            </Tabs.Trigger>
             {recipe.type === 'proxy' && (
               <>
-                <Tabs.Trigger value="firewall">
-                  <Shield size={16} /> Firewall
-                </Tabs.Trigger>
+                {isFirewallSupportedFormat(recipe.format) && (
+                  <Tabs.Trigger value="firewall">
+                    <Shield size={16} /> Firewall
+                  </Tabs.Trigger>
+                )}
                 <Tabs.Trigger value="health-check">
                   <ShieldCheck size={16} /> Health Check
                 </Tabs.Trigger>
@@ -459,25 +490,25 @@ export function RepositoryForm({
               {formContent}
             </Tabs.Content>
 
-            {isFeatureEnabled(USAGE_TAB_FLAG) && (
-              <Tabs.Content value="usage">
-                <RepositorySettingsUsageTab
-                  repositoryName={repository.name}
-                  repositoryType={toRepositoryUsageKind(repository.type)}
-                />
-              </Tabs.Content>
-            )}
+            <Tabs.Content value="usage">
+              <RepositorySettingsUsageTab
+                repositoryName={repository.name}
+                repositoryType={toRepositoryUsageKind(repository.type)}
+              />
+            </Tabs.Content>
 
             {recipe.type === 'proxy' && (
               <>
-                <Tabs.Content value="firewall">
-                  <RepositoryFirewallConfigTab
-                    repositoryName={repository.name}
-                    hasFirewallLicense={hasFirewallLicense}
-                    showHealthCheck={false}
-                    format={recipe.format}
-                  />
-                </Tabs.Content>
+                {isFirewallSupportedFormat(recipe.format) && (
+                  <Tabs.Content value="firewall">
+                    <RepositoryFirewallConfigTab
+                      repositoryName={repository.name}
+                      hasFirewallLicense={hasFirewallLicense}
+                      showHealthCheck={false}
+                      format={recipe.format}
+                    />
+                  </Tabs.Content>
+                )}
                 <Tabs.Content value="health-check">
                   <RepositoryFirewallConfigTab
                     repositoryName={repository.name}

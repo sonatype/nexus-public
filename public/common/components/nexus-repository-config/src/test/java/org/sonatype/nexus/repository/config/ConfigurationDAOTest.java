@@ -185,6 +185,29 @@ public class ConfigurationDAOTest
   }
 
   @Test
+  public void testCountByBlobStore() {
+    // two repositories on "bs-a" (one with additional storage attributes), one on "bs-b"
+    ConfigurationData r1 =
+        configurationData("r1", "maven-hosted", true, Map.of("storage", Map.of("blobStoreName", "bs-a")), id1);
+    ConfigurationData r2 = configurationData("r2", "npm-hosted", true,
+        Map.of("storage", Map.of("blobStoreName", "bs-a", "strictContentTypeValidation", true)), id2);
+    ConfigurationData r3 =
+        configurationData("r3", "docker-hosted", true, Map.of("storage", Map.of("blobStoreName", "bs-b")), id3);
+    // a repository with no storage.blobStoreName (e.g. a group) must not be counted
+    ConfigurationData r4 =
+        configurationData("r4", "maven-group", true, Map.of("group", Map.of("memberNames", "r1")), id1);
+
+    dao.create(r1);
+    dao.create(r2);
+    dao.create(r3);
+    dao.create(r4);
+
+    assertThat(dao.countByBlobStore("bs-a"), is(2));
+    assertThat(dao.countByBlobStore("bs-b"), is(1));
+    assertThat(dao.countByBlobStore("bs-missing"), is(0));
+  }
+
+  @Test
   public void testReadByIds() {
     ConfigurationData config1 =
         configurationData("repo1", "maven-hosted", true, Map.of("storage", Map.of("blobStoreName", "default")), id1);

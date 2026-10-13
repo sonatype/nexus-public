@@ -205,48 +205,6 @@
     font-style: italic;
   }
 
-  &__help {
-    margin-top: var(--space-2);
-    padding: var(--space-4);
-    background: var(--gray-2);
-    border: 1px solid var(--gray-5);
-    border-radius: var(--radius-2);
-  }
-
-  &__help-header {
-    margin-bottom: var(--space-2);
-    color: var(--gray-12);
-
-    svg {
-      color: var(--accent-9);
-    }
-  }
-
-  &__help-text {
-    color: var(--gray-11);
-    line-height: 1.5;
-
-    & + & {
-      margin-top: var(--space-2);
-    }
-  }
-
-  &__help-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    color: var(--accent-11);
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    svg {
-      flex-shrink: 0;
-    }
-  }
-
   // Modal styles
   //
   // The Change Order dialog renders through Radix's Dialog.Portal, which mounts

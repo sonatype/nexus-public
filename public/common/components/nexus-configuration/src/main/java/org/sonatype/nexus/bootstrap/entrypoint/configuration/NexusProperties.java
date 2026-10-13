@@ -99,6 +99,30 @@ public class NexusProperties
     nexusProperties.put(key, value);
   }
 
+  /**
+   * Sets a property in the shared nexus property map <em>and</em> the JVM system properties. Use
+   * this after {@link #init} has completed, when a caller needs a late-arriving mutation to reach
+   * every downstream reader: Spring's {@code Environment} (via the {@code PropertySource} that
+   * wraps this map), Spring {@code @ConditionalOnProperty}/{@code @Value}, and callers reading
+   * through {@code System.getProperty}. {@code init} only copies the map to system properties
+   * once at startup, so later map mutations do not propagate automatically.
+   * <p>
+   * The mutation is only visible to {@code @Value} and {@code @ConditionalOnProperty} readers
+   * whose beans are instantiated <em>after</em> the call, so first-round bootstrap components must
+   * invoke this from a {@code @PostConstruct} that runs before {@code SpringComponentScan}
+   * triggers the second-round scan.
+   * <p>
+   * The backing property map is a JVM-static field shared across every {@code NexusProperties}
+   * instance, so mutations made through the autowired {@code @Component} instance are visible to
+   * the standalone instance that Spring adds to its {@code Environment} as a {@code
+   * PropertySource}. This coupling is load-bearing; don't refactor the map to per-instance state
+   * without also rewiring the {@code Environment} property source.
+   */
+  public void setPropertyAndSyncSystem(final String key, final String value) {
+    put(key, value);
+    System.setProperty(key, value);
+  }
+
   String get(final String property, final String defaultValue) {
     String value = getProperty(property);
 

@@ -12,10 +12,6 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.validation.ValidationException;
-import jakarta.validation.Validator;
-
-import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailManager;
@@ -23,16 +19,16 @@ import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension.RegisterValidator;
+import org.sonatype.nexus.validation.constraint.SsrfSafeHostValidator;
 
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
+import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -40,6 +36,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -55,15 +53,12 @@ class EmailComponentTest
 {
   private static final String ADDRESS = "you@somewhere.com";
 
-  @ValidationExecutor
-  private final Validator validator =
-      new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
+  @RegisterValidator
+  @Mock
+  SsrfSafeHostValidator ssrfSafeHostValidator;
 
   @Mock
   private EmailManager emailManager;
-
-  @Mock
-  private AntiSsrfService antiSsrfService;
 
   @Mock
   private EmailConfiguration emailConfiguration;
@@ -129,11 +124,12 @@ class EmailComponentTest
 
   @Test
   void updateSavesConfiguration() {
+    doReturn(true).when(ssrfSafeHostValidator).isValid(eq("localhost"), any());
     when(emailManager.newConfiguration()).thenReturn(emailConfiguration);
 
     underTest.update(getConfigurationXO("baz"));
 
-    verify(antiSsrfService).validateHostWithoutCache("localhost");
+    verify(ssrfSafeHostValidator).isValid(eq("localhost"), any());
     verify(emailManager).setConfiguration(emailConfiguration, "baz");
     verify(emailManager).getConfiguration();
   }
@@ -141,8 +137,8 @@ class EmailComponentTest
   @Test
   void update_blocksPrivateSmtpHost() {
     doThrow(new ValidationException("SSRF protection: private network address"))
-        .when(antiSsrfService)
-        .validateHostWithoutCache("localhost");
+        .when(ssrfSafeHostValidator)
+        .isValid(eq("localhost"), any());
 
     assertThrows(ValidationException.class, () -> underTest.update(getConfigurationXO("baz")));
 
@@ -151,13 +147,14 @@ class EmailComponentTest
 
   @Test
   void sendVerification() throws Exception {
+    doReturn(true).when(ssrfSafeHostValidator).isValid(eq("localhost"), any());
     EmailConfigurationXO formCredentials = getConfigurationXO("baz");
     EmailConfiguration emailConfig = mock(EmailConfiguration.class);
     when(emailManager.newConfiguration()).thenReturn(emailConfig);
 
     underTest.sendVerification(formCredentials, ADDRESS);
 
-    verify(antiSsrfService).validateHostWithoutCache("localhost");
+    verify(ssrfSafeHostValidator).isValid(eq("localhost"), any());
     verify(emailManager).sendVerification(emailConfig, "baz", ADDRESS);
   }
 
@@ -165,8 +162,8 @@ class EmailComponentTest
   void sendVerification_blocksLoopbackHost() throws Exception {
     EmailConfigurationXO configuration = getConfigurationXO("baz");
     doThrow(new ValidationException("SSRF protection: private network address"))
-        .when(antiSsrfService)
-        .validateHostWithoutCache("localhost");
+        .when(ssrfSafeHostValidator)
+        .isValid(eq("localhost"), any());
 
     assertThrows(ValidationException.class, () -> underTest.sendVerification(configuration, ADDRESS));
 
@@ -177,8 +174,8 @@ class EmailComponentTest
   void sendVerification_blocksPrivateIpHost() throws Exception {
     EmailConfigurationXO configuration = getConfigurationXOWithHost("192.168.1.1", "baz");
     doThrow(new ValidationException("SSRF protection: private network address"))
-        .when(antiSsrfService)
-        .validateHostWithoutCache("192.168.1.1");
+        .when(ssrfSafeHostValidator)
+        .isValid(eq("192.168.1.1"), any());
 
     assertThrows(ValidationException.class, () -> underTest.sendVerification(configuration, ADDRESS));
 
@@ -187,13 +184,14 @@ class EmailComponentTest
 
   @Test
   void sendVerification_allowsPublicSmtpHost() throws Exception {
+    doReturn(true).when(ssrfSafeHostValidator).isValid(eq("smtp.example.com"), any());
     EmailConfigurationXO configuration = getConfigurationXOWithHost("smtp.example.com", "baz");
     EmailConfiguration emailConfig = mock(EmailConfiguration.class);
     when(emailManager.newConfiguration()).thenReturn(emailConfig);
 
     underTest.sendVerification(configuration, ADDRESS);
 
-    verify(antiSsrfService).validateHostWithoutCache("smtp.example.com");
+    verify(ssrfSafeHostValidator).isValid(eq("smtp.example.com"), any());
     verify(emailManager).sendVerification(emailConfig, "baz", ADDRESS);
   }
 

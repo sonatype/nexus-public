@@ -37,7 +37,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * This task creates compact blob store tasks for S3 blob stores based on the old configuration setting for expiration.
@@ -62,8 +62,8 @@ public class ScheduleS3CompactTasksTask
       final BlobStoreManager blobstoreManager,
       final TaskScheduler taskScheduler)
   {
-    this.blobstoreManager = checkNotNull(blobstoreManager);
-    this.taskScheduler = checkNotNull(taskScheduler);
+    this.blobstoreManager = requireNonNull(blobstoreManager);
+    this.taskScheduler = requireNonNull(taskScheduler);
   }
 
   @Override

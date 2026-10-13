@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
+import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
@@ -24,6 +25,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -69,17 +71,31 @@ public class AuthRateLimiterServiceImpl
 
   private final long maxDelaySeconds;
 
+  private final Clock clock;
+
   private final LoadingCache<String, AttemptRecord> attempts;
 
+  @Autowired
   public AuthRateLimiterServiceImpl(
       @Value("${nexus.auth.ratelimit.max-attempts:3}") final int maxAttempts,
       @Value("${nexus.auth.ratelimit.base-delay-seconds:30}") final long baseDelaySeconds,
       @Value("${nexus.auth.ratelimit.max-delay-seconds:900}") final long maxDelaySeconds,
       @Value("${nexus.auth.ratelimit.max-tracked-keys:10000}") final int maxTrackedKeys)
   {
+    this(maxAttempts, baseDelaySeconds, maxDelaySeconds, maxTrackedKeys, Clock.systemUTC());
+  }
+
+  AuthRateLimiterServiceImpl(
+      final int maxAttempts,
+      final long baseDelaySeconds,
+      final long maxDelaySeconds,
+      final int maxTrackedKeys,
+      final Clock clock)
+  {
     this.maxAttempts = maxAttempts;
     this.baseDelaySeconds = baseDelaySeconds;
     this.maxDelaySeconds = maxDelaySeconds;
+    this.clock = clock;
 
     this.attempts = CacheBuilder.newBuilder()
         .expireAfterAccess(maxDelaySeconds, TimeUnit.SECONDS)
@@ -141,11 +157,21 @@ public class AuthRateLimiterServiceImpl
       if (record.failureCount <= maxAttempts) {
         return null;
       }
-      long shift = record.failureCount - maxAttempts - 1;
-      long retryAfter = (shift >= 63)
-          ? maxDelaySeconds
-          : Math.min(baseDelaySeconds * (1L << shift), maxDelaySeconds);
-      return new RateLimitResult(retryAfter, record.failureCount);
+      long now = clock.millis();
+      if (now >= record.blockedUntilMs) {
+        // Deadline has passed — allow this request through so valid credentials can be evaluated.
+        // The failure counter is intentionally preserved: a subsequent wrong password keeps
+        // escalating the backoff (resetting it here would grant maxAttempts fresh guesses every
+        // base-delay-seconds, undermining the CWE-307 control from NEXUS-50643).
+        //
+        // Note: blockedUntilMs is NOT updated here; it remains in the past until the next call to
+        // checkAndRecordForKey() sets a new deadline. This is intentional: check() is read-only
+        // and is only called as a pre-auth guard immediately before checkAndRecord() on a failed
+        // credential, so the stale value is always overwritten before the next block window begins.
+        return null;
+      }
+      long remainingSeconds = Math.max(1L, TimeUnit.MILLISECONDS.toSeconds(record.blockedUntilMs - now));
+      return new RateLimitResult(remainingSeconds, record.failureCount);
     }
   }
 
@@ -161,9 +187,14 @@ public class AuthRateLimiterServiceImpl
       }
 
       long shift = record.failureCount - maxAttempts - 1;
-      long retryAfter = (shift >= 63)
+      // Guard before the multiply: baseDelaySeconds*(1L<<shift) overflows a long when shift≥59
+      // with baseDelaySeconds=30. The condition `baseDelaySeconds > (maxDelaySeconds >> shift)` is
+      // equivalent to `baseDelaySeconds*(1L<<shift) > maxDelaySeconds` without risk of overflow.
+      long retryAfter = (shift >= 63 || baseDelaySeconds > (maxDelaySeconds >> shift))
           ? maxDelaySeconds
-          : Math.min(baseDelaySeconds * (1L << shift), maxDelaySeconds);
+          : baseDelaySeconds * (1L << shift);
+
+      record.blockedUntilMs = clock.millis() + TimeUnit.SECONDS.toMillis(retryAfter);
 
       // Log first block at INFO to leave a clear signal in production logs without spamming.
       if (record.failureCount == maxAttempts + 1) {
@@ -179,5 +210,11 @@ public class AuthRateLimiterServiceImpl
   private static final class AttemptRecord
   {
     int failureCount;
+
+    // Epoch-ms deadline set by checkAndRecordForKey() once failureCount exceeds maxAttempts.
+    // A value of 0 is safe: checkForKey() only reads this field when failureCount > maxAttempts,
+    // and checkAndRecordForKey() always writes it before returning at that threshold, so
+    // blockedUntilMs == 0 is unreachable from checkForKey() in normal execution.
+    long blockedUntilMs;
   }
 }

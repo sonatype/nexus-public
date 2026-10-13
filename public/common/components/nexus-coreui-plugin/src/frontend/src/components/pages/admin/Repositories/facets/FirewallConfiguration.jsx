@@ -20,7 +20,8 @@ import {
   NxFieldset,
   NxFormGroup,
   NxFormSelect,
-  NxInfoAlert
+  NxInfoAlert,
+  NxTextInput
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
@@ -32,7 +33,8 @@ const FIREWALL_FORMAT_CAPABILITIES_URL = 'service/rest/v1/repositories/firewall/
 export default function FirewallConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
   const format = currentParent.context.data?.format;
-
+  const repositoryType = currentParent.context.data?.type;
+  const firewallMode = currentParent.context.data?.firewall?.mode;
   const [pccsFormats, setPccsFormats] = useState(['npm', 'pypi']);
 
   useEffect(() => {
@@ -46,6 +48,12 @@ export default function FirewallConfiguration({parentMachine}) {
   }, []);
 
   const isPccsValidFormat = pccsFormats.includes(format);
+
+  // Only show timeout field for Docker proxy repositories with Firewall explicitly enabled
+  // Show when: Docker proxy + Firewall mode is AUDIT, QUARANTINE, or PCCS (not DISABLED or undefined)
+  const showTimeoutField = format === 'docker' &&
+    repositoryType === 'proxy' &&
+    (firewallMode === 'AUDIT' || firewallMode === 'QUARANTINE' || firewallMode === 'PCCS');
 
   return (
     <>
@@ -71,6 +79,28 @@ export default function FirewallConfiguration({parentMachine}) {
 
         <NxInfoAlert>{FIREWALL.WARNING}</NxInfoAlert>
       </NxFieldset>
+
+      {/* Layer Download Timeout Field for Docker proxy repositories */}
+      {showTimeoutField && (
+        <NxFormGroup
+          label={FIREWALL.LAYER_DOWNLOAD_TIMEOUT_LABEL}
+          sublabel={FIREWALL.LAYER_DOWNLOAD_TIMEOUT_SUBLABEL}
+          className="nxrm-form-group-layer-download-timeout"
+        >
+          <NxTextInput
+            {...FormUtils.fieldProps('dockerProxy.layerDownloadTimeoutMinutes', currentParent)}
+            onChange={FormUtils.handleUpdate('dockerProxy.layerDownloadTimeoutMinutes', sendParent)}
+            type="number"
+            placeholder="10"
+            min="1"
+            max="1440"
+            validatable
+          />
+          <NxInfoAlert>
+            {FIREWALL.LAYER_DOWNLOAD_TIMEOUT_HELP}
+          </NxInfoAlert>
+        </NxFormGroup>
+      )}
     </>
   );
 }

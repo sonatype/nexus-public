@@ -441,7 +441,6 @@ export function UsersList({
             label: 'View Documentation',
             href: 'http://links.sonatype.com/products/nxrm3/docs/users',
           }}
-          className="users-list__help"
         />
       </Box>
     </Flex>

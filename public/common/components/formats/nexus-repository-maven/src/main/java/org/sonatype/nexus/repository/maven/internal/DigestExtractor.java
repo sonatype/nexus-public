@@ -25,7 +25,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Utility class for extracting digest strings from Maven .sha1/.md5 files that originates from external source, and
@@ -48,7 +48,7 @@ public class DigestExtractor
    */
   @Nullable
   public static String extract(final InputStream stream) throws IOException {
-    checkNotNull(stream);
+    requireNonNull(stream);
     try (InputStreamReader isr = new InputStreamReader(ByteStreams.limit(stream, MAX_CHARS_NEEDED),
         StandardCharsets.UTF_8)) {
       return extract(CharStreams.toString(isr));
@@ -64,7 +64,7 @@ public class DigestExtractor
    */
   @Nullable
   public static String extract(final String input) {
-    checkNotNull(input);
+    requireNonNull(input);
     // we need at most MAX_CHARS_NEEDED
     String raw = input.length() > MAX_CHARS_NEEDED ? input.substring(0, MAX_CHARS_NEEDED) : input;
     // if multiline, we need the 1st line only

@@ -116,4 +116,80 @@ describe('AddIpModal', () => {
       expect(onClose).toHaveBeenCalled();
     });
   });
+
+  describe('URI-bracketed IPv6 leniency (NEXUS-54702)', () => {
+    it('enables the submit button for bracketed IPv6 input', () => {
+      renderModal();
+      const input = screen.getByTestId('add-ip-input');
+      fireEvent.change(input, { target: { value: '[::1]' } });
+      expect(screen.getByTestId('add-ip-submit-button')).not.toBeDisabled();
+    });
+
+    it('enables the submit button for bracketed IPv6 CIDR input', () => {
+      renderModal();
+      const input = screen.getByTestId('add-ip-input');
+      fireEvent.change(input, { target: { value: '[2001:db8::]/32' } });
+      expect(screen.getByTestId('add-ip-submit-button')).not.toBeDisabled();
+    });
+
+    it('keeps the submit button disabled for half-bracketed input', () => {
+      renderModal();
+      const input = screen.getByTestId('add-ip-input');
+      fireEvent.change(input, { target: { value: '[::1' } });
+      expect(screen.getByTestId('add-ip-submit-button')).toBeDisabled();
+    });
+
+    it('submits the raw bracketed input; canonicalization happens server-side', () => {
+      // AddIpModal dispatches trimmedIp to onConfirm without normalizing. The
+      // server-side IpAddressValidator normalizes on write, and validateAndNormalize
+      // handles the read path. See AddIpModal.jsx:73-76.
+      const onConfirm = jest.fn();
+      renderModal({ onConfirm });
+      fireEvent.change(screen.getByTestId('add-ip-input'), { target: { value: '[::1]' } });
+      fireEvent.click(screen.getByTestId('add-ip-submit-button'));
+      expect(onConfirm).toHaveBeenCalledWith([{ ipAddress: '[::1]', description: '' }]);
+    });
+
+    it('flags bracketed input as duplicate of an already-stored bare entry', () => {
+      renderModal({ existingIps: [{ ipAddress: '::1' }] });
+      const input = screen.getByTestId('add-ip-input');
+      fireEvent.change(input, { target: { value: '[::1]' } });
+      fireEvent.blur(input);
+      expect(
+        screen.getByText('This IP address already exists in your allow list')
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('add-ip-submit-button')).toBeDisabled();
+    });
+
+    it('flags bare input as duplicate of an already-stored bracketed entry', () => {
+      renderModal({ existingIps: [{ ipAddress: '[::1]' }] });
+      const input = screen.getByTestId('add-ip-input');
+      fireEvent.change(input, { target: { value: '::1' } });
+      fireEvent.blur(input);
+      expect(
+        screen.getByText('This IP address already exists in your allow list')
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('handleSubmit uses live validation, not stale blur state', () => {
+    it('does not call onConfirm when input becomes a duplicate after a prior valid entry (no blur in between)', () => {
+      // Regression for PR review finding #1. Sequence:
+      //   1. Type a valid, non-duplicate IP (validationError stays '').
+      //   2. Type a duplicate WITHOUT blurring first (validationError stays '' — only blur sets it).
+      //   3. handleSubmit fires. If the guard used the stale validationError,
+      //      it would let a duplicate submit through; the fix runs
+      //      validateIpInput(ipInput) live and blocks the submit.
+      const onConfirm = jest.fn();
+      renderModal({ onConfirm, existingIps: [{ ipAddress: '10.0.0.1' }] });
+      const input = screen.getByTestId('add-ip-input');
+      fireEvent.change(input, { target: { value: '192.168.1.1' } });
+      // No blur — validationError is still ''.
+      fireEvent.change(input, { target: { value: '10.0.0.1' } });
+      // Attempt submit programmatically (bypasses the disabled-button gate,
+      // simulates a future Enter-key handler or any indirect submit path).
+      fireEvent.click(screen.getByTestId('add-ip-submit-button'));
+      expect(onConfirm).not.toHaveBeenCalled();
+    });
+  });
 });

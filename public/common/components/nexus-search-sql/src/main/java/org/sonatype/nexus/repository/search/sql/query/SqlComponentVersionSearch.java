@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * SQL implementation of {@link ComponentVersionSearch}.
@@ -67,9 +67,9 @@ public class SqlComponentVersionSearch
       final ExpressionBuilder expressionBuilder,
       final SearchConditionFactory conditionFactory)
   {
-    this.searchStore = checkNotNull(searchStore);
-    this.expressionBuilder = checkNotNull(expressionBuilder);
-    this.conditionFactory = checkNotNull(conditionFactory);
+    this.searchStore = requireNonNull(searchStore);
+    this.expressionBuilder = requireNonNull(expressionBuilder);
+    this.conditionFactory = requireNonNull(conditionFactory);
   }
 
   @Override
@@ -128,11 +128,12 @@ public class SqlComponentVersionSearch
    * escapes added for {@code %} and {@code _} would themselves be re-escaped.
    */
   @Nullable
-  private static String toVersionLikePattern(@Nullable final String versionFilter) {
+  static String toVersionLikePattern(@Nullable final String versionFilter) {
     if (StringUtils.isBlank(versionFilter)) {
       return null;
     }
-    String escaped = versionFilter.toLowerCase(Locale.ROOT)
+    String escaped = versionFilter.replace("\u0000", "")
+        .toLowerCase(Locale.ROOT)
         .replace("\\", "\\\\")
         .replace("%", "\\%")
         .replace("_", "\\_");

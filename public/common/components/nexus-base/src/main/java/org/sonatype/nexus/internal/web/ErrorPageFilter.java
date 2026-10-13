@@ -37,10 +37,10 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Servlet filter to add error page rendering.
@@ -61,7 +61,7 @@ public class ErrorPageFilter
 
   @Autowired
   public ErrorPageFilter(final XFrameOptions xFrameOptions) {
-    this.xFrameOptions = checkNotNull(xFrameOptions);
+    this.xFrameOptions = requireNonNull(xFrameOptions);
   }
 
   @Override

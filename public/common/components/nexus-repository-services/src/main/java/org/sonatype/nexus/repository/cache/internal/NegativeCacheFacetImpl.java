@@ -42,7 +42,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 
 /**
@@ -95,7 +95,7 @@ public class NegativeCacheFacetImpl
 
   @Autowired
   public NegativeCacheFacetImpl(final CacheHelper cacheHelper) {
-    this.cacheHelper = checkNotNull(cacheHelper);
+    this.cacheHelper = requireNonNull(cacheHelper);
   }
 
   @Override
@@ -147,7 +147,9 @@ public class NegativeCacheFacetImpl
 
   @Override
   protected void doDestroy() throws Exception {
-    cache = null;
+    if (cache != null) {
+      maybeDestroyCache();
+    }
     config = null;
   }
 
@@ -169,7 +171,7 @@ public class NegativeCacheFacetImpl
   @Override
   @Guarded(by = STARTED)
   public Status get(final NegativeCacheKey key) {
-    checkNotNull(key);
+    requireNonNull(key);
     if (cache != null) {
       return cache.get(key);
     }
@@ -179,8 +181,8 @@ public class NegativeCacheFacetImpl
   @Override
   @Guarded(by = STARTED)
   public void put(final NegativeCacheKey key, final Status status) {
-    checkNotNull(key);
-    checkNotNull(status);
+    requireNonNull(key);
+    requireNonNull(status);
     if (cache != null) {
       log.debug("Adding {}={} to negative-cache of {}", key, status, getRepository());
       cache.put(key, status);
@@ -190,7 +192,7 @@ public class NegativeCacheFacetImpl
   @Override
   @Guarded(by = STARTED)
   public void invalidate(final NegativeCacheKey key) {
-    checkNotNull(key);
+    requireNonNull(key);
     if (cache != null && cache.remove(key)) {
       log.debug("Removing {} from negative-cache of {}", key, getRepository());
     }

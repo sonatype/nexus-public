@@ -336,7 +336,6 @@ export function PrivilegesList({ onSelect, onEdit, onDelete, onCreate, canEdit =
             label: 'View Documentation',
             href: 'http://links.sonatype.com/products/nxrm3/docs/privileges',
           }}
-          className="privileges-list__help"
         />
       </Box>
     </Flex>

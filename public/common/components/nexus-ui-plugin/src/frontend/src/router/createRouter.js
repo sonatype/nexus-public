@@ -78,19 +78,6 @@ const LOGIN_RECOVERY_TIMEOUT_MS = 15000;
 const PERMISSIONS_RECOVERY_TIMEOUT_MS = 30000;
 
 /**
- * How long to let permissions land before deciding visibility.
- *
- * Short on purpose. This exists only to avoid a visible welcome-page flash in the
- * common case where permissions are milliseconds away — correctness comes from
- * recoverWhenPermissionsArrive, not from this wait. An earlier revision blocked here
- * for the full waitForPermissions() budget of 30s, which stalls navigation outright
- * when the permissions endpoint is slow or broken, and is not something a wait can
- * fix anyway: arePermissionsReady() reads true over an empty map, so the case that
- * actually breaks never reaches this branch (NEXUS-54422).
- */
-const PERMISSIONS_SETTLE_MS = 500;
-
-/**
  * Navigates to a returnTo target, or to the welcome page when there is none.
  *
  * @param router
@@ -307,22 +294,24 @@ export function createRouter({initialRoute, menuRoutes, missingRoute}) {
         }
       }
 
-      // isAuthStateResolved() answers "is a user signed in", not "have their permissions
-      // loaded" — NEXUS-52583's fast-render bootstrap deliberately lets the router run
-      // before NX.Permissions is populated, so a permission-gated route (e.g. unified
-      // search's nexus:search:read) can fail this check purely because the answer to
-      // that permission has not arrived yet (NEXUS-54422).
-      //
-      // Bounded deliberately: this only smooths over the case where permissions are
-      // milliseconds away, so the user does not see a welcome-page flash. It is NOT the
-      // correctness mechanism — recoverWhenPermissionsArrive below is. Blocking here for
-      // waitForPermissions()'s full 30s default stalled navigation whenever the
-      // permissions endpoint was slow, and could not fix the observed failure anyway:
-      // that one installs an empty map, which makes arePermissionsReady() read true and
-      // skips this branch entirely.
-      if (!ExtJS.arePermissionsReady()) {
-        console.debug('Permissions not yet loaded, briefly waiting before evaluating visibility');
-        await ExtJS.waitForPermissions(PERMISSIONS_SETTLE_MS).catch(() => {});
+      // A permission-gated route can still evaluate as not-visible right after auth resolves
+      // because permissions load asynchronously in the background (NEXUS-53199 — see App.jsx).
+      // If a user is present but permissions have not landed yet, wait for them and re-check
+      // before redirecting. Otherwise a pasted deep link to a permission-gated preview route
+      // (e.g. a component-detail URL under preview.browse.search) bounces to the dashboard on
+      // first load and only resolves after a manual reload once permissions are cached
+      // (NEXUS-54428). If the wait expires without permissions, recoverWhenPermissionsArrive
+      // (armed below on the redirect) still resumes the destination once they finally land.
+      if (ExtJS.hasUser() && ExtJS.arePermissionsReady && !ExtJS.arePermissionsReady()) {
+        console.debug('Permissions not loaded yet, waiting before evaluating visibility');
+        try {
+          // Bound the wait by the UI's own status interval rather than the hardcoded 30s default,
+          // so a deep-linked, permission-gated route redirects promptly instead of hanging for
+          // half a minute when permissions genuinely never arrive.
+          await ExtJS.waitForPermissions(ExtJS.calculateTimeout());
+        } catch {
+          // Permissions never arrived within the timeout; fall through to the redirect below.
+        }
         if (isVisibleIncludingAncestors(stateTo)) {
           return;
         }

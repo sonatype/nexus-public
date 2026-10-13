@@ -527,7 +527,8 @@ describe('BrowseTreeNode', () => {
       />
     );
 
-    const node = screen.getByTestId('tree-node-folder1');
+    // Presentation lives on the row; the treeitem wrapper owns focus and ARIA.
+    const node = screen.getByTestId('tree-row-folder1');
     expect(node).toHaveClass('browse-tree__node--focused');
   });
 
@@ -564,7 +565,72 @@ describe('BrowseTreeNode', () => {
       />
     );
 
-    const node = screen.getByTestId('tree-node-folder1');
+    // Indentation is a row concern, not a treeitem-wrapper concern.
+    const node = screen.getByTestId('tree-row-folder1');
     expect(node).toHaveStyle({ paddingLeft: '40px' }); // 2 * 20px
+  });
+
+  describe('the whole row is the click target', () => {
+    /**
+     * The row spans the full visible width and shows a pointer cursor, so every
+     * part of it has to select: the indent on the left, the gaps between icon and
+     * label, and the empty space past the label. Only the expand/collapse control
+     * is carved out, and only when there is something to expand.
+     */
+    it('selects when the click lands on the row rather than the label', () => {
+      const onSelect = jest.fn();
+
+      render(
+        <BrowseTreeNode
+          {...defaultProps}
+          depth={2}
+          onSelect={onSelect}
+          nodeState={createNodeState()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('tree-row-folder1'));
+
+      expect(onSelect).toHaveBeenCalledWith(mockRootNodes[0]);
+    });
+
+    it('selects when the click lands on the empty toggle column of a leaf', () => {
+      const onSelect = jest.fn();
+      const onToggle = jest.fn();
+      const leaf = mockRootNodes[2]; // asset1.jar
+
+      render(
+        <BrowseTreeNode
+          {...defaultProps}
+          onSelect={onSelect}
+          onToggle={onToggle}
+          nodeState={createNodeState({ node: leaf })}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('toggle-asset1.jar'));
+
+      expect(onSelect).toHaveBeenCalledWith(leaf);
+      expect(onToggle).not.toHaveBeenCalled();
+    });
+
+    it('expands without selecting when the click lands on the toggle of a folder', () => {
+      const onSelect = jest.fn();
+      const onToggle = jest.fn();
+
+      render(
+        <BrowseTreeNode
+          {...defaultProps}
+          onSelect={onSelect}
+          onToggle={onToggle}
+          nodeState={createNodeState()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('toggle-folder1'));
+
+      expect(onToggle).toHaveBeenCalledWith('folder1');
+      expect(onSelect).not.toHaveBeenCalled();
+    });
   });
 });

@@ -17,6 +17,7 @@ import AnonymousAccessStep from './AnonymousAccessStep';
 import ChangePasswordStep from './ChangePasswordStep';
 import CommunityDiscoverStep from './steps/CommunityDiscoverStep/CommunityDiscoverStep';
 import EulaStep from './steps/EulaStep/EulaStep';
+import MandatoryTelemetryAcknowledgementStep from './steps/MandatoryTelemetryAcknowledgementStep/MandatoryTelemetryAcknowledgementStep';
 
 export type StepComponent = React.FC;
 
@@ -27,4 +28,5 @@ export const stepRegistry: Record<string, StepComponent> = {
   ConfigureAnonymousAccess: AnonymousAccessStep,
   CommunityDiscover: CommunityDiscoverStep,
   CommunityEula: EulaStep,
+  MandatoryTelemetryAcknowledgement: MandatoryTelemetryAcknowledgementStep,
 };

@@ -23,14 +23,20 @@ import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiAdvan
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketSecurity;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiCloudFront;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiEncryption;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiFailoverBucket;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiGlobalDistributionType.S3BlobStoreApiGlobalDistribution;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiTransferAcceleration;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.rapture.PasswordPlaceholder;
+
+import jakarta.annotation.Nullable;
 
 import static java.lang.Long.parseLong;
 import static java.util.Objects.nonNull;
@@ -39,8 +45,12 @@ import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_DISTRIBUTION_URL_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY_PAIR_ID_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.TRANSFER_ACCELERATION_ENABLED_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.REGION_KEY;
 
 /**
@@ -54,7 +64,43 @@ public final class S3BlobStoreApiConfigurationMapper
     return new S3BlobStoreApiModel(
         configuration.getName(),
         createSoftQuota(configuration),
-        createS3BlobStoreBucketConfiguration(configuration));
+        createS3BlobStoreBucketConfiguration(configuration),
+        createS3GlobalDistributionConfiguration(configuration));
+  }
+
+  private static S3BlobStoreApiGlobalDistribution createS3GlobalDistributionConfiguration(
+      final BlobStoreConfiguration configuration)
+  {
+    NestedAttributesMap s3Attributes = configuration.attributes(CONFIG_KEY);
+
+    S3BlobStoreApiCloudFront cloudFront = cloudFront(s3Attributes);
+
+    if (cloudFront != null) {
+      return cloudFront;
+    }
+
+    if (s3Attributes.get(TRANSFER_ACCELERATION_ENABLED_KEY, Boolean.class, false)) {
+      return new S3BlobStoreApiTransferAcceleration();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static S3BlobStoreApiCloudFront cloudFront(final NestedAttributesMap s3Attributes) {
+    if (!s3Attributes.contains(CLOUDFRONT_KEY)) {
+      return null;
+    }
+
+    NestedAttributesMap cloudFront = s3Attributes.child(CLOUDFRONT_KEY);
+
+    String distributionUrl = cloudFront.get(CLOUDFRONT_DISTRIBUTION_URL_KEY, String.class);
+    if (Strings2.isBlank(distributionUrl)) {
+      return null;
+    }
+
+    return new S3BlobStoreApiCloudFront(distributionUrl, cloudFront.get(CLOUDFRONT_KEY_PAIR_ID_KEY, String.class),
+        PasswordPlaceholder.get());
   }
 
   private static BlobStoreApiSoftQuota createSoftQuota(final BlobStoreConfiguration configuration) {

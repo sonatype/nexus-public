@@ -22,7 +22,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +42,7 @@ public class BlobStoreStateHealthCheck
 
   @Autowired
   public BlobStoreStateHealthCheck(final Provider<BlobStoreManager> blobStoreManagerProvider) {
-    this.blobStoreManagerProvider = Preconditions.checkNotNull(blobStoreManagerProvider);
+    this.blobStoreManagerProvider = Objects.requireNonNull(blobStoreManagerProvider);
   }
 
   @Override

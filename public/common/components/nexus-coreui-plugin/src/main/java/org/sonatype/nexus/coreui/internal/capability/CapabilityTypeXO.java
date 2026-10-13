@@ -15,7 +15,7 @@ package org.sonatype.nexus.coreui.internal.capability;
 import java.util.List;
 import jakarta.validation.constraints.NotEmpty;
 
-import org.sonatype.nexus.coreui.FormFieldXO;
+import org.sonatype.nexus.api.extdirect.common.FormFieldXO;
 
 public class CapabilityTypeXO
 {

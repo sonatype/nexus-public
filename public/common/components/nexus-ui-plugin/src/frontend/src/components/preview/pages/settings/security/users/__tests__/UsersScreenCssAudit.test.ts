@@ -16,6 +16,9 @@ import * as path from 'path';
 
 const USERS_DIR = path.resolve(__dirname, '..');
 
+const USERS_PAGE_SCSS = 'UsersPage.scss';
+const FIT_TO_CONTENT_COMMENT = '// Content flows naturally, parent container handles scrolling';
+
 function readScss(filename: string): string {
   return fs.readFileSync(path.join(USERS_DIR, filename), 'utf-8');
 }
@@ -23,7 +26,7 @@ function readScss(filename: string): string {
 describe('NEXUS-52931 Users screen CSS token and component audit', () => {
   // AC-1: All CSS custom property references resolve to defined tokens
   it('UsersPage.scss does not reference the undefined --color-text-primary token', () => {
-    const content = readScss('UsersPage.scss');
+    const content = readScss(USERS_PAGE_SCSS);
     expect(content).not.toContain('--color-text-primary');
   });
 
@@ -52,5 +55,47 @@ describe('NEXUS-52931 Users screen CSS token and component audit', () => {
   it('UserForm.scss imports the shared animations module', () => {
     const content = readScss('UserForm.scss');
     expect(content).toContain("@use '../../../../shared/animations'");
+  });
+});
+
+describe('NEXUS-54309 Users table fit-to-content sizing', () => {
+  it('UsersPage.scss does not force full-viewport height on the page wrapper', () => {
+    const content = readScss(USERS_PAGE_SCSS);
+    expect(content).not.toContain('height: 100%');
+  });
+
+  it('UsersPage.scss does not force a flex column layout on the page wrapper', () => {
+    const content = readScss(USERS_PAGE_SCSS);
+    expect(content).not.toContain('display: flex');
+    expect(content).not.toContain('flex-direction: column');
+  });
+
+  it('UsersPage.scss does not use flex: 1 to force the content region to fill parent height', () => {
+    const content = readScss(USERS_PAGE_SCSS);
+    expect(content).not.toContain('flex: 1');
+  });
+
+  it('UsersPage.scss documents that the parent container handles scrolling', () => {
+    const content = readScss(USERS_PAGE_SCSS);
+    expect(content).toContain(FIT_TO_CONTENT_COMMENT);
+  });
+});
+
+describe('NEXUS-54309 (v2) Users list fit-to-content sizing', () => {
+  const USERS_LIST_SCSS = 'UsersList.scss';
+
+  it('UsersList.scss wrapper opts out of the viewport-height cascade', () => {
+    const content = readScss(USERS_LIST_SCSS);
+    expect(content).not.toMatch(/\.users-list\s*\{[^}]*height:\s*100%/);
+  });
+
+  it('UsersList.scss wrapper prevents cross-axis stretch of sidebar and main region', () => {
+    const content = readScss(USERS_LIST_SCSS);
+    expect(content).toMatch(/\.users-list\s*\{[^}]*align-items:\s*flex-start/);
+  });
+
+  it('UsersList.scss does not stretch the table region with flex: 1', () => {
+    const content = readScss(USERS_LIST_SCSS);
+    expect(content).not.toMatch(/&__table\s*\{[^}]*flex:\s*1/);
   });
 });

@@ -11,14 +11,64 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Box, Flex, IconButton, Text, Tooltip } from '@radix-ui/themes';
-import { X } from 'lucide-react';
+import { AlertTriangle, RotateCcw, X } from 'lucide-react';
 
-import { RoleProfilePage } from './roles/RoleProfilePage';
+import { RoleDetail } from './roles/RoleDetail';
+import { useRoleModalContent } from './roles/useRoleModalContent';
+import { SettingsButton } from '../../../shared/form';
 import { UserProfilePage } from './users/UserProfilePage';
 import { PrivilegeProfilePage } from './privileges/PrivilegeProfilePage';
+
+function RoleModalContent({ roleName, onClose }: { roleName: string; onClose: () => void }) {
+  const { role, loading, error, errorType, retry } = useRoleModalContent(roleName);
+
+  // Transient errors (network, 5xx) get a retry affordance so the user is not forced to
+  // close and re-open the modal. 'notFound' errors are surfaced through RoleDetail's
+  // existing not-found card since retry cannot help.
+  if (errorType === 'transient' && !role) {
+    return (
+      <Flex
+        direction="column"
+        align="center"
+        gap="3"
+        p="6"
+        data-testid="role-modal-load-error"
+      >
+        <AlertTriangle size={32} />
+        <Text size="3" weight="medium">Unable to load role</Text>
+        <Text size="2" color="gray">{error || 'An unexpected error occurred while loading this role.'}</Text>
+        <Flex gap="2">
+          <SettingsButton
+            variant="primary"
+            icon={RotateCcw}
+            onClick={retry}
+            testId="role-modal-load-retry"
+          >
+            Retry
+          </SettingsButton>
+          <SettingsButton variant="secondary" onClick={onClose}>
+            Close
+          </SettingsButton>
+        </Flex>
+      </Flex>
+    );
+  }
+
+  return (
+    <RoleDetail
+      role={role}
+      loading={loading}
+      canEdit={false}
+      canDelete={false}
+      onDelete={() => {}}
+      onCancel={onClose}
+      error={error}
+    />
+  );
+}
 
 import './SecurityEntityModal.scss';
 
@@ -115,11 +165,10 @@ export function SecurityEntityModalProvider({ children }: { children: React.Reac
       </Flex>
       <Box p="4" className="security-entity-modal__content">
           {state.entityType === 'role' && (
-            <RoleProfilePage
-              roleName={state.entityId}
-              onBack={closeModal}
-              embedMode
-            />
+            // Key by roleName so a switch between roles remounts the component (fresh
+            // machine, cleared state). useMachine does not hot-swap machines on prop
+            // change; remounting is the idiomatic fix.
+            <RoleModalContent key={state.entityId} roleName={state.entityId} onClose={closeModal} />
           )}
           {state.entityType === 'user' && (
             <UserProfilePage

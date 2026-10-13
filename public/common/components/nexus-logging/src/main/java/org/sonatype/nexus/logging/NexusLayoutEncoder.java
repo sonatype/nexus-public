@@ -17,9 +17,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.pattern.PatternLayoutEncoderBase;
 
 /**
- * Adds the ability to use %node in an encoder pattern
- *
- * @since 3.6.1
+ * Adds the ability to use {@code %node} in an encoder pattern, and replaces the default
+ * {@code %m}/{@code %msg}/{@code %message} converters with {@link MaskingMessageConverter}
+ * so that sensitive cookie values (e.g. Keycloak tokens) are redacted from all log output.
  */
 public class NexusLayoutEncoder
     extends PatternLayoutEncoderBase<ILoggingEvent>
@@ -27,7 +27,12 @@ public class NexusLayoutEncoder
   @Override
   public void start() {
     PatternLayout patternLayout = new PatternLayout();
-    patternLayout.getDefaultConverterMap().put("node", NexusNodeNameConverter.class.getName());
+    // logback 1.6.x removed the mutable Map<String,String> getDefaultConverterMap() in favor of a
+    // per-instance Map<String, Supplier<DynamicConverter>> exposed via getInstanceConverterMap().
+    patternLayout.getInstanceConverterMap().put("node", NexusNodeNameConverter::new);
+    patternLayout.getInstanceConverterMap().put("m", MaskingMessageConverter::new);
+    patternLayout.getInstanceConverterMap().put("msg", MaskingMessageConverter::new);
+    patternLayout.getInstanceConverterMap().put("message", MaskingMessageConverter::new);
     patternLayout.setContext(context);
     patternLayout.setPattern(getPattern());
     patternLayout.start();

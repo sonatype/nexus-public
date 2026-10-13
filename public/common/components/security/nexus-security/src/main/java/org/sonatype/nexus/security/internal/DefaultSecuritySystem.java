@@ -31,6 +31,9 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.UserPrincipalsExpiredDistributedEvent;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.UserIdHelper;
@@ -40,7 +43,6 @@ import org.sonatype.nexus.security.anonymous.AnonymousHelper;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.authc.UserPasswordChanged;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
-import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.privilege.Privilege;
@@ -70,7 +72,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 
@@ -118,14 +120,14 @@ public class DefaultSecuritySystem
       final SecurityHelper securityHelper,
       final SessionInvalidator sessionInvalidator)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.realmSecurityManager = checkNotNull(realmSecurityManager);
-    this.realmManager = checkNotNull(realmManager);
-    this.anonymousManager = checkNotNull(anonymousManager);
-    this.authorizationManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(authorizationManagersList));
-    this.userManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(userManagersList));
-    this.securityHelper = checkNotNull(securityHelper);
-    this.sessionInvalidator = checkNotNull(sessionInvalidator);
+    this.eventManager = requireNonNull(eventManager);
+    this.realmSecurityManager = requireNonNull(realmSecurityManager);
+    this.realmManager = requireNonNull(realmManager);
+    this.anonymousManager = requireNonNull(anonymousManager);
+    this.authorizationManagers = QualifierUtil.buildQualifierBeanMap(requireNonNull(authorizationManagersList));
+    this.userManagers = QualifierUtil.buildQualifierBeanMap(requireNonNull(userManagersList));
+    this.securityHelper = requireNonNull(securityHelper);
+    this.sessionInvalidator = requireNonNull(sessionInvalidator);
   }
 
   // TODO: Sort out better lifecycle management for dependent components
@@ -265,6 +267,7 @@ public class DefaultSecuritySystem
       sessionInvalidator.invalidateSessionsForUser(user.getUserId(), user.getSource(), "user deactivation");
       // clear the realm authc caches as user got disabled
       eventManager.post(new UserPrincipalsExpired(user.getUserId(), user.getSource()));
+      eventManager.post(new UserPrincipalsExpiredDistributedEvent(user.getUserId(), user.getSource()));
     }
 
     // then save the users Roles
@@ -288,6 +291,7 @@ public class DefaultSecuritySystem
 
     // clear the realm authz caches as user might get roles changed
     eventManager.post(new AuthorizationConfigurationChanged());
+    eventManager.post(new AuthorizationChangedDistributedEvent());
 
     return user;
   }
@@ -306,7 +310,7 @@ public class DefaultSecuritySystem
 
   @Override
   public void deleteUser(String userId, String source) throws UserNotFoundException, NoSuchUserManagerException {
-    checkNotNull(userId, "User ID may not be null");
+    requireNonNull(userId, "User ID may not be null");
 
     Subject subject = getSubject();
     if (subject.getPrincipal() != null && userId.equals(subject.getPrincipal().toString())) {
@@ -325,6 +329,7 @@ public class DefaultSecuritySystem
 
     // flush authc
     eventManager.post(new UserPrincipalsExpired(userId, source));
+    eventManager.post(new UserPrincipalsExpiredDistributedEvent(userId, source));
   }
 
   @Override
@@ -359,6 +364,7 @@ public class DefaultSecuritySystem
     }
     // clear the authz realm caches
     eventManager.post(new AuthorizationConfigurationChanged());
+    eventManager.post(new AuthorizationChangedDistributedEvent());
   }
 
   private User findUser(String userId, UserManager userManager, Set<String> roleIds) throws UserNotFoundException {

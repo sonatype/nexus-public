@@ -39,8 +39,8 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Maven 2 repository metadata builder.
@@ -98,7 +98,7 @@ public class MetadataBuilder
   // groupId
 
   public boolean onEnterGroupId(final String groupId) {
-    checkNotNull(groupId);
+    requireNonNull(groupId);
     if (Objects.equals(groupId, this.groupId)) {
       return false;
     }
@@ -144,7 +144,7 @@ public class MetadataBuilder
 
   public boolean onEnterArtifactId(final String artifactId) {
     checkState(groupId != null);
-    checkNotNull(artifactId);
+    requireNonNull(artifactId);
     if (Objects.equals(artifactId, this.artifactId)) {
       return false;
     }
@@ -275,7 +275,7 @@ public class MetadataBuilder
   }
 
   public void addBaseVersion(final String baseVersion) {
-    checkNotNull(baseVersion);
+    requireNonNull(baseVersion);
     // NEXUS-53161: Always store the original version string to preserve all distinct entries
     boolean isNew = originalBaseVersions.add(baseVersion);
     if (isNew) {
@@ -309,7 +309,7 @@ public class MetadataBuilder
   public boolean onEnterBaseVersion(final String baseVersion) {
     checkState(groupId != null);
     checkState(artifactId != null);
-    checkNotNull(baseVersion);
+    requireNonNull(baseVersion);
     if (Objects.equals(baseVersion, this.baseVersion)) {
       return false;
     }
@@ -369,7 +369,7 @@ public class MetadataBuilder
   }
 
   public void addArtifactVersion(final MavenPath mavenPath) {
-    checkNotNull(mavenPath);
+    requireNonNull(mavenPath);
     Coordinates coordinates = mavenPath.getCoordinates();
     if (mavenPath.isSubordinate() || coordinates == null) {
       return;

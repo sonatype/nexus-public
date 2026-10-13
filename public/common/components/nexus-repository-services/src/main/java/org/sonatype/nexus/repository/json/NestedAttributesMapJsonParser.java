@@ -20,7 +20,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import com.fasterxml.jackson.core.JsonParser;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.isNull;
 
 /**
@@ -39,8 +39,8 @@ public class NestedAttributesMapJsonParser
   private boolean defaultMapping;
 
   public NestedAttributesMapJsonParser(final JsonParser jsonParser, final NestedAttributesMap root) {
-    super(checkNotNull(jsonParser));
-    this.root = checkNotNull(root);
+    super(requireNonNull(jsonParser));
+    this.root = requireNonNull(root);
   }
 
   /**

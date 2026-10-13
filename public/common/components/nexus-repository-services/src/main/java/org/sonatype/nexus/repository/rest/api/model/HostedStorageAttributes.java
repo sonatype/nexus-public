@@ -12,14 +12,15 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import jakarta.validation.constraints.NotNull;
+import java.util.Objects;
+
+import org.sonatype.nexus.repository.config.WritePolicy;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.sonatype.nexus.repository.config.WritePolicy;
-
-import java.util.Objects;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * REST API model for describing storage of hosted repositories.
@@ -38,9 +39,10 @@ public class HostedStorageAttributes
   public HostedStorageAttributes(
       @JsonProperty("blobStoreName") final String blobStoreName,
       @JsonProperty("strictContentTypeValidation") final Boolean strictContentTypeValidation,
+      @JsonProperty("globalDistribution") @Nullable final Boolean globalDistribution,
       @JsonProperty("writePolicy") final String writePolicy)
   {
-    super(blobStoreName, strictContentTypeValidation);
+    super(blobStoreName, strictContentTypeValidation, globalDistribution);
 
     Objects.requireNonNull(writePolicy, "writePolicy is required");
     this.writePolicy = WritePolicy.fromString(writePolicy).name();

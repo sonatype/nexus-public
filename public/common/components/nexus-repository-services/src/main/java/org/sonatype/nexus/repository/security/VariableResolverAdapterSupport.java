@@ -23,7 +23,7 @@ import org.sonatype.nexus.selector.PropertiesResolver;
 import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Adapts different contexts to variable resolvers
@@ -55,8 +55,8 @@ public abstract class VariableResolverAdapterSupport
   @Override
   public VariableSource fromCoordinates(final String format, final String path, final Map<String, String> coordinates) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver(checkNotNull(path), PATH));
-    builder.addResolver(new ConstantVariableResolver(checkNotNull(format), FORMAT));
+    builder.addResolver(new ConstantVariableResolver(requireNonNull(path), PATH));
+    builder.addResolver(new ConstantVariableResolver(requireNonNull(format), FORMAT));
 
     addCoordinates(builder, coordinates);
     return builder.build();
@@ -66,7 +66,7 @@ public abstract class VariableResolverAdapterSupport
   public VariableSource fromSourceLookup(final String format, final Map<String, Object> asset) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
     builder.addResolver(
-        new ConstantVariableResolver(checkNotNull((String) asset.get(NAME)), PATH));
+        new ConstantVariableResolver(requireNonNull((String) asset.get(NAME)), PATH));
     builder.addResolver(
         new ConstantVariableResolver(format, FORMAT));
     addFromSourceLookup(builder, asset);

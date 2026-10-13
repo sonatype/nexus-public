@@ -23,7 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -45,11 +45,11 @@ public class DescriptionRendererImpl
 
   @Autowired
   public DescriptionRendererImpl(final TemplateHelper templateHelper) {
-    this.templateHelper = checkNotNull(templateHelper);
+    this.templateHelper = requireNonNull(templateHelper);
     objectMapper = new ObjectMapper();
     objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     template = getClass().getResource(TEMPLATE_RESOURCE);
-    checkNotNull(template);
+    requireNonNull(template);
   }
 
   @Override

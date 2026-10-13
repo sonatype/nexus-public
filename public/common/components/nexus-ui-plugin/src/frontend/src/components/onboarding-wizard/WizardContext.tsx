@@ -92,7 +92,7 @@ export function WizardProvider({
       return true;
     }
     if (
-      state === 'setupComplete' ||
+      state === 'verificationFailed' ||
       state === 'done' ||
       state === 'skipped' ||
       state === 'issueOccurred' ||
@@ -112,7 +112,7 @@ export function WizardProvider({
   }, [send]);
 
   const submit = useCallback(() => {
-    if (state === 'setupComplete') {
+    if (state === 'verificationFailed') {
       send({ type: 'SUBMIT' });
       return;
     }

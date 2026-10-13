@@ -31,7 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Consumes(APPLICATION_JSON)
@@ -44,7 +44,7 @@ public abstract class ApiKeysEncryptionApiResource
   private final ApiKeysReEncryptService apiKeysReEncryptService;
 
   protected ApiKeysEncryptionApiResource(final ApiKeysReEncryptService apiKeysReEncryptService) {
-    this.apiKeysReEncryptService = checkNotNull(apiKeysReEncryptService);
+    this.apiKeysReEncryptService = requireNonNull(apiKeysReEncryptService);
   }
 
   @PUT

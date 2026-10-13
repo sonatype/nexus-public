@@ -18,7 +18,7 @@ import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -52,7 +52,7 @@ public class DeploymentIdStoreImpl
   @Transactional
   @Override
   public void set(final String deploymentId) {
-    checkNotNull(deploymentId);
+    requireNonNull(deploymentId);
     dao().set(deploymentId);
 
     this.deploymentId = Optional.of(deploymentId);

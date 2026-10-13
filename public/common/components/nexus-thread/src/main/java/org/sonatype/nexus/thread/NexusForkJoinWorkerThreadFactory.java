@@ -16,7 +16,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import java.util.concurrent.ForkJoinWorkerThread;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Nexus {@link ForkJoinWorkerThreadFactory}.
@@ -29,7 +29,7 @@ public class NexusForkJoinWorkerThreadFactory
   private final String jobPrefix;
 
   public NexusForkJoinWorkerThreadFactory(final String jobPrefix) {
-    this.jobPrefix = checkNotNull(jobPrefix);
+    this.jobPrefix = requireNonNull(jobPrefix);
   }
 
   @Override

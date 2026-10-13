@@ -12,30 +12,30 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
+import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
-
-import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
-import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @since 3.28
  */
-public class AbstractHostedRepositoriesApiResource<T extends HostedRepositoryApiRequest>
+public class AbstractHostedRepositoriesApiResource<S extends HostedStorageAttributes, T extends HostedRepositoryApiRequest<S>>
     extends AbstractRepositoriesApiResource<T>
 {
-  protected HostedRepositoryApiRequestToConfigurationConverter<T> configurationConverter;
+  protected HostedRepositoryApiRequestToConfigurationConverter<S, T> configurationConverter;
 
   @Autowired
   public void setConfigurationConverter(
-      final HostedRepositoryApiRequestToConfigurationConverter<T> configurationConverter)
+      final HostedRepositoryApiRequestToConfigurationConverter<S, T> configurationConverter)
   {
     this.configurationConverter = configurationConverter;
   }

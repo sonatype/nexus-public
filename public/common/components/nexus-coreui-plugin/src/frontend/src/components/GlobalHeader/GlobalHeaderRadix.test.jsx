@@ -44,6 +44,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   handleExtJsUnsavedChanges: (_ctrl, fn) => fn(),
   hasUnsavedChanges: jest.fn(() => false),
   useSideNavbarOpenState: () => [true],
+  HelpMenu: () => <div data-testid="help-menu" />,
 }));
 
 jest.mock('@uirouter/react', () => ({
@@ -61,7 +62,6 @@ jest.mock('../../contexts/ThemeContext', () => ({
 jest.mock('./SearchRadix', () => () => <div data-testid="search-radix" />);
 jest.mock('./SystemStatusRadix', () => () => <div data-testid="system-status" />);
 jest.mock('../ThemeSwitcher/ThemeSwitcher', () => () => null);
-jest.mock('./HelpMenuRadix', () => () => <div data-testid="help-menu" />);
 jest.mock('./LoginAndUserButtonRadix', () => () => <div data-testid="login-btn" />);
 jest.mock('../../routerConfig/routerUtils', () => ({refreshReactPage: jest.fn()}));
 

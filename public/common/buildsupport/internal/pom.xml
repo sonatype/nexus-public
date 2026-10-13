@@ -20,22 +20,13 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.96.4-01</version>
+    <version>3.97.0-13</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-internal</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <properties>
-    <!-- NEXUS-46395: bumped 3.0.1 -> 4.0.0. The 4.x line is Jakarta-native (jakarta.inject.*
-         instead of javax.inject.*); 3.x carried 32 javax/inject bytecode references on the classpath
-         and was the last remaining source of javax.inject-1.jar in the runtime assembly. -->
-    <sonatype-licensing.version>4.0.1</sonatype-licensing.version>
-    <clm.dto.model.version>2.1.33-01</clm.dto.model.version>
-    <insight-brain-client.version>2.1.10-01</insight-brain-client.version>
-    <insight-scanner.version>3.0.46-01</insight-scanner.version>
-  </properties>
 
   <dependencyManagement>
     <dependencies>
@@ -59,138 +50,6 @@
         <version>1.37.1</version>
         <scope>import</scope>
         <type>pom</type>
-      </dependency>
-      <!-- licensing -->
-
-      <dependency>
-        <groupId>com.sonatype.licensing</groupId>
-        <artifactId>license-bundle</artifactId>
-        <version>${sonatype-licensing.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>aopalliance</groupId>
-            <artifactId>aopalliance</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>xmlpull</groupId>
-            <artifactId>xmlpull</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>xpp3</groupId>
-            <artifactId>xpp3_min</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.thoughtworks.xstream</groupId>
-            <artifactId>xstream</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-          </exclusion>
-          <!--
-          NEXUS-46245: license-bundle 4.0.1 still declares Jakarta-flavored guice 7 and
-          sisu.inject as compile-scope dependencies. They are used by the bundle's own
-          shade-time component scan (META-INF/sisu/jakarta.inject.Named transformer in the
-          license-bundle build) and are not needed at runtime by Nexus, which uses Spring
-          DI exclusively post-NEXUS-49172. Exclude them so they do not leak onto the
-          downstream classpath.
-          -->
-          <exclusion>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.sisu</groupId>
-            <artifactId>org.eclipse.sisu.inject</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.licensing</groupId>
-        <artifactId>license-creator</artifactId>
-        <version>${sonatype-licensing.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.licensing</groupId>
-        <artifactId>license-extension</artifactId>
-        <version>${sonatype-licensing.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.thoughtworks.xstream</groupId>
-            <artifactId>xstream</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <!-- CLM/insight -->
-
-      <dependency>
-        <groupId>com.sonatype.clm</groupId>
-        <artifactId>com.sonatype.clm.dto.model</artifactId>
-        <version>${clm.dto.model.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.brain</groupId>
-        <artifactId>insight-brain-client</artifactId>
-        <version>${insight-brain-client.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.scan</groupId>
-        <artifactId>insight-client-utils</artifactId>
-        <version>${insight-scanner.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.scan</groupId>
-        <artifactId>insight-scanner-archive</artifactId>
-        <version>${insight-scanner.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.sonatype.insight.scan</groupId>
-            <artifactId>insight-scanner-tools</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <!-- Override cyclonedx-core-java to fix CVE-2025-64518 (XXE vulnerability) -->
-      <dependency>
-        <groupId>org.cyclonedx</groupId>
-        <artifactId>cyclonedx-core-java</artifactId>
-        <version>12.0.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.json</groupId>
-        <artifactId>json</artifactId>
-        <version>20231013</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.scan</groupId>
-        <artifactId>insight-scanner-core</artifactId>
-        <version>${insight-scanner.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.scan</groupId>
-        <artifactId>insight-scanner-container-image</artifactId>
-        <version>${insight-scanner.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.scan</groupId>
-        <artifactId>insight-scanner-model-io</artifactId>
-        <version>${insight-scanner.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.scan</groupId>
-        <artifactId>insight-scanner-model</artifactId>
-        <version>${insight-scanner.version}</version>
       </dependency>
 
       <dependency>

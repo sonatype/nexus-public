@@ -1,0 +1,315 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+package org.sonatype.nexus.api.rest.common.routing;
+
+import org.sonatype.nexus.api.rest.common.routing.model.RoutingRuleTestXO;
+import org.sonatype.nexus.api.rest.common.routing.model.RoutingRuleXO;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response.Status;
+
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.RoutingRulePreviewXO;
+import org.sonatype.nexus.repository.routing.RoutingMode;
+import org.sonatype.nexus.repository.routing.RoutingRule;
+import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
+import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.repository.types.GroupType;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
+import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.security.BreadActions;
+
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static java.util.Objects.requireNonNull;
+import static com.google.common.collect.Streams.stream;
+import static java.util.Collections.emptyList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.sonatype.nexus.common.entity.EntityHelper.id;
+import org.springframework.stereotype.Component;
+
+@Component
+@Consumes(APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
+@Path(RoutingRulesResource.RESOURCE_PATH)
+public class RoutingRulesResource
+    implements Resource
+{
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
+  static final String RESOURCE_PATH = "internal/ui/routing-rules";
+
+  private static final String GROUPS = "groups";
+
+  private static final String PROXIES = "proxies";
+
+  private static final boolean ALLOWED = true;
+
+  private final RoutingRuleStore routingRuleStore;
+
+  private final RoutingRuleHelper routingRuleHelper;
+
+  private final RepositoryPermissionChecker repositoryPermissionChecker;
+
+  private final RepositoryManager repositoryManager;
+
+  @Autowired
+  public RoutingRulesResource(
+      final RoutingRuleStore routingRuleStore,
+      final RoutingRuleHelper routingRuleHelper,
+      final RepositoryPermissionChecker repositoryPermissionChecker,
+      final RepositoryManager repositoryManager)
+  {
+    this.routingRuleStore = requireNonNull(routingRuleStore);
+    this.routingRuleHelper = requireNonNull(routingRuleHelper);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
+    this.repositoryManager = requireNonNull(repositoryManager);
+  }
+
+  @POST
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
+  public void createRoutingRule(RoutingRuleXO routingRuleXO) {
+    routingRuleStore.create(fromXO(routingRuleXO));
+  }
+
+  @POST
+  @Path("/test")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
+  public boolean isAllowed(RoutingRuleTestXO routingRuleTestXO) {
+    String path = routingRuleTestXO.getPath();
+    List<String> matchers = routingRuleTestXO.getMatchers();
+    RoutingMode mode = routingRuleTestXO.getMode();
+    return routingRuleHelper.isAllowed(mode, matchers, path);
+  }
+
+  @GET
+  public List<RoutingRuleXO> getRoutingRules(@QueryParam("includeRepositoryNames") boolean includeRepositoryNames) {
+    routingRuleHelper.ensureUserHasPermissionToRead();
+
+    List<RoutingRuleXO> rules = routingRuleStore.list()
+        .stream()
+        .map(RoutingRulesResource::toXO)
+        .collect(toList());
+
+    if (includeRepositoryNames) {
+      setAssignedRepositories(rules);
+    }
+
+    return rules;
+  }
+
+  private void setAssignedRepositories(final List<RoutingRuleXO> rules) {
+    Map<EntityId, List<Repository>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    for (RoutingRuleXO rule : rules) {
+      List<Repository> repositories = assignedRepositories.computeIfAbsent(id(rule.getId()), id -> emptyList());
+      List<String> repositoryNames = repositoryPermissionChecker
+          .userHasRepositoryAdminPermission(repositories, BreadActions.READ)
+          .stream()
+          .map(Repository::getName)
+          .sorted(String.CASE_INSENSITIVE_ORDER)
+          .collect(Collectors.toList());
+
+      rule.setAssignedRepositoryCount(repositories.size());
+      rule.setAssignedRepositoryNames(repositoryNames);
+    }
+  }
+
+  @GET
+  @Path("/{name}")
+  public RoutingRuleXO getRoutingRule(@PathParam("name") final String name) {
+    routingRuleHelper.ensureUserHasPermissionToRead();
+    RoutingRuleXO routingRule = RoutingRulesResource.toXO(routingRuleStore.getByName(name));
+    Map<EntityId, List<Repository>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    populateAssignedRepositoryNames(assignedRepositories, routingRule);
+    return routingRule;
+  }
+
+  @PUT
+  @Path("/{name}")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
+  public void updateRoutingRule(@PathParam("name") final String name, RoutingRuleXO routingRuleXO) {
+    RoutingRule routingRule = routingRuleStore.getByName(name);
+    if (null == routingRule) {
+      throw new WebApplicationException(Status.NOT_FOUND);
+    }
+    routingRule.name(routingRuleXO.getName());
+    routingRule.description(routingRuleXO.getDescription());
+    routingRule.mode(routingRuleXO.getMode());
+    routingRule.matchers(routingRuleXO.getMatchers());
+    routingRuleStore.update(routingRule);
+  }
+
+  @DELETE
+  @Path("/{name}")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
+  public void deleteRoutingRule(@PathParam("name") final String name) {
+    RoutingRule routingRule = routingRuleStore.getByName(name);
+    if (null == routingRule) {
+      throw new WebApplicationException(Status.NOT_FOUND);
+    }
+
+    Map<EntityId, List<Repository>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    List<Repository> repositories = assignedRepositories.getOrDefault(routingRule.id(), emptyList());
+    if (!repositories.isEmpty()) {
+      throw new WebApplicationException("Routing rule is still in use by " + repositories.size() + " repositories.",
+          Status.BAD_REQUEST);
+    }
+
+    routingRuleStore.delete(routingRule);
+  }
+
+  @GET
+  @Path("/preview")
+  @RequiresPermissions("nexus:*")
+  @RequiresAuthentication
+  public RoutingRulePreviewXO getRoutingRulesPreview(
+      @QueryParam("path") final String path,
+      @QueryParam("filter") final String filter)
+  {
+    Map<Class<?>, List<Repository>> repositoriesByType = stream(repositoryManager.browse())
+        .collect(groupingBy(r -> r.getType().getClass()));
+    List<Repository> groupRepositories = repositoriesByType.getOrDefault(GroupType.class, emptyList());
+    List<Repository> proxyRepositories = repositoriesByType.getOrDefault(ProxyType.class, emptyList());
+
+    Map<RoutingRule, Boolean> routingRulePathMapping = routingRuleStore.list()
+        .stream()
+        .collect(toMap(identity(), (RoutingRule rule) -> routingRuleHelper.isAllowed(rule, path)));
+
+    final Stream<Repository> repositories;
+    if (GROUPS.equals(filter)) {
+      repositories = groupRepositories.stream();
+    }
+    else if (PROXIES.equals(filter)) {
+      repositories = proxyRepositories.stream();
+    }
+    else {
+      repositories = Stream.of(groupRepositories, proxyRepositories).flatMap(Collection::stream);
+    }
+
+    List<RoutingRulePreviewXO> rootRepositories = repositories.map(repository -> {
+      List<Repository> children = repository.optionalFacet(GroupFacet.class)
+          .map(facet -> facet.members())
+          .orElse(null);
+      return toPreviewXO(repository, children, routingRulePathMapping);
+    }).collect(toList());
+
+    return RoutingRulePreviewXO.builder()
+        .children(rootRepositories)
+        .expanded(!rootRepositories.isEmpty())
+        .expandable(true)
+        .build();
+  }
+
+  private RoutingRulePreviewXO toPreviewXO(
+      final Repository repository,
+      final List<Repository> childRepositories,
+      Map<RoutingRule, Boolean> routingRulePathMapping)
+  {
+    Optional<RoutingRule> maybeRule = getRoutingRule(repository);
+
+    boolean allowed = maybeRule.map(routingRulePathMapping::get).orElse(ALLOWED);
+    String ruleName = maybeRule.map(RoutingRule::name).orElse(null);
+
+    List<RoutingRulePreviewXO> children = childRepositories == null
+        ? null
+        : childRepositories.stream()
+            .map(childRepository -> toPreviewXO(childRepository, null, routingRulePathMapping))
+            .collect(toList());
+
+    return RoutingRulePreviewXO.builder()
+        .repository(repository.getName())
+        .type(repository.getType().getValue())
+        .format(repository.getFormat().getValue())
+        .allowed(allowed)
+        .rule(ruleName)
+        .children(children)
+        .expanded(children != null && !children.isEmpty())
+        .expandable(children != null && !children.isEmpty())
+        .build();
+  }
+
+  private Optional<RoutingRule> getRoutingRule(final Repository repository) {
+    return Optional.ofNullable(repository.getConfiguration().getRoutingRuleId())
+        .map(EntityId::getValue)
+        .map(routingRuleStore::getById);
+  }
+
+  private RoutingRule fromXO(RoutingRuleXO routingRuleXO) {
+    final RoutingRule routingRule = routingRuleStore.newRoutingRule();
+    routingRule.name(routingRuleXO.getName());
+    routingRule.description(routingRuleXO.getDescription());
+    routingRule.mode(routingRuleXO.getMode());
+    routingRule.matchers(routingRuleXO.getMatchers());
+    return routingRule;
+  }
+
+  private static RoutingRuleXO toXO(RoutingRule routingRule) {
+    RoutingRuleXO routingRuleXO = new RoutingRuleXO();
+    routingRuleXO.setId(routingRule.id().getValue());
+    routingRuleXO.setName(routingRule.name());
+    routingRuleXO.setDescription(routingRule.description());
+    routingRuleXO.setMode(routingRule.mode());
+    routingRuleXO.setMatchers(routingRule.matchers());
+    return routingRuleXO;
+  }
+
+  private void populateAssignedRepositoryNames(
+      Map<EntityId, List<Repository>> assignedRepositories,
+      RoutingRuleXO routingRule)
+  {
+    List<Repository> repositories = assignedRepositories.computeIfAbsent(id(routingRule.getId()), id -> emptyList());
+    List<String> repositoryNames = repositoryPermissionChecker
+        .userHasRepositoryAdminPermission(repositories, BreadActions.READ)
+        .stream()
+        .map(Repository::getName)
+        .sorted(String.CASE_INSENSITIVE_ORDER)
+        .collect(toList());
+
+    // Note: the detail page shows only repos the current user has permission to see.
+    // The list page (setAssignedRepositories) intentionally uses the unfiltered total.
+    routingRule.setAssignedRepositoryCount(repositoryNames.size());
+    routingRule.setAssignedRepositoryNames(repositoryNames);
+  }
+}

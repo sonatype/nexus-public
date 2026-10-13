@@ -15,6 +15,7 @@ import {Box, Card, Flex, Grid, Heading, Text} from '@radix-ui/themes';
 import {Info} from 'lucide-react';
 import {LoadingState, ErrorState} from '../../shared';
 import UIStrings from '../../../../constants/UIStrings';
+import HumanReadableUtils from '../../../../interface/HumanReadableUtils';
 
 const {
   WELCOME: {
@@ -25,11 +26,13 @@ const {
   },
 } = UIStrings;
 
-function formatBytes(bytes) {
-  if (bytes == null || bytes <= 0 || !Number.isFinite(bytes)) return '0.00 Bytes';
-  const units = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
+function formatBytes(value) {
+  // Guard non-positive/non-numeric inputs uniformly so a negative current-month
+  // value renders "N/A" instead of falling through to bytesToString, which
+  // returns "Unavailable" for negatives (HumanReadableUtils.js:34) — two
+  // different strings for effectively the same "no usable data" condition.
+  if (typeof value !== 'number' || value <= 0) return 'N/A';
+  return HumanReadableUtils.bytesToString(value);
 }
 
 function CloudUsageTile({title, current, average, peak, tooltip}) {
@@ -74,29 +77,24 @@ export function CloudUsageCenterPanel({monthlyMetrics}) {
   const egressHistory = monthlyMetrics.history?.egress ?? [];
   const storageHistory = monthlyMetrics.history?.storage ?? [];
 
-  // Filter out zero values: treat 0 as "no data" rather than a legitimate measurement.
-  // This prevents newly created instances with zero traffic from skewing averages,
-  // and aligns with API behavior where missing months may report as 0 or null.
-  // Note: This means a month with legitimately zero egress is excluded, but the
-  // trade-off is acceptable to avoid noise from API gaps.
-  const egressValues = egressHistory.map((p) => p.value).filter((v) => v > 0);
-  const storageValues = storageHistory.map((p) => p.value).filter((v) => v > 0);
-
-  const currentEgress = egressValues[0] ?? 0;
+  // useMonthlyMetrics returns history oldest-first, so the current month is the
+  // last entry. Read current from that position on the raw ordered history, then
+  // filter zeros only when aggregating prior months. Filtering before slicing
+  // would let a zero in an earlier month shift what "current" points to.
+  // Zeros are treated as "no data" for averaging to avoid API-gap noise.
+  const currentEgress = egressHistory[egressHistory.length - 1]?.value ?? 0;
+  const priorEgress = egressHistory.slice(0, -1).map((p) => p.value).filter((v) => v > 0);
   const avgEgress =
-    egressValues.length > 1
-      ? egressValues.slice(1).reduce((a, b) => a + b, 0) / (egressValues.length - 1)
-      : 0;
-  const peakEgress =
-    egressValues.length > 1 ? egressValues.slice(1).reduce((max, v) => (v > max ? v : max), 0) : 0;
+    priorEgress.length > 0 ? priorEgress.reduce((a, b) => a + b, 0) / priorEgress.length : 0;
+  const peakEgress = priorEgress.length > 0 ? Math.max(...priorEgress) : 0;
 
-  const currentStorage = storageValues[0] ?? 0;
+  const currentStorage = storageHistory[storageHistory.length - 1]?.value ?? 0;
+  const priorStorage = storageHistory.slice(0, -1).map((p) => p.value).filter((v) => v > 0);
   const avgStorage =
-    storageValues.length > 1
-      ? storageValues.slice(1).reduce((a, b) => a + b, 0) / (storageValues.length - 1)
-      : 0;
-  const peakStorage =
-    storageValues.length > 1 ? storageValues.slice(1).reduce((max, v) => (v > max ? v : max), 0) : 0;
+    priorStorage.length > 0 ? priorStorage.reduce((a, b) => a + b, 0) / priorStorage.length : 0;
+  // Peak Storage includes the current month (NEXUS-46933); Peak Egress does not.
+  const allStorage = storageHistory.map((p) => p.value).filter((v) => v > 0);
+  const peakStorage = allStorage.length > 0 ? Math.max(...allStorage) : 0;
 
   return (
     <Card size="3" style={{padding: 'var(--space-5)'}}>

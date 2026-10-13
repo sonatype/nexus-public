@@ -13,6 +13,7 @@
 package org.sonatype.nexus.common.conversion;
 
 import java.time.Duration;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -67,7 +68,17 @@ public class DurationPropertyEditor
         return t;
       }
     }
-    throw new RuntimeException("Unable to parse: " + value);
+    // no suffix matched, try ISO-8601
+    return extractIso(value);
+  }
+
+  private static Duration extractIso(final String value) {
+    try {
+      return Duration.parse(value);
+    }
+    catch (DateTimeParseException e) {
+      throw new RuntimeException("Unable to parse: " + value);
+    }
   }
 
   private static Duration extract(final String value, final ChronoUnit unit, final String... suffixes) {

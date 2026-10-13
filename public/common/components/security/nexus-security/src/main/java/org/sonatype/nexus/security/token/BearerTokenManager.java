@@ -24,7 +24,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Allows the logic for managing bearer tokens to be shared between formats and it is intended that this will be
@@ -51,9 +51,9 @@ public abstract class BearerTokenManager
       final SecurityHelper securityHelper,
       final String format)
   {
-    this.apiKeyService = checkNotNull(apiKeyService);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.format = checkNotNull(format);
+    this.apiKeyService = requireNonNull(apiKeyService);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.format = requireNonNull(format);
   }
 
   /**
@@ -62,7 +62,7 @@ public abstract class BearerTokenManager
    * that credential is echoed back instead of minting a new token.
    */
   protected String createToken(final PrincipalCollection principals) {
-    checkNotNull(principals);
+    requireNonNull(principals);
     if (echoResolver != null) {
       Optional<String> echoed = echoResolver.presentedToken(principals);
       if (echoed.isPresent()) {

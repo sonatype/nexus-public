@@ -14,14 +14,21 @@ package org.sonatype.nexus.repository.content.facet;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.common.app.softdelete.SoftDeletedAssetRef;
+import org.sonatype.nexus.common.app.softdelete.TrashIndexRecorder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.datastore.api.SerializedAccessException;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.RedeployDisabledException;
@@ -31,6 +38,7 @@ import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AttributeOperation;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
@@ -38,8 +46,10 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetsImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentBlobsImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentsImpl;
+import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 import org.sonatype.nexus.repository.storage.BlobMetadataStorage;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -54,13 +64,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.groups.Default;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION_ENABLED;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
@@ -121,14 +132,27 @@ public abstract class ContentFacetSupport
 
   private AssetBlobValidator assetBlobValidator;
 
+  @Nullable
+  @Autowired(required = false)
+  private TrashIndexRecorder trashIndexRecorder;
+
+  private boolean globalDistributionEnabled;
+
   protected ContentFacetSupport(final FormatStoreManager formatStoreManager) {
-    this.formatStoreManager = checkNotNull(formatStoreManager);
+    this.formatStoreManager = requireNonNull(formatStoreManager);
   }
 
   @Autowired
   @VisibleForTesting
   protected final void setDependencies(final ContentFacetDependencies dependencies) {
-    this.dependencies = checkNotNull(dependencies);
+    this.dependencies = requireNonNull(dependencies);
+  }
+
+  /**
+   * @return {@code true} if the repository's {@code storage.globalDistribution} attribute is set to {@code true}.
+   */
+  public final boolean isGlobalDistributionEnabled() {
+    return globalDistributionEnabled;
   }
 
   @Override
@@ -168,6 +192,8 @@ public abstract class ContentFacetSupport
     config = facet(ConfigurationFacet.class).readSection(configuration, STORAGE, Config.class);
     log.debug("Config: {}", config);
 
+    globalDistributionEnabled = readGlobalDistributionEnabledFromConfig(configuration);
+
     stores = new ContentFacetStores(
         dependencies.getBlobStoreManager(), config.blobStoreName,
         formatStoreManager, config.dataStoreName);
@@ -178,6 +204,22 @@ public abstract class ContentFacetSupport
     fluentAssets = new FluentAssetsImpl(this, stores.assetStore);
   }
 
+  private static boolean readGlobalDistributionEnabledFromConfig(final Configuration configuration) {
+    Map<String, Map<String, Object>> attributes = configuration.getAttributes();
+    if (attributes == null) {
+      return false;
+    }
+    Map<String, Object> storage = attributes.get(STORAGE);
+    if (storage == null) {
+      return false;
+    }
+    Object raw = storage.getOrDefault(GLOBAL_DISTRIBUTION_ENABLED, Boolean.FALSE);
+    if (raw instanceof Boolean b) {
+      return b;
+    }
+    return Boolean.parseBoolean(String.valueOf(raw));
+  }
+
   @Override
   protected void doStart() throws Exception {
     // configuration is persisted by this point and has been assigned an id
@@ -185,10 +227,8 @@ public abstract class ContentFacetSupport
 
     checkState(configRepositoryId != null, "Missing configRepositoryId");
 
-    // get or create the associated content repository
-    contentRepositoryId = stores.contentRepositoryStore.readContentRepository(configRepositoryId)
-        .orElseGet(this::createContentRepository)
-        .contentRepositoryId();
+    // get or create the associated content repository (idempotent under the create race)
+    contentRepositoryId = readOrCreateContentRepository().contentRepositoryId();
 
     checkState(contentRepositoryId != null, "Missing contentRepositoryId");
 
@@ -203,11 +243,34 @@ public abstract class ContentFacetSupport
   /**
    * Creates a {@link ContentRepository} for the associated config repository.
    */
-  private final ContentRepository createContentRepository() {
+  private ContentRepository createContentRepository() {
     ContentRepositoryData contentRepository = newContentRepository();
     contentRepository.setConfigRepositoryId(configRepositoryId);
     stores.contentRepositoryStore.createContentRepository(contentRepository);
     return contentRepository;
+  }
+
+  /**
+   * Reads the associated {@link ContentRepository}, creating it if absent. Tolerant of the create race in
+   * which another node inserts the shared content-repository row between our read and our insert: on a losing
+   * insert we absorb the {@link DuplicateKeyException} and re-read the row the peer just committed, so this
+   * facet still starts instead of failing its {@code INITIALISED -> STARTED} transition.
+   */
+  private ContentRepository readOrCreateContentRepository() {
+    Optional<ContentRepository> existing = stores.contentRepositoryStore.readContentRepository(configRepositoryId);
+    if (existing.isPresent()) {
+      return existing.get();
+    }
+    try {
+      return createContentRepository();
+    }
+    catch (DuplicateKeyException e) {
+      log.debug("Content repository for {} was created concurrently by another node; re-reading",
+          configRepositoryId, e);
+      return stores.contentRepositoryStore.readContentRepository(configRepositoryId)
+          .orElseThrow(() -> new IllegalStateException(
+              "Missing content repository for " + configRepositoryId + " after concurrent create", e));
+    }
   }
 
   /**
@@ -220,7 +283,11 @@ public abstract class ContentFacetSupport
   }
 
   @Override
-  @Transactional
+  // Retry on a transient serialization failure / deadlock (e.g. the async browse/search flush of this
+  // repository's content racing this delete for locks on the shared content-repository rows). PostgreSQL
+  // aborts one transaction; retrying the delete once the survivor releases its locks lets it complete
+  // cleanly, instead of failing the STOPPED -> DELETED transition and stranding the repository. See NEXUS-54229.
+  @Transactional(retryOn = SerializedAccessException.class)
   protected void doDelete() throws Exception {
     if (configRepositoryId != null) {
       stores.assetStore.deleteAssets(contentRepositoryId);
@@ -364,5 +431,75 @@ public abstract class ContentFacetSupport
    */
   protected ContentRepositoryData newContentRepository() {
     return new ContentRepositoryData();
+  }
+
+  /**
+   * Removes a stale trash index entry when {@code createAsset} upserts over a soft-deleted row,
+   * silently clearing {@code deleted_on}. Without this, the trash index would retain a ghost entry
+   * for an asset that is no longer soft-deleted (e.g., metadata files rebuilt after component restore).
+   */
+  public void cleanupTrashIndex(final String assetPath) {
+    if (trashIndexRecorder != null) {
+      try {
+        trashIndexRecorder.removeAssetByPath(getRepository().getName(), assetPath);
+      }
+      catch (Exception e) {
+        log.debug("Could not clean up trash index for asset path '{}'", assetPath, e);
+      }
+    }
+  }
+
+  /**
+   * Reconciles the trash index when {@code createComponent} upserts over a soft-deleted row, silently
+   * clearing {@code deleted_on} (i.e. a component revived by re-upload). Removes the component's now-stale
+   * "umbrella" trash entry, and re-records any sibling asset that is still soft-deleted (not part of this
+   * re-upload) as its own entry so it stays individually restorable -- otherwise it would become an
+   * invisible orphan once the umbrella entry is gone. Re-uploaded assets clear their own re-surfaced entry
+   * via {@link #cleanupTrashIndex(String)} when they are created immediately after the component.
+   */
+  public void cleanupComponentTrashIndex(final Component component) {
+    // Gated only on the recorder's presence (absent in editions without the soft-delete plugin), NOT on the
+    // nexus.softDelete.enabled flag: a stale trash index row can be left behind by a period when the flag
+    // was ON, then silently revived by a createComponent upsert while the flag is OFF. If this reconciliation
+    // were gated on the current flag state, that ghost row would survive -- showing the component in Trash
+    // while it is live in the repository, un-restorable ("not in the soft-deleted state"). The asset path
+    // ({@link #cleanupTrashIndex(String)}) is likewise ungated, so this keeps the two paths symmetric.
+    if (trashIndexRecorder == null) {
+      return;
+    }
+    String repositoryName = getRepository().getName();
+    try {
+      String componentExternalId =
+          InternalIds.toExternalId(InternalIds.internalComponentId(component)).getValue();
+      int removed = trashIndexRecorder.removeComponentByExternalId(repositoryName, componentExternalId);
+
+      // Fast path: if no umbrella entry was removed, this component was never in Trash (a brand-new or
+      // never-deleted upload -- the overwhelmingly common case), so there are no soft-deleted siblings to
+      // re-surface. Skip the per-asset scan to keep the create/upload hot path cheap.
+      if (removed == 0) {
+        return;
+      }
+
+      String format = getRepository().getFormat().getValue();
+      Integer repositoryId = contentRepositoryId();
+      // browseAllComponentAssets loads the component's assets into memory (not paginated). This is bounded: a
+      // component owns only a handful of assets in every format, and this scan runs solely on the rare revive path
+      // (removed > 0). Docker/OCI layers and blobs are component-less shared assets, not children here, so the
+      // per-component asset count stays small -- no streaming/pagination needed (NEXUS-51733).
+      for (Asset asset : stores().assetStore.browseAllComponentAssets(component)) {
+        AssetData assetData = (AssetData) asset;
+        if (assetData.getDeletedOn() != null) {
+          String assetExternalId =
+              InternalIds.toExternalId(InternalIds.internalAssetId(asset)).getValue();
+          String deletedBy = assetData.getDeletedBy() != null ? assetData.getDeletedBy() : "system";
+          trashIndexRecorder.resurfaceSoftDeletedChildAsset(new SoftDeletedAssetRef(
+              repositoryName, repositoryId, format, componentExternalId, assetExternalId,
+              asset.path(), asset.kind(), assetData.getDeletedOn(), deletedBy));
+        }
+      }
+    }
+    catch (Exception e) {
+      log.debug("Could not reconcile trash index after component upsert in '{}'", repositoryName, e);
+    }
   }
 }

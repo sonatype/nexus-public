@@ -36,6 +36,10 @@ export default {
     LIST: 'browse.upload.list',
     EDIT: 'browse.upload.edit',
   },
+  TRASH: {
+    ROOT: 'browse.trash',
+    TITLE: 'Trash',
+  },
   TAGS: {
     ROOT: 'browse.tags',
     TITLE: 'Tags',

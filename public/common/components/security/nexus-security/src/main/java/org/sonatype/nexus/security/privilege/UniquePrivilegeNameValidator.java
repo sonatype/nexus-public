@@ -18,7 +18,7 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -37,11 +37,14 @@ public class UniquePrivilegeNameValidator
 
   @Autowired
   public UniquePrivilegeNameValidator(final SecuritySystem securitySystem) {
-    this.securitySystem = checkNotNull(securitySystem);
+    this.securitySystem = requireNonNull(securitySystem);
   }
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
     log.trace("Validating unique privilege name: {}", value);
     for (Privilege privilege : securitySystem.listPrivileges()) {
       if (value.equals(privilege.getName())) {

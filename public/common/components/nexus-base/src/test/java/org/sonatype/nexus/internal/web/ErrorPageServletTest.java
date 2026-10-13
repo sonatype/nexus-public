@@ -21,10 +21,8 @@ import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.internal.template.TemplateHelperImpl;
-import org.sonatype.nexus.internal.webresources.DevModeResources;
 import org.sonatype.nexus.internal.webresources.WebResourceServiceImpl;
 import org.sonatype.nexus.internal.webresources.WebResourceServlet;
-import org.sonatype.nexus.mime.internal.DefaultMimeSupport;
 import org.sonatype.nexus.servlet.XFrameOptions;
 import org.sonatype.nexus.testcommon.extensions.LoggingExtension;
 import org.sonatype.nexus.testcommon.extensions.LoggingExtension.CaptureLogsFor;
@@ -90,8 +88,7 @@ class ErrorPageServletTest
     ServletContextHandler context = new ServletContextHandler();
     ErrorPageService errorPageService = new ErrorPageService(templateHelper, xFrameOptions);
     context.addServlet(new ServletHolder(new ErrorPageServlet(errorPageService)), "/error.html");
-    WebResourceServiceImpl webResources =
-        new WebResourceServiceImpl(new DevModeResources(), new DefaultMimeSupport(), List.of(), List.of());
+    WebResourceServiceImpl webResources = new WebResourceServiceImpl(List.of(), List.of());
     context.addServlet(
         new ServletHolder(new WebResourceServlet(webResources, xFrameOptions, new Time(10, TimeUnit.DAYS))), "/bad/*");
 

@@ -16,6 +16,8 @@ import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -54,7 +56,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
 import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
@@ -100,8 +102,8 @@ public class FluentAssetImpl
   private final Asset asset;
 
   public FluentAssetImpl(final ContentFacetSupport facet, final Asset asset) {
-    this.facet = checkNotNull(facet);
-    this.asset = checkNotNull(asset);
+    this.facet = requireNonNull(facet);
+    this.asset = requireNonNull(asset);
   }
 
   @Override
@@ -197,14 +199,13 @@ public class FluentAssetImpl
 
   @Override
   public FluentAsset attach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
-    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, asset)
-        .attach(blob, checksums);
+    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, asset).attach(blob, checksums);
   }
 
   @Override
   public FluentAsset attachIgnoringWritePolicy(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
-    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, asset)
-        .attachIgnoringWritePolicy(blob, checksums);
+    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, asset).attachIgnoringWritePolicy(blob,
+        checksums);
   }
 
   @Override
@@ -230,7 +231,11 @@ public class FluentAssetImpl
         .orElseThrow(() -> new IllegalStateException("No blob attached to " + assetPath));
 
     Blob blob = retrieveBlob(assetBlob.blobRef());
-    Content content = new Content(new BlobPayload(blob, assetBlob.contentType()));
+    BlobPayload payload = new BlobPayload(blob, assetBlob.contentType());
+    if (!facet.isGlobalDistributionEnabled()) {
+      payload.disableGlobalDistribution();
+    }
+    Content content = new Content(payload);
 
     setupContentAttributes(content, blob, assetBlob);
 
@@ -279,12 +284,10 @@ public class FluentAssetImpl
     // external cache details previously recorded from upstream content
     AttributesMap contentHeaders = attributes(CONTENT);
 
-    Object lastModified = contentHeaders.get(CONTENT_LAST_MODIFIED);
-    if (lastModified == null && repository().getType() instanceof GroupType) {
-      lastModified = blob.getMetrics().getCreationTime();
+    DateTime lastModified = resolveLastModified(contentHeaders.get(CONTENT_LAST_MODIFIED), blob);
+    if (lastModified != null) {
+      contentAttributes.set(CONTENT_LAST_MODIFIED, lastModified);
     }
-
-    contentAttributes.set(CONTENT_LAST_MODIFIED, new DateTime(lastModified));
     contentAttributes.set(CONTENT_ETAG, Optional.ofNullable(contentHeaders.get(CONTENT_ETAG))
         .orElseGet(blob.getMetrics()::getSha1Hash));
 
@@ -297,6 +300,39 @@ public class FluentAssetImpl
     BlobMetrics metrics = blob.getMetrics();
     contentAttributes.set(CONTENT_LAST_MODIFIED, metrics.getCreationTime());
     contentAttributes.set(CONTENT_ETAG, metrics.getSha1Hash());
+  }
+
+  /**
+   * Interpret the persisted Last-Modified value for a proxy or group asset. The stored value may be
+   * a {@link DateTime} (freshly set) or a {@link String} (rehydrated via {@link #cacheContentHeaders}
+   * which {@code toString()}s the DateTime before persisting).
+   * <p>
+   * When upstream sent no Last-Modified, proxy repositories return {@code null} so the response
+   * omits the header rather than synthesizing a timestamp — a fake value derived from local state
+   * (e.g. blob creation time) can beat a genuine older upstream Last-Modified via
+   * {@code If-Modified-Since} and pin clients to stale content. See NEXUS-54469. Group repositories
+   * still fall back to blob creation time because a group has no single upstream whose later header
+   * could conflict — NEXUS-41192.
+   */
+  @Nullable
+  private DateTime resolveLastModified(@Nullable final Object storedLastModified, final Blob blob) {
+    if (storedLastModified instanceof DateTime dt) {
+      return dt;
+    }
+    if (storedLastModified != null) {
+      try {
+        return new DateTime(storedLastModified);
+      }
+      catch (IllegalArgumentException e) {
+        log.debug("Unparseable {}={}, omitting Last-Modified header", CONTENT_LAST_MODIFIED,
+            storedLastModified, e);
+        return null;
+      }
+    }
+    if (repository().getType() instanceof GroupType) {
+      return blob.getMetrics().getCreationTime();
+    }
+    return null;
   }
 
   private Asset handleMissingBlobRetry(

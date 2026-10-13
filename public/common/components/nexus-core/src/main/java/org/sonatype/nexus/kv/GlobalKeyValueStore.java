@@ -25,7 +25,7 @@ import com.google.common.collect.Iterables;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * MyBatis nexus_key_value access interface
@@ -41,7 +41,7 @@ public class GlobalKeyValueStore
   @Autowired
   public GlobalKeyValueStore(final DataSessionSupplier sessionSupplier, final ObjectMapper mapper) {
     super(sessionSupplier, NexusKeyValueDAO.class);
-    this.mapper = checkNotNull(mapper);
+    this.mapper = requireNonNull(mapper);
   }
 
   /**

@@ -204,17 +204,6 @@ export function ContentSelectorsList({ onSelect, onCreate, canCreate = true }: C
 
   return (
     <Box className="content-selectors-list">
-      {/* Help Section */}
-      <HelpSection
-        title="What is a content selector?"
-        content="Content selectors provide a means for you to select specific content from your repositories. Repository content is evaluated against expressions written in CSEL (Content Selector Expression Language)."
-        docLink={{
-          label: 'Learn more',
-          href: 'http://links.sonatype.com/products/nxrm3/docs/content-selector',
-        }}
-        className="content-selectors-list__help"
-      />
-
       {/* Search Filter */}
       <Box className="content-selectors-list__toolbar">
         <TextField.Root
@@ -243,6 +232,16 @@ export function ContentSelectorsList({ onSelect, onCreate, canCreate = true }: C
         emptyState={renderEmptyState()}
         ariaLabel="Content selectors table"
         className="content-selectors-list__table"
+      />
+
+      {/* Help Section */}
+      <HelpSection
+        title="What is a content selector?"
+        content="Content selectors provide a means for you to select specific content from your repositories. Repository content is evaluated against expressions written in CSEL (Content Selector Expression Language)."
+        docLink={{
+          label: 'Learn more',
+          href: 'http://links.sonatype.com/products/nxrm3/docs/content-selector',
+        }}
       />
     </Box>
   );

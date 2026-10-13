@@ -28,7 +28,7 @@ import org.sonatype.nexus.supportzip.ImportTaskData;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.supportzip.datastore.RestoreHelper.FILE_SUFFIX;
 
@@ -51,8 +51,8 @@ public class TaskRestorer
       final RestoreHelper restoreHelper,
       final List<ImportTaskData> importTaskByName)
   {
-    this.restoreHelper = checkNotNull(restoreHelper);
-    this.importTaskByName = QualifierUtil.buildQualifierBeanMap(checkNotNull(importTaskByName));
+    this.restoreHelper = requireNonNull(restoreHelper);
+    this.importTaskByName = QualifierUtil.buildQualifierBeanMap(requireNonNull(importTaskByName));
   }
 
   @Override

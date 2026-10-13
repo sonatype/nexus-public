@@ -15,7 +15,7 @@ package org.sonatype.nexus.capability;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Identity of a capability.
@@ -29,7 +29,7 @@ public class CapabilityIdentity
 
   @JsonCreator
   public CapabilityIdentity(@JsonProperty("value") final String value) {
-    this.value = checkNotNull(value);
+    this.value = requireNonNull(value);
   }
 
   @Override

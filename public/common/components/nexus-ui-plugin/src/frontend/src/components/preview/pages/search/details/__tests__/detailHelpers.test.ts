@@ -12,11 +12,14 @@
  */
 
 import {
+  buildBrowseTarget,
   buildComponentPath,
   buildMavenPath,
   buildPurl,
   getMavenCentralUrl,
   parseGaCoordinates,
+  PREVIEW_BROWSE_REPO_PATH_STATE,
+  PREVIEW_BROWSE_REPO_STATE,
 } from '../detailHelpers';
 
 describe('parseGaCoordinates', () => {
@@ -89,6 +92,13 @@ describe('buildComponentPath', () => {
     expect(buildComponentPath('nuget:Newtonsoft.Json', '13.0.3')).toBe('Newtonsoft.Json/13.0.3');
   });
 
+  it('restores the @scope/name form for a scoped npm package', () => {
+    // A scoped package's gaId is npm:scope:name (npm strips the leading @ from the namespace), so
+    // the path must be rebuilt as @scope/name/version — not scope:name/version, which points at a
+    // Browse node that does not exist.
+    expect(buildComponentPath('npm:babel:core', '7.0.0')).toBe('@babel/core/7.0.0');
+  });
+
   it('returns null for an unsupported format', () => {
     expect(buildComponentPath('docker:library/nginx', '1.25')).toBeNull();
   });
@@ -117,5 +127,58 @@ describe('getMavenCentralUrl', () => {
   it('returns null for non-Maven formats', () => {
     expect(getMavenCentralUrl('npm:lodash')).toBeNull();
     expect(getMavenCentralUrl('pypi:requests')).toBeNull();
+  });
+});
+
+describe('buildBrowseTarget', () => {
+  it('targets the new Preview Browse node state when a path is given', () => {
+    expect(
+      buildBrowseTarget(
+        'maven-central',
+        'org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar',
+      ),
+    ).toEqual({
+      state: PREVIEW_BROWSE_REPO_PATH_STATE,
+      params: {
+        repoName: 'maven-central',
+        path: 'org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar',
+        tab: 'summary',
+      },
+    });
+  });
+
+  it('percent-encodes each path segment so a decode-once route round-trips it', () => {
+    // BrowsePage decodes the raw route param once, so the target must carry the encoded form.
+    // A bare % (100%.txt) would otherwise throw on decode; a literal %20 would decode to a
+    // different path. Separators stay as '/', only the segments are encoded.
+    expect(buildBrowseTarget('raw-hosted', 'dir/100%.txt')).toEqual({
+      state: PREVIEW_BROWSE_REPO_PATH_STATE,
+      params: { repoName: 'raw-hosted', path: 'dir/100%25.txt', tab: 'summary' },
+    });
+    expect(buildBrowseTarget('raw-hosted', 'a/report%20final.pdf')?.params.path).toBe(
+      'a/report%2520final.pdf',
+    );
+  });
+
+  it('targets the repository root when no path is given', () => {
+    expect(buildBrowseTarget('raw-hosted')).toEqual({
+      state: PREVIEW_BROWSE_REPO_STATE,
+      params: { repoName: 'raw-hosted' },
+    });
+    // An empty path is treated as no path, not as a node under the repo.
+    expect(buildBrowseTarget('raw-hosted', '')).toEqual({
+      state: PREVIEW_BROWSE_REPO_STATE,
+      params: { repoName: 'raw-hosted' },
+    });
+  });
+
+  it('never targets the Classic UI route', () => {
+    const target = buildBrowseTarget('maven-central', 'org/foo');
+    expect(target?.state.startsWith('preview.browse')).toBe(true);
+  });
+
+  it('returns null when there is no repository to browse to', () => {
+    expect(buildBrowseTarget('')).toBeNull();
+    expect(buildBrowseTarget('', 'org/foo')).toBeNull();
   });
 });

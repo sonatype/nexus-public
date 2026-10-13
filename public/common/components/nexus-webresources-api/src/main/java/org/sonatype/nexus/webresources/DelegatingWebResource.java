@@ -17,7 +17,7 @@ import java.io.InputStream;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Delegating {@link WebResource}.
@@ -30,7 +30,7 @@ public class DelegatingWebResource
   private final WebResource delegate;
 
   public DelegatingWebResource(final WebResource delegate) {
-    this.delegate = checkNotNull(delegate);
+    this.delegate = requireNonNull(delegate);
   }
 
   @Override

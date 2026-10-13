@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Provides a pointer to a blob in a given store.
@@ -107,8 +107,8 @@ public class BlobRef
       @Nullable final OffsetDateTime dateBasedRef)
   {
     this.node = node;
-    this.store = checkNotNull(store);
-    this.blob = checkNotNull(blob);
+    this.store = requireNonNull(store);
+    this.blob = requireNonNull(blob);
     this.dateBasedRef = dateBasedRef;
   }
 

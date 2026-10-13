@@ -96,10 +96,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.isNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUESTS_LOG_ONLY;
 
 /**
@@ -308,7 +308,7 @@ public abstract class ProxyFacetSupport
 
   @Autowired
   protected void configureAntiSsrfService(final AntiSsrfService antiSsrfService) {
-    this.antiSsrfService = checkNotNull(antiSsrfService);
+    this.antiSsrfService = requireNonNull(antiSsrfService);
   }
 
   @VisibleForTesting
@@ -440,7 +440,7 @@ public abstract class ProxyFacetSupport
 
   @Override
   public Content get(final Context context) throws IOException {
-    checkNotNull(context);
+    requireNonNull(context);
     Content content = maybeGetCachedContent(context);
     boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
     String format = getRepository().getFormat().getValue();
@@ -822,9 +822,10 @@ public abstract class ProxyFacetSupport
       if (url.contains("://")) {
         uri = new URI(url);
       }
-      // Use two-stage encoding when preserveEncodedCharacters is enabled
+      // Use two-stage encoding when preserveEncodedCharacters is enabled. The trailing slash must survive:
+      // upstreams such as a chained Nexus PyPI repository return different relative links for "pkg/" and "pkg".
       else if (encodingHelper != null) {
-        String baseEncoded = encodingHelper.encodeUrlSegments(url);
+        String baseEncoded = encodingHelper.encodeUrlSegmentsPreserveTrailing(url);
         String finalEncoded = encodeUrl(baseEncoded);
         uri = config.remoteUrl.resolve(finalEncoded);
       }
@@ -1258,7 +1259,7 @@ public abstract class ProxyFacetSupport
    */
   protected String encodePathForRemote(final String path) throws UnsupportedEncodingException {
     if (encodingHelper != null) {
-      String baseEncoded = encodingHelper.encodeUrlSegments(path);
+      String baseEncoded = encodingHelper.encodeUrlSegmentsPreserveTrailing(path);
       return encodeUrl(baseEncoded);
     }
     // Legacy behavior (preserveEncodedCharacters == false)

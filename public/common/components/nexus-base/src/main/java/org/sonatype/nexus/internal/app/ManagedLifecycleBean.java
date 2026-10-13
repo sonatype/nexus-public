@@ -21,7 +21,7 @@ import org.sonatype.nexus.jmx.reflect.ManagedOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -39,7 +39,7 @@ public class ManagedLifecycleBean
 
   @Autowired
   public ManagedLifecycleBean(final ManagedLifecycleManager lifecycleManager) {
-    this.lifecycleManager = checkNotNull(lifecycleManager);
+    this.lifecycleManager = requireNonNull(lifecycleManager);
   }
 
   @ManagedAttribute

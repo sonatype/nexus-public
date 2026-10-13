@@ -59,7 +59,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SWITCH_FEEDBACK_DISABLED_KEY;
@@ -117,11 +117,11 @@ public class UISwitchFeedbackResource
       @Value("${nexus.preview.ui.switch.feedback.url:" + DEFAULT_FEEDBACK_ENDPOINT_URL
           + "}") final String feedbackEndpointUrl)
   {
-    this.objectMapper = checkNotNull(objectMapper);
-    this.keyValueStore = checkNotNull(keyValueStore);
-    this.deploymentAccess = checkNotNull(deploymentAccess);
-    this.antiSsrfService = checkNotNull(antiSsrfService);
-    this.httpClientManager = checkNotNull(httpClientManager);
+    this.objectMapper = requireNonNull(objectMapper);
+    this.keyValueStore = requireNonNull(keyValueStore);
+    this.deploymentAccess = requireNonNull(deploymentAccess);
+    this.antiSsrfService = requireNonNull(antiSsrfService);
+    this.httpClientManager = requireNonNull(httpClientManager);
     this.defaultSwitchFeedbackDisabled = defaultSwitchFeedbackDisabled;
     this.feedbackEndpointUrl = feedbackEndpointUrl;
     this.feedbackRedirectStrategy = new PostPreservingRedirectStrategy(antiSsrfService);

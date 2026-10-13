@@ -28,6 +28,13 @@ export interface DeleteConfirmationModalProps {
   entityName?: string;
   entityType: string;
   loading?: boolean;
+  /** When true, the entity is moved to Trash (recoverable) instead of being permanently
+   *  deleted, so the copy reflects a recoverable soft-delete. Callers pass this only when a
+   *  soft-delete will actually occur (e.g. soft-delete enabled on a hosted repository). */
+  softDelete?: boolean;
+  /** Optional retention window (days) surfaced in the soft-delete copy ("recoverable for N days").
+   *  Only used when {@link softDelete} is true; omitted → a generic recoverable message is shown. */
+  retentionDays?: number;
   /** Optional extra content (e.g. resource details) rendered above the
    *  acknowledgement input. Lets callers surface context like task type or
    *  schedule without forking the modal. */
@@ -56,6 +63,8 @@ export function DeleteConfirmationModal({
   entityName,
   entityType,
   loading = false,
+  softDelete = false,
+  retentionDays,
   children,
 }: DeleteConfirmationModalProps) {
   const [confirmationText, setConfirmationText] = useState('');
@@ -128,9 +137,25 @@ export function DeleteConfirmationModal({
         </Flex>
 
         {/* Warning Message — surface the entity name here so the user sees what they're
-            deleting now that the acknowledgement is a fixed literal word. */}
+            deleting now that the acknowledgement is a fixed literal word. When the deletion is a
+            recoverable soft-delete (softDelete), the copy reflects a move to Trash instead of a
+            permanent, irreversible removal. */}
         <AlertDialog.Description size="2" mb="4">
-          {entityName ? (
+          {softDelete ? (
+            <>
+              {entityName ? (
+                <>
+                  <Text as="span" weight="bold">{entityName}</Text>{' '}
+                  will be moved to Trash
+                </>
+              ) : (
+                <>This {entityType} will be moved to Trash</>
+              )}
+              {typeof retentionDays === 'number'
+                ? <> and can be restored for {retentionDays} days before it is permanently removed.</>
+                : <> and can be restored before it is permanently removed.</>}
+            </>
+          ) : entityName ? (
             <>
               This action cannot be undone. All data associated with{' '}
               <Text as="span" weight="bold">{entityName}</Text>{' '}

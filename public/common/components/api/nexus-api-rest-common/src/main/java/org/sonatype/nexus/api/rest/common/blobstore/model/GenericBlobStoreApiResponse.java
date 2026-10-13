@@ -18,7 +18,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.19
@@ -58,8 +58,8 @@ public class GenericBlobStoreApiResponse
       availableSpaceInBytes = metrics.getAvailableSpace();
     }
 
-    name = checkNotNull(configuration.getName());
-    setType(checkNotNull(configuration.getType()));
+    name = requireNonNull(configuration.getName());
+    setType(requireNonNull(configuration.getType()));
   }
 
   public String getName() {

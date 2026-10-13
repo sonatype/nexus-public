@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
 import com.google.common.base.Splitter;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.repository.browse.node.BrowsePathBuilder.appendPath;
 import static org.sonatype.nexus.repository.browse.node.BrowsePathBuilder.fromPaths;
@@ -66,7 +66,7 @@ public class Maven2BrowseNodeGenerator
 
   @Override
   public List<BrowsePath> computeAssetPaths(final Asset asset) {
-    checkNotNull(asset);
+    requireNonNull(asset);
 
     return asset.component().map(component -> {
 
@@ -83,7 +83,7 @@ public class Maven2BrowseNodeGenerator
    */
   @Override
   public List<BrowsePath> computeComponentPaths(final Asset asset) {
-    checkNotNull(asset);
+    requireNonNull(asset);
 
     Component component = asset.component().get(); // NOSONAR: caller guarantees this
 

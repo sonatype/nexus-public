@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.user;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link User} event.
@@ -24,7 +24,7 @@ public abstract class UserEvent
   private final User user;
 
   public UserEvent(final User user) {
-    this.user = checkNotNull(user);
+    this.user = requireNonNull(user);
   }
 
   public User getUser() {

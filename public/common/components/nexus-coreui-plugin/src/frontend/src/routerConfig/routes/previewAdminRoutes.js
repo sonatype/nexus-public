@@ -48,7 +48,6 @@ import {
   // withFeatureGate below so each section shows ComingSoonPage in
   // production when its feature flag is off.
   RepositoriesPage as RepositoriesPageRaw,
-  RepositoryProfilePage as RepositoryProfilePageRaw,
   BlobStoresPage as BlobStoresPageRaw,
   ContentSelectorsPage as ContentSelectorsPageRaw,
   CleanupPoliciesPage as CleanupPoliciesPageRaw,
@@ -87,6 +86,8 @@ import {
   IqServerOverviewPage,
   IqServerConnectedPage as IqServerConnectedPageImpl,
   HostedRepoEvaluationSetupPage,
+  PRO_AND_COMMUNITY_EDITIONS,
+  PRO_FAMILY_EDITIONS,
 } from '@sonatype/nexus-ui-plugin';
 import {lazyLoad} from './lazyLoad';
 
@@ -157,7 +158,6 @@ const sonatypeInternalRoutes = [
 
 // Repository - Gated (Coming Soon in production, WIP accessible in dev only)
 const RepositoriesPage = withFeatureGate(RepositoriesPageRaw, 'repository.repositories', 'Repositories');
-const RepositoryProfilePage = withFeatureGate(RepositoryProfilePageRaw, 'repository.repositories', 'Repository Profile');
 const BlobStoresPage = withFeatureGate(BlobStoresPageRaw, 'repository.blobstores', 'Blob Stores');
 const ContentSelectorsPage = withFeatureGate(ContentSelectorsPageRaw, 'repository.selectors', 'Content Selectors');
 const CleanupPoliciesPage = withFeatureGate(CleanupPoliciesPageRaw, 'repository.cleanuppolicies', 'Cleanup Policies');
@@ -360,26 +360,6 @@ export const previewAdminRoutes = [
     data: { title: 'Repository Details' },
   },
   {
-    name: 'preview.admin.repository.repositories.profile',
-    url: '/:repositoryName/profile?tab',
-    component: RepositoryProfilePage,
-    params: {
-      tab: { value: null, type: 'string', dynamic: true },
-    },
-    data: { title: 'Repository Profile' },
-    resolve: [
-      {
-        token: 'repositoryName',
-        deps: ['$stateParams'],
-        resolveFn: ($stateParams) => $stateParams.repositoryName,
-      },
-      {
-        token: 'context',
-        resolveFn: () => 'settings', // Settings context - shows Settings sidebar
-      },
-    ],
-  },
-  {
     name: 'preview.admin.repository.blobstores',
     url: '/blobstores',
     abstract: true,
@@ -525,7 +505,7 @@ export const previewAdminRoutes = [
         // feature does not exist and then dead-ends.
         bundle: 'nexus-pro-datastore-plugin',
         requiresPermission: Permissions.ADMIN,
-        editions: ['PRO', 'COMMUNITY'],
+        editions: PRO_AND_COMMUNITY_EDITIONS,
       },
     },
   },
@@ -587,8 +567,7 @@ export const previewAdminRoutes = [
   },
   {
     // NEXUS-52167: `?tab` keeps the active profile tab in the URL so it survives
-    // browser Back. `dynamic` avoids a remount on tab switch. Mirrors
-    // repositories.profile above.
+    // browser Back. `dynamic` avoids a remount on tab switch.
     name: 'preview.admin.security.privileges.profile',
     url: '/:privilegeId/profile?tab',
     component: PrivilegesPage,
@@ -780,7 +759,7 @@ export const previewAdminRoutes = [
       // shows on PRO installs whose license does not include user tokens and then dead-ends.
       visibilityRequirements: {
         requiresPermission: Permissions.USER_TOKENS_SETTINGS.READ,
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
         licenseValid: [{ key: 'usertoken', defaultValue: false }],
       },
     },
@@ -793,8 +772,7 @@ export const previewAdminRoutes = [
       title: 'Service Account Tokens',
       visibilityRequirements: {
         requiresPermission: Permissions.SERVICE_ACCOUNTS.READ,
-        editions: ['PRO'],
-        statesEnabled: [{ key: 'serviceAccountEnabled', defaultValue: false }],
+        editions: PRO_FAMILY_EDITIONS,
       },
     },
   },
@@ -810,7 +788,7 @@ export const previewAdminRoutes = [
         // gates the tile shows where the feature does not exist and then dead-ends.
         bundle: 'nexus-saml-plugin',
         requiresPermission: Permissions.ADMIN,
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
     },
   },
@@ -827,7 +805,7 @@ export const previewAdminRoutes = [
         // where the feature does not exist and then dead-ends.
         bundle: 'nexus-oauth2-plugin',
         requiresPermission: Permissions.ADMIN,
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
         statesEnabled: [{ key: 'oauth2Available', defaultValue: false }],
       },
     },
@@ -859,7 +837,7 @@ export const previewAdminRoutes = [
       // A settings:read gate let non-admins open the page and then hit a 403.
       visibilityRequirements: {
         requiresPermission: Permissions.ADMIN,
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
     },
   },
@@ -997,7 +975,7 @@ export const previewAdminRoutes = [
       // lack the create permission the page actually requires.
       visibilityRequirements: {
         requiresPermission: Permissions.ATLAS.CREATE,
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
     },
   },

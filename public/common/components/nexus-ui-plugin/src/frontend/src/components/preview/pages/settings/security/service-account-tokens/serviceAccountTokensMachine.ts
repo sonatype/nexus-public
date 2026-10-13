@@ -13,7 +13,10 @@
 
 import { ReactNode } from 'react';
 import { assign, createMachine } from 'xstate';
+import { SERVICE_ACCOUNT_TOKENS_STRINGS } from './strings';
 import type { CreateTokenForm, RoleOption, ServiceAccountToken } from './types';
+
+const MESSAGES = SERVICE_ACCOUNT_TOKENS_STRINGS.MESSAGES;
 
 export interface CreatedTokenResult {
   token: ServiceAccountToken;
@@ -29,7 +32,7 @@ export interface ServiceAccountTokensLoadResult {
 export interface ServiceAccountTokensServices {
   loadAll: () => Promise<ServiceAccountTokensLoadResult>;
   createToken: (form: CreateTokenForm) => Promise<CreatedTokenResult>;
-  revokeToken: (tokenId: string) => Promise<void>;
+  revokeToken: (tokenId: string, tokenName: string) => Promise<void>;
 }
 
 export interface ServiceAccountTokensContext {
@@ -173,7 +176,7 @@ export function createServiceAccountTokensMachine(services: ServiceAccountTokens
             const invoke = event as unknown as { data: unknown };
             if (invoke.data instanceof Error) return invoke.data.message;
             if (typeof invoke.data === 'string') return invoke.data;
-            return 'Failed to load service-account tokens.';
+            return MESSAGES.LOAD_ERROR;
           },
         }),
         clearLoadError: assign({ loadError: (_ctx) => null }),
@@ -200,7 +203,7 @@ export function createServiceAccountTokensMachine(services: ServiceAccountTokens
             const invoke = event as unknown as { data: unknown };
             if (invoke.data instanceof Error) return invoke.data.message;
             if (typeof invoke.data === 'string') return invoke.data;
-            return 'Failed to create service-account token.';
+            return MESSAGES.CREATE_ERROR_GENERIC;
           },
           pendingCreate: (_ctx) => null,
         }),
@@ -218,7 +221,7 @@ export function createServiceAccountTokensMachine(services: ServiceAccountTokens
             const invoke = event as unknown as { data: unknown };
             if (invoke.data instanceof Error) return invoke.data.message;
             if (typeof invoke.data === 'string') return invoke.data;
-            return 'Failed to revoke service-account token.';
+            return MESSAGES.REVOKE_ERROR_GENERIC;
           },
           pendingRevokeId: (_ctx) => null,
         }),
@@ -236,7 +239,9 @@ export function createServiceAccountTokensMachine(services: ServiceAccountTokens
           if (!ctx.pendingRevokeId) {
             throw new Error('No pending revoke id');
           }
-          return services.revokeToken(ctx.pendingRevokeId);
+          const tokenName =
+            ctx.tokens.find((token) => token.id === ctx.pendingRevokeId)?.name ?? '';
+          return services.revokeToken(ctx.pendingRevokeId, tokenName);
         },
       },
     }

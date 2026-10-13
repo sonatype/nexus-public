@@ -16,7 +16,7 @@
  *
  * MIGRATION STATUS:
  * - REST: most methods use REST API
- *   - fetchRepositories, fetchComponent, deleteComponent, deleteAsset
+ *   - fetchRepositories, fetchBrowsableRepositories, fetchComponent, deleteComponent, deleteAsset
  *   - fetchBrowseNodes (GET /v1/repositories/{name}/browse)
  *   - deleteFolder (DELETE /v1/repositories/{name}/browse)
  * - ExtDirect: fetchAsset uses coreui_Component.readAsset to receive the full asset
@@ -70,7 +70,7 @@ export async function fetchRepositories(): Promise<RepositoryReference[]> {
   try {
     const repos = await restClient.get<RestRepository[]>(ENDPOINTS.REPOSITORIES);
     // Map to reference format
-    return repos.map((r) => ({
+    return (repos ?? []).map((r) => ({
       id: r.name,
       name: r.name,
       format: r.format,
@@ -81,6 +81,32 @@ export async function fetchRepositories(): Promise<RepositoryReference[]> {
     const apiError = parseApiError(err);
     throw new Error(apiError.message);
   }
+}
+
+/**
+ * Fetch the repositories the current user may browse, with their type.
+ *
+ * Reads the *browse*-gated listing, which is what makes it safe to gate an action
+ * on the type it returns: `RepositoriesResource.getRepositories()` is
+ * `@RequiresUser` and filters through
+ * `RepositoryManagerRESTAdapterImpl.getRepositories()` →
+ * `repositoryPermissionChecker.userCanBrowseRepositories(...)` — the same browse
+ * permission that let the user reach the repository in the tree at all.
+ *
+ * Deliberately NOT the internal `repositories/details` listing that the Browse
+ * repository list renders: `RepositoryInternalResource.getRepositoryDetails()`
+ * filters through `userHasRepositoryAdminPermission(repository, READ)`, an
+ * administration permission. A delete-capable non-administrator receives an empty
+ * details listing, and because the repository-type gate in `useCanDelete` treats
+ * an unresolved type as "not deletable" (correctly — it must never offer the
+ * action optimistically), reading the type from there would hide Delete
+ * permanently for exactly the delete-capable non-administrators the gate exists
+ * to serve.
+ */
+export async function fetchBrowsableRepositories(): Promise<RepositoryReference[]> {
+  // Same listing as fetchRepositories: kept as a separate, documented seam so the
+  // delete gate's data source is explicit at its call site and pinned by its own test.
+  return fetchRepositories();
 }
 
 // =============================================================================
@@ -184,6 +210,7 @@ interface ExtDirectAssetXO {
   componentId?: string | null;
   createdBy?: string | null;
   createdByIp?: string | null;
+  containingRepositoryName?: string | null;
   attributes?: Record<string, unknown>;
   registryUrl?: string | null;
 }
@@ -233,6 +260,7 @@ function extDirectToAssetXO(ext: ExtDirectAssetXO, repositoryName: string): Asse
     componentId: ext.componentId ?? undefined,
     createdBy: ext.createdBy ?? undefined,
     createdByIp: ext.createdByIp ?? undefined,
+    containingRepositoryName: ext.containingRepositoryName ?? undefined,
     attributes,
     registryUrl: ext.registryUrl ?? undefined,
   };
@@ -295,6 +323,60 @@ export async function fetchAsset(assetId: string, repositoryName: string): Promi
     console.error('Failed to fetch asset:', err);
     const apiError = parseApiError(err);
     throw new Error(apiError.message);
+  }
+}
+
+// =============================================================================
+// COMPONENT TAGS (ExtDirect — Pro feature)
+// =============================================================================
+
+/**
+ * Shape of a tag summary returned by proui_TagList.readTagListDetails.
+ *
+ * Field names are the server's `TagSummaryXO` getters, not a UI convention: the tag name arrives
+ * as `id` (tag names are the tag primary key), and the timestamps are `lastUpdatedTime` /
+ * `firstCreatedTime`. Reading a `name` property here yields undefined for every row, which the
+ * caller cannot distinguish from an untagged component (NEXUS-54501).
+ */
+interface TagSummaryXO {
+  id: string;
+  lastUpdatedTime?: string | null;
+  firstCreatedTime?: string | null;
+}
+
+/**
+ * Fetch the tags associated with a component via ExtDirect proui_TagList.readTagListDetails.
+ *
+ * Tags are a Pro feature; the server method is guarded by `nexus:tags:read`. Callers should
+ * gate the request on Pro edition + permission (Classic parity, NEXUS-54501). The store-load
+ * method filters by `componentId` and `repositoryName`.
+ *
+ * Returns the tag names, or an empty array on any error/empty response (graceful degradation).
+ *
+ * @param componentId - Raw internal component id, as returned by ExtDirect
+ *          `coreui_Component.readComponent`/`readAsset`. The server resolves it with
+ *          `find(new DetachedEntityId(componentId))`, so the base64 `RepositoryItemIDXO` id the
+ *          REST v1 API returns is rejected — see the same distinction in `useCanDelete`
+ *          (NEXUS-54171).
+ * @param repositoryName - Repository holding the component
+ * @returns Array of tag names
+ */
+export async function fetchComponentTags(componentId: string, repositoryName: string): Promise<string[]> {
+  try {
+    const response = await ExtAPIUtils.extAPIRequest('proui_TagList', 'readTagListDetails', {
+      filter: [
+        { property: 'componentId', value: componentId },
+        { property: 'repositoryName', value: repositoryName },
+      ],
+    });
+    const data = ExtAPIUtils.checkForErrorAndExtract(response) as TagSummaryXO[] | undefined;
+    if (!Array.isArray(data)) {
+      return [];
+    }
+    return data.map((tag) => tag.id).filter((name): name is string => Boolean(name));
+  } catch (err: unknown) {
+    console.error('Failed to fetch component tags:', err);
+    return [];
   }
 }
 

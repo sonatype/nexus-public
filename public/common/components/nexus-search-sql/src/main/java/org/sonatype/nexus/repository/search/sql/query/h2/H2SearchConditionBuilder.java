@@ -35,7 +35,7 @@ import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.replace;
 
 /**
@@ -81,7 +81,7 @@ abstract class H2SearchConditionBuilder
   }
 
   H2SearchConditionBuilder(final H2SearchDB db, final ConditionType conditionType) {
-    this.db = checkNotNull(db);
+    this.db = requireNonNull(db);
     this.conditionType = conditionType;
   }
 

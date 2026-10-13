@@ -15,7 +15,7 @@ package org.sonatype.nexus.distributed.event.service.api.common;
 import org.sonatype.nexus.common.event.EventWithSource;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public abstract class DistributedEventSupport
     extends EventWithSource
@@ -23,7 +23,7 @@ public abstract class DistributedEventSupport
   private final EventType eventType;
 
   protected DistributedEventSupport(final EventType eventType) {
-    this.eventType = checkNotNull(eventType);
+    this.eventType = requireNonNull(eventType);
   }
 
   public EventType getEventType() {

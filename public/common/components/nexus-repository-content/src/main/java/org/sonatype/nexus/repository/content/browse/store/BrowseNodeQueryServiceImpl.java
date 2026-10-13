@@ -57,9 +57,9 @@ import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH;
@@ -107,14 +107,14 @@ public class BrowseNodeQueryServiceImpl
       final ContentAuthHelper contentAuthHelper,
       final SelectorFilterBuilder selectorFilterBuilder)
   {
-    this.securityHelper = checkNotNull(securityHelper);
-    this.selectorManager = checkNotNull(selectorManager);
-    this.browseNodeFilters = QualifierUtil.buildQualifierBeanMap(checkNotNull(browseNodeFilters));
-    this.browseNodeIdentities = QualifierUtil.buildQualifierBeanMap(checkNotNull(browseNodeIdentitiesList));
-    this.browseNodeComparators = QualifierUtil.buildQualifierBeanMap(checkNotNull(browseNodeComparatorsList));
-    this.defaultBrowseNodeComparator = checkNotNull(this.browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
-    this.contentAuthHelper = checkNotNull(contentAuthHelper);
-    this.selectorFilterBuilder = checkNotNull(selectorFilterBuilder);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.selectorManager = requireNonNull(selectorManager);
+    this.browseNodeFilters = QualifierUtil.buildQualifierBeanMap(requireNonNull(browseNodeFilters));
+    this.browseNodeIdentities = QualifierUtil.buildQualifierBeanMap(requireNonNull(browseNodeIdentitiesList));
+    this.browseNodeComparators = QualifierUtil.buildQualifierBeanMap(requireNonNull(browseNodeComparatorsList));
+    this.defaultBrowseNodeComparator = requireNonNull(this.browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
+    this.contentAuthHelper = requireNonNull(contentAuthHelper);
+    this.selectorFilterBuilder = requireNonNull(selectorFilterBuilder);
   }
 
   @Override

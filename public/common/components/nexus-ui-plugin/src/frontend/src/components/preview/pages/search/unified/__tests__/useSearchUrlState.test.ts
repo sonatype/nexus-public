@@ -32,22 +32,79 @@ describe('useSearchUrlState', () => {
 
   describe('readFromUrl', () => {
     it('parses query, format, and format-specific filters', () => {
-      setHash('q=spring&format=maven&maven.groupId=org.apache');
+      // After Task 2, maven group is the generic GROUP_FILTER (apiParam='group').
+      // The old maven.groupId param is gone; the URL param is now 'group'.
+      setHash('q=spring&format=maven&group=org.apache');
       const { result } = renderHook(() => useSearchUrlState());
 
       const state = result.current.readFromUrl();
       expect(state.query).toBe('spring');
       expect(state.format).toBe('maven');
-      expect(state.filters.groupId).toBe('org.apache');
+      expect(state.filters.group).toBe('org.apache');
     });
 
-    it('parses npm scope filter (group -> scope mapping)', () => {
+    it('parses npm group filter (scope is now aliased via generic group)', () => {
+      // After Task 2, npm no longer has a separate 'scope' filter id.
+      // The generic GROUP_FILTER (id='group', apiParam='group') is used instead;
+      // aliasLabels relabels it as "Scope" in the sidebar.
       setHash('q=react&format=npm&group=@types');
       const { result } = renderHook(() => useSearchUrlState());
 
       const state = result.current.readFromUrl();
       expect(state.format).toBe('npm');
-      expect(state.filters.scope).toBe('@types');
+      expect(state.filters.group).toBe('@types');
+    });
+
+    describe('legacy apiParam back-compat', () => {
+      // Bookmarked or documentation-linked URLs from before NEXUS-55106 carry
+      // per-format apiParam names that were folded into the generic
+      // group/name/version inputs.  parseUrlState still recognises them so
+      // shared links keep working.
+      it('accepts legacy maven.groupId / maven.artifactId', () => {
+        setHash('format=maven&maven.groupId=org.springframework&maven.artifactId=spring-core');
+        const { result } = renderHook(() => useSearchUrlState());
+
+        const state = result.current.readFromUrl();
+        expect(state.filters.group).toBe('org.springframework');
+        expect(state.filters.name).toBe('spring-core');
+      });
+
+      it('accepts legacy docker.imageName / docker.imageTag', () => {
+        setHash('format=docker&docker.imageName=nginx&docker.imageTag=latest');
+        const { result } = renderHook(() => useSearchUrlState());
+
+        const state = result.current.readFromUrl();
+        expect(state.filters.name).toBe('nginx');
+        expect(state.filters.version).toBe('latest');
+      });
+
+      it('accepts legacy oci.imageName / oci.imageTag', () => {
+        setHash('format=oci&oci.imageName=nginx&oci.imageTag=latest');
+        const { result } = renderHook(() => useSearchUrlState());
+
+        const state = result.current.readFromUrl();
+        expect(state.filters.name).toBe('nginx');
+        expect(state.filters.version).toBe('latest');
+      });
+
+      it('accepts legacy composer.vendor / composer.package', () => {
+        setHash('format=composer&composer.vendor=symfony&composer.package=console');
+        const { result } = renderHook(() => useSearchUrlState());
+
+        const state = result.current.readFromUrl();
+        expect(state.filters.group).toBe('symfony');
+        expect(state.filters.name).toBe('console');
+      });
+
+      it('prefers current apiParam when both legacy and current names are present', () => {
+        // The current apiParam always wins so a URL migrated in place keeps its
+        // updated value even if a stale legacy param sneaks in beside it.
+        setHash('format=maven&group=new&maven.groupId=old');
+        const { result } = renderHook(() => useSearchUrlState());
+
+        const state = result.current.readFromUrl();
+        expect(state.filters.group).toBe('new');
+      });
     });
 
     it('defaults invalid format to "all" (TC-009)', () => {
@@ -95,18 +152,19 @@ describe('useSearchUrlState', () => {
 
   describe('syncToUrl', () => {
     it('writes query, format, and filters to the URL', () => {
+      // After Task 2, maven group uses the generic filter (id='group', apiParam='group').
       const { result } = renderHook(() => useSearchUrlState());
       const state: UrlSearchState = {
         format: 'maven',
         query: 'spring',
-        filters: { groupId: 'org.apache' },
+        filters: { group: 'org.apache' },
       };
 
       result.current.syncToUrl(state);
 
       expect(window.location.hash).toContain('q=spring');
       expect(window.location.hash).toContain('format=maven');
-      expect(window.location.hash).toContain('maven.groupId=org.apache');
+      expect(window.location.hash).toContain('group=org.apache');
     });
 
     it('omits format when "all" and clears filters', () => {
@@ -226,24 +284,52 @@ describe('useSearchUrlState', () => {
       });
       expect(result.current.readFromUrl().filters.nameOrVersion).toBe('commons');
     });
+
+    it('parseUrlState reads group / name / version when format=all', () => {
+      // Generic GNV filters are registered on the 'all' format (NEXUS-55106).
+      setHash('format=all&group=g&name=n&version=v');
+      const { result } = renderHook(() => useSearchUrlState());
+
+      const state = result.current.readFromUrl();
+      expect(state.format).toBe('all');
+      expect(state.filters.group).toBe('g');
+      expect(state.filters.name).toBe('n');
+      expect(state.filters.version).toBe('v');
+    });
+
+    it('buildQueryString includes group / name / version params when format=all', () => {
+      // Proving the outbound path: filters with generic GNV ids are serialised to
+      // the URL so the user can share or bookmark a pre-filled sidebar state.
+      const { result } = renderHook(() => useSearchUrlState());
+      result.current.syncToUrl({
+        format: 'all',
+        query: '',
+        filters: { group: 'g', name: 'n', version: 'v' },
+      });
+
+      expect(window.location.hash).toContain('group=g');
+      expect(window.location.hash).toContain('name=n');
+      expect(window.location.hash).toContain('version=v');
+    });
   });
 
   describe('getShareableUrl', () => {
     beforeEach(() => setHash(''));
 
     it('produces an absolute URL carrying the state', () => {
+      // After Task 2, maven group uses the generic filter (id='group', apiParam='group').
       const { result } = renderHook(() => useSearchUrlState());
 
       const url = result.current.getShareableUrl({
         format: 'maven',
         query: 'spring',
-        filters: { groupId: 'org.apache' },
+        filters: { group: 'org.apache' },
       });
 
       expect(url).toContain('#preview/browse/search');
       expect(url).toContain('q=spring');
       expect(url).toContain('format=maven');
-      expect(url).toContain('maven.groupId=org.apache');
+      expect(url).toContain('group=org.apache');
     });
 
     it('omits format when it is "all"', () => {
@@ -346,11 +432,12 @@ describe('useSearchUrlState', () => {
     });
 
     it('never writes a value the read path would drop (AT-009)', () => {
+      // After Task 2, maven group uses the generic filter (id='group', apiParam='group').
       const { result } = renderHook(() => useSearchUrlState());
       const state = {
         format: 'maven' as const,
         query: 'q'.repeat(300),
-        filters: { groupId: 'org.apache', nameOrVersion: 'n'.repeat(300) },
+        filters: { group: 'org.apache', nameOrVersion: 'n'.repeat(300) },
       };
 
       result.current.syncToUrl(state);
@@ -359,7 +446,7 @@ describe('useSearchUrlState', () => {
       const readBack = result.current.readFromUrl();
       expect(readBack.query).toBe('');
       expect(readBack.filters.nameOrVersion).toBeUndefined();
-      expect(readBack.filters.groupId).toBe('org.apache');
+      expect(readBack.filters.group).toBe('org.apache');
       expect(readBack.format).toBe('maven');
     });
   });

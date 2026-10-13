@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.view.Payload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * String payload.
@@ -39,8 +39,8 @@ public class StringPayload
   private final String contentType;
 
   public StringPayload(final String content, final Charset charset, @Nullable final String contentType) {
-    this.contentBytes = checkNotNull(content).getBytes(charset);
-    this.charset = checkNotNull(charset);
+    this.contentBytes = requireNonNull(content).getBytes(charset);
+    this.charset = requireNonNull(charset);
     this.contentType = contentType;
   }
 

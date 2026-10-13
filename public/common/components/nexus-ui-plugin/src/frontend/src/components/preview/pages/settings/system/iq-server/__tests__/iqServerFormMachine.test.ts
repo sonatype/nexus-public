@@ -14,7 +14,7 @@
 import { interpret } from 'xstate';
 import { waitFor } from 'xstate/lib/waitFor';
 import Axios from 'axios';
-import { createIqServerFormMachine, toFormData, toUpdatePayload } from '../iqServerFormMachine';
+import { createIqServerFormMachine, fetchIqSettings, toFormData, toUpdatePayload } from '../iqServerFormMachine';
 import { DEFAULT_IQ_CONFIGURATION, PASSWORD_PLACEHOLDER } from '../types';
 
 jest.mock('axios');
@@ -53,6 +53,40 @@ describe('iqServerFormMachine', () => {
     await waitFor(service, (s) => s.matches('editing') && s.context.isPristine);
     expect(service.getSnapshot().context.data.url).toBe('https://iq-normalized');
     service.stop();
+  });
+
+  /**
+   * The IQ REST API rejects a null authenticationType with a @NotNull violation
+   * ("must not be null", localized), and GET /v1/iq returns an all-null XO while IQ has
+   * never been configured. Spreading that response over the defaults replaces the ''
+   * default with null, so the loaded form state must be normalized to a usable value.
+   */
+  it('normalizes a null authenticationType from an unconfigured server to USER', async () => {
+    mockedAxios.get.mockResolvedValue({
+      data: { enabled: false, url: null, authenticationType: null, username: null, password: null },
+    });
+
+    const data = await fetchIqSettings();
+
+    expect(data.authenticationType).toBe('USER');
+  });
+
+  it('normalizes a blank authenticationType with no username to USER', async () => {
+    // The pre-existing coercion only fired when a username was present, which is never
+    // true on a first-time setup.
+    mockedAxios.get.mockResolvedValue({ data: { ...DEFAULT_IQ_CONFIGURATION, authenticationType: '' } });
+
+    const data = await fetchIqSettings();
+
+    expect(data.authenticationType).toBe('USER');
+  });
+
+  it('does not overwrite an explicit PKI authenticationType', async () => {
+    mockedAxios.get.mockResolvedValue({ data: { ...SETTINGS, authenticationType: 'PKI' } });
+
+    const data = await fetchIqSettings();
+
+    expect(data.authenticationType).toBe('PKI');
   });
 
   describe('properties parsing', () => {

@@ -24,14 +24,26 @@
       online          BOOLEAN      NOT NULL,
       routing_rule_id ${UUID_TYPE} NULL,
       attributes      ${JSON_TYPE} NOT NULL,
+      deleted_on      TIMESTAMP WITH TIME ZONE NULL,
+      deleted_by      VARCHAR(200) NULL,
 
       CONSTRAINT pk_repository_id PRIMARY KEY (id),
       CONSTRAINT uk_repository_name UNIQUE (name)
     )
   </insert>
 
+  <!-- NEXUS-54969: explicit column list that EXCLUDES deleted_on/deleted_by. With soft-delete disabled those
+       columns may be absent, and listing them would let a SELECT's result shape drift on a live ALTER. -->
+  <sql id="repositoryColumns">
+    id, name, recipe_name, online, routing_rule_id, attributes
+  </sql>
+
   <select id="browse" resultType="ConfigurationData">
-    SELECT * FROM repository;
+    SELECT <include refid="repositoryColumns"/> FROM repository WHERE deleted_on IS NULL;
+  </select>
+
+  <select id="browseAll" resultType="ConfigurationData">
+    SELECT <include refid="repositoryColumns"/> FROM repository;
   </select>
 
   <insert id="create" parameterType="ConfigurationData">
@@ -40,35 +52,105 @@
   </insert>
 
   <select id="read" resultType="ConfigurationData">
-    SELECT * FROM repository WHERE id = #{value};
+    SELECT <include refid="repositoryColumns"/> FROM repository WHERE id = #{value} AND deleted_on IS NULL;
   </select>
 
   <select id="readByName" resultType="ConfigurationData">
-    SELECT * FROM repository WHERE name = #{value};
+    SELECT <include refid="repositoryColumns"/> FROM repository WHERE name = #{value} AND deleted_on IS NULL;
   </select>
 
   <select id="readByNames" resultType="ConfigurationData">
-    SELECT * FROM repository
-    <if test="collection != null">
-      <foreach item="repositoryName" index="index" collection="collection"
-               open="WHERE (" separator=" OR " close=")">
-        name LIKE #{repositoryName}
-      </foreach>
-    </if>
+    SELECT <include refid="repositoryColumns"/> FROM repository
+    <where>
+      deleted_on IS NULL
+      <if test="collection != null">
+        <foreach item="repositoryName" index="index" collection="collection"
+                 open=" AND (" separator=" OR " close=")">
+          name LIKE #{repositoryName}
+        </foreach>
+      </if>
+    </where>
   </select>
 
   <select id="readByIds" resultType="ConfigurationData">
-    SELECT * FROM repository
-    <if test="collection != null and !collection.isEmpty()">
-      WHERE id IN
-      <foreach item="id" collection="collection" open="(" separator="," close=")">
-        #{id}
-      </foreach>
-    </if>
+    SELECT <include refid="repositoryColumns"/> FROM repository
+    <where>
+      deleted_on IS NULL
+      <if test="collection != null and !collection.isEmpty()">
+        AND id IN
+        <foreach item="id" collection="collection" open="(" separator="," close=")">
+          #{id}
+        </foreach>
+      </if>
+    </where>
   </select>
 
   <select id="readByRecipe" resultType="ConfigurationData">
-    SELECT * FROM repository WHERE recipe_name = #{value} ORDER by id ASC;
+    SELECT <include refid="repositoryColumns"/> FROM repository WHERE recipe_name = #{value} AND deleted_on IS NULL ORDER by id ASC;
+  </select>
+
+  <!--
+    ZDU fallbacks (no deleted_on predicate) used only when the soft-delete columns are not yet migrated.
+    Pre-migration no repository can be soft-deleted, so these are logically equivalent to their filtered
+    counterparts while keeping the id/name/recipe scoping.
+  -->
+  <select id="readIgnoringSoftDelete" resultType="ConfigurationData">
+    SELECT <include refid="repositoryColumns"/> FROM repository WHERE id = #{value};
+  </select>
+
+  <select id="readByNameIgnoringSoftDelete" resultType="ConfigurationData">
+    SELECT <include refid="repositoryColumns"/> FROM repository WHERE name = #{value};
+  </select>
+
+  <select id="readByNamesIgnoringSoftDelete" resultType="ConfigurationData">
+    SELECT <include refid="repositoryColumns"/> FROM repository
+    <where>
+      <if test="collection != null">
+        <foreach item="repositoryName" index="index" collection="collection"
+                 open=" (" separator=" OR " close=")">
+          name LIKE #{repositoryName}
+        </foreach>
+      </if>
+    </where>
+  </select>
+
+  <select id="readByRecipeIgnoringSoftDelete" resultType="ConfigurationData">
+    SELECT <include refid="repositoryColumns"/> FROM repository WHERE recipe_name = #{value} ORDER by id ASC;
+  </select>
+
+  <select id="countByBlobStore" resultType="int">
+    <choose>
+      <when test="_databaseId == 'PostgreSQL'">
+        SELECT COUNT(*) FROM repository
+          WHERE attributes -&gt; 'storage' -&gt;&gt; 'blobStoreName' = #{value} AND deleted_on IS NULL
+      </when>
+      <otherwise>
+        <!-- H2 has no JSON-path query support and stores JSON compact, so match the serialized text. H2 is
+             single-node / dev-test only, so this path is never exercised under the HA scenarios that motivated
+             this query, and blob store names use a restricted charset. Two H2-only edge cases, neither reachable
+             with a valid blob store name. First, a name containing a LIKE metacharacter (% or _) can over-count;
+             that is fail-safe because it only blocks deleting an already-unused store. Second, a name containing
+             a double-quote is stored escaped and would under-count. -->
+        SELECT COUNT(*) FROM repository
+          WHERE CAST(attributes AS VARCHAR) LIKE '%"blobStoreName":"' || #{value} || '"%' AND deleted_on IS NULL
+      </otherwise>
+    </choose>
+  </select>
+
+  <!--
+    ZDU fallback (no deleted_on predicate) for countByBlobStore, used only when the soft-delete columns are
+    not yet migrated. Pre-migration no repository can be soft-deleted, so this matches countByBlobStore.
+  -->
+  <select id="countByBlobStoreIgnoringSoftDelete" resultType="int">
+    <choose>
+      <when test="_databaseId == 'PostgreSQL'">
+        SELECT COUNT(*) FROM repository WHERE attributes -&gt; 'storage' -&gt;&gt; 'blobStoreName' = #{value}
+      </when>
+      <otherwise>
+        SELECT COUNT(*) FROM repository
+          WHERE CAST(attributes AS VARCHAR) LIKE '%"blobStoreName":"' || #{value} || '"%'
+      </otherwise>
+    </choose>
   </select>
 
   <update id="update" parameterType="ConfigurationData" useGeneratedKeys="true" keyProperty="id">
@@ -90,4 +172,58 @@
     DELETE FROM repository WHERE name = #{value};
   </delete>
 
+  <!-- Soft-delete operations (NEXUS-49147) -->
+
+  <update id="softDelete">
+    UPDATE repository SET deleted_on = CURRENT_TIMESTAMP, deleted_by = #{deletedBy}
+    WHERE name = #{name} AND deleted_on IS NULL;
+  </update>
+
+  <update id="undoSoftDelete">
+    UPDATE repository SET deleted_on = NULL, deleted_by = NULL
+    WHERE name = #{name} AND deleted_on IS NOT NULL;
+  </update>
+
+  <select id="browseDeleted" resultType="ConfigurationData">
+    SELECT * FROM repository
+    WHERE deleted_on IS NOT NULL
+    <if test="continuationToken != null">
+      AND name &gt; #{continuationToken}
+    </if>
+    ORDER BY name
+    <if test="limit gt 0">LIMIT #{limit}</if>;
+  </select>
+
+  <select id="countDeleted" resultType="int">
+    SELECT COUNT(*) FROM repository WHERE deleted_on IS NOT NULL;
+  </select>
+
+  <select id="readDeleted" resultType="ConfigurationData">
+    SELECT * FROM repository WHERE name = #{name} AND deleted_on IS NOT NULL;
+  </select>
+
+  <select id="readDeletedByNameCaseInsensitive" resultType="ConfigurationData">
+    SELECT * FROM repository WHERE LOWER(name) = LOWER(#{name}) AND deleted_on IS NOT NULL;
+  </select>
+
+  <delete id="hardDelete">
+    DELETE FROM repository WHERE name = #{name} AND deleted_on IS NOT NULL;
+  </delete>
+
+  <select id="readDeletedNamesBefore" resultType="String">
+    <choose>
+      <when test="_databaseId == 'PostgreSQL'">
+        SELECT name FROM repository
+        WHERE deleted_on IS NOT NULL
+          AND deleted_on &lt;= NOW() - #{retentionDays} * INTERVAL '1' DAY
+        ORDER BY name;
+      </when>
+      <otherwise>
+        SELECT name FROM repository
+        WHERE deleted_on IS NOT NULL
+          AND deleted_on &lt;= DATEADD(DAY, 0-#{retentionDays}, NOW())
+        ORDER BY name;
+      </otherwise>
+    </choose>
+  </select>
 </mapper>

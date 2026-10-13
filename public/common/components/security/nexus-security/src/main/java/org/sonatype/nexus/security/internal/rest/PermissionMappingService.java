@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Service for mapping Nexus permissions to REST API endpoints.
@@ -58,8 +58,8 @@ public class PermissionMappingService
    */
   @Nullable
   public String getPermissionForEndpoint(final String endpoint, final String method) {
-    checkNotNull(endpoint);
-    checkNotNull(method);
+    requireNonNull(endpoint);
+    requireNonNull(method);
 
     String normalizedEndpoint = normalizeEndpoint(endpoint);
     String normalizedMethod = method.toUpperCase();
@@ -88,7 +88,7 @@ public class PermissionMappingService
    * @return list of related endpoint mappings
    */
   public List<ApiEndpointMapping> getEndpointsForPermission(final String permission) {
-    checkNotNull(permission);
+    requireNonNull(permission);
 
     // First check for exact match
     List<ApiEndpointMapping> exactMatches = permissionToEndpointsMap.get(permission);
@@ -373,10 +373,10 @@ public class PermissionMappingService
         @Nullable final String permission,
         final String description)
     {
-      this.method = checkNotNull(method);
-      this.endpoint = checkNotNull(endpoint);
+      this.method = requireNonNull(method);
+      this.endpoint = requireNonNull(endpoint);
       this.permission = permission;
-      this.description = checkNotNull(description);
+      this.description = requireNonNull(description);
 
       String patternStr = endpoint.replaceAll("\\{[^}]+\\}", "[^/]+");
       this.endpointPattern = Pattern.compile("^" + patternStr + "$");

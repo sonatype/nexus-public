@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.event.EventWithSource;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support class for the database migration events
@@ -43,7 +43,7 @@ public abstract class UpgradeEventSupport
   {
     this.user = user;
     this.schemaVersion = schemaVersion;
-    this.migrations = checkNotNull(migrations);
+    this.migrations = requireNonNull(migrations);
   }
 
   /**

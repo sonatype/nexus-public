@@ -39,7 +39,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.DISABLE_NORMALIZE_VERSION_TASK;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
@@ -77,10 +77,10 @@ public class NormalizeComponentVersionTask
       @Value("${nexus.normalize.component.version.concurrencyLimit:5}") final int concurrencyLimit)
   {
     super(true, concurrencyLimit);
-    this.normalizationPriorityService = checkNotNull(priorityService);
-    this.versionNormalizerService = checkNotNull(versionNormalizerService);
-    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
-    this.eventManager = checkNotNull(eventManager);
+    this.normalizationPriorityService = requireNonNull(priorityService);
+    this.versionNormalizerService = requireNonNull(versionNormalizerService);
+    this.globalKeyValueStore = requireNonNull(globalKeyValueStore);
+    this.eventManager = requireNonNull(eventManager);
     this.disableTask = disableTask;
   }
 

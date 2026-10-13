@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ExtJS } from '../../../../interface/ExtJS';
 
 import { canDeleteAsset, canDeleteComponent, canDeleteFolder } from './browse.api';
+import { isDeletableRepositoryType } from './browse.capabilities';
 import type { ComponentXO } from './browse.types';
 import type { ComponentData } from './detail/DetailPanel';
 import type { BrowseNode } from './tree/browse-tree.types';
@@ -37,15 +38,23 @@ import type { BrowseNode } from './tree/browse-tree.types';
  * Returns false while resolving, on error, or for unauthenticated users. Cached
  * per node so re-selection / tab switches don't re-fire the network call.
  *
+ * Repository *type* is gated locally before the preflight ever runs: group
+ * repositories have no content-maintenance facet, so Classic UI hides Delete for
+ * them outright (see {@link isDeletableRepositoryType}). An unresolved type is
+ * treated as not deletable so the action is never offered optimistically.
+ *
  * @param selectedNode        Currently selected browse tree node, or null
  * @param selectedRepository  Currently selected repository name, or undefined
  * @param componentData       Component metadata (required for component nodes;
  *                            the server signature takes a JSON-stringified XO)
+ * @param repositoryType      Type of the selected repository ('hosted' | 'proxy' |
+ *                            'group'), or undefined while it is still resolving
  */
 export function useCanDelete(
   selectedNode: BrowseNode | null,
   selectedRepository: string | undefined,
   componentData: ComponentData | null | undefined,
+  repositoryType: string | undefined,
 ): boolean {
   const user = ExtJS.useUser();
   const authenticated = Boolean(user?.authenticated);
@@ -54,6 +63,13 @@ export function useCanDelete(
 
   useEffect(() => {
     if (!authenticated || !selectedNode || !selectedRepository) {
+      setCanDelete(false);
+      return;
+    }
+
+    // Repository-type gate first: no preflight for repositories that cannot
+    // delete content at all, and none while the type is still unknown.
+    if (!isDeletableRepositoryType(repositoryType)) {
       setCanDelete(false);
       return;
     }
@@ -114,6 +130,15 @@ export function useCanDelete(
         break;
       }
       case 'folder':
+        // Classic UI's updateDeleteFolderButton only wires up the folder-delete
+        // preflight when a path is present, so a pathless node (the synthetic
+        // repository root, or a node built from an empty URL segment) never
+        // offers Delete. Without this guard an empty path would be sent to
+        // canDeleteFolder, which scopes deletion by path prefix.
+        if (!selectedNode.id) {
+          setCanDelete(false);
+          return;
+        }
         permissionPromise = canDeleteFolder(selectedNode.id, selectedRepository);
         break;
       default:
@@ -130,7 +155,7 @@ export function useCanDelete(
     return () => {
       cancelled = true;
     };
-  }, [selectedNode, selectedRepository, componentData, authenticated]);
+  }, [selectedNode, selectedRepository, componentData, authenticated, repositoryType]);
 
   return canDelete;
 }

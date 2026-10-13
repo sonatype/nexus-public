@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.view.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -43,7 +43,7 @@ public class RoutingRuleHandler
 
   @Autowired
   public RoutingRuleHandler(final RoutingRuleHelper routingRuleHelper) {
-    this.routingRuleHelper = checkNotNull(routingRuleHelper);
+    this.routingRuleHelper = requireNonNull(routingRuleHelper);
   }
 
   @Override

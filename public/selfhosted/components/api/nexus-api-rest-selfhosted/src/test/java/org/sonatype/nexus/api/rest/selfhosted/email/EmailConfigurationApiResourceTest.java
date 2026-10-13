@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
-import jakarta.validation.ValidationException;
-import jakarta.ws.rs.core.Response;
-
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailConfiguration;
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailValidation;
 import org.sonatype.nexus.common.text.Strings2;
@@ -23,12 +20,14 @@ import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension.RegisterValidator;
+import org.sonatype.nexus.validation.constraint.SsrfSafeHostValidator;
 
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.mail2.core.EmailException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -36,11 +35,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,21 +49,18 @@ import static org.mockito.Mockito.when;
 @WithUser
 class EmailConfigurationApiResourceTest
 {
+  @RegisterValidator
+  @Mock
+  SsrfSafeHostValidator ssrfSafeHostValidator;
+
   @Mock
   private EmailManager emailManager;
 
   @Mock
-  private AntiSsrfService antiSsrfService;
-
-  @Mock
   private EmailConfiguration emailConfiguration;
 
+  @InjectMocks
   private EmailConfigurationApiResource underTest;
-
-  @BeforeEach
-  void setup() {
-    underTest = new EmailConfigurationApiResource(emailManager, antiSsrfService);
-  }
 
   @Test
   void getUnconfiguredEmailConfigurationHandlesNullDefaultConfiguration() {
@@ -95,48 +91,43 @@ class EmailConfigurationApiResourceTest
 
   @Test
   void setEmailConfigurationSetsTheNewConfiguration() {
+    doReturn(true).when(ssrfSafeHostValidator).isValid(eq("smtp.example.com"), any());
     EmailConfiguration newConfiguration = mock(EmailConfiguration.class);
     String newPassword = "testPassword";
     ApiEmailConfiguration request = new ApiEmailConfiguration();
     request.setEnabled(true);
     request.setHost("smtp.example.com");
     request.setPassword(newPassword);
+    request.setPort(25);
+    request.setFromAddress("foo@example.com");
 
     when(emailManager.newConfiguration()).thenReturn(newConfiguration);
 
     underTest.setEmailConfiguration(request);
 
-    verify(antiSsrfService).validateHostWithoutCache("smtp.example.com");
+    verify(ssrfSafeHostValidator).isValid(any(), any());
     verify(emailManager).setConfiguration(newConfiguration, newPassword);
     verify(newConfiguration).setEnabled(true);
   }
 
   @Test
   void setEmailConfigurationKeepsTheOriginalPassword() {
+    doReturn(true).when(ssrfSafeHostValidator).isValid(any(), any());
     EmailConfiguration newConfiguration = mock(EmailConfiguration.class);
     when(emailManager.newConfiguration()).thenReturn(newConfiguration);
 
     ApiEmailConfiguration request = new ApiEmailConfiguration();
     request.setEnabled(true);
     request.setPassword(Strings2.EMPTY);
+    request.setPort(25);
+    request.setHost("localhost");
+    request.setFromAddress("foo@example.com");
 
     underTest.setEmailConfiguration(request);
 
+    verify(ssrfSafeHostValidator).isValid(any(), any());
     verify(newConfiguration).setEnabled(true);
     verify(emailManager).setConfiguration(newConfiguration, Strings2.EMPTY);
-  }
-
-  @Test
-  void setEmailConfiguration_blocksPrivateSmtpHost() {
-    ApiEmailConfiguration request = new ApiEmailConfiguration();
-    request.setHost("192.168.1.1");
-    doThrow(new ValidationException("SSRF protection: private network address"))
-        .when(antiSsrfService)
-        .validateHostWithoutCache("192.168.1.1");
-
-    assertThrows(ValidationException.class, () -> underTest.setEmailConfiguration(request));
-
-    verify(emailManager, never()).setConfiguration(any(), any());
   }
 
   @Test

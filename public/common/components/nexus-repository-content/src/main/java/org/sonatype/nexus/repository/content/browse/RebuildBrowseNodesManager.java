@@ -32,7 +32,7 @@ import org.sonatype.nexus.upgrade.datastore.UpgradeContext;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import org.springframework.stereotype.Component;
 
@@ -70,10 +70,10 @@ public class RebuildBrowseNodesManager
       final PeriodicJobService periodicJobService,
       final UpgradeContext upgradeContext)
   {
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.periodicJobService = checkNotNull(periodicJobService);
-    this.upgradeContext = checkNotNull(upgradeContext);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.periodicJobService = requireNonNull(periodicJobService);
+    this.upgradeContext = requireNonNull(upgradeContext);
   }
 
   @Override

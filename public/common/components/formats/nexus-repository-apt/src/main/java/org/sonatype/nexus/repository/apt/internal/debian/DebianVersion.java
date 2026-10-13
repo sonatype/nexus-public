@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * More info about debian version could be found by ref:
@@ -36,7 +36,7 @@ public class DebianVersion
   private String upstreamVersion;
 
   public DebianVersion(final String version) {
-    checkNotNull(version);
+    requireNonNull(version);
     int colonIndex = version.indexOf(':');
     int hyphenIndex = version.lastIndexOf('-');
 

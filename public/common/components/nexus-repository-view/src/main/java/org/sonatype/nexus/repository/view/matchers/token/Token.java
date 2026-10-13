@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.view.matchers.token;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A portion of a parsed pattern template.
@@ -27,7 +27,7 @@ public abstract class Token
   protected final String value;
 
   protected Token(final String value) {
-    this.value = checkNotNull(value);
+    this.value = requireNonNull(value);
   }
 
   public abstract String toRegexp();

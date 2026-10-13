@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 
 /**
@@ -71,10 +71,10 @@ public class ComponentNormalizedVersionMigrationStep
       final TaskScheduler taskScheduler,
       final UpgradeTaskScheduler startupScheduler)
   {
-    this.formats = checkNotNull(formats);
-    this.keyValueStore = checkNotNull(keyValueStore);
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.startupScheduler = checkNotNull(startupScheduler);
+    this.formats = requireNonNull(formats);
+    this.keyValueStore = requireNonNull(keyValueStore);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.startupScheduler = requireNonNull(startupScheduler);
   }
 
   @Override
@@ -129,7 +129,7 @@ public class ComponentNormalizedVersionMigrationStep
       log.info("adding missing column '{}' to {} format", COLUMN_NAME, formatName);
       alterStatement.execute(replace(ADD_COLUMN_STATEMENT, formatName));
 
-      if (!indexExists(connection, replace(INDEX_NAME, formatName))) {
+      if (!indexExists(connection, tableName, replace(INDEX_NAME, formatName))) {
         log.info("adding missing index '{}' to {} format", replace(INDEX_NAME, formatName), formatName);
         alterStatement.execute(replace(ADD_INDEX_STATEMENT, formatName));
       }

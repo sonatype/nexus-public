@@ -22,7 +22,7 @@ import org.sonatype.nexus.validation.ssrf.SsrfProtectionConfiguration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Serializable data class for storing {@link SsrfProtectionConfiguration} in the key-value store.
@@ -63,7 +63,7 @@ class SsrfProtectionConfigData
   }
 
   static SsrfProtectionConfigData from(final SsrfProtectionConfiguration config) {
-    checkNotNull(config);
+    requireNonNull(config);
     return new SsrfProtectionConfigData(config.enabled(), config.allowedIPs(), config.allowedDomains());
   }
 

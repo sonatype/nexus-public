@@ -26,7 +26,7 @@ import com.google.common.base.Splitter;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH;
 
 /**
@@ -66,7 +66,7 @@ public class AptBrowseNodeGenerator
 
   @Override
   public List<BrowsePath> computeComponentPaths(final Asset asset) {
-    checkNotNull(asset);
+    requireNonNull(asset);
 
     checkArgument(asset.component().isPresent());
     Component component = asset.component().get();

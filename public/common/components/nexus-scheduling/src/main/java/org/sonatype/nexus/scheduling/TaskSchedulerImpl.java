@@ -34,8 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED_VALUE;
 
 import org.springframework.context.annotation.Lazy;
@@ -69,9 +69,9 @@ public class TaskSchedulerImpl
       final Provider<SchedulerSPI> scheduler,
       @Value(CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED_VALUE) final boolean changeRepoBlobstoreTaskEnabled)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.taskFactory = checkNotNull(taskFactory);
-    this.scheduler = checkNotNull(scheduler);
+    this.eventManager = requireNonNull(eventManager);
+    this.taskFactory = requireNonNull(taskFactory);
+    this.scheduler = requireNonNull(scheduler);
     this.changeRepoBlobstoreTaskEnabled = changeRepoBlobstoreTaskEnabled;
   }
 
@@ -108,7 +108,7 @@ public class TaskSchedulerImpl
 
   @Override
   public TaskConfiguration createTaskConfigurationInstance(final String typeId) {
-    checkNotNull(typeId);
+    requireNonNull(typeId);
 
     TaskDescriptor descriptor = taskFactory.findDescriptor(typeId);
     checkArgument(descriptor != null, "Missing descriptor for task with type-id: %s", typeId);
@@ -133,7 +133,7 @@ public class TaskSchedulerImpl
 
   @Override
   public TaskInfo getTaskById(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
     TaskInfo taskInfo = getScheduler().getTaskById(id);
     if (null != taskInfo && includeRepoMoveTask(taskInfo)) {
       return taskInfo;
@@ -155,10 +155,10 @@ public class TaskSchedulerImpl
 
   @Override
   public TaskInfo scheduleTask(final TaskConfiguration config, final Schedule schedule) {
-    checkNotNull(config);
-    checkNotNull(schedule);
+    requireNonNull(config);
+    requireNonNull(schedule);
 
-    TaskDescriptor descriptor = checkNotNull(taskFactory.findDescriptor(config.getTypeId()));
+    TaskDescriptor descriptor = requireNonNull(taskFactory.findDescriptor(config.getTypeId()));
 
     if (descriptor.isSingletonTaskType()) {
       TaskInfo existing = getTaskByTypeId(config.getTypeId());

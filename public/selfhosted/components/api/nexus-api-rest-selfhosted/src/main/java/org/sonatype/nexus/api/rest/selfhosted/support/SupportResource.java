@@ -39,7 +39,7 @@ import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.sonatype.nexus.common.supportzip.SupportZipConstants.REST_SUPPORT_RESOURCE_URI;
@@ -64,7 +64,7 @@ public class SupportResource
 
   @Autowired
   public SupportResource(final SupportZipGenerator supportZipGenerator) {
-    this.supportZipGenerator = checkNotNull(supportZipGenerator);
+    this.supportZipGenerator = requireNonNull(supportZipGenerator);
   }
 
   @RequiresAuthentication

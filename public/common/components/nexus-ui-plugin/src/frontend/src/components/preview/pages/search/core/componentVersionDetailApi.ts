@@ -18,6 +18,7 @@ import type {
   ComponentVersionDetailRequest,
   GAAsset,
 } from './search.types';
+import { deriveFileType } from './fileType';
 
 const SEARCH_ENDPOINT = '/service/rest/v1/search';
 
@@ -55,14 +56,15 @@ interface RawSearchResponse {
 }
 
 function toAsset(raw: RawAsset, itemRepository: string): GAAsset {
-  const extension = (raw.path.split('.').pop() || 'jar').toLowerCase();
   return {
     id: raw.id,
     repository: raw.repository || itemRepository,
     path: raw.path,
     downloadUrl: raw.downloadUrl,
     format: raw.contentType || raw.format || 'application/octet-stream',
-    extension,
+    // Not `format` above: that field carries the MIME type, and the type shown in the Files
+    // tab is derived from the path plus the *repository* format. See fileType.ts.
+    extension: deriveFileType({ path: raw.path, format: raw.format }),
     classifier: undefined,
     size: raw.fileSize ?? 0,
     contentType: raw.contentType || 'application/octet-stream',

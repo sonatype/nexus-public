@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.common.log;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Emitted when the log has been marked.
@@ -24,7 +24,7 @@ public class LogMarkInsertedEvent
   private final String message;
 
   public LogMarkInsertedEvent(final String message) {
-    this.message = checkNotNull(message);
+    this.message = requireNonNull(message);
   }
 
   public String getMessage() {

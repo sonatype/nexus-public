@@ -12,20 +12,18 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.user;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-
-import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
-import org.sonatype.nexus.security.internal.rest.ApiUser;
-import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
-
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
+import org.sonatype.nexus.security.internal.rest.ApiUser;
+import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 
 /**
  * Swagger documentation for {@link UserApiResource}
@@ -41,11 +39,13 @@ public interface UserApiResourceDoc
 
   String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
 
+  String CREATE_USER_BAD_REQUEST = "Invalid user data supplied";
+
   @Operation(summary = "Create a new user in the default source.")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "User created",
           content = @Content(schema = @Schema(implementation = ApiUser.class))),
-      @ApiResponse(responseCode = "400", description = PASSWORD_REQUIRED),
+      @ApiResponse(responseCode = "400", description = CREATE_USER_BAD_REQUEST),
       @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
   ApiUser createUser(
       @Parameter(description = "A representation of the user to create.") @NotNull @Valid ApiCreateUser user);

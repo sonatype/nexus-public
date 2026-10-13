@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.scheduling.Cancelable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -61,9 +61,9 @@ public class PurgeMavenUnusedSnapshotsTask
       @Qualifier(HostedType.NAME) final Type hostedType,
       @Qualifier(Maven2Format.NAME) final Format maven2Format)
   {
-    this.groupType = checkNotNull(groupType);
-    this.hostedType = checkNotNull(hostedType);
-    this.maven2Format = checkNotNull(maven2Format);
+    this.groupType = requireNonNull(groupType);
+    this.hostedType = requireNonNull(hostedType);
+    this.maven2Format = requireNonNull(maven2Format);
   }
 
   @Override

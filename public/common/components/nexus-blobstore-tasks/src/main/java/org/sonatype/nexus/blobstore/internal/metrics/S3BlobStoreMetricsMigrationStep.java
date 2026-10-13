@@ -31,7 +31,7 @@ import org.sonatype.nexus.upgrade.datastore.UpgradeCooperation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 import org.springframework.stereotype.Component;
 
@@ -64,9 +64,9 @@ public class S3BlobStoreMetricsMigrationStep
       final UpgradeCooperation upgradeCooperation)
   {
     super(BLOB_STORE_TYPE);
-    this.kv = checkNotNull(kv);
-    this.objectMapper = checkNotNull(objectMapper);
-    this.cooperation = checkNotNull(upgradeCooperation).get(NAME);
+    this.kv = requireNonNull(kv);
+    this.objectMapper = requireNonNull(objectMapper);
+    this.cooperation = requireNonNull(upgradeCooperation).get(NAME);
   }
 
   @Override

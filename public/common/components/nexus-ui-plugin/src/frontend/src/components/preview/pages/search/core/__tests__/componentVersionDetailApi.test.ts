@@ -130,6 +130,53 @@ describe('fetchComponentVersionDetail', () => {
     expect(result.assets[0].extension).toBe('pom');
   });
 
+  it('labels an extensionless NuGet asset by format, not by a version fragment (AT-002)', async () => {
+    // NEXUS-54612: NuGet packages live at /{id}/{version}, so splitting on '.' used to yield
+    // the last version segment — "16343" — as the file type.
+    mockedAxios.get.mockResolvedValue({
+      data: {
+        items: [
+          {
+            ...row('nuget-hosted', '2.0.20126.16343'),
+            format: 'nuget',
+            assets: [
+              {
+                ...asset('/System.Net.Http/2.0.20126.16343'),
+                format: 'nuget',
+                contentType: 'application/octet-stream',
+              },
+            ],
+          },
+        ],
+        continuationToken: null,
+      },
+    });
+
+    const result = await fetchComponentVersionDetail(REQ);
+
+    expect(result.assets[0].extension).toBe('nupkg');
+  });
+
+  it('never falls back to jar for an extensionless asset (AT-002)', async () => {
+    // The old default was 'jar', which mislabelled every extensionless asset in every
+    // non-maven format.
+    mockedAxios.get.mockResolvedValue({
+      data: {
+        items: [
+          {
+            ...row('raw-hosted', '1.0.0'),
+            assets: [{ ...asset('docs/README'), format: 'raw' }],
+          },
+        ],
+        continuationToken: null,
+      },
+    });
+
+    const result = await fetchComponentVersionDetail(REQ);
+
+    expect(result.assets[0].extension).not.toBe('jar');
+  });
+
   it('stops at MAX_DETAIL_PAGES when the token never clears', async () => {
     mockedAxios.get.mockResolvedValue({
       data: { items: [row('r', '1.0.500')], continuationToken: 'never-ends' },

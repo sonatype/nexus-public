@@ -18,7 +18,7 @@ import com.google.common.primitives.Ints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for {@link ContentSource} implementations.
@@ -40,8 +40,8 @@ public abstract class ContentSourceSupport
    * @since 3.0
    */
   public ContentSourceSupport(final Type type, final String path, final Priority priority) {
-    this.type = checkNotNull(type);
-    this.path = normalize(checkNotNull(path));
+    this.type = requireNonNull(type);
+    this.path = normalize(requireNonNull(path));
     setPriority(priority);
   }
 
@@ -64,7 +64,7 @@ public abstract class ContentSourceSupport
   }
 
   public void setPriority(final Priority priority) {
-    this.priority = checkNotNull(priority);
+    this.priority = requireNonNull(priority);
   }
 
   /**

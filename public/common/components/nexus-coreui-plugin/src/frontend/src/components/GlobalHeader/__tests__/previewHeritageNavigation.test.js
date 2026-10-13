@@ -128,6 +128,19 @@ describe('getHeritageEquivalent', () => {
     it('strips leading slash', () => {
       expect(getHeritageEquivalent('/preview/admin/iq')).toBe('admin/iq');
     });
+
+    it('maps trash to Classic browse/trash, not browse/browse:trash', () => {
+      // Without an explicit mapping the path falls through to the
+      // preview/browse/<repo> catch-all and produces "browse/browse:trash" —
+      // an extra "browse:" segment the Classic UI cannot resolve, so the
+      // toggle button shows an "undefined" error.
+      expect(getHeritageEquivalent('preview/browse/trash')).toBe('browse/trash');
+    });
+
+    it('preserves query string on the trash route', () => {
+      expect(getHeritageEquivalent('preview/browse/trash?sort=deletedOn:desc'))
+        .toBe('browse/trash?sort=deletedOn:desc');
+    });
   });
 });
 

@@ -35,12 +35,14 @@ import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetRestoredEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentRestoredEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentUpdatedEvent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.store.InternalIds;
@@ -57,7 +59,7 @@ import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.Integer.parseInt;
 import static java.lang.Thread.MIN_PRIORITY;
 import static java.util.Optional.ofNullable;
@@ -131,8 +133,8 @@ public abstract class SearchEventHandler
       @Value("${" + NO_PURGE_DELAY_KEY + ":true}") final boolean noPurgeDelay,
       @Value("${" + FLUSH_POOL_SIZE + ":128}") final int poolSize)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.periodicJobService = checkNotNull(periodicJobService);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.periodicJobService = requireNonNull(periodicJobService);
     checkArgument(flushOnCount > 0, FLUSH_ON_COUNT_KEY + " must be positive");
     this.flushOnCount = flushOnCount;
     checkArgument(flushOnSeconds > 0, FLUSH_ON_SECONDS_KEY + " must be positive");
@@ -253,6 +255,12 @@ public abstract class SearchEventHandler
 
   @AllowConcurrentEvents
   @Subscribe
+  public void on(final ComponentRestoredEvent event) {
+    requestIndex(event);
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
   public void on(final AssetCreatedEvent event) {
     requestIndex(event);
   }
@@ -267,6 +275,12 @@ public abstract class SearchEventHandler
   @Subscribe
   public void on(final AssetDeletedEvent event) {
     requestIndex(event); // update the component search document on asset delete
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final AssetRestoredEvent event) {
+    requestIndex(event); // re-index the component search document on asset restore (NEXUS-51733)
   }
 
   @AllowConcurrentEvents
@@ -492,11 +506,22 @@ public abstract class SearchEventHandler
                 repository -> repository.optionalFacet(SearchFacet.class)
                     .ifPresent(
                         searchFacet -> {
-                          if (repoTag.startsWith(INDEX.name())) {
-                            searchFacet.index(componentIds);
+                          try {
+                            if (repoTag.startsWith(INDEX.name())) {
+                              searchFacet.index(componentIds);
+                            }
+                            else {
+                              searchFacet.purge(componentIds);
+                            }
                           }
-                          else {
-                            searchFacet.purge(componentIds);
+                          catch (IllegalStateException e) {
+                            // Repository stopped/deleted (e.g. a concurrent delete) between
+                            // repositoryManager.get() and index/purge; SearchFacet.index/purge are
+                            // @Guarded(by = STARTED). Skip it and keep flushing the rest of the page rather
+                            // than aborting the periodic flush -- same silent-drop semantics as
+                            // flushPendingForRepository(). See NEXUS-54229.
+                            log.debug("Skipping search flush for stopped/deleted repository {}: {}",
+                                repository.getName(), e.getMessage());
                           }
                         })));
   }

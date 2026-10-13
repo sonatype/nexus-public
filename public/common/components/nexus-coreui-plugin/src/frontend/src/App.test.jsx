@@ -35,10 +35,6 @@ jest.mock('./components/login/SelfHostedLoginPageWrapper', () => {
   return () => (<main><h1>Login Test Mock</h1></main>);
 });
 
-jest.mock('./components/login/LoginPageRadix', () => {
-  return () => (<main><h1>Login Test Mock</h1></main>);
-});
-
 // Phase 1: Mock Context providers to use ExtJS state directly in tests
 jest.mock('./contexts/AuthContext', () => ({
   AuthProvider: ({ children }) => children,

@@ -54,8 +54,8 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
@@ -113,9 +113,9 @@ public class S3BlobStoreDescriptor
       final AntiSsrfService antiSsrfService)
   {
     super(quotaService);
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.capabilityRegistryProvider = checkNotNull(capabilityRegistryProvider);
-    this.antiSsrfService = checkNotNull(antiSsrfService);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.capabilityRegistryProvider = requireNonNull(capabilityRegistryProvider);
+    this.antiSsrfService = requireNonNull(antiSsrfService);
   }
 
   @Override

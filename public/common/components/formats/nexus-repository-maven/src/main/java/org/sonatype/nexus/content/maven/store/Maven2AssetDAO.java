@@ -42,5 +42,6 @@ public interface Maven2AssetDAO
       @Param("repositoryId") int repositoryId,
       @Param("limit") int limit,
       @Nullable @Param("continuationToken") String continuationToken,
-      @Param("namespace") String namespace);
+      @Param("namespace") String namespace,
+      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
 }

@@ -20,8 +20,9 @@ import java.sql.SQLException;
 import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.scheduling.TaskSupport;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -53,11 +54,9 @@ public class CreateSearchTextPatternOpsIndexTask
   {
   }
 
-  private static final String CHECK_INDEX_EXISTS_SQL = "SELECT 1 FROM pg_indexes WHERE indexname = ?";
-
   private static final String CHECK_INDEX_INVALID_SQL =
       "SELECT 1 FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid "
-          + "WHERE c.relname = ? AND NOT i.indisvalid";
+          + "WHERE i.indrelid = to_regclass(?) AND c.relname = ? AND NOT i.indisvalid";
 
   private static final String DROP_INDEX_IF_EXISTS_SQL = "DROP INDEX IF EXISTS %s";
 
@@ -70,9 +69,15 @@ public class CreateSearchTextPatternOpsIndexTask
 
   private final DataSessionSupplier dataSessionSupplier;
 
+  private final DatabaseMigrationUtility databaseMigrationUtility;
+
   @Autowired
-  public CreateSearchTextPatternOpsIndexTask(final DataSessionSupplier dataSessionSupplier) {
-    this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
+  public CreateSearchTextPatternOpsIndexTask(
+      final DataSessionSupplier dataSessionSupplier,
+      final DatabaseMigrationUtility databaseMigrationUtility)
+  {
+    this.dataSessionSupplier = requireNonNull(dataSessionSupplier);
+    this.databaseMigrationUtility = requireNonNull(databaseMigrationUtility);
   }
 
   @Override
@@ -83,12 +88,12 @@ public class CreateSearchTextPatternOpsIndexTask
   @Override
   protected Object execute() throws Exception {
     try (Connection connection = dataSessionSupplier.openConnection("nexus")) {
-      if (!isPostgresql(connection)) {
+      if (!databaseMigrationUtility.isPostgresql(connection)) {
         log.debug("Not PostgreSQL, skipping text_pattern_ops index creation");
         return 0;
       }
 
-      if (!tableExists(connection, SEARCH_COMPONENTS_TABLE)) {
+      if (!databaseMigrationUtility.tableExists(connection, SEARCH_COMPONENTS_TABLE)) {
         log.info("Table {} does not exist, skipping text_pattern_ops index creation", SEARCH_COMPONENTS_TABLE);
         return 0;
       }
@@ -133,7 +138,7 @@ public class CreateSearchTextPatternOpsIndexTask
       final String indexName,
       final String column) throws SQLException
   {
-    if (indexExists(connection, indexName)) {
+    if (databaseMigrationUtility.indexExists(connection, SEARCH_COMPONENTS_TABLE, indexName)) {
       log.info("Index {} already exists, skipping creation", indexName);
       return;
     }
@@ -147,18 +152,14 @@ public class CreateSearchTextPatternOpsIndexTask
 
   private void dropInvalidIndex(final Connection connection, final String indexName) {
     try {
-      try (PreparedStatement stmt = connection.prepareStatement(CHECK_INDEX_EXISTS_SQL)) {
-        stmt.setString(1, indexName);
-        try (ResultSet rs = stmt.executeQuery()) {
-          if (rs.next()) {
-            try (PreparedStatement invalidStmt = connection.prepareStatement(CHECK_INDEX_INVALID_SQL)) {
-              invalidStmt.setString(1, indexName);
-              try (ResultSet invalidRs = invalidStmt.executeQuery()) {
-                if (invalidRs.next()) {
-                  runStatement(connection, "DROP INDEX CONCURRENTLY IF EXISTS " + indexName);
-                  log.warn("Dropped invalid index: {}", indexName);
-                }
-              }
+      if (databaseMigrationUtility.indexExists(connection, SEARCH_COMPONENTS_TABLE, indexName)) {
+        try (PreparedStatement invalidStmt = connection.prepareStatement(CHECK_INDEX_INVALID_SQL)) {
+          invalidStmt.setString(1, SEARCH_COMPONENTS_TABLE);
+          invalidStmt.setString(2, indexName);
+          try (ResultSet invalidRs = invalidStmt.executeQuery()) {
+            if (invalidRs.next()) {
+              runStatement(connection, "DROP INDEX CONCURRENTLY IF EXISTS " + indexName);
+              log.warn("Dropped invalid index: {}", indexName);
             }
           }
         }
@@ -171,28 +172,6 @@ public class CreateSearchTextPatternOpsIndexTask
 
   private void dropIndexIfExists(final Connection connection, final String indexName) throws SQLException {
     runStatement(connection, String.format(DROP_INDEX_IF_EXISTS_SQL, indexName));
-  }
-
-  private boolean isPostgresql(final Connection connection) throws SQLException {
-    return "PostgreSQL".equals(connection.getMetaData().getDatabaseProductName());
-  }
-
-  private boolean tableExists(final Connection connection, final String tableName) throws SQLException {
-    try (PreparedStatement stmt = connection.prepareStatement("SELECT to_regclass(?)")) {
-      stmt.setString(1, tableName);
-      try (ResultSet rs = stmt.executeQuery()) {
-        return rs.next() && rs.getObject(1) != null;
-      }
-    }
-  }
-
-  private boolean indexExists(final Connection connection, final String indexName) throws SQLException {
-    try (PreparedStatement stmt = connection.prepareStatement(CHECK_INDEX_EXISTS_SQL)) {
-      stmt.setString(1, indexName);
-      try (ResultSet rs = stmt.executeQuery()) {
-        return rs.next();
-      }
-    }
   }
 
   private void runStatement(final Connection connection, final String sql) throws SQLException {

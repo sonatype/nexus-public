@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Hold the information needed for importing from an InputStream
@@ -56,9 +56,9 @@ public class ImportStreamConfiguration
       final String assetName,
       @Nullable final String contentType)
   {
-    this.repository = checkNotNull(repository);
-    this.inputStream = checkNotNull(inputStream);
-    this.assetName = checkNotNull(assetName);
+    this.repository = requireNonNull(repository);
+    this.inputStream = requireNonNull(inputStream);
+    this.assetName = requireNonNull(assetName);
     this.contentType = contentType;
   }
 

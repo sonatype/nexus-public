@@ -61,7 +61,8 @@ public interface Maven2ComponentDAO
    */
   Set<GAV> findGavsWithSnaphots(
       @Param("repositoryId") final int repositoryId,
-      @Param("minimumRetained") final int minimumRetained);
+      @Param("minimumRetained") final int minimumRetained,
+      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
 
   /**
    * Find components by Group Artifact Version(GAVs)
@@ -82,7 +83,8 @@ public interface Maven2ComponentDAO
       @Param("name") final String name,
       @Param("group") final String group,
       @Param("baseVersion") final String baseVersion,
-      @Param("releaseVersion") final String releaseVersion);
+      @Param("releaseVersion") final String releaseVersion,
+      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
 
   /**
    * Retrieve known base versions for a provided GA.
@@ -96,7 +98,8 @@ public interface Maven2ComponentDAO
   Set<String> getBaseVersions(
       @Param("repositoryId") int repositoryId,
       @Param("namespace") String namespace,
-      @Param("name") String name);
+      @Param("name") String name,
+      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
 
   /**
    * Find snapshots to delete for which a release version exists
@@ -109,7 +112,8 @@ public interface Maven2ComponentDAO
    */
   int[] selectSnapshotsAfterRelease(
       @Param("repositoryId") final int repositoryId,
-      @Param("gracePeriod") final int gracePeriod);
+      @Param("gracePeriod") final int gracePeriod,
+      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
 
   /**
    * Selects snapshot components ids last used before provided date
@@ -124,7 +128,8 @@ public interface Maven2ComponentDAO
   Collection<Integer> selectUnusedSnapshots(
       @Param("repositoryId") int repositoryId,
       @Param("olderThan") LocalDate olderThan,
-      @Param("limit") long limit);
+      @Param("limit") long limit,
+      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
 
   @Override
   @ResultMap("OrderedComponentDataMap")

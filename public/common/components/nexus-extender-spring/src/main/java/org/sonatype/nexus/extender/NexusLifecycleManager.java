@@ -39,7 +39,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Lists.reverse;
 import static java.lang.Math.max;
 import static org.sonatype.nexus.common.app.FeatureFlags.STARTUP_TASKS_DELAY_SECONDS_VALUE;
@@ -76,7 +76,7 @@ public class NexusLifecycleManager
       final ApplicationContext context)
   {
     this.timeToDelay = timeToDelay;
-    this.context = checkNotNull(context);
+    this.context = requireNonNull(context);
   }
 
   @Override

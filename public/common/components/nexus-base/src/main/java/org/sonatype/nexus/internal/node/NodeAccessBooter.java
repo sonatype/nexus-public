@@ -23,8 +23,8 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.isNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 
 /**
@@ -44,8 +44,8 @@ public class NodeAccessBooter
 
   @Autowired
   public NodeAccessBooter(final ObjectProvider<NodeIdInitializer> nodeIdInitializer, final NodeAccess nodeAccess) {
-    this.nodeIdInitializer = checkNotNull(nodeIdInitializer);
-    this.nodeAccess = checkNotNull(nodeAccess);
+    this.nodeIdInitializer = requireNonNull(nodeIdInitializer);
+    this.nodeAccess = requireNonNull(nodeAccess);
   }
 
   @Override

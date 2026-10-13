@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Component-led layout based on group, name, and version; places assets one level below their components.
@@ -43,7 +43,7 @@ public class DefaultBrowseNodeGenerator
    */
   @Override
   public List<BrowsePath> computeAssetPaths(final Asset asset) {
-    checkNotNull(asset);
+    requireNonNull(asset);
 
     if (asset.component().isPresent()) {
       // place asset one level beneath component, using the asset's name as the display name
@@ -62,7 +62,7 @@ public class DefaultBrowseNodeGenerator
    */
   @Override
   public List<BrowsePath> computeComponentPaths(final Asset asset) {
-    checkNotNull(asset);
+    requireNonNull(asset);
 
     List<String> paths = new ArrayList<>();
 

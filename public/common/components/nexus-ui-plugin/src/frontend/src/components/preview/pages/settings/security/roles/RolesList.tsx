@@ -12,8 +12,8 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Flex, Text, TextField, IconButton, Tooltip } from '@radix-ui/themes';
-import { Search, Lock, Shield, Plus, Pencil, Trash2, Eye } from 'lucide-react';
+import { Box, Flex, Text, TextField, IconButton } from '@radix-ui/themes';
+import { Search, Lock, Shield, Plus } from 'lucide-react';
 
 import {
   EntityTable,
@@ -41,7 +41,7 @@ type ManagementType = 'user' | 'system';
 /**
  * RolesList - Displays roles using SUPER UI/UX standard
  */
-export function RolesList({ onSelect, onDelete, onCreate, canUpdate = true, canDelete = true }: RolesListProps) {
+export function RolesList({ onSelect, onCreate }: RolesListProps) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [filter, setFilter] = useState('');
   const [managementFilter, setManagementFilter] = useState<ManagementType[]>([]);
@@ -166,7 +166,7 @@ export function RolesList({ onSelect, onDelete, onCreate, canUpdate = true, canD
   }, [sortField, sortDirection]);
 
   const handleRowClick = useCallback((role: Role) => {
-    onSelect(role.id, 'profile');
+    onSelect(role.id);
   }, [onSelect]);
 
   const handleFilterChange = useCallback((sectionId: string, value: string | string[]) => {
@@ -249,56 +249,7 @@ export function RolesList({ onSelect, onDelete, onCreate, canUpdate = true, canD
       sortable: true,
       width: '300px',
     },
-    {
-      id: 'actions',
-      header: '',
-      accessor: (role) => (
-        <Flex gap="2" justify="end">
-          {/* View button for all roles */}
-          <Tooltip content="View Role">
-            <IconButton
-              variant="ghost"
-              size="1"
-              onClick={(e) => { e.stopPropagation(); onSelect(role.id, 'profile'); }}
-              aria-label={`View ${role.name}`}
-            >
-              <Eye size={14} />
-            </IconButton>
-          </Tooltip>
-          {/* Edit and Delete only for non-read-only roles */}
-          {!isReadOnlyRole(role) && (
-            <>
-              {canUpdate && (
-                <Tooltip content="Edit Role">
-                  <IconButton
-                    variant="ghost"
-                    size="1"
-                    onClick={(e) => { e.stopPropagation(); onSelect(role.id, 'edit'); }}
-                    aria-label={`Edit ${role.name}`}
-                  >
-                    <Pencil size={14} />
-                  </IconButton>
-                </Tooltip>
-              )}
-              {canDelete && onDelete && (
-                <Tooltip content="Delete Role">
-                  <IconButton
-                    variant="ghost"
-                    size="1"
-                    onClick={(e) => { e.stopPropagation(); onDelete(role.id, role.name); }}
-                    aria-label={`Delete ${role.name}`}
-                  >
-                    <Trash2 size={14} />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </>
-          )}
-        </Flex>
-      ),
-      width: '120px',
-    },
-  ], [onSelect, onDelete, canUpdate, canDelete]);
+  ], []);
 
   // Empty state
   const emptyState = useMemo(() => {
@@ -427,7 +378,6 @@ export function RolesList({ onSelect, onDelete, onCreate, canUpdate = true, canD
             label: 'View Documentation',
             href: 'http://links.sonatype.com/products/nxrm3/docs/roles',
           }}
-          className="roles-list__help"
         />
       </Box>
     </Flex>

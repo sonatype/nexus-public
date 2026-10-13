@@ -20,6 +20,15 @@ public interface NexusEdition
 
   String getName();
 
+  /**
+   * Short, display-oriented name for the edition.
+   * <p>
+   * <b>Not a unique identifier.</b> Professional and Cloud both return {@code "PRO"}, so a
+   * short-name comparison cannot tell a self-hosted Pro instance from a Cloud one. Use
+   * {@link #getId()} for identity. Note that reading the {@code nexus.edition} property as a
+   * {@code String} yields this short name rather than the id, because a converter is registered
+   * for it during bootstrap.
+   */
   String getShortName();
 
   int getPriority();

@@ -35,7 +35,7 @@ import org.sonatype.nexus.validation.ConstraintViolations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.DELETE;
@@ -61,7 +61,7 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
 
   @Autowired
   public void installComponents(final Provider<CapabilityRegistry> capabilityRegistry) {
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
   }
 
   @Override
@@ -116,7 +116,7 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
   @Autowired
   public void installValidationComponents(final Provider<Validator> validatorProvider) {
     checkState(this.validatorProvider == null);
-    this.validatorProvider = checkNotNull(validatorProvider);
+    this.validatorProvider = requireNonNull(validatorProvider);
   }
 
   @Override
@@ -150,8 +150,8 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
   }
 
   protected void validateConfig(final Map<String, String> properties, final ValidationMode validationMode) {
-    checkNotNull(properties);
-    checkNotNull(validationMode);
+    requireNonNull(properties);
+    requireNonNull(validationMode);
 
     ConfigT config = createConfig(properties);
     if (config != null) {
@@ -160,8 +160,8 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
   }
 
   protected void validate(final Object value, final Class<?> validationGroup) {
-    checkNotNull(value);
-    checkNotNull(validationGroup);
+    requireNonNull(value);
+    requireNonNull(validationGroup);
     List<Class<?>> validationGroups = asList(validationGroup, Default.class);
 
     if (log.isTraceEnabled()) {
@@ -177,8 +177,8 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
       @Nullable final CapabilityIdentity id,
       final Map<String, String> properties)
   {
-    checkNotNull(properties);
-    checkNotNull(capabilityRegistry);
+    requireNonNull(properties);
+    requireNonNull(capabilityRegistry);
 
     CapabilityReferenceFilter filter = capabilities().withType(type());
     if (id != null) {
@@ -236,7 +236,7 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
 
   @Autowired
   public void setTemplateHelper(final TemplateHelper templateHelper) {
-    this.templateHelper = checkNotNull(templateHelper);
+    this.templateHelper = requireNonNull(templateHelper);
   }
 
   protected String render(final String template, final TemplateParameters params) {

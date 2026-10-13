@@ -20,6 +20,7 @@ import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsButton, SettingsAlert } from '../../../../shared/form';
 import { PageHeader } from '../../../../shared';
+import { useIsLicensedEdition } from '../../../../shared/hooks';
 
 import './UpgradePage.scss';
 
@@ -37,8 +38,7 @@ export function UpgradePage({ className }: UpgradePageProps) {
   const license = ExtJS.useLicense();
 
   const currentVersion = status?.version || 'Unknown';
-  const edition = status?.edition || 'OSS';
-  const isPro = edition === 'PRO';
+  const isLicensedEdition = useIsLicensedEdition();
 
   return (
     <Box className={`upgrade-page ${className || ''}`.trim()}>
@@ -61,12 +61,12 @@ export function UpgradePage({ className }: UpgradePageProps) {
               Nexus Repository {currentVersion}
             </Heading>
             <Flex align="center" gap="2" className="upgrade-page__edition">
-              <Badge 
-                color={isPro ? 'blue' : 'gray'} 
+              <Badge
+                color={isLicensedEdition ? 'blue' : 'gray'}
                 variant="soft"
                 size="2"
               >
-                {isPro ? 'Professional Edition' : 'OSS Edition'}
+                {isLicensedEdition ? 'Professional Edition' : 'OSS Edition'}
               </Badge>
               {license?.daysToExpiry !== undefined && license.daysToExpiry > 0 && (
                 <Badge color="green" variant="outline" size="1">
@@ -155,7 +155,7 @@ export function UpgradePage({ className }: UpgradePageProps) {
       </Box>
 
       {/* Pro Edition Upgrade (for OSS users) */}
-      {!isPro && (
+      {!isLicensedEdition && (
         <Card className="upgrade-page__pro-card">
           <Flex align="start" gap="4">
             <Box className="upgrade-page__pro-icon-wrapper">

@@ -21,7 +21,8 @@ public class SearchTokenizer
   private static final String QUOTE = "'";
 
   public static String tsEscape(final String term) {
-    return QUOTE + term.toLowerCase().replace("\\", "\\\\").replace(QUOTE, "\\'") + QUOTE;
+    // NEXUS-54105: strip NUL bytes from indexing path input to avoid PSQLException.
+    return QUOTE + term.replace("\u0000", "").toLowerCase().replace("\\", "\\\\").replace(QUOTE, "\\'") + QUOTE;
   }
 
   /**

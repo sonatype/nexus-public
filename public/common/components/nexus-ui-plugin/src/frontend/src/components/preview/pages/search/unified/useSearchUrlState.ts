@@ -62,6 +62,36 @@ export interface UseSearchUrlStateReturn {
 const VALID_FORMATS = new Set<string>(Object.keys(FORMATS));
 
 /**
+ * Legacy API param names that were replaced when a per-format filter row was
+ * folded into the generic group/name/version inputs.  Bookmarked or documented
+ * URLs from before the refactor still carry these names, so we accept them on
+ * read and map them onto the generic filter id.  Writes always use the current
+ * apiParam.
+ *
+ * Keyed by format, then by legacy apiParam → target generic filter id.
+ * (npm previously used the generic apiParam `group` for scope, and raw had no
+ * name row at all — both need no entry here.)
+ */
+const LEGACY_API_PARAM_ALIASES: Partial<Record<SearchFormat, Record<string, 'group' | 'name' | 'version'>>> = {
+  maven: {
+    'maven.groupId': 'group',
+    'maven.artifactId': 'name',
+  },
+  docker: {
+    'docker.imageName': 'name',
+    'docker.imageTag': 'version',
+  },
+  oci: {
+    'oci.imageName': 'name',
+    'oci.imageTag': 'version',
+  },
+  composer: {
+    'composer.vendor': 'group',
+    'composer.package': 'name',
+  },
+};
+
+/**
  * Valid sort fields for validation, derived from the options the sort controls
  * actually offer. Deriving rather than duplicating the list means a URL can
  * never carry a sort field the controls cannot display — which would leave the
@@ -158,6 +188,21 @@ function parseUrlState(): UrlSearchState {
     const value = readSafeParam(params, filterDef.apiParam);
     if (value) {
       filters[filterDef.id] = value;
+    }
+  }
+
+  // Accept legacy apiParam names for bookmarked/shared URLs written before the
+  // per-format group/name/version rows were folded into the generic inputs.
+  // Only fill a generic filter if the current parse did not already set it
+  // from the current apiParam — the current name always wins on read.
+  const legacyMap = LEGACY_API_PARAM_ALIASES[format];
+  if (legacyMap) {
+    for (const [legacyParam, targetId] of Object.entries(legacyMap)) {
+      if (filters[targetId]) continue;
+      const value = readSafeParam(params, legacyParam);
+      if (value) {
+        filters[targetId] = value;
+      }
     }
   }
 

@@ -138,8 +138,9 @@ jest.mock('../../../../../interface/ExtJS', () => ({
     state: jest.fn().mockReturnValue({
       getValue: jest.fn().mockReturnValue(false),
     }),
-    isProEdition: jest.fn().mockReturnValue(false),
+    isLicensedEdition: jest.fn().mockReturnValue(false),
     useUser: jest.fn().mockReturnValue({ administrator: false }),
+    useState: jest.fn((getValue) => getValue()),
   },
 }));
 
@@ -575,7 +576,7 @@ describe('SettingsHubPage', () => {
 
   describe('Pro Edition Filtering', () => {
     beforeEach(() => {
-      jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(true);
+      jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(true);
       jest.spyOn(ExtJS, 'useUser').mockReturnValue({ administrator: true });
     });
 
@@ -590,7 +591,7 @@ describe('SettingsHubPage', () => {
     });
 
     it('hides proOnly cards on CE/OSS', () => {
-      jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(false);
+      jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(false);
 
       renderWithTheme(<SettingsHubPage />);
 
@@ -601,7 +602,7 @@ describe('SettingsHubPage', () => {
   describe('Admin Visibility', () => {
     beforeEach(() => {
       // Pro edition on so proOnly cards aren't filtered out
-      jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(true);
+      jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -718,6 +719,79 @@ describe('SettingsHubPage', () => {
 
       // Usage is cloudOnly: true, so it must not appear on self-hosted
       expect(screen.queryByText('Usage')).not.toBeInTheDocument();
+    });
+  });
+
+  // Deployment (isCloud) and edition (isLicensedEdition) are independent filter passes; this locks the full 2x2 matrix.
+  describe('Deployment and edition axis separation', () => {
+    const PRO_ONLY_CARD = 'IP Allow List';      // proOnly + adminOnly
+    const CLOUD_ONLY_CARD = 'Usage';            // cloudOnly
+    const CLOUD_EXCLUDED_CARD = 'Blob Stores';  // cloudExcluded
+    const ALWAYS_VISIBLE_CARD = 'Repositories'; // no deployment/edition gating
+
+    const setDeployment = (cloud: boolean) => {
+      (ExtJS.state as jest.Mock).mockReturnValue({
+        getValue: jest.fn().mockImplementation((key: string) => key === 'isCloud' && cloud),
+      });
+    };
+
+    beforeEach(() => {
+      // Admin required for the adminOnly PRO_ONLY_CARD; held true so edition is the only variable.
+      jest.spyOn(ExtJS, 'useUser').mockReturnValue({ administrator: true });
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+      (ExtJS.state as jest.Mock).mockReturnValue({
+        getValue: jest.fn().mockReturnValue(false),
+      });
+    });
+
+    it('self-hosted community hides pro-only and cloud-only cards', () => {
+      setDeployment(false);
+      jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(false);
+
+      renderWithTheme(<SettingsHubPage />);
+
+      expect(screen.queryByText(PRO_ONLY_CARD)).not.toBeInTheDocument();
+      expect(screen.queryByText(CLOUD_ONLY_CARD)).not.toBeInTheDocument();
+      expect(screen.getByText(CLOUD_EXCLUDED_CARD)).toBeInTheDocument();
+      expect(screen.getByText(ALWAYS_VISIBLE_CARD)).toBeInTheDocument();
+    });
+
+    it('self-hosted pro shows pro-only and hides cloud-only cards', () => {
+      setDeployment(false);
+      jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(true);
+
+      renderWithTheme(<SettingsHubPage />);
+
+      expect(screen.getByText(PRO_ONLY_CARD)).toBeInTheDocument();
+      expect(screen.queryByText(CLOUD_ONLY_CARD)).not.toBeInTheDocument();
+      expect(screen.getByText(CLOUD_EXCLUDED_CARD)).toBeInTheDocument();
+    });
+
+    it('cloud pro shows pro-only and cloud-only cards and hides cloud-excluded', () => {
+      setDeployment(true);
+      jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(true);
+
+      renderWithTheme(<SettingsHubPage />);
+
+      expect(screen.getByText(PRO_ONLY_CARD)).toBeInTheDocument();
+      expect(screen.getByText(CLOUD_ONLY_CARD)).toBeInTheDocument();
+      expect(screen.queryByText(CLOUD_EXCLUDED_CARD)).not.toBeInTheDocument();
+    });
+
+    it('cloud community hides pro-only cards independently of deployment', () => {
+      // Previously proOnly was nested under !isCloud, so a non-pro cloud tier leaked pro-only cards.
+      setDeployment(true);
+      jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(false);
+
+      renderWithTheme(<SettingsHubPage />);
+
+      expect(screen.queryByText(PRO_ONLY_CARD)).not.toBeInTheDocument();
+      // Deployment axis stays independent: cloud-only shown, cloud-excluded hidden.
+      expect(screen.getByText(CLOUD_ONLY_CARD)).toBeInTheDocument();
+      expect(screen.queryByText(CLOUD_EXCLUDED_CARD)).not.toBeInTheDocument();
     });
   });
 

@@ -45,7 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.manager.internal.RepositoryImpl.State.DELETED;
 import static org.sonatype.nexus.repository.manager.internal.RepositoryImpl.State.DESTROYED;
 import static org.sonatype.nexus.repository.manager.internal.RepositoryImpl.State.FAILED;
@@ -80,9 +80,9 @@ public class RepositoryImpl
 
   @Autowired
   public RepositoryImpl(final EventManager eventManager, final Type type, final Format format) {
-    this.eventManager = checkNotNull(eventManager);
-    this.type = checkNotNull(type);
-    this.format = checkNotNull(format);
+    this.eventManager = requireNonNull(eventManager);
+    this.type = requireNonNull(type);
+    this.format = requireNonNull(format);
   }
 
   @Override
@@ -97,12 +97,12 @@ public class RepositoryImpl
 
   @Override
   public String getName() {
-    return checkNotNull(name);
+    return requireNonNull(name);
   }
 
   @Override
   public Configuration getConfiguration() {
-    return checkNotNull(configuration);
+    return requireNonNull(configuration);
   }
 
   @Override
@@ -158,7 +158,7 @@ public class RepositoryImpl
 
   @Override
   public void validate(final Configuration configuration) throws Exception {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     Set<ConstraintViolation<?>> violations = new HashSet<>();
     MultipleFailures failures = new MultipleFailures();
@@ -187,7 +187,7 @@ public class RepositoryImpl
   @Override
   @Transitions(from = NEW, to = INITIALISED)
   public void init(final Configuration configuration) throws Exception {
-    this.configuration = checkNotNull(configuration);
+    this.configuration = requireNonNull(configuration);
     this.name = configuration.getRepositoryName();
 
     MultipleFailures failures = new MultipleFailures();
@@ -207,7 +207,7 @@ public class RepositoryImpl
   @Override
   @Guarded(by = STOPPED)
   public void update(final Configuration configuration) throws Exception {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     // Ensure configuration sanity
     validate(configuration);
@@ -263,6 +263,16 @@ public class RepositoryImpl
     List<Lock> facetLocks = new ArrayList<>();
     if (repositoryLock.tryLock(LOCK_TIMEOUT, TimeUnit.SECONDS)) {
       try {
+        // Only a STARTED repository can be stopped. Under HA immediate consistency this repository can be
+        // transiently STOPPED on this node -- a concurrent replicated update runs stop()->update()->start(),
+        // or an originating delete races that window -- so guard the transition (checked under the write lock
+        // we now hold) instead of letting stop()'s @Transitions(from = STARTED) throw InvalidStateException.
+        // Mirrors the guard already used by destroy(). See NEXUS-53816 / NEXUS-54229.
+        if (!states.is(STARTED)) {
+          log.debug("Skipping stopSafe for repository '{}'; not STARTED (current state: {})", name,
+              states.getCurrent());
+          return;
+        }
         for (Facet facet : facets.reverse()) {
           Lock facetLock = facet.getWriteLock();
           if (facetLock.tryLock(LOCK_TIMEOUT, TimeUnit.SECONDS)) { // NOSONAR
@@ -312,8 +322,16 @@ public class RepositoryImpl
   }
 
   @Override
-  @Transitions(from = STOPPED, to = DELETED)
+  @Transitions(to = DELETED)
   public void delete() throws Exception {
+    // A STOPPED repository is required to delete its facets. Under HA immediate consistency a concurrent
+    // replicated update (stop()->update()->start()) can flip this repository back to STARTED between the
+    // manager's stopSafe() and this call, so stop it here -- atomically, under the write lock this
+    // @Transitions action already holds -- instead of failing the delete with InvalidStateException.
+    // Mirrors destroy(). See NEXUS-53816 / NEXUS-54229.
+    if (states.is(STARTED)) {
+      stopSafe();
+    }
     MultipleFailures failures = new MultipleFailures();
 
     for (Facet facet : facets.reverse()) {
@@ -362,7 +380,7 @@ public class RepositoryImpl
   @Override
   @Guarded(by = NEW)
   public void attach(final Facet facet) throws Exception {
-    checkNotNull(facet);
+    requireNonNull(facet);
     log.debug("Attaching facet: {}", facet);
     facet.attach(this);
     facets.add(facet);

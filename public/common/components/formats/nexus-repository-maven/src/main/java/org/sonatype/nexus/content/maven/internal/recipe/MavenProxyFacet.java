@@ -41,7 +41,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HttpHeaders;
 import org.apache.http.client.methods.HttpRequestBase;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -69,8 +69,8 @@ public class MavenProxyFacet
       final ConstraintViolationFactory constraintViolationFactory,
       final MavenProxyRequestHeaderSupport mavenProxyRequestHeaderSupport)
   {
-    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
-    this.mavenProxyRequestHeaderSupport = checkNotNull(mavenProxyRequestHeaderSupport);
+    this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
+    this.mavenProxyRequestHeaderSupport = requireNonNull(mavenProxyRequestHeaderSupport);
   }
 
   @Override

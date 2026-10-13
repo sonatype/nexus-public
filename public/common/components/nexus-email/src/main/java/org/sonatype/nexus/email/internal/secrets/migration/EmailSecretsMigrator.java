@@ -20,7 +20,7 @@ import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.security.secrets.SecretsMigrator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -34,7 +34,7 @@ public class EmailSecretsMigrator
 
   @Autowired
   public EmailSecretsMigrator(final EmailManager emailManager) {
-    this.emailManager = checkNotNull(emailManager);
+    this.emailManager = requireNonNull(emailManager);
   }
 
   @Override

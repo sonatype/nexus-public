@@ -33,7 +33,7 @@ import com.google.common.collect.ImmutableMap;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 import org.springframework.stereotype.Component;
@@ -61,7 +61,7 @@ public class DatastoreLoggerOverrides
       final LoggingOverridesStore loggingLevelsStore)
   {
     super(appDirectories);
-    this.loggingLevelsStore = checkNotNull(loggingLevelsStore);
+    this.loggingLevelsStore = requireNonNull(loggingLevelsStore);
   }
 
   @Override

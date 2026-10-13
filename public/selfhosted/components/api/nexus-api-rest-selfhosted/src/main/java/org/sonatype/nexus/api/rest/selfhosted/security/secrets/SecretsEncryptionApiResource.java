@@ -13,13 +13,6 @@
 package org.sonatype.nexus.api.rest.selfhosted.security.secrets;
 
 import java.util.Map;
-import jakarta.validation.Valid;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.api.rest.selfhosted.security.secrets.model.ReEncryptionRequestApiXO;
 import org.sonatype.nexus.crypto.secrets.MissingKeyException;
@@ -27,12 +20,20 @@ import org.sonatype.nexus.crypto.secrets.ReEncryptService;
 import org.sonatype.nexus.crypto.secrets.ReEncryptionNotSupportedException;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.validation.Validate;
 
 import com.google.common.collect.ImmutableMap;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Consumes(APPLICATION_JSON)
@@ -45,7 +46,7 @@ public abstract class SecretsEncryptionApiResource
   private final ReEncryptService reEncryptService;
 
   protected SecretsEncryptionApiResource(final ReEncryptService reEncryptService) {
-    this.reEncryptService = checkNotNull(reEncryptService);
+    this.reEncryptService = requireNonNull(reEncryptService);
   }
 
   @PUT
@@ -53,6 +54,7 @@ public abstract class SecretsEncryptionApiResource
   @Path("/re-encrypt")
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
+  @Validate
   public Response reEncrypt(@Valid final ReEncryptionRequestApiXO request) {
     try {
       String taskId = reEncryptService.submitReEncryption(request.getSecretKeyId(), request.getNotifyEmail());

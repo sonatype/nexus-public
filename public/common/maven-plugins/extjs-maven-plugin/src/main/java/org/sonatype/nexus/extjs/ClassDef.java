@@ -20,7 +20,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * ExtJS class definition record.
@@ -60,8 +60,8 @@ public class ClassDef
   private List<String> mvcViews;
 
   public ClassDef(final String name, final File source) {
-    this.name = checkNotNull(name);
-    this.source = checkNotNull(source);
+    this.name = requireNonNull(name);
+    this.source = requireNonNull(source);
   }
 
   public String getName() {
@@ -106,7 +106,7 @@ public class ClassDef
   }
 
   public void setExtend(final String extend) {
-    this.extend = checkNotNull(extend);
+    this.extend = requireNonNull(extend);
     dependencies.add(extend);
   }
 
@@ -116,7 +116,7 @@ public class ClassDef
   }
 
   public void setOverride(final String override) {
-    this.override = checkNotNull(override);
+    this.override = requireNonNull(override);
     dependencies.add(override);
   }
 
@@ -126,7 +126,7 @@ public class ClassDef
   }
 
   public void setRequires(final List<String> requires) {
-    this.requires = checkNotNull(requires);
+    this.requires = requireNonNull(requires);
     dependencies.addAll(requires);
   }
 
@@ -136,7 +136,7 @@ public class ClassDef
   }
 
   public void setMixins(final List<String> mixins) {
-    this.mixins = checkNotNull(mixins);
+    this.mixins = requireNonNull(mixins);
     dependencies.addAll(mixins);
   }
 
@@ -146,7 +146,7 @@ public class ClassDef
   }
 
   public void setUses(final List<String> uses) {
-    this.uses = checkNotNull(uses);
+    this.uses = requireNonNull(uses);
     dependencies.addAll(uses);
   }
 
@@ -160,7 +160,7 @@ public class ClassDef
   }
 
   public void setMvcControllers(final List<String> mvcControllers) {
-    this.mvcControllers = checkNotNull(mvcControllers);
+    this.mvcControllers = requireNonNull(mvcControllers);
   }
 
   @Nullable
@@ -169,7 +169,7 @@ public class ClassDef
   }
 
   public void setMvcModels(final List<String> mvcModels) {
-    this.mvcModels = checkNotNull(mvcModels);
+    this.mvcModels = requireNonNull(mvcModels);
   }
 
   @Nullable
@@ -178,7 +178,7 @@ public class ClassDef
   }
 
   public void setMvcStores(final List<String> mvcStores) {
-    this.mvcStores = checkNotNull(mvcStores);
+    this.mvcStores = requireNonNull(mvcStores);
   }
 
   @Nullable
@@ -187,6 +187,6 @@ public class ClassDef
   }
 
   public void setMvcViews(final List<String> mvcViews) {
-    this.mvcViews = checkNotNull(mvcViews);
+    this.mvcViews = requireNonNull(mvcViews);
   }
 }

@@ -32,6 +32,11 @@ Ext.define('NX.coreui.view.repository.facet.FirewallFacet', {
   pccsEnabled: false,
 
   /**
+   * Set to true for Docker proxy repositories (to show layer download timeout field).
+   */
+  dockerProxy: false,
+
+  /**
    * @override
    */
   initComponent: function() {
@@ -69,12 +74,67 @@ Ext.define('NX.coreui.view.repository.facet.FirewallFacet', {
             editable: false,
             store: modeStore,
             queryMode: 'local',
-            allowBlank: true
+            allowBlank: true,
+            value: 'DISABLED',
+            listeners: {
+              change: function(combo, newValue) {
+                var timeoutField = me.down('#layerDownloadTimeout');
+                if (me.dockerProxy && timeoutField) {
+                  // Show timeout field only when firewall is AUDIT, QUARANTINE, or PCCS (not DISABLED)
+                  var showField = newValue && newValue !== 'DISABLED';
+                  timeoutField.setDisabled(!showField);
+                  timeoutField.setVisible(showField);
+                }
+              }
+            }
+          },
+          // Layer Download Timeout field for Docker proxy repositories
+          // Only visible when dockerProxy=true AND firewall mode is not DISABLED
+          {
+            xtype: 'numberfield',
+            name: 'attributes.dockerProxy.layerDownloadTimeoutMinutes',
+            itemId: 'layerDownloadTimeout',
+            fieldLabel: NX.I18n.get('Repository_Facet_FirewallFacet_LayerDownloadTimeout_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_FirewallFacet_LayerDownloadTimeout_HelpText'),
+            minValue: 1,
+            maxValue: 1440,
+            allowDecimals: false,
+            allowBlank: true,
+            value: null,
+            emptyText: '10',
+            // Initially hidden when not dockerProxy OR when mode is DISABLED (default value)
+            hidden: !me.dockerProxy,
+            disabled: !me.dockerProxy,
+            validator: function(value) {
+              if (!value || value === '') {
+                return true; // Empty is valid (will use default)
+              }
+              var num = parseInt(value, 10);
+              if (isNaN(num)) {
+                return NX.I18n.get('Repository_Facet_FirewallFacet_LayerDownloadTimeout_ValidationError_NaN');
+              }
+              if (num < 1) {
+                return NX.I18n.get('Repository_Facet_FirewallFacet_LayerDownloadTimeout_ValidationError_Min');
+              }
+              if (num > 1440) {
+                return NX.I18n.get('Repository_Facet_FirewallFacet_LayerDownloadTimeout_ValidationError_Max');
+              }
+              return true;
+            }
           }
         ]
       }
     ];
 
     me.callParent();
+
+    // Sync initial visibility with the current combo value after the form is rendered
+    // This ensures the timeout field is correctly shown/hidden when editing an existing repository
+    if (me.dockerProxy) {
+      var combo = me.down('#firewallMode');
+      if (combo) {
+        combo.fireEvent('change', combo, combo.getValue());
+      }
+    }
   }
 });

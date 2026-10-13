@@ -42,7 +42,7 @@ import org.apache.tika.mime.MimeTypes;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link MimeSupport} implementation based on Apache Tika.
@@ -111,7 +111,7 @@ public class DefaultMimeSupport
   @Nonnull
   @Override
   public List<String> guessMimeTypesListFromPath(final String path, final MimeRulesSource... mimeRulesSources) {
-    checkNotNull(path);
+    requireNonNull(path);
     List<String> mimeTypes = new ArrayList<>();
     for (MimeRulesSource mimeRulesSource : mimeRulesSources) {
       final MimeRule mimeRule = mimeRulesSource.getRuleForName(path);
@@ -135,7 +135,7 @@ public class DefaultMimeSupport
   @Nonnull
   @Override
   public List<String> detectMimeTypes(final InputStream input, @Nullable final String fileName) throws IOException {
-    checkNotNull(input);
+    requireNonNull(input);
 
     List<String> detected = Lists.newArrayList();
     Metadata metadata = new Metadata();
@@ -163,7 +163,7 @@ public class DefaultMimeSupport
    */
   @Nonnull
   private List<String> guessMimeTypesListFromPath(final String path) {
-    checkNotNull(path);
+    requireNonNull(path);
     final String pathExtension = Files.getFileExtension(path);
     try {
       final List<String> mimeTypes = new ArrayList<>();

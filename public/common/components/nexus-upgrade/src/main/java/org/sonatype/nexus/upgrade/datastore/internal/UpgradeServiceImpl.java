@@ -28,7 +28,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.CLUSTERED_ZERO_DOWNTIME_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 
@@ -54,7 +54,7 @@ public class UpgradeServiceImpl
       @Nullable final DeploymentValidator deploymentValidator,
       final UpgradeManager upgradeManager)
   {
-    this.upgradeManager = checkNotNull(upgradeManager);
+    this.upgradeManager = requireNonNull(upgradeManager);
     this.deploymentValidator = Optional.ofNullable(deploymentValidator);
   }
 

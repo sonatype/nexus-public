@@ -20,6 +20,12 @@ import { GAFilesTab } from '../GAFilesTab';
 import * as exportToCsvModule from '../../../../shared/utils/exportToCsv';
 import type { GAVersion, GAAsset } from '../../core';
 
+// GAFilesTab's rows call useRouter for the "View in Browse" action (NEXUS-54430); this suite
+// renders those rows only to exercise the Export CSV button, so a bare router stub is enough.
+jest.mock('@uirouter/react', () => ({
+  useRouter: () => ({ stateService: { go: jest.fn() } }),
+}));
+
 const renderWithTheme = (ui: React.ReactElement) => render(<Theme>{ui}</Theme>);
 
 const testVersions: readonly GAVersion[] = [
@@ -92,7 +98,7 @@ describe('Export CSV button', () => {
       onSearchQueryChange: jest.fn(),
       onRetry: jest.fn(),
       selectedVersion: null,
-      onVersionSelect: jest.fn(),
+      onSelectVersion: jest.fn(),
     };
 
     it('renders the Export page button', () => {
@@ -194,17 +200,17 @@ describe('Export CSV button', () => {
       expect(onRetry).toHaveBeenCalledTimes(1);
     });
 
-    it('highlights the selected version row via data-selected attribute', () => {
-      renderWithTheme(<GAVersionsTab {...defaultProps} selectedVersion="2.0.0" />);
-      const selectedRows = document.querySelectorAll('[data-selected="true"]');
+    it('highlights the selected version row via aria-selected attribute', () => {
+      renderWithTheme(<GAVersionsTab {...defaultProps} selectedVersion="2.0.0" onSelectVersion={jest.fn()} />);
+      const selectedRows = document.querySelectorAll('[aria-selected="true"]');
       expect(selectedRows.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('calls onVersionSelect when a version row is clicked', async () => {
-      const onVersionSelect = jest.fn();
-      renderWithTheme(<GAVersionsTab {...defaultProps} onVersionSelect={onVersionSelect} />);
+    it('calls onSelectVersion when a version row is clicked', async () => {
+      const onSelectVersion = jest.fn();
+      renderWithTheme(<GAVersionsTab {...defaultProps} onSelectVersion={onSelectVersion} />);
       await userEvent.click(screen.getByText('2.0.0'));
-      expect(onVersionSelect).toHaveBeenCalledWith('2.0.0');
+      expect(onSelectVersion).toHaveBeenCalledWith('2.0.0');
     });
 
     it('echoes typed input immediately and calls onSearchQueryChange', async () => {
@@ -270,27 +276,27 @@ describe('Export CSV button', () => {
     it('selects a version when Enter is pressed on a focused row', () => {
       // userEvent 12.8.3 (installed) has no .keyboard() API; fireEvent.keyDown targets the
       // exact DOM event the row's onKeyDown handler checks.
-      const onVersionSelect = jest.fn();
-      renderWithTheme(<GAVersionsTab {...defaultProps} onVersionSelect={onVersionSelect} />);
+      const onSelectVersion = jest.fn();
+      renderWithTheme(<GAVersionsTab {...defaultProps} onSelectVersion={onSelectVersion} />);
       const row = screen.getByText('2.0.0').closest('tr')!;
       fireEvent.keyDown(row, { key: 'Enter' });
-      expect(onVersionSelect).toHaveBeenCalledWith('2.0.0');
+      expect(onSelectVersion).toHaveBeenCalledWith('2.0.0');
     });
 
     it('selects a version when Space is pressed on a focused row', () => {
-      const onVersionSelect = jest.fn();
-      renderWithTheme(<GAVersionsTab {...defaultProps} onVersionSelect={onVersionSelect} />);
+      const onSelectVersion = jest.fn();
+      renderWithTheme(<GAVersionsTab {...defaultProps} onSelectVersion={onSelectVersion} />);
       const row = screen.getByText('1.0.0').closest('tr')!;
       fireEvent.keyDown(row, { key: ' ' });
-      expect(onVersionSelect).toHaveBeenCalledWith('1.0.0');
+      expect(onSelectVersion).toHaveBeenCalledWith('1.0.0');
     });
 
     it('does not select a version for an unrelated key press on a row', () => {
-      const onVersionSelect = jest.fn();
-      renderWithTheme(<GAVersionsTab {...defaultProps} onVersionSelect={onVersionSelect} />);
+      const onSelectVersion = jest.fn();
+      renderWithTheme(<GAVersionsTab {...defaultProps} onSelectVersion={onSelectVersion} />);
       const row = screen.getByText('2.0.0').closest('tr')!;
       fireEvent.keyDown(row, { key: 'Tab' });
-      expect(onVersionSelect).not.toHaveBeenCalled();
+      expect(onSelectVersion).not.toHaveBeenCalled();
     });
 
     it('renders sidebar sort-key and sort-direction selectors reflecting the current props', () => {
@@ -451,9 +457,10 @@ describe('Export CSV button', () => {
     /*
      * The Last Modified column must never print the literal string "Invalid Date".
      *
-     * formatDate's try/catch cannot prevent it on its own: `new Date('')` and `new Date('nope')`
-     * throw nothing, they yield an Invalid Date whose toLocaleDateString() returns exactly that
-     * string. Both an absent timestamp and an unparseable one have to be tested explicitly. Only
+     * A try/catch around the formatting call cannot prevent it on its own: `new Date('')` and
+     * `new Date('nope')` throw nothing, they yield an Invalid Date that formats to exactly that
+     * string. The shared formatDateTime (NEXUS-54427) screens for it with an explicit NaN check.
+     * Both an absent timestamp and an unparseable one have to be tested explicitly. Only
      * null is reachable from the API — componentVersionDetailApi maps a missing lastModified to it
      * — but the unparseable case guards the same render path against a future format change.
      */
@@ -572,6 +579,25 @@ describe('Export CSV button', () => {
       expect(screen.getByText('npm-hosted-a')).toBeInTheDocument();
       expect(screen.getByText('npm-hosted-b')).toBeInTheDocument();
       expect(screen.getByText('npm-proxy-c')).toBeInTheDocument();
+    });
+
+    it('hides the per-row repository when the header already fixes one', () => {
+      // With a repository fixed in the header, every asset shares it, so repeating it per row is
+      // redundant noise — the badge and its screen-reader label are dropped, filenames stay.
+      renderWithTheme(<GAFilesTab {...defaultProps} selectedRepository="repo-a" />);
+      expect(screen.getByText('lib-1.0.jar')).toBeInTheDocument();
+      expect(screen.queryByText('repo-a')).not.toBeInTheDocument();
+      expect(screen.queryByText('Repository:')).not.toBeInTheDocument();
+    });
+
+    it('does not match the fixed repository name in the search query', async () => {
+      // The repository is no longer a visible field when pinned, so searching it would filter
+      // against something the user cannot see. Typing it must not resurrect a repository match.
+      renderWithTheme(<GAFilesTab {...defaultProps} selectedRepository="repo-a" />);
+      await userEvent.type(screen.getByPlaceholderText('Filter'), 'repo-a');
+      expect(screen.queryByText('lib-1.0.jar')).not.toBeInTheDocument();
+      expect(screen.queryByText('lib-1.0.pom')).not.toBeInTheDocument();
+      expect(screen.getByText('No Files Found')).toBeInTheDocument();
     });
 
     it('Export CSV button is disabled when filters leave sortedAssets empty', async () => {

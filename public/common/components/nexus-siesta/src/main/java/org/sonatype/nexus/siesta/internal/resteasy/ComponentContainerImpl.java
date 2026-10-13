@@ -37,7 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * RESTEasy {@link ComponentContainer}.
@@ -59,7 +59,7 @@ public class ComponentContainerImpl
   public ComponentContainerImpl(final ResteasyDeployment deployment, final ApplicationContext context) {
     this.deployment = deployment;
     // Register RESTEasy with JAX-RS as early as possible
-    RuntimeDelegate.setInstance(checkNotNull(deployment.getProviderFactory()));
+    RuntimeDelegate.setInstance(requireNonNull(deployment.getProviderFactory()));
     this.context = context;
   }
 

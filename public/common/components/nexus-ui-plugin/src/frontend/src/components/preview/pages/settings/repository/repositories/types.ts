@@ -35,6 +35,8 @@ export interface RepositoryStatus {
 export interface StorageConfig {
   blobStoreName: string;
   strictContentTypeValidation: boolean;
+  /** Absent unless the API exposes global distribution for this edition. */
+  globalDistribution?: boolean;
   writePolicy?: WritePolicy;
 }
 
@@ -149,6 +151,63 @@ export interface DockerConfig {
   v1Enabled: boolean;
   subdomain?: string | null;
   pathEnabled?: boolean;
+}
+
+/**
+ * OCI connector / authentication configuration.
+ *
+ * Mirrors the REST model {@code OciAttributes}. `v1Enabled` and `forceBasicAuth`
+ * are `@NotNull` server-side, so a create payload that omits either is rejected
+ * with `must not be null` — see the defaulting in `buildRepositoryConfig`.
+ *
+ * On cloud, the backend converter rejects `httpPort`, `httpsPort`, a non-empty
+ * `subdomain`, and `forceBasicAuth === false`; the facet hides those fields and
+ * forces path-based routing so the UI cannot offer what the server refuses.
+ */
+export interface OciConfig {
+  v1Enabled?: boolean;
+  forceBasicAuth?: boolean;
+  httpPort?: number | null;
+  httpsPort?: number | null;
+  subdomain?: string | null;
+  pathEnabled?: boolean;
+}
+
+/**
+ * OCI cosign keyless enforcement policy.
+ *
+ * Sent as a TOP-LEVEL `cosign` block (sibling of `oci`), matching the REST model
+ * {@code OciCosignConfiguration} — not nested under `oci`.
+ */
+export interface OciCosignAttributes {
+  /**
+   * `KEYLESS` is retained in this union on purpose even though the UI never offers it and the
+   * payload builder never emits it: the server's read path still surfaces `KEYLESS` for rows
+   * persisted before it began rejecting the mode, so the edit form has to be able to represent
+   * one. Narrowing this to `'NONE'` would break loading those repositories.
+   */
+  enforcement?: 'NONE' | 'KEYLESS';
+  identityRegex?: string;
+  issuerRegex?: string;
+}
+
+/**
+ * OCI proxy-specific configuration.
+ *
+ * Sent as a TOP-LEVEL `ociProxy` block, matching the REST model
+ * {@code OciProxyAttributes}, which has exactly these four fields.
+ *
+ * There is deliberately no `useTrustStoreForIndexAccess`: unlike Docker — where the equivalent
+ * toggle selects the SSL context used to fetch the index — the OCI backend has no such concept
+ * at any layer (`OciProxyAttributes` and `OciProxyFacetImpl.Config` both lack it). A checkbox
+ * for it was rendered and collected but never emitted, which is worse than absent for a control
+ * that claims to govern certificate trust.
+ */
+export interface OciProxyAttributes {
+  indexType?: 'REGISTRY' | 'CUSTOM';
+  indexUrl?: string | null;
+  cacheForeignLayers?: boolean;
+  foreignLayerUrlWhitelist?: string[];
 }
 
 /**
@@ -269,6 +328,13 @@ export interface TerraformSigningConfig {
   passphrase?: string;
 }
 
+/**
+ * HuggingFace XET transfer-protocol configuration
+ */
+export interface XetConfig {
+  enabled: boolean;
+}
+
 // =============================================================================
 // Repository Data Models
 // =============================================================================
@@ -288,6 +354,9 @@ export interface RepositoryAttributes {
   maven?: MavenConfig;
   docker?: DockerConfig;
   dockerProxy?: DockerProxyConfig;
+  oci?: OciConfig;
+  ociProxy?: OciProxyAttributes;
+  cosign?: OciCosignAttributes;
   nugetProxy?: NugetProxyConfig;
   apt?: AptConfig;
   aptSigning?: AptSigningConfig;
@@ -297,6 +366,7 @@ export interface RepositoryAttributes {
   raw?: RawConfig;
   pypi?: PypiConfig;
   terraformSigning?: TerraformSigningConfig | null;
+  xet?: XetConfig;
 }
 
 /**
@@ -337,6 +407,9 @@ export interface RepositoryFormData {
   maven?: MavenConfig;
   docker?: DockerConfig;
   dockerProxy?: DockerProxyConfig;
+  oci?: OciConfig;
+  ociProxy?: OciProxyAttributes;
+  cosign?: OciCosignAttributes;
   nugetProxy?: NugetProxyConfig;
   apt?: AptConfig;
   aptSigning?: AptSigningConfig;
@@ -346,6 +419,7 @@ export interface RepositoryFormData {
   raw?: RawConfig;
   pypi?: PypiConfig;
   terraformSigning?: TerraformSigningConfig | null;
+  xet?: XetConfig;
 }
 
 /**
@@ -513,6 +587,18 @@ export interface RepositoryFormErrors {
       accessKeyId?: string;
       secretAccessKey?: string;
     };
+  };
+  oci?: {
+    httpPort?: string;
+    httpsPort?: string;
+    subdomain?: string;
+  };
+  ociProxy?: {
+    indexUrl?: string;
+  };
+  cosign?: {
+    identityRegex?: string;
+    issuerRegex?: string;
   };
   nugetProxy?: {
     queryCacheItemMaxAge?: string;

@@ -16,7 +16,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
@@ -37,7 +37,7 @@ public class ReplicationTaskLogger
   ReplicationTaskLogger(final Logger log, final TaskLogInfo taskLogInfo) {
     super(log);
 
-    this.taskLogInfo = checkNotNull(taskLogInfo);
+    this.taskLogInfo = requireNonNull(taskLogInfo);
     this.repositoryName = taskLogInfo.getString(REPLICATION_DISCRIMINATOR_ID);
     MDC.put(TASK_LOG_ONLY_MDC, "true");
     MDC.put(REPLICATION_DISCRIMINATOR_ID, repositoryName);

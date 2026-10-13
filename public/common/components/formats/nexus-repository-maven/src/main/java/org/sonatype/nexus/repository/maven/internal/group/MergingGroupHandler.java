@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,6 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.transaction.RetryDeniedException;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Predicates.or;
@@ -135,7 +135,7 @@ public class MergingGroupHandler
     log.trace("Incoming request for {} : {}", context.getRepository().getName(), mavenPath.getPath());
 
     List<Repository> proxiesOrGroups =
-        members.stream().filter(PROXY_OR_GROUP::apply).collect(toList());
+        members.stream().filter(PROXY_OR_GROUP::test).collect(toList());
 
     Content content = maybeCooperate(repository, mavenPath, () -> {
       try {

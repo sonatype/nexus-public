@@ -7,13 +7,18 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Flex, Text, TextField, Button } from '@radix-ui/themes';
+import { Box, Flex, Text, Button } from '@radix-ui/themes';
 import { RefreshCw } from 'lucide-react';
 
 import { FormatSearchDropdown } from './FormatSearchDropdown';
 import { RepositorySearchDropdown } from './RepositorySearchDropdown';
 import type { SearchFormat } from './unified.types';
-import { getFiltersForFormat } from './searchFilters';
+import {
+  getFiltersForFormat,
+  getAliasLabelsForFormat,
+  getAliasPlaceholdersForFormat,
+} from './searchFilters';
+import { TextFilter, SelectFilter } from './filters';
 
 import './SearchSidebar.scss';
 
@@ -40,6 +45,42 @@ export interface SearchSidebarProps {
   inDrawer?: boolean;
 }
 
+/**
+ * Adapter that maps `readonly string[]` filter options into the
+ * `{ value, label }` shape SelectFilter expects, memoized on the source
+ * options array so the mapped list keeps a stable reference across parent
+ * renders.  Without this, every parent render (e.g. a keystroke in another
+ * text filter) would hand SelectFilter a fresh `options` prop and defeat any
+ * downstream memoization.
+ */
+const SelectFilterAdapter = React.memo(function SelectFilterAdapter(props: {
+  id: string;
+  label: string;
+  options?: readonly string[];
+  value: string;
+  onChange: (id: string, value: string) => void;
+  onSearch?: () => void;
+  disabled?: boolean;
+}): JSX.Element {
+  const { options, ...rest } = props;
+  const mappedOptions = useMemo(
+    () => (options ?? []).map((opt) => ({ value: opt, label: opt })),
+    [options],
+  );
+  return <SelectFilter {...rest} options={mappedOptions} />;
+});
+
+/**
+ * Debounce delay for sidebar filter changes (ms).
+ *
+ * 300 ms rather than `APIConstants.DEBOUNCE_DELAY`: these filters narrow an already-rendered
+ * result set, so the list is expected to react closely to typing.
+ *
+ * This debounces a *callback* (`onSearch`), not a value: Reset fires it immediately, and format,
+ * repository and select changes schedule it outside the text-filter window. Neither is expressible
+ * with the shared `useDebounced` hook, so this keeps its own timer ref. See
+ * `private/developer-documentation/frontend/debouncing.md`.
+ */
 const DEBOUNCE_MS = 300;
 
 export const SearchSidebar = React.memo(function SearchSidebar({
@@ -54,7 +95,6 @@ export const SearchSidebar = React.memo(function SearchSidebar({
   repositories = [],
   inDrawer = false,
 }: SearchSidebarProps): JSX.Element {
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Track the focused input element so focus can be restored after disabled toggles
   const focusedInputRef = useRef<HTMLElement | null>(null);
   // Track which filter id is currently focused, so external filter changes
@@ -139,33 +179,42 @@ export const SearchSidebar = React.memo(function SearchSidebar({
     (filterId: string, value: string) => {
       setLocalValues((prev) => ({ ...prev, [filterId]: value }));
       onFilterChange(filterId, value);
-      if (onSearch) {
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => {
-          debounceRef.current = null;
-          onSearch();
-        }, DEBOUNCE_MS);
-      }
+      // Debounce and onSearch are delegated to TextFilter via the debounceMs prop
     },
-    [onFilterChange, onSearch],
+    [onFilterChange],
   );
 
-  const handleSelectFilterChange = useCallback(
-    (filterId: string, value: string) => {
-      onFilterChange(filterId, value);
-      if (onSearch) setTimeout(onSearch, 200);
+  // SelectFilter debounces its own onSearch call; the sidebar only needs to
+  // relay the value change, so onFilterChange is passed to it directly.
+
+  const handleInputFocus = useCallback((id: string, el: HTMLInputElement) => {
+    focusedInputRef.current = el;
+    focusedFilterIdRef.current = id;
+  }, []);
+
+  const handleInputBlur = useCallback(
+    (_id: string) => {
+      if (!disabled) focusedInputRef.current = null;
+      focusedFilterIdRef.current = null;
     },
-    [onFilterChange, onSearch],
+    [disabled],
   );
 
   const repositoryValue = filters.repository || '';
 
-  // Format-specific filters (exclude repository and nameOrVersion — both rendered elsewhere)
-  const formatSpecificFilters = useMemo(() => {
-    if (!selectedFormat || selectedFormat === 'all') return [];
-    return getFiltersForFormat(selectedFormat).filter(
-      (f) => f.id !== 'repository' && f.id !== 'nameOrVersion',
-    );
+  // Filters to render + alias vocabulary (label + placeholder) for the current
+  // format.  Bundled into a single memo so React only compares one dep pair.
+  // Repository and nameOrVersion are rendered elsewhere (header / results
+  // header), so they are excluded from the sidebar list.
+  const { filtersToRender, aliasLabels, aliasPlaceholders } = useMemo(() => {
+    const format = (selectedFormat || 'all') as SearchFormat;
+    return {
+      filtersToRender: getFiltersForFormat(format).filter(
+        (f) => f.id !== 'repository' && f.id !== 'nameOrVersion',
+      ),
+      aliasLabels: getAliasLabelsForFormat(format) ?? {},
+      aliasPlaceholders: getAliasPlaceholdersForFormat(format) ?? {},
+    };
   }, [selectedFormat]);
 
   return (
@@ -219,8 +268,8 @@ export const SearchSidebar = React.memo(function SearchSidebar({
             />
           </Box>
 
-          {/* Format-specific filters (when format is selected) */}
-          {formatSpecificFilters.length > 0 && (
+          {/* Filters — generic group/name/version always shown; aliases applied per format */}
+          {filtersToRender.length > 0 && (
             <Box mt="1">
               <Flex align="center" justify="between" mb="3">
                 <Text size="2" weight="bold">
@@ -228,60 +277,51 @@ export const SearchSidebar = React.memo(function SearchSidebar({
                 </Text>
               </Flex>
               <Flex direction="column" gap="3">
-                {formatSpecificFilters.map((filter) =>
-                  filter.type === 'text' ? (
-                    <Box key={filter.id}>
-                      <Text as="label" size="2" htmlFor={`filter-${filter.id}`}>
-                        {filter.label}
-                      </Text>
-                      <TextField.Root
-                        id={`filter-${filter.id}`}
-                        placeholder={filter.placeholder}
+                {filtersToRender.map((filter) => {
+                  // Relabel generic group/name/version when the current format declares an alias.
+                  const isGeneric =
+                    filter.id === 'group' || filter.id === 'name' || filter.id === 'version';
+                  const aliasKey = isGeneric
+                    ? (filter.id as 'group' | 'name' | 'version')
+                    : undefined;
+                  const label = aliasKey ? aliasLabels[aliasKey] ?? filter.label : filter.label;
+                  const placeholder = aliasKey
+                    ? aliasPlaceholders[aliasKey] ?? filter.placeholder
+                    : filter.placeholder;
+
+                  if (filter.type === 'text') {
+                    return (
+                      <TextFilter
+                        key={filter.id}
+                        id={filter.id}
+                        label={label}
+                        placeholder={placeholder}
                         value={localValues[filter.id] ?? filters[filter.id] ?? ''}
-                        onChange={(e) => handleTextFilterChange(filter.id, e.target.value)}
-                        onFocus={(e) => {
-                          focusedInputRef.current = e.currentTarget;
-                          focusedFilterIdRef.current = filter.id;
-                        }}
-                        onBlur={() => {
-                          if (!disabled) focusedInputRef.current = null;
-                          focusedFilterIdRef.current = null;
-                        }}
+                        onChange={handleTextFilterChange}
+                        onSearch={onSearch}
+                        debounceMs={DEBOUNCE_MS}
                         disabled={disabled}
-                        size="2"
-                        mt="1"
+                        onInputFocus={handleInputFocus}
+                        onInputBlur={handleInputBlur}
                       />
-                    </Box>
-                  ) : filter.type === 'select' && filter.options ? (
-                    <Box key={filter.id}>
-                      <Text as="label" size="2" htmlFor={`filter-${filter.id}`}>
-                        {filter.label}
-                      </Text>
-                      <select
-                        id={`filter-${filter.id}`}
-                        value={filters[filter.id] || ''}
-                        onChange={(e) => handleSelectFilterChange(filter.id, e.target.value)}
+                    );
+                  }
+                  if (filter.type === 'select') {
+                    return (
+                      <SelectFilterAdapter
+                        key={filter.id}
+                        id={filter.id}
+                        label={label}
+                        options={filter.options}
+                        value={filters[filter.id] ?? ''}
+                        onChange={onFilterChange}
+                        onSearch={onSearch}
                         disabled={disabled}
-                        style={{
-                          width: '100%',
-                          padding: '8px 12px',
-                          marginTop: '4px',
-                          fontSize: '14px',
-                          border: '1px solid var(--gray-6)',
-                          borderRadius: '6px',
-                          backgroundColor: 'var(--color-surface)',
-                        }}
-                      >
-                        <option value="">{filter.placeholder || 'All'}</option>
-                        {filter.options.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    </Box>
-                  ) : null,
-                )}
+                      />
+                    );
+                  }
+                  return null;
+                })}
               </Flex>
             </Box>
           )}

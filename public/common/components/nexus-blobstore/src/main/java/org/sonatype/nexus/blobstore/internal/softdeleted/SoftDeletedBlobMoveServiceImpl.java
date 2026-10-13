@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of {@link SoftDeletedBlobMoveService} that updates soft_deleted_blobs records
@@ -50,7 +50,7 @@ public class SoftDeletedBlobMoveServiceImpl
       final SoftDeletedBlobsStore softDeletedBlobsStore,
       @Value("${nexus.blobstore.softdeleted.move.batchSize:100}") final int batchSize)
   {
-    this.softDeletedBlobsStore = checkNotNull(softDeletedBlobsStore);
+    this.softDeletedBlobsStore = requireNonNull(softDeletedBlobsStore);
     if (batchSize <= 0) {
       log.warn("Invalid batchSize {} configured for soft-deleted blob moves, using default: {}",
           batchSize, DEFAULT_BATCH_SIZE);

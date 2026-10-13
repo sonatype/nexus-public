@@ -32,7 +32,7 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to generate {@link Descriptor} instances.
@@ -47,7 +47,7 @@ public class DescriptorHelper
    * Build descriptor for given type.
    */
   public static Descriptor build(final Class<?> type) {
-    checkNotNull(type);
+    requireNonNull(type);
     log.trace("Building descriptor for type: {}", type);
     return build(type.getAnnotations());
   }
@@ -56,7 +56,7 @@ public class DescriptorHelper
    * Build descriptor for given method.
    */
   public static Descriptor build(final Method method) {
-    checkNotNull(method);
+    requireNonNull(method);
     log.trace("Building descriptor for method: {}", method);
     return build(method.getAnnotations());
   }
@@ -65,7 +65,7 @@ public class DescriptorHelper
    * Build descriptor for given annotations.
    */
   public static Descriptor build(final Annotation... annotations) {
-    checkNotNull(annotations);
+    requireNonNull(annotations);
     log.trace("Building descriptor for annotations: {}", Arrays.asList(annotations));
 
     Map<String, Object> fields = Maps.newTreeMap();
@@ -197,8 +197,8 @@ public class DescriptorHelper
    */
   @Nullable
   public static String stringValue(final Descriptor descriptor, final String name) {
-    checkNotNull(descriptor);
-    checkNotNull(name);
+    requireNonNull(descriptor);
+    requireNonNull(name);
     Object value = descriptor.getFieldValue(name);
     if (value instanceof CharSequence) {
       return value.toString();

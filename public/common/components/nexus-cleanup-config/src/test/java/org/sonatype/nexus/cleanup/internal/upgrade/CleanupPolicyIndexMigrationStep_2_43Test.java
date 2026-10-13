@@ -167,7 +167,7 @@ public class CleanupPolicyIndexMigrationStep_2_43Test
 
     underTest.migrate(connection);
 
-    assertThat(executedSql, hasItem(containsString("pg_indexes")));
+    assertThat(executedSql, hasItem(containsString("indexrelid")));
     assertThat(executedSql, not(hasItem(containsString("CREATE INDEX"))));
     assertThat(executedSql, not(hasItem(containsString("DO $$"))));
   }
@@ -181,7 +181,7 @@ public class CleanupPolicyIndexMigrationStep_2_43Test
     underTest.migrate(connection);
 
     assertThat(executedSql, hasItem(containsString("to_regclass")));
-    assertThat(executedSql, not(hasItem(containsString("pg_indexes"))));
+    assertThat(executedSql, not(hasItem(containsString("indexrelid"))));
     assertThat(executedSql, not(hasItem(containsString("CREATE INDEX"))));
   }
 
@@ -231,7 +231,7 @@ public class CleanupPolicyIndexMigrationStep_2_43Test
         when(results.next()).thenReturn(tablePresent);
         when(statement.executeQuery()).thenReturn(results);
       }
-      else if (sql.contains("information_schema.indexes")) {
+      else if (sql.contains("INFORMATION_SCHEMA.INDEXES")) {
         // indexExists check
         ResultSet results = mock(ResultSet.class);
         when(results.next()).thenReturn(indexPresent);
@@ -264,24 +264,17 @@ public class CleanupPolicyIndexMigrationStep_2_43Test
       executedSql.add(sql);
       PreparedStatement statement = mock(PreparedStatement.class);
 
-      if (sql.contains("to_regclass")) {
+      if (sql.contains("indexrelid")) {
+        // indexExists check; its query also contains to_regclass, so it must be matched first
+        ResultSet results = mock(ResultSet.class);
+        when(results.next()).thenReturn(indexPresent);
+        when(statement.executeQuery()).thenReturn(results);
+      }
+      else if (sql.contains("to_regclass")) {
         // tableExists check
         ResultSet results = mock(ResultSet.class);
         when(results.next()).thenReturn(tablePresent);
         when(results.getObject(1)).thenReturn(tablePresent ? TABLE_NAME : null);
-        when(statement.executeQuery()).thenReturn(results);
-      }
-      else if (sql.contains("current_schema")) {
-        // currentSchema lookup used by indexExists on PostgreSQL
-        ResultSet results = mock(ResultSet.class);
-        when(results.next()).thenReturn(true);
-        when(results.getString(1)).thenReturn("public");
-        when(statement.executeQuery()).thenReturn(results);
-      }
-      else if (sql.contains("pg_indexes")) {
-        // indexExists check
-        ResultSet results = mock(ResultSet.class);
-        when(results.next()).thenReturn(indexPresent);
         when(statement.executeQuery()).thenReturn(results);
       }
       // otherwise (the CREATE INDEX DO-block) statement.execute() defaults to false

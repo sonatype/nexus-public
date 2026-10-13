@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.HIGH;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.OPTIONAL;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.METRICS;
@@ -65,8 +65,8 @@ public class MetricsCustomizer
 
   @Autowired
   public MetricsCustomizer(final MetricRegistry metricRegistry, final HealthCheckRegistry healthCheckRegistry) {
-    this.metricRegistry = checkNotNull(metricRegistry);
-    this.healthCheckRegistry = checkNotNull(healthCheckRegistry);
+    this.metricRegistry = requireNonNull(metricRegistry);
+    this.healthCheckRegistry = requireNonNull(healthCheckRegistry);
     this.threadDump = new ThreadDump(ManagementFactory.getThreadMXBean());
     this.healthCheckObjectMapper = new ObjectMapper().registerModule(new HealthCheckModule());
     this.metricsObjectMapper = new ObjectMapper().registerModule(new MetricsModule(

@@ -29,8 +29,8 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.Term;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Used with {@link CselToExpression} to convert a CSEL content selector into an {@link Expression} for SQL based
@@ -47,14 +47,14 @@ public class SelectorExpressionBuilder
   private final Map<String, SearchField> propertyAliases = new HashMap<>();
 
   public SelectorExpressionBuilder(final SearchMappingService mappingService) {
-    this.mappingService = checkNotNull(mappingService);
+    this.mappingService = requireNonNull(mappingService);
   }
 
   /**
    * Aliases the given property name to a specific record field.
    */
   public SelectorExpressionBuilder propertyAlias(final String name, final SearchField field) {
-    propertyAliases.put(checkNotNull(name), checkNotNull(field));
+    propertyAliases.put(requireNonNull(name), requireNonNull(field));
     return this;
   }
 

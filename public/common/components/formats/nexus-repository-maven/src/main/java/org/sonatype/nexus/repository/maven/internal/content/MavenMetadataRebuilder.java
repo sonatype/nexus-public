@@ -39,7 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import org.springframework.stereotype.Component;
@@ -81,7 +81,7 @@ public class MavenMetadataRebuilder
       @Nullable final String artifactId,
       @Nullable final String baseVersion)
   {
-    checkNotNull(repository);
+    requireNonNull(repository);
     MetadataRebuildWorker worker =
         new MetadataRebuildWorker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize);
     return rebuildWithWorker(worker, rebuildChecksums, cascadeUpdate, groupId, artifactId, baseVersion);
@@ -142,8 +142,8 @@ public class MavenMetadataRebuilder
 
   @Override
   public Set<String> deleteMetadata(final Repository repository, final List<String[]> gavs) {
-    checkNotNull(repository);
-    checkNotNull(gavs);
+    requireNonNull(repository);
+    requireNonNull(gavs);
 
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     Set<String> deletedPaths = Sets.newHashSet();

@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.internal.event;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
@@ -29,7 +32,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.EVENTS;
 import static org.sonatype.nexus.common.event.EventBusFactory.reentrantAsyncEventBus;
 import static org.sonatype.nexus.common.event.EventBusFactory.reentrantEventBus;
@@ -53,12 +56,45 @@ public class EventManagerImpl
 
   private final EventBus asyncBus;
 
+  /**
+   * Tally of events dropped because they were posted before the EVENTS phase started, keyed by event class
+   * name. Accumulated by {@link #post} while the manager has not yet started and flushed as a single summary
+   * log line by {@link #doStart}, so a full-fleet deploy no longer emits one WARN per dropped event.
+   */
+  private final Map<String, Long> preStartDropTally = new ConcurrentHashMap<>();
+
+  /**
+   * Set on the first {@link #doStart}. Distinguishes pre-start drops (accumulated into {@link #preStartDropTally}
+   * and summarized at start) from post-shutdown drops (logged at DEBUG only, with no later flush point).
+   * Intentionally never reset: this managed-lifecycle component starts once per JVM, so it gates both the one-time
+   * summary flush and post-start tallying for the lifetime of the process.
+   */
+  private volatile boolean everStarted;
+
   @Autowired
   public EventManagerImpl(final EventExecutor eventExecutor) {
-    this.eventExecutor = checkNotNull(eventExecutor);
+    this.eventExecutor = requireNonNull(eventExecutor);
 
     this.eventBus = reentrantEventBus("nexus");
     this.asyncBus = reentrantAsyncEventBus("nexus.async", eventExecutor);
+  }
+
+  @Override
+  protected void doStart() throws Exception {
+    // Flush the pre-EVENTS drop tally exactly once, on the first start. The everStarted guard makes this a no-op
+    // on any later restart (so a stale tally is never re-logged), and it also gates post() so no further entries
+    // accumulate afterwards. The tally is never cleared: a tally that races in just after this runs simply sits
+    // harmlessly in the bounded map (one entry per event class) instead of surviving a clear. Every pre-EVENTS
+    // publisher posts either on the boot thread or on worker threads its own earlier phase joins before the
+    // lifecycle manager advances to EVENTS, so all pre-start posts happen-before this flush and the count is exact.
+    if (!everStarted) {
+      everStarted = true;
+      if (!preStartDropTally.isEmpty()) {
+        long total = preStartDropTally.values().stream().mapToLong(Long::longValue).sum();
+        log.info("EventManager started; {} event(s) posted before the EVENTS phase were dropped "
+            + "(expected for pre-EVENTS lifecycle publishers): {}", total, preStartDropTally);
+      }
+    }
   }
 
   @Override
@@ -93,10 +129,16 @@ public class EventManagerImpl
   public void post(final Object event) {
     // The EventManager is only usable once it has started (the EVENTS lifecycle phase). Posting earlier
     // (or after shutdown) is a lifecycle violation: the subscribers are not registered yet, so rather than
-    // deliver to an incomplete bus we drop the event and warn, without failing the caller.
+    // deliver to an incomplete bus we drop the event without failing the caller. These drops are benign --
+    // every known pre-EVENTS publisher either re-reads authoritative state at its own phase or emits an
+    // audit-only event -- so we log each at DEBUG and aggregate them into a single INFO summary when the
+    // phase starts (see doStart), instead of emitting one WARN each (a full-fleet deploy logged hundreds).
     if (!isStarted()) {
-      log.warn("EventManager is not started; ignoring event posted outside the EVENTS phase: {}",
-          event == null ? null : event.getClass().getName());
+      String type = event == null ? "null" : event.getClass().getName();
+      log.debug("EventManager is not started; dropping event posted outside the EVENTS phase: {}", type);
+      if (!everStarted) {
+        preStartDropTally.merge(type, 1L, Long::sum);
+      }
       return;
     }
 

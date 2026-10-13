@@ -21,10 +21,11 @@ jest.mock('../useBlobStores', () => ({
 }));
 
 // Mock ExtJS at the path the source uses. Individual tests can override via
-// jest.requireMock so we can flip isProEdition per case.
+// jest.requireMock so we can flip isLicensedEdition per case.
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
-    isProEdition: jest.fn(() => true),
+    isLicensedEdition: jest.fn(() => true),
+    useState: jest.fn((getValue) => getValue()),
   }
 }));
 
@@ -236,7 +237,7 @@ describe('AzureBlobStoreSettings', () => {
     const extjs = require('../../../../../../../interface/ExtJS').ExtJS;
 
     beforeEach(() => {
-      extjs.isProEdition.mockReturnValue(true);
+      extjs.isLicensedEdition.mockReturnValue(true);
     });
 
     it('renders the checkbox on Pro edition', () => {
@@ -245,7 +246,7 @@ describe('AzureBlobStoreSettings', () => {
     });
 
     it('does not render the checkbox on non-Pro editions', () => {
-      extjs.isProEdition.mockReturnValue(false);
+      extjs.isLicensedEdition.mockReturnValue(false);
       render(<AzureBlobStoreSettings {...defaultProps} />);
       expect(screen.queryByTestId('checkbox-Direct Download (SAS URLs)')).not.toBeInTheDocument();
     });
@@ -348,7 +349,7 @@ describe('AzureBlobStoreSettings', () => {
       });
 
       it('hides the note on non-Pro editions even when enabled with MI', () => {
-        extjs.isProEdition.mockReturnValue(false);
+        extjs.isLicensedEdition.mockReturnValue(false);
         const props = {
           ...defaultProps,
           data: {

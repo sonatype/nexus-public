@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 
 /**
@@ -71,7 +71,7 @@ public class UpgradeNexusKeyValueStore
   @Autowired
   public UpgradeNexusKeyValueStore(final DataSessionSupplier sessionSupplier, final ObjectMapper mapper) {
     super(sessionSupplier);
-    this.mapper = checkNotNull(mapper);
+    this.mapper = requireNonNull(mapper);
   }
 
   /**

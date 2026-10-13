@@ -39,7 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link TemplateHelper}.
@@ -84,8 +84,8 @@ public class TemplateHelperImpl
       final VelocityEngine velocityEngine,
       @Value(FeatureFlags.NEXUS_PCCS_PERF_PYPI_ENABLED_NAMED_VALUE) final boolean pypiPerfEnabled)
   {
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.velocityEngine = checkNotNull(velocityEngine);
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.velocityEngine = requireNonNull(velocityEngine);
     this.pypiPerfEnabled = pypiPerfEnabled;
   }
 
@@ -109,8 +109,8 @@ public class TemplateHelperImpl
 
   @Override
   public String render(final URL template, final TemplateParameters parameters) {
-    checkNotNull(template);
-    checkNotNull(parameters);
+    requireNonNull(template);
+    requireNonNull(parameters);
 
     log.trace("Rendering template: {} w/params: {}", template, parameters);
 

@@ -28,7 +28,7 @@ import org.apache.shiro.authz.annotation.RequiresUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
@@ -48,7 +48,7 @@ public class RepositoriesResource
 
   @Autowired
   public RepositoriesResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter) {
-    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
+    this.repositoryManagerRESTAdapter = requireNonNull(repositoryManagerRESTAdapter);
   }
 
   @RequiresUser

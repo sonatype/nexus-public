@@ -12,14 +12,14 @@
  */
 package org.sonatype.nexus.selector;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class ContentSelectorEvent
 {
   private final SelectorConfiguration selectorConfiguration;
 
   public ContentSelectorEvent(final SelectorConfiguration selectorConfiguration) {
-    this.selectorConfiguration = checkNotNull(selectorConfiguration);
+    this.selectorConfiguration = requireNonNull(selectorConfiguration);
   }
 
   public SelectorConfiguration getSelectorConfiguration() {

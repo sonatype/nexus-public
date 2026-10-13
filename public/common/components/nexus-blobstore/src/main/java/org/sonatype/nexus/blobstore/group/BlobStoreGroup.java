@@ -69,10 +69,10 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.synchronizedList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.function.Function.identity;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
@@ -133,10 +133,10 @@ public class BlobStoreGroup
       final Provider<CacheHelper> cacheHelperProvider,
       @Value("${nexus.blobstore.group.blobId.cache.timeToLive:2d}") final Time blobIdCacheTimeout)
   {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.fillPolicyProviders = checkNotNull(QualifierUtil.buildQualifierBeanMap(fillPolicyProvidersList));
-    this.cacheHelperProvider = checkNotNull(cacheHelperProvider);
-    this.blobIdCacheTimeout = checkNotNull(blobIdCacheTimeout);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.fillPolicyProviders = requireNonNull(QualifierUtil.buildQualifierBeanMap(fillPolicyProvidersList));
+    this.cacheHelperProvider = requireNonNull(cacheHelperProvider);
+    this.blobIdCacheTimeout = requireNonNull(blobIdCacheTimeout);
   }
 
   @Override

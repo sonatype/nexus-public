@@ -14,7 +14,7 @@
 .capabilities-list {
   display: flex;
   gap: var(--space-4);
-  height: 100%;
+  align-items: flex-start;
 
   &__sidebar {
     flex-shrink: 0;
@@ -118,8 +118,7 @@
   }
 
   &__table {
-    flex: 1;
-    min-height: 0;
+    width: 100%;
   }
 
   &__description-text {

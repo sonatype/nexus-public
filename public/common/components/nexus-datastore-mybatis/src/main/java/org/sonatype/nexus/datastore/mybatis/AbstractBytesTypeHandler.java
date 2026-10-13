@@ -30,7 +30,7 @@ import org.apache.ibatis.type.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Abstract {@link TypeHandler} that supports serializing/deserializing Java objects to/from a byte array.
@@ -46,7 +46,7 @@ public abstract class AbstractBytesTypeHandler<T>
    * @param defaultValueSupplier a Supplier to use when the database has a null value stored
    */
   protected AbstractBytesTypeHandler(final Supplier<T> defaultValueSupplier) {
-    this.defaultValueSupplier = checkNotNull(defaultValueSupplier);
+    this.defaultValueSupplier = requireNonNull(defaultValueSupplier);
   }
 
   @Override

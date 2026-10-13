@@ -14,6 +14,7 @@ import React, {useState} from 'react';
 import {Link} from '@radix-ui/themes';
 
 import {ExtJS} from '../../../../interface/ExtJS';
+import {EDITION_COMMUNITY, resolveEditionId} from '../../../../interface/editionUtils';
 import {scrollToUsageCenter} from '../../../../interface/LocationUtils';
 import {helperFunctions} from '../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
 import UIStrings from '../../../../constants/UIStrings';
@@ -90,7 +91,9 @@ export default function CELimitsAlert(): React.ReactElement | null {
   const purchaseUrl = useViewPurchaseALicenseUrl();
   const learnMoreUrl = buildLearnMoreUrl(throttlingStatus);
 
-  const isCommunityEdition = ExtJS.useState(() => ExtJS.state().getEdition() === 'COMMUNITY');
+  const isCommunityEdition = ExtJS.useState(
+      () => resolveEditionId(ExtJS.state()) === EDITION_COMMUNITY,
+  );
   const isHa = ExtJS.useState(() => ExtJS.state().getValue('nexus.datastore.clustered.enabled'));
 
   const [belowLimitDismissed, setBelowLimitDismissed] = useState(

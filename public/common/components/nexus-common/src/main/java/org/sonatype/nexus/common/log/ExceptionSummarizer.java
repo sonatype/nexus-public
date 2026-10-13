@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Summarizes logging of continually repeated exceptions to avoid flooding logs.
@@ -96,8 +96,8 @@ public class ExceptionSummarizer
       final BiPredicate<Exception, Exception> matcher,
       final BiConsumer<String, Exception> logger)
   {
-    this.matcher = checkNotNull(matcher);
-    this.logger = checkNotNull(logger);
+    this.matcher = requireNonNull(matcher);
+    this.logger = requireNonNull(logger);
   }
 
   /**

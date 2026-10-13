@@ -72,7 +72,7 @@ public class AssetDataContinuationTokenIntegrationTest
       session.getTransaction().commit();
 
       // Browse with browseEagerAssetsInRepository
-      Continuation<Asset> page1 = assetDao.browseEagerAssetsInRepository(repositoryId, null, 2, null, null);
+      Continuation<Asset> page1 = assetDao.browseEagerAssetsInRepository(repositoryId, null, 2, null, null, true);
       assertThat(page1.size(), is(2));
 
       String continuationToken = page1.nextContinuationToken();
@@ -114,7 +114,7 @@ public class AssetDataContinuationTokenIntegrationTest
       session.getTransaction().commit();
 
       // Browse with regular browseAssets (non-eager)
-      Continuation<Asset> assets = assetDao.browseAssets(repositoryId, 10, null, null, null, null);
+      Continuation<Asset> assets = assetDao.browseAssets(repositoryId, 10, null, null, null, null, true);
       assertThat(assets.size(), is(2));
 
       // Verify each asset produces a simple token (just asset ID)
@@ -158,7 +158,7 @@ public class AssetDataContinuationTokenIntegrationTest
 
       session.getTransaction().commit();
 
-      Continuation<Asset> assets = assetDao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null);
+      Continuation<Asset> assets = assetDao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null, true);
       assertThat(assets.size(), is(3));
 
       // Verify all tokens are unique
@@ -192,7 +192,7 @@ public class AssetDataContinuationTokenIntegrationTest
 
       session.getTransaction().commit();
 
-      Continuation<Asset> assets = assetDao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null);
+      Continuation<Asset> assets = assetDao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null, true);
       assertThat(assets.size(), is(3));
 
       // Even with the same timestamp, tokens should be unique due to different asset IDs
@@ -238,7 +238,7 @@ public class AssetDataContinuationTokenIntegrationTest
       session.getTransaction().commit();
 
       // Page 1
-      Continuation<Asset> page1 = assetDao.browseEagerAssetsInRepository(repositoryId, null, 2, null, null);
+      Continuation<Asset> page1 = assetDao.browseEagerAssetsInRepository(repositoryId, null, 2, null, null, true);
       assertThat(page1.size(), is(2));
 
       String token1 = page1.nextContinuationToken();
@@ -247,7 +247,7 @@ public class AssetDataContinuationTokenIntegrationTest
 
       // Page 2
       Continuation<Asset> page2 = assetDao.browseEagerAssetsInRepository(
-          repositoryId, decodedToken1, 2, null, null);
+          repositoryId, decodedToken1, 2, null, null, true);
       assertThat(page2.size(), is(2));
 
       String token2 = page2.nextContinuationToken();
@@ -256,7 +256,7 @@ public class AssetDataContinuationTokenIntegrationTest
 
       // Page 3
       Continuation<Asset> page3 = assetDao.browseEagerAssetsInRepository(
-          repositoryId, decodedToken2, 2, null, null);
+          repositoryId, decodedToken2, 2, null, null, true);
       assertThat(page3.size(), is(1));
 
       // Verify all assets in all pages produce composite tokens
@@ -297,8 +297,8 @@ public class AssetDataContinuationTokenIntegrationTest
 
       // Query the same assets with both methods
       Continuation<Asset> eagerAssets = assetDao.browseEagerAssetsInRepository(
-          repositoryId, null, 10, null, null);
-      Continuation<Asset> regularAssets = assetDao.browseAssets(repositoryId, 10, null, null, null, null);
+          repositoryId, null, 10, null, null, true);
+      Continuation<Asset> regularAssets = assetDao.browseAssets(repositoryId, 10, null, null, null, null, true);
 
       assertThat(eagerAssets.size(), is(2));
       assertThat(regularAssets.size(), is(2));

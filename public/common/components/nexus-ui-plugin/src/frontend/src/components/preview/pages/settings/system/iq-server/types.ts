@@ -24,6 +24,15 @@ export interface IqServerConfiguration {
   timeoutSeconds: number | null;
   properties: string;
   showLink: boolean;
+  /**
+   * Round-tripped, never edited here. Self-hosted GET /v1/iq returns this
+   * flag and PUT /v1/iq re-derives the stored value from the payload, so omitting it on
+   * Save silently resets a stored `true` to `false`. It has no UI control — it is carried
+   * from the fetched configuration back into the Save payload untouched. Optional because
+   * cloud's GET never returns it (cloud derives it from the Firewall tenant instead), so
+   * on cloud it stays undefined and is omitted from the payload.
+   */
+  failOpenModeEnabled?: boolean;
   // Server-returned only; not sent on writes.
   licensedSolutions?: Array<{ id: string; url: string }>;
   hasFirewall?: boolean;

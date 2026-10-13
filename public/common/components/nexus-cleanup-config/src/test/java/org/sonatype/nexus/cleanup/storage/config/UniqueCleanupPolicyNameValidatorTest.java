@@ -41,6 +41,11 @@ public class UniqueCleanupPolicyNameValidatorTest
   }
 
   @Test
+  public void isValid_nullName() {
+    assertThat(underTest.isValid(null, null), is(true));
+  }
+
+  @Test
   public void isValidByCleanupPolicyName() {
     when(cleanupPolicyStorage.exists(TEST_NAME)).thenReturn(false);
 

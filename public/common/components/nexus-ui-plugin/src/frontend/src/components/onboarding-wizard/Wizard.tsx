@@ -159,47 +159,55 @@ function WarningIcon(): JSX.Element {
   );
 }
 
-/**
- * SetupCompleteBody - Renders the setup complete screen.
- * When errorKind is set (retry after a verify failure), it swaps to a warning
- * variant with a callout describing the failure so the user can act correctly.
- */
-function SetupCompleteBody({
-  errorKind,
-}: {
-  errorKind?: WizardErrorKind | null;
-}): JSX.Element {
+function SetupCompleteBody(): JSX.Element {
   const { SETUP_COMPLETE } = UIStrings.ONBOARDING_WIZARD;
-  const hasError = !!errorKind;
-
-  let calloutMessage: string | null = null;
-  let calloutTestId: string | null = null;
-  if (errorKind === 'stillRequired') {
-    calloutMessage = SETUP_COMPLETE.STILL_REQUIRED_MESSAGE;
-    calloutTestId = 'onboarding-wizard__still-required';
-  } else if (errorKind === 'network') {
-    calloutMessage = SETUP_COMPLETE.NETWORK_ERROR_MESSAGE;
-    calloutTestId = 'onboarding-wizard__network-error';
-  }
 
   return (
     <div className="onboarding-wizard__setup-complete">
-      {hasError ? <WarningIcon /> : <SuccessIcon />}
+      <SuccessIcon />
       <h2 className="onboarding-wizard__setup-complete-title">
         {SETUP_COMPLETE.TITLE}
       </h2>
       <p className="onboarding-wizard__setup-complete-description">
         {SETUP_COMPLETE.DESCRIPTION}
       </p>
-      {calloutMessage && (
-        <Callout.Root
-          color="red"
-          data-testid={calloutTestId ?? undefined}
-          style={{ marginTop: 'var(--space-4, 16px)' }}
-        >
-          <Callout.Text>{calloutMessage}</Callout.Text>
-        </Callout.Root>
-      )}
+    </div>
+  );
+}
+
+function VerificationFailedBody({
+  errorKind,
+}: {
+  errorKind: WizardErrorKind | null;
+}): JSX.Element {
+  const { VERIFICATION_FAILED } = UIStrings.ONBOARDING_WIZARD;
+
+  let calloutMessage: string;
+  let calloutTestId: string;
+  if (errorKind === 'stillRequired') {
+    calloutMessage = VERIFICATION_FAILED.STILL_REQUIRED_MESSAGE;
+    calloutTestId = 'onboarding-wizard__still-required';
+  } else if (errorKind === 'network') {
+    calloutMessage = VERIFICATION_FAILED.NETWORK_ERROR_MESSAGE;
+    calloutTestId = 'onboarding-wizard__network-error';
+  } else {
+    calloutMessage = VERIFICATION_FAILED.GENERIC_MESSAGE;
+    calloutTestId = 'onboarding-wizard__generic-error';
+  }
+
+  return (
+    <div className="onboarding-wizard__setup-complete">
+      <WarningIcon />
+      <h2 className="onboarding-wizard__setup-complete-title">
+        {VERIFICATION_FAILED.TITLE}
+      </h2>
+      <Callout.Root
+        color="yellow"
+        data-testid={calloutTestId}
+        style={{ marginTop: 'var(--space-4, 16px)' }}
+      >
+        <Callout.Text>{calloutMessage}</Callout.Text>
+      </Callout.Root>
     </div>
   );
 }
@@ -259,8 +267,8 @@ function computeAction(
     const isLast = currentIndex === steps.length - 1;
     return { label: isLast ? ACTIONS.FINISH : ACTIONS.NEXT, onClick: wizard.submit };
   }
-  if (state === 'setupComplete') {
-    return { label: ACTIONS.COMPLETE_SETUP, onClick: wizard.submit };
+  if (state === 'verificationFailed') {
+    return { label: ACTIONS.RETRY, onClick: wizard.submit };
   }
   if (state === 'done' || state === 'skipped') {
     return { label: ACTIONS.FINISH, onClick: wizard.finish };
@@ -274,14 +282,20 @@ export default function Wizard(): JSX.Element {
   const wizard = useWizard();
   const { state, steps, currentIndex, errorKind, isCurrentStepValid, skip, actionButtonRef } = wizard;
 
-  const { ARIA, LOADING, VERIFYING, SETUP_COMPLETE, ISSUE_OCCURRED } = UIStrings.ONBOARDING_WIZARD;
+  const { ARIA, LOADING, VERIFYING, SETUP_COMPLETE, VERIFICATION_FAILED, ISSUE_OCCURRED } =
+    UIStrings.ONBOARDING_WIZARD;
 
-  // Determine aria-live content based on state. On setupComplete with an error
-  // we announce the error title so screen readers don't say "Setup Complete"
-  // while a warning callout is visible.
   let ariaLiveContent = '';
-  if (state === 'setupComplete') {
-    ariaLiveContent = errorKind ? ISSUE_OCCURRED.TITLE : SETUP_COMPLETE.TITLE;
+  if (state === 'verificationFailed') {
+    let detail: string;
+    if (errorKind === 'stillRequired') {
+      detail = VERIFICATION_FAILED.STILL_REQUIRED_MESSAGE;
+    } else if (errorKind === 'network') {
+      detail = VERIFICATION_FAILED.NETWORK_ERROR_MESSAGE;
+    } else {
+      detail = VERIFICATION_FAILED.GENERIC_MESSAGE;
+    }
+    ariaLiveContent = `${VERIFICATION_FAILED.TITLE}. ${detail}`;
   } else if (state === 'done' || state === 'skipped') {
     ariaLiveContent = SETUP_COMPLETE.TITLE;
   } else if (state === 'issueOccurred') {
@@ -326,8 +340,8 @@ export default function Wizard(): JSX.Element {
         body = <UnknownStepBody />;
       }
     }
-  } else if (state === 'setupComplete') {
-    body = <SetupCompleteBody errorKind={errorKind} />;
+  } else if (state === 'verificationFailed') {
+    body = <VerificationFailedBody errorKind={errorKind} />;
   } else if (state === 'verifying') {
     body = (
       <div className="onboarding-wizard__verifying">
@@ -395,7 +409,7 @@ export default function Wizard(): JSX.Element {
                   data-testid="onboarding-wizard__action"
                   disabled={!isActionEnabled}
                   onClick={onActionClick}
-                  autoFocus={state === 'setupComplete' && !errorKind}
+                  autoFocus={state === 'done' || state === 'skipped'}
                 >
                   {actionLabel}
                 </Button>

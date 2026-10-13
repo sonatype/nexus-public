@@ -13,26 +13,20 @@
 
 import React from 'react';
 import { Badge, Flex } from '@radix-ui/themes';
-import { Cloud, Database, FolderSync, LucideIcon } from 'lucide-react';
 
 import { TYPE_LABELS } from './types';
+import { REPOSITORY_TYPE_CONFIG, type RepositoryTypeKind } from './repositoryTypeIcon';
 
 import './RepositoriesList.scss';
 
 export interface TypeBadgeProps {
   /** Repository type (hosted, proxy, group) */
-  type: 'hosted' | 'proxy' | 'group';
+  type: RepositoryTypeKind;
   /** Custom class name */
   className?: string;
   /** Whether to show the icon */
   showIcon?: boolean;
 }
-
-const TYPE_CONFIG: Record<string, { color: any; icon: LucideIcon }> = {
-  proxy: { color: 'blue', icon: Cloud },
-  hosted: { color: 'green', icon: Database },
-  group: { color: 'purple', icon: FolderSync },
-};
 
 /**
  * TypeBadge - A standardized semantic badge for repository types.
@@ -43,13 +37,13 @@ export function TypeBadge({
   className = '',
   showIcon = true,
 }: TypeBadgeProps): JSX.Element {
-  const config = TYPE_CONFIG[type] || { color: 'gray', icon: Database };
+  const config = REPOSITORY_TYPE_CONFIG[type];
   const Icon = config.icon;
   const label = TYPE_LABELS[type] || type;
 
   return (
     <Badge
-      color={config.color}
+      color={config.radixColor}
       variant="soft"
       className={`type-badge type-badge--${type} ${className}`}
     >

@@ -57,10 +57,10 @@ function mapCreateError(err: unknown): string {
   return typeof message === 'string' && message ? message : MESSAGES.CREATE_ERROR_GENERIC;
 }
 
-function mapRevokeError(err: unknown): string {
+function mapRevokeError(err: unknown, tokenName: string): string {
   const response = axiosResponseOf(err);
   const status = response?.status;
-  if (status === 404) return MESSAGES.REVOKE_ERROR_NOT_FOUND;
+  if (status === 404) return MESSAGES.REVOKE_ERROR_NOT_FOUND(tokenName);
   if (status === 403) return MESSAGES.REVOKE_ERROR_FORBIDDEN;
   const message = (response?.data as { message?: unknown })?.message;
   return typeof message === 'string' && message ? message : MESSAGES.REVOKE_ERROR_GENERIC;
@@ -110,11 +110,11 @@ async function createTokenRaw(form: CreateTokenForm): Promise<CreatedTokenResult
   }
 }
 
-async function revokeTokenRaw(tokenId: string): Promise<void> {
+async function revokeTokenRaw(tokenId: string, tokenName: string): Promise<void> {
   try {
     await Axios.delete(tokenUrl(tokenId));
   } catch (err: unknown) {
-    throw new Error(mapRevokeError(err));
+    throw new Error(mapRevokeError(err, tokenName));
   }
 }
 
@@ -175,7 +175,7 @@ export function useServiceAccountTokens(
           return { tokens, roles: rolesResult.data, rolesError: rolesResult.error };
         },
         createToken: (form) => createTokenRaw(form),
-        revokeToken: (tokenId) => revokeTokenRaw(tokenId),
+        revokeToken: (tokenId, tokenName) => revokeTokenRaw(tokenId, tokenName),
       }),
     [canCreate]
   );

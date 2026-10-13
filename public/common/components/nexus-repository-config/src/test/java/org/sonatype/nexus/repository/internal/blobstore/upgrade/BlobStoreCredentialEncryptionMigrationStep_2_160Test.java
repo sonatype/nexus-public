@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -24,12 +25,13 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -37,16 +39,17 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BlobStoreCredentialEncryptionMigrationStep_2_160Test
 {
-  @Rule
-  public MockitoRule mockitoRule = MockitoJUnit.rule();
-
   @Mock
   private SecretsService secretsService;
 
@@ -69,7 +72,7 @@ public class BlobStoreCredentialEncryptionMigrationStep_2_160Test
 
   private BlobStoreCredentialEncryptionMigrationStep_2_160 underTest;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     // Name the mock "s3" so QualifierUtil resolves it correctly
     s3Descriptor = mock(BlobStoreDescriptor.class, "s3");
@@ -200,6 +203,90 @@ public class BlobStoreCredentialEncryptionMigrationStep_2_160Test
     underTest.migrate(connection);
 
     verify(secretsService, never()).encryptMaven(any(), any(), any());
+  }
+
+  @Test
+  public void testDescriptorWithNoSensitiveFieldsLeavesLegacyCiphertextUntouched() throws Exception {
+    // A blob store type that declares no sensitive fields is excluded from this sweep entirely, even
+    // when its configuration holds a credential in some other (non-SecretsService) ciphertext format.
+    // GCS is the live example: it stores legacy EncryptDecryptService ciphertext and deliberately does
+    // not declare auth_account_key as sensitive, so this step must never re-encrypt it. Arming GCS and
+    // migrating its legacy values is owned by NEXUS-54379.
+    BlobStoreDescriptor googleDescriptor = mock(BlobStoreDescriptor.class, "google");
+    when(googleDescriptor.getSensitiveConfigurationFields()).thenReturn(Collections.emptyList());
+
+    BlobStoreCredentialEncryptionMigrationStep_2_160 withGoogleDescriptor =
+        new BlobStoreCredentialEncryptionMigrationStep_2_160(secretsService, List.of(googleDescriptor));
+
+    when(resultSet.next()).thenReturn(true, false);
+    when(resultSet.getString("id")).thenReturn("gcs-id");
+    when(resultSet.getString("name")).thenReturn("test-gcs");
+    when(resultSet.getString("type")).thenReturn("google");
+    when(resultSet.getString("attributes"))
+        .thenReturn("{\"google\":{\"auth_account_key\":\"someLegacyCiphertext\"}}");
+
+    withGoogleDescriptor.migrate(connection);
+
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+    // Confirm we returned before the UPDATE path — only the SELECT was prepared.
+    verify(connection, times(1)).prepareStatement(any());
+  }
+
+  @Test
+  public void testUpdateFailureRollsBackOrphanSecrets() throws Exception {
+    // A secret is created before the UPDATE runs, so a failed write would leave a secrets row that
+    // nothing references — the config on disk still holds the plaintext. The sweep must remove it.
+    when(resultSet.next()).thenReturn(true, false);
+    when(resultSet.getString("id")).thenReturn("s3-id");
+    when(resultSet.getString("name")).thenReturn("test-s3");
+    when(resultSet.getString("type")).thenReturn("s3");
+    when(resultSet.getString("attributes"))
+        .thenReturn("{\"s3\":{\"secretKey\":\"mySecretKey\"}}");
+
+    Secret plaintextSecret = mock(Secret.class);
+    when(plaintextSecret.decrypt()).thenReturn("mySecretKey".toCharArray());
+    when(secretsService.from("mySecretKey")).thenReturn(plaintextSecret);
+
+    Secret encryptedSecret = mock(Secret.class);
+    when(encryptedSecret.getId()).thenReturn("_42");
+    when(secretsService.encryptMaven(eq("blobstore-config"), aryEq("mySecretKey".toCharArray()), isNull()))
+        .thenReturn(encryptedSecret);
+
+    when(updateStmt.executeUpdate()).thenThrow(new SQLException("simulated write failure"));
+
+    // The rollback is best-effort cleanup, not a migration failure: an upgrade must not abort a boot
+    // over one blob store whose credential is left exactly as it was.
+    underTest.migrate(connection);
+
+    verify(secretsService).remove(encryptedSecret);
+  }
+
+  @Test
+  public void testUpdateFailureWithFailingCleanupIsSwallowed() throws Exception {
+    // If the cleanup itself fails there is nothing further the sweep can do — the orphan is logged and
+    // migrate() still returns normally, so the remaining upgrade steps run.
+    when(resultSet.next()).thenReturn(true, false);
+    when(resultSet.getString("id")).thenReturn("s3-id");
+    when(resultSet.getString("name")).thenReturn("test-s3");
+    when(resultSet.getString("type")).thenReturn("s3");
+    when(resultSet.getString("attributes"))
+        .thenReturn("{\"s3\":{\"secretKey\":\"mySecretKey\"}}");
+
+    Secret plaintextSecret = mock(Secret.class);
+    when(plaintextSecret.decrypt()).thenReturn("mySecretKey".toCharArray());
+    when(secretsService.from("mySecretKey")).thenReturn(plaintextSecret);
+
+    Secret encryptedSecret = mock(Secret.class);
+    when(encryptedSecret.getId()).thenReturn("_42");
+    when(secretsService.encryptMaven(eq("blobstore-config"), aryEq("mySecretKey".toCharArray()), isNull()))
+        .thenReturn(encryptedSecret);
+
+    when(updateStmt.executeUpdate()).thenThrow(new SQLException("simulated write failure"));
+    doThrow(new RuntimeException("secrets store unavailable")).when(secretsService).remove(encryptedSecret);
+
+    underTest.migrate(connection);
+
+    verify(secretsService).remove(encryptedSecret);
   }
 
   @Test

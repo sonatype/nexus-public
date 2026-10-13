@@ -26,7 +26,7 @@ import org.sonatype.nexus.security.UserIdHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.AUDIT_LOG_ONLY;
 import org.springframework.stereotype.Component;
 
@@ -73,9 +73,9 @@ public class AuditRecorderImpl
 
   @Override
   public void record(final AuditData data) {
-    checkNotNull(data);
-    checkNotNull(data.getDomain());
-    checkNotNull(data.getType());
+    requireNonNull(data);
+    requireNonNull(data.getDomain());
+    requireNonNull(data.getType());
 
     if (enabled) {
       // fill in timestamp, node-id and initiator if missing

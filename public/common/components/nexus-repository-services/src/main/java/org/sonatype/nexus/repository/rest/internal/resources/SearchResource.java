@@ -76,7 +76,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.lang.String.format;
 import static java.util.Comparator.comparing;
@@ -145,16 +145,16 @@ public class SearchResource
       final SecurityHelper securityHelper,
       @Nullable final List<AssetXODescriptor> assetDescriptorsList)
   {
-    this.searchUtils = checkNotNull(searchUtils);
-    this.searchResultFilterUtils = checkNotNull(searchResultFilterUtils);
-    this.searchService = checkNotNull(searchService);
-    this.componentXOFactory = checkNotNull(componentXOFactory);
-    this.searchResourceExtensions = checkNotNull(searchResourceExtensions);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.securityHelper = checkNotNull(securityHelper);
+    this.searchUtils = requireNonNull(searchUtils);
+    this.searchResultFilterUtils = requireNonNull(searchResultFilterUtils);
+    this.searchService = requireNonNull(searchService);
+    this.componentXOFactory = requireNonNull(componentXOFactory);
+    this.searchResourceExtensions = requireNonNull(searchResourceExtensions);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.securityHelper = requireNonNull(securityHelper);
     this.assetDescriptors =
         assetDescriptorsList != null ? QualifierUtil.buildQualifierBeanMap(assetDescriptorsList) : null;
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @RequiresUser
@@ -184,7 +184,13 @@ public class SearchResource
             component.getAssets() != null && !component.getAssets().isEmpty())
         .collect(toList());
 
-    return new Page<>(componentXOs, response.getContinuationToken());
+    // getTotalHits() is the pre-filter row count from the search backend, whereas componentXOs
+    // is post-filter: components in deleted repositories are dropped by toComponent, and when
+    // asset parameters are present, components with no matching assets are dropped as well. When
+    // that filtering can apply, the count is unreachable by paging, so surface it as the exact
+    // page total only when there are no asset parameters — null otherwise (NEXUS-54423).
+    Long total = assetParams.isEmpty() ? response.getTotalHits() : null;
+    return new Page<ComponentXO>(componentXOs, response.getContinuationToken(), total);
   }
 
   /**
@@ -286,8 +292,7 @@ public class SearchResource
         .sortField(sort)
         .sortDirection(Optional.ofNullable(direction)
             .filter(dir -> !dir.isBlank())
-            .map(String::toUpperCase)
-            .map(this::parseSortDirection)
+            .map(SearchResource::parseSortDirection)
             .orElse(null))
         .includeAssets()
         .build();
@@ -295,15 +300,11 @@ public class SearchResource
     return searchService.search(request);
   }
 
-  private SortDirection parseSortDirection(final String direction) {
-    try {
-      return SortDirection.valueOf(direction);
-    }
-    catch (IllegalArgumentException e) {
-      throw new WebApplicationMessageException(Response.Status.BAD_REQUEST,
-          format("\"%s\" is not a valid sort direction. Supported values are: ASC, DESC", direction),
-          APPLICATION_JSON);
-    }
+  private static SortDirection parseSortDirection(final String direction) {
+    return SortDirection.parse(direction)
+        .orElseThrow(() -> new WebApplicationMessageException(Response.Status.BAD_REQUEST,
+            format("\"%s\" is not a valid sort direction. Supported values are: ASC, DESC", direction),
+            APPLICATION_JSON));
   }
 
   // Returns null if the repository no longer exists (deleted after search index was built); callers must

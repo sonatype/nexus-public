@@ -218,27 +218,42 @@ public class SearchTableIndexesMigrationStep_2_77
       return;
     }
 
-    // This function creates pg_trgm extension if available (PostgreSQL 13+)
-    // and then creates a GIST index for efficient path pattern matching
+    // Creates the pg_trgm extension if needed (PostgreSQL 13+) and a GIST index for path pattern
+    // matching. gist_trgm_ops is schema-qualified with the extension's own schema: the extension may
+    // already live in a schema outside this connection's search_path, and CREATE EXTENSION IF NOT
+    // EXISTS does not relocate it (NEXUS-54867).
     runStatement(connection, """
         DO $$
         DECLARE
             version_number INTEGER;
             db_version VARCHAR;
+            trgm_schema VARCHAR;
         BEGIN
             SELECT LOWER(version()) INTO db_version;
             IF db_version ~ '^postgresql \\d\\d' THEN
                 SELECT SUBSTRING(db_version, CHAR_LENGTH('postgresql') + 2, 2) INTO version_number;
                 IF version_number >= 13 THEN
-                    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm') THEN
+                    SELECT n.nspname INTO trgm_schema
+                      FROM pg_extension e
+                      JOIN pg_namespace n ON n.oid = e.extnamespace
+                     WHERE e.extname = 'pg_trgm';
+                    IF trgm_schema IS NULL THEN
                         CREATE EXTENSION pg_trgm;
+                        SELECT n.nspname INTO trgm_schema
+                          FROM pg_extension e
+                          JOIN pg_namespace n ON n.oid = e.extnamespace
+                         WHERE e.extname = 'pg_trgm';
                     END IF;
                     IF NOT EXISTS (
-                        SELECT 1 FROM pg_indexes
-                        WHERE indexname = 'trgm_idx_search_components_paths'
+                        SELECT 1 FROM pg_index i
+                        JOIN pg_class ic ON ic.oid = i.indexrelid
+                        WHERE ic.relname = 'trgm_idx_search_components_paths'
+                          AND i.indrelid = to_regclass('search_components')
                     ) THEN
-                        CREATE INDEX trgm_idx_search_components_paths
-                        ON search_components USING GIST (paths gist_trgm_ops);
+                        EXECUTE format(
+                            'CREATE INDEX trgm_idx_search_components_paths '
+                            'ON search_components USING GIST (paths %I.gist_trgm_ops)',
+                            trgm_schema);
                     END IF;
                 END IF;
             END IF;

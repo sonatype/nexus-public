@@ -80,6 +80,58 @@ describe('DeleteConfirmationModal', () => {
     });
   });
 
+  describe('Soft-delete (Trash) messaging', () => {
+    it('shows "moved to Trash" copy with retention window instead of permanent-delete copy', () => {
+      render(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="maven-releases"
+          entityType="repository"
+          softDelete
+          retentionDays={30}
+        />
+      );
+
+      expect(screen.getByText(/moved to Trash/)).toBeInTheDocument();
+      expect(screen.getByText(/restored for 30 days/)).toBeInTheDocument();
+      expect(screen.queryByText(/permanently deleted/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/This action cannot be undone/)).not.toBeInTheDocument();
+    });
+
+    it('falls back to a generic recoverable message when no retention window is provided', () => {
+      render(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="maven-releases"
+          entityType="repository"
+          softDelete
+        />
+      );
+
+      expect(screen.getByText(/moved to Trash/)).toBeInTheDocument();
+      expect(screen.getByText(/can be restored before it is permanently removed/)).toBeInTheDocument();
+    });
+
+    it('shows permanent-delete copy by default (softDelete off)', () => {
+      render(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="maven-central"
+          entityType="repository"
+        />
+      );
+
+      expect(screen.getByText(/permanently deleted/)).toBeInTheDocument();
+      expect(screen.queryByText(/moved to Trash/)).not.toBeInTheDocument();
+    });
+  });
+
   describe('Entity Name Mode (Repositories, Blob Stores)', () => {
     it('requires typing "Delete" regardless of entity name', async () => {
       render(

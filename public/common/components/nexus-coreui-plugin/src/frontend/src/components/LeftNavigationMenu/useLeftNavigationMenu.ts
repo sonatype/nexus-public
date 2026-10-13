@@ -16,6 +16,7 @@ import { useIsActive, useSref, useTransitionHook } from '@uirouter/react';
 import {
   ExtJS,
   isSonatypeDevMode,
+  useIsLicensedEdition,
   useIsPreviewUI,
   useRepositories,
   useSideNavbarOpenState,
@@ -157,7 +158,7 @@ export interface UseLeftNavigationMenuResult {
   /** Whether the Sonatype-internal "Test Hub" entry should be shown (Preview UI only). */
   showTestHub: boolean;
   /** Whether the instance runs the Pro edition (gates Pro-only entries like Tags). */
-  isProEdition: boolean;
+  isLicensedEdition: boolean;
 }
 
 /**
@@ -175,7 +176,7 @@ export function useLeftNavigationMenu(): UseLeftNavigationMenuResult {
 
   // Test Hub is visible in Preview UI when the SONATYPE_INTERNAL build flag or localStorage flag is set
   const showTestHub = isPreviewUI && isSonatypeDevMode();
-  const isProEdition = ExtJS.isProEdition?.() ?? false;
+  const isLicensedEdition = useIsLicensedEdition();
 
   return {
     isCollapsed: !isOpen,
@@ -183,6 +184,6 @@ export function useLeftNavigationMenu(): UseLeftNavigationMenuResult {
     adminInitialRouteName,
     isSettingsVisible,
     showTestHub,
-    isProEdition,
+    isLicensedEdition,
   };
 }

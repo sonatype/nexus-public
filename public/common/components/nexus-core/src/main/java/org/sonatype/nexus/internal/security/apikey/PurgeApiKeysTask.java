@@ -20,7 +20,7 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyService;
 import org.sonatype.nexus.security.usertoken.event.UserTokenPurgedEvent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -43,8 +43,8 @@ public class PurgeApiKeysTask
 
   @Autowired
   public PurgeApiKeysTask(final ApiKeyInternalService store, final EventManager eventManager) {
-    this.apiKeyService = checkNotNull(store);
-    this.eventManager = checkNotNull(eventManager);
+    this.apiKeyService = requireNonNull(store);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override

@@ -17,6 +17,7 @@ import { Theme } from '@radix-ui/themes';
 
 import { ProxyFacet } from '../ProxyFacet';
 import { RepositoryFormData } from '../../types';
+import UIStrings from '../../../../../../../../constants/UIStrings';
 
 const mockGetValue = jest.fn().mockReturnValue(false);
 
@@ -210,6 +211,16 @@ describe('ProxyFacet', () => {
     renderFacet({ formData, format: 'docker' });
 
     expect(screen.getByText(/https:\/\/registry-1\.docker\.io/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for oci format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'oci' });
+
+    expect(screen.getByText(/https:\/\/ghcr\.io/)).toBeInTheDocument();
   });
 
   it('shows correct placeholder for yum format', () => {
@@ -488,6 +499,43 @@ describe('ProxyFacet', () => {
       expect(mockOnNestedChange).toHaveBeenCalledWith('nugetProxy', {
         symbolServerUrl: 'https://symbols.nuget.org/download/symbols',
       });
+    });
+  });
+
+  // NEXUS-54771: validateRepository in repositoryFormMachine emits FLAT dot-notation
+  // keys ('proxy.remoteUrl'), but this facet used to read only the nested shape
+  // (errors?.proxy?.remoteUrl) — so no validation message ever rendered for these
+  // three fields when driven by the form machine. Both shapes must resolve.
+  describe('validation message rendering (both error shapes)', () => {
+    // Imported, not copied: a local literal would keep passing if the production
+    // string changed while the component rendered something else.
+    const SCHEME_MESSAGE = UIStrings.ERROR.URL_ERROR;
+
+    it.each([
+      ['flat dot-notation key', { 'proxy.remoteUrl': SCHEME_MESSAGE }],
+      ['nested object', { proxy: { remoteUrl: SCHEME_MESSAGE } }],
+    ])('renders the remoteUrl error from a %s', (_shape, errors) => {
+      renderFacet({ errors });
+
+      expect(screen.getByText(SCHEME_MESSAGE)).toBeInTheDocument();
+    });
+
+    it.each([
+      ['flat dot-notation key', { 'proxy.contentMaxAge': 'Bad content age' }],
+      ['nested object', { proxy: { contentMaxAge: 'Bad content age' } }],
+    ])('renders the contentMaxAge error from a %s', (_shape, errors) => {
+      renderFacet({ errors });
+
+      expect(screen.getByText('Bad content age')).toBeInTheDocument();
+    });
+
+    it.each([
+      ['flat dot-notation key', { 'proxy.metadataMaxAge': 'Bad metadata age' }],
+      ['nested object', { proxy: { metadataMaxAge: 'Bad metadata age' } }],
+    ])('renders the metadataMaxAge error from a %s', (_shape, errors) => {
+      renderFacet({ errors });
+
+      expect(screen.getByText('Bad metadata age')).toBeInTheDocument();
     });
   });
 });

@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -99,7 +100,23 @@ final class QueryParameterForwardingHelper
    * will be rejected with a {@link BadRequestException} even if the excluded parameters would
    * bring the effective count below the threshold.
    */
+  boolean isForwardingEnabled() {
+    return config.get().forwardQueryParameters();
+  }
+
   String buildQueryString(final Parameters parameters) {
+    return buildQueryString(parameters, Collections.emptySet());
+  }
+
+  /**
+   * Builds a query string, treating any key in {@code valuelessParamNames} as valueless (no {@code =} sign).
+   *
+   * <p>
+   * <b>Edge case:</b> when a key appears both valueless (e.g. {@code ?flag}) and with an empty value
+   * (e.g. {@code ?flag=}) in the same request, every occurrence of that key is emitted valueless because
+   * {@code valuelessParamNames} is a name set, not per-occurrence data.
+   */
+  String buildQueryString(final Parameters parameters, final Set<String> valuelessParamNames) {
     if (parameters == null || parameters.isEmpty()) {
       return "";
     }
@@ -131,6 +148,7 @@ final class QueryParameterForwardingHelper
 
       List<String> values = new ArrayList<>(parameters.getAll(key));
       values.sort(Comparator.nullsFirst(Comparator.naturalOrder()));
+      boolean isValueless = valuelessParamNames.contains(key);
       for (String value : values) {
         if (!first) {
           queryString.append("&");
@@ -138,7 +156,7 @@ final class QueryParameterForwardingHelper
         first = false;
 
         queryString.append(URLEncoder.encode(key, StandardCharsets.UTF_8));
-        if (value != null) {
+        if (value != null && !(isValueless && value.isEmpty())) {
           queryString.append("=").append(URLEncoder.encode(value, StandardCharsets.UTF_8));
         }
       }

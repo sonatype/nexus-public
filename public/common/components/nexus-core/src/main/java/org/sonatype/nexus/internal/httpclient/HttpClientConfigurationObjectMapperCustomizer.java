@@ -29,7 +29,7 @@ import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -53,8 +53,8 @@ public class HttpClientConfigurationObjectMapperCustomizer
       final SecretsService secretsService,
       final KeyValueStore keyValueStore)
   {
-    this.secretsService = checkNotNull(secretsService);
-    this.keyValueStore = checkNotNull(keyValueStore);
+    this.secretsService = requireNonNull(secretsService);
+    this.keyValueStore = requireNonNull(keyValueStore);
   }
 
   @Override

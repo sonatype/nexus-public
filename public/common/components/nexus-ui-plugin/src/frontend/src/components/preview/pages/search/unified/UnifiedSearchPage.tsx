@@ -13,6 +13,8 @@ import { SearchSidebar } from './SearchSidebar';
 import { SearchResults } from './SearchResults';
 import { MobileFilterDrawer } from './MobileFilterDrawer';
 import MalwareBanner from '../../../shared/security/MalwareBanner';
+import { HelpSection } from '../../../shared';
+import { SEARCH_DOCS_URL, SEARCH_HELP } from './SearchStrings';
 import { useUnifiedSearch } from './useUnifiedSearch';
 import { useRepositories } from './useRepositories';
 import { useSearchNavigation } from './useSearchNavigation';
@@ -104,15 +106,26 @@ export default function UnifiedSearchPage(): JSX.Element {
     state.format === 'all' &&
     !state.filters.nameOrVersion;
 
-  // When unfiltered: show instance total (from contentUsageEvaluationResult or mock).
-  // When filtered: show search result count.
-  const displayTotalCount = (() => {
-    if (!isUnfiltered) return state.totalCount;
+  // The authoritative, exact match count for the heading — never a "+"-capped
+  // lower bound and stable as pages load. Filtered searches use the server-side
+  // COUNT the REST API returns (state.total); the unfiltered view uses the
+  // instance component total (exact) or the mock total. Left undefined only when
+  // no exact figure is available, in which case SearchResults falls back to the
+  // loaded-count display.
+  const authoritativeTotal = (() => {
+    if (!isUnfiltered) return state.total;
     if (isMockMode()) return getMockSearchTotalCount();
     const instanceTotal = instanceTotals?.totalComponents;
     if (typeof instanceTotal === 'number' && instanceTotal >= 0) return instanceTotal;
-    return state.totalCount;
+    return state.total;
   })();
+
+  // The loaded-count fallback passed alongside the authoritative total. It is
+  // derived from authoritativeTotal so the two can never drift: SearchResults
+  // only consults totalCount when total is undefined, and there this resolves to
+  // state.totalCount — identical to the previous per-branch fallback. When an
+  // exact total exists, the header shows it and this value is unused.
+  const displayTotalCount = authoritativeTotal ?? state.totalCount;
 
   const apiFormat =
     state.format !== 'all' ? getApiFormat(state.format) : undefined;
@@ -406,6 +419,7 @@ export default function UnifiedSearchPage(): JSX.Element {
               loading={state.loading}
               error={state.error}
               totalCount={displayTotalCount}
+              total={authoritativeTotal}
               hasMore={hasMore}
               onLoadMore={loadMore}
               onSelect={handleSelect}
@@ -420,6 +434,25 @@ export default function UnifiedSearchPage(): JSX.Element {
               sortDirection={state.sortDirection}
               onSortChange={handleSortChange}
               onOpenMobileFilters={() => setShowMobileFilters(true)}
+            />
+
+            {/*
+              Search help. Last child of the main region, below the results —
+              so it is part of the main landmark rather than a sibling of it,
+              full width of the content column at every breakpoint, and unable
+              to displace or overlap the search input, filter and sort
+              controls, result cards or pagination. Living outside
+              <SearchResults> also means it renders identically in the loading,
+              empty, error and populated states.
+            */}
+            <HelpSection
+              title={SEARCH_HELP.title}
+              content={SEARCH_HELP.content}
+              docLink={{
+                label: SEARCH_HELP.linkLabel,
+                href: SEARCH_DOCS_URL,
+                analyticsId: SEARCH_HELP.linkAnalyticsId,
+              }}
             />
           </Box>
         </Grid>

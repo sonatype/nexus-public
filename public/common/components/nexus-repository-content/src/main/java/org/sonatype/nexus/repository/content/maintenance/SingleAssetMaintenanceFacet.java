@@ -43,4 +43,10 @@ public class SingleAssetMaintenanceFacet
 
     return super.deleteAsset(asset);
   }
+
+  @Override
+  public boolean cascadeSoftDeleteToComponent(final Asset asset, final boolean lastRemainingAsset) {
+    // Component maps one-to-one to its asset: deleting the asset deletes the component (see deleteAsset).
+    return true;
+  }
 }

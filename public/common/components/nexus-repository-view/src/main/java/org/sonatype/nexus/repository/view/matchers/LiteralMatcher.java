@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.view.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Literal string matcher.
@@ -34,7 +34,7 @@ public class LiteralMatcher
   private final boolean ignoreCase;
 
   public LiteralMatcher(final String literal, final boolean ignoreCase) {
-    this.literal = checkNotNull(literal);
+    this.literal = requireNonNull(literal);
     this.ignoreCase = ignoreCase;
   }
 
@@ -44,7 +44,7 @@ public class LiteralMatcher
 
   @Override
   public boolean matches(final Context context) {
-    checkNotNull(context);
+    requireNonNull(context);
     String path = context.getRequest().getPath();
     log.debug("Matching: {}={} ignore-case: {}", path, literal, ignoreCase);
     if (ignoreCase) {

@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Tracks repositories that failed to initialize or start during Nexus startup.
@@ -46,8 +46,8 @@ public class FailedRepositoryTracker
    * @param cause the exception that caused the failure
    */
   public void recordFailure(final String repositoryName, final Exception cause) {
-    checkNotNull(repositoryName);
-    checkNotNull(cause);
+    requireNonNull(repositoryName);
+    requireNonNull(cause);
 
     String lcName = repositoryName.toLowerCase();
     String reason = cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName();
@@ -64,7 +64,7 @@ public class FailedRepositoryTracker
    * @param repositoryName the name of the repository
    */
   public void clearFailure(final String repositoryName) {
-    checkNotNull(repositoryName);
+    requireNonNull(repositoryName);
 
     String lcName = repositoryName.toLowerCase();
     RepositoryFailure removed = failures.remove(lcName);
@@ -81,7 +81,7 @@ public class FailedRepositoryTracker
    * @return the failure record, or empty if the repository hasn't failed
    */
   public Optional<RepositoryFailure> getFailure(final String repositoryName) {
-    checkNotNull(repositoryName);
+    requireNonNull(repositoryName);
     return Optional.ofNullable(failures.get(repositoryName.toLowerCase()));
   }
 
@@ -92,7 +92,7 @@ public class FailedRepositoryTracker
    * @return true if the repository has failed
    */
   public boolean hasFailed(final String repositoryName) {
-    checkNotNull(repositoryName);
+    requireNonNull(repositoryName);
     return failures.containsKey(repositoryName.toLowerCase());
   }
 
@@ -126,9 +126,9 @@ public class FailedRepositoryTracker
     private final Instant failedAt;
 
     public RepositoryFailure(final String name, final String reason, final Instant failedAt) {
-      this.name = checkNotNull(name);
-      this.reason = checkNotNull(reason);
-      this.failedAt = checkNotNull(failedAt);
+      this.name = requireNonNull(name);
+      this.reason = requireNonNull(reason);
+      this.failedAt = requireNonNull(failedAt);
     }
 
     public String getName() {

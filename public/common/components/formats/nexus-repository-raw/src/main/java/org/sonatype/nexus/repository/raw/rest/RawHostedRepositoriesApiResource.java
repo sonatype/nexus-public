@@ -12,6 +12,16 @@
  */
 package org.sonatype.nexus.repository.raw.rest;
 
+import org.sonatype.nexus.repository.rest.api.AbstractHostedRepositoriesApiResource;
+import org.sonatype.nexus.repository.rest.api.FormatAndType;
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
+import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -19,16 +29,6 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
-
-import org.sonatype.nexus.repository.rest.api.AbstractHostedRepositoriesApiResource;
-import org.sonatype.nexus.repository.rest.api.FormatAndType;
-import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
-
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
@@ -42,7 +42,7 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
  */
 @Tag(name = API_REPOSITORY_MANAGEMENT)
 public abstract class RawHostedRepositoriesApiResource
-    extends AbstractHostedRepositoriesApiResource<RawHostedRepositoryApiRequest>
+    extends AbstractHostedRepositoriesApiResource<HostedStorageAttributes, RawHostedRepositoryApiRequest>
 {
   @Operation(summary = "Create raw hosted repository")
   @ApiResponses(value = {
@@ -52,7 +52,7 @@ public abstract class RawHostedRepositoriesApiResource
   })
   @POST
   @Override
-  public Response createRepository(RawHostedRepositoryApiRequest request) {
+  public Response createRepository(final RawHostedRepositoryApiRequest request) {
     return super.createRepository(request);
   }
 

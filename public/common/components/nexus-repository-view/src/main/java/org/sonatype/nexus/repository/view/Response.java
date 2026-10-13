@@ -17,8 +17,8 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * View response.
@@ -137,7 +137,7 @@ public class Response
     }
 
     public Builder copy(final Response response) {
-      checkNotNull(response);
+      requireNonNull(response);
       attributes = response.getAttributes();
       headers = response.getHeaders();
       status = response.getStatus();

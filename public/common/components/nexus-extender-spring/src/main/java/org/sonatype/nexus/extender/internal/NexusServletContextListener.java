@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
@@ -61,8 +61,8 @@ public class NexusServletContextListener
       @Autowired(required = false) final ApplicationVersion applicationVersion,
       @Value("${" + NEXUS_LIFECYCLE_STARTUP_PHASE + ":#{null}}") final String startupPhaseValue)
   {
-    this.nexusLifecycleManager = checkNotNull(nexusLifecycleManager);
-    this.nexusEditionSelector = checkNotNull(nexusEditionSelector);
+    this.nexusLifecycleManager = requireNonNull(nexusLifecycleManager);
+    this.nexusEditionSelector = requireNonNull(nexusEditionSelector);
     this.applicationVersion = applicationVersion; // may be null
     if (startupPhaseValue != null) {
       startupPhase = Phase.valueOf(startupPhaseValue);

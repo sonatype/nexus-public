@@ -26,7 +26,7 @@ import org.sonatype.nexus.script.ScriptUpdatedEvent;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import org.springframework.stereotype.Component;
@@ -54,9 +54,9 @@ public class ScriptManagerImpl
       final ScriptStore scriptStore,
       @Value("${nexus.scripts.allowCreation:false}") final boolean allowCreation)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.scriptStore = checkNotNull(scriptStore);
-    this.allowCreation = checkNotNull(allowCreation);
+    this.eventManager = requireNonNull(eventManager);
+    this.scriptStore = requireNonNull(scriptStore);
+    this.allowCreation = requireNonNull(allowCreation);
   }
 
   @Override
