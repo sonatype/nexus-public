@@ -157,7 +157,7 @@ export const previewBrowseRoutes = [
         statesEnabled: [
           {
             key: 'previewAuditEnabled',
-            defaultValue: true,
+            defaultValue: false,
           },
         ],
       },

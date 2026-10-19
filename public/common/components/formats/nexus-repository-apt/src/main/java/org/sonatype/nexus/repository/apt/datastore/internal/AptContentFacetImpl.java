@@ -171,9 +171,10 @@ public class AptContentFacetImpl
     String normalizedPath = normalizeAssetPath(path);
 
     try (TempBlob tempBlob = blobs().ingest(payload, AptFacetHelper.hashAlgorithms)) {
-      return isDebPackageContentType(normalizedPath)
+      return (isDebPackageContentType(normalizedPath)
           ? findOrCreateDebAsset(normalizedPath, tempBlob, packageInfo)
-          : findOrCreateMetadataAsset(tempBlob, normalizedPath);
+          : findOrCreateMetadataAsset(tempBlob, normalizedPath))
+              .markAsCached(payload);
     }
   }
 

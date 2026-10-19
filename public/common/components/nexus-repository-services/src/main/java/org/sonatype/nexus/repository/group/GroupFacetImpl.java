@@ -17,14 +17,15 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+
 import javax.annotation.Nullable;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheInvalidationEvent;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -33,6 +34,7 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryAttributesDesEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
@@ -41,6 +43,8 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Iterables;
 import com.google.common.eventbus.Subscribe;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -48,8 +52,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.Objects.isNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
@@ -67,8 +71,6 @@ public class GroupFacetImpl
     extends FacetSupport
     implements GroupFacet
 {
-  private static final String CACHE_CONTROLLER_TOKEN = "cacheToken";
-
   protected final RepositoryManager repositoryManager;
 
   private final Type groupType;
@@ -145,7 +147,7 @@ public class GroupFacetImpl
     return root.facet(GroupFacet.class).members().stream().anyMatch((repository) -> {
       return checkedGroups.add(repository) &&
           (repository.getName().equals(repositoryName) ||
-              (groupType.equals(repository.getType()) && containsGroup(repository, repositoryName, checkedGroups)));
+              groupType.equals(repository.getType()) && containsGroup(repository, repositoryName, checkedGroups));
     });
   }
 
@@ -160,7 +162,7 @@ public class GroupFacetImpl
         continue;
       }
       if (repository.getName().equals(repositoryName) ||
-          (groupType.equals(repository.getType()) && containsGroup(repository, repositoryName, checkedGroups))) {
+          groupType.equals(repository.getType()) && containsGroup(repository, repositoryName, checkedGroups)) {
         return constraintViolationFactory.createViolation(CONFIG_KEY + ".memberNames",
             "Group '" + repository.getName() + "' has a member repository '" + repositoryName +
                 "' and cannot be added to this list.");
@@ -174,11 +176,6 @@ public class GroupFacetImpl
   protected void doConfigure(final Configuration configuration) throws Exception {
     config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
 
-    String storedToken =
-        repositoryAttributeService().getRepositoryAttribute(getRepository(), CACHE_CONTROLLER_TOKEN, null);
-
-    cacheController = new CacheController(-1, storedToken);
-
     log.debug("Config: {}", config);
   }
 
@@ -190,8 +187,7 @@ public class GroupFacetImpl
 
     // check whether any members or their ordering have changed
     if (!Iterables.elementsEqual(config.memberNames, previousMemberNames)) {
-      cacheController.invalidateCache();
-      postCacheTokenEvent(getRepository(), cacheController.current().getCacheToken());
+      invalidateOwnCache();
 
       Set<String> removedMembers = new HashSet<>(previousMemberNames);
       removedMembers.removeAll(config.memberNames);
@@ -201,6 +197,18 @@ public class GroupFacetImpl
         scheduleBrowseNodeCleanup();
       }
     }
+  }
+
+  @Override
+  protected void doStart() {
+    String storedToken =
+        repositoryAttributeService().getRepositoryAttribute(getRepository(), METADATA_CACHE_TOKEN_ATTRIBUTE, "dummy");
+
+    if ("dummy".equals(storedToken)) {
+      throw new RuntimeException("ContentFacet must be registered before GroupFacet");
+    }
+
+    cacheController = new CacheController(-1, storedToken);
   }
 
   protected void cleanupOrphanedGroupAssets(final Set<String> removedMemberNames) {
@@ -289,10 +297,20 @@ public class GroupFacetImpl
 
   @Override
   public void invalidateGroupCaches() {
-    log.info("Invalidating group caches of {}", getRepository().getName());
-    cacheController.invalidateCache();
-    for (Repository repository : members()) {
-      repositoryCacheInvalidationService.processCachesInvalidation(repository);
+    if (!EventHelper.isReplicating()) {
+      log.info("Invalidating group caches of {}", getRepository().getName());
+
+      invalidateOwnCache();
+
+      members().forEach(repositoryCacheInvalidationService::processCachesInvalidation);
+    }
+  }
+
+  protected void invalidateOwnCache() {
+    if (!EventHelper.isReplicating()) {
+      storeMetadataCacheToken(cacheController.invalidateCache());
+
+      getEventManager().post(new RepositoryCacheInvalidationEvent(getRepository().getName()));
     }
   }
 
@@ -317,9 +335,20 @@ public class GroupFacetImpl
   }
 
   @Subscribe
-  public void on(final RepositoryCacheSyncTokenEvent event) {
-    if (!event.isLocal() && getRepository().getName().equals(event.getRepositoryName())) {
-      cacheController.setCache(event.getToken());
+  public void on(final ContentRepositoryAttributesDesEvent event) {
+    if (EventHelper.isReplicating() && Objects.equals(getRepository().getName(), event.getRepoName())
+        && METADATA_CACHE_TOKEN_ATTRIBUTE.equals(event.getKey())) {
+      String metadataCacheToken =
+          repositoryAttributeService.getRepositoryAttribute(getRepository(), METADATA_CACHE_TOKEN_ATTRIBUTE, "dummy");
+
+      if (!"dummy".equals(metadataCacheToken)) {
+        cacheController.setCache(metadataCacheToken);
+
+        log.atDebug()
+            .addArgument(getRepository()::getName)
+            .addArgument(metadataCacheToken)
+            .log("Repository:{}, metadataCacheToken:{}");
+      }
     }
   }
 }

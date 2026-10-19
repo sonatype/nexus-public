@@ -755,7 +755,7 @@ class ContentFacetSupportTest
     liveAsset.setAssetId(8);
     liveAsset.setPath("/com/example/demo/1.0/demo-1.0.jar");
 
-    when(assetStore.browseAllComponentAssets(component)).thenReturn(List.of(deletedSibling, liveAsset));
+    when(assetStore.browseAllComponentAssetsWithSoftDelete(component)).thenReturn(List.of(deletedSibling, liveAsset));
 
     underTest.cleanupComponentTrashIndex(component);
 
@@ -802,7 +802,7 @@ class ContentFacetSupportTest
     liveAsset.setAssetId(8);
     liveAsset.setPath("/live");
 
-    when(assetStore.browseAllComponentAssets(component)).thenReturn(List.of(liveAsset));
+    when(assetStore.browseAllComponentAssetsWithSoftDelete(component)).thenReturn(List.of(liveAsset));
 
     underTest.cleanupComponentTrashIndex(component);
 
@@ -848,7 +848,7 @@ class ContentFacetSupportTest
     liveAsset.setAssetId(8);
     liveAsset.setPath("/live");
 
-    when(assetStore.browseAllComponentAssets(component)).thenReturn(List.of(liveAsset));
+    when(assetStore.browseAllComponentAssetsWithSoftDelete(component)).thenReturn(List.of(liveAsset));
 
     underTest.cleanupComponentTrashIndex(component);
 
@@ -879,7 +879,7 @@ class ContentFacetSupportTest
     // The delete is always attempted (this is what fixes the toggle-ghost bug), but the sibling scan and any
     // re-surface are skipped because nothing was removed.
     verify(trashIndexRecorder).removeComponentByExternalId(eq("repo1"), any());
-    verify(assetStore, never()).browseAllComponentAssets(any());
+    verify(assetStore, never()).browseAllComponentAssetsWithSoftDelete(any());
     verify(trashIndexRecorder, never()).resurfaceSoftDeletedChildAsset(any());
   }
 

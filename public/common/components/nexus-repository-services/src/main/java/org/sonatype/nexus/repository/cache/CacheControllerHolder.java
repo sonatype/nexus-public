@@ -111,8 +111,4 @@ public class CacheControllerHolder
       return controllers.put(cacheType, cacheController);
     }
   }
-
-  public void invalidateCaches() {
-    controllers.values().forEach(CacheController::invalidateCache);
-  }
 }

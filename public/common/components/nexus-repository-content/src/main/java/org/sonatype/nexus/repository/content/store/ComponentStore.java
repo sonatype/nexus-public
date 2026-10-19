@@ -26,7 +26,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.Event;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
@@ -51,11 +50,10 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.upgrades.SoftDeleteAnchorMigrationStep_2_169;
 import org.sonatype.nexus.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static java.util.Arrays.stream;
@@ -77,21 +75,7 @@ public class ComponentStore<T extends ComponentDAO>
 
   private static final int ASSET_BROWSE_LIMIT = 1000;
 
-  /**
-   * Optional dependency: when present and the database schema has reached
-   * {@link SoftDeleteAnchorMigrationStep_2_169#VERSION}, queries include the {@code deleted_on}
-   * predicate; otherwise the predicate is omitted, giving correct pre-migration behaviour.
-   * Setter-injected so it can be left null in unit tests and during early bootstrap.
-   */
-  private DatabaseCheck databaseCheck;
-
-  /**
-   * Sticky cache for the result of {@link #softDeleteAvailable()}. Once the schema version
-   * reaches 2.154 the boolean flips to {@code true} permanently, so subsequent queries see a
-   * plain field read with no further calls into {@link DatabaseCheck}. Matches the pattern used
-   * in {@code JwtSessionStore#hasTypeColumn()} and {@code ApiKeyServiceImpl#isOnDBVersion()}.
-   */
-  private volatile boolean softDeleteAvailable;
+  private SoftDeleteSchemaState softDeleteSchemaState;
 
   /**
    * Caps how many unresolved assets are named in the warning logged by {@link #resolveAssetComponents}.
@@ -109,30 +93,14 @@ public class ComponentStore<T extends ComponentDAO>
     this.clustered = clustered;
   }
 
-  /**
-   * Optional setter-injected so unit tests that construct the store directly aren't forced to
-   * provide a {@link DatabaseCheck}. When null, {@link #softDeleteAvailable()} returns
-   * {@code false}, which matches pre-migration behaviour exactly.
-   */
+  /** Optional so unit tests that construct the store directly return {@code false} (pre-migration). */
   @Autowired(required = false)
-  public void setDatabaseCheck(final DatabaseCheck databaseCheck) {
-    this.databaseCheck = databaseCheck;
+  public void setSoftDeleteSchemaState(final SoftDeleteSchemaState softDeleteSchemaState) {
+    this.softDeleteSchemaState = softDeleteSchemaState;
   }
 
-  /**
-   * Returns {@code true} once the schema has been migrated to at least version
-   * {@link SoftDeleteAnchorMigrationStep_2_169#VERSION 2.169}, i.e. the soft-delete columns
-   * exist on every dynamic-format table. The result is sticky: once it flips to true it stays
-   * true for the life of the store, so per-query overhead in steady state is a single volatile
-   * read.
-   */
   protected boolean softDeleteAvailable() {
-    // NEXUS-54969: soft-delete is disabled at the DB layer. Returning false unconditionally keeps every
-    // read/write from referencing the deleted_on/deleted_by columns, so the SELECT * result shape cannot
-    // drift when the (now no-op) soft-delete migration would otherwise have added those columns on a live
-    // connection -- which triggered "cached plan must not change result type" (SQLState 0A000) 500s.
-    // The databaseCheck wiring and sticky field are retained so this is a one-line revert to re-enable.
-    return false;
+    return softDeleteSchemaState != null && softDeleteSchemaState.isSoftDeleteAvailable();
   }
 
   /**

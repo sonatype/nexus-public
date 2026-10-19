@@ -13,24 +13,35 @@
 package org.sonatype.nexus.repository.content.event.repository;
 
 import org.sonatype.nexus.common.event.EventWithSource;
-import org.sonatype.nexus.repository.content.ContentRepository;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
 /**
- * Event sent whenever a {@link ContentRepository}'s attributes change between all nodes.
+ * Event sent whenever a {@link Repository}'s attributes change between all nodes.
  */
 public class ContentRepositoryAttributesDesEvent
     extends EventWithSource
 {
   private final String repoName;
 
+  private final String key;
+
   @JsonCreator
-  public ContentRepositoryAttributesDesEvent(@JsonProperty("repoName") final String repoName) {
+  public ContentRepositoryAttributesDesEvent(
+      @JsonProperty("repoName") final String repoName,
+      @Nullable @JsonProperty("key") final String key)
+  {
     this.repoName = requireNonNull(repoName);
+    this.key = key;
+  }
+
+  @Nullable
+  public String getKey() {
+    return key;
   }
 
   public String getRepoName() {

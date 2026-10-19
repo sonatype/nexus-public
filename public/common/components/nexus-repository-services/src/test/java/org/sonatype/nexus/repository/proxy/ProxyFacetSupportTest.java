@@ -24,13 +24,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.outbound.context.OutboundRequestContext;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.MissingBlobException;
@@ -38,8 +41,10 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
+import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryAttributesDesEvent;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
@@ -54,8 +59,6 @@ import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.net.HttpHeaders;
-import org.sonatype.nexus.common.template.EscapeHelper;
-
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
@@ -71,18 +74,20 @@ import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.protocol.HttpContext;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Spy;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -92,27 +97,15 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.withSettings;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUESTS_LOG_ONLY;
+import static org.sonatype.nexus.repository.FacetSupport.CONTENT_CACHE_TOKEN_ATTRIBUTE;
+import static org.sonatype.nexus.repository.FacetSupport.METADATA_CACHE_TOKEN_ATTRIBUTE;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
-import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.MISSING_BLOB_SKIP_NEGATIVE_CACHE;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.MISSING_BLOB_SKIP_NEGATIVE_CACHE;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_THROTTLED_ANALYTICS_MARKED;
 import static org.sonatype.nexus.repository.replication.PullReplicationSupport.IS_REPLICATION_REQUEST;
-
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for the abstract class {@link ProxyFacetSupport}
@@ -1435,6 +1428,90 @@ public class ProxyFacetSupportTest
     finally {
       executor.shutdownNow();
     }
+  }
+
+  @Test
+  public void onAttributesEvent_replicatedMetadataToken_updatesMetadataCacheController() {
+    CacheController metadataCacheController = mock();
+    NegativeCacheFacet negativeCacheFacet = stubReplicationWiring(metadataCacheController);
+    when(repositoryAttributeService.getRepositoryAttribute(repository, METADATA_CACHE_TOKEN_ATTRIBUTE, "dummy"))
+        .thenReturn("metadata-token");
+    // a different value under the content key must never leak into the metadata branch
+    when(repositoryAttributeService.getRepositoryAttribute(repository, CONTENT_CACHE_TOKEN_ATTRIBUTE, "dummy"))
+        .thenReturn("content-token");
+
+    EventHelper.asReplicating(() -> underTest.on(
+        new ContentRepositoryAttributesDesEvent("test-repo", METADATA_CACHE_TOKEN_ATTRIBUTE)));
+
+    verify(metadataCacheController).setCache("metadata-token");
+    verify(cacheController, never()).setCache(anyString());
+    verify(negativeCacheFacet).invalidate();
+  }
+
+  @Test
+  public void onAttributesEvent_replicatedContentToken_updatesContentCacheController() {
+    CacheController metadataCacheController = mock();
+    NegativeCacheFacet negativeCacheFacet = stubReplicationWiring(metadataCacheController);
+    when(repositoryAttributeService.getRepositoryAttribute(repository, CONTENT_CACHE_TOKEN_ATTRIBUTE, "dummy"))
+        .thenReturn("content-token");
+
+    EventHelper.asReplicating(() -> underTest.on(
+        new ContentRepositoryAttributesDesEvent("test-repo", CONTENT_CACHE_TOKEN_ATTRIBUTE)));
+
+    verify(cacheController).setCache("content-token");
+    verify(metadataCacheController, never()).setCache(anyString());
+    verify(negativeCacheFacet).invalidate();
+  }
+
+  @Test
+  public void onAttributesEvent_replicatedMetadataTokenNotStored_leavesCachesUntouched() {
+    CacheController metadataCacheController = mock();
+    NegativeCacheFacet negativeCacheFacet = stubReplicationWiring(metadataCacheController);
+    when(repositoryAttributeService.getRepositoryAttribute(repository, METADATA_CACHE_TOKEN_ATTRIBUTE, "dummy"))
+        .thenReturn("dummy");
+
+    EventHelper.asReplicating(() -> underTest.on(
+        new ContentRepositoryAttributesDesEvent("test-repo", METADATA_CACHE_TOKEN_ATTRIBUTE)));
+
+    verify(metadataCacheController, never()).setCache(anyString());
+    verify(cacheController, never()).setCache(anyString());
+    verify(negativeCacheFacet, never()).invalidate();
+  }
+
+  @Test
+  public void onAttributesEvent_metadataTokenForOtherRepository_isIgnored() {
+    CacheController metadataCacheController = mock();
+    stubReplicationWiring(metadataCacheController);
+
+    EventHelper.asReplicating(() -> underTest.on(
+        new ContentRepositoryAttributesDesEvent("other-repo", METADATA_CACHE_TOKEN_ATTRIBUTE)));
+
+    verifyNoInteractions(metadataCacheController);
+    verify(cacheController, never()).setCache(anyString());
+  }
+
+  @Test
+  public void onAttributesEvent_metadataTokenWhenNotReplicating_isIgnored() {
+    CacheController metadataCacheController = mock();
+    stubReplicationWiring(metadataCacheController);
+
+    underTest.on(new ContentRepositoryAttributesDesEvent("test-repo", METADATA_CACHE_TOKEN_ATTRIBUTE));
+
+    verifyNoInteractions(metadataCacheController);
+    verify(cacheController, never()).setCache(anyString());
+  }
+
+  /**
+   * Wires the repository name, separate content/metadata cache controllers and a negative cache facet so
+   * {@link ProxyFacetSupport#on(ContentRepositoryAttributesDesEvent)} can run against mocks.
+   */
+  private NegativeCacheFacet stubReplicationWiring(final CacheController metadataCacheController) {
+    NegativeCacheFacet negativeCacheFacet = mock(NegativeCacheFacet.class);
+    when(repository.getName()).thenReturn("test-repo");
+    when(repository.facet(NegativeCacheFacet.class)).thenReturn(negativeCacheFacet);
+    when(cacheControllerHolder.getMetadataCacheController()).thenReturn(metadataCacheController);
+    underTest.setRepositoryAttributeService(repositoryAttributeService);
+    return negativeCacheFacet;
   }
 
   /**

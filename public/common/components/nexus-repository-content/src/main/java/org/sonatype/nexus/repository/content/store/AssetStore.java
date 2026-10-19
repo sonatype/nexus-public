@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
-import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
@@ -46,12 +45,11 @@ import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
-import org.sonatype.nexus.repository.content.upgrades.SoftDeleteAnchorMigrationStep_2_169;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.util.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static java.util.Objects.requireNonNull;
@@ -74,11 +72,7 @@ public class AssetStore<T extends AssetDAO>
 
   private GlobalRepositorySettings globalRepositorySettings;
 
-  /** See {@code ComponentStore#databaseCheck}. */
-  private DatabaseCheck databaseCheck;
-
-  /** Sticky cache for {@link #softDeleteAvailable()}. See {@code ComponentStore#softDeleteAvailable}. */
-  private volatile boolean softDeleteAvailable;
+  private SoftDeleteSchemaState softDeleteSchemaState;
 
   @Autowired
   public AssetStore(
@@ -91,21 +85,14 @@ public class AssetStore<T extends AssetDAO>
     this.clustered = clustered;
   }
 
-  /** See {@code ComponentStore#setDatabaseCheck}. */
+  /** See {@code ComponentStore#setSoftDeleteSchemaState}. */
   @Autowired(required = false)
-  public void setDatabaseCheck(final DatabaseCheck databaseCheck) {
-    this.databaseCheck = databaseCheck;
+  public void setSoftDeleteSchemaState(final SoftDeleteSchemaState softDeleteSchemaState) {
+    this.softDeleteSchemaState = softDeleteSchemaState;
   }
 
-  /**
-   * See {@code ComponentStore#softDeleteAvailable()}. Disabled for NEXUS-54969; when re-enabled it would
-   * again gate on {@link SoftDeleteAnchorMigrationStep_2_169#VERSION}.
-   */
   protected boolean softDeleteAvailable() {
-    // NEXUS-54969: soft-delete disabled at the DB layer -- see ComponentStore#softDeleteAvailable() for the
-    // full rationale (prevents deleted_on/deleted_by from entering SELECT */INSERT/UPDATE and the resulting
-    // "cached plan must not change result type" 500s). Kept as a one-line revert to re-enable.
-    return false;
+    return softDeleteSchemaState != null && softDeleteSchemaState.isSoftDeleteAvailable();
   }
 
   @Autowired
@@ -251,6 +238,14 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public Collection<Asset> browseAllComponentAssets(final Component component) {
     return dao().browseAllComponentAssets(component);
+  }
+
+  /**
+   * Browse all assets associated with a component, including soft-deleted.
+   */
+  @Transactional
+  public Collection<Asset> browseAllComponentAssetsWithSoftDelete(final Component component) {
+    return dao().browseAllComponentAssetsWithSoftDelete(component);
   }
 
   /**

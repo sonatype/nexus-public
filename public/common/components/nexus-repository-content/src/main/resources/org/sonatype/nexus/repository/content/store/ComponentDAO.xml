@@ -25,6 +25,10 @@
     normalized_version, attributes, created, last_updated, entity_version
   </sql>
 
+  <sql id="componentColumnsWithSoftDelete">
+    <include refid="componentColumns"/>, deleted_on, deleted_by
+  </sql>
+
   <sql id="assetColumns">
     asset_id, repository_id, path, kind, component_id, asset_blob_id,
     last_downloaded, attributes, created, last_updated, asset_blob_size
@@ -127,11 +131,6 @@
     <if test="filter != null"> AND (${filter})</if>;
   </select>
 
-  <!-- Every read query that filters on deleted_on wraps the predicate in
-       <if test="softDeleteAvailable">...</if>. The store layer passes the result of
-       DatabaseCheck.isAtLeast(SoftDeleteAnchorMigrationStep_2_163.VERSION). Pre-migration the
-       boolean is false, the predicate is omitted, and the query returns the same logical result
-       (no row can be soft-deleted before the column exists). -->
   <select id="countUnnormalized" resultType="int">
     SELECT COUNT(component_id)
       FROM ${format}_component
@@ -202,8 +201,8 @@
     <result property="attributes" column="attributes"/>
     <result property="created" column="created"/>
     <result property="lastUpdated" column="last_updated"/>
-    <!-- NEXUS-54969: deleted_on/deleted_by are no longer selected (soft-delete disabled; the columns may not
-         exist), so they are not mapped here. -->
+    <result property="deletedOn" column="deleted_on"/>
+    <result property="deletedBy" column="deleted_by"/>
   </resultMap>
 
   <!--resultMap to obtain components using a custom order (orderedToken) -->
@@ -597,7 +596,7 @@
   </update>
 
   <select id="browseDeletedComponents" resultMap="ComponentDataMap">
-    SELECT * FROM ${format}_component
+    SELECT <include refid="componentColumnsWithSoftDelete"/> FROM ${format}_component
     WHERE deleted_on IS NOT NULL
     <if test="repositoryId != null"> AND repository_id = #{repositoryId}</if>
     <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
@@ -611,7 +610,7 @@
   </select>
 
   <select id="readDeletedComponent" resultMap="ComponentDataMap">
-    SELECT * FROM ${format}_component
+    SELECT <include refid="componentColumnsWithSoftDelete"/> FROM ${format}_component
     WHERE component_id = #{componentId} AND deleted_on IS NOT NULL;
   </select>
 

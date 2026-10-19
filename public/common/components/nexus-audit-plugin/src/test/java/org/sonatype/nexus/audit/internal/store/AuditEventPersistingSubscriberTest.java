@@ -14,9 +14,12 @@ package org.sonatype.nexus.audit.internal.store;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditDataRecordedEvent;
+import org.sonatype.nexus.audit.internal.rest.AuditLogResource;
 import org.sonatype.nexus.common.event.EventHelper;
 
 import org.junit.jupiter.api.AfterEach;
@@ -31,13 +34,17 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_AUDIT_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE;
 
 /**
  * Tests for {@link AuditEventPersistingSubscriber}.
@@ -46,6 +53,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class AuditEventPersistingSubscriberTest
 {
+  private static final Pattern AUDIT_PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{[^:}]+:(true|false)}");
+
   @Mock
   private AuditEventStore auditEventStore;
 
@@ -272,6 +281,30 @@ public class AuditEventPersistingSubscriberTest
     assertThat(persisted.getDomain(), is(auditData.getDomain()));
     assertThat(persisted.getType(), is(auditData.getType()));
     clearInvocations(auditEventStore);
+  }
+
+  @Test
+  void shouldNotRegisterSubscriberWhenAuditPropertyIsMissing() {
+    ConditionalOnBooleanProperty annotation =
+        AuditEventPersistingSubscriber.class.getAnnotation(ConditionalOnBooleanProperty.class);
+
+    assertThat(annotation, notNullValue());
+    assertThat(annotation.name(), arrayContaining(PREVIEW_UI_AUDIT_ENABLED));
+    assertThat(annotation.matchIfMissing(), is(false));
+  }
+
+  @Test
+  void shouldKeepAuditGateDefaultsAlignedAcrossSubscriberResourceAndPlaceholder() {
+    boolean subscriberDefault =
+        AuditEventPersistingSubscriber.class.getAnnotation(ConditionalOnBooleanProperty.class).matchIfMissing();
+    boolean resourceDefault =
+        AuditLogResource.class.getAnnotation(ConditionalOnBooleanProperty.class).matchIfMissing();
+    Matcher placeholder = AUDIT_PLACEHOLDER_PATTERN.matcher(PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE);
+    assertThat(placeholder.matches(), is(true));
+    boolean placeholderDefault = Boolean.parseBoolean(placeholder.group(1));
+
+    assertThat(resourceDefault, is(subscriberDefault));
+    assertThat(placeholderDefault, is(subscriberDefault));
   }
 
   private void assertEventFiltered(final AuditData auditData) {

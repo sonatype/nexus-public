@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -34,9 +35,10 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.io.Cooperation;
 import org.sonatype.nexus.common.template.EscapeHelper;
-import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheInvalidationEvent;
 import org.sonatype.nexus.outbound.context.OutboundRequestContext;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.ETagHeaderUtils;
@@ -50,6 +52,7 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryAttributesDesEvent;
 import org.sonatype.nexus.repository.firewall.FirewallHeaderProvider;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
@@ -111,6 +114,8 @@ public abstract class ProxyFacetSupport
     extends FacetSupport
     implements ProxyFacet
 {
+  private static final String DUMMY = "dummy";
+
   public static final String BYPASS_HTTP_ERRORS_HEADER_NAME = "BYPASS_HTTP_ERRORS";
 
   public static final String BYPASS_HTTP_ERRORS_HEADER_VALUE = "true";
@@ -338,13 +343,6 @@ public abstract class ProxyFacetSupport
   protected void doConfigure(final Configuration configuration) throws Exception {
     config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, ProxyConfig.class);
 
-    String storedToken =
-        repositoryAttributeService().getRepositoryAttribute(getRepository(), CACHE_TOKEN_ATTRIBUTE, null);
-
-    cacheControllerHolder = new CacheControllerHolder(
-        new CacheController((int) config.getContentMaxAge().getSeconds(), null),
-        new CacheController((int) config.getMetadataMaxAge().getSeconds(), storedToken));
-
     // normalize URL path to contain trailing slash
     config.remoteUrl = normalizeURLPath(config.remoteUrl);
 
@@ -418,8 +416,21 @@ public abstract class ProxyFacetSupport
   }
 
   @Override
-  protected void doStart() throws Exception {
+  protected void doStart() {
     httpClient = facet(HttpClientFacet.class);
+
+    String storedToken =
+        repositoryAttributeService().getRepositoryAttribute(getRepository(), METADATA_CACHE_TOKEN_ATTRIBUTE, DUMMY);
+    String cachedStoredToken =
+        repositoryAttributeService().getRepositoryAttribute(getRepository(), CONTENT_CACHE_TOKEN_ATTRIBUTE, DUMMY);
+
+    if (DUMMY.equals(storedToken) || DUMMY.equals(cachedStoredToken)) {
+      throw new RuntimeException("ContentFacet must be registered before ProxyFacet");
+    }
+
+    cacheControllerHolder = new CacheControllerHolder(
+        new CacheController((int) config.getContentMaxAge().getSeconds(), cachedStoredToken),
+        new CacheController((int) config.getMetadataMaxAge().getSeconds(), storedToken));
 
     if (remoteUrlChanged) {
       remoteUrlChanged = false;
@@ -475,7 +486,7 @@ public abstract class ProxyFacetSupport
     return get(context, content);
   }
 
-  private void sendProxyThrottledRequestEventIfNeeded(final Context context, boolean isBlocked) {
+  private void sendProxyThrottledRequestEventIfNeeded(final Context context, final boolean isBlocked) {
     if (!context.getAttributes().contains(PROXY_THROTTLED_ANALYTICS_MARKED)) {
       getEventManager().post(new ProxyThrottledRequestEvent(isBlocked));
     }
@@ -721,11 +732,26 @@ public abstract class ProxyFacetSupport
 
   @Override
   public void invalidateProxyCaches() {
-    log.info("Invalidating proxy caches of {}", getRepository().getName());
-    cacheControllerHolder.invalidateCaches();
+    if (!EventHelper.isReplicating()) {
+      log.info("Invalidating proxy caches of {}", getRepository().getName());
+      invalidateMetadataCache();
+      invalidateContentCache();
+      getEventManager().post(new RepositoryCacheInvalidationEvent(getRepository().getName()));
+    }
+  }
 
-    // Post event to synchronize cache token across nodes
-    postCacheTokenEvent(getRepository(), cacheControllerHolder.getContentCacheController().current().getCacheToken());
+  protected void invalidateContentCache() {
+    if (!EventHelper.isReplicating()) {
+      CacheController contentCacheController = cacheControllerHolder.getContentCacheController();
+      storeContentCacheToken(contentCacheController.invalidateCache());
+    }
+  }
+
+  protected void invalidateMetadataCache() {
+    if (!EventHelper.isReplicating()) {
+      CacheController metadataCacheController = cacheControllerHolder.getMetadataCacheController();
+      storeMetadataCacheToken(metadataCacheController.invalidateCache());
+    }
   }
 
   @Override
@@ -1028,7 +1054,7 @@ public abstract class ProxyFacetSupport
   /**
    * Gets URLs from header to handle 300 (multiple locations) responses.
    */
-  protected List<String> extractUrls(HttpResponse response) {
+  protected List<String> extractUrls(final HttpResponse response) {
     Header[] locationHeaders = response.getHeaders(HttpHeaders.LINK);
     List<String> urls = new ArrayList<>();
     Pattern pattern = Pattern.compile(ALTERNATIVE_URLS_PATTERN);
@@ -1284,9 +1310,31 @@ public abstract class ProxyFacetSupport
   }
 
   @Subscribe
-  public void on(final RepositoryCacheSyncTokenEvent event) {
-    if (!event.isLocal() && getRepository().getName().equals(event.getRepositoryName())) {
-      cacheControllerHolder.getMetadataCacheController().setCache(event.getToken());
+  public void on(final ContentRepositoryAttributesDesEvent event) {
+    String repositoryName = getRepository().getName();
+    if (EventHelper.isReplicating() && Objects.equals(repositoryName, event.getRepoName())) {
+      if (CONTENT_CACHE_TOKEN_ATTRIBUTE.equals(event.getKey())) {
+        Optional
+            .ofNullable(repositoryAttributeService.getRepositoryAttribute(getRepository(),
+                CONTENT_CACHE_TOKEN_ATTRIBUTE, DUMMY))
+            .filter(val -> !DUMMY.equals(val))
+            .ifPresent(contentCacheToken -> {
+              cacheControllerHolder.getContentCacheController().setCache(contentCacheToken);
+              log.debug("repository:{}, contentCacheToken:{}", repositoryName, contentCacheToken);
+              facet(NegativeCacheFacet.class).invalidate();
+            });
+      }
+      else if (METADATA_CACHE_TOKEN_ATTRIBUTE.equals(event.getKey())) {
+        Optional
+            .ofNullable(repositoryAttributeService.getRepositoryAttribute(getRepository(),
+                METADATA_CACHE_TOKEN_ATTRIBUTE, DUMMY))
+            .filter(val -> !DUMMY.equals(val))
+            .ifPresent(metadataCacheToken -> {
+              cacheControllerHolder.getMetadataCacheController().setCache(metadataCacheToken);
+              log.debug("repository:{}, metadataCacheToken:{}", repositoryName, metadataCacheToken);
+              facet(NegativeCacheFacet.class).invalidate();
+            });
+      }
     }
   }
 

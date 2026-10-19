@@ -12,70 +12,63 @@
  */
 package org.sonatype.nexus.repository.cache;
 
-import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheInvalidationEvent;
+import java.util.Optional;
+
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.proxy.ProxyFacet;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RepositoryCacheInvalidationServiceTest
 {
-  @Mock
-  private RepositoryManager repositoryManager;
-
-  @Mock
-  private EventManager eventManager;
-
   @Mock
   private Repository repository;
 
   @Mock
-  private Type type;
+  private GroupFacet groupFacet;
+
+  @Mock
+  private ProxyFacet proxyFacet;
+
+  @Mock
+  private NegativeCacheFacet negativeCacheFacet;
 
   private RepositoryCacheInvalidationService underTest;
 
-  @Before
+  @BeforeEach
   public void setup() {
-    underTest = new RepositoryCacheInvalidationService(repositoryManager, eventManager);
-  }
-
-  /**
-   * Core fix: a cache-invalidation event for a repository not yet materialized on this node (the create->use
-   * window under HA) must be skipped, not NPE. Before the fix this threw NPE on checkNotNull(repository)
-   * inside invalidateCaches(...).
-   */
-  @Test
-  public void testOn_repositoryNotMaterialized_skipsWithoutException() {
-    when(repositoryManager.get("absent-repo")).thenReturn(null);
-
-    // must not throw
-    underTest.on(new RepositoryCacheInvalidationEvent("absent-repo"));
-
-    verify(repositoryManager).get("absent-repo");
-    verifyNoInteractions(repository);
+    underTest = new RepositoryCacheInvalidationService();
   }
 
   @Test
-  public void testOn_repositoryPresent_invalidatesCaches() {
-    when(repositoryManager.get("present-repo")).thenReturn(repository);
-    when(repository.getType()).thenReturn(type);
-    when(type.getValue()).thenReturn("hosted"); // neither group nor proxy -> no facet interaction
+  void testProcessCachesInvalidation_group() {
+    when(repository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
+    when(repository.optionalFacet(NegativeCacheFacet.class)).thenReturn(Optional.empty());
+    when(repository.optionalFacet(ProxyFacet.class)).thenReturn(Optional.empty());
 
-    underTest.on(new RepositoryCacheInvalidationEvent("present-repo"));
+    underTest.processCachesInvalidation(repository);
 
-    // proceeded into invalidateCaches(...), which inspects the repository type
-    verify(repository, atLeastOnce()).getType();
+    verify(groupFacet).invalidateGroupCaches();
+  }
+
+  @Test
+  void testProcessCachesInvalidation_proxy() {
+    when(repository.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
+    when(repository.optionalFacet(NegativeCacheFacet.class)).thenReturn(Optional.of(negativeCacheFacet));
+    when(repository.optionalFacet(ProxyFacet.class)).thenReturn(Optional.of(proxyFacet));
+
+    underTest.processCachesInvalidation(repository);
+
+    verify(proxyFacet).invalidateProxyCaches();
+    verify(negativeCacheFacet).invalidate();
   }
 }

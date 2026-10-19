@@ -111,7 +111,7 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
         contentFacetFinder.findRepository(this.format, contentRepository)
             .ifPresent(repository -> {
               String repoName = repository.getName();
-              postCommitEvent(() -> new ContentRepositoryAttributesDesEvent(repoName));
+              postCommitEvent(() -> new ContentRepositoryAttributesDesEvent(repoName, key));
             });
       }
     });

@@ -118,6 +118,18 @@
     SELECT <include refid="repositoryColumns"/> FROM repository WHERE recipe_name = #{value} ORDER by id ASC;
   </select>
 
+  <select id="readByIdsIgnoringSoftDelete" resultType="ConfigurationData">
+    SELECT <include refid="repositoryColumns"/> FROM repository
+    <where>
+      <if test="collection != null and !collection.isEmpty()">
+        id IN
+        <foreach item="id" collection="collection" open="(" separator="," close=")">
+          #{id}
+        </foreach>
+      </if>
+    </where>
+  </select>
+
   <select id="countByBlobStore" resultType="int">
     <choose>
       <when test="_databaseId == 'PostgreSQL'">

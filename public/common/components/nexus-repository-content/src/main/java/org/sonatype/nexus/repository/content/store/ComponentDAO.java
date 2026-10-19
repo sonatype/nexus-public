@@ -52,7 +52,7 @@ public interface ComponentDAO
    * still returns the correct logical result (pre-migration no row is soft-deleted).
    *
    * <p>
-   * See {@code SoftDeleteAnchorMigrationStep_2_169} and
+   * See {@code SoftDeleteColumnsMigrationStep_2_172} and
    * {@link org.sonatype.nexus.repository.content.store.ComponentStore#softDeleteAvailable()}.
    */
   String SOFT_DELETE_AVAILABLE = "softDeleteAvailable";

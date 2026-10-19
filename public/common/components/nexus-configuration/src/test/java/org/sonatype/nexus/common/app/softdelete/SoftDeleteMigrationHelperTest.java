@@ -65,4 +65,32 @@ class SoftDeleteMigrationHelperTest
     RuntimeException outer = new RuntimeException("Service failure", mid);
     assertTrue(SoftDeleteMigrationHelper.isMissingDeletedOnColumn(outer));
   }
+
+  @Test
+  void isMissingDeletedOnColumn_localizedPostgresMessageWithSqlState_returnsTrue() {
+    // Spanish lc_messages: "no existe la columna «deleted_on»" (NEXUS-55897). The English text match
+    // misses this; the SQLState (42703 undefined_column) does not, since it is not localized.
+    SQLException e = new SQLException("ERROR: no existe la columna \u00abdeleted_on\u00bb", "42703");
+    assertTrue(SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e));
+  }
+
+  @Test
+  void isMissingDeletedOnColumn_localizedPostgresMessageNestedWithSqlState_returnsTrue() {
+    SQLException inner = new SQLException("ERREUR: la colonne \u00ab deleted_on \u00bb n'existe pas", "42703");
+    RuntimeException outer = new RuntimeException("Query failed", inner);
+    assertTrue(SoftDeleteMigrationHelper.isMissingDeletedOnColumn(outer));
+  }
+
+  @Test
+  void isMissingDeletedOnColumn_h2SqlStateWithDeletedOn_returnsTrue() {
+    SQLException e = new SQLException("Columna no encontrada: DELETED_ON", "42S22");
+    assertTrue(SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e));
+  }
+
+  @Test
+  void isMissingDeletedOnColumn_undefinedColumnSqlStateButDifferentColumn_returnsFalse() {
+    // A different missing column must not trigger the soft-delete fallback, even with the right SQLState.
+    SQLException e = new SQLException("ERROR: no existe la columna \u00abfoo\u00bb", "42703");
+    assertFalse(SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e));
+  }
 }

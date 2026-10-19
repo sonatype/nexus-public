@@ -152,7 +152,7 @@ export function DeleteConfirmationModal({
                 <>This {entityType} will be moved to Trash</>
               )}
               {typeof retentionDays === 'number'
-                ? <> and can be restored for {retentionDays} days before it is permanently removed.</>
+                ? <> and can be restored within {retentionDays} days before it is permanently removed.</>
                 : <> and can be restored before it is permanently removed.</>}
             </>
           ) : entityName ? (

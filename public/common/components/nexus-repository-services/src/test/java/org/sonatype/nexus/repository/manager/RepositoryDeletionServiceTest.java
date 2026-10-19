@@ -17,7 +17,9 @@ import java.util.List;
 
 import org.sonatype.nexus.common.app.softdelete.SoftDeleteContext;
 import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
+import org.sonatype.nexus.common.app.softdelete.SoftDeleteSchemaVersions;
 import org.sonatype.nexus.common.app.softdelete.SoftDeletedEntityService;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -57,6 +59,9 @@ public class RepositoryDeletionServiceTest
   private SoftDeletedEntityService repositorySoftDeleteService;
 
   @Mock
+  private DatabaseCheck databaseCheck;
+
+  @Mock
   private Repository repository;
 
   @Mock
@@ -85,8 +90,7 @@ public class RepositoryDeletionServiceTest
   {
     // Allowlist the setUp format (maven2) so "flag on" exercises the soft-delete path under the
     // fail-closed gate (an empty allowlist would hard-delete everything).
-    return new RepositoryDeletionService(repositoryManager, securityHelper, services,
-        new SoftDeleteFormatGate(softDeleteEnabled, "maven2"));
+    return service(softDeleteEnabled, "maven2", services);
   }
 
   private RepositoryDeletionService service(
@@ -94,8 +98,11 @@ public class RepositoryDeletionServiceTest
       final String formatsAllowlist,
       final List<SoftDeletedEntityService> services)
   {
-    return new RepositoryDeletionService(repositoryManager, securityHelper, services,
-        new SoftDeleteFormatGate(softDeleteEnabled, formatsAllowlist));
+    // Columns are assumed present in these tests, so schema-availability does not gate the flag path.
+    when(databaseCheck.isAtLeast(SoftDeleteSchemaVersions.REPOSITORY)).thenReturn(true);
+    RepositoryDeletionService svc = new RepositoryDeletionService(repositoryManager, securityHelper, services,
+        new SoftDeleteFormatGate(softDeleteEnabled, formatsAllowlist), databaseCheck);
+    return svc;
   }
 
   @Test
@@ -146,6 +153,20 @@ public class RepositoryDeletionServiceTest
 
     // Soft-delete enabled but only maven2 allow-listed -> an npm repo hard-deletes (phased rollout).
     service(true, "maven2", List.of(repositorySoftDeleteService)).delete(REPO);
+
+    verify(repositoryManager).delete(REPO);
+    verify(repositorySoftDeleteService, never()).softDelete(any(), any());
+  }
+
+  @Test
+  public void hostedRepoWithFlagOnButSchemaNotMigratedIsHardDeleted() throws Exception {
+    // ZDU window: flag on and format allow-listed, but repository.deleted_on doesn't exist yet.
+    // Must hard-delete rather than attempt a soft-delete write that would fail on the missing column.
+    when(databaseCheck.isAtLeast(SoftDeleteSchemaVersions.REPOSITORY)).thenReturn(false);
+    RepositoryDeletionService svc = new RepositoryDeletionService(repositoryManager, securityHelper,
+        List.of(repositorySoftDeleteService), new SoftDeleteFormatGate(true, "maven2"), databaseCheck);
+
+    svc.delete(REPO);
 
     verify(repositoryManager).delete(REPO);
     verify(repositorySoftDeleteService, never()).softDelete(any(), any());

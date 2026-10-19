@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content;
 
 import javax.annotation.Nullable;
+
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.manager.RepositoryAttributeService;

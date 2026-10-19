@@ -65,7 +65,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     FolderInfo_Delete_Button: 'Delete folder',
     FolderInfo_Delete_Title: 'Delete the entire folder?',
     FolderInfo_Delete_Text: 'All assets you have permission to delete under folder \'{0}\' will be removed. The view will not automatically refresh to show progress. This operation cannot be undone.',
-    FolderInfo_Delete_SoftDelete_Text: 'Folder "{0}" and all its contents will be moved to Trash and can be restored for {1} days before they are permanently removed.',
+    FolderInfo_Delete_SoftDelete_Text: 'Folder "{0}" and all its contents will be moved to Trash and can be restored within {1} days before they are permanently removed.',
     FolderInfo_Delete_SoftDelete_Text_NoRetention: 'Folder "{0}" and all its contents will be moved to Trash and can be restored before they are permanently removed.',
     FolderInfo_Delete_Success: 'The folder is now being deleted in the background',
     Component_Asset_Tree_Title_Feature: 'Tree',

@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.content.store.SoftDeleteSchemaState;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.security.SecurityHelper;
 
@@ -73,18 +74,22 @@ public class ContentDeletionService
 
   private final SoftDeleteFormatGate softDeleteFormatGate;
 
+  private final SoftDeleteSchemaState softDeleteSchemaState;
+
   @Autowired
   public ContentDeletionService(
       final MaintenanceService maintenanceService,
       final SecurityHelper securityHelper,
       final List<SoftDeletedEntityService> softDeletedEntityServices,
-      final SoftDeleteFormatGate softDeleteFormatGate)
+      final SoftDeleteFormatGate softDeleteFormatGate,
+      final SoftDeleteSchemaState softDeleteSchemaState)
   {
     this.maintenanceService = requireNonNull(maintenanceService);
     this.securityHelper = requireNonNull(securityHelper);
     this.componentSoftDeleteService = findService(softDeletedEntityServices, "component");
     this.assetSoftDeleteService = findService(softDeletedEntityServices, "asset");
     this.softDeleteFormatGate = requireNonNull(softDeleteFormatGate);
+    this.softDeleteSchemaState = requireNonNull(softDeleteSchemaState);
   }
 
   /**
@@ -188,7 +193,11 @@ public class ContentDeletionService
   }
 
   private boolean shouldSoftDelete(final Repository repository, final SoftDeletedEntityService service) {
-    return softDeleteFormatGate.isEnabled()
+    // isSoftDeleteAvailable() requires the flag AND that the deleted_on columns actually exist. Gating on
+    // schema (not just the flag) keeps a prematurely-enabled flag safe under ZDU: a new-version node can run
+    // with the flag on before the deferred migration adds the columns; hard-delete until they exist rather
+    // than attempting a soft-delete write that would fail on the missing column.
+    return softDeleteSchemaState.isSoftDeleteAvailable()
         && service != null
         && HostedType.NAME.equals(repository.getType().getValue())
         && softDeleteFormatGate.isEnabledForFormat(repository.getFormat().getValue());

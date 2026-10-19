@@ -52,7 +52,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_AUDIT_ENABLE
  * REST API for querying audit events across all domains.
  */
 @Component
-@ConditionalOnBooleanProperty(name = PREVIEW_UI_AUDIT_ENABLED, matchIfMissing = true)
+@ConditionalOnBooleanProperty(name = PREVIEW_UI_AUDIT_ENABLED, matchIfMissing = false)
 @Path("/internal/ui/audit-log")
 @Produces(APPLICATION_JSON)
 public class AuditLogResource

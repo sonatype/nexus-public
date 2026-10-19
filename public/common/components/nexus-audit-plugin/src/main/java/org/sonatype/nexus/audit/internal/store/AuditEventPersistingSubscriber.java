@@ -40,7 +40,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_AUDIT_ENABLE
  * everything else (e.g. task lifecycle noise) is skipped. Webhooks and file appenders are unaffected.
  */
 @Component
-@ConditionalOnBooleanProperty(name = PREVIEW_UI_AUDIT_ENABLED, matchIfMissing = true)
+@ConditionalOnBooleanProperty(name = PREVIEW_UI_AUDIT_ENABLED, matchIfMissing = false)
 public class AuditEventPersistingSubscriber
     implements EventAware
 {

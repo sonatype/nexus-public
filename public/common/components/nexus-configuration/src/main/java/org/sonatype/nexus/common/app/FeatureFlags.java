@@ -448,11 +448,13 @@ public class FeatureFlags
    * Gates Preview UI audit event DB persistence and the audit log REST/UI surface.
    * Intentionally decoupled from the preview UI visibility flags so audit DB writes can be
    * deferred until the persistence path is production-ready.
-   * Available values: true, false. Default value: true
+   * Defaults to false: audit_events grew without bound since 3.96.0 (NEXUS-53767), so DB
+   * persistence is opt-in until the volume and retention redesign lands (NEXUS-55862, NEXUS-55482).
+   * Available values: true, false. Default value: false
    */
   public static final String PREVIEW_UI_AUDIT_ENABLED = "nexus.previewui.audit.enabled";
 
-  public static final String PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE = "${nexus.previewui.audit.enabled:true}";
+  public static final String PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE = "${nexus.previewui.audit.enabled:false}";
 
   /*
    * Per-realm principal permissions cache maximum size. Default value: 1000. Override per realm by appending the

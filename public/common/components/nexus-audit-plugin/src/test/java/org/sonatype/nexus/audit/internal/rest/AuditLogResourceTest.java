@@ -43,16 +43,20 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_AUDIT_ENABLED;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -67,6 +71,15 @@ public class AuditLogResourceTest
   private DefaultSecurityManager securityManager;
 
   private TestRealm realm;
+
+  @Test
+  public void shouldNotRegisterResourceWhenAuditPropertyIsMissing() {
+    ConditionalOnBooleanProperty annotation = AuditLogResource.class.getAnnotation(ConditionalOnBooleanProperty.class);
+
+    assertThat(annotation, notNullValue());
+    assertThat(annotation.name(), arrayContaining(PREVIEW_UI_AUDIT_ENABLED));
+    assertThat(annotation.matchIfMissing(), is(false));
+  }
 
   @Before
   public void setUp() {

@@ -348,7 +348,7 @@ describe('DeleteDialog', () => {
         />
       );
       expect(screen.getByText(/will be moved to Trash/)).toBeInTheDocument();
-      expect(screen.getByText(/restored for 30 days/)).toBeInTheDocument();
+      expect(screen.getByText(/restored within 30 days/)).toBeInTheDocument();
       expect(screen.queryByText(/This action cannot be undone/)).not.toBeInTheDocument();
     });
 

@@ -160,6 +160,11 @@ public interface AssetDAO
   Collection<Asset> browseAllComponentAssets(Component component);
 
   /**
+   * Browse all assets associated with a component, including soft-deleted.
+   */
+  Collection<Asset> browseAllComponentAssetsWithSoftDelete(Component component);
+
+  /**
    * Finds assets where lastUpdated is greater than or equal to the given value.
    *
    * @param repositoryId the repository to browse

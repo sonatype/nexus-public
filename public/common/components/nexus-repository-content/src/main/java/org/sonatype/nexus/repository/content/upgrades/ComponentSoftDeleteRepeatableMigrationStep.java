@@ -13,9 +13,13 @@
 package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
@@ -26,26 +30,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Disabled placeholder (NEXUS-54969).
+ * Creates the soft-delete {@code deleted_on} indexes on every {@code {format}_component} table
+ * (NEXUS-54973). The columns themselves are added by the versioned {@link SoftDeleteColumnsMigrationStep_2_172};
+ * this step only builds the indexes, which are performance-only (their absence never breaks a query).
  *
  * <p>
- * This step originally added soft-delete columns ({@code deleted_on}, {@code deleted_by}) and partial
- * indexes to every {@code {format}_component} table (Logical Deletion Recovery, NEXUS-49147/NEXUS-51733).
- * Because the content DAOs read those tables with {@code SELECT *}, running the live, non-transactional
- * {@code ALTER TABLE} while pgjdbc had already server-side-prepared those statements caused
- * {@code cached plan must not change result type} (SQLState {@code 0A000}) failures — a spike of
- * customer-facing 500s during rollout.
- * </p>
- *
- * <p>
- * The body is now a no-op: no columns or indexes are added. This is safe for both database states —
- * an already-migrated database keeps its (now unused, all-NULL) columns, and a never-migrated database
- * never gets them. The store layer ({@code ComponentStore#softDeleteAvailable()}) also returns
- * {@code false}, so no read/write references those columns. The class stays registered and keeps its
- * checksum so Flyway continues to track it. Re-enabling is <em>not</em> merely reverting this class: it also
- * requires re-auditing every {@code SELECT *} / {@code C.*} read on {@code {format}_component} tables —
- * including format-specific DAOs with custom layouts — for result-shape safety.
- * </p>
+ * Repeatable and keyed on the registered {@link Format} set, so a newly-registered format's tables are
+ * indexed automatically. Runs non-transactionally so PostgreSQL can use {@code CREATE INDEX CONCURRENTLY}
+ * (NEXUS-51733); all statements are idempotent.
  */
 @Component
 public class ComponentSoftDeleteRepeatableMigrationStep
@@ -53,11 +45,13 @@ public class ComponentSoftDeleteRepeatableMigrationStep
 {
   private static final Logger log = LoggerFactory.getLogger(ComponentSoftDeleteRepeatableMigrationStep.class);
 
+  private static final Pattern SAFE_TABLE_NAME = Pattern.compile("^[a-zA-Z0-9_]+$");
+
   /**
-   * Bump when the migration body changes in a way that must re-run on already-migrated databases.
-   * Left intact so the recorded Flyway checksum is unchanged by this disabling change.
+   * Bump when the index logic changes in a way that must re-run on already-migrated databases (the format
+   * set alone may be unchanged). 3 = split from column work (columns moved to the versioned step).
    */
-  private static final int LOGIC_VERSION = 2;
+  private static final int LOGIC_VERSION = 3;
 
   private final List<Format> formats;
 
@@ -76,11 +70,106 @@ public class ComponentSoftDeleteRepeatableMigrationStep
   }
 
   @Override
-  public void migrate(final Connection connection) {
-    // NEXUS-54969: disabled. Do not add deleted_on/deleted_by columns or indexes to {format}_component
-    // tables. Idempotent no-op: already-migrated databases keep their (unused, NULL) columns; fresh
-    // databases never get them. Prevents the live ALTER TABLE that triggered "cached plan must not change
-    // result type" (SQLState 0A000) 500s.
-    log.debug("Soft-delete component column migration disabled (NEXUS-54969); skipping");
+  public boolean canExecuteInTransaction() {
+    return false;
+  }
+
+  @Override
+  public void migrate(final Connection connection) throws Exception {
+    List<String> componentTables = findComponentTables(connection);
+    if (componentTables.isEmpty()) {
+      log.info("No component tables found, skipping soft-delete index creation");
+      return;
+    }
+
+    log.info("Ensuring soft-delete indexes on {} component tables", componentTables.size());
+    for (String tableName : componentTables) {
+      // The indexes reference deleted_on, which the versioned SoftDeleteColumnsMigrationStep_2_172 adds. Flyway
+      // runs that versioned step before this repeatable one, so the column normally exists here; guard defensively
+      // and skip (rather than fail the migration) if a table somehow predates the column.
+      if (!columnExists(connection, tableName, "deleted_on")) {
+        log.warn("Skipping soft-delete indexes on {}: deleted_on column not present yet", tableName);
+        continue;
+      }
+      createPartialIndex(connection, tableName);
+      createActiveIndex(connection, tableName, "idx_" + tableName + "_active",
+          "repository_id, component_id", "repository_id, deleted_on, component_id");
+      createActiveIndex(connection, tableName, "idx_" + tableName + "_active_coords",
+          "repository_id, namespace, name", "repository_id, namespace, name");
+    }
+  }
+
+  private List<String> findComponentTables(final Connection connection) throws Exception {
+    List<String> tables = new ArrayList<>();
+    String sql;
+    if (isPostgresql(connection)) {
+      sql = "SELECT table_name FROM information_schema.tables "
+          + "WHERE table_schema = 'public' AND table_name LIKE '%\\_component' ESCAPE '\\'";
+    }
+    else {
+      sql = "SELECT table_name FROM information_schema.tables "
+          + "WHERE table_name LIKE '%\\_COMPONENT' ESCAPE '\\'";
+    }
+
+    try (PreparedStatement stmt = connection.prepareStatement(sql);
+        ResultSet rs = stmt.executeQuery()) {
+      while (rs.next()) {
+        String name = rs.getString("table_name");
+        if (SAFE_TABLE_NAME.matcher(name).matches()) {
+          tables.add(name);
+        }
+        else {
+          log.warn("Skipping component table with unexpected name: {}", name);
+        }
+      }
+    }
+    return tables;
+  }
+
+  private void createPartialIndex(final Connection connection, final String tableName) throws Exception {
+    String indexName = "idx_" + tableName + "_soft_deleted";
+    if (indexExists(connection, tableName, indexName)) {
+      return;
+    }
+
+    if (isPostgresql(connection)) {
+      runStatement(connection, String.format(
+          "CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (deleted_on) WHERE deleted_on IS NOT NULL",
+          indexName, tableName));
+    }
+    else if (isH2(connection)) {
+      runStatement(connection,
+          String.format("CREATE INDEX IF NOT EXISTS %s ON %s (deleted_on)", indexName, tableName));
+    }
+  }
+
+  /**
+   * Active-path indexes for the hot {@code deleted_on IS NULL} access pattern; without them the added
+   * predicate defeats index-only scans on {@code uk_${format}_component_coordinate} (and the PK) and forces
+   * per-row heap fetches (NEXUS-51733). {@code idx_{table}_active (repository_id, component_id)} serves
+   * keyset browse/count; {@code idx_{table}_active_coords (repository_id, namespace, name)} serves
+   * coordinate lookups and the namespace/name DISTINCT scans. PostgreSQL uses partial indexes
+   * ({@code WHERE deleted_on IS NULL}); H2's keyset index carries {@code deleted_on} as a leading column.
+   */
+  private void createActiveIndex(
+      final Connection connection,
+      final String tableName,
+      final String indexName,
+      final String postgresColumns,
+      final String h2Columns) throws Exception
+  {
+    if (indexExists(connection, tableName, indexName)) {
+      return;
+    }
+
+    if (isPostgresql(connection)) {
+      runStatement(connection, String.format(
+          "CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s) WHERE deleted_on IS NULL",
+          indexName, tableName, postgresColumns));
+    }
+    else if (isH2(connection)) {
+      runStatement(connection,
+          String.format("CREATE INDEX IF NOT EXISTS %s ON %s (%s)", indexName, tableName, h2Columns));
+    }
   }
 }

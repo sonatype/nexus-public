@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.content.store.SoftDeleteSchemaState;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.security.SecurityHelper;
 
@@ -68,6 +69,9 @@ class ContentDeletionServiceTest
   private SoftDeletedEntityService assetSoftDeleteService;
 
   @Mock
+  private SoftDeleteSchemaState softDeleteSchemaState;
+
+  @Mock
   private Repository repository;
 
   @Mock
@@ -103,8 +107,7 @@ class ContentDeletionServiceTest
   {
     // Allowlist the setUp format (maven2) so "flag on" exercises the soft-delete path under the
     // fail-closed gate (an empty allowlist would hard-delete everything).
-    return new ContentDeletionService(maintenanceService, securityHelper, services,
-        new SoftDeleteFormatGate(softDeleteEnabled, "maven2"));
+    return service(softDeleteEnabled, "maven2", services);
   }
 
   private ContentDeletionService service(
@@ -112,8 +115,10 @@ class ContentDeletionServiceTest
       final String formatsAllowlist,
       final List<SoftDeletedEntityService> services)
   {
+    // Columns are assumed present in these tests, so schema-availability tracks the flag.
+    lenient().when(softDeleteSchemaState.isSoftDeleteAvailable()).thenReturn(softDeleteEnabled);
     return new ContentDeletionService(maintenanceService, securityHelper, services,
-        new SoftDeleteFormatGate(softDeleteEnabled, formatsAllowlist));
+        new SoftDeleteFormatGate(softDeleteEnabled, formatsAllowlist), softDeleteSchemaState);
   }
 
   // ---- component ----
@@ -171,6 +176,20 @@ class ContentDeletionServiceTest
 
     // Soft-delete enabled, but only maven2 is allow-listed -> an npm repo hard-deletes (phased rollout).
     service(true, "maven2", List.of(componentSoftDeleteService)).deleteComponent(repository, component);
+
+    verify(maintenanceService).deleteComponent(repository, component);
+    verify(componentSoftDeleteService, never()).softDelete(any(), any());
+  }
+
+  @Test
+  void hostedComponentWithFlagOnButSchemaNotMigratedIsHardDeleted() {
+    // ZDU window: flag on and format allow-listed, but the deleted_on columns don't exist yet.
+    // Must fall back to hard-delete rather than attempt a soft-delete write that would fail.
+    when(softDeleteSchemaState.isSoftDeleteAvailable()).thenReturn(false);
+    ContentDeletionService svc = new ContentDeletionService(maintenanceService, securityHelper,
+        List.of(componentSoftDeleteService), new SoftDeleteFormatGate(true, "maven2"), softDeleteSchemaState);
+
+    svc.deleteComponent(repository, component);
 
     verify(maintenanceService).deleteComponent(repository, component);
     verify(componentSoftDeleteService, never()).softDelete(any(), any());

@@ -22,7 +22,7 @@ import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
-import org.sonatype.nexus.repository.content.upgrades.SoftDeleteAnchorMigrationStep_2_169;
+import org.sonatype.nexus.repository.content.store.SoftDeleteSchemaState;
 import org.sonatype.nexus.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,22 +36,12 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
     extends ContentStoreSupport<T>
 {
   /**
-   * Optional dependency serving two independent concerns:
-   * <ul>
-   * <li>{@link #isPostgresql()} — dialect detection for the {@code getByDisplayPath} SQL,
-   * pre-existing.</li>
-   * <li>{@link #softDeleteAvailable()} — gates the {@code deleted_on IS NULL} predicate
-   * behind {@link SoftDeleteAnchorMigrationStep_2_169#VERSION}.</li>
-   * </ul>
-   * Both fall back to {@code false} when this is null (which only happens in unit tests
-   * that construct the store directly without Spring): {@code isPostgresql()} exercises the
-   * H2 code path, and {@code softDeleteAvailable()} returns false — both of which are the
-   * correct defaults for unit-test fixtures.
+   * Optional dependency for {@link #isPostgresql()} dialect detection in the {@code getByDisplayPath} SQL;
+   * falls back to the H2 path when null (unit tests that construct the store without Spring).
    */
   private DatabaseCheck databaseCheck;
 
-  /** See {@code ComponentStore#softDeleteAvailable}. */
-  private volatile boolean softDeleteAvailable;
+  private SoftDeleteSchemaState softDeleteSchemaState;
 
   @Autowired
   public BrowseNodeStore(
@@ -68,20 +58,17 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
     this.databaseCheck = databaseCheck;
   }
 
+  @Autowired(required = false)
+  public void setSoftDeleteSchemaState(final SoftDeleteSchemaState softDeleteSchemaState) {
+    this.softDeleteSchemaState = softDeleteSchemaState;
+  }
+
   private boolean isPostgresql() {
     return databaseCheck != null && databaseCheck.isPostgresql();
   }
 
-  /**
-   * See {@code ComponentStore#softDeleteAvailable()}. Disabled for NEXUS-54969 (returns {@code false}
-   * unconditionally); when re-enabled it would again gate on {@link SoftDeleteAnchorMigrationStep_2_169#VERSION}.
-   */
   protected boolean softDeleteAvailable() {
-    // NEXUS-54969: soft-delete disabled at the DB layer. The _2_169 anchor still advances the schema version, so
-    // the previous isAtLeast() gate would flip true even though the (now no-op) column migration never added
-    // deleted_on to upgraded format tables -- which would cause "column deleted_on does not exist" in the
-    // (conan-only) browse-node join filter. Hardcoded false keeps deleted_on out of every read. One-line revert.
-    return false;
+    return softDeleteSchemaState != null && softDeleteSchemaState.isSoftDeleteAvailable();
   }
 
   /**

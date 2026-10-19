@@ -17,7 +17,9 @@ import java.util.List;
 
 import org.sonatype.nexus.common.app.softdelete.SoftDeleteContext;
 import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
+import org.sonatype.nexus.common.app.softdelete.SoftDeleteSchemaVersions;
 import org.sonatype.nexus.common.app.softdelete.SoftDeletedEntityService;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
 import org.apache.shiro.authz.AuthorizationException;
@@ -63,12 +65,15 @@ public class RepositoryDeletionService
 
   private final SoftDeleteFormatGate softDeleteFormatGate;
 
+  private final DatabaseCheck databaseCheck;
+
   @Autowired
   public RepositoryDeletionService(
       final RepositoryManager repositoryManager,
       final SecurityHelper securityHelper,
       final List<SoftDeletedEntityService> softDeletedEntityServices,
-      final SoftDeleteFormatGate softDeleteFormatGate)
+      final SoftDeleteFormatGate softDeleteFormatGate,
+      final DatabaseCheck databaseCheck)
   {
     this.repositoryManager = requireNonNull(repositoryManager);
     this.securityHelper = requireNonNull(securityHelper);
@@ -77,6 +82,7 @@ public class RepositoryDeletionService
         .findFirst()
         .orElse(null);
     this.softDeleteFormatGate = requireNonNull(softDeleteFormatGate);
+    this.databaseCheck = requireNonNull(databaseCheck);
   }
 
   /**
@@ -119,7 +125,11 @@ public class RepositoryDeletionService
   }
 
   private boolean shouldSoftDelete(final Repository repository) {
+    // Require the repository deleted_on column to actually exist (schema >= 2.171), not just the flag: under
+    // ZDU a new-version node can run with the flag on before the deferred migration adds the column, and the
+    // repository soft-delete write has no missing-column fallback (unlike the reads). Hard-delete until it exists.
     return softDeleteFormatGate.isEnabled()
+        && databaseCheck.isAtLeast(SoftDeleteSchemaVersions.REPOSITORY)
         && repositorySoftDeleteService != null
         && repository != null
         && HostedType.NAME.equals(repository.getType().getValue())

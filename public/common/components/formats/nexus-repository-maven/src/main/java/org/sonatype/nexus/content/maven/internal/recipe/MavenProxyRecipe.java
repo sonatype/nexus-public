@@ -13,8 +13,7 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import javax.annotation.Nonnull;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Provider;
+
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.content.maven.internal.index.MavenContentProxyIndexFacet;
 import org.sonatype.nexus.repository.Format;
@@ -34,10 +33,13 @@ import org.sonatype.nexus.repository.view.Route.Builder;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
+import jakarta.inject.Provider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * @since 3.26
@@ -87,12 +89,12 @@ public class MavenProxyRecipe
 
   @Override
   public void apply(@Nonnull final Repository repository) throws Exception {
+    repository.attach(mavenContentFacet.get());
     repository.attach(securityFacet.get());
     repository.attach(configure(viewFacet.get()));
     repository.attach(httpClientFacet.get());
     repository.attach(negativeCacheFacet.get());
     repository.attach(proxyFacet.get());
-    repository.attach(mavenContentFacet.get());
     repository.attach(purgeUnusedFacet.get());
     repository.attach(searchFacet.get());
     repository.attach(browseFacet.get());

@@ -13,8 +13,7 @@
 package org.sonatype.nexus.content.raw.internal.recipe;
 
 import javax.annotation.Nonnull;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Provider;
+
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -29,9 +28,12 @@ import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
-import static java.util.Objects.requireNonNull;
-import org.springframework.stereotype.Component;
+import jakarta.inject.Provider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Raw group repository recipe.
@@ -64,10 +66,10 @@ public class RawGroupRecipe
 
   @Override
   public void apply(@Nonnull final Repository repository) throws Exception {
+    repository.attach(contentFacet.get());
     repository.attach(securityFacet.get());
     repository.attach(configure(viewFacet.get()));
     repository.attach(groupFacet.get());
-    repository.attach(contentFacet.get());
     repository.attach(browseFacet.get());
   }
 

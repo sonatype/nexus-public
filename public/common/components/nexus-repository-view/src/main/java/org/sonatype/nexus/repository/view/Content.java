@@ -141,8 +141,9 @@ public class Content
   /**
    * disables redirect handling for this content.
    */
-  public void setDisableRedirect() {
+  public Content setDisableRedirect() {
     disableRedirect = true;
+    return this;
   }
 
   @Override

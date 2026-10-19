@@ -28,6 +28,10 @@
     normalized_version, attributes, created, last_updated, entity_version
   </sql>
 
+  <sql id="assetColumnsWithSoftDelete">
+    <include refid="assetColumns"/>, deleted_on, deleted_by
+  </sql>
+
   <insert id="createSchema" databaseId="H2">
     --
     -- each format has an asset table which they can extend
@@ -120,8 +124,8 @@
   <resultMap id="assetResult" type="AssetData">
     <result property="assetBlobId" column="asset_blob_id"/>
     <result property="componentId" column="component_id" />
-    <!-- NEXUS-54969: deleted_on/deleted_by are no longer selected (soft-delete disabled; the columns may not
-         exist), so they are not mapped here. -->
+    <result property="deletedOn" column="deleted_on"/>
+    <result property="deletedBy" column="deleted_by"/>
     <association property="component" column="component_id" select="fetchComponent" fetchType="lazy"/>
     <association property="assetBlob" column="asset_blob_id" select="fetchAssetBlob" fetchType="lazy"/>
   </resultMap>
@@ -260,6 +264,10 @@
 
   <select id="browseAllComponentAssets" resultMap="assetResult" parameterType="ComponentData">
     SELECT <include refid="assetColumns"/> FROM ${format}_asset WHERE component_id = #{componentId};
+  </select>
+
+  <select id="browseAllComponentAssetsWithSoftDelete" resultMap="assetResult" parameterType="ComponentData">
+    SELECT <include refid="assetColumnsWithSoftDelete"/> FROM ${format}_asset WHERE component_id = #{componentId};
   </select>
 
   <sql id="regexList">
@@ -709,12 +717,15 @@
 
   <!-- Read a single deleted asset by ID (ignoring non-deleted) -->
   <select id="readDeletedAsset" resultMap="assetResult">
-    SELECT * FROM ${format}_asset WHERE asset_id = #{assetId} AND deleted_on IS NOT NULL;
+    SELECT <include refid="assetColumnsWithSoftDelete"/> FROM ${format}_asset WHERE asset_id = #{assetId} AND deleted_on IS NOT NULL;
   </select>
 
   <!-- Browse soft-deleted assets, hiding cascade-deleted assets but showing individually-deleted ones -->
   <select id="browseDeletedAssets" resultMap="assetResult">
-    SELECT A.* FROM ${format}_asset A
+    SELECT A.asset_id, A.repository_id, A.path, A.kind, A.component_id, A.asset_blob_id,
+           A.last_downloaded, A.attributes, A.created, A.last_updated, A.asset_blob_size,
+           A.deleted_on, A.deleted_by
+    FROM ${format}_asset A
     LEFT JOIN ${format}_component C ON A.component_id = C.component_id
     WHERE A.deleted_on IS NOT NULL
     AND (A.component_id IS NULL OR C.deleted_on IS NULL OR A.deleted_on &lt; C.deleted_on)
@@ -726,7 +737,7 @@
   <!-- Browse ALL soft-deleted assets (including cascade-deleted ones); used by format GC to protect
        blobs/manifests still referenced by soft-deleted (restorable) content -->
   <select id="browseAllDeletedAssets" resultMap="assetResult">
-    SELECT * FROM ${format}_asset
+    SELECT <include refid="assetColumnsWithSoftDelete"/> FROM ${format}_asset
     WHERE deleted_on IS NOT NULL
     <if test="repositoryId != null"> AND repository_id = #{repositoryId}</if>
     <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>

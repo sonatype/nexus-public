@@ -175,11 +175,11 @@ export const ACTION_STRINGS: ActionStrings = {
     folderMessage: (name: string) =>
       `Are you sure you want to delete folder "${name}" and all its contents? This action cannot be undone.`,
     componentTrashMessage: (name: string, retentionDays?: number) =>
-      `Component "${name}" will be moved to Trash and can be restored${retentionDays ? ` for ${retentionDays} days` : ''} before it is permanently removed.`,
+      `Component "${name}" will be moved to Trash and can be restored${retentionDays ? ` within ${retentionDays} days` : ''} before it is permanently removed.`,
     assetTrashMessage: (name: string, retentionDays?: number) =>
-      `Asset "${name}" will be moved to Trash and can be restored${retentionDays ? ` for ${retentionDays} days` : ''} before it is permanently removed.`,
+      `Asset "${name}" will be moved to Trash and can be restored${retentionDays ? ` within ${retentionDays} days` : ''} before it is permanently removed.`,
     folderTrashMessage: (name: string, retentionDays?: number) =>
-      `Folder "${name}" and all its contents will be moved to Trash and can be restored${retentionDays ? ` for ${retentionDays} days` : ''} before they are permanently removed.`,
+      `Folder "${name}" and all its contents will be moved to Trash and can be restored${retentionDays ? ` within ${retentionDays} days` : ''} before they are permanently removed.`,
     confirmButton: 'Delete',
     cancelButton: 'Cancel',
     deletingButton: 'Deleting...',

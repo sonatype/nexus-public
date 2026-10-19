@@ -76,6 +76,11 @@ public interface ConfigurationDAO
   Collection<Configuration> readByRecipeIgnoringSoftDelete(String recipeName);
 
   /**
+   * Read repositories by id, ignoring soft-delete (ZDU fallback for {@code readByIds}).
+   */
+  Collection<ConfigurationData> readByIdsIgnoringSoftDelete(Collection<EntityId> repositoryIds);
+
+  /**
    * Mark a repository as soft-deleted.
    */
   void softDelete(

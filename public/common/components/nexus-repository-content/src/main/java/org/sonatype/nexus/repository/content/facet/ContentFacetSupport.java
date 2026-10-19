@@ -486,7 +486,7 @@ public abstract class ContentFacetSupport
       // component owns only a handful of assets in every format, and this scan runs solely on the rare revive path
       // (removed > 0). Docker/OCI layers and blobs are component-less shared assets, not children here, so the
       // per-component asset count stays small -- no streaming/pagination needed (NEXUS-51733).
-      for (Asset asset : stores().assetStore.browseAllComponentAssets(component)) {
+      for (Asset asset : stores().assetStore.browseAllComponentAssetsWithSoftDelete(component)) {
         AssetData assetData = (AssetData) asset;
         if (assetData.getDeletedOn() != null) {
           String assetExternalId =
