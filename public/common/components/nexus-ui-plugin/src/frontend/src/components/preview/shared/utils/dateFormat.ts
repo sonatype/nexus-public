@@ -108,7 +108,13 @@ export function formatDateTime(
       // behavior. Do not "simplify" this into a conditional spread — it would change nothing but
       // obscure that the no-override path is the intended default.
       timeZone: options.timeZone,
-    }).format(parsed);
+    })
+      .formatToParts(parsed)
+      // ICU 78 (Node 26, current browsers) labels a zero offset `GMT+0`; ICU 77 and earlier say
+      // `GMT`. Pin the older spelling so UTC reads the same on every runtime. Only the
+      // timeZoneName part is touched, so no other field can be rewritten by accident.
+      .map(({ type, value }) => (type === 'timeZoneName' && value === 'GMT+0' ? 'GMT' : value))
+      .join('');
   } catch {
     // Only reachable via an invalid `timeZone` (RangeError). A malformed override should degrade
     // to the placeholder, never take the surrounding tab down.

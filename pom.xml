@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.97.1-02</version>
+  <version>3.97.2-02</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.97.1-02</nexus.version>
+    <nexus.version>3.97.2-02</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <spring-boot.version>4.1.0</spring-boot.version>
@@ -72,7 +72,7 @@
     <argLine/>
 
     <!-- Define the node version used by the frontend-maven-plugin -->
-    <node.version>v22.19.0</node.version>
+    <node.version>v26.12.1</node.version>
     <!-- NOTE: We use corepack (bundled with Node 16.9+) to manage yarn instead of downloading it.
          This avoids CVE-2025-9308 in yarn 1.x by using Yarn 4.9.1 specified in package.json's
          "packageManager" field. Corepack reads this field and uses the correct yarn version.
@@ -300,7 +300,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.97.1-02</version>
+          <version>3.97.2-02</version>
           <executions>
             <execution>
               <goals>
