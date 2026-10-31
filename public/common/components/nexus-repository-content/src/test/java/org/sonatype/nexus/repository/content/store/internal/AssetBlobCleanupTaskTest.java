@@ -421,6 +421,90 @@ public class AssetBlobCleanupTaskTest
   }
 
   @Test
+  void testBatchDeleteRemovesRecordWhenPhysicalBlobIsAlreadyMissing() throws Exception {
+    setBatchDeleteIgnoreFinalField(null);
+
+    // Simulate FileBlobStore finding the physical blob already gone:
+    // doDelete -> attributes null -> deleteHard -> doDeleteHard returns false (no exception).
+    // The cleanup task must still remove the corresponding asset_blob row so it converges.
+    BlobRef missingContentBlobRef = mock(BlobRef.class);
+    BlobId missingContentBlobId = mock(BlobId.class);
+    when(missingContentBlobRef.getStore()).thenReturn("default");
+    when(missingContentBlobRef.getBlobId()).thenReturn(missingContentBlobId);
+    when(blobStore.delete(missingContentBlobId, EXPECTED_REASON)).thenReturn(false);
+
+    firstPage.add(newAssetBlob(missingContentBlobRef));
+    when(firstPage.get(firstPage.size() - 1).nextContinuationToken()).thenReturn("NEXT");
+
+    when(assetBlobStore.deleteAssetBlobBatch(any())).thenReturn(6);
+
+    AssetBlobCleanupTask task =
+        new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager, recoveryModeService);
+
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
+    taskConfiguration.setString(CONTENT_STORE_FIELD_ID, "content");
+    taskConfiguration.setId(UUID.randomUUID().toString());
+    taskConfiguration.setTypeId(TYPE_ID);
+    task.configure(taskConfiguration);
+
+    ArgumentCaptor<String[]> blobRefIdCaptor = forClass(String[].class);
+
+    task.execute();
+
+    verify(assetBlobStore, atLeast(1)).deleteAssetBlobBatch(blobRefIdCaptor.capture());
+
+    // First page has 6 blobs: 4 succeed, 1 missing-store included (NEXUS-37039),
+    // 1 with already-absent physical content — all 6 must reach the DB delete batch
+    // so cleanup converges (NEXUS-53973).
+    String[] firstBatch = blobRefIdCaptor.getAllValues().get(0);
+    assertThat("Ref with already-absent physical blob is still sent to DB delete batch",
+        firstBatch.length, is(6));
+
+    // The first page must not be re-browsed; once rows are deleted the task should advance.
+    verify(assetBlobStore, times(1))
+        .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_MINUTE, "NEXT");
+
+    // Verify the un-alarming WARN was emitted for the already-absent ref.
+    assertThat(logs.logs(), hasItem(allOf(logLevel(Level.WARN),
+        formattedMessage(containsString("already absent")))));
+  }
+
+  @Test
+  void testBatchDeleteFollowsUpWithHardDeleteWhenPhysicalBlobIsAlreadyMissing() throws Exception {
+    setBatchDeleteIgnoreFinalField(null);
+
+    // When soft-delete finds the .properties file missing, a stray .bytes file may still
+    // exist on disk. deleteBlobContent must follow up with deleteHard(blobId) to converge.
+    BlobRef missingContentBlobRef = mock(BlobRef.class);
+    BlobId missingContentBlobId = mock(BlobId.class);
+    when(missingContentBlobRef.getStore()).thenReturn("default");
+    when(missingContentBlobRef.getBlobId()).thenReturn(missingContentBlobId);
+    when(blobStore.delete(missingContentBlobId, EXPECTED_REASON)).thenReturn(false);
+
+    firstPage.add(newAssetBlob(missingContentBlobRef));
+    when(firstPage.get(firstPage.size() - 1).nextContinuationToken()).thenReturn("NEXT");
+
+    when(assetBlobStore.deleteAssetBlobBatch(any())).thenReturn(6);
+
+    AssetBlobCleanupTask task =
+        new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager, recoveryModeService);
+
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
+    taskConfiguration.setString(CONTENT_STORE_FIELD_ID, "content");
+    taskConfiguration.setId(UUID.randomUUID().toString());
+    taskConfiguration.setTypeId(TYPE_ID);
+    task.configure(taskConfiguration);
+
+    task.execute();
+
+    // deleteHard runs exactly once — for the ref whose soft-delete returned false.
+    verify(blobStore, times(1)).deleteHard(any());
+    verify(blobStore).deleteHard(missingContentBlobId);
+  }
+
+  @Test
   void testOrphanedBlobsWithDeletedBlobstoreAreDeleted() throws Exception {
     // Use single-threaded path to test NEXUS-37039 fix
     setBatchDeleteIgnoreFinalField("raw");

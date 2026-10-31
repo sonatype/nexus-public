@@ -11,11 +11,253 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FocusEvent,
+  type KeyboardEvent,
+} from 'react';
 import { Flex, Text, Button, IconButton, Select } from '@radix-ui/themes';
+import { NxCombobox } from '@sonatype/react-shared-components';
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 
+import './TablePagination.scss';
+
 export const PAGE_SIZE_OPTIONS = [20, 40, 50, 100, 250] as const;
+
+export type PageToken = number | 'ellipsis-left' | 'ellipsis-right';
+
+export interface PageMatch {
+  id: number;
+  displayName: string;
+}
+
+const SHOW_ALL_THRESHOLD = 10;
+const LARGE_TOTAL_THRESHOLD = 1000;
+const MATCH_CAP = 20;
+const EMPTY_QUERY_WINDOW_RADIUS = 50;
+
+export function computeMatches(
+  query: string,
+  currentPage: number,
+  totalPages: number,
+): PageMatch[] {
+  const trimmed = query.trim();
+  if (trimmed === '') {
+    const start = Math.max(1, currentPage - EMPTY_QUERY_WINDOW_RADIUS);
+    const end = Math.min(totalPages, currentPage + EMPTY_QUERY_WINDOW_RADIUS);
+    const matches: PageMatch[] = [];
+    for (let p = start; p <= end; p++) {
+      matches.push({ id: p, displayName: String(p) });
+    }
+    return matches;
+  }
+  if (!/^\d+$/.test(trimmed)) {
+    return [];
+  }
+  const matches: PageMatch[] = [];
+  for (let p = 1; p <= totalPages && matches.length < MATCH_CAP; p++) {
+    if (String(p).startsWith(trimmed)) {
+      matches.push({ id: p, displayName: String(p) });
+    }
+  }
+  return matches;
+}
+
+interface PageJumpControlProps {
+  currentPage: number;
+  totalPages: number;
+  onJump: (page: number) => void;
+}
+
+function PageJumpControl({ currentPage, totalPages, onJump }: PageJumpControlProps) {
+  const [draft, setDraft] = useState(String(currentPage));
+  const [hasTyped, setHasTyped] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedItemRef = useRef<PageMatch | null>(null);
+  const justCommittedRef = useRef(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const scrolledForOpenRef = useRef(false);
+
+  useEffect(() => {
+    setDraft(String(currentPage));
+    setHasTyped(false);
+    selectedItemRef.current = null;
+    justCommittedRef.current = false;
+  }, [currentPage]);
+
+  const matches = useMemo(
+    () => computeMatches(hasTyped ? draft : '', currentPage, totalPages),
+    [hasTyped, draft, currentPage, totalPages],
+  );
+
+  // NxCombobox renders match text only and reserves aria-selected for the
+  // arrow-key cursor, so the current page is tagged on the rendered option node.
+  useEffect(() => {
+    if (!isOpen) return;
+    const options = wrapperRef.current?.querySelectorAll<HTMLElement>('[role="option"]');
+    if (!options?.length) return;
+    for (const option of options) {
+      option.removeAttribute('aria-current');
+    }
+    const currentIndex = matches.findIndex((match) => match.id === currentPage);
+    if (currentIndex < 0) return;
+    const currentOption = options[currentIndex];
+    currentOption.setAttribute('aria-current', 'page');
+    if (!scrolledForOpenRef.current) {
+      currentOption.scrollIntoView({ block: 'nearest' });
+      scrolledForOpenRef.current = true;
+    }
+  }, [isOpen, matches, currentPage]);
+
+  const handleChange = (newValue: string, item?: PageMatch) => {
+    if (item) {
+      selectedItemRef.current = item;
+    } else {
+      const digits = newValue.replace(/\D/g, '');
+      setDraft(digits);
+      setHasTyped(true);
+      selectedItemRef.current = null;
+    }
+  };
+
+  const handleSearch = (query: string) => {
+    const selected = selectedItemRef.current;
+    if (selected && query === selected.displayName) {
+      const clamped = Math.max(1, Math.min(selected.id, totalPages));
+      if (clamped !== currentPage) {
+        onJump(clamped);
+        justCommittedRef.current = true;
+      } else {
+        justCommittedRef.current = false;
+      }
+      selectedItemRef.current = null;
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter') return;
+    if (justCommittedRef.current) {
+      justCommittedRef.current = false;
+      return;
+    }
+    const trimmed = draft.trim();
+    if (trimmed === '') return;
+    const parsed = parseInt(trimmed, 10);
+    if (!Number.isFinite(parsed) || parsed < 1) return;
+    const clamped = Math.max(1, Math.min(parsed, totalPages));
+    if (clamped !== currentPage) {
+      onJump(clamped);
+    }
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+    setIsOpen(false);
+    scrolledForOpenRef.current = false;
+    const trimmed = draft.trim();
+    const parsed = parseInt(trimmed, 10);
+    if (Number.isFinite(parsed) && parsed >= 1) {
+      const clamped = Math.max(1, Math.min(parsed, totalPages));
+      if (clamped !== currentPage) {
+        onJump(clamped);
+      }
+      return;
+    }
+    setDraft(String(currentPage));
+    setHasTyped(false);
+  };
+
+  const inputWidth = `${String(totalPages).length + 3}ch`;
+
+  return (
+    <div
+      ref={wrapperRef}
+      onFocus={() => setIsOpen(true)}
+      onBlur={handleBlur}
+      style={{ display: 'inline-block' }}
+    >
+      <NxCombobox<PageMatch>
+        value={draft}
+        matches={matches}
+        onChange={handleChange}
+        onSearch={handleSearch}
+        autoComplete={false}
+        aria-label="Jump to page"
+        emptyMessage={`No page starts with "${draft.trim()}"`}
+        className="tablepagination-jump-combobox"
+        style={{ width: inputWidth }}
+        onKeyDown={handleKeyDown}
+      />
+    </div>
+  );
+}
+
+/**
+ * Middle window around currentPage, shifted inward when it would overrun a
+ * boundary so the resulting range still spans (2 * siblingCount + 1) pages
+ * when possible.
+ */
+function computeWindow(
+  currentPage: number,
+  totalPages: number,
+  siblingCount: number,
+): { start: number; end: number } {
+  const rawStart = currentPage - siblingCount;
+  const rawEnd = currentPage + siblingCount;
+  const minStart = 2;
+  const maxEnd = totalPages - 1;
+  if (rawStart < minStart) {
+    const shift = minStart - rawStart;
+    return { start: minStart, end: Math.min(maxEnd, rawEnd + shift) };
+  }
+  if (rawEnd > maxEnd) {
+    const shift = rawEnd - maxEnd;
+    return { start: Math.max(minStart, rawStart - shift), end: maxEnd };
+  }
+  return { start: rawStart, end: rawEnd };
+}
+
+/** Page 1, plus page 2 (single-page gap) or an ellipsis (multi-page gap), or neither if adjacent. */
+function leftBoundaryTokens(windowStart: number): PageToken[] {
+  if (windowStart <= 2) return [1];
+  if (windowStart === 3) return [1, 2];
+  return [1, 'ellipsis-left'];
+}
+
+/** Mirror of leftBoundaryTokens, terminating with page totalPages. */
+function rightBoundaryTokens(windowEnd: number, totalPages: number): PageToken[] {
+  if (windowEnd >= totalPages - 1) return [totalPages];
+  if (windowEnd === totalPages - 2) return [totalPages - 1, totalPages];
+  return ['ellipsis-right', totalPages];
+}
+
+/**
+ * Returns the bounded set of tokens to render in the pagination bar.
+ * For totalPages <= 10, returns every page number (no ellipses) so medium-sized
+ * tables keep every page reachable in a single click.
+ * For totalPages > 10, returns [1, ...window, totalPages] with a window around
+ * currentPage that shifts when near the boundaries. The window is 7 pages wide
+ * for totalPages < 1000 and narrows to 5 pages at 4+ digits so the wider
+ * numeric tiles still fit the row without wrapping. Ellipsis markers are only
+ * inserted when they would hide at least 2 pages (otherwise the elided page
+ * is shown inline).
+ */
+export function getPageTokens(currentPage: number, totalPages: number): PageToken[] {
+  if (totalPages <= SHOW_ALL_THRESHOLD) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const siblingCount = totalPages >= LARGE_TOTAL_THRESHOLD ? 2 : 3;
+  const { start, end } = computeWindow(currentPage, totalPages, siblingCount);
+  const middle = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  return [
+    ...leftBoundaryTokens(start),
+    ...middle,
+    ...rightBoundaryTokens(end, totalPages),
+  ];
+}
 
 export interface TablePaginationProps {
   currentPage: number;
@@ -113,20 +355,11 @@ export function TablePagination({
         </Flex>
         <Flex align="center" gap="2" style={{ whiteSpace: 'nowrap' }}>
           <Text size="2">Page</Text>
-          <Select.Root
-            value={currentPage.toString()}
-            onValueChange={(v) => handlePageChange(parseInt(v, 10))}
-            size="2"
-          >
-            <Select.Trigger style={{ minWidth: 'unset' }} />
-            <Select.Content>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Select.Item key={page} value={page.toString()}>
-                  {page}
-                </Select.Item>
-              ))}
-            </Select.Content>
-          </Select.Root>
+          <PageJumpControl
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onJump={handlePageChange}
+          />
           <Text size="2">of {totalPages}</Text>
         </Flex>
       </Flex>
@@ -155,23 +388,41 @@ export function TablePagination({
             <ChevronLeft size={16} />
           </IconButton>
 
-          {/* Page number buttons */}
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              variant="outline"
-              color="gray"
-              size="2"
-              highContrast={currentPage === page}
-              onClick={() => handlePageChange(page)}
-              style={{
-                backgroundColor: currentPage === page ? 'var(--gray-12)' : undefined,
-                color: currentPage === page ? 'var(--gray-1)' : undefined,
-              }}
-            >
-              {page}
-            </Button>
-          ))}
+          {/* Page number buttons — windowed */}
+          {getPageTokens(currentPage, totalPages).map((token) => {
+            if (token === 'ellipsis-left' || token === 'ellipsis-right') {
+              return (
+                <Text
+                  key={token}
+                  size="2"
+                  color="gray"
+                  aria-hidden="true"
+                  style={{ padding: '0 4px' }}
+                >
+                  …
+                </Text>
+              );
+            }
+            const page = token;
+            const isCurrent = currentPage === page;
+            return (
+              <Button
+                key={page}
+                variant="outline"
+                color="gray"
+                size="2"
+                highContrast={isCurrent}
+                aria-current={isCurrent ? 'page' : undefined}
+                onClick={() => handlePageChange(page)}
+                style={{
+                  backgroundColor: isCurrent ? 'var(--gray-12)' : undefined,
+                  color: isCurrent ? 'var(--gray-1)' : undefined,
+                }}
+              >
+                {page}
+              </Button>
+            );
+          })}
 
           <IconButton
             variant="outline"

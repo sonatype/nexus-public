@@ -17,7 +17,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
 
 /**
@@ -46,10 +46,10 @@ public class DataStoreConfigurationEvent
       @JsonProperty("attributes") final Map<String, String> attributes)
   {
     super(UPDATED);
-    this.configurationName = checkNotNull(configurationName);
-    this.type = checkNotNull(type);
-    this.source = checkNotNull(source);
-    this.attributes = checkNotNull(attributes);
+    this.configurationName = requireNonNull(configurationName);
+    this.type = requireNonNull(type);
+    this.source = requireNonNull(source);
+    this.attributes = requireNonNull(attributes);
   }
 
   public String getConfigurationName() {

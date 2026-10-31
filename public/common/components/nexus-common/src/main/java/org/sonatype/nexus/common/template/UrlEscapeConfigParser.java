@@ -18,12 +18,47 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Parser for simple URL escape rules configuration.
+ *
+ * <p>
+ * This parser is used by {@link EscapeHelper}'s String constructor for simple,
+ * global URL escape rules. For repository-specific configuration with enhanced
+ * security, use {@code UrlEscapeRulesParser} instead.
+ * </p>
+ *
+ * <h2>Format:</h2>
+ * 
+ * <pre>
+ * pattern:replacement,pattern:replacement
+ * </pre>
+ *
+ * <h2>Security Limits:</h2>
+ * <ul>
+ * <li>Maximum config length: 500 characters</li>
+ * <li>Maximum rules: 20</li>
+ * <li>Maximum pattern length: 3 characters</li>
+ * <li>Maximum replacement length: 10 characters</li>
+ * </ul>
+ *
+ * <h2>Difference from UrlEscapeRulesParser:</h2>
+ * <ul>
+ * <li>This parser: Simple format for global configuration</li>
+ * <li>UrlEscapeRulesParser: Repository-specific format with enhanced security (10KB limit, 50 rules)</li>
+ * </ul>
+ *
+ * @since 3.0
+ * @see EscapeHelper#EscapeHelper(String)
+ * @see UrlEscapeRulesParser for repository-specific configuration
+ */
 public final class UrlEscapeConfigParser
 {
   private static final Logger log = LoggerFactory.getLogger(UrlEscapeConfigParser.class);
 
+  /** Maximum config length for simple global configuration */
   private static final int MAX_CONFIG_LENGTH = 500;
 
+  /** Maximum rules for simple configuration */
   private static final int MAX_RULES = 20;
 
   private static final int MAX_PATTERN_LENGTH = 3;

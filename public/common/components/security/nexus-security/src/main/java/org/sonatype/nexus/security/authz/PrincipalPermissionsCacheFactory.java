@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_CACHE_CONCURRENCY_LEVEL_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE;
@@ -75,7 +75,7 @@ public class PrincipalPermissionsCacheFactory
   {
     this.enabled = enabled;
     this.defaultMaximumSize = defaultMaximumSize;
-    this.defaultTimeToLive = checkNotNull(defaultTimeToLive);
+    this.defaultTimeToLive = requireNonNull(defaultTimeToLive);
     this.cacheRecordStats = cacheRecordStats;
     this.cacheConcurrencyLevel = cacheConcurrencyLevel;
   }
@@ -88,7 +88,8 @@ public class PrincipalPermissionsCacheFactory
     int maximumSize = defaultMaximumSize;
     if (environment != null) {
       maximumSize = environment.getProperty(
-          PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE + "." + checkNotNull(realmName), Integer.class, defaultMaximumSize);
+          PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE + "." + requireNonNull(realmName), Integer.class,
+          defaultMaximumSize);
     }
     return new PrincipalPermissionsCache(
         enabled,

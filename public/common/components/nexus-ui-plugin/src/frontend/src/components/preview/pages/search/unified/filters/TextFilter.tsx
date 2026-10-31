@@ -12,10 +12,8 @@
  */
 
 import React, { useCallback, useRef, useEffect } from 'react';
+import { Box, IconButton, Text, TextField } from '@radix-ui/themes';
 import { X } from 'lucide-react';
-
-/** Debounce delay for text filter changes (ms) */
-const TEXT_FILTER_DEBOUNCE_MS = 2000; // 2 seconds for testing
 
 export interface TextFilterProps {
   /** Filter ID */
@@ -32,14 +30,21 @@ export interface TextFilterProps {
   placeholder?: string;
   /** Whether the filter is disabled */
   disabled?: boolean;
+  /** Debounce delay in milliseconds for onChange-triggered searches (default: 300) */
+  debounceMs?: number;
+  /** Called when the input gains focus. Receives the filter id and its input element. */
+  onInputFocus?: (id: string, el: HTMLInputElement) => void;
+  /** Called when the input loses focus. Receives the filter id. */
+  onInputBlur?: (id: string) => void;
 }
 
 /**
  * Text input filter component for the search sidebar.
- * 
- * Auto-applies filter with 300ms debounce as user types.
- * Enter key triggers immediate search without waiting for debounce.
- * Escape key clears the filter.
+ *
+ * The input itself is uncontrolled by the debounce: every keystroke is reported through `onChange`
+ * immediately, and only `onSearch` is debounced by the configurable `debounceMs` prop (default
+ * 300ms — matches the search sidebar's other text filters). Enter searches at once and cancels
+ * the pending debounce; Escape clears the filter.
  */
 export function TextFilter({
   id,
@@ -49,7 +54,11 @@ export function TextFilter({
   onSearch,
   placeholder,
   disabled = false,
+  debounceMs = 300,
+  onInputFocus,
+  onInputBlur,
 }: TextFilterProps): JSX.Element {
+  const inputId = `filter-${id}`;
   // Track debounce timer
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -78,10 +87,10 @@ export function TextFilter({
       if (onSearch) {
         debounceRef.current = setTimeout(() => {
           onSearch();
-        }, TEXT_FILTER_DEBOUNCE_MS);
+        }, debounceMs);
       }
     },
-    [id, onChange, onSearch]
+    [id, onChange, onSearch, debounceMs]
   );
 
   const handleClear = useCallback(() => {
@@ -117,33 +126,39 @@ export function TextFilter({
   );
 
   return (
-    <div className="text-filter">
-      <label className="text-filter__label" htmlFor={`filter-${id}`}>
+    <Box>
+      <Text as="label" size="1" weight="medium" htmlFor={inputId}>
         {label}
-      </label>
-      <div className="text-filter__input-wrapper">
-        <input
-          id={`filter-${id}`}
-          type="text"
-          className="text-filter__input"
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled}
-        />
+      </Text>
+      <TextField.Root
+        id={inputId}
+        size="2"
+        mt="1"
+        spellCheck={false}
+        placeholder={placeholder}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onFocus={onInputFocus ? (e) => onInputFocus(id, e.currentTarget) : undefined}
+        onBlur={onInputBlur ? () => onInputBlur(id) : undefined}
+        disabled={disabled}
+      >
         {value && !disabled && (
-          <button
-            type="button"
-            className="text-filter__clear"
-            onClick={handleClear}
-            aria-label={`Clear ${label} filter`}
-          >
-            <X size={14} />
-          </button>
+          <TextField.Slot side="right">
+            <IconButton
+              type="button"
+              variant="ghost"
+              color="gray"
+              size="1"
+              onClick={handleClear}
+              aria-label={`Clear ${label} filter`}
+            >
+              <X size={14} />
+            </IconButton>
+          </TextField.Slot>
         )}
-      </div>
-    </div>
+      </TextField.Root>
+    </Box>
   );
 }
 

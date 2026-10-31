@@ -29,6 +29,27 @@ class SearchTokenizerTest
     assertThat(SearchTokenizer.tsEscape("as\\df"), is("'as\\\\df'"));
   }
 
+  /*
+   * NEXUS-54105 - PostgreSQL cannot encode 0x00 in UTF-8 for ::tsquery/::tsvector binds.
+   * tsEscape() is the single choke point for indexing and query paths, so NUL bytes
+   * must be stripped here as a defense in depth against crafted repository metadata.
+   */
+  @Test
+  void testTsEscapeStripsNulBytes() {
+    assertThat(SearchTokenizer.tsEscape("test\u0000x"), is("'testx'"));
+    assertThat(SearchTokenizer.tsEscape("\u0000leading"), is("'leading'"));
+    assertThat(SearchTokenizer.tsEscape("trailing\u0000"), is("'trailing'"));
+    assertThat(SearchTokenizer.tsEscape("multiple\u0000\u0000nul"), is("'multiplenul'"));
+    assertThat(SearchTokenizer.tsEscape("\u0000\u0000\u0000"), is("''"));
+  }
+
+  @Test
+  void testTsEscapePreservesOtherControlChars() {
+    // Only NUL is Postgres-illegal for bind parameters; tab and newline pass through
+    assertThat(SearchTokenizer.tsEscape("with\ttab"), is("'with\ttab'"));
+    assertThat(SearchTokenizer.tsEscape("with\nnewline"), is("'with\nnewline'"));
+  }
+
   @Test
   void testStripLeadingSeparators() {
     assertThat(SearchTokenizer.stripLeadingSeparators(""), is(""));

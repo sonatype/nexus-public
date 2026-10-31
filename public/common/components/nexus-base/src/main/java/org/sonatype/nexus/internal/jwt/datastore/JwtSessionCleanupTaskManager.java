@@ -25,7 +25,7 @@ import org.sonatype.nexus.security.jwt.JwtSessionRevocationService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
@@ -61,8 +61,8 @@ public class JwtSessionCleanupTaskManager
       final PeriodicJobService periodicJobService,
       final JwtSessionRevocationService jwtSessionRevocationService)
   {
-    this.periodicJobService = checkNotNull(periodicJobService);
-    this.jwtSessionRevocationService = checkNotNull(jwtSessionRevocationService);
+    this.periodicJobService = requireNonNull(periodicJobService);
+    this.jwtSessionRevocationService = requireNonNull(jwtSessionRevocationService);
   }
 
   @Override

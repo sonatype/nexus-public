@@ -12,14 +12,12 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.firewall.FirewallMode;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.FirewallAttributes;
-import org.sonatype.nexus.repository.firewall.FirewallMode;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAuthenticationAttributes;
@@ -30,24 +28,21 @@ import org.sonatype.nexus.repository.rest.api.model.ReplicationAttributes;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.collect.Sets;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
-
-import org.sonatype.nexus.rest.ValidationErrorsException;
-import org.springframework.stereotype.Component;
 
 /**
  * @since 3.20
  */
 @Component
 public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRepositoryApiRequest>
-    extends AbstractRepositoryApiRequestToConfigurationConverter<T>
+    extends AbstractRepositoryApiRequestToConfigurationConverter<StorageAttributes, T>
 {
   private final RoutingRuleStore routingRuleStore;
 
@@ -60,7 +55,6 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
   public Configuration convert(final T request) {
     Configuration configuration = super.convert(request);
     convertRoutingRule(request, configuration);
-    convertStorage(request, configuration);
     convertCleanup(request, configuration);
     convertProxy(request, configuration);
     convertNegativeCache(request, configuration);
@@ -160,16 +154,6 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
     if (nonNull(cleanup)) {
       NestedAttributesMap cleanupConfiguration = configuration.attributes("cleanup");
       cleanupConfiguration.set("policyName", Sets.newHashSet(cleanup.getPolicyNames()));
-    }
-  }
-
-  private void convertStorage(final T request, final Configuration configuration) {
-    StorageAttributes storage = request.getStorage();
-    if (nonNull(storage)) {
-      NestedAttributesMap storageConfiguration = configuration.attributes(STORAGE);
-      storageConfiguration.set(BLOB_STORE_NAME, storage.getBlobStoreName());
-      storageConfiguration.set(STRICT_CONTENT_TYPE_VALIDATION, storage.getStrictContentTypeValidation());
-      maybeAddDataStoreName(configuration);
     }
   }
 

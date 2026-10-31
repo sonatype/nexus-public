@@ -53,7 +53,7 @@ export function useTasksForm({
   deleteTask,
 }: UseTasksFormOptions): UseTasksFormReturn {
   const toast = useToast();
-  const isCreate = !taskId && !task;
+  const isCreate = !(taskId || task);
 
   // Create the form machine - memoized based on taskId and task
   const machine = useMemo(
@@ -81,7 +81,16 @@ export function useTasksForm({
           }
           onCancel();
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : 'Operation failed');
+          const rawMessage = err instanceof Error ? err.message : 'Operation failed';
+          // Translate the backend's "Property 'X' not found" into a clearer
+          // user-facing message. canAdvance should prevent this for normal
+          // flows (NEXUS-53357), but this still helps when a new field is
+          // added on the backend that the frontend hasn't surfaced yet.
+          const friendly = rawMessage.replace(
+            /Property '([^']+)' not found/g,
+            "Required field '$1' is missing — fill it in and try again",
+          );
+          toast.error(friendly);
           throw err;
         }
       },

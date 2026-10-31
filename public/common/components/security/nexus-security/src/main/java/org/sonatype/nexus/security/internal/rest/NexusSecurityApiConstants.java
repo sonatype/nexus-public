@@ -55,6 +55,9 @@ public final class NexusSecurityApiConstants
 
   public static final String PRIVILEGE_CREATED = "Privilege created.";
 
+  public static final String PRIVILEGE_CONFLICT =
+      "Privilege conflict: name in request body does not match path, or type does not match the target privilege.";
+
   public static final String PRIVILEGE_TYPE_DESCRIPTION =
       "The type of privilege, each type covers different portions of the system. External values supplied to this will be ignored by the system.";
 

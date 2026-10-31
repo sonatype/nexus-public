@@ -28,6 +28,7 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
+import org.sonatype.nexus.repository.manager.RepositoryDeletionService;
 import org.sonatype.nexus.validation.Validate;
 import org.sonatype.nexus.validation.group.Create;
 import org.sonatype.nexus.validation.group.Update;
@@ -39,7 +40,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -52,9 +53,15 @@ public class RepositoryComponent
 {
   private final RepositoryUiService repositoryUiService;
 
+  private final RepositoryDeletionService repositoryDeletionService;
+
   @Autowired
-  public RepositoryComponent(final RepositoryUiService repositoryUiService) {
-    this.repositoryUiService = checkNotNull(repositoryUiService);
+  public RepositoryComponent(
+      final RepositoryUiService repositoryUiService,
+      final RepositoryDeletionService repositoryDeletionService)
+  {
+    this.repositoryUiService = requireNonNull(repositoryUiService);
+    this.repositoryDeletionService = requireNonNull(repositoryDeletionService);
   }
 
   @DirectMethod
@@ -97,10 +104,14 @@ public class RepositoryComponent
 
   /**
    * Retrieve a list of available repositories references + add an entry for all repositories '*".
+   * Requires authentication (blocks anonymous callers); these variants add entries for all repositories/formats and are
+   * only invoked from the authenticated Tasks/Privileges admin UI. The CWE-470 classloader sink is additionally closed
+   * by the allowlist in RepositoryUiService.toFacetList. Gated per NEXUS-54946.
    */
   @DirectMethod
   @Timed
   @ExceptionMetered
+  @RequiresAuthentication
   public List<RepositoryReferenceXO> readReferencesAddingEntryForAll(@Nullable final StoreLoadParameters parameters) {
     return repositoryUiService.readReferencesAddingEntryForAll(parameters);
   }
@@ -108,10 +119,14 @@ public class RepositoryComponent
   /**
    * Retrieve a list of available repositories references + add an entry for all repositories '*' and an entry for
    * format 'All (format) repositories' '*(format)'".
+   * Requires authentication (blocks anonymous callers); these variants add entries for all repositories/formats and are
+   * only invoked from the authenticated Tasks/Privileges admin UI. The CWE-470 classloader sink is additionally closed
+   * by the allowlist in RepositoryUiService.toFacetList. Gated per NEXUS-54946.
    */
   @DirectMethod
   @Timed
   @ExceptionMetered
+  @RequiresAuthentication
   public List<RepositoryReferenceXO> readReferencesAddingEntriesForAllFormats(
       @Nullable final StoreLoadParameters parameters)
   {
@@ -142,7 +157,9 @@ public class RepositoryComponent
   @RequiresAuthentication
   @Validate
   public void remove(@NotEmpty final String name) throws Exception {
-    repositoryUiService.remove(name);
+    // The soft-delete-vs-hard-delete decision (and the per-repository DELETE authorization) is owned
+    // by RepositoryDeletionService so every transport behaves identically (NEXUS-51733).
+    repositoryDeletionService.delete(name);
   }
 
   @DirectMethod

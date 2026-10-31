@@ -79,7 +79,7 @@ export function useIqConnectionStatus(autoTest = true): IqConnectionStatus {
   }, []);
 
   const testConnection = useCallback(async () => {
-    if (!config?.url || !config?.enabled) {
+    if (!(config?.url && config?.enabled)) {
       setState('not-configured');
       return;
     }
@@ -106,7 +106,7 @@ export function useIqConnectionStatus(autoTest = true): IqConnectionStatus {
     const newConfig = await fetchConfig();
     setConfig(newConfig);
 
-    if (!newConfig?.url || !newConfig?.enabled) {
+    if (!(newConfig?.url && newConfig?.enabled)) {
       setState('not-configured');
       setErrorMessage(undefined);
       return;
@@ -141,7 +141,7 @@ export function useIqConnectionStatus(autoTest = true): IqConnectionStatus {
 
       setConfig(cfg);
 
-      if (!cfg?.url || !cfg?.enabled) {
+      if (!(cfg?.url && cfg?.enabled)) {
         setState('not-configured');
         return;
       }

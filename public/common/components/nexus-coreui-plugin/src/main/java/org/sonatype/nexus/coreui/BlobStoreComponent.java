@@ -12,13 +12,20 @@
  */
 package org.sonatype.nexus.coreui;
 
-import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.groups.Default;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.api.extdirect.common.FormFieldXO;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -30,8 +37,8 @@ import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
-import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
@@ -49,19 +56,20 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Streams.stream;
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.coreui.internal.blobstore.BlobStoreInternalResource.AZURE_CONFIG;
 import static org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationData.SECRET_ACCESS_KEY;
 import static org.sonatype.nexus.security.BreadActions.READ;
-import org.springframework.stereotype.Component;
 
 /**
  * BlobStore {@link org.sonatype.nexus.extdirect.DirectComponent}.
@@ -106,13 +114,13 @@ public class BlobStoreComponent
       final RepositoryPermissionChecker repositoryPermissionChecker,
       @Nullable final BlobStoreTaskService blobStoreTaskService)
   {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.store = checkNotNull(store);
-    this.blobStoreDescriptorProvider = checkNotNull(blobStoreDescriptorProvider);
-    this.quotaFactories = QualifierUtil.buildQualifierBeanMap(checkNotNull(quotaFactoriesList));
-    this.applicationDirectories = checkNotNull(applicationDirectories);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.store = requireNonNull(store);
+    this.blobStoreDescriptorProvider = requireNonNull(blobStoreDescriptorProvider);
+    this.quotaFactories = QualifierUtil.buildQualifierBeanMap(requireNonNull(quotaFactoriesList));
+    this.applicationDirectories = requireNonNull(applicationDirectories);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
     this.blobStoreTaskService = blobStoreTaskService;
   }
 
@@ -126,10 +134,12 @@ public class BlobStoreComponent
         repositoryManager.browse());
 
     List<BlobStoreGroup> blobStoreGroups = getBlobStoreGroups();
+    // Resolve repository blob store usage once (NEXUS-54229) instead of an isBlobstoreUsed() call per blob store.
+    Set<String> blobstoresInUse = repositoryManager.blobstoresInUse();
 
     return store.list()
         .stream()
-        .map(config -> asBlobStoreXO(config, blobStoreGroups))
+        .map(config -> asBlobStoreXO(config, blobStoreGroups, blobstoresInUse))
         .collect(Collectors.toList()); // NOSONAR
   }
 
@@ -152,10 +162,11 @@ public class BlobStoreComponent
         READ,
         repositoryManager.browse());
 
+    Set<String> blobstoresInUse = repositoryManager.blobstoresInUse();
     List<BlobStoreXO> blobStores = store.list()
         .stream()
         .filter(config -> !BlobStoreGroup.TYPE.equals(config.getType()))
-        .map(this::asBlobStoreXO)
+        .map(config -> asBlobStoreXO(config, Collections.emptyList(), blobstoresInUse))
         .collect(Collectors.toList());
 
     BlobStoreXO allXO = new BlobStoreXO().withName("(All Blob Stores)");
@@ -192,12 +203,13 @@ public class BlobStoreComponent
             !group.getBlobStoreConfiguration().getName().equals(selectedBlobStoreName))
         .collect(Collectors.toList()); // NOSONAR
 
+    Set<String> blobstoresInUse = repositoryManager.blobstoresInUse();
     return store.list()
         .stream()
         .filter(config -> !BlobStoreGroup.TYPE.equals(config.getType()) &&
             !repositoryManager.browseForBlobStore(config.getName()).iterator().hasNext() &&
             isNotInOtherGroups(config, otherGroups))
-        .map(this::asBlobStoreXO)
+        .map(config -> asBlobStoreXO(config, Collections.emptyList(), blobstoresInUse))
         .collect(Collectors.toList()); // NOSONAR
   }
 
@@ -206,10 +218,11 @@ public class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions("nexus:blobstores:read")
   public List<BlobStoreXO> readGroups() {
+    Set<String> blobstoresInUse = repositoryManager.blobstoresInUse();
     return store.list()
         .stream()
         .filter(config -> BlobStoreGroup.TYPE.equals(config.getType()))
-        .map(this::asBlobStoreXO)
+        .map(config -> asBlobStoreXO(config, Collections.emptyList(), blobstoresInUse))
         .collect(Collectors.toList()); // NOSONAR
   }
 
@@ -348,16 +361,31 @@ public class BlobStoreComponent
       BlobStoreConfiguration blobStoreConfiguration,
       Collection<BlobStoreGroup> blobStoreGroups)
   {
+    // Single-blob-store callers (create/update, tests) need one indexed usage check, not the list-path batch
+    // scan; isBlobstoreUsed() is backed by the countByBlobStore expression index (NEXUS-54229).
+    String name = blobStoreConfiguration.getName();
+    Set<String> inUse = repositoryManager.isBlobstoreUsed(name) ? Set.of(name) : Collections.emptySet();
+    return asBlobStoreXO(blobStoreConfiguration, blobStoreGroups, inUse);
+  }
+
+  @VisibleForTesting
+  BlobStoreXO asBlobStoreXO(
+      BlobStoreConfiguration blobStoreConfiguration,
+      Collection<BlobStoreGroup> blobStoreGroups,
+      Set<String> blobstoresInUse)
+  {
+    String name = blobStoreConfiguration.getName();
+    long blobStoreUseCount = blobStoreManager.blobStoreUsageCount(name);
     NestedAttributesMap quotaAttributes = blobStoreConfiguration.attributes(BlobStoreQuotaSupport.ROOT_KEY);
     BlobStoreXO blobStoreXO = new BlobStoreXO()
-        .withName(blobStoreConfiguration.getName())
+        .withName(name)
         .withType(blobStoreConfiguration.getType())
         .withAttributes(filterAttributes(blobStoreConfiguration.getAttributes()))
-        .withRepositoryUseCount(repositoryManager.blobstoreUsageCount(blobStoreConfiguration.getName()))
-        .withTaskUseCount(blobStoreTaskService.countTasksInUseForBlobStore(blobStoreConfiguration.getName()))
-        .withBlobStoreUseCount(blobStoreManager.blobStoreUsageCount(blobStoreConfiguration.getName()))
-        .withInUse(repositoryManager.isBlobstoreUsed(blobStoreConfiguration.getName()))
-        .withConvertable(blobStoreManager.isConvertable(blobStoreConfiguration.getName()))
+        .withRepositoryUseCount(repositoryManager.blobstoreUsageCount(name))
+        .withTaskUseCount(blobStoreTaskService.countTasksInUseForBlobStore(name))
+        .withBlobStoreUseCount(blobStoreUseCount)
+        .withInUse(blobstoresInUse.contains(name) || blobStoreUseCount > 0)
+        .withConvertable(blobStoreManager.isConvertable(name))
         .withIsQuotaEnabled(!quotaAttributes.isEmpty())
         .withQuotaType((String) quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY))
         .withQuotaLimit(getQuotaLimit(quotaAttributes))
@@ -367,7 +395,7 @@ public class BlobStoreComponent
             .findFirst()
             .orElse(null));
 
-    BlobStore blobStore = blobStoreManager.getByName().get(blobStoreConfiguration.getName());
+    BlobStore blobStore = blobStoreManager.getByName().get(name);
     if (blobStore != null && blobStore.isStarted()) {
       BlobStoreMetrics metrics = blobStore.getMetrics();
       blobStoreXO.withBlobCount(metrics.getBlobCount())

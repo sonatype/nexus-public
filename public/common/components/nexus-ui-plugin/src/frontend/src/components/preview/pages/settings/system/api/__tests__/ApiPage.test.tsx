@@ -97,7 +97,7 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  // @ts-ignore
+  // @ts-expect-error
   delete global.fetch;
 });
 

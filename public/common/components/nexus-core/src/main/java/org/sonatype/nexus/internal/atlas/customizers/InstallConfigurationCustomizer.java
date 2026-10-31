@@ -30,7 +30,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.common.jdbc.JdbcUrlRedactor.redactPassword;
@@ -61,7 +61,7 @@ public class InstallConfigurationCustomizer
 
   @Autowired
   public InstallConfigurationCustomizer(final ApplicationDirectories applicationDirectories) {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
   }
 
   @Override
@@ -154,7 +154,7 @@ public class InstallConfigurationCustomizer
         final Priority priority) throws IOException
     {
       super(type, path, file, priority,
-          IOUtils.toString(checkNotNull(SanitizedJettyFileSource.class.getResourceAsStream("jetty-stylesheet.xml")),
+          IOUtils.toString(requireNonNull(SanitizedJettyFileSource.class.getResourceAsStream("jetty-stylesheet.xml")),
               UTF_8));
     }
   }

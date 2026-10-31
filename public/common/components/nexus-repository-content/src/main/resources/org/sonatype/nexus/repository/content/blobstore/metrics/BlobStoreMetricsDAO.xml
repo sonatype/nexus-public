@@ -92,4 +92,11 @@
     FROM blob_store_metrics
     WHERE blob_store_name = #{blobStoreName};
   </delete>
+
+  <update id="rename">
+    UPDATE blob_store_metrics
+       SET blob_store_name = #{newName}
+     WHERE blob_store_name = #{oldName};
+  </update>
+
 </mapper>

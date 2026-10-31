@@ -43,6 +43,11 @@ public class RolesExistValidatorTest
   }
 
   @Test
+  public void isValid_nullCollection() {
+    assertThat(underTest.isValid(null, mock(ConstraintValidatorContext.class)), is(true));
+  }
+
+  @Test
   public void isValid_ignoresJavaElExpression() {
     ConstraintValidatorContext context = mock(ConstraintValidatorContext.class);
     when(context.buildConstraintViolationWithTemplate(any()))

@@ -36,13 +36,12 @@ import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.validation.Validate;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRIETARY_COMPONENTS;
@@ -70,7 +69,7 @@ public class RepositoryProprietaryContentResource
 
   @Autowired
   public RepositoryProprietaryContentResource(final AuthorizingRepositoryManager repositoryManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   /**
@@ -140,7 +139,7 @@ public class RepositoryProprietaryContentResource
 
     if (!failed.isEmpty()) {
       throw new WebApplicationMessageException(Status.INTERNAL_SERVER_ERROR,
-          "\"Problem updating following repositories: " + Joiner.on(", ").join(failed) + "\"", APPLICATION_JSON);
+          "\"Problem updating following repositories: " + String.join(", ", failed) + "\"", APPLICATION_JSON);
     }
   }
 

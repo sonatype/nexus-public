@@ -13,9 +13,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Flex, Text, Heading, Card } from '@radix-ui/themes';
-import { Loader2, ChevronRight } from 'lucide-react';
+import { Loader2, } from 'lucide-react';
 
-import { SettingsButton, SettingsAlert } from '../../../../shared/form';
+import { SettingsAlert } from '../../../../shared/form';
 import { useRepositoriesApi } from './useRepositoriesApi';
 import { FormatIcon } from './components/FormatIcon';
 import SearchHeader from '../../../search/unified/SearchHeader';
@@ -29,7 +29,6 @@ import {
 import { 
   getFormatDescription, 
   getTypeDescription, 
-  getRecipeDescription 
 } from './repositoryTypeDescriptions';
 
 import './RepositoryTypeSelector.scss';

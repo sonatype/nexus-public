@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.apt.AptFormat;
@@ -30,6 +29,7 @@ import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
@@ -44,7 +44,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.content.utils.FormatAttributesUtils;
-import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
@@ -53,14 +52,15 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -69,9 +69,12 @@ import static org.sonatype.nexus.repository.apt.debian.Utils.isDebPackageContent
 import static org.sonatype.nexus.repository.apt.internal.AptFacetHelper.normalizeAssetPath;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.DEB;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_ARCHITECTURE;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_COMPONENT;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_DISTRIBUTION;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_INDEX_SECTION;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_NAME;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_VERSION;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 
 /**
  * Apt content facet
@@ -168,12 +171,11 @@ public class AptContentFacetImpl
       final Payload payload,
       @Nullable final PackageInfo packageInfo) throws IOException
   {
-    String normalizedPath = normalizeAssetPath(path);
-
     try (TempBlob tempBlob = blobs().ingest(payload, AptFacetHelper.hashAlgorithms)) {
-      return isDebPackageContentType(normalizedPath)
-          ? findOrCreateDebAsset(normalizedPath, tempBlob, packageInfo)
-          : findOrCreateMetadataAsset(tempBlob, normalizedPath);
+      return (isDebPackageContentType(path)
+          ? findOrCreateDebAsset(path, tempBlob, packageInfo)
+          : findOrCreateMetadataAsset(tempBlob, path))
+              .markAsCached(payload);
     }
   }
 
@@ -204,6 +206,12 @@ public class AptContentFacetImpl
     formatAttributes.put(P_ARCHITECTURE, info.getArchitecture());
     formatAttributes.put(P_PACKAGE_NAME, info.getPackageName());
     formatAttributes.put(P_PACKAGE_VERSION, info.getVersion());
+    if(info.getDistribution()!=null) {
+      formatAttributes.put(P_DISTRIBUTION, info.getDistribution());
+    }
+    if(info.getComponent()!=null) {
+      formatAttributes.put(P_COMPONENT, info.getComponent());
+    }
     formatAttributes.put(P_INDEX_SECTION, buildIndexSection(controlFile, asset));
 
     FormatAttributesUtils.setFormatAttributes(asset, formatAttributes);
@@ -232,15 +240,33 @@ public class AptContentFacetImpl
 
     // Check if asset already exists with CacheInfo (from upstream passthrough)
     Optional<FluentAsset> existing = assets().path(normalizedPath).find();
-    boolean hadCacheInfo = existing.isPresent() &&
-        existing.get().attributes().contains(CacheInfo.CACHE);
+    boolean hadCacheInfo = false;
+    boolean contentChanged = true;
+    FluentAsset asset = null;
+    if (existing.isPresent()) {
+      asset = existing.get();
+      hadCacheInfo = asset.attributes().contains(CacheInfo.CACHE);
 
-    // Save the asset with new blob
-    FluentAsset asset = assets()
+    contentChanged = asset.blob()
+        .map(existingBlob -> {
+          String existingSha256 = existingBlob.checksums().get(HashAlgorithm.SHA256.name());
+          String newSha256 = tempBlob.getHashes().get(HashAlgorithm.SHA256).toString();
+          return existingSha256 == null || !existingSha256.equals(newSha256);
+        })
+        .orElse(true);
+    }
+
+    if (contentChanged || asset == null) {
+      // Save the asset with new blob
+      log.debug("Metadata asset changed, updating blob: {}", path);
+      asset = assets()
         .path(normalizedPath)
         .blob(tempBlob)
         .save();
-
+    } else {
+      log.debug("Metadata asset unchanged, skipping blob update: {}", path);
+    }
+    
     // For generated metadata (proxy signing mode):
     // 1. Clear CacheInfo if it exists (from upstream passthrough)
     // 2. Always set lastModified to NOW (as millis) for proper staleness tracking
@@ -264,20 +290,19 @@ public class AptContentFacetImpl
     return components()
         .name(name)
         .version(version)
-        .normalizedVersion(versionNormalizerService().getNormalizedVersionByFormat(version, repository().getFormat()))
         .namespace(architecture)
         .getOrCreate();
   }
 
   @Override
   public TempBlob getTempBlob(final Payload payload) {
-    checkNotNull(payload);
+    requireNonNull(payload);
     return blobs().ingest(payload, AptFacetHelper.hashAlgorithms);
   }
 
   @Override
   public TempBlob getTempBlob(final InputStream in, @Nullable final String contentType) {
-    checkNotNull(in);
+    requireNonNull(in);
     return blobs().ingest(in, contentType, AptFacetHelper.hashAlgorithms);
   }
 

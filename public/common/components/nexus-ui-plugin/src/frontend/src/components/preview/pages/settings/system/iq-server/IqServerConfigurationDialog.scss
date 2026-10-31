@@ -1,0 +1,28 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ */
+
+.iq-connection-settings-dialog {
+  &__verify {
+    &--ok {
+      color: var(--green-11, #166534);
+    }
+    &--fail {
+      color: var(--red-11, #991b1b);
+    }
+  }
+
+  &__advanced {
+    border-left: 2px solid var(--gray-a4, #e5e7eb);
+  }
+}
+
+.iq-dlg-spinner {
+  animation: iq-dlg-spin 1s linear infinite;
+}
+
+@keyframes iq-dlg-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

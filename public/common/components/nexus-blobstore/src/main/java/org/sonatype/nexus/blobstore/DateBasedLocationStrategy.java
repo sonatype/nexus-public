@@ -16,7 +16,7 @@ import java.time.OffsetDateTime;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_PATH_FORMATTER;
 
 /**
@@ -29,7 +29,7 @@ public class DateBasedLocationStrategy
 {
   @Override
   public String location(final BlobId blobId) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
 
     OffsetDateTime blobCreationTime = blobId.getBlobCreatedRef();
     String datePath = blobCreationTime.format(DATE_TIME_PATH_FORMATTER);

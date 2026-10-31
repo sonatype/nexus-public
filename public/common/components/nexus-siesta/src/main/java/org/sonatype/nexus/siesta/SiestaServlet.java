@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Siesta servlet.
@@ -54,7 +54,7 @@ public class SiestaServlet
 
   @Autowired
   public SiestaServlet(final ComponentContainer componentContainer) {
-    this.componentContainer = checkNotNull(componentContainer);
+    this.componentContainer = requireNonNull(componentContainer);
 
     log.debug("Component container: {}", componentContainer);
   }
@@ -76,8 +76,8 @@ public class SiestaServlet
       final HttpServletRequest request,
       final HttpServletResponse response) throws ServletException, IOException
   {
-    checkNotNull(request);
-    checkNotNull(response);
+    requireNonNull(request);
+    requireNonNull(response);
 
     // Log the request URI+URL muck
     String uri = request.getRequestURI();

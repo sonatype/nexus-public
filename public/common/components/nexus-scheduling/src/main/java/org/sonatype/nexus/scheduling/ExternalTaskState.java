@@ -16,7 +16,7 @@ import java.util.Date;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -46,7 +46,7 @@ public class ExternalTaskState
       @Nullable final Long lastRunDuration,
       @Nullable final String progress)
   {
-    this.state = checkNotNull(state);
+    this.state = requireNonNull(state);
     this.nextFireTime = nextFireTime;
     this.lastEndState = lastEndState;
     this.lastRunStarted = lastRunStarted; // NOSONAR

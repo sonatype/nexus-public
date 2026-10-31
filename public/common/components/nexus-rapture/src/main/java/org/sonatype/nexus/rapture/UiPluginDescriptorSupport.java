@@ -17,7 +17,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for {@link UiPluginDescriptor} implementations.
@@ -47,7 +47,7 @@ public abstract class UiPluginDescriptorSupport
   private final String pluginId;
 
   public UiPluginDescriptorSupport(final String artifactId) {
-    this.pluginId = checkNotNull(artifactId);
+    this.pluginId = requireNonNull(artifactId);
   }
 
   @Override

@@ -12,16 +12,15 @@
  */
 package org.sonatype.nexus.coreui;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Named;
-import jakarta.validation.ConstraintValidator;
-import jakarta.validation.ConstraintValidatorContext;
-
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Validator for {@link DockerRepositoryNameConstraint} that ensures Docker repository names are lowercase.
@@ -34,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * than removed) to keep the diff minimal; backward compatibility for mixed-case updates is now provided by
  * the validation-group scoping, not by this runtime check.
  */
-@Named
+@Component
 public class DockerRepositoryNameValidator
     implements ConstraintValidator<DockerRepositoryNameConstraint, RepositoryXO>
 {

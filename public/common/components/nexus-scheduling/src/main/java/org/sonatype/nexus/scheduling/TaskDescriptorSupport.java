@@ -20,7 +20,7 @@ import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -93,14 +93,14 @@ public abstract class TaskDescriptorSupport
       final boolean requestRecovery,
       final FormField... formFields)
   {
-    this.id = checkNotNull(id);
-    this.type = checkNotNull(type);
-    this.name = checkNotNull(name);
+    this.id = requireNonNull(id);
+    this.type = requireNonNull(type);
+    this.name = requireNonNull(name);
     this.visible = visible;
     this.exposed = exposed;
     this.requestRecovery = requestRecovery;
 
-    checkNotNull(formFields);
+    requireNonNull(formFields);
     this.formFields = Arrays.stream(formFields).filter(Objects::nonNull).collect(toList());
   }
 

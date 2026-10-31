@@ -13,7 +13,7 @@
 import React from 'react';
 import {useActor} from '@xstate/react';
 
-import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, useIsLicensedEdition} from '@sonatype/nexus-ui-plugin';
 
 import {
   NxAccordion,
@@ -58,7 +58,7 @@ export default function S3BlobStoreSettings({service}) {
   const isPrimaryRegionActive = activeRegion === pristineBucketConfig.bucket?.region;
   const isFailoverAvailable = ExtJS.state().getValue('S3FailoverEnabled', false);
   const showPrimaryRegionInactiveMessage = hasActiveRegion && isFailoverAvailable && !isPrimaryRegionActive;
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
 
   function bucketConfigurationField(field) {
     return `bucketConfiguration.${field}`;
@@ -155,7 +155,7 @@ export default function S3BlobStoreSettings({service}) {
                  {...FormUtils.fieldProps(bucketField('prefix'), current)}
                  onChange={FormUtils.handleUpdate(bucketField('prefix'), send)}/>
     </NxFormGroup>
-    {isProEdition &&
+    {isLicensedEdition &&
         <div className="nxrm-s3-presigned">
           <NxFieldset label={FIELDS.S3BlobStore_Presigned_FieldLabel}>
             <NxCheckbox {...FormUtils.checkboxProps(bucketConfigurationField('preSignedUrlEnabled'), current)}

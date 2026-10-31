@@ -19,7 +19,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.coreui.BrowseNodeXO;
+import org.sonatype.nexus.api.common.shared.repository.browse.BrowseNodeXO;
 import org.sonatype.nexus.coreui.ComponentHelper;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;

@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Nested {@link AttributesMap} supporting parent/child relationship.
@@ -57,7 +57,7 @@ public class NestedAttributesMap
   {
     super(backing);
     this.parent = parent;
-    this.key = checkNotNull(key);
+    this.key = requireNonNull(key);
   }
 
   /**
@@ -118,7 +118,7 @@ public class NestedAttributesMap
    */
   @SuppressWarnings("unchecked")
   public NestedAttributesMap child(final String name) {
-    checkNotNull(name);
+    requireNonNull(name);
 
     Object child = backing.get(name);
     if (child == null) {

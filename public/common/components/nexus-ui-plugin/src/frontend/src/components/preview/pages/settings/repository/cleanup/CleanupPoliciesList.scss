@@ -12,44 +12,7 @@
  */
 
 .cleanup-policies-list {
-  &__help {
-    padding: var(--space-4);
-    margin-bottom: var(--space-4);
-    background-color: var(--gray-a2);
-    border-radius: var(--radius-3);
-    border: 1px solid var(--gray-a5);
-  }
-
-  &__help-icon {
-    color: var(--accent-9);
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  &__help-title {
-    margin-bottom: var(--space-1);
-    color: var(--gray-12);
-  }
-
-  &__help-text {
-    color: var(--gray-11);
-    line-height: 1.5;
-  }
-
-  &__help-link {
-    color: var(--accent-11);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
   &__toolbar {
-    margin-top: var(--space-4);
     margin-bottom: var(--space-4);
     display: flex;
     justify-content: flex-end;

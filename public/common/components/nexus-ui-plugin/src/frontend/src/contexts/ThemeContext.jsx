@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, {createContext, useContext, useEffect, useState, useCallback} from 'react';
+import React, {createContext, useContext, useEffect, useLayoutEffect, useState, useCallback} from 'react';
 
 /**
  * ThemeContext provides theme management for the application.
@@ -148,7 +148,14 @@ export function ThemeProvider({ children }) {
   // Dark mode only applies on Preview UI routes -- Default UI (ExtJS/RSC)
   // does not support dark mode and must always render in light mode.
   // Login route always uses light since Heritage login doesn't support dark.
-  useEffect(() => {
+  //
+  // useLayoutEffect (not useEffect) so `data-theme` on <html> and the
+  // `dark`/`radix-themes` classes on <body> are set BEFORE the first paint
+  // on a browser refresh. Using useEffect leaves those unset for one paint,
+  // during which var(--color-surface) resolves through Radix's light default
+  // while the dark logo is already rendered -- the "gray mask" flash on the
+  // global header until the next hash change re-runs styles.
+  useLayoutEffect(() => {
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
     const isPreviewUI = hash.includes('preview/');
     const isLoginRoute = hash.includes('login');

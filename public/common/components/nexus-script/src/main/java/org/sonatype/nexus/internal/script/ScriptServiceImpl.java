@@ -34,8 +34,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -69,10 +69,10 @@ public class ScriptServiceImpl
       final ScriptCleanupHandler scriptCleanupHandler,
       @Value("${nexus.scripts.groovyOnly:true}") final boolean allowOnlyGroovy)
   {
-    this.engineManager = checkNotNull(engineManager);
-    this.lookupHelper = checkNotNull(lookupHelper);
-    this.scriptApis = checkNotNull(scriptApis);
-    this.scriptCleanupHandler = checkNotNull(scriptCleanupHandler);
+    this.engineManager = requireNonNull(engineManager);
+    this.lookupHelper = requireNonNull(lookupHelper);
+    this.scriptApis = requireNonNull(scriptApis);
+    this.scriptCleanupHandler = requireNonNull(scriptCleanupHandler);
     this.allowOnlyGroovy = allowOnlyGroovy;
   }
 
@@ -90,7 +90,7 @@ public class ScriptServiceImpl
 
   @Override
   public void applyDefaultBindings(final Bindings bindings) {
-    checkNotNull(bindings);
+    requireNonNull(bindings);
 
     // TODO: Could potentially expose these in GLOBAL_SCOPE bindings?
     // TODO: Consider options to allow scripts more easily become injected aware?
@@ -130,7 +130,7 @@ public class ScriptServiceImpl
 
   @Override
   public Object eval(final String language, final String script, final ScriptContext context) throws ScriptException {
-    return engineForLanguage(checkNotNull(language)).eval(checkNotNull(script), checkNotNull(context));
+    return engineForLanguage(requireNonNull(language)).eval(requireNonNull(script), requireNonNull(context));
   }
 
   @Override
@@ -145,7 +145,7 @@ public class ScriptServiceImpl
   }
 
   private void validateLanguage(final String language) {
-    checkNotNull(language);
+    requireNonNull(language);
 
     if (allowOnlyGroovy && !language.equals(ScriptEngineManagerProvider.DEFAULT_LANGUAGE)) {
       throw new IllegalScriptLanguageException("Language: " + language + " is not allowed");

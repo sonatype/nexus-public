@@ -20,7 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Suffix string matcher.
@@ -38,7 +38,7 @@ public class SuffixMatcher
 
   @VisibleForTesting
   public SuffixMatcher(final String suffix, final boolean ignoreCase) {
-    this.suffix = checkNotNull(suffix);
+    this.suffix = requireNonNull(suffix);
     this.ignoreCase = ignoreCase;
   }
 
@@ -52,7 +52,7 @@ public class SuffixMatcher
 
   @Override
   public boolean matches(final Context context) {
-    checkNotNull(context);
+    requireNonNull(context);
     String path = context.getRequest().getPath();
     log.debug("Matching: {} ends-with={} ignore-case: {}", path, suffix, ignoreCase);
     if (ignoreCase) {

@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.security.RepositoryAdminPrivilegeDescriptor
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.repository.security.RepositoryViewPrivilegeDescriptor;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.privilege.ApplicationPrivilegeDescriptor;
@@ -38,6 +39,7 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
+import org.apache.shiro.authz.Permission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.security.rest.ApiPrivilegeRepositoryContentSelector.CSEL_KEY;
@@ -68,6 +71,9 @@ class RepositoryPrivilegeApiResourceTest
 {
   @Mock
   private SecuritySystem securitySystem;
+
+  @Mock
+  private SecurityHelper securityHelper;
 
   @Mock
   private AuthorizationManager authorizationManager;
@@ -95,6 +101,7 @@ class RepositoryPrivilegeApiResourceTest
   @BeforeEach
   void setup() throws Exception {
     lenient().when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
+    lenient().when(securityHelper.allPermitted(any(Permission.class))).thenReturn(true);
     lenient().when(repository1.getFormat()).thenReturn(format1);
     lenient().when(repository2.getFormat()).thenReturn(format2);
     lenient().when(repositoryManager.get("repository1")).thenReturn(repository1);
@@ -113,7 +120,7 @@ class RepositoryPrivilegeApiResourceTest
             repositoryManager, formats, false),
         new RepositoryContentSelectorPrivilegeDescriptor(repositoryManager, selectorManager, formats, false));
 
-    underTest = new RepositoryPrivilegeApiResource(securitySystem, privilegeDescriptors);
+    underTest = new RepositoryPrivilegeApiResource(securitySystem, securityHelper, privilegeDescriptors);
   }
 
   @Test
@@ -278,6 +285,29 @@ class RepositoryPrivilegeApiResourceTest
   }
 
   @Test
+  void testUpdatePrivilege_crossType_rejected() {
+    Privilege priv = createPrivilege("repository-view", "priv", "privdesc", false, FORMAT_KEY, "format1",
+        REPOSITORY_KEY, "repository1", ACTIONS_KEY, "read");
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
+
+    ApiPrivilegeRepositoryAdminRequest apiPrivilege = new ApiPrivilegeRepositoryAdminRequest("priv", "newdescription",
+        "format1", "repository1", List.of(PrivilegeAction.READ));
+
+    try {
+      underTest.updatePrivilege("priv", apiPrivilege);
+      fail("cross-type update should have been rejected with 409");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(409));
+      assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
+      assertThat(e.getResponse().getEntity().toString(),
+          is("ValidationErrorXO{id='*', message='\"Privilege 'priv' is of type 'repository-view'"
+              + " and cannot be updated via the 'repository-admin' endpoint.\"'}"));
+    }
+    verify(authorizationManager, never()).updatePrivilegeByName(any());
+  }
+
+  @Test
   void testUpdatePrivilege_repositoryView() {
     Privilege priv =
         createPrivilege("repository-view", "priv", "privdesc", false, FORMAT_KEY, "format1", REPOSITORY_KEY,
@@ -300,6 +330,7 @@ class RepositoryPrivilegeApiResourceTest
     Privilege priv =
         createPrivilege("repository-view", "priv", "privdesc", false, FORMAT_KEY, "format1", REPOSITORY_KEY,
             "repository1", ACTIONS_KEY, "read,delete");
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
     ApiPrivilegeRepositoryViewRequest apiPrivilege = new ApiPrivilegeRepositoryViewRequest("priv", "newdescription",
         "format2", "invalid", List.of(PrivilegeAction.DELETE));
@@ -335,6 +366,9 @@ class RepositoryPrivilegeApiResourceTest
 
   @Test
   void testUpdatePrivilege_repositoryAdminInvalidRepository() {
+    Privilege priv = createPrivilege("repository-admin", "priv", "privdesc", false);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
+
     ApiPrivilegeRepositoryAdminRequest apiPrivilege = new ApiPrivilegeRepositoryAdminRequest("priv", "newdescription",
         "format2", "invalid", List.of(PrivilegeAction.DELETE));
 
@@ -370,6 +404,9 @@ class RepositoryPrivilegeApiResourceTest
 
   @Test
   void testUpdatePrivilege_repositoryContentSelectorInvalidRepository() {
+    Privilege priv = createPrivilege("repository-content-selector", "priv", "privdesc", false);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
+
     ApiPrivilegeRepositoryContentSelectorRequest apiPrivilege =
         new ApiPrivilegeRepositoryContentSelectorRequest("priv", "newdescription",
             "format2", "invalid", "newContentSelector", List.of(PrivilegeAction.DELETE));
@@ -384,6 +421,9 @@ class RepositoryPrivilegeApiResourceTest
 
   @Test
   void testUpdatePrivilege_repositoryContentSelectorInvalidContentSelector() {
+    Privilege priv = createPrivilege("repository-content-selector", "priv", "privdesc", false);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
+
     ApiPrivilegeRepositoryContentSelectorRequest apiPrivilege =
         new ApiPrivilegeRepositoryContentSelectorRequest("priv", "newdescription",
             "format2", "repository2", "invalid", List.of(PrivilegeAction.DELETE));

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.common.template;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -33,22 +34,43 @@ import static java.util.stream.Collectors.joining;
 @TemplateAccessible
 public class EscapeHelper
 {
-
   private static final Map<String, String> DEFAULT_RULES;
 
   static {
-    DEFAULT_RULES = new LinkedHashMap<>();
-    DEFAULT_RULES.put("%", "%25");
-    DEFAULT_RULES.put(":", "%3A");
-    DEFAULT_RULES.put(" ", "%20");
+    Map<String, String> defaults = new LinkedHashMap<>();
+    defaults.put("%", "%25");
+    defaults.put(":", "%3A");
+    defaults.put(" ", "%20");
+    DEFAULT_RULES = Collections.unmodifiableMap(defaults);
+  }
+
+  /**
+   * Returns a copy of the default URL escape rules.
+   * Used for merging with repository-specific rules.
+   *
+   * @return copy of default rules map
+   */
+  public static Map<String, String> getDefaultRules() {
+    return new LinkedHashMap<>(DEFAULT_RULES);
   }
 
   private final Map<String, String> transformRules;
 
   private final Pattern transformPattern; // compiled once, preserves rule order
 
+  /**
+   * Create an EscapeHelper with default URL escape rules.
+   * Default rules: %→%25, :→%3A, space→%20
+   */
   public EscapeHelper() {
-    this(null);
+    this.transformRules = DEFAULT_RULES;
+
+    // Build alternation in *insertion order*; Pattern.quote each key
+    String alternation = transformRules.keySet()
+        .stream()
+        .map(Pattern::quote)
+        .collect(Collectors.joining("|"));
+    this.transformPattern = Pattern.compile(alternation);
   }
 
   public EscapeHelper(final String urlEscapeRulesConfig) {
@@ -69,7 +91,36 @@ public class EscapeHelper
     }
   }
 
+  /**
+   * Create an EscapeHelper with custom rules map.
+   *
+   * This constructor is used for repository-specific URL escape rules.
+   *
+   * @param customRules map of pattern to replacement, or null/empty for no rules
+   */
+  public EscapeHelper(final Map<String, String> customRules) {
+    this.transformRules = customRules != null && !customRules.isEmpty()
+        ? new LinkedHashMap<>(customRules)
+        : new LinkedHashMap<>();
+
+    // Build alternation in *insertion order*; Pattern.quote each key
+    if (transformRules.isEmpty()) {
+      this.transformPattern = null; // means: no transform
+    }
+    else {
+      String alternation = transformRules.keySet()
+          .stream()
+          .map(Pattern::quote)
+          .collect(Collectors.joining("|"));
+      this.transformPattern = Pattern.compile(alternation);
+    }
+  }
+
   public String html(final String value) {
+    // Shared, general-purpose HTML escaper used by $esc.html(...) across many templates (error pages,
+    // describe, capability status, SAML, etc.). Deliberately NOT changed by NEXUS-52802: the PyPI perf
+    // path escapes via its own Guava escaper in PyPiIndexUtils, so this stays escapeHtml4 to preserve
+    // exact output for every other caller.
     return StringEscapeUtils.escapeHtml4(value);
   }
 
@@ -137,8 +188,22 @@ public class EscapeHelper
   }
 
   /**
+   * Variant of {@link #uriSegments(String)} that preserves trailing empty segments so a value like
+   * "simple/flask/" round-trips as "simple/flask/" — not "simple/flask". The default
+   * {@code String.split("/")} drops trailing empties, which is fine for leaf-file URLs but wrong
+   * for callers that resolve relative links against the resulting base URI. PEP 503 PyPI simple
+   * indexes serve DIFFERENT link prefixes for "/simple/pkg/" (../../packages/...) vs "/simple/pkg"
+   * (../packages/...), so silently dropping the trailing slash pulls back one-level-short links
+   * that then resolve to a wrong upstream URL on the next fetch. Use only when the caller needs
+   * exact byte-preservation of trailing slashes.
+   */
+  public String uriSegmentsPreserveTrailing(final String value) {
+    return Stream.of(value.split("/", -1)).map(this::transform).collect(joining("/"));
+  }
+
+  /**
    * Strip java el start token from a string
-   * 
+   *
    * @since 3.14
    */
   public String stripJavaEl(final String value) {

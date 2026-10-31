@@ -14,16 +14,8 @@ package org.sonatype.nexus.repository.content.rest.internal.resources;
 
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.Nullable;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -31,7 +23,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
-import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.rest.internal.resources.doc.AssetsResourceDoc;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
@@ -41,14 +33,24 @@ import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.annotation.RequiresUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.content.rest.AssetXOBuilder.fromAsset;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -72,23 +74,24 @@ public class AssetsResource
 
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
-  private final MaintenanceService maintenanceService;
+  private final ContentDeletionService contentDeletionService;
 
   private final Map<String, AssetXODescriptor> assetDescriptors;
 
   @Autowired
   public AssetsResource(
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
-      final MaintenanceService maintenanceService,
+      final ContentDeletionService contentDeletionService,
       final ContentAuthHelper contentAuthHelper,
       final List<AssetXODescriptor> assetDescriptorsList)
   {
     super(contentAuthHelper);
-    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
-    this.maintenanceService = checkNotNull(maintenanceService);
+    this.repositoryManagerRESTAdapter = requireNonNull(repositoryManagerRESTAdapter);
+    this.contentDeletionService = requireNonNull(contentDeletionService);
     this.assetDescriptors = QualifierUtil.buildQualifierBeanMap(assetDescriptorsList);
   }
 
+  @RequiresUser
   @GET
   @Override
   public Page<AssetXO> getAssets(
@@ -100,6 +103,7 @@ public class AssetsResource
     return new Page<>(toAssetXOs(repository, assets, this.assetDescriptors), nextContinuationToken(assets));
   }
 
+  @RequiresUser
   @GET
   @Path("/{id}")
   @Override
@@ -111,6 +115,7 @@ public class AssetsResource
     return fromAsset(asset, repository, this.assetDescriptors, uploaderVisible);
   }
 
+  @RequiresUser
   @DELETE
   @Path("/{id}")
   @Override
@@ -120,7 +125,15 @@ public class AssetsResource
 
     DetachedEntityId entityId = new DetachedEntityId(repositoryItemIDXO.getId());
     Asset asset = getAsset(id, repository, entityId);
-    maintenanceService.deleteAsset(repository, asset);
+
+    // The soft-delete-vs-hard-delete decision and the content DELETE authorization are owned by
+    // ContentDeletionService (NEXUS-49147); soft-delete identifier/not-found errors map to 404.
+    try {
+      contentDeletionService.deleteAsset(repository, asset);
+    }
+    catch (IllegalArgumentException | IllegalStateException e) {
+      throw new NotFoundException("Unable to locate asset with id " + id);
+    }
   }
 
   private Asset getAsset(final String id, final Repository repository, final DetachedEntityId entityId) {

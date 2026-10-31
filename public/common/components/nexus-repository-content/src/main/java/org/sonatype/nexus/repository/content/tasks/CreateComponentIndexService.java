@@ -22,7 +22,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import org.springframework.stereotype.Component;
 
@@ -57,9 +57,9 @@ public class CreateComponentIndexService
       final DatabaseMigrationUtility databaseMigrationUtility,
       final List<Format> formats)
   {
-    this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
-    this.databaseMigrationUtility = checkNotNull(databaseMigrationUtility);
-    this.formats = checkNotNull(formats);
+    this.dataSessionSupplier = requireNonNull(dataSessionSupplier);
+    this.databaseMigrationUtility = requireNonNull(databaseMigrationUtility);
+    this.formats = requireNonNull(formats);
   }
 
   public void recreateComponentIndexes() throws SQLException {

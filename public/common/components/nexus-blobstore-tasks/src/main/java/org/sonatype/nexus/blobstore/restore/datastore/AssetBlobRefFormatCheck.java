@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
@@ -44,7 +44,7 @@ public class AssetBlobRefFormatCheck
 
   @Autowired
   public AssetBlobRefFormatCheck(final List<FormatStoreManager> formatStoreManagersList) {
-    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersList));
+    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatStoreManagersList));
   }
 
   /**

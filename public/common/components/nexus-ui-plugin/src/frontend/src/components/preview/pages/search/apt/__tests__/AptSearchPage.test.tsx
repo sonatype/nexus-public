@@ -22,7 +22,7 @@ import { AptSearchResults } from '../AptSearchResults';
 import { AptResultRow } from '../AptResultRow';
 import { AptDetailPage } from '../AptDetailPage';
 import { mockAptResults, mockAptSearchApi } from '../mockData';
-import type { AptResult, AptSearchFilters as FilterValues } from '../apt.types';
+import type { AptResult, } from '../apt.types';
 
 // Mock the useAptSearch hook
 jest.mock('../useAptSearch', () => ({

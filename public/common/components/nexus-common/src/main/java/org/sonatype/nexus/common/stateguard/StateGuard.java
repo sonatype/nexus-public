@@ -26,7 +26,7 @@ import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * State guard provides support to transition from state to state and execute an action, as well as guard
@@ -51,9 +51,9 @@ public class StateGuard
       final String initial,
       @Nullable final String failure)
   {
-    this.log = checkNotNull(log);
-    this.readWriteLock = checkNotNull(readWriteLock);
-    this.current = checkNotNull(initial);
+    this.log = requireNonNull(log);
+    this.readWriteLock = requireNonNull(readWriteLock);
+    this.current = requireNonNull(initial);
     this.failure = failure;
   }
 
@@ -98,7 +98,7 @@ public class StateGuard
    * Code executed after may not have the same state, to execute and ensure state is allowed use {@link #guard} instead.
    */
   public void ensure(final String... allowed) {
-    checkNotNull(allowed);
+    requireNonNull(allowed);
     checkArgument(allowed.length != 0);
 
     Lock lock = Locks.read(readWriteLock);
@@ -177,9 +177,9 @@ public class StateGuard
         final Class<? extends Exception>[] ignore,
         final boolean requiresWriteLock)
     {
-      this.to = checkNotNull(to);
+      this.to = requireNonNull(to);
       this.silent = silent;
-      this.ignore = checkNotNull(ignore);
+      this.ignore = requireNonNull(ignore);
       this.requiresWriteLock = requiresWriteLock;
     }
 
@@ -193,7 +193,7 @@ public class StateGuard
 
     @Override
     public TransitionImpl from(final String... allowed) {
-      checkNotNull(allowed);
+      requireNonNull(allowed);
       checkArgument(allowed.length != 0);
       this.allowed = allowed;
       return this;
@@ -275,7 +275,7 @@ public class StateGuard
     private final String[] allowed;
 
     private GuardImpl(final String[] allowed) {
-      checkNotNull(allowed);
+      requireNonNull(allowed);
       checkArgument(allowed.length != 0);
       this.allowed = allowed;
     }
@@ -290,7 +290,7 @@ public class StateGuard
     @Override
     @Nullable
     public <V> V run(final Action<V> action) throws Exception {
-      checkNotNull(action);
+      requireNonNull(action);
 
       Lock lock = Locks.read(readWriteLock);
       try {

@@ -844,6 +844,7 @@ export default function IpAllowList() {
                                     <DropdownMenu.Trigger>
                                       <IconButton
                                         variant="ghost"
+                                        color="gray"
                                         size="1"
                                         aria-label="Row actions"
                                       >

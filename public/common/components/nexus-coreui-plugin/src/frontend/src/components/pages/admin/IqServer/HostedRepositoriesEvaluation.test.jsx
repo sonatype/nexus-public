@@ -518,4 +518,68 @@ describe('HostedRepositoriesEvaluation', () => {
       expect(screen.getByRole('tablist')).toBeInTheDocument();
     });
   });
+
+  describe('permission denied handling', () => {
+    const containsPermissionDenied = (_, node) =>
+      node?.textContent?.includes(HOSTED_REPOSITORIES_EVALUATION.PERMISSION_DENIED) ?? false;
+
+    it('renders permission-denied banner when permissionDenied is true', () => {
+      const permissionDeniedState = {
+        context: {
+          hasSelections: false,
+          globalConfigAvailable: false,
+          numberOfMonitoredRepositories: 0,
+          existingSettings: null,
+          permissionDenied: true
+        },
+        matches: jest.fn(() => false)
+      };
+      useMachine.mockReturnValue([permissionDeniedState, mockSend]);
+
+      render(<HostedRepositoriesEvaluation />);
+
+      expect(screen.getAllByText(containsPermissionDenied).length).toBeGreaterThan(0);
+      expect(screen.queryByTestId('progress-steps')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('settings-tab')).not.toBeInTheDocument();
+    });
+
+    it('sends RETRY event when Retry button is clicked in the permission-denied banner', async () => {
+      const permissionDeniedState = {
+        context: {
+          hasSelections: false,
+          globalConfigAvailable: false,
+          numberOfMonitoredRepositories: 0,
+          existingSettings: null,
+          permissionDenied: true
+        },
+        matches: jest.fn(() => false)
+      };
+      useMachine.mockReturnValue([permissionDeniedState, mockSend]);
+
+      render(<HostedRepositoriesEvaluation />);
+
+      const retryButton = screen.getByRole('button', {name: /retry/i});
+      await userEvent.click(retryButton);
+
+      expect(mockSend).toHaveBeenCalledWith('RETRY');
+    });
+
+    it('does not render permission-denied banner when permissionDenied is false', () => {
+      const okState = {
+        context: {
+          hasSelections: false,
+          globalConfigAvailable: false,
+          numberOfMonitoredRepositories: 0,
+          existingSettings: null,
+          permissionDenied: false
+        },
+        matches: jest.fn(() => false)
+      };
+      useMachine.mockReturnValue([okState, mockSend]);
+
+      render(<HostedRepositoriesEvaluation />);
+
+      expect(screen.queryAllByText(containsPermissionDenied)).toHaveLength(0);
+    });
+  });
 });

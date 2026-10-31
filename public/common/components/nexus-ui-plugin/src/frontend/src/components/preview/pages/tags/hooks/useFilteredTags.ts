@@ -11,127 +11,136 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import { restClient } from '../../../../../interface/api';
+import { useCallback, useMemo } from 'react';
+import { useMachine } from '@xstate/react';
 
-export interface TagWithCount {
-  name: string;
-  attributes: Record<string, unknown> | null;
-  firstCreated: string | null;
-  lastUpdated: string | null;
-  componentCount: number;
+import type {
+  TagWithCount,
+  TagsFilters,
+  TagSortField,
+} from '../tags.types';
+import { tagsListMachine } from '../machines/tagsListMachine';
+
+export type { TagWithCount, TagSortField };
+
+/**
+ * Return type for useFilteredTags hook.
+ */
+export interface UseFilteredTagsReturn {
+  tags: TagWithCount[];
+  loading: boolean;
+  error: string | null;
+  filters: TagsFilters;
+  sortField: TagSortField;
+  sortDirection: 'asc' | 'desc';
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  totalUnfilteredItems: number | null;
+  setFilters: (filters: TagsFilters) => void;
+  toggleSort: (field: TagSortField) => void;
+  setPage: (page: number) => void;
+  setPageSize: (size: number) => void;
+  retry: () => void;
+  refresh: () => void;
 }
-
-export interface TagPage {
-  items: TagWithCount[];
-  totalCount: number;
-  continuationToken: string | null;
-}
-
-export interface TagsFilters {
-  nameFilter: string;
-  componentCountRanges: string[];
-  activityDays: number[];
-}
-
-export type TagSortField = 'name' | 'componentCount' | 'firstCreated' | 'lastUpdated';
-export type SortDirection = 'asc' | 'desc';
-
-const TAGS_FILTERED_URL = '/service/rest/internal/ui/tags/filtered';
 
 /**
  * Custom hook for managing the state of the filtered and paginated tags list.
+ *
+ * This hook follows the three-layer architecture:
+ * - Layer 1: tagsListMachine (XState state machine)
+ * - Layer 2: useFilteredTags (this integration hook)
+ * - Layer 3: TagsPageRadix component
+ *
+ * The hook uses an XState machine to handle:
+ * - Loading states and error handling
+ * - Server-side filtering
+ * - Server-side sorting
+ * - Server-side pagination
+ *
+ * @returns Filtered tags state and actions
  */
-export function useFilteredTags() {
-  const [tags, setTags] = useState<TagWithCount[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<TagsFilters>({
-    nameFilter: '',
-    componentCountRanges: [],
-    activityDays: [],
-  });
-  const [sortField, setSortField] = useState<TagSortField>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [currentPage, setCurrentPage] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(20);
-  const [totalItems, setTotalItems] = useState<number>(0);
-  const [totalUnfilteredItems, setTotalUnfilteredItems] = useState<number | null>(null);
+export function useFilteredTags(): UseFilteredTagsReturn {
+  // tagsListMachine already declares its initial context; no override needed.
+  const machine = useMemo(() => tagsListMachine, []);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (filters.nameFilter) {
-        params.append('nameFilter', filters.nameFilter);
-      }
-      filters.componentCountRanges.forEach((range) => {
-        params.append('componentCountRanges', range);
-      });
-      filters.activityDays.forEach((days) => {
-        params.append('activityDays', String(days));
-      });
-      params.append('sortField', sortField);
-      params.append('sortDirection', sortDirection);
-      params.append('page', String(currentPage));
-      params.append('pageSize', String(pageSize));
+  // Use the XState machine
+  const [state, send] = useMachine(machine);
 
-      const data = await restClient.get<TagPage>(`${TAGS_FILTERED_URL}?${params.toString()}`);
-      setTags(data.items);
-      setTotalItems(data.totalCount);
-      const noActiveFilters =
-        filters.nameFilter.trim() === '' &&
-        filters.componentCountRanges.length === 0 &&
-        filters.activityDays.length === 0;
-      // totalUnfilteredItems is only captured on unfiltered fetches. If the user arrives with
-      // active filters it stays null and the header shows '-' — intentional, since we don't
-      // know the true total until an unfiltered fetch completes.
-      if (noActiveFilters) {
-        setTotalUnfilteredItems(data.totalCount);
-      }
-    } catch (err) {
-      console.error('Failed to fetch tags:', err);
-      setError('Failed to load tags. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, sortField, sortDirection, currentPage, pageSize]);
+  // Extract context values for easier access
+  const {
+    tags,
+    loading,
+    error,
+    filters,
+    sortField,
+    sortDirection,
+    currentPage,
+    pageSize,
+    totalItems,
+    totalUnfilteredItems,
+  } = state.context;
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleSetFilters = useCallback((newFilters: TagsFilters) => {
-    setFilters(newFilters);
-    setCurrentPage(0);
-  }, []);
-
-  const handleToggleSort = useCallback(
-    (field: TagSortField) => {
-      if (sortField === field) {
-        setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-      } else {
-        setSortField(field);
-        setSortDirection('asc');
-      }
-      setCurrentPage(0);
+  /**
+   * Update filters and trigger a refetch.
+   * Resets to page 0 automatically.
+   */
+  const handleSetFilters = useCallback(
+    (newFilters: TagsFilters) => {
+      send({ type: 'SET_FILTERS', filters: newFilters });
     },
-    [sortField]
+    [send]
   );
 
-  const handleSetPage = useCallback((page: number) => {
-    setCurrentPage(page);
-  }, []);
+  /**
+   * Toggle sort on a field.
+   * If clicking the same field, toggles direction.
+   * If clicking a different field, sorts ascending.
+   * Resets to page 0.
+   */
+  const handleToggleSort = useCallback(
+    (field: TagSortField) => {
+      send({ type: 'TOGGLE_SORT', field });
+    },
+    [send]
+  );
 
-  const handleSetPageSize = useCallback((size: number) => {
-    setPageSize(size);
-    setCurrentPage(0);
-  }, []);
+  /**
+   * Go to a specific page.
+   */
+  const handleSetPage = useCallback(
+    (page: number) => {
+      send({ type: 'SET_PAGE', page });
+    },
+    [send]
+  );
 
+  /**
+   * Change page size.
+   * Resets to page 0 automatically.
+   */
+  const handleSetPageSize = useCallback(
+    (size: number) => {
+      send({ type: 'SET_PAGE_SIZE', pageSize: size });
+    },
+    [send]
+  );
+
+  /**
+   * Retry fetching after an error.
+   */
   const handleRetry = useCallback(() => {
-    fetchData();
-  }, [fetchData]);
+    send({ type: 'RETRY' });
+  }, [send]);
+
+  /**
+   * Refresh the list (e.g., after creating a new tag).
+   * Works from both ready and error states.
+   */
+  const handleRefresh = useCallback(() => {
+    send({ type: 'REFRESH' });
+  }, [send]);
 
   return {
     tags,
@@ -149,6 +158,7 @@ export function useFilteredTags() {
     setPage: handleSetPage,
     setPageSize: handleSetPageSize,
     retry: handleRetry,
+    refresh: handleRefresh,
   };
 }
 

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.transaction;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
 
@@ -85,7 +85,7 @@ public abstract class TransactionSupport
 
   @Override
   public void reason(final String reason) {
-    this.reason = checkNotNull(reason);
+    this.reason = requireNonNull(reason);
   }
 
   @Override

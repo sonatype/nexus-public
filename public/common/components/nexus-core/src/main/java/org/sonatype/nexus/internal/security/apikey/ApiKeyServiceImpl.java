@@ -45,7 +45,7 @@ import com.google.common.eventbus.Subscribe;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 import org.springframework.stereotype.Component;
@@ -87,13 +87,13 @@ public class ApiKeyServiceImpl
       final List<ApiKeyFactory> apiKeyFactoriesList,
       final DefaultApiKeyFactory defaultApiKeyFactory)
   {
-    this.apiKeyStore = checkNotNull(apiKeyStoreV1);
-    this.apiKeyStoreV2 = checkNotNull(apiKeyStoreV2);
-    this.databaseCheck = checkNotNull(check);
-    this.kv = checkNotNull(kv);
-    this.principalsHelper = checkNotNull(principalsHelper);
-    this.apiKeyFactories = QualifierUtil.buildQualifierBeanMap(checkNotNull(apiKeyFactoriesList));
-    this.defaultApiKeyFactory = checkNotNull(defaultApiKeyFactory);
+    this.apiKeyStore = requireNonNull(apiKeyStoreV1);
+    this.apiKeyStoreV2 = requireNonNull(apiKeyStoreV2);
+    this.databaseCheck = requireNonNull(check);
+    this.kv = requireNonNull(kv);
+    this.principalsHelper = requireNonNull(principalsHelper);
+    this.apiKeyFactories = QualifierUtil.buildQualifierBeanMap(requireNonNull(apiKeyFactoriesList));
+    this.defaultApiKeyFactory = requireNonNull(defaultApiKeyFactory);
   }
 
   @Override
@@ -305,7 +305,7 @@ public class ApiKeyServiceImpl
   private char[] makeApiKey(final String domain) {
     ApiKeyFactory factory = apiKeyFactories.get(domain);
     if (factory != null) {
-      return checkNotNull(factory.makeApiKey());
+      return requireNonNull(factory.makeApiKey());
     }
     return defaultApiKeyFactory.makeApiKey();
   }

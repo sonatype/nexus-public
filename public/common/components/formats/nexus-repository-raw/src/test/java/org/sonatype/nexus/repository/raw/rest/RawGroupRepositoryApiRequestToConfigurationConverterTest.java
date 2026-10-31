@@ -153,7 +153,7 @@ class RawGroupRepositoryApiRequestToConfigurationConverterTest
 
   private RawGroupRepositoryApiRequest createRequest(ContentDisposition contentDisposition) {
     RawAttributes raw = new RawAttributes(contentDisposition);
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     GroupAttributes group = new GroupAttributes(Arrays.asList("raw-hosted", "raw-proxy"));
 
     return new RawGroupRepositoryApiRequest(
@@ -165,7 +165,7 @@ class RawGroupRepositoryApiRequestToConfigurationConverterTest
   }
 
   private RawGroupRepositoryApiRequest createRequestWithNullRaw() {
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     GroupAttributes group = new GroupAttributes(Arrays.asList("raw-hosted", "raw-proxy"));
 
     return new RawGroupRepositoryApiRequest(

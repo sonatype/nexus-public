@@ -16,9 +16,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 
-import jakarta.inject.Named;
-
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+
+import org.springframework.stereotype.Component;
 
 /**
  * Adds the date_path_ref column to soft_deleted_blobs table.
@@ -31,7 +31,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
  *
  * @since 3.87
  */
-@Named
+@Component
 public class SoftDeletedBlobsDatePathRefMigrationStep_2_31
     implements DatabaseMigrationStep
 {

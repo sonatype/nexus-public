@@ -18,7 +18,7 @@ import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.METRICS_INTERNAL_ENABLED;
 import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 
@@ -36,7 +36,7 @@ public final class InstrumentedHandler // NOSONAR
   public InstrumentedHandler(final ServletContextHandler delegate) {
     super(resolveRegistry());
     setHandler(delegate);
-    this.delegate = checkNotNull(delegate);
+    this.delegate = requireNonNull(delegate);
   }
 
   private static MetricRegistry resolveRegistry() {

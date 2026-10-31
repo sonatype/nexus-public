@@ -26,10 +26,12 @@ import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.swagger.SwaggerContributor;
 
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.core.converter.ModelConverterContext;
 import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.jaxrs2.Reader;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -42,7 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * OpenAPI model component (formerly Swagger 1.x model).
@@ -75,8 +77,8 @@ public class SwaggerModel
       final List<ModelConverter> converters,
       final List<SwaggerContributor> contributors)
   {
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.contributors = checkNotNull(contributors);
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.contributors = requireNonNull(contributors);
 
     registerConverters(converters);
 
@@ -85,6 +87,16 @@ public class SwaggerModel
 
   private static void registerConverters(final List<ModelConverter> converters) {
     ModelConverters instance = ModelConverters.getInstance();
+
+    // Prevent OpenAPI from using toString on enums
+    instance.getConverters()
+        .stream()
+        .filter(ModelResolver.class::isInstance)
+        .map(ModelResolver.class::cast)
+        .findAny()
+        .orElseThrow()
+        .objectMapper()
+        .configure(SerializationFeature.WRITE_ENUMS_USING_TO_STRING, false);
 
     // filter banned types from model, such as Groovy's MetaClass
     instance.addConverter(new ModelFilter());
@@ -103,6 +115,8 @@ public class SwaggerModel
         .stream()
         .map(Resource::getClass)
         .forEach(this::scan);
+
+    contributors.forEach(c -> c.contribute(getOpenApi()));
   }
 
   private void scan(final Class<? extends Resource> resourceClass) {
@@ -149,8 +163,6 @@ public class SwaggerModel
         }
       }
     }
-
-    contributors.forEach(c -> c.contribute(getOpenApi()));
   }
 
   /**

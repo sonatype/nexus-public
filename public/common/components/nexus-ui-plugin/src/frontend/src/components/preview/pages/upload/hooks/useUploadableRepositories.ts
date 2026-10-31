@@ -23,6 +23,7 @@ import type {
 } from '../upload.types';
 
 // REST API endpoints
+// Available in both self-hosted and cloud distributions (see NEXUS-54057).
 const UPLOAD_SPECS_ENDPOINT = '/service/rest/v1/formats/upload-specs';
 
 /**
@@ -52,7 +53,7 @@ function isRepositoryOnline(repo: RepositoryReference): boolean {
  * - Must not be a Maven SNAPSHOT repo
  * - Must have a matching upload definition
  *
- * Note: REST API /v1/formats/upload-specs does not include `uiUpload` field,
+ * Note: the upload-specs endpoint does not include a `uiUpload` field,
  * so we assume all formats returned by upload-specs support UI upload.
  */
 function filterUploadableRepositories(
@@ -95,7 +96,7 @@ function sortRepositories(
   column: SortColumn | null,
   direction: SortDirection
 ): UploadableRepository[] {
-  if (!column || !direction) {
+  if (!(column && direction)) {
     return repositories;
   }
 
@@ -167,10 +168,12 @@ export function useUploadableRepositories() {
           let page = 1;
           let hasMore = true;
           while (hasMore) {
-            const pageData = await restClient.get<{ data: RepositoryReference[] }>(
+            // The internal endpoint returns { data: [...] }, but older/alternate
+            // deployments may return a bare array — narrow both shapes explicitly.
+            const pageData = await restClient.get<{ data: RepositoryReference[] } | RepositoryReference[]>(
               `/service/rest/internal/ui/repositories/details/filtered?type=hosted&pageSize=${PAGE_SIZE}&page=${page}`
             );
-            const pageRepos = (pageData as any)?.data || (Array.isArray(pageData) ? pageData : []);
+            const pageRepos: RepositoryReference[] = Array.isArray(pageData) ? pageData : (pageData?.data ?? []);
             repos = repos.concat(pageRepos);
             hasMore = pageRepos.length === PAGE_SIZE;
             page++;
@@ -186,42 +189,17 @@ export function useUploadableRepositories() {
         }
       };
 
-      const fetchUploadDefinitions = async (): Promise<{
-        definitions: UploadDefinition[];
-        is404: boolean;
-      }> => {
-        try {
-          const definitions = await restClient.get<UploadDefinition[]>(UPLOAD_SPECS_ENDPOINT);
-          return { definitions: definitions || [], is404: false };
-        } catch (err) {
-          const apiError = parseApiError(err);
-          if (isNotFoundError(apiError)) {
-            return { definitions: [], is404: true };
-          }
-          throw err;
-        }
+      const fetchUploadDefinitions = async (): Promise<UploadDefinition[]> => {
+        const definitions = await restClient.get<UploadDefinition[]>(UPLOAD_SPECS_ENDPOINT);
+        return definitions || [];
       };
 
-      const [repositories, { definitions: uploadDefinitions, is404: uploadSpecsNotFound }] =
-        await Promise.all([fetchAllHosted(), fetchUploadDefinitions()]);
+      const [repositories, uploadDefinitions] = await Promise.all([
+        fetchAllHosted(),
+        fetchUploadDefinitions(),
+      ]);
 
-      let uploadableRepos: UploadableRepository[];
-
-      if (uploadSpecsNotFound) {
-        uploadableRepos = (repositories || [])
-          .filter(
-            (repo) =>
-              repo.type === 'hosted' &&
-              isRepositoryOnline(repo) &&
-              repo.versionPolicy !== 'SNAPSHOT',
-          )
-          .map((repo) => ({ name: repo.name, format: repo.format, url: repo.url }));
-      } else {
-        uploadableRepos = filterUploadableRepositories(
-          repositories || [],
-          uploadDefinitions,
-        );
-      }
+      const uploadableRepos = filterUploadableRepositories(repositories || [], uploadDefinitions);
 
       setAllRepositories(uploadableRepos);
     } catch (err) {

@@ -59,10 +59,13 @@ export default FormUtils.buildFormMachine({
     logSaveSuccess: () => ExtJS.showSuccessMessage(ANONYMOUS_SETTINGS.MESSAGES.SAVE_SUCCESS)
   },
   services: {
-    fetchData: () => Axios.all([
-      Axios.get(REALMS_TYPES),
-      Axios.get(ANONYMOUS_API)
-    ]),
+    fetchData: async () => {
+      await ExtJS.waitForPermissions();
+      return Axios.all([
+        Axios.get(REALMS_TYPES),
+        Axios.get(ANONYMOUS_API)
+      ]);
+    },
     saveData: ({data}) => Axios.put(ANONYMOUS_API, {...data, userId: data.userId.trim()})
   }
 });

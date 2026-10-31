@@ -12,14 +12,14 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.ws.rs.Path;
-
 import org.sonatype.nexus.email.EmailManager;
+
+import jakarta.ws.rs.Path;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.api.rest.selfhosted.email.EmailConfigurationApiResourceV1.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
-import org.springframework.stereotype.Component;
 
 /**
  * v1 endpoint for email configuration REST API

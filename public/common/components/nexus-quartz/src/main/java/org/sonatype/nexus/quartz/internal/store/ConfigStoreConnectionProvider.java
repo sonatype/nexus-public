@@ -21,7 +21,7 @@ import org.sonatype.nexus.datastore.api.DataStore;
 
 import org.quartz.utils.ConnectionProvider;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +38,7 @@ public class ConfigStoreConnectionProvider
 
   @Autowired
   public ConfigStoreConnectionProvider(final DataSessionSupplier sessionSupplier) {
-    this.sessionSupplier = checkNotNull(sessionSupplier);
+    this.sessionSupplier = requireNonNull(sessionSupplier);
   }
 
   @Override

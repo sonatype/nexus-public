@@ -53,6 +53,16 @@ public class S3BlobStoreConfigurationHelper
 
   public static final String CONFIG_KEY = "s3";
 
+  public static final String CLOUDFRONT_KEY = "cloudFront";
+
+  public static final String CLOUDFRONT_DISTRIBUTION_URL_KEY = "distributionUrl";
+
+  public static final String CLOUDFRONT_KEY_PAIR_ID_KEY = "keyPairId";
+
+  public static final String CLOUDFRONT_PRIVATE_KEY_KEY = "privateKey";
+
+  public static final String TRANSFER_ACCELERATION_ENABLED_KEY = "transferAccelerationEnabled";
+
   private S3BlobStoreConfigurationHelper() {
     // empty
   }

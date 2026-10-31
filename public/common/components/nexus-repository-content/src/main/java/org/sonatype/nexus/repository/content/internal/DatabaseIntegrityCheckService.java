@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import org.springframework.stereotype.Component;
@@ -41,8 +41,8 @@ public class DatabaseIntegrityCheckService
       final DataSessionSupplier dataSessionSupplier,
       final List<DatabaseIntegrityChecker> databaseIntegrityCheckers)
   {
-    this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
-    this.databaseIntegrityCheckers = checkNotNull(databaseIntegrityCheckers);
+    this.dataSessionSupplier = requireNonNull(dataSessionSupplier);
+    this.databaseIntegrityCheckers = requireNonNull(databaseIntegrityCheckers);
   }
 
   @Override

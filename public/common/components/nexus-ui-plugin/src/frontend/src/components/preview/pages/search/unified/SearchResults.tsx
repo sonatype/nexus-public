@@ -18,23 +18,27 @@ import {
   Card,
   Button,
 } from '@radix-ui/themes';
-import { ArrowUpDown, Package, Search, Filter } from 'lucide-react';
+import { Package, Search, Filter } from 'lucide-react';
 import { SearchResultCard } from './SearchResultCard';
 import { TablePagination, PAGE_SIZE_OPTIONS } from '../../../shared';
-import type { SearchResult, SortOption } from './unified.types';
+import type { SearchResult, SortDirection, SortField } from './unified.types';
+import {
+  SORT_OPTIONS,
+  SORT_OPTION_GROUPS,
+  SortDirectionIcon,
+  findSortOption,
+  toSortValue,
+  useSortValueChange,
+} from './sortOptions';
+import { DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD } from './useSearchUrlState';
 
 import './SearchResults.scss';
 
 /** Debounce delay for filter input */
 const FILTER_DEBOUNCE_MS = 500;
 
-/** Available sort options */
-const SORT_OPTIONS: SortOption[] = [
-  { value: 'lastUpdated', label: 'Latest Release' },
-  { value: 'name', label: 'Name' },
-  { value: 'version', label: 'Version' },
-  { value: 'repository', label: 'Repository' },
-];
+/** Sort direction arrow size in the results-header dropdown. */
+const SORT_ICON_SIZE = 14;
 
 export interface SearchResultsProps {
   /** Search results to display */
@@ -51,20 +55,25 @@ export interface SearchResultsProps {
   onSelect: (result: SearchResult) => void;
   /** Optional: callback to retry after error */
   onRetry?: () => void;
-  /** Total count of results loaded so far */
+  /** Count of results loaded so far */
   totalCount: number;
-  /** Current sort value */
-  sortBy?: string;
-  /** Callback when sort changes */
-  onSortChange?: (value: string) => void;
+  /**
+   * True server-side match count for the whole query. When known it is shown
+   * exactly — never as a "+"-suffixed cap — and stays stable across load-more.
+   */
+  total?: number;
+  /** Current sort field */
+  sortField?: SortField;
+  /** Current sort direction */
+  sortDirection?: SortDirection;
+  /** Callback when the user picks a different sort field and/or direction */
+  onSortChange?: (field: SortField, direction: SortDirection) => void;
   /** Current search query (for display in header) */
   query?: string;
   /** Name filter value */
   nameFilter?: string;
   /** Callback when name filter changes */
   onNameFilterChange?: (value: string) => void;
-  /** Currently selected format — hides the name filter when a specific format is active */
-  selectedFormat?: string;
   /** Callback to open mobile filter drawer (mobile only) */
   onOpenMobileFilters?: () => void;
 }
@@ -78,15 +87,15 @@ export function SearchResults({
   onSelect,
   onRetry,
   totalCount,
-  sortBy = 'lastUpdated',
+  total,
+  sortField = DEFAULT_SORT_FIELD,
+  sortDirection = DEFAULT_SORT_DIRECTION,
   onSortChange,
   query,
   nameFilter = '',
   onNameFilterChange,
-  selectedFormat = '',
   onOpenMobileFilters,
 }: SearchResultsProps): JSX.Element {
-  const showNameFilter = !selectedFormat || selectedFormat === 'all';
   const [localFilterValue, setLocalFilterValue] = useState(nameFilter);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -97,6 +106,18 @@ export function SearchResults({
   useEffect(() => {
     setLocalFilterValue(nameFilter);
   }, [nameFilter]);
+
+  // Cancel any in-flight filter debounce on unmount. Clicking a result card
+  // mid-type unmounts this component while the 500ms timer is still pending, and
+  // letting it fire would push a filter change into the parent's search machine
+  // after the user has already navigated away.
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   // Reset to page 1 when results shrink (new search); advance page when load-more completes
   useEffect(() => {
@@ -163,12 +184,29 @@ export function SearchResults({
     [onNameFilterChange, localFilterValue]
   );
 
-  const displayTotal = hasMore
-    ? `${totalCount.toLocaleString()}+`
-    : totalCount.toLocaleString();
+  // Prefer the authoritative server-side match count when it is known: it is
+  // exact and stable across load-more, so it is shown as-is with no "+" cap.
+  // Only when no true total is available do we fall back to the loaded count,
+  // suffixed with "+" while more pages remain to signal it is a lower bound.
+  const displayTotal =
+    total !== undefined
+      ? total.toLocaleString()
+      : hasMore
+        ? `${totalCount.toLocaleString()}+`
+        : totalCount.toLocaleString();
+
+  // Announce the result count to assistive technology. A single polite live
+  // region (rendered once, not per responsive header copy) reports the count
+  // without stealing focus, so screen-reader users hear the count update as
+  // searches complete and pages load.
+  const countAnnouncement = loading
+    ? 'Searching for components'
+    : results.length === 0
+      ? 'Your search returned no results'
+      : `${displayTotal} components found`;
 
   /* Desktop search - fixed 300px (matches ux-lab ComponentsHeader) */
-  const desktopSearchInput = showNameFilter ? (
+  const desktopSearchInput = (
     <TextField.Root
       placeholder="Filter by component name or version"
       value={localFilterValue}
@@ -181,25 +219,50 @@ export function SearchResults({
         <Search size={14} />
       </TextField.Slot>
     </TextField.Root>
-  ) : null;
+  );
 
-  /* Sort dropdown - fixed 180px (matches ux-lab), or full width when in flexible container */
+  /* Sort dropdown - at least 180px, sized to its label, or full width when in flexible container */
+  const activeSortOption = findSortOption(sortField, sortDirection) ?? SORT_OPTIONS[0];
+
+  const handleSortValueChange = useSortValueChange(onSortChange);
+
   const renderSortDropdown = (triggerStyle?: React.CSSProperties) => (
-    <Select.Root value={sortBy} onValueChange={onSortChange} size="2">
-      <Select.Trigger style={{ width: 180, flexShrink: 0, ...triggerStyle }}>
+    <Select.Root
+      value={toSortValue(sortField, sortDirection)}
+      onValueChange={handleSortValueChange}
+      size="2"
+    >
+      <Select.Trigger
+        // Sizes to the label instead of a fixed width: the closed state names
+        // field *and* direction, and a fixed 180px clipped the direction off.
+        // minWidth keeps the shortest label from collapsing the control.
+        style={{ minWidth: 180, flexShrink: 0, ...triggerStyle }}
+        // Mirrors the visible "sort: <option>" text so the accessible name
+        // contains the visible label (WCAG 2.5.3 Label in Name), and matches the
+        // sidebar's existing "Format: …" / "Repository: …" trigger convention.
+        aria-label={`Sort: ${activeSortOption.label}`}
+      >
         <Flex align="center" gap="2">
-          <ArrowUpDown size={14} aria-hidden />
+          <SortDirectionIcon direction={sortDirection} size={SORT_ICON_SIZE} />
           <Text size="2">sort:</Text>
-          <Text size="2">
-            {SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? 'Latest Release'}
+          <Text size="2" style={{ whiteSpace: 'nowrap' }}>
+            {activeSortOption.label}
           </Text>
         </Flex>
       </Select.Trigger>
       <Select.Content position="popper" side="bottom" avoidCollisions={false} sideOffset={4}>
-        {SORT_OPTIONS.map((opt) => (
-          <Select.Item key={opt.value} value={opt.value}>
-            {opt.label}
-          </Select.Item>
+        {SORT_OPTION_GROUPS.map((group) => (
+          <Select.Group key={group.field}>
+            <Select.Label>{group.label}</Select.Label>
+            {group.options.map((opt) => (
+              <Select.Item key={opt.value} value={opt.value}>
+                <Flex align="center" gap="2">
+                  <SortDirectionIcon direction={opt.direction} size={SORT_ICON_SIZE} />
+                  <Text size="2">{opt.directionLabel}</Text>
+                </Flex>
+              </Select.Item>
+            ))}
+          </Select.Group>
         ))}
       </Select.Content>
     </Select.Root>
@@ -223,22 +286,20 @@ export function SearchResults({
       </Flex>
       <Flex direction="column" gap="3" role="toolbar" aria-label="Actions bar">
         {/* Search - full width on mobile */}
-        {showNameFilter && (
-          <Box style={{ width: '100%' }}>
-            <TextField.Root
-              placeholder="Filter by component name or version"
-              value={localFilterValue}
-              onChange={handleFilterChange}
-              onKeyDown={handleFilterKeyDown}
-              size="2"
-              style={{ width: '100%' }}
-            >
-              <TextField.Slot>
-                <Search size={14} />
-              </TextField.Slot>
-            </TextField.Root>
-          </Box>
-        )}
+        <Box style={{ width: '100%' }}>
+          <TextField.Root
+            placeholder="Filter by component name or version"
+            value={localFilterValue}
+            onChange={handleFilterChange}
+            onKeyDown={handleFilterKeyDown}
+            size="2"
+            style={{ width: '100%' }}
+          >
+            <TextField.Slot>
+              <Search size={14} />
+            </TextField.Slot>
+          </TextField.Root>
+        </Box>
         {/* Filter + Sort - row that wraps on very narrow screens */}
         <Flex align="center" gap="3" wrap="wrap">
           {onOpenMobileFilters && (
@@ -263,7 +324,7 @@ export function SearchResults({
   );
 
   /* Tablet: title + count, then search + sort (sidebar visible, no filter button) */
-  const tabletSearchInput = showNameFilter ? (
+  const tabletSearchInput = (
     <Box style={{ flex: 1, minWidth: 0 }}>
       <TextField.Root
         placeholder="Filter by component name or version"
@@ -278,7 +339,7 @@ export function SearchResults({
         </TextField.Slot>
       </TextField.Root>
     </Box>
-  ) : null;
+  );
 
   const tabletHeader = (
     <Box className="header" display={{ initial: 'none', sm: 'block', lg: 'none' }} mb="4" role="banner" aria-label="Header">
@@ -292,7 +353,7 @@ export function SearchResults({
     </Box>
   );
 
-  /* Desktop: single row space-between, search 300px + sort 180px (matches ux-lab) */
+  /* Desktop: single row space-between, search 300px + sort sized to its label */
   const desktopHeader = (
     <Box className="header" display={{ initial: 'none', lg: 'block' }} mb="4" role="banner" aria-label="Header">
       <Flex align="center" justify="between" mb="3">
@@ -307,6 +368,23 @@ export function SearchResults({
 
   const resultsHeader = (
     <>
+      <Box
+        role="status"
+        aria-live="polite"
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {countAnnouncement}
+      </Box>
       {mobileHeader}
       {tabletHeader}
       {desktopHeader}
@@ -379,7 +457,7 @@ export function SearchResults({
             <SearchResultCard
               key={result.id}
               result={result}
-              onClick={() => onSelect(result)}
+              onSelect={onSelect}
             />
           ))}
         </Flex>

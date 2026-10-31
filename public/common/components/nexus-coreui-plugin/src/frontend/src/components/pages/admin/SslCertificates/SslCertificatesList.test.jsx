@@ -43,7 +43,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
       checkPermission: jest.fn().mockReturnValue(true),
       state: jest.fn().mockReturnValue({
         getValue: jest.fn()
-      })
+      }),
+      waitForPermissions: jest.fn().mockResolvedValue(undefined),
     }
   }
 });

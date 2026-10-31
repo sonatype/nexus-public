@@ -14,6 +14,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+/*global Ext, NX*/
+
 /**
  * Repository settings form for an apt repository
  *
@@ -25,13 +27,13 @@ Ext.define('NX.coreui.view.repository.recipe.AptProxy', {
   requires: [
     'NX.coreui.view.repository.facet.AptProxyFacet',
     'NX.coreui.view.repository.facet.AptSigningFacet',
-    'NX.coreui.view.repository.facet.FirewallFacet',
     'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.HttpClientFacet',
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
-    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet',
+    'NX.coreui.view.repository.facet.FirewallFacet'
   ],
 
   /**
@@ -43,7 +45,6 @@ Ext.define('NX.coreui.view.repository.recipe.AptProxy', {
     me.items = [
       {xtype: 'nx-aptui-repository-aptproxy-facet'},
       {xtype: 'nx-aptui-repository-aptsigning-facet', allowBlank: true},
-      {xtype: 'nx-coreui-repository-firewall-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
@@ -51,6 +52,12 @@ Ext.define('NX.coreui.view.repository.recipe.AptProxy', {
       {xtype: 'nx-coreui-repository-cleanup-policy-facet'},
       {xtype: 'nx-coreui-repository-httpclient-facet'}
     ];
+
+    // FIRE-956: apt is outside FirewallSupportedFormat, so the Firewall facet is only offered when
+    // the limited-support override is enabled. Mirrors PubProxy.js.
+    if (NX.State.getValue('firewallLimitedSupportFormatsEnabled')) {
+      me.items.unshift({xtype: 'nx-coreui-repository-firewall-facet'});
+    }
 
     me.callParent();
   }

@@ -36,7 +36,7 @@ import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.24
@@ -106,22 +106,22 @@ public abstract class RawRecipeSupport
       final HandlerContributor handlerContributor,
       final ContentDispositionHandler contentDispositionHandler)
   {
-    this.securityFacet = checkNotNull(securityFacet);
-    this.viewFacet = checkNotNull(viewFacet);
-    this.contentFacet = checkNotNull(contentFacet);
-    this.maintenanceFacet = checkNotNull(maintenanceFacet);
-    this.searchFacet = checkNotNull(searchFacet);
-    this.browseFacet = checkNotNull(browseFacet);
-    this.exceptionHandler = checkNotNull(exceptionHandler);
-    this.timingHandler = checkNotNull(timingHandler);
-    this.indexHtmlForwardHandler = checkNotNull(indexHtmlForwardHandler);
-    this.securityHandler = checkNotNull(securityHandler);
-    this.partialFetchHandler = checkNotNull(partialFetchHandler);
-    this.contentHandler = checkNotNull(contentHandler);
-    this.conditionalRequestHandler = checkNotNull(conditionalRequestHandler);
-    this.contentHeadersHandler = checkNotNull(contentHeadersHandler);
-    this.lastDownloadedHandler = checkNotNull(lastDownloadedHandler);
-    this.handlerContributor = checkNotNull(handlerContributor);
-    this.contentDispositionHandler = checkNotNull(contentDispositionHandler);
+    this.securityFacet = requireNonNull(securityFacet);
+    this.viewFacet = requireNonNull(viewFacet);
+    this.contentFacet = requireNonNull(contentFacet);
+    this.maintenanceFacet = requireNonNull(maintenanceFacet);
+    this.searchFacet = requireNonNull(searchFacet);
+    this.browseFacet = requireNonNull(browseFacet);
+    this.exceptionHandler = requireNonNull(exceptionHandler);
+    this.timingHandler = requireNonNull(timingHandler);
+    this.indexHtmlForwardHandler = requireNonNull(indexHtmlForwardHandler);
+    this.securityHandler = requireNonNull(securityHandler);
+    this.partialFetchHandler = requireNonNull(partialFetchHandler);
+    this.contentHandler = requireNonNull(contentHandler);
+    this.conditionalRequestHandler = requireNonNull(conditionalRequestHandler);
+    this.contentHeadersHandler = requireNonNull(contentHeadersHandler);
+    this.lastDownloadedHandler = requireNonNull(lastDownloadedHandler);
+    this.handlerContributor = requireNonNull(handlerContributor);
+    this.contentDispositionHandler = requireNonNull(contentDispositionHandler);
   }
 }

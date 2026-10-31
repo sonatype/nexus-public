@@ -43,7 +43,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Handles registration of {@link ManagedObject} components.
@@ -60,7 +60,7 @@ public class ManagedObjectRegistrar
 
   @Autowired
   public ManagedObjectRegistrar(final MBeanServer server) {
-    this.server = checkNotNull(server);
+    this.server = requireNonNull(server);
   }
 
   @Override
@@ -178,7 +178,7 @@ public class ManagedObjectRegistrar
     if (name == null) {
       // try various annotations
       List<Function<Object, Optional<String>>> nameSources =
-          List.of(QualifierUtil::value, ManagedObjectRegistrar::getJakartaNamed, ManagedObjectRegistrar::getJavaxNamed);
+          List.of(QualifierUtil::value, ManagedObjectRegistrar::getJakartaNamed);
       for (Function<Object, Optional<String>> nameSource : nameSources) {
         name = nameSource.apply(managedObject)
             .filter(Strings2::notBlank)
@@ -197,14 +197,6 @@ public class ManagedObjectRegistrar
         .map(Object::getClass)
         .map(clazz -> clazz.getAnnotation(Named.class))
         .map(Named::value);
-  }
-
-  @Nullable
-  private static Optional<String> getJavaxNamed(final Object managedObject) {
-    return Optional.ofNullable(managedObject)
-        .map(Object::getClass)
-        .map(clazz -> clazz.getAnnotation(jakarta.inject.Named.class))
-        .map(jakarta.inject.Named::value);
   }
 
   /**

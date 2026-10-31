@@ -25,6 +25,8 @@ import jakarta.ws.rs.core.MultivaluedMap;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchMapping;
+import org.sonatype.nexus.repository.rest.SearchMappings;
+import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchUtils;
@@ -96,7 +98,7 @@ public class SearchResultFilterUtilsTest
     when(extMapping.isExactMatch()).thenReturn(true);
     when(descriptionMapping.getAttribute()).thenReturn("assets.attributes.maven2.description");
     when(descriptionMapping.isExactMatch()).thenReturn(false);
-    List<SearchMapping> mappings = Arrays.asList(extMapping, descriptionMapping);
+    List<SearchMappings> mappings = List.of(() -> Arrays.asList(extMapping, descriptionMapping));
 
     underTest = new SearchResultFilterUtils(searchUtils, mappings);
   }
@@ -259,6 +261,118 @@ public class SearchResultFilterUtilsTest
     assetParams.put(ARTIFACT_ID_ATTRIBUTE_NAME, "foo");
     return assetParams;
   }
+
+  // ----- NEXUS-53387 regression tests -----
+  // These tests would FAIL under the old empty-map/exact-default behavior and PASS with the fix.
+
+  private SearchResultFilterUtils buildSubstringUnderTest() {
+    SearchMapping npmDescMapping = new SearchMapping(
+        "npm.description",
+        "assets.attributes.npm.description",
+        "npm description",
+        SearchField.FORMAT_FIELD_3,
+        false);
+    SearchMapping npmKeywordsMapping = new SearchMapping(
+        "npm.keywords",
+        "assets.attributes.npm.keywords",
+        "npm keywords",
+        SearchField.FORMAT_FIELD_4,
+        false);
+    SearchMapping npmNameMapping = new SearchMapping(
+        "npm.name",
+        "assets.attributes.npm.name",
+        "npm name",
+        SearchField.FORMAT_FIELD_1,
+        true);
+    SearchMapping pypiDescMapping = new SearchMapping(
+        "pypi.description",
+        "assets.attributes.pypi.description",
+        "pypi description",
+        SearchField.FORMAT_FIELD_3,
+        false);
+    List<SearchMappings> mappings =
+        List.of(() -> Arrays.asList(npmDescMapping, npmKeywordsMapping, npmNameMapping, pypiDescMapping));
+    return new SearchResultFilterUtils(searchUtils, mappings);
+  }
+
+  @Test
+  public void testKeepAsset_npmDescription_substringMatches() {
+    SearchResultFilterUtils filterUtils = buildSubstringUnderTest();
+    AssetSearchResult npmAsset = createAsset(
+        "lodash-4.17.21.tgz",
+        "npm",
+        "registry-npm",
+        "abc123",
+        of("description", "Gamma probe unique-word zucchini for log tracing",
+            "name", "lodash"));
+
+    assertTrue(
+        filterUtils.keepAsset(npmAsset, "assets.attributes.npm.description", "Gamma"));
+    assertTrue(
+        filterUtils.keepAsset(npmAsset, "assets.attributes.npm.description", "zucchini"));
+    assertTrue(
+        filterUtils.keepAsset(npmAsset, "assets.attributes.npm.description", "log tracing"));
+    assertFalse(
+        filterUtils.keepAsset(npmAsset, "assets.attributes.npm.description", "nomatch"));
+  }
+
+  @Test
+  public void testKeepAsset_npmKeywords_substringMatches() {
+    SearchResultFilterUtils filterUtils = buildSubstringUnderTest();
+    AssetSearchResult npmAsset = createAsset(
+        "express-4.18.0.tgz",
+        "npm",
+        "registry-npm",
+        "def456",
+        of("keywords", "http web framework middleware",
+            "name", "express"));
+
+    assertTrue(
+        filterUtils.keepAsset(npmAsset, "assets.attributes.npm.keywords", "web"));
+    assertTrue(
+        filterUtils.keepAsset(npmAsset, "assets.attributes.npm.keywords", "middleware"));
+    assertFalse(
+        filterUtils.keepAsset(npmAsset, "assets.attributes.npm.keywords", "database"));
+  }
+
+  @Test
+  public void testKeepAsset_pypiDescription_substringMatches() {
+    SearchResultFilterUtils filterUtils = buildSubstringUnderTest();
+    AssetSearchResult pypiAsset = createAsset(
+        "requests-2.31.0.tar.gz",
+        "pypi",
+        "registry-pypi",
+        "ghi789",
+        of("description", "Python HTTP for Humans powerful and easy to use"));
+
+    assertTrue(
+        filterUtils.keepAsset(pypiAsset, "assets.attributes.pypi.description", "HTTP for Humans"));
+    assertTrue(
+        filterUtils.keepAsset(pypiAsset, "assets.attributes.pypi.description", "powerful"));
+    assertFalse(
+        filterUtils.keepAsset(pypiAsset, "assets.attributes.pypi.description", "nomatch"));
+  }
+
+  @Test
+  public void testKeepAsset_exactMatchField_requiresFullValue() {
+    SearchResultFilterUtils filterUtils = buildSubstringUnderTest();
+    AssetSearchResult npmAsset = createAsset(
+        "lodash-4.17.21.tgz",
+        "npm",
+        "registry-npm",
+        "abc123",
+        of("name", "lodash",
+            "description", "some description"));
+
+    // exact-match field: substring must not match
+    assertFalse(
+        filterUtils.keepAsset(npmAsset, "assets.attributes.npm.name", "loda"));
+    // exact-match field: full value must match
+    assertTrue(
+        filterUtils.keepAsset(npmAsset, "assets.attributes.npm.name", "lodash"));
+  }
+
+  // ----- end NEXUS-53387 regression tests -----
 
   private void runGetValueFromAssetMapTest(final AssetSearchResult assetMap, final String query, final String match) {
     Optional<Object> value = getValueFromAssetMap(assetMap, query);

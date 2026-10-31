@@ -40,7 +40,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
@@ -63,12 +63,12 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
   private LastDownloadedAttributeHandler lastDownloadedAttributeHandler;
 
   protected BaseRestoreBlobStrategy(final DryRunPrefix dryRunPrefix) {
-    this.dryRunPrefix = checkNotNull(dryRunPrefix);
+    this.dryRunPrefix = requireNonNull(dryRunPrefix);
   }
 
   @Autowired
   public void injectDependencies(final LastDownloadedAttributeHandler lastDownloadedAttributeHandler) {
-    this.lastDownloadedAttributeHandler = checkNotNull(lastDownloadedAttributeHandler);
+    this.lastDownloadedAttributeHandler = requireNonNull(lastDownloadedAttributeHandler);
   }
 
   @Override

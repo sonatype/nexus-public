@@ -106,7 +106,21 @@ export {
   clearDirtyState,
   hasUnsavedChanges,
   useIsCloud,
+  useIsLicensedEdition,
   useHasFirewallLicense,
+  useUnreadStatusFailure,
+  resetUnreadStatusFailure,
+  STATUS_BELL_ACK_STORAGE_KEY,
+  useBlobStoreInfo,
+  useRepositoryMetrics,
+  useDebounced,
+} from './hooks';
+export type {
+  UseUnreadStatusFailureReturn,
+  BlobStoreInfo,
+  UseBlobStoreInfoResult,
+  RepositoryMetrics,
+  UseRepositoryMetricsResult,
 } from './hooks';
 
 // Toast - Viewport-fixed notification system (available but not yet in use)
@@ -135,7 +149,12 @@ export {
   FormatIcon,
   type FormatIconProps,
   FORMAT_LABELS,
-  FORMAT_LOGOS,
+  FORMAT_SVGS,
+  FORMAT_IMAGES,
+  FORMAT_ICONS,
+  TYPE_ICONS,
+  DEFAULT_FORMAT_ICON,
+  type IconComponent,
 } from './Badges';
 
 // ConfirmDialog - Modal confirmation dialog
@@ -159,10 +178,14 @@ export {
   SettingsAlert,
   SettingsButton,
   SettingsTransferList,
+  RequiredMark,
 } from './form';
 
 // SearchRadix - Global header search with autocomplete
 export { SearchRadix } from './SearchRadix';
+
+// SystemStatusBell - Global header status bell shared by coreui and cloud
+export { default as SystemStatusBell } from './SystemStatusBell/SystemStatusBell';
 
 // Navigation Primitives - Reusable navigation components
 export {
@@ -222,3 +245,35 @@ export {
 
 // exportToCsv - Trigger a browser CSV file download from tabular data
 export { exportToCsv } from './utils/exportToCsv';
+
+// formatDateTime - Single date/time formatter for Search and Component Details (NEXUS-54427)
+export {
+  formatDateTime,
+  type FormatDateTimeOptions,
+  NO_DATE,
+} from './utils/dateFormat';
+
+// SystemAlerts - Application-scoped banner host (Preview UI only)
+export {
+  SystemAlerts,
+  type SystemAlertsProps,
+  SystemAlert,
+  type SystemAlertProps,
+  type SystemAlertTier,
+  type SystemAlertAction,
+  CELimitsAlert,
+} from './SystemAlerts';
+
+// HelpMenu - Shared global-header help menu for self-hosted and cloud (NEXUS-54847)
+export {
+  HelpMenu,
+  DocumentationUTMparams,
+  ReleaseNotesUTMparams,
+  KnowledgeBaseUTMparams,
+  SonatypeGuidesUTMparams,
+  CommunityUTMparams,
+  IssueTrackerUTMparams,
+  SupportUTMparams,
+} from './HelpMenu';
+
+// Edition name mapping moved to interface/editionUtils in NEXUS-54782 (edition identifier -> display name).

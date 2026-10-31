@@ -37,9 +37,6 @@ jest.mock('../../../../shared', () => ({
 import { CopyUrlButton } from '../CopyUrlButton';
 import { ACTION_STRINGS } from '../actions.types';
 
-// Get the mocked module
-const { ExtJS } = jest.requireMock('@sonatype/nexus-ui-plugin');
-
 // Helper to wrap components with Radix Theme
 function renderWithTheme(ui: React.ReactElement) {
   return render(<Theme>{ui}</Theme>);

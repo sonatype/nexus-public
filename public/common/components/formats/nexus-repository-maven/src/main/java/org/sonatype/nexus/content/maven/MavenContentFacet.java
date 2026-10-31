@@ -51,6 +51,14 @@ public interface MavenContentFacet
   Optional<Content> get(MavenPath mavenPath) throws IOException;
 
   /**
+   * Check if a maven asset exists
+   *
+   * @param mavenPath Path of asset to check
+   * @return true if asset exists, false otherwise
+   */
+  boolean exists(MavenPath mavenPath);
+
+  /**
    * Put a maven asset
    *
    * @param path The path of the asset to put

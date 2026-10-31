@@ -57,6 +57,8 @@ export interface RawAsset {
  */
 export interface RawSearchResponse {
   items: RawSearchItem[];
+  /** True server-side match count for the whole query (exact COUNT from the API) */
+  total?: number;
   continuationToken?: string;
 }
 

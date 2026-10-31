@@ -12,11 +12,28 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import java.util.Optional;
+
 /**
  * @since 3.38
  */
 public enum SortDirection
 {
   ASC,
-  DESC
+  DESC;
+
+  /**
+   * Case-insensitive parser returning empty for null or unrecognized values.
+   */
+  public static Optional<SortDirection> parse(final String value) {
+    if (value == null) {
+      return Optional.empty();
+    }
+    for (SortDirection direction : values()) {
+      if (direction.name().equalsIgnoreCase(value)) {
+        return Optional.of(direction);
+      }
+    }
+    return Optional.empty();
+  }
 }

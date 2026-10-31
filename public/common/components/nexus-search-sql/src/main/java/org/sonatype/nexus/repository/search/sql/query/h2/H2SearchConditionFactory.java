@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link SearchConditionFactory} which produces queries for use with H2 database.
@@ -41,7 +41,7 @@ public class H2SearchConditionFactory
 
   @Autowired
   public H2SearchConditionFactory(final H2SearchDB db) {
-    this.db = checkNotNull(db);
+    this.db = requireNonNull(db);
   }
 
   @Override

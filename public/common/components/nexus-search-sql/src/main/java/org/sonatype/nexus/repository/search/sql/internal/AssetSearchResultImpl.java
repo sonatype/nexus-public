@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.CHECKSUM;
 
 public class AssetSearchResultImpl
@@ -45,10 +45,10 @@ public class AssetSearchResultImpl
       final String format,
       final String repository)
   {
-    this.format = checkNotNull(format);
-    this.repository = checkNotNull(repository);
-    this.asset = checkNotNull(asset);
-    this.blob = checkNotNull(blob);
+    this.format = requireNonNull(format);
+    this.repository = requireNonNull(repository);
+    this.asset = requireNonNull(asset);
+    this.blob = requireNonNull(blob);
   }
 
   public Asset getAsset() {

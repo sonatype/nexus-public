@@ -20,7 +20,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Initial {@link HttpClientConfiguration} provider.
@@ -36,7 +36,7 @@ public class InitialHttpClientConfigurationProvider
 
   @Autowired
   public InitialHttpClientConfigurationProvider(final HttpClientManager clientManager) {
-    this.clientManager = checkNotNull(clientManager);
+    this.clientManager = requireNonNull(clientManager);
   }
 
   @Override

@@ -102,6 +102,15 @@ jest.mock('../../../../../shared', () => ({
   useHasFirewallLicense: () => mockUseHasFirewallLicense(),
 }));
 
+// useRepositoryForm uses UIRouter's useCurrentStateAndParams to read the
+// `?tab=` query param from the URL. The renderHook test harness doesn't mount a
+// <UIRouter> wrapper, so stub the hook with a mutable params object so individual
+// tests can control the ?tab= value via mockRouterParams.
+let mockRouterParams: Record<string, any> = {};
+jest.mock('@uirouter/react', () => ({
+  useCurrentStateAndParams: () => ({ state: null, params: mockRouterParams }),
+}));
+
 const DEFAULT_OPTIONS = {
   format: 'maven2',
   repositoryType: 'proxy' as const,
@@ -112,6 +121,7 @@ const DEFAULT_OPTIONS = {
 describe('useRepositoryForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRouterParams = {};
   });
 
   describe('derived state', () => {
@@ -213,6 +223,46 @@ describe('useRepositoryForm', () => {
       });
 
       expect(result.current.originChangeWarning).toBe(true);
+    });
+
+    // NEXUS-54536 Fix 3: ?tab=firewall deep-link for an unsupported format must fall back to
+    // 'settings' instead of rendering a blank panel (RepositoryForm conditionally omits the
+    // Firewall tab for unsupported formats).
+    it('shouldFallBackToSettingsWhenFirewallTabRequestedForUnsupportedFormat', () => {
+      mockRouterParams = { tab: 'firewall' };
+      const { result } = renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, format: 'apt', repositoryName: 'apt-proxy' })
+      );
+
+      expect(result.current.activeTab).toBe('settings');
+    });
+
+    // CLM-53820: the Evaluation tab is omitted for formats hosted repository evaluation can't monitor.
+    it('shouldFallBackToSettingsWhenEvaluationTabRequestedForUnsupportedFormat', () => {
+      mockRouterParams = { tab: 'evaluation' };
+      const { result } = renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, format: 'raw', repositoryName: 'raw-hosted' })
+      );
+
+      expect(result.current.activeTab).toBe('settings');
+    });
+
+    it('shouldHonourEvaluationTabDeepLinkForSupportedFormat', () => {
+      mockRouterParams = { tab: 'evaluation' };
+      const { result } = renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, format: 'npm', repositoryName: 'npm-hosted' })
+      );
+
+      expect(result.current.activeTab).toBe('evaluation');
+    });
+
+    it('shouldHonourFirewallTabDeepLinkForSupportedFormat', () => {
+      mockRouterParams = { tab: 'firewall' };
+      const { result } = renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, format: 'maven2', repositoryName: 'maven-proxy' })
+      );
+
+      expect(result.current.activeTab).toBe('firewall');
     });
   });
 
@@ -430,6 +480,38 @@ describe('useRepositoryForm', () => {
     });
 
     it('shouldNotCallOnCanAdvanceChangeWhenNotProvided', () => {
+      const { result } = renderHook(() => useRepositoryForm(DEFAULT_OPTIONS));
+
+      expect(result.current).toBeDefined();
+    });
+  });
+
+  describe('onDirtyChange effect (NEXUS-54349)', () => {
+    it('shouldReportFalseWhenFormIsPristine', () => {
+      const onDirtyChange = jest.fn();
+      mockFormReturn.isPristine = true;
+
+      renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, onDirtyChange })
+      );
+
+      expect(onDirtyChange).toHaveBeenCalledWith(false);
+    });
+
+    it('shouldReportTrueWhenFormIsDirty', () => {
+      const onDirtyChange = jest.fn();
+      mockFormReturn.isPristine = false;
+
+      renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, onDirtyChange })
+      );
+
+      expect(onDirtyChange).toHaveBeenCalledWith(true);
+
+      mockFormReturn.isPristine = true;
+    });
+
+    it('shouldNotCallOnDirtyChangeWhenNotProvided', () => {
       const { result } = renderHook(() => useRepositoryForm(DEFAULT_OPTIONS));
 
       expect(result.current).toBeDefined();

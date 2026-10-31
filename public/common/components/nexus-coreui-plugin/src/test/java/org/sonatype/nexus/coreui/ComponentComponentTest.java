@@ -17,9 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.Validator;
-
-import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
@@ -28,30 +25,38 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
+import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,10 +69,6 @@ import static org.mockito.Mockito.when;
 @WithUser
 class ComponentComponentTest
 {
-  @ValidationExecutor
-  private final Validator validator =
-      new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
-
   @Mock
   private RepositoryManager repositoryManager;
 
@@ -76,6 +77,9 @@ class ComponentComponentTest
 
   @Mock
   private ComponentHelper componentHelper;
+
+  @Mock
+  private RepositoryPermissionChecker repositoryPermissionChecker;
 
   @Mock
   private Repository repository;
@@ -90,7 +94,14 @@ class ComponentComponentTest
   @BeforeEach
   void setUp() {
     underTest = new ComponentComponent(repositoryManager, selectorFactory, jsonMapper, componentHelper,
-        Collections.emptyList());
+        repositoryPermissionChecker, Collections.emptyList());
+
+    // Default pass-through: every collected repository is permitted. Use doAnswer/lenient so stub overrides
+    // in individual tests don't re-invoke this lambda with a null argument during Mockito's `when()` recording.
+    Mockito.lenient()
+        .doAnswer(inv -> Lists.newArrayList(inv.<Iterable<Repository>>getArgument(0)))
+        .when(repositoryPermissionChecker)
+        .userCanBrowseRepositories(ArgumentMatchers.<Iterable<Repository>>any());
   }
 
   @Test
@@ -300,6 +311,93 @@ class ComponentComponentTest
   }
 
   @Test
+  void testPreviewAssets_returnsNullWhenCallerCannotBrowseAny() {
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("repositoryName");
+            setValue("*");
+          }
+        },
+        new Filter()
+        {
+          {
+            setProperty("expression");
+            setValue("format == \"maven2\"");
+          }
+        },
+        new Filter()
+        {
+          {
+            setProperty("type");
+            setValue("csel");
+          }
+        }));
+
+    Repository repo1 = mock(Repository.class);
+    when(repositoryManager.browse()).thenReturn(List.of(repo1));
+    doReturn(Collections.emptyList()).when(repositoryPermissionChecker)
+        .userCanBrowseRepositories(ArgumentMatchers.<Iterable<Repository>>any());
+
+    PagedResponse<AssetXO> result = underTest.previewAssets(parameters);
+
+    // Null (not an empty PagedResponse) is the intentional DirectMethod contract here — see the
+    // comment on ComponentComponent#previewAssets. The REST endpoint returns PageResult(0, [])
+    // instead; do not "fix" this to match REST without also auditing the classic ExtJS UI.
+    assertThat(result, is(nullValue()));
+    verify(componentHelper, never()).previewAssets(any(RepositorySelector.class), any(), any(), any());
+  }
+
+  @Test
+  void testPreviewAssets_filtersToPermittedSubset() {
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("repositoryName");
+            setValue("*");
+          }
+        },
+        new Filter()
+        {
+          {
+            setProperty("expression");
+            setValue("format == \"maven2\"");
+          }
+        },
+        new Filter()
+        {
+          {
+            setProperty("type");
+            setValue("csel");
+          }
+        }));
+
+    Repository permittedRepo = mock(Repository.class);
+    Repository forbiddenRepo = mock(Repository.class);
+    when(repositoryManager.browse()).thenReturn(List.of(permittedRepo, forbiddenRepo));
+    doReturn(List.of(permittedRepo)).when(repositoryPermissionChecker)
+        .userCanBrowseRepositories(ArgumentMatchers.<Iterable<Repository>>any());
+
+    PageResult<AssetXO> pageResult = new PageResult<>(0, Collections.emptyList());
+    when(componentHelper.previewAssets(any(RepositorySelector.class), any(), any(), any()))
+        .thenReturn(pageResult);
+
+    PagedResponse<AssetXO> result = underTest.previewAssets(parameters);
+
+    assertThat(result, is(notNullValue()));
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<List<Repository>> repoCaptor = ArgumentCaptor.forClass(List.class);
+    verify(componentHelper).previewAssets(any(RepositorySelector.class), repoCaptor.capture(), anyString(), any());
+    assertThat(repoCaptor.getValue(), contains(permittedRepo));
+  }
+
+  @Test
   void testCanDeleteComponent_delegatesToHelper() throws Exception {
     String componentJson =
         "{\"id\":\"comp1\",\"repositoryName\":\"my-repo\",\"group\":\"g\",\"name\":\"n\",\"version\":\"v\",\"format\":\"maven2\"}";
@@ -377,7 +475,7 @@ class ComponentComponentTest
   void testReadAsset_withFormatTransformation() {
     AssetAttributeTransformer transformer = mock(AssetAttributeTransformer.class);
     underTest = new ComponentComponent(repositoryManager, selectorFactory, jsonMapper, componentHelper,
-        Collections.emptyList());
+        repositoryPermissionChecker, Collections.emptyList());
 
     when(repositoryManager.get("my-repo")).thenReturn(repository);
     AssetXO assetXO = new AssetXO();

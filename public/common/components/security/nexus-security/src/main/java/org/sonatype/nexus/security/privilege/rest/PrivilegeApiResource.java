@@ -32,6 +32,7 @@ import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.privilege.ApplicationPrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
@@ -56,9 +57,10 @@ public class PrivilegeApiResource
   @Autowired
   public PrivilegeApiResource(
       final SecuritySystem securitySystem,
+      final SecurityHelper securityHelper,
       final List<PrivilegeDescriptor> privilegeDescriptorsList)
   {
-    super(securitySystem, privilegeDescriptorsList);
+    super(securitySystem, securityHelper, privilegeDescriptorsList);
   }
 
   @Override

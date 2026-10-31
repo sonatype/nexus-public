@@ -31,8 +31,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -112,5 +114,28 @@ public class GroovyScriptEngineFactoryTest
     actualContext = GroovyScriptEngineFactory.getContext(binding);
 
     assertEquals(expectedContext, actualContext);
+  }
+
+  @Test
+  public void getScriptEngineReturnsTheSameCachedInstanceOnSubsequentCalls() {
+    GroovyScriptEngineFactory factory = new GroovyScriptEngineFactory(applicationDirectories);
+
+    ScriptEngine first = factory.getScriptEngine();
+    ScriptEngine second = factory.getScriptEngine();
+
+    assertSame(first, second);
+  }
+
+  @Test
+  public void itWillNotCallCleanupWhenTheHandlerBindingIsNotAScriptCleanupHandler() throws ScriptException {
+    GroovyScriptEngineFactory factory = new GroovyScriptEngineFactory(applicationDirectories);
+    ScriptEngine engine = factory.getScriptEngine();
+    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+    bindings.put(ScriptServiceImpl.SCRIPT_CLEANUP_HANDLER, "not-a-cleanup-handler");
+
+    Object result = engine.eval("return 2", bindings);
+
+    assertEquals(2, result);
+    verify(scriptCleanupHandler, never()).cleanup(any());
   }
 }

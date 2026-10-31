@@ -33,7 +33,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.security.role.rest.RoleApiResource.SOURCE_NOT_FOUND;
@@ -54,7 +54,7 @@ public class RoleInternalResource
 
   @Autowired
   public RoleInternalResource(final SecuritySystem securitySystem) {
-    this.securitySystem = checkNotNull(securitySystem);
+    this.securitySystem = requireNonNull(securitySystem);
   }
 
   @GET

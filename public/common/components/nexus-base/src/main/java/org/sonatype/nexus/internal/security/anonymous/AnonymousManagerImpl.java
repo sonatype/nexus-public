@@ -33,7 +33,7 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -65,10 +65,10 @@ public class AnonymousManagerImpl
       final AnonymousConfigurationStore store,
       @Qualifier("initial") final Provider<AnonymousConfiguration> defaults)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.store = checkNotNull(store);
+    this.eventManager = requireNonNull(eventManager);
+    this.store = requireNonNull(store);
     log.debug("Store: {}", store);
-    this.defaults = checkNotNull(defaults);
+    this.defaults = requireNonNull(defaults);
     log.debug("Defaults: {}", defaults);
   }
 
@@ -92,7 +92,7 @@ public class AnonymousManagerImpl
       AnonymousConfiguration defaultModel = defaults.get();
 
       // default config must not be null
-      checkNotNull(defaultModel);
+      requireNonNull(defaultModel);
 
       model = store.newConfiguration();
       model.setEnabled(defaultModel.isEnabled());
@@ -137,7 +137,7 @@ public class AnonymousManagerImpl
 
   @Override
   public void setConfiguration(final AnonymousConfiguration configuration) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     AnonymousConfiguration model = configuration.copy();
 

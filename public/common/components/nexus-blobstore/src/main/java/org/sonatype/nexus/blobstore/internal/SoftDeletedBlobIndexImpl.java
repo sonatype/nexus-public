@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.internal;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -29,8 +30,8 @@ import org.springframework.core.Ordered;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -52,13 +53,13 @@ public class SoftDeletedBlobIndexImpl
 
   @Autowired
   public SoftDeletedBlobIndexImpl(final SoftDeletedBlobsStore softDeletedBlobsStore) {
-    this.softDeletedBlobsStore = checkNotNull(softDeletedBlobsStore);
+    this.softDeletedBlobsStore = requireNonNull(softDeletedBlobsStore);
   }
 
   @Override
   public void init(final BlobStore blobStore) {
-    checkNotNull(blobStore);
-    String newBlobStoreName = checkNotNull(blobStore.getBlobStoreConfiguration().getName());
+    requireNonNull(blobStore);
+    String newBlobStoreName = requireNonNull(blobStore.getBlobStoreConfiguration().getName());
     checkState(blobStoreName == null || Objects.equals(newBlobStoreName, blobStoreName), "Previously initialized");
 
     if (blobStoreName != null) {
@@ -93,6 +94,12 @@ public class SoftDeletedBlobIndexImpl
   @Override
   public final void deleteRecord(final BlobId blobId) {
     softDeletedBlobsStore.deleteRecord(blobStoreName, blobId);
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public final void deleteRecords(final Collection<BlobId> blobIds) {
+    softDeletedBlobsStore.deleteRecords(blobStoreName, blobIds);
   }
 
   @Guarded(by = STARTED)

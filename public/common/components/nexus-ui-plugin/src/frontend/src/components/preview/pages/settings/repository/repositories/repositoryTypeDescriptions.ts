@@ -95,7 +95,6 @@ export const RECIPE_DESCRIPTIONS: Record<string, string> = {
 
   // Terraform
   'terraform-proxy': 'Cache Terraform modules and providers.',
-  'terraformbackend-hosted': 'Store Terraform state files for infrastructure management.',
 
   // Ansible Galaxy
   'ansiblegalaxy-hosted': 'Store your own Ansible collections in a private repository.',
@@ -130,7 +129,6 @@ export const FORMAT_DESCRIPTIONS: Record<string, string> = {
   helm: 'The package manager for Kubernetes applications.',
   go: 'The proxy and registry for Go modules.',
   terraform: 'Registry for Terraform providers and modules.',
-  terraformbackend: 'State backend for Terraform remote state files.',
   cocoapods: 'The dependency manager for Swift and Objective-C Cocoa projects.',
   r: 'The comprehensive R archive network for statistical computing.',
   conan: 'The open-source package manager for C and C++ development.',

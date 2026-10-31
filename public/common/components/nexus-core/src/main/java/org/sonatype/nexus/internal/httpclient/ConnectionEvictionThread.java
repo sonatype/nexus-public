@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Low priority daemon thread responsible to evict connection manager pooled connections.
@@ -49,7 +49,7 @@ class ConnectionEvictionThread
     super("nexus-httpclient-eviction-thread");
     checkArgument(idleTimeMillis > -1, "Keep alive period in milliseconds cannot be negative");
     checkArgument(evictingDelayMillis > 0, "Evicting delay period in milliseconds must be greater than 0");
-    this.connectionManager = checkNotNull(connectionManager);
+    this.connectionManager = requireNonNull(connectionManager);
     this.idleTimeMillis = idleTimeMillis;
     this.evictingDelayMillis = evictingDelayMillis;
     setDaemon(true);

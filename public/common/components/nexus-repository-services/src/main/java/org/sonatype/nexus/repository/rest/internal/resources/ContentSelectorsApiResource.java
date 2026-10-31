@@ -45,7 +45,7 @@ import org.sonatype.nexus.validation.Validate;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -76,10 +76,10 @@ public class ContentSelectorsApiResource
       final SelectorConfigurationStore store,
       final EventManager eventManager)
   {
-    this.selectorFactory = checkNotNull(selectorFactory);
-    this.selectorManager = checkNotNull(selectorManager);
-    this.store = checkNotNull(store);
-    this.eventManager = checkNotNull(eventManager);
+    this.selectorFactory = requireNonNull(selectorFactory);
+    this.selectorManager = requireNonNull(selectorManager);
+    this.store = requireNonNull(store);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @GET

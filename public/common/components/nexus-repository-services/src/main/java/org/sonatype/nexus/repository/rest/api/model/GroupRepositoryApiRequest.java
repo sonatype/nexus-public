@@ -12,28 +12,22 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-
 import org.sonatype.nexus.repository.types.GroupType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 3.20
  */
 @JsonIgnoreProperties({"type"})
 public class GroupRepositoryApiRequest
-    extends AbstractRepositoryApiRequest
+    extends AbstractRepositoryApiRequest<StorageAttributes>
 {
-  @Schema
-  @NotNull
-  @Valid
-  protected final StorageAttributes storage;
-
   @Schema
   @NotNull
   @Valid
@@ -47,13 +41,8 @@ public class GroupRepositoryApiRequest
       @JsonProperty("storage") final StorageAttributes storage,
       @JsonProperty("group") final GroupAttributes group)
   {
-    super(name, format, GroupType.NAME, online);
-    this.storage = storage;
+    super(name, format, GroupType.NAME, online, storage);
     this.group = group;
-  }
-
-  public StorageAttributes getStorage() {
-    return storage;
   }
 
   public GroupAttributes getGroup() {

@@ -13,213 +13,200 @@
 package org.sonatype.nexus.internal.ssrf;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.nexus.kv.GlobalKeyValueStore;
+import org.sonatype.nexus.internal.kv.NexusKeyValueDAO;
+import org.sonatype.nexus.kv.upgrade.UpgradeNexusKeyValueStore;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.testdb.DataSessionConfiguration;
+import org.sonatype.nexus.testdb.DatabaseTest;
+import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 import org.sonatype.nexus.validation.ssrf.SsrfProtectionConfiguration;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+/**
+ * Real-database tests for {@link SsrfProtectionDefaultMigrationStep_2_120}, exercising the
+ * {@link UpgradeNexusKeyValueStore} direct-SQL path against the {@code nexus_key_value} table.
+ */
 class SsrfProtectionDefaultMigrationStep_2_120Test
 {
-  @Mock
-  private GlobalKeyValueStore globalKeyValueStore;
+  private static final String CONFIG_KEY = "ssrf.protection.config";
 
-  @Mock
-  private Format mavenFormat;
+  @DataSessionConfiguration(daos = {NexusKeyValueDAO.class})
+  TestDataSessionSupplier dataSessionSupplier;
 
-  @Mock
-  private Format npmFormat;
-
-  @Mock
-  private Connection connection;
-
-  @Captor
-  private ArgumentCaptor<SsrfProtectionConfigData> configCaptor;
-
-  @BeforeEach
-  void setUp() {
-    lenient().when(mavenFormat.getValue()).thenReturn("maven2");
-    lenient().when(npmFormat.getValue()).thenReturn("npm");
+  private UpgradeNexusKeyValueStore keyValueStore() {
+    return new UpgradeNexusKeyValueStore(dataSessionSupplier, new ObjectMapper());
   }
 
-  @Test
-  void testMigrate_newInstall_enablesSsrfProtection() throws Exception {
-    noExistingConfig();
-    mockEmptyTable("maven2_component");
-    mockEmptyTable("maven2_asset");
-    mockEmptyTable("npm_component");
-    mockEmptyTable("npm_asset");
+  @DatabaseTest
+  void migrate_newInstall_enablesSsrfProtection() throws Exception {
+    UpgradeNexusKeyValueStore store = keyValueStore();
+    SsrfProtectionDefaultMigrationStep_2_120 underTest = new SsrfProtectionDefaultMigrationStep_2_120(store, List.of());
 
-    SsrfProtectionDefaultMigrationStep_2_120 underTest = createStep(List.of(mavenFormat, npmFormat));
-    underTest.migrate(connection);
+    try (Connection conn = dataSessionSupplier.openConnection()) {
+      underTest.migrate(conn);
+    }
 
-    SsrfProtectionConfiguration config = captureWrittenConfig();
-    assertThat(config.enabled()).isTrue();
-    assertThat(config.allowedIPs()).isEmpty();
-    assertThat(config.allowedDomains()).isEmpty();
+    SsrfProtectionConfigData config = store.get(CONFIG_KEY, SsrfProtectionConfigData.class).orElseThrow();
+    assertThat(config.isEnabled()).isTrue();
+    assertThat(config.getAllowedIPs()).isEmpty();
+    assertThat(config.getAllowedDomains()).isEmpty();
   }
 
-  @Test
-  void testMigrate_existingInstall_withComponents_skips() throws Exception {
-    noExistingConfig();
-    mockNonEmptyTable("maven2_component");
+  @DatabaseTest
+  void migrate_existingConfig_skips() throws Exception {
+    UpgradeNexusKeyValueStore store = keyValueStore();
+    store.setObject(CONFIG_KEY,
+        SsrfProtectionConfigData
+            .from(new SsrfProtectionConfiguration(false, Set.of("10.0.0.1"), Set.of())));
 
-    SsrfProtectionDefaultMigrationStep_2_120 underTest = createStep(List.of(mavenFormat));
-    underTest.migrate(connection);
+    SsrfProtectionDefaultMigrationStep_2_120 underTest =
+        new SsrfProtectionDefaultMigrationStep_2_120(store, List.of(format("maven2")));
 
-    verifyNoConfigWritten();
+    try (Connection conn = dataSessionSupplier.openConnection()) {
+      underTest.migrate(conn);
+    }
+
+    // Existing (disabled) config must be left untouched.
+    assertThat(store.get(CONFIG_KEY, SsrfProtectionConfigData.class).orElseThrow().isEnabled()).isFalse();
   }
 
-  @Test
-  void testMigrate_existingInstall_withAssetsOnly_skips() throws Exception {
-    noExistingConfig();
-    mockEmptyTable("maven2_component");
-    mockNonEmptyTable("maven2_asset");
+  @DatabaseTest
+  void migrate_existingInstall_withComponents_skips() throws Exception {
+    UpgradeNexusKeyValueStore store = keyValueStore();
+    SsrfProtectionDefaultMigrationStep_2_120 underTest =
+        new SsrfProtectionDefaultMigrationStep_2_120(store, List.of(format("maven2")));
 
-    SsrfProtectionDefaultMigrationStep_2_120 underTest = createStep(List.of(mavenFormat));
-    underTest.migrate(connection);
+    try (Connection conn = dataSessionSupplier.openConnection(); Statement stmt = conn.createStatement()) {
+      stmt.execute("CREATE TABLE maven2_component (id INT)");
+      stmt.execute("CREATE TABLE maven2_asset (id INT)");
+      stmt.execute("INSERT INTO maven2_component (id) VALUES (1)");
 
-    verifyNoConfigWritten();
+      underTest.migrate(conn);
+    }
+
+    assertThat(store.getKey(CONFIG_KEY)).isEmpty();
   }
 
-  @Test
-  void testMigrate_existingInstall_withKvEntry_skips() throws Exception {
-    SsrfProtectionConfigData existingConfig = SsrfProtectionConfigData.from(
-        new SsrfProtectionConfiguration(false, Set.of("10.0.0.1"), Set.of()));
-    when(globalKeyValueStore.get(eq("ssrf.protection.config"), eq(SsrfProtectionConfigData.class)))
-        .thenReturn(Optional.of(existingConfig));
+  @DatabaseTest
+  void migrate_existingInstall_withAssetsOnly_skips() throws Exception {
+    UpgradeNexusKeyValueStore store = keyValueStore();
+    SsrfProtectionDefaultMigrationStep_2_120 underTest =
+        new SsrfProtectionDefaultMigrationStep_2_120(store, List.of(format("maven2")));
 
-    SsrfProtectionDefaultMigrationStep_2_120 underTest = createStep(List.of(mavenFormat));
-    underTest.migrate(connection);
+    try (Connection conn = dataSessionSupplier.openConnection(); Statement stmt = conn.createStatement()) {
+      stmt.execute("CREATE TABLE maven2_component (id INT)");
+      stmt.execute("CREATE TABLE maven2_asset (id INT)");
+      // assets present but no components
+      stmt.execute("INSERT INTO maven2_asset (id) VALUES (1)");
 
-    verifyNoConfigWritten();
-    verify(connection, never()).prepareStatement(anyString());
+      underTest.migrate(conn);
+    }
+
+    assertThat(store.getKey(CONFIG_KEY)).isEmpty();
   }
 
-  @Test
-  void testMigrate_tablesDoNotExist_treatedAsEmpty() throws Exception {
-    noExistingConfig();
-    mockMissingTable("maven2_component");
-    mockMissingTable("maven2_asset");
+  @DatabaseTest
+  void migrate_mixedFormats_someHaveComponents_skips() throws Exception {
+    UpgradeNexusKeyValueStore store = keyValueStore();
+    SsrfProtectionDefaultMigrationStep_2_120 underTest =
+        new SsrfProtectionDefaultMigrationStep_2_120(store, List.of(format("maven2"), format("npm")));
 
-    SsrfProtectionDefaultMigrationStep_2_120 underTest = createStep(List.of(mavenFormat));
-    underTest.migrate(connection);
+    try (Connection conn = dataSessionSupplier.openConnection(); Statement stmt = conn.createStatement()) {
+      stmt.execute("CREATE TABLE maven2_component (id INT)");
+      stmt.execute("CREATE TABLE maven2_asset (id INT)");
+      stmt.execute("CREATE TABLE npm_component (id INT)");
+      stmt.execute("CREATE TABLE npm_asset (id INT)");
+      // only maven2 has component rows; npm is empty
+      stmt.execute("INSERT INTO maven2_component (id) VALUES (1)");
 
-    assertThat(captureWrittenConfig().enabled()).isTrue();
+      underTest.migrate(conn);
+    }
+
+    assertThat(store.getKey(CONFIG_KEY)).isEmpty();
   }
 
-  @Test
-  void testMigrate_mixedFormats_someHaveComponents_skips() throws Exception {
-    noExistingConfig();
-    mockEmptyTable("maven2_component");
-    mockEmptyTable("maven2_asset");
-    mockNonEmptyTable("npm_component");
+  @DatabaseTest
+  void migrate_mixedFormats_someHaveAssetsOnly_skips() throws Exception {
+    UpgradeNexusKeyValueStore store = keyValueStore();
+    SsrfProtectionDefaultMigrationStep_2_120 underTest =
+        new SsrfProtectionDefaultMigrationStep_2_120(store, List.of(format("maven2"), format("npm")));
 
-    SsrfProtectionDefaultMigrationStep_2_120 underTest = createStep(List.of(mavenFormat, npmFormat));
-    underTest.migrate(connection);
+    try (Connection conn = dataSessionSupplier.openConnection(); Statement stmt = conn.createStatement()) {
+      stmt.execute("CREATE TABLE maven2_component (id INT)");
+      stmt.execute("CREATE TABLE maven2_asset (id INT)");
+      stmt.execute("CREATE TABLE npm_component (id INT)");
+      stmt.execute("CREATE TABLE npm_asset (id INT)");
+      // only npm has asset rows; maven2 is empty
+      stmt.execute("INSERT INTO npm_asset (id) VALUES (1)");
 
-    verifyNoConfigWritten();
+      underTest.migrate(conn);
+    }
+
+    assertThat(store.getKey(CONFIG_KEY)).isEmpty();
   }
 
-  @Test
-  void testMigrate_mixedFormats_someHaveAssetsOnly_skips() throws Exception {
-    noExistingConfig();
-    mockEmptyTable("maven2_component");
-    mockEmptyTable("maven2_asset");
-    mockEmptyTable("npm_component");
-    mockNonEmptyTable("npm_asset");
+  @DatabaseTest
+  void migrate_firstFormatTablesMissing_laterFormatHasContent_skips() throws Exception {
+    // Regression guard for the transaction-abort cascade: the first-iterated format's content tables are
+    // absent while a later format has content. A missing table must be skipped (via tableExists) rather
+    // than misclassify the whole install. On PostgreSQL the pre-fix code queried the missing maven2 table,
+    // aborted the transaction (42P01 -> 25P02), and every later probe returned false -> the existing npm
+    // content was missed and SSRF protection was wrongly enabled. The step must detect an existing install.
+    UpgradeNexusKeyValueStore store = keyValueStore();
+    SsrfProtectionDefaultMigrationStep_2_120 underTest =
+        new SsrfProtectionDefaultMigrationStep_2_120(store, List.of(format("maven2"), format("npm")));
 
-    SsrfProtectionDefaultMigrationStep_2_120 underTest = createStep(List.of(mavenFormat, npmFormat));
-    underTest.migrate(connection);
+    try (Connection conn = dataSessionSupplier.openConnection(); Statement stmt = conn.createStatement()) {
+      // maven2_component / maven2_asset intentionally absent; npm has a component row
+      stmt.execute("CREATE TABLE npm_component (id INT)");
+      stmt.execute("CREATE TABLE npm_asset (id INT)");
+      stmt.execute("INSERT INTO npm_component (id) VALUES (1)");
 
-    verifyNoConfigWritten();
+      underTest.migrate(conn);
+    }
+
+    assertThat(store.getKey(CONFIG_KEY)).isEmpty();
   }
 
-  @Test
-  void testMigrate_noFormats_treatedAsNewInstall() throws Exception {
-    noExistingConfig();
+  @DatabaseTest
+  void migrate_contentTablesMissing_treatedAsNewInstall() throws Exception {
+    UpgradeNexusKeyValueStore store = keyValueStore();
+    SsrfProtectionDefaultMigrationStep_2_120 underTest =
+        new SsrfProtectionDefaultMigrationStep_2_120(store, List.of(format("maven2")));
 
-    SsrfProtectionDefaultMigrationStep_2_120 underTest = createStep(List.of());
-    underTest.migrate(connection);
+    try (Connection conn = dataSessionSupplier.openConnection()) {
+      underTest.migrate(conn);
+    }
 
-    assertThat(captureWrittenConfig().enabled()).isTrue();
+    assertThat(store.get(CONFIG_KEY, SsrfProtectionConfigData.class).orElseThrow().isEnabled()).isTrue();
   }
 
-  @Test
-  void testMigrate_idempotent_secondRunFindsKvEntry() throws Exception {
-    SsrfProtectionConfigData existingConfig = SsrfProtectionConfigData.from(
-        new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
-    when(globalKeyValueStore.get(eq("ssrf.protection.config"), eq(SsrfProtectionConfigData.class)))
-        .thenReturn(Optional.of(existingConfig));
+  @DatabaseTest
+  void migrate_idempotent_secondRunIsNoOp() throws Exception {
+    UpgradeNexusKeyValueStore store = keyValueStore();
+    SsrfProtectionDefaultMigrationStep_2_120 underTest = new SsrfProtectionDefaultMigrationStep_2_120(store, List.of());
 
-    SsrfProtectionDefaultMigrationStep_2_120 underTest = createStep(List.of(mavenFormat));
-    underTest.migrate(connection);
+    try (Connection conn = dataSessionSupplier.openConnection()) {
+      underTest.migrate(conn);
+      assertDoesNotThrow(() -> underTest.migrate(conn));
+    }
 
-    verifyNoConfigWritten();
-    verify(connection, never()).prepareStatement(anyString());
+    assertThat(store.get(CONFIG_KEY, SsrfProtectionConfigData.class).orElseThrow().isEnabled()).isTrue();
   }
 
-  private void noExistingConfig() {
-    when(globalKeyValueStore.get(eq("ssrf.protection.config"), eq(SsrfProtectionConfigData.class)))
-        .thenReturn(Optional.empty());
-  }
-
-  private void mockEmptyTable(final String tableName) throws SQLException {
-    PreparedStatement stmt = mock(PreparedStatement.class);
-    ResultSet rs = mock(ResultSet.class);
-    when(connection.prepareStatement("SELECT 1 FROM " + tableName + " LIMIT 1")).thenReturn(stmt);
-    when(stmt.executeQuery()).thenReturn(rs);
-    when(rs.next()).thenReturn(false);
-  }
-
-  private void mockNonEmptyTable(final String tableName) throws SQLException {
-    PreparedStatement stmt = mock(PreparedStatement.class);
-    ResultSet rs = mock(ResultSet.class);
-    when(connection.prepareStatement("SELECT 1 FROM " + tableName + " LIMIT 1")).thenReturn(stmt);
-    when(stmt.executeQuery()).thenReturn(rs);
-    when(rs.next()).thenReturn(true);
-  }
-
-  private void mockMissingTable(final String tableName) throws SQLException {
-    PreparedStatement stmt = mock(PreparedStatement.class);
-    when(connection.prepareStatement("SELECT 1 FROM " + tableName + " LIMIT 1")).thenReturn(stmt);
-    when(stmt.executeQuery()).thenThrow(new SQLException("Table not found"));
-  }
-
-  private SsrfProtectionConfiguration captureWrittenConfig() {
-    verify(globalKeyValueStore).setString(eq("ssrf.protection.config"), configCaptor.capture());
-    return configCaptor.getValue().toConfiguration();
-  }
-
-  private void verifyNoConfigWritten() {
-    verify(globalKeyValueStore, never()).setString(anyString(), (Object) any());
-  }
-
-  private SsrfProtectionDefaultMigrationStep_2_120 createStep(final List<Format> formats) {
-    return new SsrfProtectionDefaultMigrationStep_2_120(globalKeyValueStore, formats);
+  private static Format format(final String value) {
+    Format format = mock(Format.class);
+    lenient().when(format.getValue()).thenReturn(value);
+    return format;
   }
 }

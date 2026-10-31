@@ -37,6 +37,7 @@ import UIStrings from '../../../../constants/UIStrings';
 import {ROUTE_NAMES} from '../../../../routerConfig/routeNames/routeNames';
 
 import Machine from './IqServerMachine';
+import {setJustSavedIqConfig} from './iqServerJustSavedCache';
 
 import './IqServer.scss';
 
@@ -78,6 +79,7 @@ export default function IqServerForm() {
       // Navigate to Connected page after save (saving → loaded)
       if (hasSavedRef.current && wasSaving && isNowLoaded && pristineData.enabled && isFeatureEnabled) {
         hasSavedRef.current = false;
+        setJustSavedIqConfig(pristineData);
         router.stateService.go(ROUTE_NAMES.ADMIN.IQ.CONNECTED);
       }
     }
@@ -91,10 +93,6 @@ export default function IqServerForm() {
 
   function discard() {
     send({type: 'RESET'});
-  }
-
-  function goBack() {
-    router.stateService.go(ROUTE_NAMES.ADMIN.IQ.CONNECTED);
   }
 
   function handleUrlChange(url) {
@@ -126,7 +124,7 @@ export default function IqServerForm() {
 
   return <NxStatefulForm
       {...formProps}
-      submitBtnText={UIStrings.SETTINGS.NEXT_BUTTON_LABEL}
+      submitBtnText={fromConnected ? UIStrings.SETTINGS.UPDATE_BUTTON_LABEL : UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
       submitBtnClasses={isNextDisabled ? 'disabled' : ''}
       validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
       onSubmit={() => {
@@ -135,9 +133,6 @@ export default function IqServerForm() {
         }
       }}
       additionalFooterBtns={<>
-        <NxButton type="button" variant="tertiary" disabled={!fromConnected} onClick={goBack}>
-          {UIStrings.SETTINGS.BACK_BUTTON_LABEL}
-        </NxButton>
         <NxButton type="button" variant="tertiary" disabled={isInvalid} onClick={verifyConnection}>
           {UIStrings.IQ_SERVER.VERIFY_CONNECTION_BUTTON_LABEL}
         </NxButton>

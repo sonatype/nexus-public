@@ -19,18 +19,38 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.read.ListAppender;
 import org.hamcrest.core.StringContains;
+import org.junit.After;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
 public class TaskLogHomeTest
 
 {
+  private Appender<ILoggingEvent> detachedTaskLogFileAppender;
+
+  @After
+  public void restoreTaskLogFileAppender() {
+    if (detachedTaskLogFileAppender != null) {
+      LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+      loggerContext.getLogger(ROOT_LOGGER_NAME).addAppender(detachedTaskLogFileAppender);
+      detachedTaskLogFileAppender = null;
+    }
+  }
+
   @Test
   public void getTaskLogsHome() {
     Path taskLogHome = Paths.get(TaskLogHome.getTaskLogsHome());
@@ -47,6 +67,40 @@ public class TaskLogHomeTest
 
     Path file = taskLogHome.resolve("temp.log");
     assertFalse("temp file was not deleted", Files.exists(file));
+  }
+
+  /**
+   * When the 'tasklogfile' appender is absent, getTaskLogsHome() should log the
+   * "could not find appender" message at most once, not once per call.
+   */
+  @Test
+  public void missingAppenderIsLoggedOnlyOnce() {
+    TaskLogHome.resetMissingAppenderLoggedForTests();
+
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(ROOT_LOGGER_NAME);
+    detachedTaskLogFileAppender = rootLogger.getAppender("tasklogfile");
+    rootLogger.detachAppender("tasklogfile");
+
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    listAppender.setContext(loggerContext);
+    listAppender.start();
+    ch.qos.logback.classic.Logger taskLogHomeLogger = loggerContext.getLogger(TaskLogHome.class);
+    taskLogHomeLogger.addAppender(listAppender);
+
+    try {
+      assertNull(TaskLogHome.getTaskLogsHome());
+      assertNull(TaskLogHome.getTaskLogsHome());
+      assertNull(TaskLogHome.getTaskLogsHome());
+
+      List<ILoggingEvent> missingAppenderEvents = listAppender.list.stream()
+          .filter(event -> event.getFormattedMessage().contains("Could not find a Logback SiftingAppender"))
+          .toList();
+      assertEquals(1, missingAppenderEvents.size());
+    }
+    finally {
+      taskLogHomeLogger.detachAppender(listAppender);
+    }
   }
 
   /**

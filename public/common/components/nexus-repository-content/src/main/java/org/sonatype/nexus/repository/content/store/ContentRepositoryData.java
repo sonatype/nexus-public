@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.store;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.ContentRepository;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link ContentRepository} data backed by the content data store.
@@ -46,7 +46,7 @@ public class ContentRepositoryData
    * Sets the config repository id.
    */
   public void setConfigRepositoryId(final EntityId configRepositoryId) {
-    this.configRepositoryId = checkNotNull(configRepositoryId);
+    this.configRepositoryId = requireNonNull(configRepositoryId);
   }
 
   @Override

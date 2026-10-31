@@ -23,8 +23,8 @@ import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to facilitate writing to a temporary file and replacing target file with optional backup.
@@ -47,7 +47,7 @@ public class FileReplacer
   private boolean deleteBackupFile;
 
   public FileReplacer(final File file) throws IOException {
-    this.file = checkNotNull(file);
+    this.file = requireNonNull(file);
 
     // not using File.createTempFile() here so tmp + backup can share same timestamp-id
     // and delay creation of file until needed in the case of backup file
@@ -68,7 +68,7 @@ public class FileReplacer
   }
 
   public FileReplacer(final String fileName) throws IOException {
-    this(new File(checkNotNull(fileName)));
+    this(new File(requireNonNull(fileName)));
   }
 
   private void delete(final File file) throws IOException {
@@ -104,7 +104,7 @@ public class FileReplacer
   }
 
   public void replace(final ContentWriter writer) throws IOException {
-    checkNotNull(writer);
+    requireNonNull(writer);
 
     // setup buffering, as almost certainly anywhere using this class is going to want this
     BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile));

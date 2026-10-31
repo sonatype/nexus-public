@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.event.component;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 
 /**
@@ -30,7 +30,7 @@ public class ComponentEvent
 
   protected ComponentEvent(final Component component) {
     super(contentRepositoryId(component));
-    this.component = checkNotNull(component);
+    this.component = requireNonNull(component);
   }
 
   public Component getComponent() {

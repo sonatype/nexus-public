@@ -13,6 +13,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import {
+  Badge,
   Box,
   Button,
   Card,
@@ -28,6 +29,7 @@ import {
   Table,
   Text,
   TextField,
+  VisuallyHidden,
 } from '@radix-ui/themes';
 import {
   AlertCircle,
@@ -39,6 +41,8 @@ import {
   X,
 } from 'lucide-react';
 
+import { useRouter } from '@uirouter/react';
+
 import type { GAAsset } from '../core';
 import {
   SortableTableHeader,
@@ -46,12 +50,30 @@ import {
   type SortDirection,
 } from '../../../shared';
 import { MobileFilterDrawer } from '../unified/MobileFilterDrawer';
-import { exportToCsv } from '../../../shared';
+import { exportToCsv, formatDateTime } from '../../../shared';
+import { buildBrowseTarget } from './detailHelpers';
 
 interface GAFilesTabProps {
   assets: readonly GAAsset[];
   selectedVersion: string | null;
+  /**
+   * The repository fixed in the header, if any. When set, every asset here belongs to it, so the
+   * per-row repository badge is redundant (the header already states the repo) and is hidden.
+   * When null the view aggregates assets across every repository serving the version, so the badge
+   * is shown to distinguish assets that share a filename across repositories (NEXUS-54201).
+   */
+  selectedRepository?: string | null;
   loading: boolean;
+}
+
+/**
+ * Sort key for an asset's timestamp. Undated assets collapse to one bucket at the bottom of a
+ * descending sort rather than to NaN, which would make the whole ordering arbitrary.
+ */
+function lastModifiedSortValue(asset: GAAsset): number {
+  if (!asset.lastModified) return -Infinity;
+  const time = new Date(asset.lastModified).getTime();
+  return Number.isNaN(time) ? -Infinity : time;
 }
 
 /**
@@ -61,8 +83,12 @@ interface GAFilesTabProps {
 export function GAFilesTab({
   assets,
   selectedVersion,
+  selectedRepository,
   loading,
 }: GAFilesTabProps) {
+  // Show the per-row repository only in the aggregate view (no repo fixed in the header), where
+  // it is the field that distinguishes assets sharing a filename across repositories.
+  const showRepository = !selectedRepository;
   const [sortKey, setSortKey] = useState<string | null>('path');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,9 +103,28 @@ export function GAFilesTab({
     setCurrentPage(1);
   };
 
+  /**
+   * A new selected version starts at its first page, never at whatever page the previous version
+   * was left on (NEXUS-54560).
+   *
+   * `[selectedVersion]`, not `[]` — the dependency is doing real work only on one path, which is
+   * why the mount-only version of this effect looked harmless. Picking a version happens in the
+   * Versions tab, and Radix unmounts inactive Tabs.Content (GADetailPage passes no `forceMount`),
+   * so returning to Files remounts this component and `useState(1)` already resets the page. But
+   * `version` is a `dynamic` route param (previewBrowseRoutes), so a URL-originated change while
+   * Files is the active tab — deep link, hand-edited hash, Back/Forward — does not re-enter the
+   * state: GADetailPage is not remounted, GAFilesTab is rendered with no `key`, and this instance
+   * keeps its `currentPage` while receiving a new version. Nothing downstream clamps (neither this
+   * component nor TablePagination), so page 3 of a three-page version renders an empty table body
+   * against a one-page version.
+   *
+   * `selectedVersion` is a string ('' for versionless formats, null for "nothing selected"), so it
+   * is the version's logical identity as well as its value — a re-render carrying the same version,
+   * or a refetch of its assets, leaves the page where the user put it.
+   */
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filterExtensions]);
+  }, [selectedVersion]);
 
   const extensionOptions = useMemo(() => {
     const exts = new Set(assets.map((a) => a.extension));
@@ -90,11 +135,17 @@ export function GAFilesTab({
     return assets.filter((a) => {
       const q = searchQuery.trim().toLowerCase();
       const fileName = a.path.split('/').pop() || a.path;
+      // `repository` is matched only when it is the visible sub-line under each filename (the
+      // aggregate view) and is the field distinguishing assets that share one (NEXUS-54201);
+      // matching a hidden field would be surprising. `classifier` stays in the list for the mock
+      // path, but the real API never populates it — see componentVersionDetailApi.toAsset — so it
+      // matches nothing in production.
       if (
         q &&
         !(
           fileName.toLowerCase().includes(q) ||
           a.extension.toLowerCase().includes(q) ||
+          (showRepository && a.repository.toLowerCase().includes(q)) ||
           (a.classifier?.toLowerCase().includes(q) ?? false)
         )
       ) {
@@ -108,7 +159,7 @@ export function GAFilesTab({
       }
       return true;
     });
-  }, [assets, searchQuery, filterExtensions]);
+  }, [assets, searchQuery, filterExtensions, showRepository]);
 
   const sortedAssets = useMemo(() => {
     const arr = [...filteredAssets];
@@ -128,11 +179,14 @@ export function GAFilesTab({
         case 'size':
           cmp = a.size - b.size;
           break;
-        case 'lastModified':
-          cmp =
-            new Date(a.lastModified).getTime() -
-            new Date(b.lastModified).getTime();
+        case 'lastModified': {
+          // Compared, not subtracted: -Infinity - -Infinity is NaN, and a NaN comparator makes
+          // the ordering of two undated assets arbitrary.
+          const aTime = lastModifiedSortValue(a);
+          const bTime = lastModifiedSortValue(b);
+          cmp = aTime === bTime ? 0 : aTime < bTime ? -1 : 1;
           break;
+        }
         default:
           return 0;
       }
@@ -212,13 +266,14 @@ export function GAFilesTab({
               <Flex key={ext} align="center" gap="2" mb="1">
                 <Checkbox
                   checked={filterExtensions.includes(ext)}
-                  onCheckedChange={(c) =>
+                  onCheckedChange={(c) => {
                     setFilterExtensions((prev) =>
                       c === true
                         ? [...prev, ext]
                         : prev.filter((x) => x !== ext),
-                    )
-                  }
+                    );
+                    setCurrentPage(1);
+                  }}
                 />
                 <Text size="2">{ext}</Text>
               </Flex>
@@ -229,7 +284,8 @@ export function GAFilesTab({
     </Box>
   );
 
-  if (!selectedVersion) {
+  // === null, not truthiness: '' is the valid selected version for versionless formats (raw).
+  if (selectedVersion === null) {
     return (
       <Callout.Root color="amber">
         <Callout.Icon>
@@ -290,7 +346,13 @@ export function GAFilesTab({
               <TextField.Root
                 placeholder="Filter"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                // Narrowing the result set has to return to page 1 for the same reason sorting
+                // does: nothing clamps `currentPage`, so filtering 45 rows down to 22 while on
+                // page 3 leaves the table blank (NEXUS-54560).
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 style={{ width: '100%', minWidth: 0 }}
               >
                 <TextField.Slot>
@@ -302,7 +364,12 @@ export function GAFilesTab({
                       variant="ghost"
                       color="gray"
                       size="1"
-                      onClick={() => setSearchQuery('')}
+                      // Same reset as typing and as clearAllFilters: clearing the filter is a
+                      // filter change, and the two must not disagree about the page.
+                      onClick={() => {
+                        setSearchQuery('');
+                        setCurrentPage(1);
+                      }}
                       aria-label="Clear search"
                     >
                       <X size={14} />
@@ -324,20 +391,24 @@ export function GAFilesTab({
                 </Box>
                 <Button asChild size="2" variant="outline" color="gray">
                   <button
+                    type="button"
                     disabled={sortedAssets.length === 0}
                     aria-label="Export all filtered results as CSV"
                     onClick={() =>
+                      // `repository` replaces `classifier`: the real API never populates the
+                      // latter (componentVersionDetailApi.toAsset hardcodes it undefined), so the
+                      // column was always blank, and the repository is what the rows now show.
                       exportToCsv(
                         sortedAssets.map((a) => ({
                           file: a.path.split('/').pop() || a.path,
                           extension: a.extension,
-                          classifier: a.classifier,
+                          repository: a.repository,
                           size: a.size,
-                          lastModified: a.lastModified,
+                          lastModified: a.lastModified ?? '',
                           downloadUrl: a.downloadUrl,
                         })),
                         'files.csv',
-                        ['file', 'extension', 'classifier', 'size', 'lastModified', 'downloadUrl'],
+                        ['file', 'extension', 'repository', 'size', 'lastModified', 'downloadUrl'],
                       )
                     }
                   >
@@ -436,7 +507,7 @@ export function GAFilesTab({
 
                         <Table.Body>
                           {paginatedAssets.map((asset) => (
-                            <AssetRow key={asset.id} asset={asset} />
+                            <AssetRow key={asset.id} asset={asset} showRepository={showRepository} />
                           ))}
                         </Table.Body>
                       </Table.Root>
@@ -476,28 +547,49 @@ export function GAFilesTab({
   );
 }
 
-function AssetRow({ asset }: { asset: GAAsset }) {
+function AssetRow({ asset, showRepository }: { asset: GAAsset; showRepository: boolean }) {
+  const router = useRouter();
   const fileName = asset.path.split('/').pop() || asset.path;
 
   const handleDownload = () => {
     window.open(asset.downloadUrl, '_blank');
   };
 
+  /**
+   * Deep-link into the new Preview / Nexus One Browse experience for this asset.
+   *
+   * Navigates through the router (not `window.location.hash`), so the destination resolves to
+   * the current edition's Browse URL and stays inside the new UI. Before NEXUS-54430 this wrote
+   * `#browse/browse:<repo>:<path>` directly, which is the Classic UI bookmark and dropped the
+   * user out of the new UI entirely.
+   */
   const handleBrowse = () => {
-    const browseUrl = `#browse/browse:${asset.repository}:${encodeURIComponent(asset.path)}`;
-    window.location.hash = browseUrl;
+    const target = buildBrowseTarget(asset.repository, asset.path);
+    if (target) {
+      router.stateService.go(target.state, target.params);
+    }
   };
 
   return (
     <Table.Row>
       <Table.Cell>
-        <Flex direction="column" gap="1">
+        {/* align="start": Flex defaults to stretch, which would grow the badge's pill background
+            to the column's full width instead of hugging the repository name. */}
+        <Flex direction="column" gap="1" align="start">
           <Text size="2" weight="medium">
             {fileName}
           </Text>
-          <Text size="2" color="gray">
-            {asset.classifier || '-'}
-          </Text>
+          {/* Repository sub-line only in the aggregate view. When the header fixes a repository
+              every asset shares it, so repeating it per row is noise. Same badge convention as the
+              per-row counts in GAVersionsTab and GARepositoriesTab; it has no column header to
+              anchor it, so it keeps the hidden label — without it a screen reader would announce
+              the File cell as two bare strings. */}
+          {showRepository && (
+            <Badge color="gray" variant="solid" radius="full" size="1">
+              <VisuallyHidden>Repository: </VisuallyHidden>
+              {asset.repository}
+            </Badge>
+          )}
         </Flex>
       </Table.Cell>
 
@@ -515,7 +607,7 @@ function AssetRow({ asset }: { asset: GAAsset }) {
 
       <Table.Cell>
         <Text size="2" color="gray">
-          {formatDate(asset.lastModified)}
+          {formatDateTime(asset.lastModified)}
         </Text>
       </Table.Cell>
 
@@ -532,11 +624,17 @@ function AssetRow({ asset }: { asset: GAAsset }) {
             </IconButton>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content align="end">
-            <DropdownMenu.Item onClick={handleDownload}>
+            <DropdownMenu.Item
+              onClick={handleDownload}
+              aria-label={`Download ${fileName}`}
+            >
               Download
             </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={handleBrowse}>
-              Browse
+            <DropdownMenu.Item
+              onClick={handleBrowse}
+              aria-label={`View ${fileName} in Browse`}
+            >
+              View in Browse
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
@@ -551,18 +649,6 @@ function formatFileSize(bytes: number): string {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-}
-
-function formatDate(dateString: string): string {
-  try {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return dateString;
-  }
 }
 
 export default GAFilesTab;

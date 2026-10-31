@@ -109,7 +109,6 @@ export function SupportZipNodeCard({
             </Text>
           </Flex>
         );
-      case 'NOT_CREATED':
       default:
         return (
           <Text size="2" color="gray">

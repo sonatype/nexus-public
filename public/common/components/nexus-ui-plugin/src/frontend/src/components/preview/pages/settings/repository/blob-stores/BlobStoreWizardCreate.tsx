@@ -113,7 +113,7 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
       });
       return next;
     });
-  }, [types, selectedType]);
+  }, [selectedType, types]);
 
   const updateNested = useCallback((path: string, value: unknown) => {
     touchedFields.current.add(path);

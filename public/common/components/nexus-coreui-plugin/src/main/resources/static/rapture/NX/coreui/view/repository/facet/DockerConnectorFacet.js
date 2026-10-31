@@ -29,7 +29,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
    */
   initComponent: function () {
     var me = this,
-      subdomainVisibility = NX.State.getEdition() === 'PRO';
+      subdomainVisibility = NX.State.isLicensedEdition();
     // Remove repositoryName lookup here, as the form/field may not exist yet
     me.items = [
       {

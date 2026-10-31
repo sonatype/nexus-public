@@ -12,32 +12,18 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { SystemInfoPage } from '../SystemInfoPage';
-import * as useSystemInfoApiModule from '../useSystemInfoApi';
+import * as useSystemInfoModule from '../useSystemInfo';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
-// Mock the API hook
-jest.mock('../useSystemInfoApi');
+// Mock the integration hook
+jest.mock('../useSystemInfo');
 
-// Mock useToast with trackable mock functions
-const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
-
-jest.mock('../../../../../shared', () => ({
-  ...jest.requireActual('../../../../../shared'),
-  useToast: () => ({
-    success: mockToastSuccess,
-    error: mockToastError,
-    warning: jest.fn(),
-    info: jest.fn(),
-  }),
-}));
-
-const mockedUseSystemInfoApi = useSystemInfoApiModule.useSystemInfoApi as jest.MockedFunction<
-  typeof useSystemInfoApiModule.useSystemInfoApi
+const mockedUseSystemInfo = useSystemInfoModule.useSystemInfo as jest.MockedFunction<
+  typeof useSystemInfoModule.useSystemInfo
 >;
 
 // Wrapper component for Radix Theme
@@ -45,202 +31,174 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   return <Theme>{children}</Theme>;
 }
 
-describe('SystemInfoPage', () => {
-  const mockSystemInfo = {
-    'nexus-status': {
-      version: '3.88.0-01',
-      edition: 'PRO',
-      status: 'Running',
-    },
-    'nexus-node': {
-      nodeId: 'node-1',
-      clustered: false,
-    },
-    'nexus-license': {
-      licenseType: 'Professional',
-      validTo: '2025-12-31',
-    },
-    'system-runtime': {
-      javaVersion: '17.0.1',
-      availableProcessors: 8,
-    },
+const mockSystemInfo = {
+  'nexus-status': {
+    version: '3.88.0-01',
+    edition: 'PRO',
+    status: 'Running',
+  },
+  'nexus-node': {
+    nodeId: 'node-1',
+    clustered: false,
+  },
+  'nexus-license': {
+    licenseType: 'Professional',
+    validTo: '2025-12-31',
+  },
+  'system-runtime': {
+    javaVersion: '17.0.1',
+    availableProcessors: 8,
+  },
+};
+
+const mockSections: [string, any][] = Object.entries(mockSystemInfo);
+
+function makeHook(
+  overrides: Partial<ReturnType<typeof useSystemInfoModule.useSystemInfo>> = {}
+): ReturnType<typeof useSystemInfoModule.useSystemInfo> {
+  return {
+    systemInfo: mockSystemInfo,
+    nodes: [],
+    selectedNode: null,
+    isHAMode: false,
+    isLoading: false,
+    isRefreshing: false,
+    error: null,
+    expandedSections: new Set(['nexus-status', 'nexus-node', 'nexus-license']),
+    sections: mockSections,
+    sectionRefs: { current: {} } as React.MutableRefObject<Record<string, HTMLDivElement | null>>,
+    handleNodeSelect: jest.fn(),
+    handleRefresh: jest.fn(),
+    handleDownload: jest.fn(),
+    handleCopy: jest.fn().mockResolvedValue(undefined),
+    handleExpandAll: jest.fn(),
+    handleCollapseAll: jest.fn(),
+    handleSectionToggle: jest.fn(),
+    handleJumpToSection: jest.fn(),
+    clearError: jest.fn(),
+    ...overrides,
   };
+}
 
-  const mockFetchSystemInfo = jest.fn();
-  const mockFetchSystemInfoHA = jest.fn();
-  const mockFetchActiveNodes = jest.fn();
-  const mockDownloadSystemInfo = jest.fn();
-  const mockCopyToClipboard = jest.fn();
-  const mockSetError = jest.fn();
-
+describe('SystemInfoPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Spy on checkPermission and mock to return true by default
     jest.spyOn(ExtJS, 'checkPermission').mockReturnValue(true);
-    
-    mockedUseSystemInfoApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchSystemInfo: mockFetchSystemInfo.mockResolvedValue(mockSystemInfo),
-      fetchSystemInfoHA: mockFetchSystemInfoHA.mockResolvedValue({}),
-      fetchActiveNodes: mockFetchActiveNodes.mockResolvedValue([]),
-      downloadSystemInfo: mockDownloadSystemInfo,
-      copyToClipboard: mockCopyToClipboard.mockResolvedValue(true),
-    });
+    mockedUseSystemInfo.mockReturnValue(makeHook());
   });
 
-  it('renders loading state initially', () => {
+  it('renders loading state', () => {
+    mockedUseSystemInfo.mockReturnValue(makeHook({ isLoading: true }));
+
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
     expect(screen.getByText('Loading system information...')).toBeInTheDocument();
   });
 
-  it('renders the page header', async () => {
+  it('renders the page header', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
-    });
-
+    expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
     expect(screen.getByText('View detailed system and server information')).toBeInTheDocument();
   });
 
-  it('displays system info sections', async () => {
+  it('displays system info sections', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(screen.getByText('Nexus Status')).toBeInTheDocument();
-    });
-
+    expect(screen.getByText('Nexus Status')).toBeInTheDocument();
     expect(screen.getByText('Nexus Node')).toBeInTheDocument();
     expect(screen.getByText('Nexus License')).toBeInTheDocument();
     expect(screen.getByText('System Runtime')).toBeInTheDocument();
   });
 
-  it('expands first 3 sections by default', async () => {
+  it('expands sections listed in expandedSections', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(screen.getByText('Nexus Status')).toBeInTheDocument();
-    });
-
-    // First 3 sections should show their content
+    // nexus-status is in expandedSections — content visible
     expect(screen.getByText('version')).toBeInTheDocument();
     expect(screen.getByText('3.88.0-01')).toBeInTheDocument();
   });
 
-  it('handles refresh button click', async () => {
-    render(<SystemInfoPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
-    });
-
-    const refreshButton = screen.getByRole('button', { name: /refresh/i });
-    fireEvent.click(refreshButton);
-
-    await waitFor(() => {
-      expect(mockFetchSystemInfo).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  it('handles download button click', async () => {
-    render(<SystemInfoPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
-    });
-
-    const downloadButton = screen.getByRole('button', { name: /download/i });
-    fireEvent.click(downloadButton);
-
-    expect(mockDownloadSystemInfo).toHaveBeenCalledWith(mockSystemInfo, 'system-information.json');
-  });
-
-  it('handles copy button click', async () => {
-    render(<SystemInfoPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
-    });
-
-    const copyButton = screen.getByRole('button', { name: /copy/i });
-    fireEvent.click(copyButton);
-
-    await waitFor(() => {
-      expect(mockCopyToClipboard).toHaveBeenCalledWith(mockSystemInfo);
-    });
-  });
-
-  it('shows success message after copy', async () => {
-    render(<SystemInfoPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
-    });
-
-    const copyButton = screen.getByRole('button', { name: /copy/i });
-    fireEvent.click(copyButton);
-
-    await waitFor(() => {
-      expect(mockToastSuccess).toHaveBeenCalledWith('Copied to clipboard');
-    });
-  });
-
-  it('shows error message when copy fails', async () => {
-    mockCopyToClipboard.mockResolvedValue(false);
+  it('does not show content for collapsed sections', () => {
+    mockedUseSystemInfo.mockReturnValue(
+      makeHook({ expandedSections: new Set(['nexus-status']) })
+    );
 
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
-    });
-
-    const copyButton = screen.getByRole('button', { name: /copy/i });
-    fireEvent.click(copyButton);
-
-    await waitFor(() => {
-      expect(mockSetError).toHaveBeenCalledWith('Failed to copy to clipboard');
-    });
+    expect(screen.getByText('version')).toBeInTheDocument();
+    expect(screen.queryByText('nodeId')).not.toBeInTheDocument();
   });
 
-  it('displays error state', async () => {
-    mockedUseSystemInfoApi.mockReturnValue({
-      loading: false,
-      error: 'Failed to load system information',
-      setError: mockSetError,
-      fetchSystemInfo: mockFetchSystemInfo.mockResolvedValue({}),
-      fetchSystemInfoHA: mockFetchSystemInfoHA,
-      fetchActiveNodes: mockFetchActiveNodes.mockResolvedValue([]),
-      downloadSystemInfo: mockDownloadSystemInfo,
-      copyToClipboard: mockCopyToClipboard,
-    });
+  it('calls handleRefresh when refresh button is clicked', () => {
+    const mockHandleRefresh = jest.fn();
+    mockedUseSystemInfo.mockReturnValue(makeHook({ handleRefresh: mockHandleRefresh }));
 
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load system information')).toBeInTheDocument();
-    });
+    fireEvent.click(screen.getByRole('button', { name: /refresh/i }));
+
+    expect(mockHandleRefresh).toHaveBeenCalled();
   });
 
-  it('shows no permission message when user lacks permission', async () => {
+  it('calls handleDownload when download button is clicked', () => {
+    const mockHandleDownload = jest.fn();
+    mockedUseSystemInfo.mockReturnValue(makeHook({ handleDownload: mockHandleDownload }));
+
+    render(<SystemInfoPage />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /download/i }));
+
+    expect(mockHandleDownload).toHaveBeenCalled();
+  });
+
+  it('calls handleCopy when copy button is clicked', () => {
+    const mockHandleCopy = jest.fn().mockResolvedValue(undefined);
+    mockedUseSystemInfo.mockReturnValue(makeHook({ handleCopy: mockHandleCopy }));
+
+    render(<SystemInfoPage />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /copy/i }));
+
+    expect(mockHandleCopy).toHaveBeenCalled();
+  });
+
+  it('displays error alert when hook returns an error', () => {
+    mockedUseSystemInfo.mockReturnValue(makeHook({ error: 'Failed to load system information' }));
+
+    render(<SystemInfoPage />, { wrapper: TestWrapper });
+
+    expect(screen.getByText('Failed to load system information')).toBeInTheDocument();
+  });
+
+  it('calls clearError when error alert is dismissed', () => {
+    const mockClearError = jest.fn();
+    mockedUseSystemInfo.mockReturnValue(
+      makeHook({ error: 'Some error', clearError: mockClearError })
+    );
+
+    render(<SystemInfoPage />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
+
+    expect(mockClearError).toHaveBeenCalled();
+  });
+
+  it('shows no permission message when user lacks permission', () => {
     jest.spyOn(ExtJS, 'checkPermission').mockReturnValue(false);
+    mockedUseSystemInfo.mockReturnValue(makeHook({ isLoading: false }));
 
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(screen.getByText('You do not have permission to view system information.')).toBeInTheDocument();
-    });
+    expect(
+      screen.getByText('You do not have permission to view system information.')
+    ).toBeInTheDocument();
   });
 
-  it('displays help section with documentation link', async () => {
+  it('displays help section with documentation link', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(screen.getByText('About System Information')).toBeInTheDocument();
-    });
-
+    expect(screen.getByText('About System Information')).toBeInTheDocument();
     expect(screen.getByText('documentation')).toHaveAttribute(
       'href',
       'https://help.sonatype.com/en/system-information.html'
@@ -253,196 +211,151 @@ describe('SystemInfoPage', () => {
       { nodeId: 'node-2', friendlyName: 'Node 2', local: false },
     ];
 
-    const mockHASystemInfo = {
-      'node-1': mockSystemInfo,
-      'node-2': {
-        'nexus-status': {
-          version: '3.88.0-01',
-          edition: 'PRO',
-          status: 'Running',
-        },
-      },
-    };
+    it('shows node selector in HA mode', () => {
+      mockedUseSystemInfo.mockReturnValue(
+        makeHook({ isHAMode: true, nodes: mockHANodes, selectedNode: 'node-1' })
+      );
 
-    beforeEach(() => {
-      // Override the entire mock to enable HA mode (multiple nodes)
-      mockedUseSystemInfoApi.mockReturnValue({
-        loading: false,
-        error: null,
-        setError: mockSetError,
-        fetchSystemInfo: mockFetchSystemInfo.mockResolvedValue(mockSystemInfo),
-        fetchSystemInfoHA: mockFetchSystemInfoHA.mockResolvedValue(mockHASystemInfo),
-        fetchActiveNodes: mockFetchActiveNodes.mockResolvedValue(mockHANodes),
-        downloadSystemInfo: mockDownloadSystemInfo,
-        copyToClipboard: mockCopyToClipboard.mockResolvedValue(true),
-      });
-    });
-
-    it('shows node selector in HA mode', async () => {
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByText('Select Node')).toBeInTheDocument();
-      });
-
+      expect(screen.getByText('Select Node')).toBeInTheDocument();
       expect(screen.getByText('Node 1')).toBeInTheDocument();
       expect(screen.getByText('Node 2')).toBeInTheDocument();
     });
 
-    it('selects local node by default', async () => {
+    it('does not show node selector when not in HA mode', () => {
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByText('Select Node')).toBeInTheDocument();
-      });
-
-      const node1Button = screen.getByRole('button', { name: /node 1/i });
-      expect(node1Button).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.queryByText('Select Node')).not.toBeInTheDocument();
     });
 
-    it('switches nodes when clicked', async () => {
+    it('calls handleNodeSelect when a node button is clicked', () => {
+      const mockHandleNodeSelect = jest.fn();
+      mockedUseSystemInfo.mockReturnValue(
+        makeHook({
+          isHAMode: true,
+          nodes: mockHANodes,
+          selectedNode: 'node-1',
+          handleNodeSelect: mockHandleNodeSelect,
+        })
+      );
+
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByText('Select Node')).toBeInTheDocument();
-      });
+      fireEvent.click(screen.getByRole('button', { name: /node 2/i }));
 
-      const node2Button = screen.getByRole('button', { name: /node 2/i });
-      fireEvent.click(node2Button);
+      expect(mockHandleNodeSelect).toHaveBeenCalledWith('node-2');
+    });
 
-      expect(node2Button).toHaveAttribute('aria-pressed', 'true');
+    it('marks selected node with aria-pressed true', () => {
+      mockedUseSystemInfo.mockReturnValue(
+        makeHook({ isHAMode: true, nodes: mockHANodes, selectedNode: 'node-1' })
+      );
+
+      render(<SystemInfoPage />, { wrapper: TestWrapper });
+
+      expect(screen.getByRole('button', { name: /node 1/i })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
     });
   });
 
   describe('Navigation features', () => {
-    it('renders navigation bar with Jump to Section dropdown', async () => {
+    it('renders navigation bar with Jump to Section dropdown', () => {
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByText('Jump to:')).toBeInTheDocument();
-      });
-
+      expect(screen.getByText('Jump to:')).toBeInTheDocument();
       expect(screen.getByTestId('system-info-jump-to')).toBeInTheDocument();
     });
 
-    it('renders Expand All button', async () => {
+    it('renders Expand All button', () => {
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByTestId('system-info-expand-all')).toBeInTheDocument();
-      });
-
+      expect(screen.getByTestId('system-info-expand-all')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /expand all/i })).toBeInTheDocument();
     });
 
-    it('renders Collapse All button', async () => {
+    it('renders Collapse All button', () => {
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByTestId('system-info-collapse-all')).toBeInTheDocument();
-      });
-
+      expect(screen.getByTestId('system-info-collapse-all')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /collapse all/i })).toBeInTheDocument();
     });
 
-    it('expands all sections when Expand All is clicked', async () => {
+    it('calls handleExpandAll when Expand All is clicked', () => {
+      const mockHandleExpandAll = jest.fn();
+      mockedUseSystemInfo.mockReturnValue(makeHook({ handleExpandAll: mockHandleExpandAll }));
+
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByText('Nexus Status')).toBeInTheDocument();
-      });
+      fireEvent.click(screen.getByTestId('system-info-expand-all'));
 
-      // Click Expand All
-      const expandAllButton = screen.getByTestId('system-info-expand-all');
-      fireEvent.click(expandAllButton);
-
-      // All sections should be expanded - check for content from System Runtime (4th section)
-      await waitFor(() => {
-        expect(screen.getByText('javaVersion')).toBeInTheDocument();
-      });
+      expect(mockHandleExpandAll).toHaveBeenCalled();
     });
 
-    it('collapses all sections when Collapse All is clicked', async () => {
+    it('calls handleCollapseAll when Collapse All is clicked', () => {
+      const mockHandleCollapseAll = jest.fn();
+      mockedUseSystemInfo.mockReturnValue(makeHook({ handleCollapseAll: mockHandleCollapseAll }));
+
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByText('Nexus Status')).toBeInTheDocument();
-      });
+      fireEvent.click(screen.getByTestId('system-info-collapse-all'));
 
-      // First 3 sections are expanded by default, verify content is visible
-      expect(screen.getByText('version')).toBeInTheDocument();
-
-      // Click Collapse All
-      const collapseAllButton = screen.getByTestId('system-info-collapse-all');
-      fireEvent.click(collapseAllButton);
-
-      // Content should no longer be visible (sections collapsed)
-      await waitFor(() => {
-        expect(screen.queryByText('version')).not.toBeInTheDocument();
-      });
+      expect(mockHandleCollapseAll).toHaveBeenCalled();
     });
 
-    it('toggles individual section when header is clicked', async () => {
+    it('shows no section content when all sections are collapsed', () => {
+      mockedUseSystemInfo.mockReturnValue(makeHook({ expandedSections: new Set() }));
+
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByText('Nexus Status')).toBeInTheDocument();
-      });
+      expect(screen.getByText('Nexus Status')).toBeInTheDocument();
+      expect(screen.queryByText('version')).not.toBeInTheDocument();
+    });
 
-      // First section is expanded, verify content
-      expect(screen.getByText('version')).toBeInTheDocument();
+    it('calls handleSectionToggle when section header is clicked', () => {
+      const mockHandleSectionToggle = jest.fn();
+      mockedUseSystemInfo.mockReturnValue(
+        makeHook({ handleSectionToggle: mockHandleSectionToggle })
+      );
 
-      // Click the section header to collapse
+      render(<SystemInfoPage />, { wrapper: TestWrapper });
+
       const sectionHeader = screen.getByText('Nexus Status').closest('[role="button"]');
       if (sectionHeader) {
         fireEvent.click(sectionHeader);
       }
 
-      // Content should be hidden
-      await waitFor(() => {
-        expect(screen.queryByText('version')).not.toBeInTheDocument();
-      });
+      expect(mockHandleSectionToggle).toHaveBeenCalledWith('nexus-status', expect.any(Boolean));
+    });
 
-      // Click again to expand
-      if (sectionHeader) {
-        fireEvent.click(sectionHeader);
-      }
+    it('hides navigation bar when no sections are available', () => {
+      mockedUseSystemInfo.mockReturnValue(makeHook({ sections: [], systemInfo: null }));
 
-      // Content should be visible again
-      await waitFor(() => {
-        expect(screen.getByText('version')).toBeInTheDocument();
-      });
+      render(<SystemInfoPage />, { wrapper: TestWrapper });
+
+      expect(screen.queryByTestId('system-info-nav')).not.toBeInTheDocument();
     });
   });
 
   describe('Breadcrumb navigation', () => {
-    it('renders breadcrumbs with Settings link', async () => {
+    it('renders breadcrumbs with Settings link', () => {
       render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
-      });
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
     });
 
-    it('renders System Information as current page in breadcrumbs', async () => {
+    it('renders System Information as current page in breadcrumbs', () => {
       const { container } = render(<SystemInfoPage />, { wrapper: TestWrapper });
 
-      await waitFor(() => {
-        expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
-      });
-
-      // System Information should be the current page (span with aria-current)
       const currentBreadcrumb = container.querySelector('[aria-current="page"]');
       expect(currentBreadcrumb).toBeInTheDocument();
       expect(currentBreadcrumb?.textContent).toBe('System Information');
     });
 
-    it('navigates to Settings when Settings breadcrumb is clicked', async () => {
+    it('navigates to Settings when Settings breadcrumb is clicked', () => {
       render(<SystemInfoPage />, { wrapper: TestWrapper });
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
-      });
 
       const originalHash = window.location.hash;
       screen.getByRole('button', { name: 'Settings' }).click();
@@ -451,5 +364,3 @@ describe('SystemInfoPage', () => {
     });
   });
 });
-
-

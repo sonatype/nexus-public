@@ -86,6 +86,12 @@ export interface SslCertificatesDetailProps {
   onDelete: () => void;
   onCancel: () => void;
   error?: string;
+  /**
+   * Shows the "trust the issuing CA" warning. Only meaningful while previewing a certificate that
+   * has not been added yet — on an already-trusted certificate the advice is about a decision the
+   * user has already made (NEXUS-54265).
+   */
+  showTrustWarning?: boolean;
 }
 
 /**
@@ -96,6 +102,12 @@ export interface SslCertificatesAddFormProps {
   onCancel: () => void;
   loading?: boolean;
   error?: string;
+  /**
+   * Navigate to an already-trusted certificate. Used when the loaded certificate turns out
+   * to be in the trust store already, so the user has a way to reach it instead of a
+   * dead-end error (Classic UI's SslCertificatesAlreadyExistsModal).
+   */
+  onViewExisting?: (certificateId: string) => void;
 }
 
 /**
@@ -131,5 +143,3 @@ export const isCertificateExpired = (certificate: SslCertificate): boolean => {
   if (!certificate.expiresOn) return false;
   return certificate.expiresOn < Date.now();
 };
-
-

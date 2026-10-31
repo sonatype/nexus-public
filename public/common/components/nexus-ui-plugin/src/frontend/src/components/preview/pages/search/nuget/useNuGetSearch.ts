@@ -13,7 +13,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import Axios from 'axios';
-import type { NuGetSearchState, NuGetSearchFilters, NuGetResult, NuGetSearchResponse } from './nuget.types';
+import type { NuGetSearchState, NuGetResult, NuGetSearchResponse } from './nuget.types';
 import { mockNuGetSearchApi } from './mockData';
 
 // Feature flag to switch between real API and mock data

@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Text, Heading, Grid } from '@radix-ui/themes';
+import { Box, Flex, Text, } from '@radix-ui/themes';
 import { Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 
 import {
@@ -22,7 +22,6 @@ import {
   SettingsAlert,
 } from '../../../../shared/form';
 import {
-  SslCertificate,
   SslCertificatesDetailProps,
   formatDate,
   isCertificateExpired,
@@ -41,6 +40,7 @@ export function SslCertificatesDetail({
   onDelete,
   onCancel,
   error,
+  showTrustWarning = false,
 }: SslCertificatesDetailProps) {
   // Loading state
   if (loading) {
@@ -173,19 +173,19 @@ export function SslCertificatesDetail({
         </SettingsFormSection>
 
         {/* Warning */}
-        <Box className="ssl-certificates-detail__warning">
-          <SettingsAlert type="warning">
-            <Text size="2">
-              Warning: Adding a certificate to the trust store means you trust the certificate authority (CA) that issued it.
-              Only add certificates from trusted sources.
-            </Text>
-          </SettingsAlert>
-        </Box>
+        {showTrustWarning && (
+          <Box className="ssl-certificates-detail__warning">
+            <SettingsAlert type="warning">
+              <Text size="2">
+                Warning: Adding a certificate to the trust store means you trust the certificate authority (CA) that issued it.
+                Only add certificates from trusted sources.
+              </Text>
+            </SettingsAlert>
+          </Box>
+        )}
       </SettingsForm>
     </Box>
   );
 }
 
 export default SslCertificatesDetail;
-
-

@@ -48,6 +48,28 @@
   Style overrides for the ExtJS classes.
 */
 
+/*
+  Restore Radix Themes' own table cell padding.
+
+  Rapture's baseapp reset zeroes it out globally:
+    td:not([class|=x])             { padding-right: 5px }
+    td:not([class|=x]):last-child  { padding-right: 0 }
+  Those selectors are specificity (0,2,1), which outranks Radix's own
+  :where(.rt-TableCell) padding (0,0,0) and any `pr` prop (0,1,0) — so every
+  Radix table renders a 5px right gutter and no gutter at all on the last cell.
+  !important is the only way to win without per-table workarounds.
+
+  Uses --table-cell-padding rather than a literal so the value stays correct
+  across Table.Root size="1|2|3".
+
+  This override exists solely to counteract Rapture and must be deleted along
+  with it when ExtJS/Rapture is removed from the application.
+*/
+.radix-themes td.rt-TableCell,
+.radix-themes th.rt-TableColumnHeaderCell {
+  padding-right: var(--table-cell-padding) !important;
+}
+
 .nx-coreui-component-details {
   z-index: 4;
 }

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, } from 'react';
 import { useRolesApi } from '../roles/useRolesApi';
 import { useUsersApi } from '../users/useUsersApi';
 import { usePrivilegesApi } from './usePrivilegesApi';
@@ -80,11 +80,13 @@ export function usePrivilegeProfile(privilegeId: string | null): UsePrivilegePro
 
     const load = async () => {
       try {
-        const [privData, allRoles, allUsers] = await Promise.all([
-          findPrivilege(privilegeId),
-          fetchRoles(),
-          fetchUsers(),
-        ]);
+        // The privilege itself only requires nexus:privileges:read. The "Roles Using
+        // This" and "Users With Access" tabs are supplementary cross-references that
+        // additionally need nexus:roles:read / nexus:users:read. A user with only
+        // privileges:read must still be able to view the privilege (matching Classic),
+        // so fetch it first and let the roles/users lookups degrade to empty on a 403
+        // instead of failing the whole profile (NEXUS-54212).
+        const privData = await findPrivilege(privilegeId);
 
         if (cancelled) return;
 
@@ -97,6 +99,16 @@ export function usePrivilegeProfile(privilegeId: string | null): UsePrivilegePro
         }
 
         setPrivilege(privData);
+
+        const [rolesResult, usersResult] = await Promise.allSettled([
+          fetchRoles(),
+          fetchUsers(),
+        ]);
+
+        if (cancelled) return;
+
+        const allRoles = rolesResult.status === 'fulfilled' ? rolesResult.value : [];
+        const allUsers = usersResult.status === 'fulfilled' ? usersResult.value : [];
 
         const roleMapForCompute = new Map(allRoles.map((r) => [r.id, r]));
         const rolesThatGrant: Role[] = [];

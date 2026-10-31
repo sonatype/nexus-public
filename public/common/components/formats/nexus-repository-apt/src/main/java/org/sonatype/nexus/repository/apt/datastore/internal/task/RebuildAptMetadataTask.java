@@ -21,14 +21,15 @@ import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.data.AptKeyValueFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata.AptHostedMetadataFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.proxy.AptProxyFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.proxy.metadata.AptProxyMetadataFacet;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
-import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.CancelableHelper;
+
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -153,7 +154,7 @@ public class RebuildAptMetadataTask
     keyValueFacet.clearAllTrackedDistributions();
 
     // Invalidate proxy caches cluster-wide
-    repository.facet(ProxyFacet.class).invalidateProxyCaches();
+    repository.facet(AptProxyFacet.class).invalidateMetadataCache();
 
     return trackedDistributions;
   }

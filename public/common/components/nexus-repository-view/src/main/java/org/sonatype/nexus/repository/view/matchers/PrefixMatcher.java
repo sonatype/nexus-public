@@ -20,7 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Prefix string matcher.
@@ -38,7 +38,7 @@ public class PrefixMatcher
 
   @VisibleForTesting
   public PrefixMatcher(final String prefix, final boolean ignoreCase) {
-    this.prefix = checkNotNull(prefix);
+    this.prefix = requireNonNull(prefix);
     this.ignoreCase = ignoreCase;
   }
 
@@ -52,7 +52,7 @@ public class PrefixMatcher
 
   @Override
   public boolean matches(final Context context) {
-    checkNotNull(context);
+    requireNonNull(context);
     String path = context.getRequest().getPath();
     log.debug("Matching: {} starts-with={} ignore-case: {}", path, prefix, ignoreCase);
     if (ignoreCase) {

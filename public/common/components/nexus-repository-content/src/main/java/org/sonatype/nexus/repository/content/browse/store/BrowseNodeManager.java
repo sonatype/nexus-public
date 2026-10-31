@@ -27,7 +27,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 
@@ -47,7 +47,7 @@ public class BrowseNodeManager
   static final int MAX_CHILDREN = 2000;
 
   public BrowseNodeManager(final BrowseNodeStore<BrowseNodeDAO> browseNodeStore, final int repositoryId) {
-    this.browseNodeStore = checkNotNull(browseNodeStore);
+    this.browseNodeStore = requireNonNull(browseNodeStore);
     this.repositoryId = repositoryId;
   }
 
@@ -172,6 +172,28 @@ public class BrowseNodeManager
    */
   public void delete(final Long internalNodeId) {
     browseNodeStore.delete(internalNodeId);
+  }
+
+  /**
+   * Returns the node id of the browse node for the given asset, or {@code null} if none exists.
+   * Must be called before the asset is deleted, because ON DELETE SET NULL will clear the
+   * asset_id reference once the asset row is removed.
+   */
+  @Nullable
+  public Long getNodeIdForAsset(final Integer assetId) {
+    Long nodeId = browseNodeStore.getNodeIdForAsset(assetId);
+    log.debug("Browse node id for asset id {} - {}", assetId, nodeId);
+    return nodeId;
+  }
+
+  /**
+   * Deletes the browse node with the given node id and returns its parent id (PostgreSQL only).
+   */
+  @Nullable
+  public Long deleteByNodeIdReturningParentId(final Long nodeId) {
+    Long parentNode = browseNodeStore.deleteByNodeIdReturningParentId(nodeId);
+    log.debug("Deleted browse node by node id {} - Returned parent node {}", nodeId, parentNode);
+    return parentNode;
   }
 
   /**

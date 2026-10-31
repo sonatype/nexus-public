@@ -36,6 +36,10 @@ export default {
     LIST: 'browse.upload.list',
     EDIT: 'browse.upload.edit',
   },
+  TRASH: {
+    ROOT: 'browse.trash',
+    TITLE: 'Trash',
+  },
   TAGS: {
     ROOT: 'browse.tags',
     TITLE: 'Tags',
@@ -73,7 +77,6 @@ export default {
     RUBYGEMS: 'browse.search.rubygems',
     ANSIBLEGALAXY: 'browse.search.ansiblegalaxy',
     TERRAFORM: 'browse.search.terraform',
-    TERRAFORM_STATE_BACKEND: 'browse.search.terraformbackend',
     YUM: 'browse.search.yum',
     SWIFT: 'browse.search.swift',
   },

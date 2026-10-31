@@ -38,7 +38,7 @@ import org.junit.platform.commons.support.ReflectionSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
@@ -58,7 +58,7 @@ class DatabaseSpecificExtension
   private final String jdbcUrl;
 
   DatabaseSpecificExtension(final String jdbcUrl) {
-    this.jdbcUrl = checkNotNull(jdbcUrl);
+    this.jdbcUrl = requireNonNull(jdbcUrl);
   }
 
   @Override

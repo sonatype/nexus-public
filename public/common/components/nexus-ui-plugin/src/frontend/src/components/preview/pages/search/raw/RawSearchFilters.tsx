@@ -42,13 +42,6 @@ export function RawSearchFilters({
   onSearch,
   loading = false,
 }: RawSearchFiltersProps): React.ReactElement {
-  const handleInputChange = useCallback(
-    (field: keyof FilterValues) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      onFiltersChange({ [field]: e.target.value });
-    },
-    [onFiltersChange]
-  );
-
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && !loading) {

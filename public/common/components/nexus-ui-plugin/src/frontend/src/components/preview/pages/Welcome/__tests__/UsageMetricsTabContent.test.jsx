@@ -19,11 +19,10 @@ jest.mock('../useUsageMetricsTabData', () => ({
   useUsageMetricsTabData: jest.fn(),
 }));
 
-jest.mock('../dashboard', () => ({
-  InstanceTotalsPanel: function MockInstanceTotalsPanel() {
-    return <div data-testid="instance-totals-panel">InstanceTotalsPanel</div>;
-  },
-}));
+// UsageCenter replaced InstanceTotalsPanel for non-cloud (NEXUS-53863): no Storage/Egress charts
+jest.mock('../UsageCenter', () => function MockUsageCenter() {
+  return <div data-testid="usage-center">UsageCenter</div>;
+});
 
 jest.mock('../CloudUsageCenterPanel', () => ({
   CloudUsageCenterPanel: function MockCloudUsageCenterPanel({monthlyMetrics}) {
@@ -32,11 +31,17 @@ jest.mock('../CloudUsageCenterPanel', () => ({
   },
 }));
 
+jest.mock('../CELimitsAlerts', () => function MockCELimitsAlerts() {
+  return <div data-testid="ce-limits-alerts">CE Limits Alerts</div>;
+});
+
+jest.mock('../../../shared/security/MalwareBanner', () => function MockMalwareBanner() {
+  return <div data-testid="malware-banner">Malware Banner</div>;
+});
+
 const baseHookResult = {
   isCloud: false,
-  instanceTotals: {data: null, loading: false},
   monthlyMetrics: {loading: false, error: null, history: {egress: [], storage: []}},
-  monthlyMetricsFormatted: undefined,
 };
 
 describe('UsageMetricsTabContent', () => {
@@ -44,9 +49,9 @@ describe('UsageMetricsTabContent', () => {
     useUsageMetricsTabData.mockReturnValue(baseHookResult);
   });
 
-  it('renders InstanceTotalsPanel for non-cloud deployments', () => {
+  it('renders UsageCenter for non-cloud deployments', () => {
     render(<UsageMetricsTabContent />);
-    expect(screen.getByTestId('instance-totals-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('usage-center')).toBeInTheDocument();
     expect(screen.queryByTestId('cloud-usage-panel')).not.toBeInTheDocument();
   });
 
@@ -54,7 +59,7 @@ describe('UsageMetricsTabContent', () => {
     useUsageMetricsTabData.mockReturnValue({...baseHookResult, isCloud: true});
     render(<UsageMetricsTabContent />);
     expect(screen.getByTestId('cloud-usage-panel')).toBeInTheDocument();
-    expect(screen.queryByTestId('instance-totals-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('usage-center')).not.toBeInTheDocument();
   });
 
   it('passes monthlyMetrics to CloudUsageCenterPanel (loading state visible)', () => {
@@ -65,5 +70,22 @@ describe('UsageMetricsTabContent', () => {
     });
     render(<UsageMetricsTabContent />);
     expect(screen.getByText('Loading usage metrics...')).toBeInTheDocument();
+  });
+
+  it('renders CELimitsAlerts component exactly once', () => {
+    render(<UsageMetricsTabContent />);
+    expect(screen.getAllByTestId('ce-limits-alerts')).toHaveLength(1);
+  });
+
+  it('renders MalwareBanner component', () => {
+    render(<UsageMetricsTabContent />);
+    expect(screen.getByTestId('malware-banner')).toBeInTheDocument();
+  });
+
+  it('renders CELimitsAlerts and MalwareBanner for cloud deployments', () => {
+    useUsageMetricsTabData.mockReturnValue({...baseHookResult, isCloud: true});
+    render(<UsageMetricsTabContent />);
+    expect(screen.getByTestId('ce-limits-alerts')).toBeInTheDocument();
+    expect(screen.getByTestId('malware-banner')).toBeInTheDocument();
   });
 });

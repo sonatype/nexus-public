@@ -24,7 +24,7 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,8 +47,8 @@ public class AuthTicketServiceImpl
       final AuthTicketGenerator authTicketGenerator,
       final AuthTicketCache authTicketCache)
   {
-    this.authTicketGenerator = checkNotNull(authTicketGenerator);
-    this.authTicketCache = checkNotNull(authTicketCache);
+    this.authTicketGenerator = requireNonNull(authTicketGenerator);
+    this.authTicketCache = requireNonNull(authTicketCache);
   }
 
   @Override
@@ -72,7 +72,7 @@ public class AuthTicketServiceImpl
 
   @Override
   public boolean redeemTicket(final String user, final String ticket, final String realmName) {
-    checkNotNull(ticket);
+    requireNonNull(ticket);
     return authTicketCache.remove(user, ticket, realmName);
   }
 

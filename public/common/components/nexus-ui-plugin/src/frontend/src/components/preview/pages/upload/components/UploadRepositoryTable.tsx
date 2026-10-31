@@ -19,7 +19,6 @@ import {
   DropdownMenu,
   Flex,
   IconButton,
-  Inset,
   Spinner,
   Table,
   Text as RadixText,
@@ -42,7 +41,8 @@ export interface UploadRepositoryTableProps {
 
 /**
  * UploadRepositoryTable - Table of uploadable repositories.
- * Matches Browse RepositoryListTable structure: Card > Inset > Table.
+ * Matches the IP Allow List reference pattern: Box > Table.Root variant="surface".
+ * Loading / error / empty states still render inside a Card wrapper.
  */
 export function UploadRepositoryTable({
   repositories,
@@ -114,90 +114,92 @@ export function UploadRepositoryTable({
   }
 
   return (
-    <Card size="1">
-      <Inset clip="padding-box" side="bottom">
-        <Box className="upload-repository-table__scroll-wrapper">
-          <Table.Root size="2">
-            <Table.Header>
-              <Table.Row>
-                <SortableTableHeader
-                  sortKey="name"
-                  currentSortKey={sortColumn}
-                  currentSortDirection={getSortDirection('name')}
-                  onSort={(key, dir) => {
-                    if (dir) onSort(key as SortColumn, dir);
-                  }}
-                >
-                  {UPLOAD_STRINGS.columns.name}
-                </SortableTableHeader>
-                <SortableTableHeader
-                  sortKey="format"
-                  currentSortKey={sortColumn}
-                  currentSortDirection={getSortDirection('format')}
-                  onSort={(key, dir) => {
-                    if (dir) onSort(key as SortColumn, dir);
-                  }}
-                >
-                  {UPLOAD_STRINGS.columns.format}
-                </SortableTableHeader>
-                <Table.ColumnHeaderCell justify="end" aria-label="Row actions" pr="5" />
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {repositories.map((repo) => (
-                <Table.Row
-                  key={repo.name}
-                  onClick={handleRowClick(repo.name)}
-                  onKeyDown={handleRowKeyDown(repo.name)}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`Upload to ${repo.name}`}
-                  className="upload-repository-table__row"
-                >
-                  <Table.Cell>
-                    <RadixText weight="medium">{repo.name}</RadixText>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <RadixText size="2">{FORMAT_LABELS[repo.format] || repo.format}</RadixText>
-                  </Table.Cell>
-                  <Table.Cell pr="2" className="upload-repository-table__actions-cell">
-                    <DropdownMenu.Root>
-                      <DropdownMenu.Trigger>
-                        <IconButton
-                          variant="ghost"
-                          color="gray"
-                          size="1"
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label="Row actions"
-                        >
-                          <MoreHorizontal size={16} />
-                        </IconButton>
-                      </DropdownMenu.Trigger>
-                      <DropdownMenu.Content align="end">
-                        <DropdownMenu.Item onClick={(e) => {
-                          e.stopPropagation();
-                          onSelect(repo.name);
-                        }}>
-                          Upload to {repo.name}
-                        </DropdownMenu.Item>
-                        <DropdownMenu.Item onClick={async (e) => {
-                          e.stopPropagation();
-                          // Clipboard API may fail in non-HTTPS contexts or if permission is denied.
-                          // Failure is intentionally silent — no toast infrastructure exists in this component.
-                          await navigator.clipboard.writeText(repo.url).catch(() => {});
-                        }}>
-                          Copy URL
-                        </DropdownMenu.Item>
-                      </DropdownMenu.Content>
-                    </DropdownMenu.Root>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
-        </Box>
-      </Inset>
-    </Card>
+    <Box className="upload-repository-table__scroll-wrapper">
+      <Table.Root variant="surface" size="2">
+        <Table.Header>
+          <Table.Row>
+            <SortableTableHeader
+              sortKey="name"
+              currentSortKey={sortColumn}
+              currentSortDirection={getSortDirection('name')}
+              onSort={(key, dir) => {
+                if (dir) onSort(key as SortColumn, dir);
+              }}
+            >
+              {UPLOAD_STRINGS.columns.name}
+            </SortableTableHeader>
+            <SortableTableHeader
+              sortKey="format"
+              currentSortKey={sortColumn}
+              currentSortDirection={getSortDirection('format')}
+              onSort={(key, dir) => {
+                if (dir) onSort(key as SortColumn, dir);
+              }}
+            >
+              {UPLOAD_STRINGS.columns.format}
+            </SortableTableHeader>
+            {/* paddingRight: 32 matches the Rapture-safe right gutter used across list tables (see EntityTable.scss). */}
+            <Table.ColumnHeaderCell
+              width="80px"
+              justify="end"
+              aria-label="Row actions"
+              style={{ paddingRight: 32 }}
+            />
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {repositories.map((repo) => (
+            <Table.Row
+              key={repo.name}
+              onClick={handleRowClick(repo.name)}
+              onKeyDown={handleRowKeyDown(repo.name)}
+              tabIndex={0}
+              role="button"
+              aria-label={`Upload to ${repo.name}`}
+              className="upload-repository-table__row"
+            >
+              <Table.Cell>
+                <RadixText weight="medium">{repo.name}</RadixText>
+              </Table.Cell>
+              <Table.Cell>
+                <RadixText size="2">{FORMAT_LABELS[repo.format] || repo.format}</RadixText>
+              </Table.Cell>
+              <Table.Cell justify="end" style={{ paddingRight: 32 }} className="upload-repository-table__actions-cell">
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger>
+                    <IconButton
+                      variant="ghost"
+                      color="gray"
+                      size="1"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Actions for ${repo.name}`}
+                    >
+                      <MoreHorizontal size={16} />
+                    </IconButton>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content align="end">
+                    <DropdownMenu.Item onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(repo.name);
+                    }}>
+                      Upload to {repo.name}
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item onClick={async (e) => {
+                      e.stopPropagation();
+                      // Clipboard API may fail in non-HTTPS contexts or if permission is denied.
+                      // Failure is intentionally silent — no toast infrastructure exists in this component.
+                      await navigator.clipboard.writeText(repo.url).catch(() => {});
+                    }}>
+                      Copy URL
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table.Root>
+    </Box>
   );
 }
 

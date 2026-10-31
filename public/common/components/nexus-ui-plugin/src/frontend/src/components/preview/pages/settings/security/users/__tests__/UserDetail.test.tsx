@@ -28,56 +28,46 @@ jest.mock('../useUsersApi', () => ({
 const mockedUseUsersApi = useUsersApiModule.useUsersApi as jest.MockedFunction<typeof useUsersApiModule.useUsersApi>;
 
 // Mock ExtJS
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ExtJS: {
-    checkPermission: jest.fn().mockReturnValue(true),
-    isProEdition: jest.fn().mockReturnValue(true),
-    state: jest.fn().mockReturnValue({
-      getValue: jest.fn((key: string) => {
-        if (key === 'capabilityActiveTypes') {
-          return ['usertoken'];
-        }
-        return 'anonymous';
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const isProEdition = jest.fn().mockReturnValue(true);
+  return {
+    ExtJS: {
+      checkPermission: jest.fn().mockReturnValue(true),
+      isProEdition,
+      state: jest.fn().mockReturnValue({
+        getValue: jest.fn((key: string) => {
+          if (key === 'capabilityActiveTypes') {
+            return ['usertoken'];
+          }
+          return 'anonymous';
+        }),
+        getUser: jest.fn().mockReturnValue({ id: 'currentuser' }),
       }),
-      getUser: jest.fn().mockReturnValue({ id: 'currentuser' }),
-    }),
-  },
-  APIConstants: {
-    EXT: {
-      USER: {
-        ACTION: 'coreui_User',
-        METHODS: {
-          READ: 'read',
-          CREATE: 'create',
-          UPDATE: 'update',
-          REMOVE: 'remove',
-          CHANGE_PASSWORD: 'changePassword',
-          READ_SOURCES: 'readSources',
-          READ_ROLES: 'readRoles',
+    },
+    APIConstants: {
+      EXT: {
+        USER: {
+          ACTION: 'coreui_User',
+          METHODS: {
+            READ: 'read',
+            CREATE: 'create',
+            UPDATE: 'update',
+            REMOVE: 'remove',
+            CHANGE_PASSWORD: 'changePassword',
+            READ_SOURCES: 'readSources',
+            READ_ROLES: 'readRoles',
+          },
+        },
+      },
+      REST: {
+        PUBLIC: {
+          USERS: '/service/rest/v1/security/users',
         },
       },
     },
-    REST: {
-      PUBLIC: {
-        USERS: '/service/rest/v1/security/users',
-      },
-    },
-  },
-}));
-
-// Mock child components
-jest.mock('../UserForm', () => ({
-  UserForm: function MockUserForm({ user, onSave, onCancel, onDelete }: any) {
-    return (
-      <div data-testid="user-form">
-        <span>Editing: {user?.userId}</span>
-        <button onClick={() => onSave({ userId: user?.userId, firstName: 'Updated', lastName: 'User', emailAddress: 'updated@test.com', status: true, roles: ['nx-admin'] })}>Save Form</button>
-        <button onClick={onCancel}>Cancel Form</button>
-        {onDelete && <button onClick={onDelete}>Delete Form</button>}
-      </div>
-    );
-  },
-}));
+    useIsLicensedEdition: isProEdition,
+  };
+});
 
 // Wrapper component for Radix Theme and Toast context
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -99,7 +89,7 @@ const mockUser: User = {
   roles: ['nx-admin'],
 };
 
-const mockExternalUser: User = {
+const _mockExternalUser: User = {
   userId: 'ldapuser',
   firstName: 'LDAP',
   lastName: 'User',
@@ -112,8 +102,6 @@ const mockExternalUser: User = {
 };
 
 describe('UserDetail', () => {
-  const mockOnSave = jest.fn();
-  const mockOnDelete = jest.fn();
   const mockOnCancel = jest.fn();
   const mockChangePassword = jest.fn();
   const mockResetUserToken = jest.fn();
@@ -145,15 +133,16 @@ describe('UserDetail', () => {
         user={null}
         loading={true}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
     );
 
-    expect(screen.getByText(/Loading user details/i)).toBeInTheDocument();
+    const loadingText = screen.getByText(/Loading user details/i);
+    expect(loadingText).toBeInTheDocument();
+    const loadingContainer = loadingText.closest('[role="status"]');
+    expect(loadingContainer).toHaveAttribute('aria-live', 'polite');
+    expect(loadingContainer).toHaveAttribute('aria-busy', 'true');
   });
 
   it('shows not found state when user is null and not loading', () => {
@@ -162,15 +151,15 @@ describe('UserDetail', () => {
         user={null}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
     );
 
-    expect(screen.getByText(/User not found/i)).toBeInTheDocument();
+    const notFoundText = screen.getByText(/User not found/i);
+    expect(notFoundText).toBeInTheDocument();
+    const notFoundContainer = notFoundText.closest('[role="alert"]');
+    expect(notFoundContainer).toHaveAttribute('aria-live', 'assertive');
   });
 
   it('renders read-only view when canEdit is false', async () => {
@@ -179,9 +168,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={false}
-        canDelete={false}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -204,9 +190,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={false}
-        canDelete={false}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -219,25 +202,20 @@ describe('UserDetail', () => {
     expect(screen.getByText('nx-admin')).toBeInTheDocument();
   });
 
-  it('renders edit form when canEdit is true', async () => {
+  it('renders the edit branch (Account Actions section) when canEdit is true', async () => {
     render(
       <UserDetail
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('user-form')).toBeInTheDocument();
+      expect(screen.getByText('Account Actions')).toBeInTheDocument();
     });
-
-    expect(screen.getByText('Editing: testuser')).toBeInTheDocument();
   });
 
   it('shows change password section for local users with admin permission', async () => {
@@ -246,9 +224,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -267,9 +242,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -288,9 +260,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -319,9 +288,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -350,9 +316,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={false}
-        canDelete={false}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -367,22 +330,19 @@ describe('UserDetail', () => {
     expect(mockOnCancel).toHaveBeenCalled();
   });
 
-  it('displays user status', async () => {
+  it('displays user status via StatusBadge', async () => {
     render(
       <UserDetail
         user={mockUser}
         loading={false}
         canEdit={false}
-        canDelete={false}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
     );
 
     await waitFor(() => {
-      expect(screen.getByText('active')).toBeInTheDocument();
+      expect(screen.getByLabelText('Status: Active')).toBeInTheDocument();
     });
   });
 
@@ -392,9 +352,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={false}
-        canDelete={false}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -426,9 +383,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -447,9 +401,6 @@ describe('UserDetail', () => {
         user={userWithNoRoles}
         loading={false}
         canEdit={false}
-        canDelete={false}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -466,9 +417,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -494,9 +442,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -518,9 +463,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -547,9 +489,6 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
@@ -593,20 +532,95 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('user-form')).toBeInTheDocument();
+      expect(screen.getByText('Account Actions')).toBeInTheDocument();
     });
 
     // Reset Token button should NOT be visible
     expect(screen.queryByText('Reset Token')).not.toBeInTheDocument();
+  });
+
+  // AC-3: UserDetail uses MetadataGrid for key-value display layout
+  it('renders MetadataGrid component for user info layout in read-only view', async () => {
+    render(
+      <UserDetail
+        user={mockUser}
+        loading={false}
+        canEdit={false}
+        onCancel={mockOnCancel}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('metadata-grid')).toBeInTheDocument();
+    });
+
+    expect(document.querySelector('.user-detail__info')).not.toBeInTheDocument();
+  });
+
+  // AC-4: UserDetail uses StatusBadge for user status display
+  it('renders StatusBadge for user status in read-only view', async () => {
+    render(
+      <UserDetail
+        user={mockUser}
+        loading={false}
+        canEdit={false}
+        onCancel={mockOnCancel}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Status: Active')).toBeInTheDocument();
+    });
+
+    expect(document.querySelector('.user-detail__status--active')).not.toBeInTheDocument();
+  });
+
+  // NEXUS-54437: Delete moved off the read-only View page; UserDetail no
+  // longer accepts onDelete or canDelete, and never renders a Delete button.
+  describe('no delete affordance (NEXUS-54437)', () => {
+    it('renders without onDelete/canDelete props in read-only mode', async () => {
+      render(
+        <UserDetail
+          user={mockUser}
+          loading={false}
+          canEdit={false}
+            onCancel={mockOnCancel}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('User Information')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('button', { name: /^delete form$/i })).not.toBeInTheDocument();
+    });
+
+    it('renders without onDelete/canDelete props in edit mode', async () => {
+      render(
+        <UserDetail
+          user={mockUser}
+          loading={false}
+          canEdit={true}
+            onCancel={mockOnCancel}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Account Actions')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('button', { name: /^delete form$/i })).not.toBeInTheDocument();
+    });
   });
 
   it('hides reset token button when user lacks usertoken-user:delete permission', async () => {
@@ -624,16 +638,13 @@ describe('UserDetail', () => {
         user={mockUser}
         loading={false}
         canEdit={true}
-        canDelete={true}
-        onSave={mockOnSave}
-        onDelete={mockOnDelete}
         onCancel={mockOnCancel}
       />,
       { wrapper: TestWrapper }
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('user-form')).toBeInTheDocument();
+      expect(screen.getByText('Account Actions')).toBeInTheDocument();
     });
 
     // Reset Token button should NOT be visible

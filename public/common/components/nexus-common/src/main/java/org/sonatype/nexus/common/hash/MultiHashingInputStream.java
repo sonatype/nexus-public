@@ -27,8 +27,7 @@ import javax.annotation.Nonnull;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.HashingInputStream;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An {@link InputStream} that maintains multiple hashes and the number of bytes of data read from it.
@@ -44,8 +43,8 @@ public class MultiHashingInputStream
   private long count;
 
   public MultiHashingInputStream(final Iterable<HashAlgorithm> algorithms, final InputStream inputStream) {
-    super(checkNotNull(inputStream));
-    checkNotNull(algorithms);
+    super(requireNonNull(inputStream));
+    requireNonNull(algorithms);
     for (HashAlgorithm algorithm : algorithms) {
       hashers.put(algorithm, algorithm.function().newHasher());
     }

@@ -29,7 +29,7 @@ import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -52,8 +52,8 @@ public class MavenRestoreBlobStrategy
       final MavenPathParser mavenPathParser)
   {
     super(dryRunPrefix);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.mavenPathParser = checkNotNull(mavenPathParser);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.mavenPathParser = requireNonNull(mavenPathParser);
   }
 
   @Override

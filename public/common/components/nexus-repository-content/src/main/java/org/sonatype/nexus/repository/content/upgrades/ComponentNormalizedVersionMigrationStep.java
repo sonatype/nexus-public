@@ -18,21 +18,22 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Objects;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
+import org.sonatype.nexus.kv.upgrade.UpgradeNexusKeyValueStore;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTask;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static java.lang.String.format;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
+import static java.lang.String.format;
 
 /**
  * Migration step to populate the normalized_version column on the {format}_component tables
@@ -53,11 +54,11 @@ public class ComponentNormalizedVersionMigrationStep
       format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS %s VARCHAR;", TABLE_NAME, COLUMN_NAME);
 
   private final String ADD_INDEX_STATEMENT =
-      format("CREATE INDEX IF NOT EXISTS %s ON  %s (%s)", INDEX_NAME, TABLE_NAME, COLUMN_NAME);
+      format("CREATE INDEX IF NOT EXISTS %s ON %s (%s)", INDEX_NAME, TABLE_NAME, COLUMN_NAME);
 
   private final List<Format> formats;
 
-  private final GlobalKeyValueStore globalKeyValueStore;
+  private final UpgradeNexusKeyValueStore keyValueStore;
 
   private final TaskScheduler taskScheduler;
 
@@ -66,23 +67,26 @@ public class ComponentNormalizedVersionMigrationStep
   @Autowired
   public ComponentNormalizedVersionMigrationStep(
       final List<Format> formats,
-      final GlobalKeyValueStore globalKeyValueStore,
+      final UpgradeNexusKeyValueStore keyValueStore,
       final TaskScheduler taskScheduler,
       final UpgradeTaskScheduler startupScheduler)
   {
-    this.formats = formats;
-    this.globalKeyValueStore = globalKeyValueStore;
-    this.taskScheduler = taskScheduler;
-    this.startupScheduler = startupScheduler;
+    this.formats = requireNonNull(formats);
+    this.keyValueStore = requireNonNull(keyValueStore);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.startupScheduler = requireNonNull(startupScheduler);
   }
 
   @Override
   public Integer getChecksum() {
-    return Objects.hash(formats.stream()
+    int formatHashCode = Objects.hash(formats.stream()
         .map(Format::getValue)
         // Ordered so the hash is consistent
         .sorted()
         .toArray());
+
+    // 3.95 change hash code to trigger another run
+    return 31 * formatHashCode + 1;
   }
 
   @Override
@@ -125,7 +129,7 @@ public class ComponentNormalizedVersionMigrationStep
       log.info("adding missing column '{}' to {} format", COLUMN_NAME, formatName);
       alterStatement.execute(replace(ADD_COLUMN_STATEMENT, formatName));
 
-      if (!indexExists(connection, replace(INDEX_NAME, formatName))) {
+      if (!indexExists(connection, tableName, replace(INDEX_NAME, formatName))) {
         log.info("adding missing index '{}' to {} format", replace(INDEX_NAME, formatName), formatName);
         alterStatement.execute(replace(ADD_INDEX_STATEMENT, formatName));
       }
@@ -133,7 +137,7 @@ public class ComponentNormalizedVersionMigrationStep
   }
 
   private boolean isFormatNormalized(final Format format) {
-    return globalKeyValueStore
+    return keyValueStore
         .getKey(String.format(NormalizeComponentVersionTask.KEY_FORMAT, format.getValue()))
         .map(NexusKeyValue::getAsBoolean)
         .orElse(false);

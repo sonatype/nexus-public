@@ -205,7 +205,10 @@ Ext.define('NX.controller.User', {
    */
   showAuthenticateWindow: function (message, options, user) {
     var me = this,
-        username = user ? user.id : (NX.State.getUser().id || null),
+        // NX.State.getUser() is undefined for anonymous subjects; guard so anonymous-with-admin
+        // sessions do not crash the re-auth dialog with a NPE (NEXUS-47114).
+        currentUser = NX.State.getUser(),
+        username = user ? user.id : (currentUser ? currentUser.id : null),
         win;
 
     if (!me.getAuthenticate()) {

@@ -15,7 +15,11 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import {
+  EDITION_ID_STATE_KEY,
+  EDITION_ID_BY_SHORT_NAME,
+  ExtJS,
+} from '@sonatype/nexus-ui-plugin';
 
 export default   function givenExtJSState(
     values = {},
@@ -23,8 +27,14 @@ export default   function givenExtJSState(
     majorMinorVersion = '1.x.x',
     fullVersion = '1.x.x-snapshot'
 ) {
+  // Route-visibility checks read the stable editionId state key; caller-supplied values
+  // still win, so a test that wants an unresolved edition can pass `{editionId: undefined}`.
+  const resolvedValues = {
+    [EDITION_ID_STATE_KEY]: EDITION_ID_BY_SHORT_NAME[edition],
+    ...values,
+  };
   const getValueMock = jest.fn().mockImplementation((key) => {
-    return values[key];
+    return resolvedValues[key];
   });
 
   const stateMock = {

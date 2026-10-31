@@ -86,6 +86,37 @@ describe('getHeritageEquivalent', () => {
   it('strips leading slash', () => {
     expect(getHeritageEquivalent('/preview/admin/system/tasks')).toBe('admin/system/tasks');
   });
+
+  it('maps trash page to Classic browse/trash, not browse/browse:trash', () => {
+    // Without an explicit mapping the path falls through to the
+    // preview/browse/<repo> catch-all and produces "browse/browse:trash" —
+    // an extra "browse:" segment the Classic UI cannot resolve.
+    expect(getHeritageEquivalent('preview/browse/trash')).toBe('browse/trash');
+  });
+
+  it('preserves query string on the trash route', () => {
+    expect(getHeritageEquivalent('preview/browse/trash?sort=deletedOn:desc'))
+      .toBe('browse/trash?sort=deletedOn:desc');
+  });
+
+  it('maps recovery mode to the classic recovery route', () => {
+    expect(getHeritageEquivalent('preview/admin/support/recoverymode'))
+      .toBe('admin/support/recovery');
+  });
+
+  it('maps IQ Server Connected page with slash-separated path', () => {
+    expect(getHeritageEquivalent('preview/admin/iq/connected')).toBe('admin/iq/connected');
+  });
+
+  it('maps Hosted Repository Evaluation to Classic sonatype-lifecycle route', () => {
+    expect(getHeritageEquivalent('preview/admin/iq/hosted-repos-eval'))
+      .toBe('admin/iq/sonatype-lifecycle/hosted-repos-eval');
+  });
+
+  it('preserves query string when mapping Hosted Repository Evaluation', () => {
+    expect(getHeritageEquivalent('preview/admin/iq/hosted-repos-eval?configured=true'))
+      .toBe('admin/iq/sonatype-lifecycle/hosted-repos-eval?configured=true');
+  });
 });
 
 describe('heritageToPreviewPath', () => {
@@ -145,6 +176,13 @@ describe('heritageToPreviewPath', () => {
     expect(heritageToPreviewPath('admin/')).toBe('preview/settings');
   });
 
+  it('maps Classic Hosted Repository Evaluation to Preview route', () => {
+    expect(heritageToPreviewPath('admin/iq/sonatype-lifecycle/hosted-repos-eval'))
+      .toBe('preview/admin/iq/hosted-repos-eval');
+    expect(heritageToPreviewPath('admin/iq/sonatype-lifecycle/hosted-repos-eval?configured=true'))
+      .toBe('preview/admin/iq/hosted-repos-eval?configured=true');
+  });
+
   it('maps admin/security/atlassiancrowd to preview crowd route', () => {
     expect(heritageToPreviewPath('admin/security/atlassiancrowd')).toBe('preview/admin/security/crowd');
   });
@@ -193,11 +231,25 @@ describe('heritageToPreviewPath', () => {
       .toBe('preview/admin/support/metrichealth/metrics');
   });
 
+  it('maps the classic recovery route to the preview recovery mode page', () => {
+    expect(heritageToPreviewPath('admin/support/recovery'))
+      .toBe('preview/admin/support/recoverymode');
+  });
+
   it('maps an unrecognised path via else branch', () => {
     expect(heritageToPreviewPath('some/other')).toBe('preview/some/other');
   });
 
   it('preserves query string', () => {
     expect(heritageToPreviewPath('browse/welcome?tab=info')).toBe('preview/browse/welcome?tab=info');
+  });
+
+  it('maps browse/trash to preview/browse/trash (used by Cloud Classic→Preview switch)', () => {
+    expect(heritageToPreviewPath('browse/trash')).toBe('preview/browse/trash');
+  });
+
+  it('preserves query string on browse/trash', () => {
+    expect(heritageToPreviewPath('browse/trash?sort=deletedOn:desc'))
+      .toBe('preview/browse/trash?sort=deletedOn:desc');
   });
 });

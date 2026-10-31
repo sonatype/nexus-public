@@ -23,16 +23,18 @@ import {
   EmptyState,
   HelpSection,
   useToast,
-  ConfirmDialog,
   type TableColumn,
   type FilterSection,
 } from '../../../../shared';
+import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
 import { useTasksApi } from './useTasksApi';
+import { usePolling, POLL_INTERVAL_MS, POST_ACTION_POLL_COUNT } from './usePolling';
 import {
   Task,
   TasksListProps,
   TaskStatus,
   formatDate,
+  isActiveStatus,
 } from './types';
 
 import './TasksList.scss';
@@ -98,7 +100,7 @@ function getTaskCategory(typeId: string): string {
 }
 
 export function TasksList({ onSelect, onCreate }: TasksListProps) {
-  const { fetchTasks, runTask, stopTask, deleteTask, error: apiError, setError } = useTasksApi();
+  const { fetchTasks, runTask, stopTask, deleteTask, error: apiError } = useTasksApi();
   const toast = useToast();
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -111,9 +113,14 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  // Post-action poll window (NEXUS-53525): keeps the list refreshing for a few
+  // ticks after Run/Stop even when no row is RUNNING yet (bridges WAITING→RUNNING).
+  const [pollsLeft, setPollsLeft] = useState(0);
 
   const canDelete = ExtJS.checkPermission('nexus:tasks:delete');
   const canRun = ExtJS.checkPermission('nexus:tasks:start');
+  // Stopping requires nexus:tasks:stop, distinct from the start permission (matches Classic).
+  const canStop = ExtJS.checkPermission('nexus:tasks:stop');
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -129,6 +136,29 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
     };
     loadTasks();
   }, [fetchTasks]);
+
+  // Live status polling (NEXUS-53525): refresh the list so Status / Last Run /
+  // Last Result reflect server state without a manual reload. Poll only while a
+  // visible row is active (RUNNING/BLOCKED) or inside the post-action window —
+  // once everything is stable/terminal the list goes quiet.
+  const hasActiveTask = useMemo(() => tasks.some((t) => isActiveStatus(t.status)), [tasks]);
+  const pollingEnabled = hasActiveTask || pollsLeft > 0;
+
+  const pollTasks = useCallback(async () => {
+    const data = await fetchTasks();
+    setTasks(data);
+    // While anything is active, isActiveStatus keeps polling; otherwise burn down
+    // the post-action window so an all-stable list stops polling.
+    setPollsLeft((remaining) => (data.some((t) => isActiveStatus(t.status)) ? 0 : Math.max(0, remaining - 1)));
+  }, [fetchTasks]);
+
+  // pollOnEnable is false: the initial load above already fetched once and
+  // Run/Stop trigger their own immediate pollNow(), so there is no duplicate fetch.
+  const { pollNow: pollTasksNow } = usePolling(pollTasks, {
+    intervalMs: POLL_INTERVAL_MS,
+    enabled: pollingEnabled,
+    pollOnEnable: false,
+  });
 
   const { statusCounts, typeCounts } = useMemo(() => {
     const sc = new Map<string, number>();
@@ -176,13 +206,13 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
         case 'status': cmp = a.status.localeCompare(b.status); break;
         case 'schedule': cmp = (a.schedule || '').localeCompare(b.schedule || ''); break;
         case 'nextRun':
-          if (!a.nextRun && !b.nextRun) cmp = 0;
+          if (!(a.nextRun || b.nextRun)) cmp = 0;
           else if (!a.nextRun) cmp = 1;
           else if (!b.nextRun) cmp = -1;
           else cmp = new Date(a.nextRun).getTime() - new Date(b.nextRun).getTime();
           break;
         case 'lastRun':
-          if (!a.lastRun && !b.lastRun) cmp = 0;
+          if (!(a.lastRun || b.lastRun)) cmp = 0;
           else if (!a.lastRun) cmp = 1;
           else if (!b.lastRun) cmp = -1;
           else cmp = new Date(a.lastRun).getTime() - new Date(b.lastRun).getTime();
@@ -219,20 +249,24 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
     onSelect(task.id);
   }, [onSelect]);
 
+  // Run/Stop reconciled with polling (NEXUS-53525): open the post-action window
+  // and fire a single immediate refresh poll, then let the interval carry the row
+  // through WAITING → RUNNING → terminal. Replaces the old one-shot refetch, so
+  // there is never a duplicate fetch racing the poll.
   const handleRun = useCallback(async (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
     setActionLoading(task.id);
     try {
       await runTask(task.id);
       toast.success(`Task "${task.name}" started`);
-      const data = await fetchTasks();
-      setTasks(data);
+      setPollsLeft(POST_ACTION_POLL_COUNT);
+      pollTasksNow();
     } catch {
       toast.error(`Failed to run task "${task.name}"`);
     } finally {
       setActionLoading(null);
     }
-  }, [runTask, fetchTasks, toast]);
+  }, [runTask, toast, pollTasksNow]);
 
   const handleStop = useCallback(async (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
@@ -240,14 +274,14 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
     try {
       await stopTask(task.id);
       toast.success(`Task "${task.name}" stopped`);
-      const data = await fetchTasks();
-      setTasks(data);
+      setPollsLeft(POST_ACTION_POLL_COUNT);
+      pollTasksNow();
     } catch {
       toast.error(`Failed to stop task "${task.name}"`);
     } finally {
       setActionLoading(null);
     }
-  }, [stopTask, fetchTasks, toast]);
+  }, [stopTask, toast, pollTasksNow]);
 
   const handleDeleteClick = useCallback((e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
@@ -257,6 +291,7 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!taskToDelete) return;
+    setActionLoading(taskToDelete.id);
     try {
       await deleteTask(taskToDelete.id);
       toast.success(`Task "${taskToDelete.name}" deleted`);
@@ -266,6 +301,8 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
     } catch {
       toast.error(`Failed to delete task "${taskToDelete.name}"`);
       setDeleteDialogOpen(false);
+    } finally {
+      setActionLoading(null);
     }
   }, [taskToDelete, deleteTask, toast]);
 
@@ -388,7 +425,7 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
               <Play size={14} />
             </button>
           )}
-          {canRun && task.stoppable && task.status === 'RUNNING' && (
+          {canStop && task.stoppable && task.status === 'RUNNING' && (
             <button
               type="button"
               className="tasks-list__action-btn tasks-list__action-btn--stop"
@@ -416,7 +453,7 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
       width: '90px',
       align: 'right',
     },
-  ], [canRun, canDelete, actionLoading, handleRun, handleStop, handleDeleteClick]);
+  ], [canRun, canStop, canDelete, actionLoading, handleRun, handleStop, handleDeleteClick]);
 
   const emptyState = useMemo(() => {
     const hasFilters = searchQuery || statusFilter.length > 0 || typeFilter.length > 0;
@@ -532,7 +569,7 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
           />
         )}
 
-        {!loading && !apiError && filteredTasks.length > 0 && (
+        {!(loading || apiError ) && filteredTasks.length > 0 && (
           <Box className="tasks-list__summary">
             <Text size="2" color="gray">
               Showing <Text as="span" weight="medium">{filteredTasks.length}</Text> of <Text as="span" weight="medium">{tasks.length}</Text> tasks
@@ -551,41 +588,36 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
         />
       </Box>
 
-      <ConfirmDialog
+      <DeleteConfirmationModal
         open={deleteDialogOpen}
-        testId="delete-task-dialog"
-        onOpenChange={setDeleteDialogOpen}
-        title="Delete Task?"
-        message="This action cannot be undone. This scheduled task will no longer run automatically."
-        entityName={taskToDelete?.name}
-        confirmLabel="Delete"
-        variant="danger"
+        onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDeleteConfirm}
+        entityName={taskToDelete?.name}
+        entityType="task"
+        loading={actionLoading === taskToDelete?.id}
       >
         {taskToDelete && (
-          <Box mt="3">
-            <Flex direction="column" gap="1">
-              <Flex gap="2">
-                <Text size="2" color="gray">Type:</Text>
-                <Text size="2">{taskToDelete.typeName}</Text>
-              </Flex>
-              <Flex gap="2">
-                <Text size="2" color="gray">Schedule:</Text>
-                <Text size="2">{SCHEDULE_LABELS[taskToDelete.schedule] || taskToDelete.schedule || 'None'}</Text>
-              </Flex>
-              {taskToDelete.lastRun && (
-                <Flex gap="2">
-                  <Text size="2" color="gray">Last Run:</Text>
-                  <Text size="2">
-                    {formatDate(taskToDelete.lastRun)}
-                    {taskToDelete.lastRunResult && ` (${taskToDelete.lastRunResult})`}
-                  </Text>
-                </Flex>
-              )}
+          <Flex direction="column" gap="1">
+            <Flex gap="2">
+              <Text size="2" color="gray">Type:</Text>
+              <Text size="2">{taskToDelete.typeName}</Text>
             </Flex>
-          </Box>
+            <Flex gap="2">
+              <Text size="2" color="gray">Schedule:</Text>
+              <Text size="2">{SCHEDULE_LABELS[taskToDelete.schedule] || taskToDelete.schedule || 'None'}</Text>
+            </Flex>
+            {taskToDelete.lastRun && (
+              <Flex gap="2">
+                <Text size="2" color="gray">Last Run:</Text>
+                <Text size="2">
+                  {formatDate(taskToDelete.lastRun)}
+                  {taskToDelete.lastRunResult && ` (${taskToDelete.lastRunResult})`}
+                </Text>
+              </Flex>
+            )}
+          </Flex>
         )}
-      </ConfirmDialog>
+      </DeleteConfirmationModal>
     </Flex>
   );
 }

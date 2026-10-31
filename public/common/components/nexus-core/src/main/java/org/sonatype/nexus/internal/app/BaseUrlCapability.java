@@ -13,17 +13,20 @@
 package org.sonatype.nexus.internal.app;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.common.app.BaseUrlManager;
+import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.repository.cache.BaseUrlChangedEvent;
 
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Base-URL capability.
@@ -37,9 +40,12 @@ public class BaseUrlCapability
 {
   private final BaseUrlManager baseUrlManager;
 
+  private final EventManager eventManager;
+
   @Autowired
-  public BaseUrlCapability(final BaseUrlManager baseUrlManager) {
-    this.baseUrlManager = checkNotNull(baseUrlManager);
+  public BaseUrlCapability(final BaseUrlManager baseUrlManager, final EventManager eventManager) {
+    this.baseUrlManager = requireNonNull(baseUrlManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override
@@ -49,17 +55,33 @@ public class BaseUrlCapability
 
   @Override
   protected void onActivate(final BaseUrlCapabilityConfiguration config) throws Exception {
+    String oldUrl = baseUrlManager.getUrl();
     baseUrlManager.setUrl(config.getUrl());
+    maybePostUrlChangedEvent(oldUrl, config.getUrl());
   }
 
   @Override
   protected void onPassivate(final BaseUrlCapabilityConfiguration config) throws Exception {
+    String oldUrl = baseUrlManager.getUrl();
     baseUrlManager.setUrl(null);
+    maybePostUrlChangedEvent(oldUrl, null);
   }
 
   @Override
-  protected void onUpdate(BaseUrlCapabilityConfiguration config) throws Exception {
+  protected void onUpdate(final BaseUrlCapabilityConfiguration config) throws Exception {
     super.onUpdate(config);
+    String oldUrl = baseUrlManager.getUrl();
     baseUrlManager.setUrl(config.getUrl());
+    maybePostUrlChangedEvent(oldUrl, config.getUrl());
+  }
+
+  /**
+   * Posts a {@link BaseUrlChangedEvent} when the effective URL has changed.
+   * No event is posted when old and new are equal (normalizing {@code null} == {@code null}).
+   */
+  private void maybePostUrlChangedEvent(final String oldUrl, final String newUrl) {
+    if (!Objects.equals(oldUrl, newUrl)) {
+      eventManager.post(new BaseUrlChangedEvent(oldUrl, newUrl));
+    }
   }
 }

@@ -16,9 +16,11 @@ import java.util.Map;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.repository.capability.GlobalRepositorySettings.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 /**
  * {@link StorageSettingsCapability} configuration.
@@ -30,26 +32,31 @@ public class StorageSettingsCapabilityConfiguration
 {
   public static final String LAST_DOWNLOADED_INTERVAL = "lastDownloadedInterval";
 
-  @NotBlank
-  private String lastDownloadedInterval;
+  public static final int MINIMUM_LAST_DOWNLOADED_INTERVAL_HOURS = 1;
+
+  @NotNull
+  @Min(MINIMUM_LAST_DOWNLOADED_INTERVAL_HOURS)
+  private Integer lastDownloadedInterval;
 
   public StorageSettingsCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
-    this.lastDownloadedInterval = properties.get(LAST_DOWNLOADED_INTERVAL);
+    requireNonNull(properties);
+    this.lastDownloadedInterval = parseInteger(
+        properties.get(LAST_DOWNLOADED_INTERVAL),
+        (int) DEFAULT_LAST_DOWNLOADED_INTERVAL.toHours());
   }
 
-  public String getLastDownloadedInterval() {
+  public Integer getLastDownloadedInterval() {
     return lastDownloadedInterval;
   }
 
-  public void setLastDownloadedInterval(final String lastDownloadedInterval) {
+  public void setLastDownloadedInterval(final Integer lastDownloadedInterval) {
     this.lastDownloadedInterval = lastDownloadedInterval;
   }
 
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
-        "lastDownloadedInterval='" + lastDownloadedInterval + '\'' +
+        "lastDownloadedInterval=" + lastDownloadedInterval +
         '}';
   }
 }

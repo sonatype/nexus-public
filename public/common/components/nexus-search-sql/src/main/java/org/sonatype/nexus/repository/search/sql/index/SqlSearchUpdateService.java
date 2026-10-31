@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.types.GroupType;
 
 import org.springframework.context.annotation.Primary;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import org.springframework.stereotype.Component;
 
@@ -38,7 +38,7 @@ public class SqlSearchUpdateService
 
   @Autowired
   public SqlSearchUpdateService(final SearchStore searchTableStore) {
-    this.searchTableStore = checkNotNull(searchTableStore);
+    this.searchTableStore = requireNonNull(searchTableStore);
   }
 
   @Override

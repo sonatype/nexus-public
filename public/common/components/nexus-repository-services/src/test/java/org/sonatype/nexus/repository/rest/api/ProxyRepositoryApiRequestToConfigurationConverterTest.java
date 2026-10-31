@@ -68,7 +68,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     String expectedBearerToken = "test-bearer-token-12345";
     String expectedRemoteUrl = "https://registry.npmjs.org";
 
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     when(request.getStorage()).thenReturn(storage);
 
     ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);
@@ -102,7 +102,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     String expectedPassword = "test-password";
     String expectedRemoteUrl = "https://registry.npmjs.org";
 
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     when(request.getStorage()).thenReturn(storage);
 
     ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);
@@ -140,7 +140,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     String expectedNtlmDomain = "ntlm-domain";
     String expectedRemoteUrl = "https://registry.npmjs.org";
 
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     when(request.getStorage()).thenReturn(storage);
 
     ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);
@@ -176,7 +176,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     // Arrange
     String expectedRemoteUrl = "https://registry.npmjs.org";
 
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     when(request.getStorage()).thenReturn(storage);
 
     ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);
@@ -212,7 +212,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     // Arrange
     String expectedRemoteUrl = "https://registry.npmjs.org";
 
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     when(request.getStorage()).thenReturn(storage);
 
     ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);

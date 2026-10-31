@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.view.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A {@link Matcher} that examines the {@link Request#getPath() request path} and attempts to parse it using the
@@ -48,13 +48,13 @@ public class TokenMatcher
   private final String pattern;
 
   public TokenMatcher(final String pattern) {
-    this.pattern = checkNotNull(pattern);
+    this.pattern = requireNonNull(pattern);
     this.parser = new TokenParser(pattern);
   }
 
   @Override
   public boolean matches(final Context context) {
-    checkNotNull(context);
+    requireNonNull(context);
 
     Optional<State> state = match(context.getRequest().getPath());
 

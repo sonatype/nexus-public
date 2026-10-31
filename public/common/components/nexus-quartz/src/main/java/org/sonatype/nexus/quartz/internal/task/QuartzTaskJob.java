@@ -47,8 +47,8 @@ import org.quartz.UnableToInterruptJobException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.configurationOf;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobData;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
@@ -99,15 +99,15 @@ public class QuartzTaskJob
       final TaskFactory taskFactory,
       final BaseUrlManager baseUrlManager)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.scheduler = checkNotNull(scheduler);
-    this.taskFactory = checkNotNull(taskFactory);
-    this.baseUrlManager = checkNotNull(baseUrlManager);
+    this.eventManager = requireNonNull(eventManager);
+    this.scheduler = requireNonNull(scheduler);
+    this.taskFactory = requireNonNull(taskFactory);
+    this.baseUrlManager = requireNonNull(baseUrlManager);
   }
 
   @Override
   public void execute(final JobExecutionContext context) throws JobExecutionException {
-    this.context = checkNotNull(context);
+    this.context = requireNonNull(context);
     try {
       doExecute();
     }
@@ -288,6 +288,9 @@ public class QuartzTaskJob
   /**
    * Determines if another task truly blocks this task.
    * For blob store tasks, only block if working on the SAME blob store.
+   * For per-repository tasks (e.g. healthcheck) that declare no blob store, only block if
+   * working on the SAME repository, so tasks for different repositories run concurrently
+   * instead of serializing globally and flooding the audit log with blocked events (NEXUS-51827).
    * For other tasks, keep existing behavior (block all same-type tasks).
    */
   private boolean isTrulyBlocking(final TaskInfo otherTask) {
@@ -295,6 +298,11 @@ public class QuartzTaskJob
     if (blobStoreName != null) {
       String otherBlobStoreName = otherTask.getConfiguration().getString("blobstoreName");
       return blobStoreName.equals(otherBlobStoreName);
+    }
+    String repositoryName = task.taskConfiguration().getString("repositoryName");
+    if (repositoryName != null) {
+      String otherRepositoryName = otherTask.getConfiguration().getString("repositoryName");
+      return repositoryName.equals(otherRepositoryName);
     }
     return true;
   }

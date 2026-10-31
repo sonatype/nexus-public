@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.fluent.constraints.FluentQueryConstraint;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptyList;
 
 /**
@@ -43,16 +43,16 @@ public class FluentComponentQueryImpl
   private final List<FluentQueryConstraint> constraints;
 
   FluentComponentQueryImpl(final FluentComponentsImpl components, final List<FluentQueryConstraint> constraints) {
-    this.components = checkNotNull(components);
-    this.constraints = checkNotNull(constraints);
+    this.components = requireNonNull(components);
+    this.constraints = requireNonNull(constraints);
     this.filter = null;
     this.filterParams = null;
     this.kind = null;
   }
 
   FluentComponentQueryImpl(final FluentComponentsImpl components, final String kind) {
-    this.components = checkNotNull(components);
-    this.kind = checkNotNull(kind);
+    this.components = requireNonNull(components);
+    this.kind = requireNonNull(kind);
     this.filter = null;
     this.filterParams = null;
     this.constraints = emptyList();
@@ -63,10 +63,10 @@ public class FluentComponentQueryImpl
       final String filter,
       final Map<String, Object> filterParams)
   {
-    this.components = checkNotNull(components);
+    this.components = requireNonNull(components);
     this.kind = null;
-    this.filter = checkNotNull(filter);
-    this.filterParams = checkNotNull(filterParams);
+    this.filter = requireNonNull(filter);
+    this.filterParams = requireNonNull(filterParams);
     this.constraints = emptyList();
   }
 

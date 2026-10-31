@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,8 +56,8 @@ public class HttpAuthenticationSecretEncoder
 
   @Autowired
   public HttpAuthenticationSecretEncoder(final SecretsService secretsService, final KeyValueStore keyValueStore) {
-    this.secretsService = checkNotNull(secretsService);
-    this.keyValueStore = checkNotNull(keyValueStore);
+    this.secretsService = requireNonNull(secretsService);
+    this.keyValueStore = requireNonNull(keyValueStore);
   }
 
   private boolean isMigrationStarted() {

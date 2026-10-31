@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.security.config.MutableSecurityContributor;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.security.RepositoryAdminPrivilegeDescriptor.id;
 import static org.sonatype.nexus.repository.security.RepositoryAdminPrivilegeDescriptor.privilege;
 import static org.sonatype.nexus.security.BreadActions.ADD;
@@ -58,7 +58,7 @@ public class RepositoryAdminSecurityContributor
    * Add security configuration for given repository.
    */
   public void add(final Repository repository) {
-    checkNotNull(repository);
+    requireNonNull(repository);
     final String format = repository.getFormat().getValue();
     final String name = repository.getName();
     apply((model, configurationManager) -> {
@@ -75,7 +75,7 @@ public class RepositoryAdminSecurityContributor
    * Remove security configuration for given repository.
    */
   public void remove(final Repository repository) {
-    checkNotNull(repository);
+    requireNonNull(repository);
     final String format = repository.getFormat().getValue();
     final String name = repository.getName();
     final List<String> privilegeIds = Arrays.asList(

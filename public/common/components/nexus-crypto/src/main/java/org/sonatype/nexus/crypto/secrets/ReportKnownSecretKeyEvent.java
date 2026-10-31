@@ -17,7 +17,7 @@ import org.sonatype.nexus.common.event.EventWithSource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An event used to indicate that nodes should report whether the specified
@@ -30,7 +30,7 @@ public class ReportKnownSecretKeyEvent
 
   @JsonCreator
   public ReportKnownSecretKeyEvent(@JsonProperty("keyId") final String keyId) {
-    this.keyId = checkNotNull(keyId);
+    this.keyId = requireNonNull(keyId);
   }
 
   public String getKeyId() {

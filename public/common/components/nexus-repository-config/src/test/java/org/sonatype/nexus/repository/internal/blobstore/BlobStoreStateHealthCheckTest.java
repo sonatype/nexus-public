@@ -28,14 +28,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class BlobStoreStateHealthCheckTest
@@ -151,6 +152,22 @@ public class BlobStoreStateHealthCheckTest
 
     Result result = healthCheck.check();
     assertTrue(result.isHealthy());
+  }
+
+  @Test
+  public void shouldBe_unhealthy_whenBlobStoreNameContainsHtmlMetachars() {
+    when(blobStore.isStarted()).thenReturn(true);
+    when(blobStore.isWritable()).thenReturn(false);
+    when(blobStore.isStorageAvailable()).thenReturn(true);
+    when(blobStoreConfiguration.getType()).thenReturn(FileBlobStore.TYPE);
+    when(blobStoreConfiguration.getName()).thenReturn("poc<img src=x onerror=alert(1)>");
+
+    Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+    String message = result.getMessage();
+    assertFalse("Raw '<' must not appear in health-check message", message.contains("<img"));
+    assertFalse("Raw '>' must not appear in health-check message", message.contains("onerror=alert(1)>"));
+    assertTrue("HTML-escaped name should appear in message", message.contains("&lt;img src=x onerror=alert(1)&gt;"));
   }
 
   @Test

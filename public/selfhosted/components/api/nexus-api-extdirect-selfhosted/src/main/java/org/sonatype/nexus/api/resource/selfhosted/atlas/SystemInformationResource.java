@@ -28,7 +28,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.api.resource.selfhosted.atlas.SystemInformationResource.RESOURCE_URI;
 
 /**
@@ -47,7 +47,7 @@ public class SystemInformationResource
 
   @Autowired
   public SystemInformationResource(final SystemInformationGenerator systemInformationGenerator) {
-    this.systemInformationGenerator = checkNotNull(systemInformationGenerator);
+    this.systemInformationGenerator = requireNonNull(systemInformationGenerator);
   }
 
   @GET

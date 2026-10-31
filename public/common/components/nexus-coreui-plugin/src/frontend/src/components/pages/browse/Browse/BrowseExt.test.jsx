@@ -33,7 +33,7 @@ describe("BrowseExt", () => {
     givenBundleActiveStates();
 
     jest.spyOn(ExtJS, 'useUser').mockReturnValue({ administrator: true });
-    jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(true);
+    jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(true);
 
     const date = new Date('2024-12-02');
     jest.useFakeTimers().setSystemTime(date);

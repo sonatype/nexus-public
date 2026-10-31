@@ -28,8 +28,10 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.deser.std.MapDeserializer;
+import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
 
 import static com.fasterxml.jackson.core.JsonToken.END_ARRAY;
 import static com.fasterxml.jackson.core.JsonToken.END_OBJECT;
@@ -115,6 +117,36 @@ public class StreamingObjectMapper
     // NO OP - let implementer have a say after
   }
 
+  /**
+   * Called by {@link CustomStreamingObjectMapper#_serializerProvider} when no cached provider
+   * exists yet for this thread. Subclasses may store the newly allocated provider for reuse.
+   * The default implementation is a no-op.
+   * <p>
+   * Override in subclasses that maintain a per-thread provider cache (e.g. for shared singletons).
+   */
+  protected void onSerializerProviderCreated(final DefaultSerializerProvider provider) {
+    // NO OP
+  }
+
+  /**
+   * Returns the per-thread cached {@link DefaultSerializerProvider}, or {@code null} if none.
+   * Return {@code null} to let Jackson allocate a fresh one (which will then be passed to
+   * {@link #onSerializerProviderCreated}).
+   * <p>
+   * Override in subclasses that maintain a per-thread provider cache (e.g. for shared singletons).
+   */
+  protected DefaultSerializerProvider threadLocalSerializerProvider() {
+    return null;
+  }
+
+  /**
+   * Called in {@code finally} at the end of each {@link #readAndWrite} call.
+   * Override to clean up per-request state (e.g. remove ThreadLocal entries).
+   */
+  protected void onReadAndWriteComplete() {
+    // NO OP
+  }
+
   private class CustomStreamingObjectMapper
       extends ObjectMapper
   {
@@ -124,6 +156,17 @@ public class StreamingObjectMapper
 
     private CustomStreamingObjectMapper() {
       this.jsonFactory = new JsonFactory(this);
+    }
+
+    @Override
+    protected DefaultSerializerProvider _serializerProvider(final SerializationConfig config) {
+      DefaultSerializerProvider cached = threadLocalSerializerProvider();
+      if (cached != null) {
+        return cached;
+      }
+      DefaultSerializerProvider provider = super._serializerProvider(config);
+      onSerializerProviderCreated(provider);
+      return provider;
     }
 
     private void readAndWrite(final InputStream input, final OutputStream output) throws IOException {
@@ -153,6 +196,9 @@ public class StreamingObjectMapper
         if (config.isEnabled(FAIL_ON_TRAILING_TOKENS)) {
           _verifyNoTrailingTokens(parser, context, valueType);
         }
+      }
+      finally {
+        onReadAndWriteComplete();
       }
     }
   }

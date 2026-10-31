@@ -235,14 +235,20 @@ describe('SettingsForm', () => {
 
   it('shows unsaved changes message when not pristine', () => {
     render(<SettingsForm {...defaultProps} pristine={false} />);
-    
-    expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+
+    // Indicator is always present in the DOM so the action bar reserves the same width pristine ↔ dirty; when dirty it's visible.
+    const indicator = screen.getByText('Unsaved changes');
+    expect(indicator).toBeInTheDocument();
+    expect(indicator).toHaveAttribute('data-pristine', 'false');
   });
 
   it('hides unsaved changes message when noDirtyTracking is true', () => {
     render(<SettingsForm {...defaultProps} pristine={false} noDirtyTracking />);
-    
-    expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument();
+
+    // The indicator is rendered (reserving its slot) but visually hidden via data-pristine="true".
+    const indicator = screen.getByText('Unsaved changes');
+    expect(indicator).toBeInTheDocument();
+    expect(indicator).toHaveAttribute('data-pristine', 'true');
   });
 
   it('hides actions when showActions is false', () => {

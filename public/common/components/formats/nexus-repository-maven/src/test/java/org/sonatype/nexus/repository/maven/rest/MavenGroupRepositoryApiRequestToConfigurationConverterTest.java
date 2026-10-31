@@ -59,7 +59,7 @@ public class MavenGroupRepositoryApiRequestToConfigurationConverterTest
   }
 
   private MavenGroupRepositoryApiRequest createRequest() {
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     GroupAttributes group = new GroupAttributes(Arrays.asList("maven-hosted", "maven-central"));
 
     return new MavenGroupRepositoryApiRequest(

@@ -20,13 +20,11 @@ import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public abstract class CommunityOnboardingItem
     implements OnboardingItem
 {
-  private final String COMMUNITY = "COMMUNITY";
-
   private final String EULA_KEY = "nexus.community.eula.accepted";
 
   protected final ApplicationVersion applicationVersion;
@@ -38,13 +36,13 @@ public abstract class CommunityOnboardingItem
       final ApplicationVersion applicationVersion,
       final GlobalKeyValueStore globalKeyValueStore)
   {
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.globalKeyValueStore = requireNonNull(globalKeyValueStore);
   }
 
   @Override
   public boolean applies() {
-    boolean isCommunity = applicationVersion.getEdition().equalsIgnoreCase(COMMUNITY);
+    boolean isCommunity = applicationVersion.isCommunityEdition();
     boolean accepted = false;
 
     Optional<NexusKeyValue> eulaStatusOptional = globalKeyValueStore.getKey(EULA_KEY);

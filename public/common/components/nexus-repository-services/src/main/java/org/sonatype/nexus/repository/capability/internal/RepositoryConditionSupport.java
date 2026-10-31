@@ -29,8 +29,8 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support class for repository conditions.
@@ -58,8 +58,8 @@ public abstract class RepositoryConditionSupport
       final Supplier<String> repositoryName)
   {
     super(eventManager, false);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.repositoryName = checkNotNull(repositoryName);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.repositoryName = requireNonNull(repositoryName);
     bindLock = new ReentrantReadWriteLock();
   }
 

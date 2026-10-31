@@ -14,7 +14,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Save, Trash2, Plus } from 'lucide-react';
+import { Save, } from 'lucide-react';
 import { SettingsButton } from '../SettingsButton';
 
 describe('SettingsButton', () => {

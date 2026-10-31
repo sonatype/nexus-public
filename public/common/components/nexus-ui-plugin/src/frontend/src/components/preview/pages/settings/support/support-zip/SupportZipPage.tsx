@@ -69,7 +69,7 @@ export function SupportZipPage() {
       setResponse(null);
       const result = await createSupportZip(params);
       setResponse(result);
-    } catch (err) {
+    } catch (_err) {
       // Error is handled by the hook
     }
   }, [params, createSupportZip, setError]);

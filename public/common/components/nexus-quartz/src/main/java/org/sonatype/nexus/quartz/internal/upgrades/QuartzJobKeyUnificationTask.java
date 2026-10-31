@@ -38,7 +38,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Unifies Task Configuration ID with Quartz Job Key for optimal task lookup performance.
@@ -67,9 +67,9 @@ public class QuartzJobKeyUnificationTask
       @Value("${nexus.quartz.jobkey.unification.check.interval:30s}") final Duration checkInterval)
   {
     super(heartbeatManager);
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.waitTimeout = checkNotNull(waitTimeout);
-    this.checkInterval = checkNotNull(checkInterval);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.waitTimeout = requireNonNull(waitTimeout);
+    this.checkInterval = requireNonNull(checkInterval);
   }
 
   @Override

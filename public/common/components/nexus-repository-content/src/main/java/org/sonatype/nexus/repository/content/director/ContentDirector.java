@@ -65,7 +65,8 @@ public interface ContentDirector
     FluentComponentBuilder destComponentBuilder = content.components()
         .name(source.name())
         .namespace(source.namespace())
-        .version(source.version());
+        .version(source.version())
+        .kind(source.kind());
 
     source.attributes().forEach(attribute -> destComponentBuilder.attributes(attribute.getKey(), attribute.getValue()));
 

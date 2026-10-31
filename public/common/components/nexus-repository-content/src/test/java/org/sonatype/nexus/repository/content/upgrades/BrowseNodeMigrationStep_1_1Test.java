@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 import org.sonatype.nexus.testdb.DatabaseTest;
+import org.sonatype.nexus.upgrade.datastore.UpgradeContext;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +55,7 @@ class BrowseNodeMigrationStep_1_1Test
   private Format fakeFormat;
 
   @Mock
-  private RebuildBrowseNodesManager rebuildBrowseNodesManager;
+  private UpgradeContext upgradeContext;
 
   private BrowseNodeMigrationStep_1_1 upgradeStep;
 
@@ -64,7 +65,7 @@ class BrowseNodeMigrationStep_1_1Test
   void setup() {
     sessionRule.register(TestBrowseNodeDAO.class);
     when(fakeFormat.getValue()).thenReturn("test");
-    upgradeStep = new BrowseNodeMigrationStep_1_1(Collections.singletonList(fakeFormat), rebuildBrowseNodesManager);
+    upgradeStep = new BrowseNodeMigrationStep_1_1(Collections.singletonList(fakeFormat), upgradeContext);
     store = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME);
   }
 
@@ -72,7 +73,7 @@ class BrowseNodeMigrationStep_1_1Test
   void testUnknownFormat() throws Exception {
     when(fakeFormat.getValue()).thenReturn("foo");
     BrowseNodeMigrationStep_1_1 upgradeStep =
-        new BrowseNodeMigrationStep_1_1(Collections.singletonList(fakeFormat), rebuildBrowseNodesManager);
+        new BrowseNodeMigrationStep_1_1(Collections.singletonList(fakeFormat), upgradeContext);
 
     try (Connection conn = store.openConnection()) {
       upgradeStep.migrate(conn);
@@ -95,7 +96,7 @@ class BrowseNodeMigrationStep_1_1Test
 
     assertThat(sessionRule.table("test_browse_node")).isEmpty();
 
-    verify(rebuildBrowseNodesManager).setRebuildOnSart(true);
+    verify(upgradeContext).setFlag(RebuildBrowseNodesManager.REBUILD_BROWSE_NODES_ON_START);
   }
 
   private void insert(

@@ -29,8 +29,8 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.view.ViewUtils.copyLocalContextAttributes;
 
 /**
@@ -54,8 +54,8 @@ public class Context
       final Repository repository,
       final Request request)
   {
-    this.repository = checkNotNull(repository);
-    this.request = checkNotNull(request);
+    this.repository = requireNonNull(repository);
+    this.request = requireNonNull(request);
   }
 
   public void setAttribute(String key, Object value) {
@@ -107,7 +107,7 @@ public class Context
    * Add an additional handler to the context, immediately after the current handler.
    */
   public void insertHandler(final Handler handler) {
-    checkNotNull(handler);
+    requireNonNull(handler);
     // Insert the handler so that the next proceed() call will encounter it
     handlers.add(handler);
     handlers.previous();
@@ -118,7 +118,7 @@ public class Context
    * request instance with a payload we can read multiple times.
    */
   public Context replayable() throws IOException {
-    Payload payload = checkNotNull(request.getPayload());
+    Payload payload = requireNonNull(request.getPayload());
     try (InputStream in = payload.openInputStream()) {
       byte[] content = IOUtils.toByteArray(in);
       Context replayableContext = new Context(repository,
@@ -179,7 +179,7 @@ public class Context
    */
   @Nonnull
   Response start(final Route route) throws Exception {
-    checkNotNull(route);
+    requireNonNull(route);
     checkState(handlers == null, "Already started");
     log.debug("Starting: {}", route);
     // Copy the handler list to allow modification

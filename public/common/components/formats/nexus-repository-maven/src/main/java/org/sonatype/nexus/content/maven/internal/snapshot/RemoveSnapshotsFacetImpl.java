@@ -40,7 +40,7 @@ import org.sonatype.nexus.repository.types.GroupType;
 import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.DateTime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -64,7 +64,7 @@ public class RemoveSnapshotsFacetImpl
   public RemoveSnapshotsFacetImpl(
       @Qualifier(GroupType.NAME) final Type groupType)
   {
-    this.groupType = checkNotNull(groupType);
+    this.groupType = requireNonNull(groupType);
   }
 
   @Override

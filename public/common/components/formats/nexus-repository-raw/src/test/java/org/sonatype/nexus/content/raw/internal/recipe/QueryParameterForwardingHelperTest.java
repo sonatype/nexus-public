@@ -15,6 +15,7 @@ package org.sonatype.nexus.content.raw.internal.recipe;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.sonatype.nexus.repository.view.Parameters;
 
@@ -107,6 +108,52 @@ class QueryParameterForwardingHelperTest
     assertThat(result, containsString("key=val1"));
     assertThat(result, containsString("key=val2"));
     assertThat(result, containsString("&"));
+  }
+
+  @Test
+  void buildQueryStringMultiValuedParameterValuesAreSorted() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters params1 = new Parameters();
+    params1.set("tag", "beta", "alpha"); // unsorted order
+    params1.set("platform", "darwin");
+
+    Parameters params2 = new Parameters();
+    params2.set("tag", "alpha", "beta"); // different order
+    params2.set("platform", "darwin");
+
+    String result1 = helper.buildQueryString(params1);
+    String result2 = helper.buildQueryString(params2);
+
+    // Both should produce the same normalized query string
+    assertThat("Values should be sorted for cache deduplication", result1, is("platform=darwin&tag=alpha&tag=beta"));
+    assertThat("Both requests should produce identical query strings", result1, is(result2));
+  }
+
+  @Test
+  void buildQueryStringMultiValuedParameterWithNullValuesSortedCorrectly() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("tag", "zebra", null, "alpha"); // unsorted with null
+
+    String result = helper.buildQueryString(parameters);
+
+    // Null values should come first when sorted, then alphabetically
+    assertThat(result, is("tag&tag=alpha&tag=zebra"));
+  }
+
+  @Test
+  void buildQueryStringMultiValuedParameterReverseOrderSortedCorrectly() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("version", "v3.0", "v2.0", "v1.0"); // reverse order
+
+    String result = helper.buildQueryString(parameters);
+
+    // Should be sorted alphabetically
+    assertThat(result, is("version=v1.0&version=v2.0&version=v3.0"));
   }
 
   @Test
@@ -395,5 +442,83 @@ class QueryParameterForwardingHelperTest
 
     // 51 values on one key still exceeds the limit
     assertThrows(BadRequestException.class, () -> helper.buildQueryString(parameters));
+  }
+
+  @Test
+  void buildQueryString_valuelessParam_servletEmptyString_withValuelessSet_noEqualsSign() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("flag", ""); // Servlet API gives "" for ?flag (valueless)
+    parameters.set("query", "hello");
+
+    String result = helper.buildQueryString(parameters, Set.of("flag"));
+
+    assertThat(result, is("flag&query=hello"));
+  }
+
+  @Test
+  void buildQueryString_emptyValueParam_notInValuelessSet_preservesEqualsSign() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("empty", ""); // ?empty= (genuinely empty value)
+    parameters.set("flag", ""); // ?flag (valueless)
+    parameters.set("query", "hello world"); // Servlet decodes + to space
+
+    String result = helper.buildQueryString(parameters, Set.of("flag"));
+
+    assertThat(result, is("empty=&flag&query=hello+world")); // URLEncoder encodes space as +
+  }
+
+  @Test
+  void buildQueryString_mixedValuelessAndValuedSameKey_bothHandledCorrectly() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("flag", "", "hello"); // ?flag&flag=hello — one valueless, one with value
+    parameters.set("query", "world");
+
+    String result = helper.buildQueryString(parameters, Set.of("flag"));
+
+    assertThat(result, containsString("flag&flag=hello"));
+    assertThat(result, containsString("query=world"));
+  }
+
+  @Test
+  void buildQueryString_ampersandInValue_percentEncoded() {
+    // Servlet decodes %26 to &; URLEncoder then re-encodes & to %26.
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("special", "a&b");
+
+    String result = helper.buildQueryString(parameters);
+
+    assertThat(result, is("special=a%26b"));
+  }
+
+  @Test
+  void buildQueryString_slashInValue_percentEncoded() {
+    // Servlet decodes %2F to /; URLEncoder then re-encodes / to %2F.
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("path", "/foo/bar");
+
+    String result = helper.buildQueryString(parameters);
+
+    assertThat(result, is("path=%2Ffoo%2Fbar"));
+  }
+
+  @Test
+  void buildQueryString_spaceInValue_encodedAsPlus() {
+    // Servlet decodes %20 to a space before passing values to Parameters.
+    // URLEncoder encodes space as +, which is form-encoding semantics.
+    helper.updateConfig(true, Collections.emptyList());
+    Parameters parameters = new Parameters();
+    parameters.set("q", "hello world");
+    String result = helper.buildQueryString(parameters);
+    assertThat(result, is("q=hello+world"));
   }
 }

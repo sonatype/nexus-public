@@ -34,7 +34,7 @@ import com.google.common.collect.ImmutableMap;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_ITERATION_PHC;
@@ -67,8 +67,8 @@ public class PbeCipherFactoryImpl
       final @Value(NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE) String nexusSecretsAlgorithm,
       final @Value(NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE) Integer configuredSecretsIterations)
   {
-    this.cryptoHelper = checkNotNull(cryptoHelper);
-    this.hashingHandlerFactory = checkNotNull(hashingHandlerFactory);
+    this.cryptoHelper = requireNonNull(cryptoHelper);
+    this.hashingHandlerFactory = requireNonNull(hashingHandlerFactory);
     this.nexusSecretsAlgorithm = nexusSecretsAlgorithm;
     this.configuredSecretsIterations = configuredSecretsIterations;
   }
@@ -103,7 +103,7 @@ public class PbeCipherFactoryImpl
       final String iv,
       final Integer iterations)
   {
-    checkNotNull(secretEncryptionKey);
+    requireNonNull(secretEncryptionKey);
     EncryptedSecret storedEncryptedSecret = null;
     String algorithm = nexusSecretsAlgorithm;
     boolean isDefaultCipher = true;

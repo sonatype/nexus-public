@@ -34,7 +34,7 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 import org.springframework.stereotype.Component;
 
@@ -83,11 +83,11 @@ public class SecurityApiImpl
       final List<String> roleIds) throws NoSuchUserManagerException
   {
     User user = new User();
-    user.setUserId(checkNotNull(id));
+    user.setUserId(requireNonNull(id));
     user.setSource(DEFAULT_SOURCE);
-    user.setFirstName(checkNotNull(firstName));
-    user.setLastName(checkNotNull(lastName));
-    user.setEmailAddress(checkNotNull(email));
+    user.setFirstName(requireNonNull(firstName));
+    user.setLastName(requireNonNull(lastName));
+    user.setEmailAddress(requireNonNull(email));
     user.setStatus(active ? UserStatus.active : UserStatus.disabled);
     user.setRoles(toIdentifiers(roleIds));
 
@@ -104,12 +104,12 @@ public class SecurityApiImpl
   {
 
     Role role = new Role();
-    role.setRoleId(checkNotNull(id));
+    role.setRoleId(requireNonNull(id));
     role.setSource(DEFAULT_SOURCE);
-    role.setName(checkNotNull(name));
+    role.setName(requireNonNull(name));
     role.setDescription(description);
-    role.setPrivileges(Sets.newHashSet(checkNotNull(privileges)));
-    role.setRoles(Sets.newHashSet(checkNotNull(roles)));
+    role.setPrivileges(Sets.newHashSet(requireNonNull(privileges)));
+    role.setRoles(Sets.newHashSet(requireNonNull(roles)));
 
     return securitySystem.getAuthorizationManager(DEFAULT_SOURCE).addRole(role);
   }
@@ -125,7 +125,7 @@ public class SecurityApiImpl
   }
 
   private static Set<RoleIdentifier> toIdentifiers(final Collection<String> roleIds) {
-    return checkNotNull(roleIds).stream()
+    return requireNonNull(roleIds).stream()
         .map(roleId -> new RoleIdentifier(DEFAULT_SOURCE, roleId))
         .collect(Collectors.toSet());
   }

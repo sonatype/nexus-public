@@ -14,8 +14,10 @@ package org.sonatype.nexus.internal.security.apikey.store;
 
 import java.time.OffsetDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.Secret;
@@ -25,19 +27,30 @@ import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.datastore.mybatis.handlers.SecretTypeHandler;
 import org.sonatype.nexus.internal.security.apikey.ApiKeyInternal;
+import org.sonatype.nexus.security.NexusSimplePrincipalCollection;
+import org.sonatype.nexus.security.RealmCaseMapping;
+import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.assertj.db.type.Table;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.slf4j.LoggerFactory;
 
 import static org.assertj.db.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
@@ -46,6 +59,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -72,6 +86,9 @@ public class ApiKeyStoreV2ImplTest
 
   private static final PrincipalCollection PRINCIPALS2 = new SimplePrincipalCollection("john", "ldap");
 
+  private static final PrincipalCollection LEGACY_PRINCIPALS =
+      new NexusSimplePrincipalCollection(BOB, new RealmCaseMapping("ldap", true));
+
   private Map<Integer, Secret> secrets = new HashMap<>();
 
   private SecretsFactory factory = mock(SecretsFactory.class);
@@ -88,6 +105,8 @@ public class ApiKeyStoreV2ImplTest
 
   private ApiKeyStoreV2Impl underTest;
 
+  private ListAppender<ILoggingEvent> logCaptor;
+
   @Before
   public void setup() {
     underTest = new ApiKeyStoreV2Impl(sessionRule, secretsService);
@@ -103,6 +122,64 @@ public class ApiKeyStoreV2ImplTest
         });
     when(factory.from(any()))
         .thenAnswer(invocation -> secrets.get(Integer.valueOf(invocation.getArgument(0, String.class))));
+
+    logCaptor = new ListAppender<>();
+    logCaptor.start();
+    ((Logger) LoggerFactory.getLogger(ApiKeyStoreV2Impl.class)).addAppender(logCaptor);
+  }
+
+  @After
+  public void tearDown() {
+    ((Logger) LoggerFactory.getLogger(ApiKeyStoreV2Impl.class)).detachAppender(logCaptor);
+  }
+
+  @Test
+  public void testGetApiKey_returnsTheOldestRowWhenLegacyAndModernRowsCoexist() {
+    OffsetDateTime now = OffsetDateTime.now();
+    underTest.persistApiKey(NUGET, LEGACY_PRINCIPALS, KEY, now.minusYears(1));
+    underTest.persistApiKey(NUGET, PRINCIPALS, KEY2, now);
+
+    assertThat(table()).hasNumberOfRows(2);
+
+    // repeated to catch nondeterministic ordering
+    for (int i = 0; i < 5; i++) {
+      ApiKeyV2Data found = (ApiKeyV2Data) underTest.getApiKey(NUGET, PRINCIPALS).orElseThrow();
+      assertThat(found.getAccessKey(), is(accessKey(KEY)));
+    }
+  }
+
+  @Test
+  public void testGetApiKey_returnsTheOldestRowRegardlessOfInsertionOrder() {
+    OffsetDateTime now = OffsetDateTime.now();
+    // newer row inserted first
+    underTest.persistApiKey(NUGET, PRINCIPALS, KEY2, now);
+    underTest.persistApiKey(NUGET, LEGACY_PRINCIPALS, KEY, now.minusYears(1));
+
+    ApiKeyV2Data found = (ApiKeyV2Data) underTest.getApiKey(NUGET, PRINCIPALS).orElseThrow();
+
+    assertThat(found.getAccessKey(), is(accessKey(KEY)));
+  }
+
+  @Test
+  public void testGetApiKey_warnsWhenDuplicateRowsExistWithoutLeakingKeyMaterial() {
+    OffsetDateTime now = OffsetDateTime.now();
+    underTest.persistApiKey(NUGET, LEGACY_PRINCIPALS, KEY, now.minusYears(1));
+    underTest.persistApiKey(NUGET, PRINCIPALS, KEY2, now);
+
+    underTest.getApiKey(NUGET, PRINCIPALS);
+
+    List<ILoggingEvent> warnings = logCaptor.list.stream()
+        .filter(event -> event.getLevel() == Level.WARN)
+        .collect(Collectors.toList());
+    assertThat(warnings, hasSize(1));
+
+    String message = warnings.get(0).getFormattedMessage();
+    assertThat(message, containsString(BOB));
+    assertThat(message, containsString(NUGET));
+    assertThat(message, containsString("2"));
+    assertFalse(message.contains(new String(KEY)));
+    assertFalse(message.contains(accessKey(KEY)));
+    assertFalse(message.contains(accessKey(KEY2)));
   }
 
   @Test
@@ -116,6 +193,20 @@ public class ApiKeyStoreV2ImplTest
     assertThat(underTest.deleteApiKey(NUGET, PRINCIPALS), is(1));
     // a secret associated the removed token should be cleaned up
     verify(secretsService).remove(any(Secret.class));
+  }
+
+  @Test
+  public void testDeleteApiKey_removesEveryDuplicateRowNotJustTheOldest() {
+    OffsetDateTime now = OffsetDateTime.now();
+    underTest.persistApiKey(NUGET, LEGACY_PRINCIPALS, KEY, now.minusYears(1));
+    underTest.persistApiKey(NUGET, PRINCIPALS, KEY2, now);
+    assertThat(table()).hasNumberOfRows(2);
+
+    assertThat(underTest.deleteApiKey(NUGET, PRINCIPALS), is(2));
+
+    assertThat(table()).hasNumberOfRows(0);
+    assertFalse(underTest.getApiKey(NUGET, PRINCIPALS).isPresent());
+    verify(secretsService, times(2)).remove(any(Secret.class));
   }
 
   @Test
@@ -322,6 +413,57 @@ public class ApiKeyStoreV2ImplTest
     assertTrue(result.isPresent());
     assertThat(result.get().getCreatedByUserId(), is((String) null));
     assertThat(result.get().getCreatedByRealm(), is((String) null));
+  }
+
+  @Test
+  public void testGetApiKey_findsRowStoredWithLegacyOrientPrincipals() {
+    underTest.persistApiKey(NUGET, LEGACY_PRINCIPALS, KEY, OffsetDateTime.now());
+
+    Optional<ApiKeyInternal> found = underTest.getApiKey(NUGET, PRINCIPALS);
+
+    assertTrue(found.isPresent());
+    assertThat(((ApiKeyV2Data) found.get()).getAccessKey(), is(accessKey(KEY)));
+    // no replacement row was created
+    assertThat(table()).hasNumberOfRows(1);
+  }
+
+  @Test
+  public void testDeleteApiKey_removesRowStoredWithLegacyOrientPrincipals() {
+    underTest.persistApiKey(NUGET, LEGACY_PRINCIPALS, KEY, OffsetDateTime.now());
+
+    assertThat(underTest.deleteApiKey(NUGET, PRINCIPALS), is(1));
+
+    assertThat(table()).hasNumberOfRows(0);
+    verify(secretsService).remove(any(Secret.class));
+  }
+
+  @Test
+  public void testGetApiKey_doesNotMatchTheSameUsernameInAnotherRealm() {
+    PrincipalCollection ldap = new SimplePrincipalCollection(BOB, "ldap");
+    PrincipalCollection local = new SimplePrincipalCollection(BOB, "local");
+    underTest.persistApiKey(NUGET, ldap, KEY, OffsetDateTime.now());
+    underTest.persistApiKey(NUGET, local, KEY2, OffsetDateTime.now());
+
+    assertThat(((ApiKeyV2Data) underTest.getApiKey(NUGET, ldap).orElseThrow()).getAccessKey(),
+        is(accessKey(KEY)));
+    assertThat(((ApiKeyV2Data) underTest.getApiKey(NUGET, local).orElseThrow()).getAccessKey(),
+        is(accessKey(KEY2)));
+  }
+
+  @Test
+  public void testGetApiKey_multiRealmRowIsNotFoundBySingleRealmLookup() {
+    SimplePrincipalCollection multiRealm = new SimplePrincipalCollection(BOB, "rut");
+    multiRealm.add(BOB, "ldap");
+    underTest.persistApiKey(NUGET, multiRealm, KEY, OffsetDateTime.now());
+
+    assertFalse(underTest.getApiKey(NUGET, new SimplePrincipalCollection(BOB, "rut")).isPresent());
+  }
+
+  @Test
+  public void testGetApiKey_anonymousPrincipalsStillMatch() {
+    underTest.persistApiKey(NUGET, new AnonymousPrincipalCollection(BOB, "anon"), KEY, OffsetDateTime.now());
+
+    assertTrue(underTest.getApiKey(NUGET, new SimplePrincipalCollection(BOB, "anon")).isPresent());
   }
 
   private Table table() {

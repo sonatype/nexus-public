@@ -34,7 +34,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.security.BreadActions.ADD;
 import static org.sonatype.nexus.security.BreadActions.EDIT;
@@ -66,10 +66,10 @@ public class AuthorizingRepositoryManagerImpl
       final TaskScheduler taskScheduler,
       final RepositoryCacheInvalidationService repositoryCacheInvalidationService)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.repositoryCacheInvalidationService = requireNonNull(repositoryCacheInvalidationService);
   }
 
   public void create(@Nonnull final Configuration configuration) throws Exception {

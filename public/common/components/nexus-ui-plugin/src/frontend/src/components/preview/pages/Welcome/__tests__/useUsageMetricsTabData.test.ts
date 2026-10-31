@@ -13,6 +13,8 @@
 import {renderHook} from '@testing-library/react';
 import {useUsageMetricsTabData} from '../useUsageMetricsTabData';
 
+// Self-hosted path now uses UsageCenter (reads its own state), so the hook only needs
+// isCloud and monthlyMetrics (for the cloud path) (NEXUS-53863).
 jest.mock('../../../../../interface/ExtJS', () => ({
   ExtJS: {
     state: jest.fn(() => ({getValue: (_key: string, def: unknown) => def})),
@@ -20,7 +22,6 @@ jest.mock('../../../../../interface/ExtJS', () => ({
 }));
 
 jest.mock('../dashboard', () => ({
-  useInstanceTotals: jest.fn(() => ({data: null, loading: false})),
   useMonthlyMetrics: jest.fn(() => ({
     loading: false,
     error: null,
@@ -28,8 +29,6 @@ jest.mock('../dashboard', () => ({
     peakStorage: null,
     responseSize: 0,
   })),
-  useInstanceStorage: jest.fn(() => ({currentStorageBytes: null})),
-  formatBytesToGB: jest.fn((bytes: number, _flag?: boolean) => `${bytes}GB`),
 }));
 
 const {ExtJS} = require('../../../../../interface/ExtJS');
@@ -54,88 +53,13 @@ describe('useUsageMetricsTabData', () => {
     });
   });
 
-  describe('monthlyMetricsFormatted', () => {
-    it('returns undefined while loading', () => {
+  describe('monthlyMetrics', () => {
+    it('passes monthlyMetrics through from useMonthlyMetrics hook', () => {
       const {useMonthlyMetrics} = require('../dashboard');
-      useMonthlyMetrics.mockReturnValueOnce({loading: true, error: null, history: null, peakStorage: null, responseSize: 0});
+      const mockMetrics = {loading: false, error: null, history: {egress: [{value: 100}], storage: []}, peakStorage: 5000, responseSize: 300};
+      useMonthlyMetrics.mockReturnValueOnce(mockMetrics);
       const {result} = renderHook(() => useUsageMetricsTabData());
-      expect(result.current.monthlyMetricsFormatted).toBeUndefined();
-    });
-
-    it('uses peakStorage from monthly metrics when available', () => {
-      const {useMonthlyMetrics, formatBytesToGB} = require('../dashboard');
-      useMonthlyMetrics.mockReturnValueOnce({
-        loading: false, error: null,
-        history: {egress: [{value: 100}], storage: []},
-        peakStorage: 5000,
-        responseSize: 100,
-      });
-      formatBytesToGB.mockReturnValueOnce('5.00 GB');
-      const {result} = renderHook(() => useUsageMetricsTabData());
-      expect(result.current.monthlyMetricsFormatted?.peakStorageGB).toBe('5.00 GB');
-    });
-
-    it('falls back to instanceStorage when monthlyMetrics.peakStorage is null', () => {
-      const {useMonthlyMetrics, useInstanceStorage, formatBytesToGB} = require('../dashboard');
-      useMonthlyMetrics.mockReturnValueOnce({
-        loading: false, error: null,
-        history: {egress: [{value: 100}], storage: []},
-        peakStorage: null,
-        responseSize: 100,
-      });
-      useInstanceStorage.mockReturnValueOnce({currentStorageBytes: 2000});
-      formatBytesToGB.mockReturnValueOnce('2.00 GB');
-      const {result} = renderHook(() => useUsageMetricsTabData());
-      expect(result.current.monthlyMetricsFormatted?.peakStorageGB).toBe('2.00 GB');
-    });
-
-    it('sets isEgressTbd=true and responseSizeGB="TBD" when no egress data exists', () => {
-      const {useMonthlyMetrics} = require('../dashboard');
-      useMonthlyMetrics.mockReturnValueOnce({
-        loading: false, error: null,
-        history: {egress: [], storage: []},
-        peakStorage: null,
-        responseSize: 0,
-      });
-      const {result} = renderHook(() => useUsageMetricsTabData());
-      expect(result.current.monthlyMetricsFormatted?.isEgressTbd).toBe(true);
-      expect(result.current.monthlyMetricsFormatted?.responseSizeGB).toBe('TBD');
-    });
-
-    it('uses responseSize as egress when available', () => {
-      const {useMonthlyMetrics, formatBytesToGB} = require('../dashboard');
-      useMonthlyMetrics.mockReturnValueOnce({
-        loading: false, error: null,
-        history: {egress: [{value: 50}], storage: []},
-        peakStorage: null,
-        responseSize: 300,
-      });
-      formatBytesToGB.mockReturnValueOnce('300GB');
-      const {result} = renderHook(() => useUsageMetricsTabData());
-      expect(result.current.monthlyMetricsFormatted?.responseSizeGB).toBe('300GB');
-      expect(result.current.monthlyMetricsFormatted?.isEgressTbd).toBe(false);
-    });
-
-    it('falls back to last known egress from history when responseSize is 0', () => {
-      const {useMonthlyMetrics, formatBytesToGB} = require('../dashboard');
-      useMonthlyMetrics.mockReturnValueOnce({
-        loading: false, error: null,
-        history: {egress: [{value: 0}, {value: 200}], storage: []},
-        peakStorage: null,
-        responseSize: 0,
-      });
-      formatBytesToGB.mockReturnValueOnce('200GB');
-      const {result} = renderHook(() => useUsageMetricsTabData());
-      expect(result.current.monthlyMetricsFormatted?.responseSizeGB).toBe('200GB');
-      expect(result.current.monthlyMetricsFormatted?.isEgressTbd).toBe(false);
-    });
-
-    it('passes instanceTotals through from useInstanceTotals hook', () => {
-      const {useInstanceTotals} = require('../dashboard');
-      useInstanceTotals.mockReturnValueOnce({data: {totalComponents: 42}, loading: false});
-      const {result} = renderHook(() => useUsageMetricsTabData());
-      expect(result.current.instanceTotals.data).toEqual({totalComponents: 42});
-      expect(result.current.instanceTotals.loading).toBe(false);
+      expect(result.current.monthlyMetrics).toBe(mockMetrics);
     });
   });
 });

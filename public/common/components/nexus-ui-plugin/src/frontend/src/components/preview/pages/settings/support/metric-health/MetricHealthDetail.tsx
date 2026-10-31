@@ -138,7 +138,7 @@ export function MetricHealthDetail({
         )}
 
         {/* No additional details */}
-        {!result.message && !result.error && !result.duration && (
+        {!((result.message || result.error ) || result.duration ) && (
           <Text size="2" className="metric-health-detail__no-details">
             No additional details available for this health check.
           </Text>

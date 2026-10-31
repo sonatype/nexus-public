@@ -38,7 +38,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.context.annotation.Lazy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.sonatype.nexus.ssl.plugin.internal.ui.TrustStoreComponent.asCertificateXO;
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateFingerprint;
 import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertificate;
@@ -58,8 +58,8 @@ public class CertificateComponent
 
   @Autowired
   public CertificateComponent(@Lazy final TrustStore trustStore, final CertificateRetriever certificateRetriever) {
-    this.trustStore = checkNotNull(trustStore);
-    this.certificateRetriever = checkNotNull(certificateRetriever);
+    this.trustStore = requireNonNull(trustStore);
+    this.certificateRetriever = requireNonNull(certificateRetriever);
   }
 
   /**

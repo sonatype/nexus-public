@@ -10,8 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Flex, Text, Heading } from '@radix-ui/themes';
+import React from 'react';
+import { Box, Flex, Text, Heading, AlertDialog, Button, TextField } from '@radix-ui/themes';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
@@ -25,13 +25,9 @@ import {
   SettingsButton,
   SettingsAlert,
 } from '../../../../shared/form';
-import { PageHeader, useToast, useUnsavedChangesWarning } from '../../../../shared';
-import { useUserTokensApi } from './useUserTokensApi';
-import { 
-  UserTokenSettings, 
-  DEFAULT_USER_TOKEN_SETTINGS, 
-  RESET_CONFIRMATION_STRING 
-} from './types';
+import { PageHeader } from '../../../../shared';
+import { useUserTokensForm } from './useUserTokensForm';
+import { RESET_CONFIRMATION_STRING } from './types';
 
 import './UserTokensPage.scss';
 
@@ -43,142 +39,38 @@ const navigateTo = (path: string) => {
  * UserTokensPage - User Token settings configuration page for Preview UI
  */
 export function UserTokensPage() {
-  const { loading, error, setError, fetchSettings, saveSettings, resetAllTokens } = useUserTokensApi();
-  
-  const [settings, setSettings] = useState<UserTokenSettings>(DEFAULT_USER_TOKEN_SETTINGS);
-  const [pristineSettings, setPristineSettings] = useState<UserTokenSettings>(DEFAULT_USER_TOKEN_SETTINGS);
-  const [loadingInitial, setLoadingInitial] = useState(true);
+  const {
+    data,
+    pristineData,
+    expirationDaysError,
+    isPristine,
+    isLoading,
+    isSaving,
+    isResetting,
+    error,
+    showExpirationWarning,
+    showResetModal,
+    resetConfirmationInput,
+    resetConfirmationError,
+    handleChange,
+    handleSubmit,
+    handleDiscard,
+    confirmSave,
+    cancelSave,
+    requestReset,
+    setResetConfirmation,
+    confirmReset,
+    cancelReset,
+    clearError,
+  } = useUserTokensForm();
 
-  // Toast notifications (app-level provider)
-  const toast = useToast();
-  
-  // Reset confirmation modal state
-  const [showResetModal, setShowResetModal] = useState(false);
-  const [confirmationString, setConfirmationString] = useState('');
-  const [confirmationError, setConfirmationError] = useState<string | null>(null);
-  
-  // Expiration change warning modal
-  const [showExpirationWarning, setShowExpirationWarning] = useState(false);
+  const isBusy = isSaving || isResetting;
 
   const canUpdate = ExtJS.checkPermission(Permissions.USER_TOKENS_SETTINGS.UPDATE);
   const canDelete = ExtJS.checkPermission(Permissions.USER_TOKENS_USERS.DELETE);
 
-  // Load settings on mount
-  useEffect(() => {
-    setLoadingInitial(true);
-    fetchSettings()
-      .then((data) => {
-        setSettings(data);
-        setPristineSettings(data);
-      })
-      .catch(() => {
-        // Error is set by the hook
-      })
-      .finally(() => {
-        setLoadingInitial(false);
-      });
-  }, [fetchSettings]);
-
-  // Check if form is pristine
-  const isPristine = useMemo(() => {
-    return (
-      settings.enabled === pristineSettings.enabled &&
-      settings.protectContent === pristineSettings.protectContent &&
-      settings.expirationEnabled === pristineSettings.expirationEnabled &&
-      settings.expirationDays === pristineSettings.expirationDays
-    );
-  }, [settings, pristineSettings]);
-
-  // Check if expiration settings changed
-  const expirationChanged = useMemo(() => {
-    return settings.expirationEnabled !== pristineSettings.expirationEnabled;
-  }, [settings.expirationEnabled, pristineSettings.expirationEnabled]);
-
-  // Validate expiration days
-  const expirationDaysError = useMemo(() => {
-    if (!settings.expirationEnabled) return undefined;
-    if (!settings.expirationDays) return 'Expiration days is required';
-    if (settings.expirationDays < 1 || settings.expirationDays > 999) {
-      return 'Must be between 1 and 999 days';
-    }
-    if (!Number.isInteger(Number(settings.expirationDays))) {
-      return 'Must be a whole number';
-    }
-    return undefined;
-  }, [settings.expirationEnabled, settings.expirationDays]);
-
-  const handleChange = useCallback((field: keyof UserTokenSettings, value: boolean | number) => {
-    setSettings((prev) => {
-      // If disabling user tokens, reset all related settings
-      if (field === 'enabled' && value === false) {
-        return {
-          ...prev,
-          enabled: false,
-          protectContent: false,
-          expirationEnabled: false,
-          expirationDays: 30,
-        };
-      }
-      return { ...prev, [field]: value };
-    });
-  }, []);
-
-  // performSave must be defined BEFORE handleSubmit since handleSubmit references it
-  const performSave = useCallback(async () => {
-    setShowExpirationWarning(false);
-    try {
-      await saveSettings(settings);
-      setPristineSettings(settings);
-      toast.success('User token settings saved successfully');
-    } catch (err) {
-      throw err;
-    }
-  }, [settings, saveSettings, toast]);
-
-  const handleSubmit = useCallback(async () => {
-    // Check if expiration settings changed - show warning
-    if (expirationChanged) {
-      setShowExpirationWarning(true);
-      return;
-    }
-    await performSave();
-  }, [expirationChanged, performSave]);
-
-  const handleDiscard = useCallback(() => {
-    setSettings(pristineSettings);
-    setError(null);
-  }, [pristineSettings, setError]);
-
-  const handleResetAllTokens = useCallback(() => {
-    setShowResetModal(true);
-    setConfirmationString('');
-    setConfirmationError(null);
-  }, []);
-
-  const confirmResetAllTokens = useCallback(async () => {
-    if (confirmationString !== RESET_CONFIRMATION_STRING) {
-      setConfirmationError(`Please type "${RESET_CONFIRMATION_STRING}" to confirm`);
-      return;
-    }
-
-    try {
-      await resetAllTokens();
-      setShowResetModal(false);
-      setConfirmationString('');
-      toast.success('All user tokens have been reset');
-    } catch (err) {
-      // Error is set by the hook
-    }
-  }, [confirmationString, resetAllTokens, toast]);
-
-  const cancelResetAllTokens = useCallback(() => {
-    setShowResetModal(false);
-    setConfirmationString('');
-    setConfirmationError(null);
-  }, []);
-
   // Loading state
-  if (loadingInitial) {
+  if (isLoading) {
     return (
       <Box className="user-tokens-page" data-testid="user-tokens-page" data-loading="true">
         <Flex align="center" justify="center" className="user-tokens-page__loading">
@@ -215,17 +107,17 @@ export function UserTokensPage() {
           <Box className="user-tokens-page__readonly">
             <Flex className="user-tokens-page__row">
               <Text size="2" weight="medium" className="user-tokens-page__label">User Tokens</Text>
-              <Text size="2">{settings.enabled ? 'Enabled' : 'Disabled'}</Text>
+              <Text size="2">{data.enabled ? 'Enabled' : 'Disabled'}</Text>
             </Flex>
             <Flex className="user-tokens-page__row">
               <Text size="2" weight="medium" className="user-tokens-page__label">Repository Authentication</Text>
-              <Text size="2">{settings.protectContent ? 'Required' : 'Not Required'}</Text>
+              <Text size="2">{data.protectContent ? 'Required' : 'Not Required'}</Text>
             </Flex>
             <Flex className="user-tokens-page__row">
               <Text size="2" weight="medium" className="user-tokens-page__label">Token Expiration</Text>
               <Text size="2">
-                {settings.expirationEnabled 
-                  ? `${settings.expirationDays} days` 
+                {data.expirationEnabled
+                  ? `${data.expirationDays} days`
                   : 'Never expires'}
               </Text>
             </Flex>
@@ -240,7 +132,7 @@ export function UserTokensPage() {
       className="user-tokens-page"
       data-testid="user-tokens-page"
       data-view="edit"
-      data-loading={loading ? 'true' : 'false'}
+      data-loading={isBusy ? 'true' : 'false'}
       px={{ initial: '4', md: '6', lg: '6' }}
       py={{ initial: '4', md: '5', lg: '6' }}
     >
@@ -259,7 +151,7 @@ export function UserTokensPage() {
       {/* Alerts */}
       {error && (
         <Box className="user-tokens-page__alerts">
-          <SettingsAlert type="error" onClose={() => setError(null)}>
+          <SettingsAlert type="error" onClose={clearError}>
             {error}
           </SettingsAlert>
         </Box>
@@ -270,12 +162,12 @@ export function UserTokensPage() {
         title=""
         onSubmit={handleSubmit}
         onCancel={handleDiscard}
-        loading={loading}
+        loading={isSaving}
         pristine={isPristine}
         submitDisabled={!!expirationDaysError}
         showActions={true}
         testId="user-tokens-form"
-        data-submitting={loading ? 'true' : 'false'}
+        data-submitting={isSaving ? 'true' : 'false'}
         data-valid={!expirationDaysError ? 'true' : 'false'}
       >
         {/* User Tokens Enable/Disable */}
@@ -287,54 +179,54 @@ export function UserTokensPage() {
           <SettingsCheckbox
             name="enabled"
             label="Enable user tokens"
-            checked={settings.enabled}
+            checked={data.enabled}
             onChange={(checked) => handleChange('enabled', checked)}
             description="Allow users to generate and use authentication tokens"
           />
         </SettingsFormSection>
 
         {/* Repository Authentication */}
-        <SettingsFormSection title="Repository Authentication" defaultOpen={settings.enabled}>
+        <SettingsFormSection title="Repository Authentication" defaultOpen={data.enabled}>
           <SettingsCheckbox
             name="protectContent"
             label="Require user tokens for repository authentication"
-            checked={settings.protectContent}
+            checked={data.protectContent}
             onChange={(checked) => handleChange('protectContent', checked)}
             description="When enabled, users must use tokens instead of passwords to access repository content"
-            disabled={!settings.enabled}
+            disabled={!data.enabled}
           />
         </SettingsFormSection>
 
         {/* Token Expiration */}
-        <SettingsFormSection title="Token Expiration" defaultOpen={settings.enabled}>
+        <SettingsFormSection title="Token Expiration" defaultOpen={data.enabled}>
           <SettingsCheckbox
             name="expirationEnabled"
             label="Enable token expiration"
-            checked={settings.expirationEnabled}
+            checked={data.expirationEnabled}
             onChange={(checked) => handleChange('expirationEnabled', checked)}
             description="Automatically expire tokens after a specified number of days"
-            disabled={!settings.enabled}
+            disabled={!data.enabled}
           />
 
-          {settings.expirationEnabled && (
+          {data.expirationEnabled && (
             <SettingsTextInput
               name="expirationDays"
               label="Token expiration (days)"
               type="number"
-              value={settings.expirationDays}
+              value={data.expirationDays}
               onChange={(value) => handleChange('expirationDays', parseInt(value, 10) || 0)}
               error={expirationDaysError}
               helpText="Number of days before tokens expire (1-999)"
               min={1}
               max={999}
-              disabled={!settings.enabled}
+              disabled={!data.enabled}
               required
             />
           )}
         </SettingsFormSection>
 
         {/* Reset All Tokens */}
-        {canDelete && settings.enabled && pristineSettings.enabled && (
+        {canDelete && data.enabled && pristineData.enabled && (
           <SettingsFormSection title="Reset All Tokens">
             <Text size="2" className="user-tokens-page__warning-text">
               <AlertTriangle size={16} className="user-tokens-page__warning-icon" />
@@ -342,8 +234,8 @@ export function UserTokensPage() {
             </Text>
             <SettingsButton
               variant="danger"
-              onClick={handleResetAllTokens}
-              disabled={loading}
+              onClick={requestReset}
+              disabled={isBusy}
               icon={RefreshCw}
             >
               Reset All User Tokens
@@ -352,62 +244,103 @@ export function UserTokensPage() {
         )}
       </SettingsForm>
 
-      {/* Reset Confirmation Modal */}
-      <Dialog.Root open={showResetModal} onOpenChange={(open) => !open && cancelResetAllTokens()}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="user-tokens-page__modal-overlay" />
-          <Dialog.Content className="user-tokens-page__modal" data-testid="user-tokens-reset-modal">
-            <Flex align="center" gap="3" className="user-tokens-page__modal-header">
-              <AlertTriangle size={24} className="user-tokens-page__modal-icon" />
-              <Dialog.Title asChild>
-                <Heading as="h2" size="4" weight="medium" className="user-tokens-page__modal-title">
-                  Reset All User Tokens
-                </Heading>
-              </Dialog.Title>
+      {/* Reset Confirmation Modal — aligned with the Delete Repository destructive
+          pattern (Radix Themes AlertDialog). Confirmation stays machine-driven:
+          confirm-on-click validates the typed phrase and, if wrong, keeps the modal
+          open with an inline error rather than disabling the button. */}
+      <AlertDialog.Root open={showResetModal} onOpenChange={(open) => !open && cancelReset()}>
+        <AlertDialog.Content maxWidth="450px" data-testid="user-tokens-reset-modal">
+          <AlertDialog.Title size="5">Reset all user tokens?</AlertDialog.Title>
+
+          <AlertDialog.Description size="2" mb="4">
+            This action will invalidate all existing user tokens. Users will need to generate new tokens to authenticate.
+          </AlertDialog.Description>
+
+          {/* Highlighted warning box showing the exact phrase the user must type.
+              Sourced from RESET_CONFIRMATION_STRING so the displayed phrase, the
+              placeholder, and the machine guard stay in sync. */}
+          <Box
+            p="3"
+            mb="4"
+            style={{
+              backgroundColor: 'var(--red-2)',
+              border: '1px solid var(--red-6)',
+              borderRadius: '6px',
+            }}
+          >
+            <Text size="2" weight="medium" style={{ display: 'block' }}>
+              {RESET_CONFIRMATION_STRING}
+            </Text>
+            <Text size="1" color="gray">
+              Type this to confirm reset
+            </Text>
+          </Box>
+
+          {/* Acknowledgement input */}
+          <Box mb="4">
+            <Flex align="center" gap="1" mb="2">
+              <Text size="2" weight="bold">
+                Acknowledgement
+              </Text>
+              <Text size="2" style={{ color: 'var(--red-9)' }}>
+                *
+              </Text>
             </Flex>
-            <Dialog.Description asChild>
-              <Box className="user-tokens-page__modal-description">
-                <Text size="2" className="user-tokens-page__modal-text">
-                  This action will invalidate all existing user tokens. Users will need to generate new tokens to authenticate.
-                </Text>
-                <Text size="2" className="user-tokens-page__modal-text">
-                  Type <strong>{RESET_CONFIRMATION_STRING}</strong> to confirm:
-                </Text>
-              </Box>
-            </Dialog.Description>
-            <SettingsTextInput
-              name="confirmationString"
-              value={confirmationString}
-              onChange={setConfirmationString}
-              error={confirmationError || undefined}
-              placeholder={RESET_CONFIRMATION_STRING}
+            <TextField.Root
+              size="2"
+              value={resetConfirmationInput}
+              onChange={(e) => setResetConfirmation(e.target.value)}
+              onKeyDown={(e) => {
+                // Enter mirrors the confirm click exactly: call confirmReset() and let the
+                // machine guard decide. Correct phrase resets; wrong phrase shows the same
+                // inline error a click would. No phrase check here.
+                if (e.key === 'Enter' && !isResetting) {
+                  confirmReset();
+                }
+              }}
+              placeholder={`Type "${RESET_CONFIRMATION_STRING}" to confirm`}
+              disabled={isResetting}
+              color={resetConfirmationError ? 'red' : undefined}
+              aria-label="Acknowledgement"
               data-testid="user-tokens-reset-confirmation-input"
+              autoFocus
             />
-            <Flex gap="3" justify="end" className="user-tokens-page__modal-actions">
-              <Dialog.Close asChild>
-                <SettingsButton
-                  variant="secondary"
-                  disabled={loading}
-                  data-testid="user-tokens-reset-cancel"
-                >
-                  Cancel
-                </SettingsButton>
-              </Dialog.Close>
-              <SettingsButton
-                variant="danger"
-                onClick={confirmResetAllTokens}
-                loading={loading}
-                data-testid="user-tokens-reset-confirm"
+            {resetConfirmationError && (
+              <Text size="1" color="red" mt="1" style={{ display: 'block' }} role="alert">
+                {resetConfirmationError}
+              </Text>
+            )}
+          </Box>
+
+          {/* Action Buttons — confirm is a plain Button (not AlertDialog.Action) so a
+              wrong phrase does not auto-close the dialog; the machine controls closure. */}
+          <Flex gap="3" mt="4" justify="end">
+            <AlertDialog.Cancel>
+              <Button
+                variant="surface"
+                color="gray"
+                size="2"
+                data-testid="user-tokens-reset-cancel"
               >
-                Reset All Tokens
-              </SettingsButton>
-            </Flex>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+                Cancel
+              </Button>
+            </AlertDialog.Cancel>
+            <Button
+              variant="solid"
+              color="red"
+              size="2"
+              onClick={confirmReset}
+              disabled={isResetting}
+              data-testid="user-tokens-reset-confirm"
+            >
+              {isResetting ? 'Resetting…' : 'Reset All Tokens'}
+            </Button>
+          </Flex>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
 
       {/* Expiration Warning Modal */}
-      <Dialog.Root open={showExpirationWarning} onOpenChange={setShowExpirationWarning}>
+      <Dialog.Root open={showExpirationWarning} onOpenChange={(open) => !open && cancelSave()}>
         <Dialog.Portal>
           <Dialog.Overlay className="user-tokens-page__modal-overlay" />
           <Dialog.Content className="user-tokens-page__modal" data-testid="user-tokens-expiration-modal">
@@ -422,20 +355,17 @@ export function UserTokensPage() {
             <Dialog.Description asChild>
               <Box className="user-tokens-page__modal-description">
                 <Text size="2" className="user-tokens-page__modal-text">
-                  {settings.expirationEnabled
-                    ? 'Enabling token expiration will cause existing tokens to expire based on their creation date. Some users may need to generate new tokens.'
-                    : 'Disabling token expiration will allow all existing tokens to remain valid indefinitely.'}
-                </Text>
-                <Text size="2" className="user-tokens-page__modal-text">
-                  Do you want to continue?
+                  {data.expirationEnabled
+                    ? 'Enabling token expiration will cause existing tokens to expire based on their creation date. Some users may need to generate new tokens. Do you want to continue?'
+                    : 'Disabling token expiration will allow all existing tokens to remain valid indefinitely. Do you want to continue?'}
                 </Text>
               </Box>
             </Dialog.Description>
-            <Flex gap="3" justify="end" className="user-tokens-page__modal-actions">
+            <Flex gap="4" justify="end" className="user-tokens-page__modal-actions">
               <Dialog.Close asChild>
                 <SettingsButton
                   variant="secondary"
-                  disabled={loading}
+                  disabled={isSaving}
                   data-testid="user-tokens-expiration-cancel"
                 >
                   Cancel
@@ -443,8 +373,8 @@ export function UserTokensPage() {
               </Dialog.Close>
               <SettingsButton
                 variant="primary"
-                onClick={performSave}
-                loading={loading}
+                onClick={confirmSave}
+                loading={isSaving}
                 data-testid="user-tokens-expiration-confirm"
               >
                 Continue
@@ -458,5 +388,3 @@ export function UserTokensPage() {
 }
 
 export default UserTokensPage;
-
-

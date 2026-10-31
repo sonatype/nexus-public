@@ -322,6 +322,14 @@ export function useCleanupPoliciesApi() {
     }
   }, []);
 
+  const isRenormalizationInProgress = useCallback((format: string): boolean => {
+    try {
+      return ExtJS.state().getValue(`${format}.renormalization.in_progress`) ?? false;
+    } catch {
+      return false;
+    }
+  }, []);
+
   return {
     loading,
     error,
@@ -338,6 +346,7 @@ export function useCleanupPoliciesApi() {
     isPreviewEnabled,
     isRetainEnabled,
     isRetainAllFormatsEnabled,
+    isRenormalizationInProgress,
   };
 }
 

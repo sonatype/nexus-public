@@ -32,7 +32,7 @@ import org.sonatype.nexus.validation.ConstraintViolations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -61,9 +61,9 @@ public class ConfigurationFacetImpl
       @Qualifier(ConfigurationObjectMapperProvider.NAME) final ObjectMapper objectMapper,
       final Provider<Validator> validatorProvider)
   {
-    this.store = checkNotNull(store);
-    this.objectMapper = checkNotNull(objectMapper);
-    this.validatorProvider = checkNotNull(validatorProvider);
+    this.store = requireNonNull(store);
+    this.objectMapper = requireNonNull(objectMapper);
+    this.validatorProvider = requireNonNull(validatorProvider);
   }
 
   @Override
@@ -74,16 +74,16 @@ public class ConfigurationFacetImpl
 
   @Override
   public <T> T convert(final Object value, final Class<T> type) {
-    checkNotNull(value);
-    checkNotNull(type);
+    requireNonNull(value);
+    requireNonNull(type);
     log.trace("Converting value: {} to type: {}", value, type);
     return objectMapper.convertValue(value, type);
   }
 
   @Override
   public <T> T readSection(final Configuration configuration, final String section, final Class<T> type) {
-    checkNotNull(configuration);
-    checkNotNull(section);
+    requireNonNull(configuration);
+    requireNonNull(section);
     log.trace("Reading section: {}", section);
     AttributesMap attributes = configuration.attributes(section);
     return convert(attributes.backing(), type);
@@ -91,8 +91,8 @@ public class ConfigurationFacetImpl
 
   @Override
   public void validate(final Object value, final Class<?>... groups) {
-    checkNotNull(value);
-    checkNotNull(groups);
+    requireNonNull(value);
+    requireNonNull(groups);
 
     if (log.isTraceEnabled()) {
       log.trace("Validating: {} in groups: {}", value, Arrays.asList(groups));

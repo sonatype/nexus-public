@@ -20,7 +20,7 @@ import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryp
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +36,7 @@ public class EncryptDecryptService
 
   @Autowired
   public EncryptDecryptService(final PbeCipherFactory pbeCipherFactory) {
-    this.pbeCipherFactory = checkNotNull(pbeCipherFactory);
+    this.pbeCipherFactory = requireNonNull(pbeCipherFactory);
   }
 
   @Override

@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.view.Payload;
 import com.google.common.base.Strings;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.Boolean.TRUE;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -55,7 +55,7 @@ public class MavenMetadataRebuildFacetImpl
 
   @Autowired
   public MavenMetadataRebuildFacetImpl(final MetadataRebuilder metadataRebuilder) {
-    this.metadataRebuilder = checkNotNull(metadataRebuilder);
+    this.metadataRebuilder = requireNonNull(metadataRebuilder);
   }
 
   @Override

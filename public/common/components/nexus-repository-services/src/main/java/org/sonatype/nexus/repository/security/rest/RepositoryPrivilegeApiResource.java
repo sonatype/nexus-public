@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.security.RepositoryAdminPrivilegeDescriptor
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.repository.security.RepositoryViewPrivilegeDescriptor;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeApiResourceSupport;
@@ -48,9 +49,10 @@ public class RepositoryPrivilegeApiResource
   @Autowired
   public RepositoryPrivilegeApiResource(
       final SecuritySystem securitySystem,
+      final SecurityHelper securityHelper,
       final List<PrivilegeDescriptor> privilegeDescriptors)
   {
-    super(securitySystem, privilegeDescriptors);
+    super(securitySystem, securityHelper, privilegeDescriptors);
   }
 
   @Override

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act, } from '@testing-library/react';
 
 // Mock the REST API from the relative path used by the source
 jest.mock('../../../../../../../interface/api', () => ({
@@ -177,7 +177,7 @@ describe('useRealmsApi', () => {
       await act(async () => {
         try {
           await result.current.updateActiveRealms(['InvalidRealm']);
-        } catch (e) {
+        } catch (_e) {
           // Expected to throw
         }
       });
@@ -194,7 +194,7 @@ describe('useRealmsApi', () => {
       await act(async () => {
         try {
           await result.current.updateActiveRealms(['NexusAuthenticatingRealm']);
-        } catch (e) {
+        } catch (_e) {
           // Expected to throw
         }
       });
@@ -213,7 +213,7 @@ describe('useRealmsApi', () => {
       await act(async () => {
         try {
           await result.current.updateActiveRealms(['test']);
-        } catch (e) {
+        } catch (_e) {
           // Expected
         }
       });

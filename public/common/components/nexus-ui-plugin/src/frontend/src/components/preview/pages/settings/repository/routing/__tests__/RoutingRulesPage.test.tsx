@@ -368,7 +368,7 @@ describe('RoutingRulesPage', () => {
       });
     });
 
-    it('requires typing rule name to confirm deletion from form', async () => {
+    it('requires typing "Delete" to confirm deletion from form', async () => {
       const mockDeleteRoutingRule = jest.fn().mockResolvedValue(undefined);
       mockUseRoutingRulesApi.mockReturnValue({
         ...mockUseRoutingRulesApi(),
@@ -400,7 +400,8 @@ describe('RoutingRulesPage', () => {
       expect(confirmButton).toBeDisabled();
 
       // Type correct rule name
-      fireEvent.change(confirmInput, { target: { value: 'test-rule' } });
+      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
+      fireEvent.change(confirmInput, { target: { value: 'Delete' } });
       expect(confirmButton).not.toBeDisabled();
 
       // Click delete
@@ -473,7 +474,8 @@ describe('RoutingRulesPage', () => {
 
       // Type rule name
       const confirmInput = await screen.findByRole('textbox');
-      fireEvent.change(confirmInput, { target: { value: 'test-rule' } });
+      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
+      fireEvent.change(confirmInput, { target: { value: 'Delete' } });
 
       // Click delete
       const confirmButton = screen.getByRole('button', { name: /^delete$/i });

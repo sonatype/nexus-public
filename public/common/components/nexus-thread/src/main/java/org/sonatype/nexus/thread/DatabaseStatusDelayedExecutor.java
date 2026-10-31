@@ -31,7 +31,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
@@ -180,7 +180,7 @@ public class DatabaseStatusDelayedExecutor
 
   @VisibleForTesting
   void setExecutor(final ExecutorService testExecutor) {
-    this.executor = checkNotNull(testExecutor);
+    this.executor = requireNonNull(testExecutor);
   }
 
   private <T> Collection<? extends Callable<T>> wrapAll(final Collection<? extends Callable<T>> tasks) {

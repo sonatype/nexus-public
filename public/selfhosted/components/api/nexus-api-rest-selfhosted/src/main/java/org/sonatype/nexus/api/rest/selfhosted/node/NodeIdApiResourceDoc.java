@@ -16,6 +16,8 @@ import org.sonatype.nexus.api.rest.selfhosted.node.NodeIdApiResource.NodeInforma
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
@@ -29,7 +31,10 @@ public interface NodeIdApiResourceDoc
 {
   @Operation(summary = "Get information about this node")
   @ApiResponses(
-      value = {@ApiResponse(responseCode = "403", description = "Insufficient permissions to update settings")})
+      value = {
+          @ApiResponse(responseCode = "200", description = "Node information returned",
+              content = @Content(schema = @Schema(implementation = NodeInformation.class))),
+          @ApiResponse(responseCode = "403", description = "Insufficient permissions to update settings")})
   NodeInformation getNodeId();
 
   @Operation(

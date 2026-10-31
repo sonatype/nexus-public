@@ -201,7 +201,7 @@ class RawProxyRepositoryApiRequestToConfigurationConverterTest
       List<String> excludedQueryParameters)
   {
     RawAttributes raw = new RawAttributes(contentDisposition, forwardQueryParameters, excludedQueryParameters);
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     ProxyAttributes proxy = new ProxyAttributes("https://example.org/raw", 1440, 1440, false);
     NegativeCacheAttributes negativeCache = new NegativeCacheAttributes(false, 1440);
     HttpClientAttributes httpClient = new HttpClientAttributes(false, true, null, null);
@@ -220,7 +220,7 @@ class RawProxyRepositoryApiRequestToConfigurationConverterTest
   }
 
   private RawProxyRepositoryApiRequest createRequestWithNullRaw() {
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     ProxyAttributes proxy = new ProxyAttributes("https://example.org/raw", 1440, 1440, false);
     NegativeCacheAttributes negativeCache = new NegativeCacheAttributes(false, 1440);
     HttpClientAttributes httpClient = new HttpClientAttributes(false, true, null, null);

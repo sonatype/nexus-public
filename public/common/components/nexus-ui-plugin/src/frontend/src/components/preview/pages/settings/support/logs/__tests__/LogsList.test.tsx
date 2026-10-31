@@ -16,10 +16,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { LogsList } from '../LogsList';
-import * as useLogsApiModule from '../useLogsApi';
+import * as useLogsListModule from '../useLogsList';
 
-// Mock the API hook
-jest.mock('../useLogsApi');
+// Mock the integration hook
+jest.mock('../useLogsList');
 
 // Mock luxon for date formatting
 jest.mock('luxon', () => ({
@@ -37,40 +37,43 @@ jest.mock('../../../../../../../interface/HumanReadableUtils', () => ({
   },
 }));
 
-const mockedUseLogsApi = useLogsApiModule.useLogsApi as jest.MockedFunction<typeof useLogsApiModule.useLogsApi>;
+const mockedUseLogsList = useLogsListModule.useLogsList as jest.MockedFunction<typeof useLogsListModule.useLogsList>;
 
 // Wrapper component for Radix Theme
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return <Theme>{children}</Theme>;
 }
 
-const mockLogs = [
+const allLogs = [
   { fileName: 'nexus.log', size: 1048576, lastModified: 1704110400000 },
   { fileName: 'request.log', size: 524288, lastModified: 1704024000000 },
   { fileName: 'audit.log', size: 262144, lastModified: 1703937600000 },
 ];
 
+function makeHook(overrides: Partial<ReturnType<typeof useLogsListModule.useLogsList>> = {}) {
+  return {
+    filteredLogs: allLogs,
+    filter: '',
+    sortField: 'fileName' as const,
+    sortDirection: 'asc' as const,
+    error: null,
+    isLoading: false,
+    setFilter: jest.fn(),
+    handleSort: jest.fn(),
+    ...overrides,
+  };
+}
+
 describe('LogsList', () => {
   const mockOnSelect = jest.fn();
-  const mockSetError = jest.fn();
-  const mockFetchLogs = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFetchLogs.mockResolvedValue(mockLogs);
-    mockedUseLogsApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchLogs: mockFetchLogs,
-      fetchLogContent: jest.fn(),
-      insertMark: jest.fn(),
-      getDownloadUrl: jest.fn(),
-    });
+    mockedUseLogsList.mockReturnValue(makeHook());
   });
 
   it('renders loading state initially', () => {
-    mockFetchLogs.mockImplementation(() => new Promise(() => {})); // Never resolves
+    mockedUseLogsList.mockReturnValue(makeHook({ isLoading: true, filteredLogs: [] }));
 
     render(<LogsList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
@@ -107,79 +110,60 @@ describe('LogsList', () => {
     expect(mockOnSelect).toHaveBeenCalledWith('nexus.log');
   });
 
-  it('filters logs by filename', async () => {
-    render(<LogsList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
+  it('calls setFilter when filter input changes', async () => {
+    const mockSetFilter = jest.fn();
+    mockedUseLogsList.mockReturnValue(makeHook({ setFilter: mockSetFilter }));
 
-    await waitFor(() => {
-      expect(screen.getByText('nexus.log')).toBeInTheDocument();
-    });
+    render(<LogsList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
     const filterInput = screen.getByPlaceholderText('Filter by file name');
     fireEvent.change(filterInput, { target: { value: 'nexus' } });
 
-    await waitFor(() => {
-      expect(screen.getByText('nexus.log')).toBeInTheDocument();
-      expect(screen.queryByText('request.log')).not.toBeInTheDocument();
-      expect(screen.queryByText('audit.log')).not.toBeInTheDocument();
-    });
+    expect(mockSetFilter).toHaveBeenCalledWith('nexus', expect.anything());
   });
 
   it('shows empty message when no logs match filter', async () => {
+    mockedUseLogsList.mockReturnValue(makeHook({ filteredLogs: [], filter: 'nonexistent' }));
+
     render(<LogsList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('nexus.log')).toBeInTheDocument();
-    });
-
-    const filterInput = screen.getByPlaceholderText('Filter by file name');
-    fireEvent.change(filterInput, { target: { value: 'nonexistent' } });
 
     await waitFor(() => {
       expect(screen.getByText('No log files match your filter')).toBeInTheDocument();
     });
   });
 
-  it('sorts by filename when header is clicked', async () => {
+  it('calls handleSort when File Name header is clicked', async () => {
+    const mockHandleSort = jest.fn();
+    mockedUseLogsList.mockReturnValue(makeHook({ handleSort: mockHandleSort }));
+
     render(<LogsList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText('nexus.log')).toBeInTheDocument();
     });
 
-    // Click on File Name header to toggle sort
     fireEvent.click(screen.getByText('File Name'));
 
-    // Should now be descending (z-a)
-    const rows = screen.getAllByRole('row');
-    // First row is header, so data starts at index 1
-    expect(rows[1]).toHaveTextContent('request.log');
+    expect(mockHandleSort).toHaveBeenCalledWith('fileName');
   });
 
-  it('sorts by size when header is clicked', async () => {
+  it('calls handleSort when Size header is clicked', async () => {
+    const mockHandleSort = jest.fn();
+    mockedUseLogsList.mockReturnValue(makeHook({ handleSort: mockHandleSort }));
+
     render(<LogsList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText('nexus.log')).toBeInTheDocument();
     });
 
-    // Click on Size header
     fireEvent.click(screen.getByText('Size'));
 
-    // Size should be sorted ascending (smallest first)
-    const rows = screen.getAllByRole('row');
-    expect(rows[1]).toHaveTextContent('audit.log');
+    expect(mockHandleSort).toHaveBeenCalledWith('size');
   });
 
-  it('displays error alert when fetch fails', async () => {
-    mockedUseLogsApi.mockReturnValue({
-      loading: false,
-      error: 'Failed to load logs',
-      setError: mockSetError,
-      fetchLogs: mockFetchLogs.mockRejectedValue(new Error('Failed to load logs')),
-      fetchLogContent: jest.fn(),
-      insertMark: jest.fn(),
-      getDownloadUrl: jest.fn(),
-    });
+  it('displays error alert when error is present', async () => {
+    mockedUseLogsList.mockReturnValue(makeHook({ error: 'Failed to load logs', filteredLogs: [] }));
 
     render(<LogsList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
@@ -189,7 +173,7 @@ describe('LogsList', () => {
   });
 
   it('shows empty message when no logs exist', async () => {
-    mockFetchLogs.mockResolvedValue([]);
+    mockedUseLogsList.mockReturnValue(makeHook({ filteredLogs: [] }));
 
     render(<LogsList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
@@ -210,5 +194,3 @@ describe('LogsList', () => {
     expect(screen.getByText('Last Modified')).toBeInTheDocument();
   });
 });
-
-

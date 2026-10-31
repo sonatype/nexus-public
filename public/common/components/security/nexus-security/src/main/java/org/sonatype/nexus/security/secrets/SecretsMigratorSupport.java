@@ -23,7 +23,7 @@ import org.sonatype.nexus.security.UserIdHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for {@link SecretsMigrator} implementations.
@@ -36,7 +36,7 @@ public abstract class SecretsMigratorSupport
   protected final SecretsService secretsService;
 
   protected SecretsMigratorSupport(final SecretsService secretsService) {
-    this.secretsService = checkNotNull(secretsService);
+    this.secretsService = requireNonNull(secretsService);
   }
 
   /**

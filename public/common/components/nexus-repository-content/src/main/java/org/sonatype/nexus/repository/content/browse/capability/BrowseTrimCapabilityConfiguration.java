@@ -16,7 +16,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.text.Strings2;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class BrowseTrimCapabilityConfiguration
 {
@@ -37,7 +37,7 @@ public class BrowseTrimCapabilityConfiguration
   }
 
   public BrowseTrimCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
+    requireNonNull(properties);
     this.postgresqlTrimEnabled = parseBoolean(
         properties.get(POSTGRESQL_TRIM_ENABLED),
         DEFAULT_POSTGRESQL_TRIM_ENABLED);

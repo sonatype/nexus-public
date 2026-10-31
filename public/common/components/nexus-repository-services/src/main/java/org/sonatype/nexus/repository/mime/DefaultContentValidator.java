@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link ContentValidator}.
@@ -60,7 +60,7 @@ public class DefaultContentValidator
 
   @Autowired
   public DefaultContentValidator(final MimeSupport mimeSupport) {
-    this.mimeSupport = checkNotNull(mimeSupport);
+    this.mimeSupport = requireNonNull(mimeSupport);
   }
 
   @Nonnull
@@ -72,7 +72,7 @@ public class DefaultContentValidator
       @Nullable final String contentName,
       @Nullable final String declaredContentType) throws IOException
   {
-    checkNotNull(contentSupplier);
+    requireNonNull(contentSupplier);
     final String declaredBaseContentType = mediaTypeWithoutParameters(declaredContentType);
 
     final LinkedHashSet<String> contentDetectedMimeTypes = new LinkedHashSet<>();

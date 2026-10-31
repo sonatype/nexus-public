@@ -36,7 +36,7 @@ describe("SearchGenericExt", () => {
     givenBundleActiveStates();
 
     jest.spyOn(ExtJS, 'useUser').mockReturnValue({ administrator: true });
-    jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(true);
+    jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue(true);
     jest.spyOn(ExtJS, 'useSearchFilterModel').mockReturnValue(null);
     historySpy = jest.spyOn(History.prototype, 'pushState');
 

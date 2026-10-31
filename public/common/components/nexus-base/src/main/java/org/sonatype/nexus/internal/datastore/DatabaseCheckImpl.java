@@ -37,7 +37,7 @@ import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationInfo;
 import org.flywaydb.core.api.MigrationVersion;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -61,7 +61,7 @@ public class DatabaseCheckImpl
 
   @Autowired
   public DatabaseCheckImpl(final DataStoreManager dataStoreManager) {
-    this.dataStoreManager = checkNotNull(dataStoreManager);
+    this.dataStoreManager = requireNonNull(dataStoreManager);
   }
 
   @Override

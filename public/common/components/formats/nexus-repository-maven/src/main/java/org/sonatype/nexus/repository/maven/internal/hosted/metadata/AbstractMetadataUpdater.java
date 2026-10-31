@@ -37,14 +37,14 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Maven 2 repository metadata updater.
  *
  * @since 3.0
  */
-abstract public class AbstractMetadataUpdater
+public abstract class AbstractMetadataUpdater
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -54,14 +54,33 @@ abstract public class AbstractMetadataUpdater
 
   private final RepositoryMetadataMerger repositoryMetadataMerger;
 
+  private final boolean rebuildChecksums;
+
   /**
    * @param update Determines whether existing content should be updated or replaced.
    * @param repository The {@link Repository} to update.
    */
   public AbstractMetadataUpdater(final boolean update, final Repository repository) {
     this.update = update;
-    this.repository = checkNotNull(repository);
+    this.repository = requireNonNull(repository);
     this.repositoryMetadataMerger = new RepositoryMetadataMerger();
+    this.rebuildChecksums = false;
+  }
+
+  /**
+   * @param update Determines whether existing content should be updated or replaced.
+   * @param repository The {@link Repository} to update.
+   * @param rebuildChecksums Whether to check for and regenerate missing checksums.
+   */
+  public AbstractMetadataUpdater(
+      final boolean update,
+      final Repository repository,
+      final boolean rebuildChecksums)
+  {
+    this.update = update;
+    this.repository = requireNonNull(repository);
+    this.repositoryMetadataMerger = new RepositoryMetadataMerger();
+    this.rebuildChecksums = rebuildChecksums;
   }
 
   /**
@@ -165,8 +184,8 @@ abstract public class AbstractMetadataUpdater
   protected void update(final MavenPath mavenPath, final Maven2Metadata metadata) {
     log.debug("Updating Metadata in {}", mavenPath.getPath());
     try {
-      checkNotNull(mavenPath);
-      checkNotNull(metadata);
+      requireNonNull(mavenPath);
+      requireNonNull(metadata);
 
       final Optional<Metadata> oldMetadata = safeRead(mavenPath);
       if (oldMetadata.isPresent()) {
@@ -191,8 +210,8 @@ abstract public class AbstractMetadataUpdater
   protected void replace(final MavenPath mavenPath, final Maven2Metadata metadata) {
     log.debug("Replacing Metadata in {}", mavenPath.getPath());
     try {
-      checkNotNull(mavenPath);
-      checkNotNull(metadata);
+      requireNonNull(mavenPath);
+      requireNonNull(metadata);
 
       final Optional<Metadata> oldMetadata = safeRead(mavenPath);
       if (oldMetadata.isPresent()) {
@@ -277,17 +296,34 @@ abstract public class AbstractMetadataUpdater
     return result;
   }
 
-  private void writeIfChanged(
+  @VisibleForTesting
+  void writeIfChanged(
       final MavenPath mavenPath,
       final Metadata oldMetadata,
       final Metadata newMetadata) throws IOException
   {
-    if (repositoryMetadataMerger.metadataEquals(oldMetadata, newMetadata)) {
-      log.info("Metadata for {} hasn't changed, skipping", mavenPath.getPath());
-    }
-    else {
+    boolean contentChanged = !repositoryMetadataMerger.metadataEquals(oldMetadata, newMetadata);
+    boolean checksumsMissing = rebuildChecksums && hasMissingChecksums(mavenPath);
+
+    if (contentChanged || checksumsMissing) {
+      if (checksumsMissing) {
+        log.debug("Metadata for {} has missing checksums, regenerating", mavenPath.getPath());
+      }
       write(mavenPath, newMetadata);
     }
+    else {
+      log.debug("Metadata for {} hasn't changed, skipping", mavenPath.getPath());
+    }
+  }
+
+  /**
+   * Checks if any checksum files are missing for the given metadata path.
+   *
+   * @param mavenPath the metadata path to check
+   * @return true if any checksum file is missing
+   */
+  protected boolean hasMissingChecksums(final MavenPath mavenPath) {
+    return false;
   }
 
   /**

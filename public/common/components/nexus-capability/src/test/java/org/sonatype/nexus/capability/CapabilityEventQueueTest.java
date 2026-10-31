@@ -17,12 +17,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
+import org.apache.shiro.SecurityUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,7 +37,8 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, AuthenticationExtension.class})
+@WithUser("test-user")
 class CapabilityEventQueueTest
 {
   @Mock
@@ -60,9 +64,14 @@ class CapabilityEventQueueTest
 
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<Thread> eventThread = new AtomicReference<>();
+    AtomicReference<Object> eventThreadPrincipal = new AtomicReference<>();
 
     doAnswer(invocation -> {
       eventThread.set(Thread.currentThread());
+      // Capture the Shiro principal bound to the event-processing thread. This is what
+      // NexusExecutorService.forCurrentSubject() must propagate — if it doesn't, auditors
+      // running on this thread would see *UNKNOWN as the initiator (NEXUS-53769).
+      eventThreadPrincipal.set(SecurityUtils.getSubject().getPrincipal());
       latch.countDown();
       return null;
     }).when(eventManager).post(any());
@@ -80,6 +89,10 @@ class CapabilityEventQueueTest
     assertTrue(eventThread.get() != callerThread, "Event should be posted on queue thread, not caller thread");
     assertTrue(eventThread.get().getName().contains("capability-event"),
         "Event thread should be from capability-event executor");
+
+    // Verify the caller's Shiro Subject was propagated to the event-processing thread.
+    assertEquals("test-user", eventThreadPrincipal.get(),
+        "Shiro Subject must be propagated from caller to event-processing thread");
   }
 
   @Test

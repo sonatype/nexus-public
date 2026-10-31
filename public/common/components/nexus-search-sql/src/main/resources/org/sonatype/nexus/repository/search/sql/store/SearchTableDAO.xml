@@ -226,7 +226,7 @@
             COALESCE(<include refid="toTsVector"><property name="tokens" value="aliasComponentNames"/></include>, ''::tsvector),
             <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
             <include refid="toTsVector"><property name="tokens" value="uploaderIps"/></include>,
-            <include refid="toQuotedTsVector"><property name="tokens" value="paths"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="paths"/></include>,
             <include refid="toTsVector"><property name="tokens" value="keywords"/></include>,
             <include refid="toTsVector"><property name="tokens" value="md5"/></include>,
             <include refid="toTsVector"><property name="tokens" value="sha1"/></include>,
@@ -263,7 +263,7 @@
           uploaders = <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
           uploader_ips = <include refid="toTsVector"><property name="tokens" value="uploaderIps"/></include>,
           paths = <include refid="join"><property name="thePaths" value="paths"/></include>,
-          tsvector_paths = <include refid="toQuotedTsVector"><property name="tokens" value="paths"/></include>,
+          tsvector_paths = <include refid="toTsVector"><property name="tokens" value="paths"/></include>,
           keywords = <include refid="toTsVector"><property name="tokens" value="keywords"/></include>,
           md5 = <include refid="toTsVector"><property name="tokens" value="md5"/></include>,
           sha1 = <include refid="toTsVector"><property name="tokens" value="sha1"/></include>,
@@ -411,6 +411,76 @@
     )
   </delete>
 
+  <delete id="deleteOrphanedComponents" databaseId="PostgreSQL">
+    WITH toBeDeleted AS (
+        SELECT cs.component_id
+        FROM search_components cs
+        WHERE <include refid="repositoryMatch"/>
+          AND NOT EXISTS (
+              SELECT 1 FROM ${format}_component comp
+              WHERE comp.component_id = cs.component_id
+                AND comp.repository_id = cs.repository_id
+          )
+    <if test="limit gt 0"> LIMIT ${limit}</if>)
+    DELETE FROM search_components cs
+    WHERE <include refid="repositoryMatch"/>
+      AND cs.component_id IN (SELECT td.component_id FROM toBeDeleted td)
+  </delete>
+
+  <delete id="deleteOrphanedComponents" databaseId="H2">
+    DELETE FROM search_components
+    WHERE <include refid="repositoryMatch"/>
+      AND component_id IN (
+          SELECT cs.component_id
+          FROM search_components cs
+          WHERE <include refid="repositoryMatch"/>
+            AND NOT EXISTS (
+                SELECT 1 FROM ${format}_component comp
+                WHERE comp.component_id = cs.component_id
+                  AND comp.repository_id = cs.repository_id
+            )
+          <if test="limit gt 0"> LIMIT ${limit}</if>
+      )
+  </delete>
+
+  <delete id="deleteOrphanedAssets" databaseId="PostgreSQL">
+    WITH toBeDeleted AS (
+        SELECT sa.component_id
+        FROM search_assets sa
+        WHERE sa.repository_id = #{repositoryId}
+          AND sa.format = #{format}
+          AND NOT EXISTS (
+              SELECT 1 FROM search_components sc
+              WHERE sc.component_id = sa.component_id
+                AND sc.repository_id = sa.repository_id
+                AND sc.format = sa.format
+          )
+    <if test="limit gt 0"> LIMIT ${limit}</if>)
+    DELETE FROM search_assets cs
+    WHERE cs.repository_id = #{repositoryId}
+      AND cs.format = #{format}
+      AND cs.component_id IN (SELECT td.component_id FROM toBeDeleted td)
+  </delete>
+
+  <delete id="deleteOrphanedAssets" databaseId="H2">
+    DELETE FROM search_assets
+    WHERE repository_id = #{repositoryId}
+      AND format = #{format}
+      AND component_id IN (
+          SELECT sa.component_id
+          FROM search_assets sa
+          WHERE sa.repository_id = #{repositoryId}
+            AND sa.format = #{format}
+            AND NOT EXISTS (
+                SELECT 1 FROM search_components sc
+                WHERE sc.component_id = sa.component_id
+                  AND sc.repository_id = sa.repository_id
+                  AND sc.format = sa.format
+            )
+          <if test="limit gt 0"> LIMIT ${limit}</if>
+      )
+  </delete>
+
   <resultMap id="searchDataMap" type="org.sonatype.nexus.repository.search.sql.store.SearchResultData">
     <id property="componentId" column="component_id" />
     <id property="repositoryId" column="repository_id" />
@@ -449,7 +519,7 @@
         attributes,
         tags
     FROM search_components cs
-    <if test="assetFilter != null">
+    <if test="assetFilter != null and assetFilter != ''">
       INNER JOIN (
       SELECT
         ap.format,
@@ -463,7 +533,8 @@
       ) content ON cs.format = content.format AND cs.repository_id = content.repository_id AND cs.component_id = content.component_id
     </if>
     <where>
-      <if test="filter != null">(${filter})</if>
+      <!-- NEXUS-54104: guard against an empty-string filter (crafted query like q="" "" "") that would otherwise emit invalid SQL "WHERE ()" -->
+      <if test="filter != null and filter != ''">(${filter})</if>
       <!-- Keyset pagination: efficiently skip to records after the cursor using index seek -->
       <!-- This is O(log n) vs O(n) for OFFSET-based pagination -->
       <if test="cursorFormat != null and cursorComponentId != null">
@@ -489,13 +560,13 @@
   </select>
 
   <select id="count" resultType="long" parameterType="SqlSearchRequest">
-    <!-- 
+    <!--
       The prefixes 'cs' and 'ap' are used to prevent ambiguity in column names.
       Be cautious when modifying them, as some classes rely on these prefixes for building filters.
     -->
     SELECT COUNT(cs.component_id)
     FROM search_components cs
-    <if test="assetFilter != null">
+    <if test="assetFilter != null and assetFilter != ''">
       INNER JOIN (
       SELECT
       ap.format,
@@ -509,7 +580,87 @@
       ) content ON cs.format = content.format AND cs.repository_id = content.repository_id AND cs.component_id = content.component_id
     </if>
     <where>
+      <!-- NEXUS-54104: guard against an empty-string filter (crafted query like q="" "" "") that would otherwise emit invalid SQL "WHERE ()" -->
+      <if test="filter != null and filter != ''">(${filter})</if>
+    </where>
+  </select>
+
+  <resultMap id="componentVersionMap" type="org.sonatype.nexus.repository.search.sql.store.ComponentVersionData">
+    <result property="version" column="version"/>
+    <result property="normalisedVersion" column="normalised_version"/>
+    <result property="repositories" column="repositories"/>
+    <result property="lastModified" column="last_modified"/>
+  </resultMap>
+
+  <!--
+    Distinct versions of a component, one row per version, with the containing repositories
+    aggregated. Portable across PostgreSQL and H2: STRING_AGG(DISTINCT ...) and
+    COUNT(DISTINCT ...) are native to PostgreSQL and accepted by H2 2.x.
+    Deliberately does NOT use DISTINCT ON (PostgreSQL-only; see NEXUS-50690).
+    ${filter} comes only from ExpressionBuilder; ${sortExpression} only from
+    ComponentVersionSortField.
+
+    Grouping on (version, normalised_version) while countComponentVersions counts DISTINCT
+    version alone is safe, and both must stay in step. Normalisation is a pure function of the
+    version string, so one version cannot yield two normalised forms — but the function itself
+    is chosen per format (MavenVersionNormalizer, RpmVersionNormalizer, NuGetVersionNormalizer,
+    ...), so what actually holds the two queries together is that ${filter} always pins a single
+    format. A caller that widened this query across formats could group one version into two
+    rows while the count still returned one, silently producing a short final page. Adding
+    normalised_version to the count is not the fix — the filter contract is.
+  -->
+  <select id="browseComponentVersions" resultMap="componentVersionMap"
+          parameterType="org.sonatype.nexus.repository.search.sql.store.ComponentVersionSearchRequest">
+    SELECT
+      cs.version,
+      cs.normalised_version,
+      <!-- ORDER BY inside the aggregate: PostgreSQL does not otherwise promise an order for
+           STRING_AGG(DISTINCT ...), and an unstable repository list would make the CSV export
+           differ between two identical requests. Determinism here is by construction and is not
+           test-observable — small inputs come back sorted either way — so do not remove this on
+           the strength of the tests still passing.
+           The ORDER BY must stay after the separator: PostgreSQL reads an earlier one as the
+           whole argument list (leaving a one-argument string_agg that does not exist) and H2
+           rejects it outright. Verified against PostgreSQL 16 and H2 2.4.240. -->
+      STRING_AGG(DISTINCT cs.search_repository_name, ',' ORDER BY cs.search_repository_name) AS repositories,
+      MAX(cs.last_modified) AS last_modified
+    FROM search_components cs
+    <where>
       <if test="filter != null">(${filter})</if>
+      <if test="versionLikePattern != null">
+        AND LOWER(cs.version) LIKE #{versionLikePattern} ESCAPE '\'
+      </if>
+    </where>
+    GROUP BY cs.version, cs.normalised_version
+    <!-- cs.version closes the order. normalised_version is not unique: distinct version strings
+         can normalise to the same value (MavenVersionNormalizer treats 1, 1.0 and 1.0.0 as equal,
+         and documents 2.0.a / 2.0.0.a as equivalent), so ordering by it alone leaves tied rows in
+         an order neither engine promises. With LIMIT/OFFSET that is not merely cosmetic: a tie
+         straddling a page boundary can come back on both pages and hide whichever row it
+         displaces, while the count query still reports both. cs.version is already in the GROUP BY,
+         so it is free to sort on. Do not fold this back into the conditional below — the default
+         sort IS cs.normalised_version, which is exactly the case that has no other tiebreaker.
+
+         The conditional tier stays DESC whatever the primary direction is: when two versions tie on
+         repository count or last_modified, newest-version-first is the useful presentation
+         regardless of how the user sorted the primary column. Only the final cs.version tier
+         follows ${sortDirection}, and its job is closing the order rather than presentation — any
+         deterministic direction there would do. -->
+    ORDER BY ${sortExpression} ${sortDirection}
+    <if test="sortExpression != 'cs.normalised_version'">, cs.normalised_version DESC</if>
+    , cs.version ${sortDirection}
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="countComponentVersions" resultType="long"
+          parameterType="org.sonatype.nexus.repository.search.sql.store.ComponentVersionSearchRequest">
+    SELECT COUNT(DISTINCT cs.version)
+    FROM search_components cs
+    <where>
+      <if test="filter != null">(${filter})</if>
+      <if test="versionLikePattern != null">
+        AND LOWER(cs.version) LIKE #{versionLikePattern} ESCAPE '\'
+      </if>
     </where>
   </select>
 
@@ -776,26 +927,6 @@
       <when test="${tokens}.isEmpty()">null</when>
       <otherwise>
         (SELECT string_agg(LOWER(token)::tsvector::text, ' ')::tsvector FROM (VALUES <foreach collection="${tokens}" separator="," item="token">(#{token})</foreach>) AS t(token))
-      </otherwise>
-    </choose>
-  </sql>
-
-  <sql id="toQuotedTsVector" databaseId="PostgreSQL">
-    <!--
-      Uses VALUES clause with direct ::tsvector casting to avoid both stack depth and tokenization issues.
-      The old || concatenation created deeply nested expression trees that exceeded PostgreSQL's stack limit.
-      The VALUES clause provides a flat structure (no nesting), while ::tsvector casting preserves exact lexemes
-      without tokenization (unlike to_tsvector which would break paths into separate tokens).
-
-      This approach:
-      - Avoids stack depth issues: VALUES clause creates flat structure vs nested || expressions
-      - Preserves exact lexemes: ::tsvector casting treats each token as single lexeme
-      - Maintains compatibility: Output is identical to old || approach (exact same lexemes, no positions)
-    -->
-    <choose>
-      <when test="${tokens}.isEmpty()">null</when>
-      <otherwise>
-        (SELECT string_agg(token::tsvector::text, ' ')::tsvector FROM (VALUES <foreach collection="${tokens}" separator="," item="token">(#{token, typeHandler=QuotingTypeHandler})</foreach>) AS t(token))
       </otherwise>
     </choose>
   </sql>

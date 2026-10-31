@@ -146,6 +146,19 @@ public class InternalIdsTest
     assertThat(internalComponentId(fluentAsset).getAsInt(), is(component.componentId));
   }
 
+  @Test
+  public void shouldUnwrapFluentWrappersToTheirBackingData() {
+    ComponentData component = new ComponentData();
+    AssetData asset = new AssetData();
+
+    Asset fluentAsset = new FluentAssetImpl(contentFacet, asset);
+    Component fluentComponent = new FluentComponentImpl(contentFacet, component);
+
+    assertThat(InternalIds.unwrap(fluentAsset), is(asset));
+    assertThat(InternalIds.unwrap(fluentComponent), is(component));
+    assertThat(InternalIds.unwrap(asset), is(asset));
+  }
+
   private static void checkIllegalState(final IntSupplier underTest) {
     try {
       underTest.getAsInt();

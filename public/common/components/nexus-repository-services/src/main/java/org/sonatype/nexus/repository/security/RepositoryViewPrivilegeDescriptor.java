@@ -30,7 +30,6 @@ import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.Permission;
@@ -40,7 +39,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED_VALUE;
 
 /**
@@ -132,7 +131,7 @@ public class RepositoryViewPrivilegeDescriptor
 
   @Override
   public Permission createPermission(final CPrivilege privilege) {
-    checkNotNull(privilege);
+    requireNonNull(privilege);
     String format = readProperty(privilege, P_FORMAT, ALL);
     String name = readProperty(privilege, P_REPOSITORY, ALL);
     List<String> actions = readListProperty(privilege, P_ACTIONS, ALL);
@@ -154,7 +153,7 @@ public class RepositoryViewPrivilegeDescriptor
   //
 
   public static String id(final String format, final String name, final String... actions) {
-    return String.format("nx-%s-%s-%s-%s", TYPE, format, name, Joiner.on(',').join(actions));
+    return String.format("nx-%s-%s-%s-%s", TYPE, format, name, String.join(",", actions));
   }
 
   public static CPrivilege privilege(final String format, final String name, final String... actions) {

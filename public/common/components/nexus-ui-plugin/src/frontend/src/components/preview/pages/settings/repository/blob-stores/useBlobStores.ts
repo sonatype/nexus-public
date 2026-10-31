@@ -41,17 +41,17 @@ const megaBytesToBytes = (mb: number): number => mb * 1024 * 1024;
 const bytesToMegaBytes = (bytes: number): number => bytes / (1024 * 1024);
 
 // Deep trim all string values in an object
-const trimStrings = (obj: Record<string, unknown>): Record<string, unknown> => {
+const _trimStrings = (obj: Record<string, unknown>): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
       result[key] = value.trim();
     } else if (value && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = trimStrings(value as Record<string, unknown>);
+      result[key] = _trimStrings(value as Record<string, unknown>);
     } else if (Array.isArray(value)) {
       result[key] = value.map(item => 
         typeof item === 'object' && item !== null 
-          ? trimStrings(item as Record<string, unknown>) 
+          ? _trimStrings(item as Record<string, unknown>) 
           : item
       );
     } else {

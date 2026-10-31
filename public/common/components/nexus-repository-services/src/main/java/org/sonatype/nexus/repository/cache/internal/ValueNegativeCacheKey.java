@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.cache.internal;
 
 import org.sonatype.nexus.repository.cache.NegativeCacheKey;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 // TODO: implement Externalizable
 
@@ -29,7 +29,7 @@ public class ValueNegativeCacheKey
   private final String value;
 
   public ValueNegativeCacheKey(final String value) {
-    this.value = checkNotNull(value);
+    this.value = requireNonNull(value);
   }
 
   /**
@@ -38,7 +38,7 @@ public class ValueNegativeCacheKey
    */
   @Override
   public boolean isParentOf(final NegativeCacheKey key) {
-    checkNotNull(key);
+    requireNonNull(key);
     return false;
   }
 

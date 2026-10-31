@@ -36,7 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.content.store.internal.migration.AssetBlobRefMigrationTaskDescriptor.CONTENT_STORE_FIELD_ID;
 import static org.sonatype.nexus.repository.content.store.internal.migration.AssetBlobRefMigrationTaskDescriptor.FORMAT_FIELD_ID;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -61,7 +61,7 @@ public class AssetBlobRefMigrationTask
       final List<FormatStoreManager> formatStoreManagersList,
       @Value("${nexus.assetBlobRef.migration.read.batchSize:100}") final int readAssetsBatchSize)
   {
-    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersList));
+    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatStoreManagersList));
 
     checkArgument(readAssetsBatchSize >= 0, "Must use a non-negative readAssetsBatchSize");
     this.readAssetsBatchSize = readAssetsBatchSize;

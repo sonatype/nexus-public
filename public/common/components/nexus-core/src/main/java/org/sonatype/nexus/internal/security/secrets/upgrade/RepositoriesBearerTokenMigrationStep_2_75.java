@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Migration step to encrypt repositories bearer tokens in authentication configurations.
@@ -39,7 +39,7 @@ public class RepositoriesBearerTokenMigrationStep_2_75
 
   @Autowired
   public RepositoriesBearerTokenMigrationStep_2_75(final UpgradeTaskScheduler startupScheduler) {
-    this.startupScheduler = checkNotNull(startupScheduler);
+    this.startupScheduler = requireNonNull(startupScheduler);
   }
 
   @Override

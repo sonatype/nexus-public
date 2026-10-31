@@ -14,6 +14,7 @@
 import {
   buildGuideComponentUrl,
   buildGuideComponentUrlFromGaId,
+  guidePackageName,
   guidePackageNameFromGaId,
   isGuideSupported,
   isGuideSupportedForGaId,
@@ -104,6 +105,43 @@ describe('guideIntegration', () => {
       expect(guidePackageNameFromGaId('maven2:org.apache.commons:commons-lang3')).toBe(
         'org.apache.commons:commons-lang3'
       );
+    });
+  });
+
+  describe('guidePackageName', () => {
+    it('joins group and name into maven coordinates for maven', () => {
+      expect(guidePackageName('maven', 'org.apache.commons', 'commons-lang3')).toBe(
+        'org.apache.commons:commons-lang3'
+      );
+    });
+
+    it('joins group and name for maven2 (case-insensitive format)', () => {
+      expect(guidePackageName('Maven2', 'org.springframework', 'spring-core')).toBe(
+        'org.springframework:spring-core'
+      );
+    });
+
+    it('returns the bare name for maven when no group is present', () => {
+      expect(guidePackageName('maven', undefined, 'commons-lang3')).toBe('commons-lang3');
+      expect(guidePackageName('maven', '', 'commons-lang3')).toBe('commons-lang3');
+    });
+
+    it('rejoins scope and bare name for scoped npm (group @scope + name core)', () => {
+      // Search results split scoped npm: group '@angular' + bare name 'core'. Guide needs the
+      // slash form '@angular/core'; returning the bare name would link to the wrong page.
+      expect(guidePackageName('npm', '@angular', 'core')).toBe('@angular/core');
+    });
+
+    it('does not double the scope when the npm name already carries it', () => {
+      expect(guidePackageName('npm', '@angular', '@angular/core')).toBe('@angular/core');
+    });
+
+    it('returns the bare name for unscoped npm (no group)', () => {
+      expect(guidePackageName('npm', undefined, 'lodash')).toBe('lodash');
+    });
+
+    it('returns the bare name for a non-maven format without a group', () => {
+      expect(guidePackageName('pypi', undefined, 'requests')).toBe('requests');
     });
   });
 

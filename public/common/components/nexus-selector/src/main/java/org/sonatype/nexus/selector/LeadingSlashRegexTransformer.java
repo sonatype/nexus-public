@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.selector;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Transforms path regular expressions with leading slashes so they match paths without leading slashes.
@@ -64,7 +64,7 @@ class LeadingSlashRegexTransformer
    * Instances can't be re-used, so only let this class construct instances.
    */
   private LeadingSlashRegexTransformer(final String regex) {
-    this.regex = checkNotNull(regex);
+    this.regex = requireNonNull(regex);
   }
 
   /**

@@ -108,7 +108,7 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
 
     me.firewallColumnMessageTemplate = Ext.create('Ext.XTemplate',
         '<div class="nx-firewall-container">',
-        '<div style="float:left;">{message}</div>',
+        '<div style="text-align:center; width:100%;">{message}</div>',
         '</div>',
         {
           compiled : true
@@ -116,9 +116,9 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
     );
 
     me.firewallColumnErrorTemplate = Ext.create('Ext.XTemplate',
-        '<div class="nx-firewall-container">',
-        '<div class="nx-firewall-iq-error-icon"></div>',
-        '<div class="nx-firewall-error">{errorMessage}</div>',
+        '<div class="nx-firewall-container" style="display:flex; justify-content:center; align-items:center; gap:5px;">',
+        '<div class="nx-firewall-iq-error-icon" style="float:none; margin-left:0;"></div>',
+        '<div class="nx-firewall-error" style="padding-left:0;">{errorMessage}</div>',
         '</div>',
         {
           compiled : true
@@ -227,6 +227,9 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
           errorMessage: errorMessage
         });
       }
+      // NEXUS-54323: 'message' is the non-admin badge ("Audit enabled" / "Quarantine enabled").
+      // Backend guarantees message == null on the admin path so this branch is skipped and the
+      // chiclet template below renders instead. See FirewallRepositoryStatusComponent#getRepositoryStatusXO.
       else if (statusModel.get('message')) {
         var message = Ext.util.Format.htmlEncode(statusModel.get('message'));
         metadata.tdAttr = 'data-qtip="' + message + '"';

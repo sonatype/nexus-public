@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.deser.std.UntypedObjectDeserializer;
 
 import static com.fasterxml.jackson.core.JsonTokenId.ID_NULL;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.nonNull;
 
 /**
@@ -39,7 +39,7 @@ public class UntypedObjectDeserializerSerializer
 
   public UntypedObjectDeserializerSerializer(final JsonGenerator generator) {
     super((JavaType) null, null);
-    this.generator = checkNotNull(generator);
+    this.generator = requireNonNull(generator);
   }
 
   /**

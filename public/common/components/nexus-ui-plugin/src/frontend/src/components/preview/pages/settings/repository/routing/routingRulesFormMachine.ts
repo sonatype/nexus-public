@@ -17,7 +17,6 @@ import { restClient } from '../../../../../../interface/api';
 import {
   RoutingRule,
   RoutingRuleFormData,
-  RoutingMode,
   INITIAL_ROUTING_RULE_FORM,
   NAME_PATTERN,
   NAME_PATTERN_MESSAGE,

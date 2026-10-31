@@ -173,8 +173,13 @@ public class ApiKeyStoreImpl
   }
 
   @Transactional
-  public Collection<ApiKeyData> browseAllSince(final OffsetDateTime last, final int pageSize) {
-    return dao().browseAllSince(last, pageSize);
+  public Collection<ApiKeyData> browseAllSince(
+      final OffsetDateTime last,
+      final String domain,
+      final String token,
+      final int pageSize)
+  {
+    return dao().browseAllSince(last, domain, new ApiKeyToken(token.toCharArray()), pageSize);
   }
 
   /*

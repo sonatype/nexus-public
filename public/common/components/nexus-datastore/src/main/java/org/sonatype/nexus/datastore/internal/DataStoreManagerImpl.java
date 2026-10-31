@@ -53,7 +53,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
@@ -102,11 +102,11 @@ public class DataStoreManagerImpl
   {
     this.enabled = true;
 
-    this.eventManager = checkNotNull(eventManager);
-    this.dataStoreDescriptors = QualifierUtil.buildQualifierBeanMap(checkNotNull(dataStoreDescriptorsList));
+    this.eventManager = requireNonNull(eventManager);
+    this.dataStoreDescriptors = QualifierUtil.buildQualifierBeanMap(requireNonNull(dataStoreDescriptorsList));
     this.dataStorePrototypes = Map.of("jdbc", jdbcPrototype);
-    this.configurationManager = checkNotNull(configurationManager);
-    this.usageChecker = checkNotNull(usageChecker);
+    this.configurationManager = requireNonNull(configurationManager);
+    this.usageChecker = requireNonNull(usageChecker);
     this.restorer = restorer;
   }
 
@@ -174,7 +174,7 @@ public class DataStoreManagerImpl
   }
 
   private DataStore<?> doCreate(final DataStoreConfiguration configuration) throws Exception {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     String storeName = configuration.getName();
 
@@ -204,7 +204,7 @@ public class DataStoreManagerImpl
   @Override
   @Guarded(by = STARTED)
   public DataStore<?> update(final DataStoreConfiguration newConfiguration) throws Exception {
-    checkNotNull(newConfiguration);
+    requireNonNull(newConfiguration);
 
     String storeName = newConfiguration.getName();
 
@@ -262,7 +262,7 @@ public class DataStoreManagerImpl
   @Override
   @Guarded(by = STARTED)
   public Optional<DataStore<?>> get(final String storeName) {
-    checkNotNull(storeName);
+    requireNonNull(storeName);
 
     return ofNullable(dataStores.get(lower(storeName)));
   }
@@ -270,7 +270,7 @@ public class DataStoreManagerImpl
   @Override
   @Guarded(by = STARTED)
   public boolean delete(final String storeName) throws Exception {
-    checkNotNull(storeName);
+    requireNonNull(storeName);
 
     checkState(!usageChecker.get().isDataStoreUsed(storeName),
         "%s data store is in use by at least one repository", storeName);
@@ -292,7 +292,7 @@ public class DataStoreManagerImpl
 
   @Override
   public boolean exists(final String storeName) {
-    checkNotNull(storeName);
+    requireNonNull(storeName);
 
     return dataStores.containsKey(lower(storeName));
   }

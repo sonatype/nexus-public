@@ -21,7 +21,6 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LoggerLevel;
-import org.sonatype.nexus.common.log.LoggerOverridesReloadEvent;
 import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
 import org.sonatype.nexus.internal.log.overrides.datastore.DatastoreLoggerOverrides;
 import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent;
@@ -38,7 +37,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.context.ApplicationContext;
 import com.google.common.collect.ImmutableSet;
@@ -47,7 +45,6 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -154,34 +151,42 @@ public class LogbackLogManagerTest
 
   @Test
   public void testReloadOverridesFromDatastoreInvoked() throws Exception {
+    // unique per run so the process-global logback context is not polluted by other tests
+    String loggerName = "datastoreOverride" + System.nanoTime();
     EventManager eventManager = mock(EventManager.class);
     LoggingOverridesStore store = mock(LoggingOverridesStore.class);
 
     Continuation<LoggingOverridesData> data = new ContinuationArrayList<LoggingOverridesData>()
     {
       {
-        add(new LoggingOverridesData("logger-name", LoggerLevel.DEBUG.toString()));
+        add(new LoggingOverridesData(loggerName, LoggerLevel.DEBUG.toString()));
       }
     };
     when(store.readRecords()).thenReturn(data);
 
     DatastoreLoggerOverrides overrides = new DatastoreLoggerOverrides(
-        mock(ApplicationDirectories.class), store, eventManager);
+        mock(ApplicationDirectories.class), store);
 
     LogbackLogManager underTest = new LogbackLogManager(eventManager, overrides);
     underTest.setApplicationContext(applicationContext);
 
+    LoggerContext context = LogbackLogManager.loggerContext();
+    // precondition: no level applied to the live logback logger yet
+    assertThat(context.exists(loggerName), nullValue());
+
     underTest.start();
+    // DatastoreLoggerOverrides applies its DB-synced overrides to logback itself at the STORAGE phase
+    // (self-contained: no callback into LogbackLogManager and no event).
     overrides.start();
 
-    ArgumentCaptor<LoggerOverridesReloadEvent> eventCaptor = ArgumentCaptor.forClass(LoggerOverridesReloadEvent.class);
-    verify(eventManager).post(eventCaptor.capture());
-
-    assertThat(eventCaptor.getValue(), instanceOf(LoggerOverridesReloadEvent.class));
-
+    // the store's overrides are tracked...
     Map<String, LoggerLevel> overriddenLoggers = underTest.getOverriddenLoggers();
     assertThat(overriddenLoggers.size(), is(1));
-    assertThat(overriddenLoggers.get("logger-name").toString(), is(LoggerLevel.DEBUG.toString()));
+    assertThat(overriddenLoggers.get(loggerName).toString(), is(LoggerLevel.DEBUG.toString()));
+
+    // ...and, crucially, applyToLogback actually pushed the level onto the live logback logger. This assertion
+    // fails if the direct-apply call in DatastoreLoggerOverrides.doStart() is removed.
+    assertThat(context.getLogger(loggerName).getLevel(), is(Level.DEBUG));
   }
 
   @Test

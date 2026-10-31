@@ -11,71 +11,32 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React from 'react';
+import React, {JSX} from 'react';
 import {
-  Package,
-  Box as LucideBox,
-  Container,
-  Archive,
-  FileCode,
-  Folder,
-  FileArchive,
-  Layers,
-  Cloud,
-  HardDrive,
-  Terminal,
-  GitBranch,
-  Boxes,
-  Workflow,
-  Server,
-  Database,
-  FolderSync,
-  Code,
-  Gem,
-} from 'lucide-react';
-import { FORMAT_LOGOS } from './formatConstants';
+  FORMAT_SVGS,
+  FORMAT_IMAGES,
+  FORMAT_ICONS,
+  TYPE_ICONS,
+  DEFAULT_FORMAT_ICON,
+} from './formatIcons';
 
 import './FormatIcon.scss';
 
 /**
- * Fallback Lucide icons for repository formats.
+ * Scaling factor for Simple Icons brand SVGs.
+ *
+ * Simple Icons includes built-in padding in their viewBox (see https://github.com/simple-icons/simple-icons/blob/develop/CONTRIBUTING.md#adherence-to-the-specification).
+ * This padding ensures icons from different brands align visually but means the actual
+ * glyph is smaller than the requested size. The 0.75 factor compensates for this padding
+ * to achieve visual parity with lucide-react icons which have no such padding.
+ *
+ * IMPORTANT: The `size` prop represents the tile/container size, not the final glyph size.
+ * For brand SVGs, the rendered glyph will be 75% of the tile size. For lucide fallbacks,
+ * the glyph fills the tile (100%).
+ *
+ * If Simple Icons ever ships a tighter viewBox, re-tune this constant.
  */
-const FORMAT_ICONS: Record<string, any> = {
-  maven2: Package,
-  npm: LucideBox,
-  docker: Container,
-  nuget: Archive,
-  pypi: FileCode,
-  rubygems: Gem,
-  raw: Folder,
-  helm: Layers,
-  go: Terminal,
-  yum: FileArchive,
-  apt: FileArchive,
-  conan: Boxes,
-  conda: Cloud,
-  cocoapods: HardDrive,
-  gitlfs: GitBranch,
-  p2: Workflow,
-  r: FileCode,
-  composer: Package,
-  cargo: Package,
-  huggingface: Cloud,
-  terraform: Layers,
-  terraformbackend: Database,
-  alpine: Package,
-  swift: Code,
-  pub: Package,
-};
-
-/**
- * Icons for repository types (hosted, proxy, group).
- */
-const TYPE_ICONS: Record<string, any> = {
-  proxy: Cloud,
-  hosted: Database,
-  group: FolderSync,
-};
+const SIMPLE_ICONS_VIEWBOX_PADDING_FACTOR = 0.75;
 
 export interface FormatIconProps {
   format: string;
@@ -86,7 +47,18 @@ export interface FormatIconProps {
 }
 
 /**
- * FormatIcon - Renders an official brand logo or fallback icon for a repo format.
+ * FormatIcon - Renders a brand logo or fallback icon for a repo format.
+ *
+ * Brand logos are bundled as SVG components from @icons-pack/react-simple-icons,
+ * ensuring they load without internet access. Each brand SVG renders in its
+ * default brand color (via the `color="default"` prop), matching the visual
+ * appearance previously served by cdn.simpleicons.org. When useBrandLogo is
+ * false, lucide-react fallback icons are displayed instead.
+ *
+ * Note: The `size` prop specifies the tile/container dimensions. For brand SVGs, the
+ * actual icon glyph renders at 75% of this size to compensate for Simple Icons viewBox
+ * padding (see SIMPLE_ICONS_VIEWBOX_PADDING_FACTOR). This ensures visual consistency
+ * with lucide-react fallback icons which have no such padding.
  */
 export function FormatIcon({
   format,
@@ -95,8 +67,9 @@ export function FormatIcon({
   className = '',
   useBrandLogo = true,
 }: FormatIconProps): JSX.Element {
-  const logoUrl = useBrandLogo ? FORMAT_LOGOS[format] : null;
-  const FallbackIcon = FORMAT_ICONS[format] || Package;
+  const SvgIcon = useBrandLogo ? FORMAT_SVGS[format] : null;
+  const imageUrl = useBrandLogo ? FORMAT_IMAGES[format] : null;
+  const FallbackIcon = FORMAT_ICONS[format] || DEFAULT_FORMAT_ICON;
   const TypeIcon = type ? TYPE_ICONS[type] : null;
 
   return (
@@ -111,18 +84,38 @@ export function FormatIcon({
         justifyContent: 'center',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-        {logoUrl ? (
-          <img
-            src={logoUrl}
-            alt={format}
-            className="format-icon-tile__logo"
-            style={{ maxWidth: size, maxHeight: size, width: 'auto', height: 'auto', objectFit: 'contain' }}
-          />
-        ) : (
-          <FallbackIcon size={size} className="format-icon-tile__fallback" />
-        )}
-      </div>
+      {SvgIcon ? (
+        <SvgIcon
+          size={size * SIMPLE_ICONS_VIEWBOX_PADDING_FACTOR}
+          // "default" is a sentinel value in @icons-pack/react-simple-icons that triggers
+          // brand-color rendering. Do not remove — IconComponent accepts any string so this
+          // compiles cleanly, but replacing it silently breaks brand colors.
+          color="default"
+          className="format-icon-tile__logo"
+          title=""
+          aria-hidden="true"
+        />
+      ) : imageUrl ? (
+        <img
+          src={imageUrl}
+          alt=""
+          className="format-icon-tile__logo"
+          style={{
+            maxWidth: size * SIMPLE_ICONS_VIEWBOX_PADDING_FACTOR,
+            maxHeight: size * SIMPLE_ICONS_VIEWBOX_PADDING_FACTOR,
+            width: 'auto',
+            height: 'auto',
+            objectFit: 'contain'
+          }}
+          aria-hidden="true"
+        />
+      ) : (
+        <FallbackIcon
+          size={size}
+          className="format-icon-tile__fallback"
+          aria-hidden="true"
+        />
+      )}
 
       {type && TypeIcon && (
         <div
@@ -130,10 +123,10 @@ export function FormatIcon({
           style={{
             position: 'absolute',
             bottom: '-4px',
-            right: '-4px'
+            right: '-4px',
           }}
         >
-          <TypeIcon size={12} />
+          <TypeIcon size={12} aria-hidden />
         </div>
       )}
     </div>

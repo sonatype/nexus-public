@@ -12,19 +12,20 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email.model;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.sonatype.nexus.validation.constraint.Hostname;
 import org.sonatype.nexus.validation.constraint.PortNumber;
+import org.sonatype.nexus.validation.constraint.SsrfSafeHost;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class ApiEmailConfiguration
 {
   private boolean enabled;
 
+  @SsrfSafeHost
   @Hostname
   @NotBlank
   private String host;

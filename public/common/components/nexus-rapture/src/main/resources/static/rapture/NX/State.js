@@ -148,7 +148,48 @@ Ext.define('NX.State', {
    * @returns {string}
    */
   getEdition: function() {
-    return this.getValue('status')['edition'];
+    var status = this.getValue('status');
+    return status ? status['edition'] : undefined;
+  },
+
+  /**
+   * Returns true if the instance is running any Pro-family edition (Pro, Pro Plus, or Enterprise).
+   * Pro Plus and Enterprise aren't distinguishable from Pro today — the backend collapses all three
+   * to 'PRO' until the corresponding ApplicationVersion beans are wired (NEXUS-54770 FU-4) —
+   * but this checks the full set now so nothing here needs to change again once that lands.
+   *
+   * @public
+   * @returns {boolean}
+   */
+  isLicensedEdition: function() {
+    var PRO_FAMILY_EDITIONS = ['PRO', 'PROPLUS', 'ENTERPRISE'];
+    return PRO_FAMILY_EDITIONS.indexOf(this.getEdition()) !== -1;
+  },
+
+  /**
+   * Returns the human-readable display name for the running edition.
+   * Reads the stable edition identifier ({@code editionId} state key) and
+   * maps it to a display name. Falls back to the legacy short name if the
+   * identifier is absent (e.g. before state is fully loaded).
+   *
+   * The mapping mirrors {@code EDITION_DISPLAY_NAMES} in
+   * {@code nexus-ui-plugin/.../interface/editionUtils.ts}; both surfaces must be
+   * updated together when a new edition identifier is added.
+   *
+   * @public
+   * @returns {string}
+   */
+  getEditionDisplayName: function() {
+    var DISPLAY_NAMES = {
+      'nexus-core-edition': 'Core',
+      'nexus-community-edition': 'Community Edition',
+      'nexus-professional-edition': 'Pro',
+      'nexus-professional-plus-edition': 'Pro+',
+      'nexus-enterprise-edition': 'Enterprise',
+      'nexus-cloud-edition': 'Pro'
+    };
+    var editionId = this.getValue('editionId');
+    return editionId ? (DISPLAY_NAMES[editionId] || editionId) : this.getEdition();
   },
 
   /**
@@ -158,10 +199,8 @@ Ext.define('NX.State', {
    * @returns {string}
    */
   getBrandedEditionAndVersion: function() {
-    var edition = this.getEdition(),
-        version = this.getVersion();
-
-    return edition + ' ' + version;
+    var version = this.getVersion();
+    return this.getEditionDisplayName() + ' ' + version;
   },
 
   /**

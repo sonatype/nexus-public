@@ -52,9 +52,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.MIN_VALUE;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -295,8 +295,8 @@ public class ProducerConsumerUploader
         final Timer readTimer)
     {
       this.counter = new AtomicInteger(1);
-      this.input = checkNotNull(input);
-      this.readChunk = checkNotNull(readTimer);
+      this.input = requireNonNull(input);
+      this.readChunk = requireNonNull(readTimer);
     }
 
     synchronized Optional<Chunk> readChunk(final int size) throws IOException {

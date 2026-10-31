@@ -661,7 +661,8 @@ public class BlobRepositoryMismatchTaskTest
   private Continuation<FluentAsset> of(final AssetData... assets) {
     ContinuationArrayList<AssetData> continuation = new ContinuationArrayList<>();
     continuation.addAll(Arrays.asList(assets));
-    return new FluentContinuation<FluentAsset, AssetData>(continuation, asset -> new FluentAssetImpl(content, asset));
+    return new FluentContinuation<FluentAsset, AssetData>(continuation,
+        asset -> new FluentAssetImpl(content, asset));
   }
 
   private AssetData mockBlobAndAsset(final String blobIdString, final String repositoryName) {
@@ -1276,7 +1277,8 @@ public class BlobRepositoryMismatchTaskTest
     page1.add(asset5);
 
     lenient().when(assets.browseEager(eq(1000), eq(savedToken)))
-        .thenReturn(new FluentContinuation<>(page1, a -> new FluentAssetImpl(content, a)));
+        .thenReturn(
+            new FluentContinuation<>(page1, a -> new FluentAssetImpl(content, a)));
 
     lenient().when(assets.browseEager(eq(1000), isNull()))
         .thenReturn(new FluentContinuation<>(new ContinuationArrayList<AssetData>(),

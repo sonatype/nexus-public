@@ -26,7 +26,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Persistent properties file.
@@ -43,7 +43,7 @@ public class PropertiesFile
   private final File file;
 
   public PropertiesFile(final File file) {
-    this.file = checkNotNull(file);
+    this.file = requireNonNull(file);
   }
 
   public void load() throws IOException {

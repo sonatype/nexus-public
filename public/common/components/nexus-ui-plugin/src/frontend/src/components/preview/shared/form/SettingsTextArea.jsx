@@ -68,6 +68,11 @@ export function SettingsTextArea({
           {required && <span className="settings-textarea__required">*</span>}
         </label>
       )}
+      {helpText && !error && (
+        <Text as="p" size="1" id={helpId} className="settings-textarea__help">
+          {helpText}
+        </Text>
+      )}
       <textarea
         ref={inputRef}
         id={textareaId}
@@ -87,11 +92,6 @@ export function SettingsTextArea({
         data-testid={`textarea-${name}`}
         className={`settings-textarea__input ${monospace ? 'settings-textarea__input--mono' : ''}`}
       />
-      {helpText && !error && (
-        <Text as="p" size="1" id={helpId} className="settings-textarea__help">
-          {helpText}
-        </Text>
-      )}
       {error && (
         <Text as="p" size="1" id={errorId} className="settings-textarea__error">
           <AlertCircle size={14} />

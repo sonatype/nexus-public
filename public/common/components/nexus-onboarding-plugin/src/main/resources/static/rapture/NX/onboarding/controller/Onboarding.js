@@ -75,6 +75,11 @@ Ext.define('NX.onboarding.controller.Onboarding', {
   },
 
   stateChanged: function() {
+    // When the React onboarding wizard is enabled, defer to it and skip the ExtJS wizard entirely.
+    if (NX.State.getValue('nexus.react.onboarding.enabled')) {
+      return;
+    }
+
     var isOnboardingRequired = NX.State.getValue('onboarding.required'),
         user = NX.State.getUser();
     if (isOnboardingRequired && user && user['administrator']) {

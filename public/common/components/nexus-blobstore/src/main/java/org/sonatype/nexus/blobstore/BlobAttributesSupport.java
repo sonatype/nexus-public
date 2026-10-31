@@ -26,7 +26,7 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 
 import org.joda.time.DateTime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.*;
 
 /**
@@ -58,7 +58,7 @@ public abstract class BlobAttributesSupport<T extends Properties>
       @Nullable final Map<String, String> headers,
       @Nullable final BlobMetrics metrics)
   {
-    this.propertiesFile = checkNotNull(propertiesFile);
+    this.propertiesFile = requireNonNull(propertiesFile);
     this.headers = headers;
     this.metrics = metrics;
   }

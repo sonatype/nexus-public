@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.security;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A selector util class that builds values that we need for storage and display of the privileges to humans based
@@ -34,8 +34,8 @@ public class RepositorySelector
   private final String format;
 
   private RepositorySelector(final String name, final String format) {
-    this.name = checkNotNull(name);
-    this.format = checkNotNull(format);
+    this.name = requireNonNull(name);
+    this.format = requireNonNull(format);
   }
 
   public static RepositorySelector all() {
@@ -47,7 +47,7 @@ public class RepositorySelector
   }
 
   public static RepositorySelector fromSelector(final String selector) {
-    checkNotNull(selector);
+    requireNonNull(selector);
 
     if (ALL.equals(selector)) {
       return new RepositorySelector(ALL, ALL);

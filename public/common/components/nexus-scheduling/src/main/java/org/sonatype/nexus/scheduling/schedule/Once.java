@@ -14,7 +14,7 @@ package org.sonatype.nexus.scheduling.schedule;
 
 import java.util.Date;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Schedule that executes once at given time.
@@ -28,7 +28,7 @@ public class Once
 
   public Once(final Date startAt) {
     super(TYPE);
-    checkNotNull(startAt);
+    requireNonNull(startAt);
     set(SCHEDULE_START_AT, dateToString(startAt));
   }
 

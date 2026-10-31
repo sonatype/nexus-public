@@ -14,7 +14,10 @@ package org.sonatype.nexus.repository.config;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.lifecycle.Lifecycle;
 
@@ -44,6 +47,13 @@ public interface ConfigurationStore
   Collection<Configuration> readByNames(Set<String> repositoryNames);
 
   /**
+   * Reads a single {@link Configuration} by its exact name (repository names are stored lowercased). Unlike
+   * {@link #readByNames}, whose SQL uses {@code LIKE}, this is an exact match, so a name containing a LIKE
+   * metacharacter (e.g. {@code _}) cannot match a different repository. See NEXUS-54229.
+   */
+  Optional<Configuration> readByName(String name);
+
+  /**
    * Checks whether the database contains an entry with the provided name.<br>
    *
    * Note: Underlying implementations may return {@code false} if unsupported.
@@ -57,4 +67,57 @@ public interface ConfigurationStore
    * @return configurations filtered by {@code recipeName}
    */
   Collection<Configuration> readByRecipe(String recipeName);
+
+  /**
+   * Mark a repository configuration as soft-deleted.
+   */
+  void softDelete(String repositoryName, String deletedBy);
+
+  /**
+   * Restore a soft-deleted repository configuration.
+   */
+  void undoSoftDelete(String repositoryName);
+
+  /**
+   * Browse soft-deleted repository configurations with pagination.
+   */
+  List<Configuration> browseDeleted(int limit, @Nullable String continuationToken);
+
+  /**
+   * @return the count of soft-deleted repository configurations
+   */
+  int countDeleted();
+
+  /**
+   * Read a soft-deleted repository configuration by name.
+   */
+  Configuration readDeleted(String repositoryName);
+
+  /**
+   * Returns {@code true} if a soft-deleted repository configuration exists whose name matches
+   * {@code repositoryName} ignoring case. Repository names are unique case-insensitively, so this guards
+   * against creating (or restoring) a repository whose name would collide with one still in Trash.
+   */
+  boolean existsDeletedByNameCaseInsensitive(String repositoryName);
+
+  /**
+   * Permanently remove a soft-deleted repository configuration.
+   */
+  void hardDelete(String repositoryName);
+
+  /**
+   * Read the names of all repositories soft-deleted more than {@code retentionDays} ago.
+   */
+  List<String> readDeletedNamesBefore(int retentionDays);
+
+  /**
+   * Counts repositories configured to use the given blob store, read authoritatively from the shared store.
+   * <p>
+   * Unlike an in-memory repository-cache scan this reflects the committed cross-node state, so it is correct
+   * even while a peer node's repository create/delete has not yet been replicated locally. See NEXUS-54229.
+   *
+   * @param blobStoreName the blob store name to match
+   * @return the number of repositories configured to use the blob store
+   */
+  int countByBlobStore(String blobStoreName);
 }

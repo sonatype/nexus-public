@@ -15,12 +15,12 @@ package org.sonatype.nexus.repository.group;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import jakarta.validation.ConstraintViolation;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
+import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
@@ -28,35 +28,41 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryAttributesDesEvent;
 import org.sonatype.nexus.repository.group.GroupFacetImpl.Config;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
-import org.junit.Before;
-import org.junit.Test;
+import jakarta.validation.ConstraintViolation;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.google.common.collect.ImmutableList.copyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.group.GroupFacetImpl.CONFIG_KEY;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class GroupFacetImplTest
 {
   @Mock
@@ -66,7 +72,7 @@ public class GroupFacetImplTest
   private ConfigurationFacet configurationFacet;
 
   @Mock
-  private Format format = mock(Format.class);
+  private Format format;
 
   @Mock
   private Content content;
@@ -89,7 +95,7 @@ public class GroupFacetImplTest
 
   private GroupFacetImpl underTest;
 
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
     underTest = new GroupFacetImpl(repositoryManager, makeConstraintViolationFactory(), groupType,
         repositoryCacheInvalidationService);
@@ -146,13 +152,13 @@ public class GroupFacetImplTest
     Config config = new Config();
     config.memberNames = Set.of(hosted1.getName(), hosted2.getName(), group1.getName());
     Configuration configuration = mock(Configuration.class);
-    when(configuration.attributes(CONFIG_KEY)).thenReturn(new NestedAttributesMap(
-        "dummy",
-        Map.of("memberNames", config.memberNames)));
+    lenient().when(configuration.attributes(CONFIG_KEY))
+        .thenReturn(new NestedAttributesMap("dummy", Map.of("memberNames", config.memberNames)));
     when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
     when(repository.getConfiguration()).thenReturn(configuration);
-    when(repositoryAttributeService.getRepositoryAttribute(repository, "cacheToken", null)).thenReturn(null);
-    underTest.setRepositoryAttributeService(repositoryAttributeService);
+
+    when(repositoryAttributeService.getRepositoryAttribute(eq(repository),
+        eq(FacetSupport.METADATA_CACHE_TOKEN_ATTRIBUTE), any())).thenReturn(null);
     underTest.init();
     underTest.start();
     assertThat(underTest.leafMembers(), containsInAnyOrder(hosted1, hosted2));
@@ -198,55 +204,55 @@ public class GroupFacetImplTest
   }
 
   @Test
-  public void testDoConfigure_WithStoredToken() throws Exception {
-    String storedToken = "stored-cache-token";
-    Config config = new Config();
-    config.memberNames = Set.of("repository1");
-    Configuration configuration = mock(Configuration.class);
+  public void testStart_WithStoredToken() throws Exception {
+    String metadataStoredToken = "stored-metadata-cache-token";
+    when(repositoryAttributeService.getRepositoryAttribute(eq(repository),
+        eq(FacetSupport.METADATA_CACHE_TOKEN_ATTRIBUTE), any())).thenReturn(metadataStoredToken);
 
-    when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
-    when(repositoryAttributeService.getRepositoryAttribute(repository, "cacheToken", null)).thenReturn(storedToken);
-
-    underTest.setRepositoryAttributeService(repositoryAttributeService);
-    underTest.doConfigure(configuration);
+    underTest.init();
+    underTest.start();
 
     assertNotNull(underTest.cacheController);
-    verify(repositoryAttributeService).getRepositoryAttribute(repository, "cacheToken", null);
+    assertThat(underTest.cacheController.current().getCacheToken(), is(metadataStoredToken));
   }
 
   @Test
-  public void testDoConfigure_WithNullStoredToken() throws Exception {
-    Config config = new Config();
-    config.memberNames = Set.of("repository1");
-    Configuration configuration = mock(Configuration.class);
+  public void testStart_WithNullStoredToken() throws Exception {
+    when(repositoryAttributeService.getRepositoryAttribute(eq(repository),
+        eq(FacetSupport.METADATA_CACHE_TOKEN_ATTRIBUTE), any())).thenReturn(null);
 
-    when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
-    when(repositoryAttributeService.getRepositoryAttribute(repository, "cacheToken", null)).thenReturn(null);
-
-    underTest.setRepositoryAttributeService(repositoryAttributeService);
-    underTest.doConfigure(configuration);
+    underTest.init();
+    underTest.start();
 
     assertNotNull(underTest.cacheController);
-    verify(repositoryAttributeService).getRepositoryAttribute(repository, "cacheToken", null);
+    assertThat(underTest.cacheController.current().getCacheToken(), is(nullValue()));
   }
 
   @Test
-  public void testOnRepositoryCacheSyncTokenEventIgnoresDifferentRepository() {
-    RepositoryCacheSyncTokenEvent event = mock(RepositoryCacheSyncTokenEvent.class);
-    when(event.isLocal()).thenReturn(false);
-    when(event.getRepositoryName()).thenReturn("different-repository");
-
-    CacheController mockCacheController = mock(CacheController.class);
+  public void testOnRepositoryCacheSyncTokenEvent() {
+    CacheController mockCacheController = mock();
     underTest.cacheController = mockCacheController;
+    when(repositoryAttributeService.getRepositoryAttribute(eq(repository),
+        eq(FacetSupport.METADATA_CACHE_TOKEN_ATTRIBUTE), any())).thenReturn("123");
 
-    underTest.on(event);
+    // Different repository
+    EventHelper.asReplicating(
+        () -> underTest.on(new ContentRepositoryAttributesDesEvent("different-repository", "cacheToken")));
+    verify(mockCacheController, never()).setCache(any());
 
-    verify(mockCacheController, org.mockito.Mockito.never()).setCache(org.mockito.ArgumentMatchers.any());
+    // Local event
+    underTest.on(new ContentRepositoryAttributesDesEvent("repositoryUnderTest", "cacheToken"));
+    verify(mockCacheController, never()).setCache(any());
+
+    // Different repository
+    EventHelper.asReplicating(
+        () -> underTest.on(new ContentRepositoryAttributesDesEvent("repositoryUnderTest", "cacheToken")));
+    verify(mockCacheController).setCache("123");
   }
 
   private static ConstraintViolationFactory makeConstraintViolationFactory() {
     ConstraintViolationFactory constraintViolationFactory = mock(ConstraintViolationFactory.class);
-    doReturn(mock(ConstraintViolation.class))
+    lenient().doReturn(mock(ConstraintViolation.class))
         .when(constraintViolationFactory)
         .createViolation(anyString(), anyString());
     return constraintViolationFactory;
@@ -254,8 +260,9 @@ public class GroupFacetImplTest
 
   private Repository makeRepositoryUnderTest() {
     Repository repositoryUnderTest = groupRepository("repositoryUnderTest");
-    when(repositoryUnderTest.facet(GroupFacet.class)).thenReturn(underTest);
-    when(repositoryUnderTest.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
+    lenient().when(repositoryUnderTest.facet(GroupFacet.class)).thenReturn(underTest);
+    lenient().when(repositoryUnderTest.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
+    underTest.setRepositoryAttributeService(repositoryAttributeService);
 
     groupRepository("repository2",
         groupRepository("repository3",
@@ -266,24 +273,24 @@ public class GroupFacetImplTest
 
   private Repository hostedRepository(final String name) {
     Repository hostedRepository = mock(Repository.class);
-    when(hostedRepository.getType()).thenReturn(new HostedType());
-    when(hostedRepository.getName()).thenReturn(name);
-    when(hostedRepository.getFormat()).thenReturn(format);
-    when(hostedRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
-    when(repositoryManager.get(name)).thenReturn(hostedRepository);
+    lenient().when(hostedRepository.getType()).thenReturn(new HostedType());
+    lenient().when(hostedRepository.getName()).thenReturn(name);
+    lenient().when(hostedRepository.getFormat()).thenReturn(format);
+    lenient().when(hostedRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
+    lenient().when(repositoryManager.get(name)).thenReturn(hostedRepository);
     return hostedRepository;
   }
 
   private Repository groupRepository(final String name, final Repository... repositories) {
     Repository groupRepository = mock(Repository.class);
-    when(groupRepository.getType()).thenReturn(groupType);
-    when(groupRepository.getName()).thenReturn(name);
-    when(groupRepository.getFormat()).thenReturn(format);
-    when(repositoryManager.get(name)).thenReturn(groupRepository);
+    lenient().when(groupRepository.getType()).thenReturn(groupType);
+    lenient().when(groupRepository.getName()).thenReturn(name);
+    lenient().when(groupRepository.getFormat()).thenReturn(format);
+    lenient().when(repositoryManager.get(name)).thenReturn(groupRepository);
     GroupFacet groupFacet = mock(GroupFacet.class);
-    when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
-    when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
-    when(groupFacet.members()).thenReturn(copyOf(repositories));
+    lenient().when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
+    lenient().when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
+    lenient().when(groupFacet.members()).thenReturn(copyOf(repositories));
     return groupRepository;
   }
 }

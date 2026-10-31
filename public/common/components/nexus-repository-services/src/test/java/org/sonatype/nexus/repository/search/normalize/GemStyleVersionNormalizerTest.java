@@ -30,14 +30,14 @@ public class GemStyleVersionNormalizerTest
   @Test
   public void testSimpleNumericRelease() {
     String result = underTest.getNormalizedVersion("1.2.3");
-    assertThat(result).endsWith(".c");
+    assertThat(result).endsWith(".0c");
   }
 
   @Test
   public void testPreReleaseWithLetters() {
     String preRelease = underTest.getNormalizedVersion("1.0.0.pre");
     String release = underTest.getNormalizedVersion("1.0.0");
-    assertThat(preRelease).contains(".a.");
+    assertThat(preRelease).contains(".0a.");
     assertThat(preRelease).isLessThan(release);
   }
 

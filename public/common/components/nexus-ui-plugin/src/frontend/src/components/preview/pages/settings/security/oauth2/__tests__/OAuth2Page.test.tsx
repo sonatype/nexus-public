@@ -16,36 +16,30 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { OAuth2Page } from '../OAuth2Page';
-import * as useOAuth2ApiModule from '../useOAuth2Api';
+import * as oauth2Api from '../oauth2Api';
+import { ToastProvider } from '../../../../../shared/Toast';
+import UIStrings from '../../../../../../../constants/UIStrings';
 
-// Mock the API hook
-jest.mock('../useOAuth2Api');
+const SAVE_SUCCESS_TOAST = 'OAuth2 configuration saved successfully';
 
-const mockedUseOAuth2Api = useOAuth2ApiModule.useOAuth2Api as jest.MockedFunction<
-  typeof useOAuth2ApiModule.useOAuth2Api
->;
+// Mock the pure API module the form machine invokes for load/save.
+jest.mock('../oauth2Api');
 
-const mockRestClient = {
-  get: jest.fn(),
-  post: jest.fn(),
-  put: jest.fn(),
-  delete: jest.fn(),
-};
+const mockedFetch = oauth2Api.fetchOAuth2Config as jest.MockedFunction<typeof oauth2Api.fetchOAuth2Config>;
+const mockedSave = oauth2Api.saveOAuth2Config as jest.MockedFunction<typeof oauth2Api.saveOAuth2Config>;
 
-// Mock the REST API from @/utils/api directly
-jest.mock('../../../../../../../interface/api', () => ({
-  ...jest.requireActual('../../../../../../../interface/api'),
-  restClient: {
-    get: (...args: unknown[]) => mockRestClient.get(...args),
-    post: (...args: unknown[]) => mockRestClient.post(...args),
-    put: (...args: unknown[]) => mockRestClient.put(...args),
-    delete: (...args: unknown[]) => mockRestClient.delete(...args),
+// OAuth2Page imports ExtJS from interface/ExtJS directly, so permission gating
+// must be driven through that module (same pattern as RolesPage.test.tsx).
+jest.mock('../../../../../../../interface/ExtJS', () => ({
+  ExtJS: {
+    checkPermission: jest.fn().mockReturnValue(true),
   },
-  parseApiError: jest.fn((err) => ({
-    message: err?.response?.data?.message || err?.message || 'An error occurred',
-    status: err?.response?.status,
-  })),
 }));
+
+const getInterfaceCheckPermission = () => {
+  const { ExtJS } = require('../../../../../../../interface/ExtJS');
+  return ExtJS.checkPermission;
+};
 
 // Extend global mock with controllable checkPermission
 jest.mock('@sonatype/nexus-ui-plugin', () => {
@@ -60,14 +54,20 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   };
 });
 
-// Get reference to the actual mock after jest.mock is hoisted
 const getMockCheckPermission = () => {
   const { ExtJS } = require('@sonatype/nexus-ui-plugin');
   return ExtJS.checkPermission;
 };
 
+// ToastProvider is mounted so save-success toasts actually render; useToast
+// falls back to a silent no-op when the provider is absent, which would make a
+// missing notification indistinguishable from a working one.
 function TestWrapper({ children }: { children: React.ReactNode }) {
-  return <Theme>{children}</Theme>;
+  return (
+    <Theme>
+      <ToastProvider>{children}</ToastProvider>
+    </Theme>
+  );
 }
 
 const mockSettings = {
@@ -87,28 +87,20 @@ const mockSettings = {
   exactMatchClaims: '',
   authorizationCustomParams: '',
   tokenRequestCustomParams: '',
+  useTrustStore: false,
 };
 
 describe('OAuth2Page', () => {
-  const mockFetchConfig = jest.fn();
-  const mockSaveConfig = jest.fn();
-  const mockSetError = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
     getMockCheckPermission().mockReturnValue(true);
-    mockedUseOAuth2Api.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue(mockSettings),
-      saveConfig: mockSaveConfig.mockResolvedValue({}),
-    });
+    getInterfaceCheckPermission().mockReturnValue(true);
+    mockedFetch.mockResolvedValue({ ...mockSettings });
+    mockedSave.mockResolvedValue(undefined);
   });
 
   it('renders the page header', async () => {
     render(<OAuth2Page />, { wrapper: TestWrapper });
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'OAuth2' })).toBeInTheDocument();
     });
@@ -116,7 +108,6 @@ describe('OAuth2Page', () => {
 
   it('renders the page description', async () => {
     render(<OAuth2Page />, { wrapper: TestWrapper });
-
     await waitFor(() => {
       expect(screen.getByText(/configure openid connect/i)).toBeInTheDocument();
     });
@@ -124,114 +115,48 @@ describe('OAuth2Page', () => {
 
   it('loads settings on mount', async () => {
     render(<OAuth2Page />, { wrapper: TestWrapper });
-
     await waitFor(() => {
-      expect(mockFetchConfig).toHaveBeenCalled();
+      expect(mockedFetch).toHaveBeenCalled();
     });
   });
 
-  it('displays client ID field', async () => {
+  it.each([
+    'Client ID',
+    'Client Secret',
+    'IDP Authorization URL',
+    'IDP Token URL',
+    'Username Claim',
+    'Groups Claim',
+    'JWS Algorithm',
+  ])('displays the %s field', async (label) => {
     render(<OAuth2Page />, { wrapper: TestWrapper });
-
     await waitFor(() => {
-      expect(screen.getByText('Client ID')).toBeInTheDocument();
+      expect(screen.getByText(label)).toBeInTheDocument();
     });
   });
 
-  it('displays client secret field', async () => {
+  it('displays save and discard buttons', async () => {
     render(<OAuth2Page />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('Client Secret')).toBeInTheDocument();
-    });
-  });
-
-  it('displays IDP authorization URL field', async () => {
-    render(<OAuth2Page />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('IDP Authorization URL')).toBeInTheDocument();
-    });
-  });
-
-  it('displays IDP token URL field', async () => {
-    render(<OAuth2Page />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('IDP Token URL')).toBeInTheDocument();
-    });
-  });
-
-  it('displays username claim field', async () => {
-    render(<OAuth2Page />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('Username Claim')).toBeInTheDocument();
-    });
-  });
-
-  it('displays groups claim field', async () => {
-    render(<OAuth2Page />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('Groups Claim')).toBeInTheDocument();
-    });
-  });
-
-  it('displays save button', async () => {
-    render(<OAuth2Page />, { wrapper: TestWrapper });
-
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
-    });
-  });
-
-  it('displays discard button', async () => {
-    render(<OAuth2Page />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
       expect(screen.getByRole('button', { name: /discard/i })).toBeInTheDocument();
     });
   });
 
   it('saves settings when Save button is clicked', async () => {
-    mockedUseOAuth2Api.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue({
-        ...mockSettings,
-        clientId: 'test-client',
-        clientSecret: 'test-secret',
-        idpAuthorizationUrl: 'https://example.com/auth',
-        idpLogoutUrl: 'https://example.com/logout',
-        idpTokenUrl: 'https://example.com/token',
-        idpJwksUrl: 'https://example.com/jwks',
-        idpJwsAlgorithm: 'RS256',
-        usernameClaim: 'sub',
-        firstNameClaim: 'given_name',
-        lastNameClaim: 'family_name',
-        emailClaim: 'email',
-        groupsClaim: 'groups',
-      }),
-      saveConfig: mockSaveConfig,
-    });
-
     render(<OAuth2Page />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText('Client ID')).toBeInTheDocument();
     });
 
-    // Make a change to enable Save button (form is pristine until modified)
     const clientIdInput = document.getElementById('settings-input-clientId') as HTMLInputElement;
     fireEvent.change(clientIdInput, { target: { value: 'modified-client' } });
 
-    const saveButton = screen.getByRole('button', { name: /save/i });
-    fireEvent.click(saveButton);
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
     await waitFor(() => {
-      expect(mockSaveConfig).toHaveBeenCalled();
+      expect(mockedSave).toHaveBeenCalled();
     });
   });
 
@@ -249,12 +174,32 @@ describe('OAuth2Page', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(mockSaveConfig).toHaveBeenCalled();
+      expect(mockedSave).toHaveBeenCalled();
     });
-
     await waitFor(() => {
       expect(saveButton).toBeDisabled();
     });
+  });
+
+  it('shows a success notification and stays pristine after a successful save', async () => {
+    render(<OAuth2Page />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('Client ID')).toBeInTheDocument();
+    });
+
+    const clientIdInput = document.getElementById('settings-input-clientId') as HTMLInputElement;
+    fireEvent.change(clientIdInput, { target: { value: 'modified-client' } });
+
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(SAVE_SUCCESS_TOAST)).toBeInTheDocument();
+    });
+    // The toast must not come at the cost of the pristine transition: both the
+    // notification and the disabled Save button are part of the success signal.
+    expect(saveButton).toBeDisabled();
   });
 
   it('resets form when Discard is confirmed', async () => {
@@ -266,18 +211,15 @@ describe('OAuth2Page', () => {
 
     const clientIdInput = document.getElementById('settings-input-clientId') as HTMLInputElement;
     fireEvent.change(clientIdInput, { target: { value: 'modified-client' } });
-
     expect(clientIdInput).toHaveValue('modified-client');
 
-    const discardButton = screen.getByRole('button', { name: /discard/i });
-    fireEvent.click(discardButton);
+    fireEvent.click(screen.getByRole('button', { name: /discard/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Unsaved Changes')).toBeInTheDocument();
     });
 
-    const leaveButton = screen.getByRole('button', { name: /leave/i });
-    fireEvent.click(leaveButton);
+    fireEvent.click(screen.getByRole('button', { name: /leave/i }));
 
     await waitFor(() => {
       expect(clientIdInput).toHaveValue('client-id');
@@ -285,33 +227,40 @@ describe('OAuth2Page', () => {
   });
 
   it('handles loading state', () => {
-    mockedUseOAuth2Api.mockReturnValue({
-      loading: true,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig,
-      saveConfig: mockSaveConfig,
-    });
-
+    // Never-resolving load keeps the machine in the loading state.
+    mockedFetch.mockReturnValue(new Promise(() => {}));
     render(<OAuth2Page />, { wrapper: TestWrapper });
-
     expect(screen.getByText(/loading oauth2 configuration/i)).toBeInTheDocument();
   });
 
-  it('handles error state', async () => {
-    mockedUseOAuth2Api.mockReturnValue({
-      loading: false,
-      error: 'Failed to load OAuth2 settings',
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig,
-      saveConfig: mockSaveConfig,
-    });
-
+  it('surfaces an initial load failure to the user', async () => {
+    mockedFetch.mockRejectedValue(new Error('Failed to load OAuth2 settings'));
     render(<OAuth2Page />, { wrapper: TestWrapper });
 
+    // Load failure leaves the form rendered (not stuck on the spinner) with the
+    // error surfaced via the shared SettingsForm error handling.
     await waitFor(() => {
       expect(screen.getByText('Failed to load OAuth2 settings')).toBeInTheDocument();
     });
+  });
+
+  it('shows an error when save fails', async () => {
+    mockedSave.mockRejectedValue(new Error('Failed to save OAuth2 settings'));
+    render(<OAuth2Page />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('Client ID')).toBeInTheDocument();
+    });
+
+    const clientIdInput = document.getElementById('settings-input-clientId') as HTMLInputElement;
+    fireEvent.change(clientIdInput, { target: { value: 'modified-client' } });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to save OAuth2 settings')).toBeInTheDocument();
+    });
+    // A failed save must not raise the success toast.
+    expect(screen.queryByText(SAVE_SUCCESS_TOAST)).not.toBeInTheDocument();
   });
 
   it('validates required fields before save', async () => {
@@ -323,20 +272,10 @@ describe('OAuth2Page', () => {
 
     const clientIdInput = document.getElementById('settings-input-clientId') as HTMLInputElement;
     fireEvent.change(clientIdInput, { target: { value: '' } });
-
-    const saveButton = screen.getByRole('button', { name: /save/i });
-    fireEvent.click(saveButton);
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Client ID is required')).toBeInTheDocument();
-    });
-  });
-
-  it('shows ID Token Signing Algorithm dropdown', async () => {
-    render(<OAuth2Page />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('JWS Algorithm')).toBeInTheDocument();
+      expect(screen.getByText(UIStrings.ERROR.FIELD_REQUIRED)).toBeInTheDocument();
     });
   });
 
@@ -348,7 +287,6 @@ describe('OAuth2Page', () => {
         expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
       });
 
-      // Click Settings breadcrumb navigates to settings page
       screen.getByRole('button', { name: 'Settings' }).click();
       expect(window.location.hash).toBe('#preview/admin/settings');
     });
@@ -357,7 +295,6 @@ describe('OAuth2Page', () => {
       render(<OAuth2Page />, { wrapper: TestWrapper });
 
       await waitFor(() => {
-        // The current page item is rendered as Text (not a button) with aria-current="page"
         const breadcrumb = screen.getByText('OAuth2', { selector: '[aria-current="page"]' });
         expect(breadcrumb).toBeInTheDocument();
       });
@@ -365,3 +302,60 @@ describe('OAuth2Page', () => {
   });
 });
 
+// NEXUS-54266: truststore control + permission gating.
+describe('truststore control', () => {
+  it('renders the checkbox checked when the loaded config has useTrustStore=true', async () => {
+    mockedFetch.mockResolvedValue({ ...mockSettings, useTrustStore: true });
+    render(<OAuth2Page />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(document.querySelector('input[name="useTrustStore"]')).toBeInTheDocument();
+    });
+    expect((document.querySelector('input[name="useTrustStore"]') as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('enables the checkbox and View Certificate when the token URL is https', async () => {
+    render(<OAuth2Page />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(document.querySelector('input[name="useTrustStore"]')).toBeInTheDocument();
+    });
+    const cb = document.querySelector('input[name="useTrustStore"]') as HTMLInputElement;
+    expect(cb.disabled).toBe(false);
+    expect(screen.getByRole('button', { name: /view certificate/i })).toBeEnabled();
+  });
+
+  it('disables the checkbox and View Certificate when the token URL is not secure', async () => {
+    mockedFetch.mockResolvedValue({ ...mockSettings, idpTokenUrl: 'http://example.com/token' });
+    render(<OAuth2Page />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(document.querySelector('input[name="useTrustStore"]')).toBeInTheDocument();
+    });
+    const cb = document.querySelector('input[name="useTrustStore"]') as HTMLInputElement;
+    expect(cb.disabled).toBe(true);
+    expect(screen.getByRole('button', { name: /view certificate/i })).toBeDisabled();
+  });
+
+  it('disables View Certificate without the ssl-truststore:read permission', async () => {
+    getInterfaceCheckPermission().mockImplementation((p: string) => p !== 'nexus:ssl-truststore:read');
+    render(<OAuth2Page />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /view certificate/i })).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /view certificate/i })).toBeDisabled();
+  });
+
+  it('hides Save/Discard and disables the checkbox for a read-only user', async () => {
+    getInterfaceCheckPermission().mockImplementation((p: string) => p !== 'nexus:settings:update');
+    render(<OAuth2Page />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(document.querySelector('input[name="useTrustStore"]')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('form-submit')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('form-cancel')).not.toBeInTheDocument();
+    expect((document.querySelector('input[name="useTrustStore"]') as HTMLInputElement).disabled).toBe(true);
+  });
+});

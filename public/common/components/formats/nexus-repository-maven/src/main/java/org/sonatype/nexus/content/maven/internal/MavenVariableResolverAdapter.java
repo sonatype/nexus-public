@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -45,7 +45,7 @@ public class MavenVariableResolverAdapter
 
   @Autowired
   public MavenVariableResolverAdapter(@Qualifier(Maven2Format.NAME) final MavenPathParser mavenPathParser) {
-    this.mavenPathParser = checkNotNull(mavenPathParser);
+    this.mavenPathParser = requireNonNull(mavenPathParser);
   }
 
   @Override
@@ -79,8 +79,8 @@ public class MavenVariableResolverAdapter
    * Adds the Maven coordinates extracted from the specified path, if available.
    */
   private void addMavenCoordinates(final VariableSourceBuilder builder, final String path) {
-    checkNotNull(builder);
-    checkNotNull(path);
+    requireNonNull(builder);
+    requireNonNull(path);
     Coordinates coords = mavenPathParser.parsePath(path).getCoordinates();
 
     if (coords != null) {

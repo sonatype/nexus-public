@@ -19,10 +19,14 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.UserPrincipalsExpiredDistributedEvent;
 import org.sonatype.nexus.security.AbstractSecurityTest;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.TestAnonymousConfiguration;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
+import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.authc.UserPasswordChanged;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.MockAuthorizationManagerB;
@@ -30,7 +34,10 @@ import org.sonatype.nexus.security.internal.DefaultSecuritySystemTest.DefaultSec
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.session.SessionInvalidator;
+import org.sonatype.nexus.security.user.MockUserManagerSupport;
+import org.sonatype.nexus.security.user.NoOpEventManager;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
+import org.sonatype.nexus.security.user.RoleMappingUserManager;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
@@ -46,6 +53,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -60,10 +68,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link DefaultSecuritySystem}.
@@ -82,6 +93,12 @@ public class DefaultSecuritySystemTest
     AuthorizationManager authorizationManager() {
       return new MockAuthorizationManagerB();
     }
+
+    @Bean
+    @Qualifier("MockRoleMappingUserManager")
+    TestRoleMappingUserManager testRoleMappingUserManager() {
+      return new TestRoleMappingUserManager();
+    }
   }
 
   @Override
@@ -89,6 +106,14 @@ public class DefaultSecuritySystemTest
   public void setUp() throws Exception {
     super.setUp();
     reset(lookup(EventManager.class));
+    reset(sessionInvalidator);
+
+    // Setup anonymous manager mock for tests that need it
+    AnonymousManager anonymousManager = lookup(AnonymousManager.class);
+    TestAnonymousConfiguration config = new TestAnonymousConfiguration();
+    config.setEnabled(false);
+    config.setUserId("anonymous");
+    when(anonymousManager.getConfiguration()).thenReturn(config);
   }
 
   @Override
@@ -233,9 +258,45 @@ public class DefaultSecuritySystemTest
 
     securitySystem.updateUser(createUser("testUpdateUser", UserStatus.disabled));
 
-    verifyEventPosted(1, UserPrincipalsExpired.class, event -> {
+    verifyEventPosted(UserPrincipalsExpired.class, event -> {
       assertThat(event.getUserId(), is("testUpdateUser"));
     });
+
+    verify(sessionInvalidator)
+        .invalidateSessionsForUser(eq("testUpdateUser"), eq("MockUserManagerA"), eq("user deactivation"));
+  }
+
+  @Test
+  void testUpdateUser_deactivation_invalidatesActiveSessions() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    // Create an active user
+    User user = createUser("testDeactivation", UserStatus.active);
+    securitySystem.addUser(user, "test1234");
+
+    // Deactivate the user - use createUser to ensure the source is set correctly
+    User updatedUser = createUser("testDeactivation", UserStatus.disabled);
+    securitySystem.updateUser(updatedUser);
+
+    verify(sessionInvalidator)
+        .invalidateSessionsForUser(eq("testDeactivation"), eq("MockUserManagerA"), eq("user deactivation"));
+  }
+
+  @Test
+  void testUpdateUser_noStatusChange_doesNotInvalidateSessions() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    // Create an active user
+    User user = createUser("testNoStatusChange", UserStatus.active);
+    securitySystem.addUser(user, "test1234");
+
+    // Update user without changing status
+    User createdUser = securitySystem.getUser("testNoStatusChange");
+    createdUser.setEmailAddress("newemail@example.com");
+    securitySystem.updateUser(createdUser);
+
+    // No invalidation expected when status stays active
+    verify(sessionInvalidator, never()).invalidateSessionsForUser(any(), any(), any());
   }
 
   @Test
@@ -247,12 +308,12 @@ public class DefaultSecuritySystemTest
     // change my own
     securitySystem.changePassword("jcoder", "newpassword");
 
-    verifyEventPosted(1, UserPasswordChanged.class, event -> {
+    verifyEventPosted(UserPasswordChanged.class, event -> {
       assertThat(event.isClearCache(), is(true));
       assertThat(event.getUserId(), is("jcoder"));
     });
 
-    verifyEventPosted(1, UserPasswordChangedDistributedEvent.class, event -> {
+    verifyEventPosted(UserPasswordChangedDistributedEvent.class, event -> {
       assertThat(event.isLocal(), is(true));
       assertThat(event.isClearCache(), is(true));
       assertThat(event.getUserId(), is("jcoder"));
@@ -274,9 +335,23 @@ public class DefaultSecuritySystemTest
     // The invalidation source should be the Shiro realm name from the authenticated Subject,
     // not the UserManager "default" source of the internal user record.
     ArgumentCaptor<String> sourceCaptor = ArgumentCaptor.forClass(String.class);
-    verify(sessionInvalidator).invalidateSessionsForUser(eq("jcoder"), sourceCaptor.capture());
+    verify(sessionInvalidator)
+        .invalidateSessionsForUser(eq("jcoder"), sourceCaptor.capture(), eq("password change"));
     assertThat(sourceCaptor.getValue(), not(is("default")));
     assertNotNull(sourceCaptor.getValue());
+  }
+
+  @Test
+  void testDeleteUser_invalidatesActiveSessions() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    // Create a user to delete
+    User user = createUser("testDeleteUser_sessionInvalidation", UserStatus.active);
+    securitySystem.addUser(user, "test1234");
+
+    securitySystem.deleteUser("testDeleteUser_sessionInvalidation");
+    verify(sessionInvalidator).invalidateSessionsForUser(
+        eq("testDeleteUser_sessionInvalidation"), any(String.class), eq("user deletion"));
   }
 
   @Test
@@ -331,6 +406,66 @@ public class DefaultSecuritySystemTest
     assertThat(users.getClass().getName(), is("java.util.LinkedHashSet"));
   }
 
+  @Test
+  void testDeleteUser_postsDistributedPrincipalsExpiredEvent() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+    securitySystem.addUser(createUser("testDeleteDistributed", UserStatus.active), "test1234");
+
+    securitySystem.deleteUser("testDeleteDistributed");
+
+    verifyEventPosted(UserPrincipalsExpired.class, event -> {
+      assertThat(event.getUserId(), is("testDeleteDistributed"));
+      assertThat(event.getSource(), is("MockUserManagerA"));
+    });
+    verifyEventPosted(UserPrincipalsExpiredDistributedEvent.class, event -> {
+      assertThat(event.getUserId(), is("testDeleteDistributed"));
+      assertThat(event.getSource(), is("MockUserManagerA"));
+      assertThat(event.isLocal(), is(true));
+    });
+  }
+
+  @Test
+  void testUpdateUser_deactivation_postsDistributedPrincipalsExpiredEvent() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+    securitySystem.addUser(createUser("testDeactivationDistributed", UserStatus.active), "test1234");
+
+    securitySystem.updateUser(createUser("testDeactivationDistributed", UserStatus.disabled));
+
+    verifyEventPosted(UserPrincipalsExpiredDistributedEvent.class, event -> {
+      assertThat(event.getUserId(), is("testDeactivationDistributed"));
+      assertThat(event.getSource(), is("MockUserManagerA"));
+      assertThat(event.isLocal(), is(true));
+    });
+  }
+
+  @Test
+  void testUpdateUser_postsDistributedAuthorizationEvent() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+    securitySystem.addUser(createUser("testRoleChangeDistributed", UserStatus.active), "test1234");
+
+    // updateUser always posts AuthorizationConfigurationChanged regardless of what changed
+    User updatedUser = createUser("testRoleChangeDistributed", UserStatus.active);
+    updatedUser.setEmailAddress("updated@example.com");
+    securitySystem.updateUser(updatedUser);
+
+    verifyEventPosted(AuthorizationChangedDistributedEvent.class, event -> {
+      assertThat(event.isLocal(), is(true));
+    });
+  }
+
+  @Test
+  void testSetUsersRoles_postsDistributedAuthorizationEvent() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    // TestRoleMappingUserManager bean in context ensures foundUser=true; setUsersRoles
+    // swallows the UserNotFoundException from the mock and still posts the event.
+    securitySystem.setUsersRoles("jcoder", "MockUserManagerA", Set.of());
+
+    verifyEventPosted(AuthorizationChangedDistributedEvent.class, event -> {
+      assertThat(event.isLocal(), is(true));
+    });
+  }
+
   private static User createUser(final String name, final UserStatus status) {
     User user = new User();
     user.setEmailAddress("email@foo.com");
@@ -344,9 +479,52 @@ public class DefaultSecuritySystemTest
     return user;
   }
 
-  private <T> void verifyEventPosted(final int totalEvents, final Class<T> eventClass, final Consumer<T> assertions) {
-    ArgumentCaptor<T> eventArgument = ArgumentCaptor.forClass(eventClass);
-    verify(lookup(EventManager.class), times(totalEvents)).post(eventArgument.capture());
-    assertions.accept(eventArgument.getValue());
+  private <T> void verifyEventPosted(final Class<T> eventClass, final Consumer<T> assertions) {
+    ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+    verify(lookup(EventManager.class), atLeastOnce()).post(captor.capture());
+    T event = captor.getAllValues()
+        .stream()
+        .filter(eventClass::isInstance)
+        .map(eventClass::cast)
+        .findFirst()
+        .orElseThrow(
+            () -> new AssertionError("Expected event of type " + eventClass.getSimpleName() + " to be posted"));
+    assertions.accept(event);
+  }
+
+  public static class TestRoleMappingUserManager
+      extends MockUserManagerSupport
+      implements RoleMappingUserManager
+  {
+    public TestRoleMappingUserManager() {
+      super(new NoOpEventManager());
+    }
+
+    @Override
+    public String getSource() {
+      return "MockRoleMappingUserManager";
+    }
+
+    @Override
+    public String getAuthenticationRealmName() {
+      return null;
+    }
+
+    @Override
+    public Set<RoleIdentifier> getUsersRoles(
+        final String userId,
+        final String userSource) throws UserNotFoundException
+    {
+      return Set.of();
+    }
+
+    @Override
+    public void setUsersRoles(
+        final String userId,
+        final String userSource,
+        final Set<RoleIdentifier> roleIdentifiers) throws UserNotFoundException
+    {
+      throw new UserNotFoundException(userId);
+    }
   }
 }

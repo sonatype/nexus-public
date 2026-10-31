@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act, } from '@testing-library/react';
 
 import { useSystemInfoApi } from '../useSystemInfoApi';
 
@@ -84,7 +84,7 @@ describe('useSystemInfoApi', () => {
       await act(async () => {
         try {
           await result.current.fetchSystemInfo();
-        } catch (err) {
+        } catch (_err) {
           // Expected to throw
         }
       });
@@ -102,7 +102,7 @@ describe('useSystemInfoApi', () => {
       await act(async () => {
         try {
           await result.current.fetchSystemInfo();
-        } catch (err) {
+        } catch (_err) {
           // Expected to throw
         }
       });

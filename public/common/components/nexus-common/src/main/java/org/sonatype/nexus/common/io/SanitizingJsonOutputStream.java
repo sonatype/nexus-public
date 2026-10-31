@@ -28,7 +28,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
 
 import static com.fasterxml.jackson.core.JsonTokenId.*;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Sanitizes JSON streamed output by replacing named fields with a specified replacement string. For fields containing
@@ -112,7 +112,7 @@ public class SanitizingJsonOutputStream
     {
       super(delegate, false);
       this.fields = new HashSet<>(fields);
-      this.replacement = checkNotNull(replacement);
+      this.replacement = requireNonNull(replacement);
     }
 
     @Override

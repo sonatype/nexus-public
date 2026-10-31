@@ -33,8 +33,8 @@ import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import org.springframework.stereotype.Component;
@@ -148,7 +148,7 @@ public class ParallelUploader
 
     private ChunkReader(final InputStream input) {
       this.counter = new AtomicInteger(1);
-      this.input = checkNotNull(input);
+      this.input = requireNonNull(input);
     }
 
     synchronized Optional<Chunk> readChunk(final int size) throws IOException {

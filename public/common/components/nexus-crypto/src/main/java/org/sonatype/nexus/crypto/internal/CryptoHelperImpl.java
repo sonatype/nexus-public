@@ -44,7 +44,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_FIPS_ENABLED_NAMED_VALUE;
 
 /**
@@ -132,7 +132,7 @@ public class CryptoHelperImpl
 
   @Override
   public Cipher createCipher(final String transformation) throws NoSuchAlgorithmException, NoSuchPaddingException {
-    checkNotNull(transformation);
+    requireNonNull(transformation);
     Cipher obj;
     try {
       obj = Cipher.getInstance(transformation, getProvider());
@@ -154,7 +154,7 @@ public class CryptoHelperImpl
 
   @Override
   public Signature createSignature(final String algorithm) throws NoSuchAlgorithmException {
-    checkNotNull(algorithm);
+    requireNonNull(algorithm);
     Signature obj;
     try {
       obj = Signature.getInstance(algorithm, getProvider());
@@ -172,7 +172,7 @@ public class CryptoHelperImpl
 
   @Override
   public SecureRandom createSecureRandom(final String algorithm) throws NoSuchAlgorithmException {
-    checkNotNull(algorithm);
+    requireNonNull(algorithm);
     SecureRandom obj;
     try {
       obj = SecureRandom.getInstance(algorithm, getProvider());
@@ -198,7 +198,7 @@ public class CryptoHelperImpl
 
   @Override
   public KeyStore createKeyStore(final String type) throws KeyStoreException {
-    checkNotNull(type);
+    requireNonNull(type);
     KeyStore obj;
     try {
       obj = KeyStore.getInstance(type, getProvider());
@@ -215,7 +215,7 @@ public class CryptoHelperImpl
 
   @Override
   public KeyPairGenerator createKeyPairGenerator(final String algorithm) throws NoSuchAlgorithmException {
-    checkNotNull(algorithm);
+    requireNonNull(algorithm);
     KeyPairGenerator obj;
     try {
       obj = KeyPairGenerator.getInstance(algorithm, getProvider());
@@ -232,7 +232,7 @@ public class CryptoHelperImpl
 
   @Override
   public CertificateFactory createCertificateFactory(final String type) throws CertificateException {
-    checkNotNull(type);
+    requireNonNull(type);
     CertificateFactory obj;
     try {
       obj = CertificateFactory.getInstance(type, getProvider());
@@ -249,7 +249,7 @@ public class CryptoHelperImpl
 
   @Override
   public KeyManagerFactory createKeyManagerFactory(final String algorithm) throws NoSuchAlgorithmException {
-    checkNotNull(algorithm);
+    requireNonNull(algorithm);
     KeyManagerFactory obj;
     try {
       obj = KeyManagerFactory.getInstance(algorithm, getProvider());
@@ -266,7 +266,7 @@ public class CryptoHelperImpl
 
   @Override
   public TrustManagerFactory createTrustManagerFactory(final String algorithm) throws NoSuchAlgorithmException {
-    checkNotNull(algorithm);
+    requireNonNull(algorithm);
     TrustManagerFactory obj;
     try {
       obj = TrustManagerFactory.getInstance(algorithm, getProvider());
@@ -283,7 +283,7 @@ public class CryptoHelperImpl
 
   @Override
   public MessageDigest createDigest(final String algorithm) throws NoSuchAlgorithmException {
-    checkNotNull(algorithm);
+    requireNonNull(algorithm);
     MessageDigest obj;
     try {
       obj = MessageDigest.getInstance(algorithm, getProvider());
@@ -300,7 +300,7 @@ public class CryptoHelperImpl
 
   @Override
   public SecretKeyFactory createSecretKeyFactory(final String algorithm) throws NoSuchAlgorithmException {
-    checkNotNull(algorithm);
+    requireNonNull(algorithm);
     SecretKeyFactory obj;
     try {
       obj = SecretKeyFactory.getInstance(algorithm, getProvider());

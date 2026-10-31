@@ -93,14 +93,6 @@ a.nxrm-internal-link:hover {
     min-width: 0;
     background-color: var(--color-background);
 
-    // Full-width layout for standalone pages (test hub, etc.)
-    // These pages don't have sidebar/header, so fill the available space
-    &.nxrm-main-content--full-width {
-      flex: 1;
-      min-height: 0;
-      width: 100%;
-    }
-
     // Flex layout needed for Default UI pages (NxPageSidebar + NxPageMain)
     display: flex;
     flex-direction: column;
@@ -170,22 +162,6 @@ a.nxrm-internal-link:hover {
       padding: var(--nx-spacing-6x, 24px);
       overflow: auto;
       box-sizing: border-box;
-    }
-  }
-
-  // Test hub page uses flex column layout (not grid)
-  // SystemNotices sits at top, content fills remaining space
-  &.nxrm-test-hub-page {
-    display: flex;
-    flex-direction: column;
-
-    .nxrm-system-notices {
-      flex-shrink: 0;
-    }
-
-    .nxrm-main-content {
-      flex: 1;
-      min-height: 0;
     }
   }
 
@@ -286,13 +262,101 @@ body:has(.nxrm-page) > .x-toast {
   display: none !important;
 }
 
-// Lock <body> when the Preview UI shell is active so tall pages can't leak scroll
-// up to <html>. .nxrm-page { overflow: hidden } alone doesn't propagate to the
-// root; without this, scrolling past the end of .nxrm-main-content reveals blank
-// space below .nxrm-page on tall forms (NEXUS-51231).
-// !important is required because ExtJS/Rapture sets `body.style.overflow = 'auto'`
-// at runtime, and inline styles beat stylesheet rules without it.
+/* ==========================================================================
+ * Shell overflow strategy (NEXUS-54306)
+ *
+ * The shell root carries RSC's `.nx-page`, which pins `min-width` to
+ * `--nx-width-page-min` (1366px, the design system's minimum supported
+ * resolution). That floor is intentional and is NOT changed here: below 1366px
+ * the shell overflows rather than reflowing, and the shell's job is to make that
+ * overflow reachable. One scrollport, split by axis:
+ *
+ *   <html>  overflow-x: auto   — THE horizontal scrollport: the viewport itself
+ *           overflow-y: hidden — vertical containment (NEXUS-51231)
+ *   <body>  overflow: visible  — must not clip or scroll; it only passes the
+ *                                shell's overflow up to the viewport
+ *   .nxrm-page                 — 1366px-wide grid, height: 100vh
+ *   .nxrm-main-content         — overflow: auto, the vertical scrollport for pages
+ *
+ * This change is deliberately confined to the overflow axes. The shell's vertical
+ * sizing contract — `.nxrm-page { height: 100vh }` here and `min-height: 100vh` in
+ * the Cloud shell — is left exactly as it was, so short-content pages keep their
+ * viewport-height floor. Horizontal reachability does not depend on it.
+ *
+ * The one consequence worth knowing: `100vh` is defined to ignore scrollbars, so
+ * where the horizontal scrollbar reserves space (Windows, Linux, macOS set to
+ * "Show scroll bars: Always") the shell is that bar's height taller than the area
+ * it is scrolled inside, and `overflow-y: hidden` clips the difference — the
+ * bottom few pixels of the shell sit under the bar. This is accepted in preference
+ * to altering the vertical contract: it costs a strip of padding below
+ * .nxrm-main-content, which is itself scrollable, whereas below 1366px the
+ * alternative was content that could not be reached at all. macOS overlay
+ * scrollbars reserve no space, so nothing changes there.
+ *
+ * The scrollport MUST be the root element, not <body>. The root element's
+ * overflow is what propagates to the viewport, making it `document.scrollingElement`
+ * — what wheel, trackpad, keyboard paging and the browser's own scrollbar all
+ * drive. A scrollable <body> underneath an `overflow: hidden` root scrolls only
+ * *programmatically*: the viewport stays locked, no scrollbar is painted, and user
+ * gestures have nothing to grab. Verify with a real gesture and `window.scrollX`,
+ * never by assigning `el.scrollLeft` — that succeeds even when nothing is reachable.
+ *
+ * Only the X axis is `auto`, so there is exactly one horizontal scrollbar and it
+ * moves the shell as a unit (header, left nav and content stay aligned) while
+ * vertical scrolling stays delegated to .nxrm-main-content. The Y axis must stay
+ * locked: `.nxrm-page { overflow: hidden }` alone does not propagate to the root,
+ * and without the lock, scrolling past the end of .nxrm-main-content reveals
+ * blank space below .nxrm-page on tall forms (NEXUS-51231). Preview UI and legacy
+ * ExtJS pages both render inside .nxrm-main-content, so both are covered.
+ *
+ * `!important` is required because ExtJS/Rapture sets `body.style.overflow` at
+ * runtime, and an inline `overflow: hidden` on <body> would clip the shell's
+ * horizontal overflow before it could ever reach the viewport scrollport.
+ *
+ * <body> also needs the same 1366px floor, for a reason that is not obvious:
+ * Radix's modal scroll lock (react-remove-scroll, used by every Dialog and
+ * DropdownMenu) injects its own `body { overflow: hidden }` stylesheet, which
+ * outranks the `!important` above on source order. Without a floor, <body> is only
+ * as wide as the viewport, so clipping it collapses the *root's* horizontal scroll
+ * range to zero and the browser clamps `scrollX` back to 0 for as long as the
+ * overlay is open. Right-edge controls the user had just scrolled into view — the
+ * account menu, row action menus — then re-render off-screen and become unusable.
+ * Matching the floor keeps <body> 1366px wide, so the scroll range (and the user's
+ * scroll position) survives the lock while the lock still does its job on Y.
+ *
+ * Pages must NOT add their own horizontal-overflow workaround: a page-level
+ * `overflow-x: auto` produces a second, nested scrollbar. Horizontal
+ * reachability is handled here, once, for every page.
+ * ========================================================================== */
+html:has(.nxrm-page) {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 body:has(.nxrm-page) {
-  overflow: hidden !important;
   height: 100vh;
+  min-width: var(--nx-width-page-min);
+  overflow: visible !important;
+}
+
+/*
+ * Exception: the unauthenticated login page.
+ *
+ * The login shell is a `position: fixed`, 100vw/100vh overlay that already fits
+ * any viewport, so it has nothing to scroll horizontally. It still renders inside
+ * .nxrm-page, whose 1366px min-width would otherwise hand the viewport a scrollbar
+ * that scrolls nothing but empty shell. Keep the login page's pre-NEXUS-54306
+ * behaviour and clip that axis instead.
+ *
+ * This must override `html:has(.nxrm-page)` above, so it targets the same element
+ * (the root) and relies on source order — the two selectors have equal
+ * specificity, so the later one wins.
+ *
+ * Both login selectors are listed on purpose: .nxrm-login-layout is the shell
+ * rendered for unauthenticated users today, .nxrm-login-page-radix is the same
+ * fixed-overlay pattern in LoginPageRadix.
+ */
+html:has(.nxrm-login-layout),
+html:has(.nxrm-login-page-radix) {
+  overflow-x: hidden;
 }

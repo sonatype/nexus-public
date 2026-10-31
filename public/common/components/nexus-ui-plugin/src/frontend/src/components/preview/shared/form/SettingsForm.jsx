@@ -152,12 +152,7 @@ export function SettingsForm({
 
   const formIdRef = useRef(`settings-form-${Math.random().toString(36).slice(2, 8)}`);
 
-  // Automatically track unsaved changes and warn on navigation
-  // Hook clears automatically when form becomes pristine (isDirty = false)
-  // Skip tracking if noDirtyTracking is enabled (e.g., one-shot upload forms)
-  // Skip tracking if externalDirtyTracking is true (parent manages dirty state)
-  // After user confirms discard, suppress tracking to prevent the router's onBefore
-  // hook from showing a second "unsaved changes" modal during navigation
+  // Track unsaved changes; skip when noDirtyTracking/externalDirtyTracking set, or after discard to prevent double modal.
   useUnsavedChangesWarning(
     !isPristine && !noDirtyTracking && !externalDirtyTracking && !discardedRef.current,
     formIdRef.current
@@ -267,12 +262,15 @@ export function SettingsForm({
               </Flex>
 
               {/* Right side: Primary actions + status */}
+              {/* "Unsaved changes" is always rendered so the action bar reserves the same horizontal space in pristine and dirty states — toggling visibility (not the DOM) prevents the layout shift that would otherwise wrap nearby buttons (e.g. Delete) when the indicator first appears. Plain <span> rather than Radix <Text> because Radix Text strips data-* attributes. */}
               <Flex gap="3" align="center">
-                {!isPristine && !error && !noDirtyTracking && (
-                  <Text size="1" className="settings-form__unsaved">
-                    Unsaved changes
-                  </Text>
-                )}
+                <span
+                  className="settings-form__unsaved"
+                  data-pristine={isPristine || !!error || noDirtyTracking ? 'true' : 'false'}
+                  aria-hidden={isPristine || !!error || noDirtyTracking ? 'true' : undefined}
+                >
+                  Unsaved changes
+                </span>
                 {actionButtons}
                 {onCancel && (
                   <Button

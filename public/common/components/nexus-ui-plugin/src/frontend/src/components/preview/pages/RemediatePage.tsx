@@ -175,14 +175,11 @@ export default function RemediatePage() {
     malwareCount,
     countsByRepo,
     tasksCount,
-    proxyRepoCount,
-    coveredRepoCount,
     loading,
     error,
     refetch,
   } = useRemediateData();
   const hasMalware = malwareCount > 0;
-  const uncoveredCount = proxyRepoCount - coveredRepoCount;
 
   if (loading) {
     return (

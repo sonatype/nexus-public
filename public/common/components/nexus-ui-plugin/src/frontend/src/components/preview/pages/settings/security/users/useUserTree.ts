@@ -11,63 +11,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useState, useMemo } from 'react';
-import { useCombinedRoleTree, type SecurityTreeNode } from '../roles/useRoleTree';
-import { DEFAULT_SOURCE, User, getSourceLabel } from './types';
+import { User } from './types';
+import { useUserTreePreview, type UseUserTreeResult } from './useUserTreePreview';
 
-export interface UseUserTreeResult {
-  tree: SecurityTreeNode[];
-  loading: boolean;
-  error: string | null;
-  toggleExpand: (nodeId: string) => void;
-  expandAll: () => void;
-  collapseAll: () => void;
-  setSearchTerm: (term: string) => void;
-}
+export type { UseUserTreeResult };
 
 /**
- * Hook: Build a user-rooted security tree (User → Roles → Privileges → Content selectors).
- * Wraps useCombinedRoleTree with a synthetic user root node for the User Profile Security Tree tab.
+ * Hook: Build a user-rooted security tree (User -> Roles -> Privileges -> Content selectors).
+ * Thin wrapper over useUserTreePreview seeded with the user's persisted roles; keeps the
+ * Profile Security Tree tab and the Edit User inline preview on one node-id/label convention.
  */
 export function useUserTree(user: User | null): UseUserTreeResult {
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const roleIds = user?.roles || [];
-  const {
-    tree: roleTrees,
-    loading,
-    error,
-    toggleExpand,
-    expandAll,
-    collapseAll,
-  } = useCombinedRoleTree(roleIds, { searchTerm });
-
-  const userNodeId = user ? `user:${user.userId}:${user.source || DEFAULT_SOURCE}` : '';
-
-  const tree = useMemo(() => {
-    if (!user || roleTrees.length === 0) return [];
-
-    const sourceLabel = getSourceLabel(user.source || DEFAULT_SOURCE);
-    const userRoot: SecurityTreeNode = {
-      id: userNodeId,
-      entityId: user.userId,
-      name: `User: ${user.userId} (${sourceLabel})`,
-      type: 'role',
-      inherited: false,
-      expanded: true,
-      isVisible: true,
-      children: roleTrees,
-    };
-    return [userRoot];
-  }, [user, userNodeId, roleTrees]);
-
-  return {
-    tree,
-    loading,
-    error,
-    toggleExpand,
-    expandAll,
-    collapseAll,
-    setSearchTerm,
-  };
+  return useUserTreePreview(user?.roles ?? [], user);
 }

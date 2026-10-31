@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -64,7 +64,7 @@ public class SqlSearchEventHandler
       @Value("${" + FLUSH_POOL_SIZE + ":128}") final int poolSize)
   {
     super(repositoryManager, periodicJobService, flushOnCount, flushOnSeconds, noPurgeDelay, poolSize);
-    this.searchTableStore = checkNotNull(searchTableStore);
+    this.searchTableStore = requireNonNull(searchTableStore);
   }
 
   @Override

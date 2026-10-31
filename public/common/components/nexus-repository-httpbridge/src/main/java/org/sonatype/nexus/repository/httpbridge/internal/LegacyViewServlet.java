@@ -32,7 +32,6 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.isNull;
 import static org.sonatype.nexus.repository.http.HttpResponses.notFound;
 
@@ -60,7 +59,7 @@ public class LegacyViewServlet
       final List<LegacyViewContributor> legacyViewContributors)
   {
     super(repositoryManager, httpResponseSenderSelector, descriptionHelper, descriptionRenderer);
-    this.legacyViewContributors = checkNotNull(legacyViewContributors);
+    this.legacyViewContributors = Objects.requireNonNull(legacyViewContributors);
     this.repositoryManager = repositoryManager;
   }
 

@@ -17,7 +17,7 @@ import jakarta.ws.rs.core.GenericEntity;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 
 /**
@@ -33,8 +33,8 @@ public class WebApplicationMessageException
   }
 
   public WebApplicationMessageException(final Status status, final Object message, final String mediaType) {
-    super(Response.status(checkNotNull(status))
-        .entity(new GenericEntity<>(new ValidationErrorXO(checkNotNull(message).toString()), ValidationErrorXO.class))
+    super(Response.status(requireNonNull(status))
+        .entity(new GenericEntity<>(new ValidationErrorXO(requireNonNull(message).toString()), ValidationErrorXO.class))
         .type(mediaType)
         .build());
   }
@@ -45,16 +45,16 @@ public class WebApplicationMessageException
       final Object message,
       final String mediaType)
   {
-    super(Response.status(checkNotNull(status))
+    super(Response.status(requireNonNull(status))
         .entity(
-            new GenericEntity<>(new ValidationErrorXO(id, checkNotNull(message).toString()), ValidationErrorXO.class))
+            new GenericEntity<>(new ValidationErrorXO(id, requireNonNull(message).toString()), ValidationErrorXO.class))
         .type(mediaType)
         .build());
   }
 
   public WebApplicationMessageException(int status, final Object message, final String mediaType) {
     super(Response.status(status)
-        .entity(new GenericEntity<>(new ValidationErrorXO(checkNotNull(message).toString()), ValidationErrorXO.class))
+        .entity(new GenericEntity<>(new ValidationErrorXO(requireNonNull(message).toString()), ValidationErrorXO.class))
         .type(mediaType)
         .build());
   }
@@ -62,7 +62,7 @@ public class WebApplicationMessageException
   public WebApplicationMessageException(int status, final String id, final Object message, final String mediaType) {
     super(Response.status(status)
         .entity(
-            new GenericEntity<>(new ValidationErrorXO(id, checkNotNull(message).toString()), ValidationErrorXO.class))
+            new GenericEntity<>(new ValidationErrorXO(id, requireNonNull(message).toString()), ValidationErrorXO.class))
         .type(mediaType)
         .build());
   }

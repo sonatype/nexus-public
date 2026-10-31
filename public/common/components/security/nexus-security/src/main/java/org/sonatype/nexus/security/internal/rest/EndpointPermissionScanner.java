@@ -41,7 +41,7 @@ import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Reflectively scans JAX-RS {@link Resource} classes for HTTP metadata, Shiro security annotations, and Swagger tags.
@@ -184,7 +184,7 @@ public final class EndpointPermissionScanner
   }
 
   static String joinServiceRestPath(final String typeSegment, final String methodSegment) {
-    checkNotNull(typeSegment);
+    requireNonNull(typeSegment);
     String joined;
     if (methodSegment.isEmpty()) {
       joined = typeSegment;

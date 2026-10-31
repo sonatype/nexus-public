@@ -36,7 +36,7 @@ export function TryItTab({ fullSwagger, row, accessDenied }: TryItTabProps) {
     return sliceSwaggerSpec(fullSwagger, row.swaggerPathKey, methodLower);
   }, [fullSwagger, row.swaggerPathKey, methodLower]);
 
-  if (!fullSwagger || !slim) {
+  if (!(fullSwagger && slim)) {
     return (
       <Text size="2" color="gray">
         API documentation is not available. Load swagger.json to use Try It.

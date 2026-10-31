@@ -30,8 +30,8 @@ import com.thoughtworks.paranamer.Paranamer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Reflection {@link MBeanOperation}.
@@ -58,11 +58,11 @@ public class ReflectionMBeanOperation
       final Supplier target,
       final Method method)
   {
-    this.info = checkNotNull(info);
+    this.info = requireNonNull(info);
     this.name = info.getName();
     this.key = new OperationKey(info);
-    this.target = checkNotNull(target);
-    this.method = checkNotNull(method);
+    this.target = requireNonNull(target);
+    this.method = requireNonNull(method);
   }
 
   @Override

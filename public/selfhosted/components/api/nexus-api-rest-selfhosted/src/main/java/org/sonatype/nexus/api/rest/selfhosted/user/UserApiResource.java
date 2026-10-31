@@ -13,10 +13,7 @@
 
 package org.sonatype.nexus.api.rest.selfhosted.user;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import com.google.common.annotations.VisibleForTesting;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -25,7 +22,12 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response.Status;
-
+import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -33,26 +35,24 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
-import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
 import org.sonatype.nexus.security.internal.rest.ApiUser;
 import org.sonatype.nexus.security.internal.rest.ApiUserStatus;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
+import org.sonatype.nexus.security.user.DuplicateUserException;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.validation.Validate;
-
-import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.shiro.authz.annotation.RequiresAuthentication;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Collections;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Resource for REST API to perform operations on the user.
@@ -77,8 +77,8 @@ public class UserApiResource
       final SecuritySystem securitySystem,
       final AdminPasswordFileManager adminPasswordFileManager)
   {
-    this.securitySystem = checkNotNull(securitySystem);
-    this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
+    this.securitySystem = requireNonNull(securitySystem);
+    this.adminPasswordFileManager = requireNonNull(adminPasswordFileManager);
   }
 
   @Override
@@ -98,6 +98,10 @@ public class UserApiResource
     catch (NoSuchUserManagerException e) {
       log.error("Unable to locate default usermanager.", e);
       throw createNoSuchUserManagerException(UserManager.DEFAULT_SOURCE);
+    }
+    catch (DuplicateUserException e) {
+      throw new ValidationErrorsException()
+          .withError("userId", String.format("User '%s' already exists.", createUser.getUserId()));
     }
   }
 

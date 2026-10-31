@@ -16,13 +16,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.nexus.common.failure.MultipleFailures.MultipleFailuresException;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -43,6 +52,23 @@ public class RepositoryTaskSupportTest
   private TaskConfiguration configuration;
 
   private TestTask task;
+
+  private ListAppender<ILoggingEvent> logCaptor;
+
+  @Before
+  public void startLogCapture() {
+    logCaptor = new ListAppender<>();
+    logCaptor.start();
+    // ComponentSupport derives its logger from getClass(), so the running task logs under the
+    // concrete TestTask subclass name, not RepositoryTaskSupport. Attach to the root logger so the
+    // capture is independent of the concrete subclass (including the anonymous ones used below).
+    ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).addAppender(logCaptor);
+  }
+
+  @After
+  public void stopLogCapture() {
+    ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).detachAppender(logCaptor);
+  }
 
   /*
    * Verify that repository field must be present in configuration.
@@ -201,6 +227,132 @@ public class RepositoryTaskSupportTest
 
     assertThrows(MultipleFailuresException.class, task::execute);
     assertThat(actualRepositories, contains(testRepository1, testRepository2));
+
+    // A generic RuntimeException (not a concurrent-deletion signal) must still land in the ERROR
+    // / failure branch — guards against the multi-catch being widened too far in future.
+    assertThat("a plain RuntimeException must be logged at ERROR",
+        logCaptor.list.stream()
+            .anyMatch(e -> e.getLevel() == Level.ERROR
+                && e.getFormattedMessage().contains("Failed to run task")),
+        is(true));
+  }
+
+  /*
+   * Verify that when execute(Repository) throws MissingFacetException (e.g. concurrent repo deletion),
+   * the task logs a warning, skips that repository, continues to the next, and does NOT throw
+   * (no task failure). NEXUS-53351.
+   */
+  @Test
+  public void testMissingFacetExceptionSkipsRepositoryWithoutFailure() throws Exception {
+    configuration = task("test", "test");
+    configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, "*");
+    Repository testRepository1 = mock(Repository.class);
+    Repository testRepository2 = mock(Repository.class);
+    when(repositoryManager.browse()).thenReturn(List.of(testRepository1, testRepository2));
+    List<Repository> actualRepositories = new ArrayList<>();
+    task = new TestTask()
+    {
+      @Override
+      protected void execute(final Repository repository) {
+        actualRepositories.add(repository);
+        if (testRepository1 == repository) {
+          throw new MissingFacetException(repository, Facet.class);
+        }
+      }
+    };
+    task.install(repositoryManager, new GroupType());
+    task.configure(configuration);
+
+    // Should not throw — MissingFacetException must be swallowed with a WARN
+    task.execute();
+    assertThat(actualRepositories, contains(testRepository1, testRepository2));
+
+    // The skipped repository must be logged at WARN, never ERROR...
+    assertThat("expected a WARN log for the concurrently-removed repository",
+        logCaptor.list.stream()
+            .anyMatch(e -> e.getLevel() == Level.WARN
+                && e.getFormattedMessage().contains("as it appears to have been removed during execution")),
+        is(true));
+    // ...and no ERROR must be logged, which also proves the exception was NOT accumulated into
+    // MultipleFailures (the failures.add(e) path is the only ERROR-logging branch).
+    assertThat("MissingFacetException must not reach the ERROR/failure branch",
+        logCaptor.list.stream()
+            .noneMatch(e -> e.getLevel() == Level.ERROR
+                && e.getFormattedMessage().contains("Failed to run task")),
+        is(true));
+  }
+
+  /*
+   * Verify that when execute(Repository) throws InvalidStateException (e.g. @Guarded method on a
+   * concurrently-deleted repo), the task logs a warning, skips that repository, continues to the
+   * next, and does NOT throw (no task failure). NEXUS-53351.
+   */
+  @Test
+  public void testInvalidStateExceptionSkipsRepositoryWithoutFailure() throws Exception {
+    configuration = task("test", "test");
+    configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, "*");
+    Repository testRepository1 = mock(Repository.class);
+    Repository testRepository2 = mock(Repository.class);
+    when(repositoryManager.browse()).thenReturn(List.of(testRepository1, testRepository2));
+    List<Repository> actualRepositories = new ArrayList<>();
+    task = new TestTask()
+    {
+      @Override
+      protected void execute(final Repository repository) {
+        actualRepositories.add(repository);
+        if (testRepository1 == repository) {
+          throw new InvalidStateException("STOPPED", new String[]{"STARTED"});
+        }
+      }
+    };
+    task.install(repositoryManager, new GroupType());
+    task.configure(configuration);
+
+    // Should not throw — InvalidStateException must be swallowed with a WARN
+    task.execute();
+    assertThat(actualRepositories, contains(testRepository1, testRepository2));
+
+    // The skipped repository must be logged at WARN, never ERROR...
+    assertThat("expected a WARN log for the concurrently-removed repository",
+        logCaptor.list.stream()
+            .anyMatch(e -> e.getLevel() == Level.WARN
+                && e.getFormattedMessage().contains("as it appears to have been removed during execution")),
+        is(true));
+    // ...and no ERROR must be logged, which also proves the exception was NOT accumulated into
+    // MultipleFailures (the failures.add(e) path is the only ERROR-logging branch).
+    assertThat("InvalidStateException must not reach the ERROR/failure branch",
+        logCaptor.list.stream()
+            .noneMatch(e -> e.getLevel() == Level.ERROR
+                && e.getFormattedMessage().contains("Failed to run task")),
+        is(true));
+  }
+
+  /*
+   * Verify that TaskInterruptedException still propagates past the new
+   * MissingFacetException|InvalidStateException catch (correct catch ordering). NEXUS-53351.
+   */
+  @Test
+  public void testTaskInterruptedExceptionPropagates() {
+    configuration = task("test", "test");
+    configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, "*");
+    Repository testRepository1 = mock(Repository.class);
+    when(repositoryManager.browse()).thenReturn(List.of(testRepository1));
+    task = new TestTask()
+    {
+      @Override
+      protected void execute(final Repository repository) {
+        throw new TaskInterruptedException("interrupted", true);
+      }
+    };
+    task.install(repositoryManager, new GroupType());
+    task.configure(configuration);
+
+    assertThrows(TaskInterruptedException.class, task::execute);
+    // It must NOT have been swallowed as a concurrent-deletion WARN.
+    assertThat(logCaptor.list.stream()
+        .noneMatch(e -> e.getLevel() == Level.WARN
+            && e.getFormattedMessage().contains("as it appears to have been removed during execution")),
+        is(true));
   }
 
   /*

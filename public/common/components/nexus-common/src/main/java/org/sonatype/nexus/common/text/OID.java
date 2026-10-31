@@ -16,7 +16,7 @@ import java.util.Collection;
 
 import com.google.common.base.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Provides a general identifier for objects.
@@ -38,7 +38,7 @@ public class OID
   private final int hash;
 
   private OID(final String type, final int hash) {
-    this.type = checkNotNull(type);
+    this.type = requireNonNull(type);
     this.hash = hash;
   }
 
@@ -97,7 +97,7 @@ public class OID
   }
 
   public static OID parse(final String spec) {
-    checkNotNull(spec);
+    requireNonNull(spec);
     String[] items = spec.split(SEPARATOR);
     if (items.length != 2) {
       throw new IllegalArgumentException();
@@ -106,13 +106,13 @@ public class OID
   }
 
   public static String render(final Object obj) {
-    checkNotNull(obj);
+    requireNonNull(obj);
     return get(obj).toString();
   }
 
   public static <T> T find(final Collection<T> items, final String id) {
-    checkNotNull(items);
-    checkNotNull(id);
+    requireNonNull(items);
+    requireNonNull(id);
 
     for (T item : items) {
       if (OID.render(item).equals(id)) {
@@ -124,7 +124,7 @@ public class OID
   }
 
   public static <T> T find(final Collection<T> items, final OID id) {
-    checkNotNull(id);
+    requireNonNull(id);
     return find(items, id.toString());
   }
 }

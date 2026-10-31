@@ -20,6 +20,8 @@ import ProtectRepoRow from './ProtectRepoRow';
 import ProtectBulkActionModal, { type ProtectBulkAction } from './ProtectBulkActionModal';
 import { isFirewallSupportedFormat } from '../../../../utils/firewallFormats';
 import { isHealthCheckSupportedFormat } from '../../../../utils/healthCheckFormats';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
 
 const emptyFilters: ProtectFilterState = {
   format: [],
@@ -47,6 +49,21 @@ export default function ProtectQuickConfig({ protectData, onRepoChanged, hardene
     canUpdateHealthCheck,
     lastAnalyzedByRepo,
   } = protectData;
+
+  // Hide the bulk Enable Firewall action without repository-admin edit, and the bulk Enable Auto
+  // Remediation action without tasks:create (NEXUS-54212). Health Check bulk action is already
+  // gated via canUpdateHealthCheck from protectData. coreui never mounts a <PermissionsProvider>,
+  // so context usePermission returns false for everyone; use the provider-independent
+  // ExtJS.usePermission.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canEditFirewall = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.REPOSITORY_ADMIN.EDIT),
+    [hasUser],
+  );
+  const canManageRemediation = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.TASKS.CREATE),
+    [hasUser],
+  );
 
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<ProtectFilterState>(emptyFilters);
@@ -135,7 +152,7 @@ export default function ProtectQuickConfig({ protectData, onRepoChanged, hardene
             >
               Enable Health Check on visible
             </Button>
-            {hasFirewall && (
+            {hasFirewall && canEditFirewall && (
               <Button
                 size="2"
                 variant="soft"
@@ -145,7 +162,7 @@ export default function ProtectQuickConfig({ protectData, onRepoChanged, hardene
                 Enable Firewall on visible
               </Button>
             )}
-            {hasFirewall && (
+            {hasFirewall && canManageRemediation && (
               <Button
                 size="2"
                 variant="soft"

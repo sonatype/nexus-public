@@ -25,7 +25,7 @@ export function wildcardImplies(grantedWildcard: string, requiredPermission: str
       return true;
     }
     const part = grantedParts[i];
-    if (!setContainsWildcard(part) && !isSubset(otherPart, part)) {
+    if (!(setContainsWildcard(part) || isSubset(otherPart, part))) {
       if (!isSubset(part, otherPart)) {
         return false;
       }

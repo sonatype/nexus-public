@@ -22,7 +22,7 @@ import org.sonatype.nexus.blobstore.metrics.BlobStoreMetricsPropertiesReaderSupp
 import software.amazon.awssdk.core.exception.SdkClientException;
 import com.google.common.collect.ImmutableMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -78,8 +78,8 @@ public class S3BlobStoreMetricsPropertiesReader
 
   @Override
   protected void doInit(final S3BlobStore blobstore) throws Exception {
-    this.bucket = checkNotNull(blobstore.getConfiguredBucket());
-    this.bucketPrefix = checkNotNull(blobstore.getBucketPrefix());
-    this.s3 = checkNotNull(blobstore.getS3());
+    this.bucket = requireNonNull(blobstore.getConfiguredBucket());
+    this.bucketPrefix = requireNonNull(blobstore.getBucketPrefix());
+    this.s3 = requireNonNull(blobstore.getS3());
   }
 }

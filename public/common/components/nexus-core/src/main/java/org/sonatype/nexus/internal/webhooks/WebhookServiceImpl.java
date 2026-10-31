@@ -71,7 +71,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.Thread.MIN_PRIORITY;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
@@ -120,9 +120,9 @@ public class WebhookServiceImpl
       final List<Webhook> webhooks,
       @Value("${nexus.webhook.pool.size:128}") final int poolSize)
   {
-    this.httpClientProvider = checkNotNull(httpClientProvider);
-    this.antiSsrfService = checkNotNull(antiSsrfService);
-    this.webhooks = checkNotNull(webhooks);
+    this.httpClientProvider = requireNonNull(httpClientProvider);
+    this.antiSsrfService = requireNonNull(antiSsrfService);
+    this.webhooks = requireNonNull(webhooks);
 
     checkArgument(poolSize > 0, "Pool size must be greater than zero");
     this.threadPoolExecutor = new ThreadPoolExecutor(
@@ -198,7 +198,7 @@ public class WebhookServiceImpl
   @Override
   @Guarded(by = STARTED)
   public void queue(final WebhookRequest request) {
-    checkNotNull(request);
+    requireNonNull(request);
     threadPoolExecutor.execute(() -> {
       try {
         send(request);
@@ -243,7 +243,7 @@ public class WebhookServiceImpl
   @Override
   @Guarded(by = STARTED)
   public void send(final WebhookRequest request) throws Exception {
-    checkNotNull(request);
+    requireNonNull(request);
 
     log.debug("Sending webhook request: {}", request);
 

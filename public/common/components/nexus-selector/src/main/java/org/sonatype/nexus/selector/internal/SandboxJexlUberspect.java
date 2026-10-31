@@ -21,12 +21,14 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.internal.introspection.Uberspect;
 import org.apache.commons.jexl3.introspection.JexlMethod;
+import org.apache.commons.jexl3.introspection.JexlPropertyGet;
 import org.apache.commons.jexl3.introspection.JexlPropertySet;
 import org.apache.commons.jexl3.introspection.JexlUberspect;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * Uberspect for Jexl which blocks writes and allows very limited methods
+ * Uberspect for Jexl which blocks writes, restricts method calls to a whitelist,
+ * and blocks reflection-based property reads on non-Map objects.
  *
  * @since 3.15
  */
@@ -75,6 +77,28 @@ public class SandboxJexlUberspect
       final Object identifier,
       final Object arg)
   {
+    return null;
+  }
+
+  @Override
+  public JexlPropertyGet getPropertyGet(final Object obj, final Object identifier) {
+    // String access is restricted to whitelisted methods (see getMethod());
+    // block all property reads on non-Map objects, including .class
+    if (obj instanceof Map) {
+      return super.getPropertyGet(obj, identifier);
+    }
+    return null;
+  }
+
+  @Override
+  public JexlPropertyGet getPropertyGet(
+      final List<PropertyResolver> resolvers,
+      final Object obj,
+      final Object identifier)
+  {
+    if (obj instanceof Map) {
+      return super.getPropertyGet(resolvers, obj, identifier);
+    }
     return null;
   }
 }

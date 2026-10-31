@@ -24,7 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,8 +47,8 @@ public class VariableResolverAdapterManagerImpl
 
   @Autowired
   public VariableResolverAdapterManagerImpl(final List<VariableResolverAdapter> adaptersByFormatList) {
-    this.adaptersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(adaptersByFormatList));
-    this.defaultAdapter = checkNotNull(this.adaptersByFormat.get(DEFAULT_ADAPTER_NAME));
+    this.adaptersByFormat = QualifierUtil.buildQualifierBeanMap(requireNonNull(adaptersByFormatList));
+    this.defaultAdapter = requireNonNull(this.adaptersByFormat.get(DEFAULT_ADAPTER_NAME));
   }
 
   @Override

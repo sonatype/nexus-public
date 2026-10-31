@@ -43,6 +43,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.search.ComponentFinder;
 import org.sonatype.nexus.repository.content.security.AssetPermissionChecker;
@@ -51,6 +52,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -65,7 +67,7 @@ import org.apache.shiro.authz.AuthorizationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.internal.uploadermetadata.UploaderMetadataSecurityContributor.UPLOADER_METADATA_READ_PERMISSION;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -102,24 +104,32 @@ public class ContentComponentHelper
 
   private final SelectorFactory selectorFactory;
 
+  private final RepositoryPermissionChecker repositoryPermissionChecker;
+
   private final Map<String, AssetXODescriptor> assetDescriptors;
+
+  private final ContentDeletionService contentDeletionService;
 
   @Autowired
   public ContentComponentHelper(
       final MaintenanceService maintenanceService,
+      final ContentDeletionService contentDeletionService,
       final List<ComponentFinder> componentFindersList,
       final AssetPermissionChecker assetPermissionChecker,
       final SelectorFactory selectorFactory,
       final RepositoryManager repositoryManager,
+      final RepositoryPermissionChecker repositoryPermissionChecker,
       final List<AssetXODescriptor> assetDescriptorsList)
   {
-    this.maintenanceService = checkNotNull(maintenanceService);
-    this.componentFinders = QualifierUtil.buildQualifierBeanMap(checkNotNull(componentFindersList));
-    this.assetPermissionChecker = checkNotNull(assetPermissionChecker);
+    this.maintenanceService = requireNonNull(maintenanceService);
+    this.contentDeletionService = requireNonNull(contentDeletionService);
+    this.componentFinders = QualifierUtil.buildQualifierBeanMap(requireNonNull(componentFindersList));
+    this.assetPermissionChecker = requireNonNull(assetPermissionChecker);
     this.defaultComponentFinder =
-        checkNotNull(componentFinders.get("default"));
-    this.selectorFactory = checkNotNull(selectorFactory);
-    this.repositoryManager = checkNotNull(repositoryManager);
+        requireNonNull(componentFinders.get("default"));
+    this.selectorFactory = requireNonNull(selectorFactory);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
     this.assetDescriptors = QualifierUtil.buildQualifierBeanMap(assetDescriptorsList);
   }
 
@@ -160,8 +170,16 @@ public class ContentComponentHelper
       final String jexlExpression,
       final QueryOptions queryOptions)
   {
+    // Defence-in-depth authorization filter: re-run the browse check on the caller's input set
+    // BEFORE group expansion. userCanBrowseRepositories tests direct RepositoryViewPermission, which
+    // does not recognise group-mediated access — filtering after expansion drops leaves the caller
+    // can only reach through a permitted parent group. Filtering pre-expansion preserves Nexus's
+    // group permission model: a permitted group entitles preview of every leaf under it.
+    List<Repository> permittedInputs =
+        repositoryPermissionChecker.userCanBrowseRepositories(selectedRepositories);
+
     Set<Repository> previewRepositories = new LinkedHashSet<>();
-    selectedRepositories.forEach(r -> {
+    permittedInputs.forEach(r -> {
       if (r.getType() instanceof GroupType) {
         previewRepositories.addAll(r.facet(GroupFacet.class).leafMembers());
       }
@@ -244,7 +262,7 @@ public class ContentComponentHelper
   @Override
   public Set<String> deleteComponent(final Repository repository, final ComponentXO model) {
     return findComponentsByModel(repository, model)
-        .flatMap(component -> maintenanceService.deleteComponent(repository, component).stream())
+        .flatMap(component -> contentDeletionService.deleteComponent(repository, component).stream())
         .collect(toSet());
   }
 
@@ -281,7 +299,7 @@ public class ContentComponentHelper
   @Override
   public Set<String> deleteAsset(final Repository repository, final EntityId assetId) {
     return findAssetById(repository, assetId)
-        .map(asset -> maintenanceService.deleteAsset(repository, asset))
+        .map(asset -> contentDeletionService.deleteAsset(repository, asset))
         .orElse(ImmutableSet.of());
   }
 

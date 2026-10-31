@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
-import jakarta.ws.rs.core.Response;
-
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailConfiguration;
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailValidation;
 import org.sonatype.nexus.common.text.Strings2;
@@ -22,11 +20,14 @@ import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension.RegisterValidator;
+import org.sonatype.nexus.validation.constraint.SsrfSafeHostValidator;
 
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.mail2.core.EmailException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -34,6 +35,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -45,18 +49,18 @@ import static org.mockito.Mockito.when;
 @WithUser
 class EmailConfigurationApiResourceTest
 {
+  @RegisterValidator
+  @Mock
+  SsrfSafeHostValidator ssrfSafeHostValidator;
+
   @Mock
   private EmailManager emailManager;
 
   @Mock
   private EmailConfiguration emailConfiguration;
 
+  @InjectMocks
   private EmailConfigurationApiResource underTest;
-
-  @BeforeEach
-  void setup() {
-    underTest = new EmailConfigurationApiResource(emailManager);
-  }
 
   @Test
   void getUnconfiguredEmailConfigurationHandlesNullDefaultConfiguration() {
@@ -87,31 +91,41 @@ class EmailConfigurationApiResourceTest
 
   @Test
   void setEmailConfigurationSetsTheNewConfiguration() {
+    doReturn(true).when(ssrfSafeHostValidator).isValid(eq("smtp.example.com"), any());
     EmailConfiguration newConfiguration = mock(EmailConfiguration.class);
     String newPassword = "testPassword";
     ApiEmailConfiguration request = new ApiEmailConfiguration();
     request.setEnabled(true);
+    request.setHost("smtp.example.com");
     request.setPassword(newPassword);
+    request.setPort(25);
+    request.setFromAddress("foo@example.com");
 
     when(emailManager.newConfiguration()).thenReturn(newConfiguration);
 
     underTest.setEmailConfiguration(request);
 
+    verify(ssrfSafeHostValidator).isValid(any(), any());
     verify(emailManager).setConfiguration(newConfiguration, newPassword);
     verify(newConfiguration).setEnabled(true);
   }
 
   @Test
   void setEmailConfigurationKeepsTheOriginalPassword() {
+    doReturn(true).when(ssrfSafeHostValidator).isValid(any(), any());
     EmailConfiguration newConfiguration = mock(EmailConfiguration.class);
     when(emailManager.newConfiguration()).thenReturn(newConfiguration);
 
     ApiEmailConfiguration request = new ApiEmailConfiguration();
     request.setEnabled(true);
     request.setPassword(Strings2.EMPTY);
+    request.setPort(25);
+    request.setHost("localhost");
+    request.setFromAddress("foo@example.com");
 
     underTest.setEmailConfiguration(request);
 
+    verify(ssrfSafeHostValidator).isValid(any(), any());
     verify(newConfiguration).setEnabled(true);
     verify(emailManager).setConfiguration(newConfiguration, Strings2.EMPTY);
   }
@@ -187,5 +201,25 @@ class EmailConfigurationApiResourceTest
     ApiEmailValidation validation = (ApiEmailValidation) response.getEntity();
     assertThat(validation.isSuccess(), is(false));
     assertThat(validation.getReason(), is("Invalid email address"));
+  }
+
+  @Test
+  void testEmailConfiguration_EmailExceptionWithNullMessage() throws EmailException {
+    when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
+    String destinationAddress = "test@example.com";
+
+    IllegalStateException causeWithNoMessage = new IllegalStateException();
+    EmailException emailException = new EmailException("wrapper", causeWithNoMessage);
+    doThrow(emailException).when(emailManager).sendVerification(emailConfiguration, destinationAddress);
+
+    Response response = underTest.testEmailConfiguration(destinationAddress);
+
+    assertThat(response, is(notNullValue()));
+    assertThat(response.getStatus(), is(400));
+    assertThat(response.hasEntity(), is(true));
+
+    ApiEmailValidation validation = (ApiEmailValidation) response.getEntity();
+    assertThat(validation.isSuccess(), is(false));
+    assertThat(validation.getReason(), is("IllegalStateException"));
   }
 }

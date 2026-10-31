@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.tools;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.3
@@ -35,9 +35,9 @@ public class DeadBlobResult<T>
       final ResultState resultState,
       final String errorMessage)
   {
-    this.repositoryName = checkNotNull(repositoryName);
+    this.repositoryName = requireNonNull(repositoryName);
     this.asset = asset;
-    this.resultState = checkNotNull(resultState);
+    this.resultState = requireNonNull(resultState);
     this.errorMessage = errorMessage;
   }
 

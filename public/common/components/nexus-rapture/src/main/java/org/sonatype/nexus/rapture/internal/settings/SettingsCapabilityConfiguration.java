@@ -19,7 +19,7 @@ import org.sonatype.nexus.rapture.settings.RaptureSettings;
 
 import com.google.common.collect.Maps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Configuration adapter for {@link SettingsCapability}.
@@ -49,7 +49,7 @@ public class SettingsCapabilityConfiguration
   }
 
   public SettingsCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
+    requireNonNull(properties);
     setDebugAllowed(parseBoolean(properties.get(DEBUG_ALLOWED), DEFAULT_DEBUG_ALLOWED));
     setStatusIntervalAuthenticated(
         parseInteger(properties.get(STATUS_INTERVAL_AUTHENTICATED), DEFAULT_STATUS_INTERVAL_AUTHENTICATED));

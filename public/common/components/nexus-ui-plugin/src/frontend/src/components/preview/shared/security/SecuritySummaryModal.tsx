@@ -289,7 +289,7 @@ export function SecuritySummaryModal({
           )}
 
           {/* Report metadata + violations (or firewall per-repo loading) */}
-          {!isFirewallUnavailable && !isFirewallUnprotected && !unsupportedMessage && (
+          {!((isFirewallUnavailable || isFirewallUnprotected ) || unsupportedMessage ) && (
             isFirewallReportBodyLoading ? (
               <Flex align="center" justify="center" gap="3" py="6" px="4" className="security-summary-modal__report-loading">
                 <Spinner size="3" />
@@ -424,7 +424,7 @@ export function SecuritySummaryModal({
           )}
 
           {/* Empty state (not while firewall per-repo report is still loading) */}
-          {!isFirewallUnavailable && !isFirewallUnprotected && !unsupportedMessage && !isFirewallReportBodyLoading && !hasSecurityIssues && !hasLicenseData && (
+          {!(((((isFirewallUnavailable || isFirewallUnprotected ) || unsupportedMessage ) || isFirewallReportBodyLoading ) || hasSecurityIssues ) || hasLicenseData ) && (
             <Flex align="center" gap="3" p="4" className="security-summary-modal__empty">
               <ShieldCheck size={32} color="var(--green-9)" />
               <Box>

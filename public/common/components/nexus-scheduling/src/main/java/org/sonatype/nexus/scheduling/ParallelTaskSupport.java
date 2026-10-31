@@ -26,6 +26,8 @@ import java.util.stream.Stream;
 
 import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+import org.sonatype.nexus.security.subject.FakeAlmightySubject;
+import org.sonatype.nexus.thread.NexusExecutorService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 import org.sonatype.nexus.thread.internal.MDCAwareRunnable;
 
@@ -74,18 +76,8 @@ public abstract class ParallelTaskSupport
   protected final Object execute() throws Exception {
     validateConfiguration();
 
-    String name = getClass().getSimpleName();
-    try (ThreadPoolExecutor executor = new ThreadPoolExecutor(
-        0,
-        concurrencyLimit,
-        60L,
-        TimeUnit.SECONDS,
-        new LinkedBlockingQueue<>(queueCapacity),
-        new NexusThreadFactory(name, name),
-        new CallerRunsPolicy());
-        ProgressLogIntervalHelper progress = new ProgressLogIntervalHelper(
-            log,
-            60)) {
+    try (NexusExecutorService executor = createExecutor();
+        ProgressLogIntervalHelper progress = new ProgressLogIntervalHelper(log, 60)) {
       List<Future<Object>> futures = jobStream(progress)
           .map(runnable -> {
             // check cancellation before scheduling job so the primary thread throws an exception and stops queuing jobs
@@ -169,6 +161,13 @@ public abstract class ParallelTaskSupport
   }
 
   protected abstract Stream<Runnable> jobStream(ProgressLogIntervalHelper progress);
+
+  private NexusExecutorService createExecutor() {
+    String name = getClass().getSimpleName();
+    return NexusExecutorService.forFixedSubject(new ThreadPoolExecutor(0, concurrencyLimit, 60L, TimeUnit.SECONDS,
+        new LinkedBlockingQueue<>(queueCapacity), new NexusThreadFactory(name, name), new CallerRunsPolicy()),
+        FakeAlmightySubject.TASK_SUBJECT);
+  }
 
   private static void validate(final int concurrencyLimit) {
     checkArgument(concurrencyLimit > 0, "concurrencyLimit must be larger than 0");

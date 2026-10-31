@@ -19,8 +19,8 @@ import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
 
@@ -39,7 +39,7 @@ public abstract class UploadHandlerSupport
   private final Set<UploadDefinitionExtension> uploadDefinitionExtensions;
 
   public UploadHandlerSupport(final Set<UploadDefinitionExtension> uploadDefinitionExtensions) {
-    this.uploadDefinitionExtensions = checkNotNull(uploadDefinitionExtensions);
+    this.uploadDefinitionExtensions = requireNonNull(uploadDefinitionExtensions);
   }
 
   /**

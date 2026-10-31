@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link BlobRef} which carries extra information about the associated Blob
@@ -23,8 +23,8 @@ public class HeavyBlobRef
   private BlobMetrics metrics;
 
   public HeavyBlobRef(final BlobRef blobref, final BlobMetrics metrics) {
-    super(checkNotNull(blobref).getNode(), blobref.getStore(), blobref.getBlob(), blobref.getDateBasedRef());
-    this.metrics = checkNotNull(metrics);
+    super(requireNonNull(blobref).getNode(), blobref.getStore(), blobref.getBlob(), blobref.getDateBasedRef());
+    this.metrics = requireNonNull(metrics);
   }
 
   public BlobMetrics getMetrics() {

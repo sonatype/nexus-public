@@ -36,7 +36,7 @@ import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.BOTH;
 import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.LOCAL;
@@ -59,8 +59,8 @@ public class FluentAssetsImpl
   private final AssetStore<?> assetStore;
 
   public FluentAssetsImpl(final ContentFacetSupport facet, final AssetStore<?> assetStore) {
-    this.facet = checkNotNull(facet);
-    this.assetStore = checkNotNull(assetStore);
+    this.facet = requireNonNull(facet);
+    this.assetStore = requireNonNull(assetStore);
   }
 
   @Override

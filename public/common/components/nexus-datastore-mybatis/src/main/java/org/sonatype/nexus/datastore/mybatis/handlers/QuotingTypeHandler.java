@@ -56,6 +56,9 @@ public class QuotingTypeHandler
   }
 
   public static String tsEscape(final String term) {
-    return QUOTE + term.replace("\\", "\\\\").replace(QUOTE, "\\'") + QUOTE;
+    // NEXUS-54105 defense in depth: PostgreSQL cannot encode 0x00 as a bind parameter
+    // for ::tsvector. Strip NUL bytes so this handler never forwards them to the driver.
+    String sanitized = term.replace("\u0000", "");
+    return QUOTE + sanitized.replace("\\", "\\\\").replace(QUOTE, "\\'") + QUOTE;
   }
 }

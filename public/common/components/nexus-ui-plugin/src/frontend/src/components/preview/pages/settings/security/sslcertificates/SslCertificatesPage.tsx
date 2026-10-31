@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Flex, Text, ScrollArea } from '@radix-ui/themes';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Box, } from '@radix-ui/themes';
+import { Plus, } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { useToast, PageHeader } from '../../../../shared';
@@ -55,8 +55,33 @@ export function SslCertificatesPage() {
     deleteCertificate,
   } = useSslCertificatesApi();
 
-  const canCreate = ExtJS.checkPermission('nexus:ssl-truststore:create');
-  const canDelete = ExtJS.checkPermission('nexus:ssl-truststore:delete');
+  // Permissions load asynchronously (NEXUS-53199), so checkPermission() can legitimately report
+  // false on the first paint. Nothing else re-renders this page afterwards, so without
+  // re-evaluating once they arrive the create/delete affordances would stay hidden for the whole
+  // session even for an admin (NEXUS-54265).
+  const [{ canCreate, canDelete }, setPermissions] = useState(() => ({
+    canCreate: ExtJS.checkPermission('nexus:ssl-truststore:create'),
+    canDelete: ExtJS.checkPermission('nexus:ssl-truststore:delete'),
+  }));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    ExtJS.waitForPermissions()
+      .then(() => {
+        if (cancelled) return;
+        setPermissions({
+          canCreate: ExtJS.checkPermission('nexus:ssl-truststore:create'),
+          canDelete: ExtJS.checkPermission('nexus:ssl-truststore:delete'),
+        });
+      })
+      // On timeout keep the initial evaluation rather than blanking the page.
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Load certificate details when selected
   useEffect(() => {
@@ -129,7 +154,8 @@ export function SslCertificatesPage() {
       setDeleteDialogOpen(false);
       handleBack();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Operation failed"; toast.error(message);
+      const message = err instanceof Error ? err.message : "Operation failed";
+      toast.error(message);
       setDeleteDialogOpen(false);
     }
   }, [certificate, deleteCertificate, handleBack, toast]);
@@ -213,7 +239,7 @@ export function SslCertificatesPage() {
             onSave={handleSave}
             onCancel={handleBack}
             loading={loading}
-            
+            onViewExisting={handleSelectCertificate}
           />
         )}
 

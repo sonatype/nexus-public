@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -66,8 +66,8 @@ public class SqlSearchIndexService
       final SearchRecordProducer searchTableDataProducer,
       final SearchStore searchStore)
   {
-    this.searchRecordProducer = checkNotNull(searchTableDataProducer);
-    this.searchStore = checkNotNull(searchStore);
+    this.searchRecordProducer = requireNonNull(searchTableDataProducer);
+    this.searchStore = requireNonNull(searchStore);
   }
 
   public void indexBatch(final Collection<FluentComponent> components, final Repository repository) {

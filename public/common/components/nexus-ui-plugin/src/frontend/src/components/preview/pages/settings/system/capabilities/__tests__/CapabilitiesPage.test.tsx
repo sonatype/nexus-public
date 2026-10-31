@@ -105,9 +105,11 @@ jest.mock('../DynamicCapabilityForm', () => ({
   DynamicCapabilityForm: function MockDynamicCapabilityForm({
     onSave,
     onCancel,
+    onSaveComplete,
   }: {
     onSave: (data: any) => void;
     onCancel: () => void;
+    onSaveComplete?: () => void;
   }) {
     return (
       <div data-testid="capability-form">
@@ -122,6 +124,9 @@ jest.mock('../DynamicCapabilityForm', () => ({
           }
         >
           Save
+        </button>
+        <button data-testid="mock-save-complete" onClick={() => onSaveComplete?.()}>
+          Save Complete
         </button>
         <button onClick={onCancel}>Cancel</button>
       </div>
@@ -225,6 +230,9 @@ describe('CapabilitiesPage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks() resets call history but not custom implementations; reset the
+    // router mock so a per-test mockImplementation cannot leak into other tests.
+    mockGo.mockReset();
     mockRouteName = 'preview.admin.system.capabilities.list';
     mockRouteParams = {};
     mockedUseCapabilitiesApi.mockReturnValue({
@@ -320,6 +328,75 @@ describe('CapabilitiesPage', () => {
     fireEvent.click(cancelButton);
 
     expect(mockGo).toHaveBeenCalledWith('preview.admin.system.capabilities.list');
+  });
+
+  it('navigates to list (not type selection) after a capability is created (NEXUS-53839)', async () => {
+    mockRouteName = 'preview.admin.system.capabilities.createWithType';
+    mockRouteParams = { typeId: 'outreach' };
+
+    const { rerender } = render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+    // Emulate the real ui-router: go() applies the route change asynchronously.
+    // Until it settles, the component keeps rendering the previous route. This is
+    // what allows the deep-link effect to re-enter the create flow when handleBack
+    // clears selectedType while the route is still .createWithType.
+    mockGo.mockImplementation((name: string, params?: Record<string, string>) => {
+      Promise.resolve().then(() => {
+        mockRouteName = name;
+        mockRouteParams = params ?? {};
+        rerender(<Theme><ToastProvider><CapabilitiesPage /></ToastProvider></Theme>);
+      });
+    });
+
+    // Wait for the type to load and the form to render
+    const saveComplete = await screen.findByTestId('mock-save-complete');
+
+    // Simulate the form machine reporting a completed save (post-create navigation)
+    fireEvent.click(saveComplete);
+
+    // After creation we must land on the capabilities list, never bounce back
+    // to the type-selection (.create) or the create wizard (.createWithType).
+    await waitFor(() => {
+      expect(mockRouteName).toBe('preview.admin.system.capabilities.list');
+    });
+    expect(mockGo).not.toHaveBeenCalledWith('preview.admin.system.capabilities.create');
+    expect(mockGo).not.toHaveBeenCalledWith(
+      'preview.admin.system.capabilities.createWithType',
+      expect.anything()
+    );
+    // The list must be shown, not the type selector / wizard.
+    expect(screen.getByTestId('capabilities-list')).toBeInTheDocument();
+    expect(screen.queryByTestId('capability-type-selector')).not.toBeInTheDocument();
+  });
+
+  it('does not re-enter the create flow when navigation is still settling after create (NEXUS-53839)', async () => {
+    // Reproduces the deep-link effect re-entry: the route is still .createWithType
+    // (navigation not yet applied) but the save has completed and selectedType has
+    // been cleared. The effect must NOT re-fetch the type and re-enter the wizard.
+    mockRouteName = 'preview.admin.system.capabilities.createWithType';
+    mockRouteParams = { typeId: 'outreach' };
+
+    // handleBack() will call go('.list'); keep the route unchanged to emulate the
+    // in-flight window where useCurrentStateAndParams has not updated yet.
+    mockGo.mockImplementation(() => {});
+
+    render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+    // Effect loads the type (deep-link entry), advancing to the config step.
+    await screen.findByTestId('mock-save-complete');
+    // Type is fetched exactly once for the genuine deep-link entry.
+    expect(mockFetchCapabilityTypes).toHaveBeenCalledTimes(1);
+
+    // Simulate save completion: handleBack clears selectedType while route is still
+    // .createWithType. Without the createStep guard, the effect re-fires and calls
+    // fetchCapabilityTypes again to rebuild the wizard.
+    fireEvent.click(screen.getByTestId('mock-save-complete'));
+
+    await waitFor(() => {
+      expect(mockGo).toHaveBeenCalledWith('preview.admin.system.capabilities.list');
+    });
+    // The effect must not have re-fetched types to re-enter the create flow.
+    expect(mockFetchCapabilityTypes).toHaveBeenCalledTimes(1);
   });
 
   it('displays page header with icon and description', () => {

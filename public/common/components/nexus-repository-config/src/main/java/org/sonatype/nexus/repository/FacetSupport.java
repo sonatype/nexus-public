@@ -14,10 +14,9 @@ package org.sonatype.nexus.repository;
 
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -26,13 +25,14 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuard;
 import org.sonatype.nexus.common.stateguard.StateGuardAware;
 import org.sonatype.nexus.common.stateguard.Transitions;
-import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
 import static org.sonatype.nexus.repository.FacetSupport.State.DELETED;
 import static org.sonatype.nexus.repository.FacetSupport.State.DESTROYED;
@@ -52,7 +52,16 @@ public abstract class FacetSupport
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  protected static final String CACHE_TOKEN_ATTRIBUTE = "cacheToken";
+  /**
+   * Attribute used to store the content cache token for repositories
+   */
+  public static final String CONTENT_CACHE_TOKEN_ATTRIBUTE = "contentCacheToken";
+
+  /**
+   * Attribute used to store the metadata cache token for repositories. For legacy reasons it the attribute string is
+   * not descriptive.
+   */
+  public static final String METADATA_CACHE_TOKEN_ATTRIBUTE = "cacheToken";
 
   private EventManager eventManager;
 
@@ -60,7 +69,7 @@ public abstract class FacetSupport
 
   @Autowired
   public void installDependencies(final EventManager eventManager) {
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Autowired
@@ -69,7 +78,7 @@ public abstract class FacetSupport
   }
 
   protected EventManager getEventManager() {
-    return checkNotNull(eventManager);
+    return requireNonNull(eventManager);
   }
 
   protected RepositoryAttributeService repositoryAttributeService() {
@@ -79,7 +88,7 @@ public abstract class FacetSupport
   private Repository repository;
 
   protected Repository getRepository() {
-    return checkNotNull(repository);
+    return requireNonNull(repository);
   }
 
   //
@@ -124,7 +133,7 @@ public abstract class FacetSupport
   @Override
   @Transitions(from = NEW, to = ATTACHED)
   public void attach(final Repository repository) throws Exception {
-    this.repository = checkNotNull(repository);
+    this.repository = requireNonNull(repository);
   }
 
   @Override
@@ -265,19 +274,28 @@ public abstract class FacetSupport
   }
 
   /**
-   * Posts a cache synchronization event to coordinate cache tokens across cluster nodes.
+   * Stores the content cache token in the repository attribute service
    *
-   * @param repository the repository for which to sync the cache token
-   * @param cacheToken the cache token to synchronize
+   * @param cacheToken the cache token
+   *
+   * @see #storeMetadataCacheToken(String)
    */
-  public void postCacheTokenEvent(final Repository repository, final String cacheToken) {
-    checkNotNull(repository);
-    if (!EventHelper.isReplicating()) {
-      // Store cache token as repository attribute if the attribute storage service is available
-      if (repositoryAttributeService() != null) {
-        repositoryAttributeService().setRepositoryAttribute(repository, CACHE_TOKEN_ATTRIBUTE, cacheToken);
-      }
-      eventManager.post(new RepositoryCacheSyncTokenEvent(repository.getName(), cacheToken));
+  protected void storeContentCacheToken(final String cacheToken) {
+    if (!EventHelper.isReplicating() && repositoryAttributeService() != null) {
+      repositoryAttributeService().setRepositoryAttribute(repository, CONTENT_CACHE_TOKEN_ATTRIBUTE, cacheToken);
+    }
+  }
+
+  /**
+   * Stores the metadata cache token in the repository attribute service
+   *
+   * @param cacheToken the cache token to synchronize
+   *
+   * @see #storeContentCacheToken(String)
+   */
+  protected void storeMetadataCacheToken(final String cacheToken) {
+    if (!EventHelper.isReplicating() && repositoryAttributeService() != null) {
+      repositoryAttributeService().setRepositoryAttribute(repository, METADATA_CACHE_TOKEN_ATTRIBUTE, cacheToken);
     }
   }
 }

@@ -17,7 +17,7 @@ import javax.cache.Cache;
 
 import org.sonatype.nexus.cache.NexusCache;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * The implementation of the {@link NexusCache}.
@@ -31,7 +31,7 @@ public class LocalCache<K, V>
   private final Cache<K, V> cache;
 
   public LocalCache(final Cache<K, V> cache) {
-    this.cache = checkNotNull(cache);
+    this.cache = requireNonNull(cache);
   }
 
   @Override

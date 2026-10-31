@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.rest.api;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.ws.rs.Path;
 
+import org.sonatype.nexus.repository.manager.RepositoryDeletionService;
+
 import static org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 import org.springframework.stereotype.Component;
@@ -30,7 +32,10 @@ public class RepositoriesApiResourceV1
   public static final String RESOURCE_URI = V1_API_PREFIX + "/repositories";
 
   @Autowired
-  public RepositoriesApiResourceV1(final AuthorizingRepositoryManager authorizingRepositoryManager) {
-    super(authorizingRepositoryManager);
+  public RepositoriesApiResourceV1(
+      final AuthorizingRepositoryManager authorizingRepositoryManager,
+      final RepositoryDeletionService repositoryDeletionService)
+  {
+    super(authorizingRepositoryManager, repositoryDeletionService);
   }
 }

@@ -71,7 +71,7 @@ describe('Welcome', function() {
     jest.spyOn(ExtJS, 'checkPermission').mockReturnValue({});
     jest.spyOn(ExtJS, 'useUser').mockImplementation(() => user);
     jest.spyOn(ExtJS, 'state').mockReturnValue({getUser: () => user, getValue: jest.fn(), getEdition: () => 'PRO'});
-    jest.spyOn(ExtJS, 'isProEdition').mockReturnValue({});
+    jest.spyOn(ExtJS, 'isLicensedEdition').mockReturnValue({});
     jest.spyOn(ExtJS, 'useState').mockReturnValue({});
     jest.spyOn(ExtJS, 'usePermission').mockReturnValue({});
     jest.spyOn(Object.getPrototypeOf(localStorage), 'getItem').mockImplementation(() => null);
@@ -79,7 +79,9 @@ describe('Welcome', function() {
 
     when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue([]);
     when(ExtJS.state().getValue).calledWith('status').mockReturnValue(status);
-    when(ExtJS.useState).calledWith(helperFunctions.useGracePeriodEndsDate).mockReturnValue(new Date(''));
+    when(ExtJS.useState)
+      .mockImplementation((getValue) => getValue())
+      .calledWith(helperFunctions.useGracePeriodEndsDate).mockReturnValue(new Date(''));
   });
 
   it('renders a main content area', function() {

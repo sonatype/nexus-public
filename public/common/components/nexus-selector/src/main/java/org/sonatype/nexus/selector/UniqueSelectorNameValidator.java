@@ -17,7 +17,7 @@ import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -36,11 +36,14 @@ public class UniqueSelectorNameValidator
 
   @Autowired
   public UniqueSelectorNameValidator(final SelectorManager selectorManager) {
-    this.selectorManager = checkNotNull(selectorManager);
+    this.selectorManager = requireNonNull(selectorManager);
   }
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
     log.trace("Validating unique selector name: {}", value);
     for (SelectorConfiguration configuration : selectorManager.browse()) {
       if (value.equals(configuration.getName())) {

@@ -43,6 +43,7 @@ import SamlStrings from './pages/admin/security/SamlStrings';
 import DataStoreStrings from './pages/admin/repository/DataStoreStrings';
 import ReplicationStrings from './pages/admin/repository/ReplicationStrings';
 import UserTokenConfigurationStrings from './pages/admin/security/UserTokenStrings';
+import ServiceAccountTokensStrings from './pages/admin/security/ServiceAccountTokensStrings';
 import UserTokenStrings from './pages/user/UserTokenStrings';
 import WelcomeStrings from './pages/user/WelcomeStrings';
 import TagsStrings from './pages/browse/tags/TagsStrings';
@@ -55,8 +56,8 @@ import ZDUMarketingModalStrings from './ZDUMarketingModalStrings';
 import RecoveryModeAlertStrings from './RecoveryModeAlertStrings';
 import MaliciousRiskStrings from '../../../../../nexus-ui-plugin/src/frontend/src/components/preview/constants/pages/maliciousrisk/MaliciousRiskStrings';
 import SearchStrings from './pages/browse/search/SearchStrings';
-import UpgradeStrings from "./pages/admin/system/UpgradeStrings";
 import PreviewUiStrings from "./pages/admin/system/PreviewUiStrings";
+import TrashStrings from "./pages/admin/system/TrashStrings";
 import RepositoryDirectoryStrings from './pages/admin/repository/RepositoryDirectoryStrings';
 import AdminSecurityDirectoryStrings from './pages/admin/repository/AdminSecurityDirectoryStrings';
 import AdminSystemDirectoryStrings from './pages/admin/system/AdminSystemDirectoryStrings';
@@ -99,9 +100,11 @@ export default {
   ...RealmsStrings,
   ...RolesStrings,
   ...SamlStrings,
+  ...ServiceAccountTokensStrings,
   ...SslCertificatesStrings,
   ...UsersStrings,
   ...UserTokenConfigurationStrings,
+  ...ServiceAccountTokensStrings,
 
   // admin/support
   ...LoggingStrings,
@@ -135,8 +138,7 @@ export default {
   ...ZDUMarketingModalStrings,
   ...RecoveryModeAlertStrings,
 
-  // system/upgrade
-  ...UpgradeStrings,
+  ...TrashStrings,
   ...RepositoryDirectoryStrings,
   ...AdminSecurityDirectoryStrings,
   ...AdminSystemDirectoryStrings,

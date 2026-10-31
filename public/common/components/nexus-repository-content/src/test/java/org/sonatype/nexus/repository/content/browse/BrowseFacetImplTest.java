@@ -126,6 +126,96 @@ public class BrowseFacetImplTest
   }
 
   // --- deleteByAssetIdAndPath tests ---
+  //
+  // Coverage note: the path where deleteByAssetIdAndPath(manager) returns null — i.e. the
+  // asset had no browse node to begin with — is covered by the pre-existing
+  // testDeleteByAssetIdAndPath() and testDeleteByAssetIdAndPath_fallsBackToDeleteByAssetId()
+  // tests below. The three NEXUS-54552 tests focus on the parent-walk behaviour that fires
+  // when the manager call returns a non-null parentNodeId.
+
+  @Test
+  public void testDeleteByAssetIdAndPath_doesNotDeleteParentNodeThatDirectlyRepresentsAnAsset() throws Exception {
+    // Reproduces NEXUS-54552: deleting a .tgz should not remove the npm metadata (packument)
+    // browse node, even when that node is also the parent of the deleted .tgz node.
+    // The metadata node has dbAssetId set — it directly represents an asset, not just a
+    // directory. The old code checked only child asset counts and children presence, so a
+    // metadata node with no remaining children was incorrectly deleted.
+    Integer internalAssetId = 1;
+    String path = "es5-ext/-/es5-ext-0.1.0.tgz";
+    Long tgzParentNodeId = 5L;
+
+    BrowseNodeData metadataNode = new BrowseNodeData();
+    metadataNode.setNodeId(10L);
+    metadataNode.setAssetCount(0L); // no child nodes have assets after tgz deletion
+    // Simulate the npm metadata/packument asset being attached to the /es5-ext browse node
+    setDbAssetId(metadataNode, 99);
+
+    when(browseNodeManager.deleteByAssetIdAndPath(internalAssetId, path)).thenReturn(tgzParentNodeId);
+    when(browseNodeManager.getNodeParents(tgzParentNodeId)).thenReturn(List.of(metadataNode));
+
+    underTest.deleteByAssetIdAndPath(internalAssetId, path);
+
+    // metadata node must NOT be deleted — it represents an asset that still exists
+    verify(browseNodeManager, never()).delete(10L);
+  }
+
+  @Test
+  public void testDeleteByAssetIdAndPath_deletesDirectoryNodeAboveMetadataNode() throws Exception {
+    // The intermediate directory node (no asset) above the metadata node should still
+    // be deleted when empty, but only up to the metadata node — not the metadata itself.
+    Integer internalAssetId = 1;
+    String path = "es5-ext/-/es5-ext-0.1.0.tgz";
+    Long tgzParentNodeId = 5L;
+
+    // directoryNode is the immediate parent of the deleted tgz node (nodeId == tgzParentNodeId).
+    // getNodeParents returns ancestors starting with the immediate parent, so this node
+    // is the first entry in the list returned by getNodeParents(tgzParentNodeId).
+    // Directory node (no asset): e.g. the "-" segment under es5-ext
+    BrowseNodeData directoryNode = new BrowseNodeData();
+    directoryNode.setNodeId(5L);
+    directoryNode.setAssetCount(0L);
+    // dbAssetId remains null — pure directory node
+
+    // Metadata node (has asset): the /es5-ext packument
+    BrowseNodeData metadataNode = new BrowseNodeData();
+    metadataNode.setNodeId(10L);
+    metadataNode.setAssetCount(0L);
+    setDbAssetId(metadataNode, 99);
+
+    when(browseNodeManager.deleteByAssetIdAndPath(internalAssetId, path)).thenReturn(tgzParentNodeId);
+    when(browseNodeManager.getNodeParents(tgzParentNodeId)).thenReturn(List.of(directoryNode, metadataNode));
+    when(browseNodeManager.hasAnyAssetOrComponentChildren(5L)).thenReturn(false);
+
+    underTest.deleteByAssetIdAndPath(internalAssetId, path);
+
+    // Directory node deleted (no asset, no children)
+    verify(browseNodeManager).delete(5L);
+    // Metadata node preserved (has asset)
+    verify(browseNodeManager, never()).delete(10L);
+  }
+
+  @Test
+  public void testDeleteByAssetIdAndPath_deletesNormalDirectoryNodesWhenNoAsset() throws Exception {
+    // A plain directory node (no asset) with no remaining children IS deleted — this is
+    // the normal cleanup path and must not be broken by the NEXUS-54552 fix.
+    Integer internalAssetId = 1;
+    String path = "some/path/file.txt";
+    Long parentNodeId = 20L;
+
+    BrowseNodeData directoryNode = new BrowseNodeData();
+    directoryNode.setNodeId(20L);
+    directoryNode.setAssetCount(0L);
+    // dbAssetId stays null
+
+    when(browseNodeManager.deleteByAssetIdAndPath(internalAssetId, path)).thenReturn(parentNodeId);
+    when(browseNodeManager.getNodeParents(parentNodeId)).thenReturn(List.of(directoryNode));
+    when(browseNodeManager.hasAnyAssetOrComponentChildren(20L)).thenReturn(false);
+
+    underTest.deleteByAssetIdAndPath(internalAssetId, path);
+
+    // Normal directory node with no children must still be cleaned up
+    verify(browseNodeManager).delete(20L);
+  }
 
   @Test
   public void testDeleteByAssetIdAndPath() {
@@ -1035,6 +1125,12 @@ public class BrowseFacetImplTest
 
     // The method should catch the exception and log it, not propagate
     verify(browseNodeManager).deleteBrowseNodes();
+  }
+
+  private static void setDbAssetId(final BrowseNodeData node, final int id) throws Exception {
+    Field f = BrowseNodeData.class.getDeclaredField("dbAssetId");
+    f.setAccessible(true);
+    f.set(node, id);
   }
 
   private static List<BrowseNode> generateParentNodes() {

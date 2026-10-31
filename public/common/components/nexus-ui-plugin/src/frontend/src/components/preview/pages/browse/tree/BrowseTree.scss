@@ -38,6 +38,9 @@
   padding: 0 var(--space-2) var(--space-2) var(--space-2);
   flex: 1;
   min-height: 0;
+  // The tree owns scrolling in BOTH axes. Deeply nested rows and long
+  // coordinates are legitimately wider than the panel, so the overflow must be
+  // scrollable here rather than hidden or pushed onto the page.
   overflow: auto;
 
   &__loading,
@@ -59,24 +62,43 @@
     border-radius: var(--radius-2);
     transition: background-color 0.15s ease;
     user-select: none;
+    // Size to content, but never narrower than the viewport, so hover/focus/
+    // selection backgrounds still span the full visible width. Without an
+    // intrinsic width the rows would collapse to the container and there would
+    // be nothing to scroll horizontally.
+    box-sizing: border-box;
+    width: max-content;
+    min-width: 100%;
 
     &:hover {
       background-color: var(--gray-a3);
     }
 
-    &:focus {
+    // Focus is conveyed by a ring (a shape that is absent when unfocused), not
+    // by the background tint alone, so it survives high-contrast and
+    // colour-vision differences in both themes. Inset so it is never clipped by
+    // the scroll container.
+    &:focus,
+    &--focused {
       outline: none;
       background-color: var(--accent-a3);
-      box-shadow: inset 0 0 0 1px var(--accent-a8);
-    }
-
-    &--focused {
-      background-color: var(--accent-a3);
-      box-shadow: inset 0 0 0 1px var(--accent-a8);
+      box-shadow: inset 0 0 0 2px var(--accent-a8);
     }
 
     &--selected {
       background-color: var(--yellow-a3);
+    }
+  }
+
+  // The treeitem wrapper is what takes DOM focus (see BrowseTreeNode), so the
+  // focus ring has to be painted on its row child rather than on the focused
+  // element itself.
+  &__node-container:focus {
+    outline: none;
+
+    > .browse-tree__node {
+      background-color: var(--accent-a3);
+      box-shadow: inset 0 0 0 2px var(--accent-a8);
     }
   }
 
@@ -101,10 +123,10 @@
     color: var(--gray-12);
     text-decoration: none;
     cursor: pointer;
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    // Never shrink and never ellipsise: a truncated coordinate is unusable, and
+    // clamping the label is what previously stopped rows from overflowing (and
+    // so stopped the tree from offering horizontal scrolling at all).
+    flex: 0 0 auto;
     white-space: nowrap;
 
     &:hover {
@@ -146,6 +168,10 @@
       &--focused {
         background-color: var(--accent-a4);
       }
+    }
+
+    &__node-container:focus > .browse-tree__node {
+      background-color: var(--accent-a4);
     }
   }
 }

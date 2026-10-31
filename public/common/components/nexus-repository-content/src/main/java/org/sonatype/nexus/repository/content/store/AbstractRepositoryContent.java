@@ -18,7 +18,7 @@ import java.util.HashMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Common {@link RepositoryContent} data backed by the content data store.
@@ -66,21 +66,21 @@ public abstract class AbstractRepositoryContent
    * Sets the content attributes.
    */
   public void setAttributes(final NestedAttributesMap attributes) {
-    this.attributes = checkNotNull(attributes);
+    this.attributes = requireNonNull(attributes);
   }
 
   /**
    * Sets when this metadata was first created.
    */
   public void setCreated(final OffsetDateTime created) {
-    this.created = checkNotNull(created);
+    this.created = requireNonNull(created);
   }
 
   /**
    * Sets when this metadata was last updated.
    */
   public void setLastUpdated(final OffsetDateTime lastUpdated) {
-    this.lastUpdated = checkNotNull(lastUpdated);
+    this.lastUpdated = requireNonNull(lastUpdated);
   }
 
   @Override

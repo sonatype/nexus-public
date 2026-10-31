@@ -15,7 +15,7 @@ package org.sonatype.nexus.transaction;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.IntStream.range;
@@ -36,7 +36,7 @@ class RollingStats
 
   public RollingStats(final int size, final TimeUnit tickUnit) {
     this.buckets = new AtomicIntegerArray(size);
-    this.tickUnit = checkNotNull(tickUnit);
+    this.tickUnit = requireNonNull(tickUnit);
     this.tick = currentTick();
   }
 

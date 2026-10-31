@@ -44,6 +44,7 @@ public class Maven2AssetStore
       @Nullable final String continuationToken,
       final String namespace)
   {
-    return dao().findMavenPluginAssetsForNamespace(repositoryId, limit, continuationToken, namespace);
+    return dao().findMavenPluginAssetsForNamespace(repositoryId, limit, continuationToken, namespace,
+        softDeleteAvailable());
   }
 }

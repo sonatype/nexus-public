@@ -17,7 +17,8 @@ import {useRouter} from '@uirouter/react';
 import {faShieldAlt, faChevronRight} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 
-import IqServerConnectedMachine from './IqServerConnectedMachine';
+import {buildIqServerConnectedMachine} from './IqServerConnectedMachine';
+import {clearJustSavedIqConfig, peekJustSavedIqConfig} from './iqServerJustSavedCache';
 
 import firewallLogoDark from '../../../../../../art/logos/sonatype-firewall-logo-iq-dark.svg';
 import firewallLogoLight from '../../../../../../art/logos/sonatype-firewall-logo-iq-light.svg';
@@ -66,9 +67,17 @@ function useDarkMode() {
 
 export default function IqServerConnected() {
   const router = useRouter();
-  const [current] = useMachine(IqServerConnectedMachine, {devTools: true});
+  // Peek during render and clear after mount: React can discard a render, refs included.
+  const [justSaved] = useState(peekJustSavedIqConfig);
+  const [machine] = useState(() => buildIqServerConnectedMachine(justSaved));
+  useEffect(() => {
+    clearJustSavedIqConfig();
+  }, []);
+  const [current] = useMachine(machine, {devTools: true});
   const {data, iqServerUrl, connectionStatus, error} = current.context;
-  const isLoading = current.matches('loading') || current.matches('verifyingConnection');
+  const isLoading = current.matches('loading')
+      || current.matches('verifyingConnection')
+      || current.matches('retryingVerify');
   const isDarkMode = useDarkMode();
   const firewallLogo = isDarkMode ? firewallLogoDark : firewallLogoLight;
   const lifecycleLogo = isDarkMode ? lifecycleLogoDark : lifecycleLogoLight;

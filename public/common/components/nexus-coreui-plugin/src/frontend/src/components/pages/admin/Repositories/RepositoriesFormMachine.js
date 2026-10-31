@@ -19,7 +19,13 @@ import Axios from 'axios';
 
 import {mergeDeepRight} from 'ramda';
 
-import {FormUtils, ValidationUtils, ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {
+  FormUtils,
+  ValidationUtils,
+  ExtJS,
+  APIConstants,
+  isHostedRepoEvaluationSupportedFormat
+} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -35,10 +41,9 @@ export const saveRepositoryUrl = (format, type, name) =>
   )}/${name ? encodeURIComponent(name) : ''}`;
 export const getRepositoryUrl = (name) => INTERNAL.REPOSITORIES_REPOSITORY + name;
 export const deleteRepositoryUrl = (name) => PUBLIC.REPOSITORIES + name;
-export const getEvaluationSettingsUrl = (repositoryId) =>
-  `/service/rest/v1/repositories/${encodeURIComponent(repositoryId)}/evaluation-settings`;
-export const saveEvaluationSettingsUrl = (repositoryId) =>
-  `/service/rest/v1/repositories/${encodeURIComponent(repositoryId)}/evaluation-settings`;
+// No leading slash — Axios prepends baseURL (which includes the context path).
+export const evaluationSettingsUrl = (repositoryId) =>
+  `service/rest/v1/repositories/${encodeURIComponent(repositoryId)}/evaluation-settings`;
 
 export default FormUtils.buildFormMachine({
   id: 'RepositoriesFormMachine',
@@ -131,7 +136,7 @@ export default FormUtils.buildFormMachine({
 
         if (response.data.type === 'hosted' && isEvaluationEnabled) {
           try {
-            const evalResponse = await Axios.get(getEvaluationSettingsUrl(response.data.name));
+            const evalResponse = await Axios.get(evaluationSettingsUrl(response.data.name));
             // Store in attributes.evaluation to match ExtJS structure
             if (!response.data.attributes) {
               response.data.attributes = {};
@@ -196,11 +201,13 @@ export default FormUtils.buildFormMachine({
       // Also save evaluation settings via dedicated API for hosted repositories if feature is enabled
       const isEvaluationEnabled = ExtJS.state().getValue('hostedRepositoryEvaluationEnabled');
 
-      if (type === 'hosted' && evaluation && isEvaluationEnabled) {
+      // The Evaluation facet is hidden for formats hosted repository evaluation doesn't support, so don't send the
+      // default settings for them either: that would enrol the repository in monitoring.
+      if (type === 'hosted' && evaluation && isEvaluationEnabled && isHostedRepoEvaluationSupportedFormat(format)) {
         const repositoryId = isEdit(pristineData) ? name : repoResponse.data.name;
 
         try {
-          await Axios.put(saveEvaluationSettingsUrl(repositoryId), {
+          await Axios.put(evaluationSettingsUrl(repositoryId), {
             mode: evaluation.mode,
             activityTimeFrame: evaluation.activityTimeFrame || null,
             artifactLatestVersions: evaluation.artifactLatestVersions || null,

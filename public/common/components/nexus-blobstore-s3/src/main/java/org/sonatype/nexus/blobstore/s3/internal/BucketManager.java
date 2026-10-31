@@ -29,7 +29,7 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredBucket;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredEndpoint;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE;
@@ -60,8 +60,8 @@ public class BucketManager
       final BucketValidationCacheService cacheService,
       final Collection<BucketOperations> bucketOperations)
   {
-    this.cacheService = checkNotNull(cacheService);
-    this.bucketOperations = checkNotNull(bucketOperations);
+    this.cacheService = requireNonNull(cacheService);
+    this.bucketOperations = requireNonNull(bucketOperations);
   }
 
   public void setS3(final EncryptingS3Client s3) {

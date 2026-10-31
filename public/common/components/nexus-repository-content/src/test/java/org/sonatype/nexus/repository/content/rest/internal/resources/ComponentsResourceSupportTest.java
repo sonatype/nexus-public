@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.FluentContinuation;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
-import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.maintenance.ContentDeletionService;
 import org.sonatype.nexus.repository.content.rest.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
@@ -86,7 +86,7 @@ public class ComponentsResourceSupportTest
   private RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
   @Mock
-  private MaintenanceService maintenanceService;
+  private ContentDeletionService contentDeletionService;
 
   @Mock
   private UploadManager uploadManager;
@@ -114,7 +114,7 @@ public class ComponentsResourceSupportTest
     mockContentFacet();
     mockFluentComponents();
 
-    underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService, uploadManager,
+    underTest = new ComponentsResource(repositoryManagerRESTAdapter, contentDeletionService, uploadManager,
         componentXOFactory, contentAuthHelper, ImmutableSet.of(componentsResourceExtension), null);
   }
 

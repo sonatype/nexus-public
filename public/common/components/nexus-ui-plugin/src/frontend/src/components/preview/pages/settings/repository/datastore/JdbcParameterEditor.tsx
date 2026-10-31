@@ -73,6 +73,21 @@ function generateId(): string {
 }
 
 /**
+ * Parse pasted text into name/value pairs — supports a single `key=value` paste and a
+ * newline-separated list (matches the "advanced" JDBC string format used elsewhere; see
+ * parseAdvancedString in types.ts). Lines without a name (no `=`, or empty) are skipped.
+ */
+function parsePastedPairs(text: string): { name: string; value: string }[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => {
+      const [name, ...valueParts] = line.split('=');
+      return { name: name?.trim() ?? '', value: valueParts.join('=').trim() };
+    })
+    .filter((pair) => pair.name);
+}
+
+/**
  * Autocomplete dropdown for parameter names
  */
 function ParameterNameAutocomplete({
@@ -81,12 +96,15 @@ function ParameterNameAutocomplete({
   disabled,
   existingNames,
   hasError,
+  onPasteExpand,
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   existingNames: string[];
   hasError?: boolean;
+  /** Given raw clipboard text, apply it and return true if handled (caller should preventDefault). */
+  onPasteExpand?: (text: string) => boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState(value);
@@ -165,6 +183,14 @@ function ParameterNameAutocomplete({
     inputRef.current?.blur();
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData('text');
+    if (onPasteExpand?.(text)) {
+      e.preventDefault();
+      setIsOpen(false);
+    }
+  };
+
   return (
     <Box className="jdbc-autocomplete" ref={containerRef}>
       <TextField.Root
@@ -172,6 +198,7 @@ function ParameterNameAutocomplete({
         value={value}
         onChange={handleInputChange}
         onFocus={handleFocus}
+        onPaste={handlePaste}
         placeholder="Type or select parameter..."
         disabled={disabled}
         className={hasError ? 'jdbc-parameter-row__input--error' : ''}
@@ -266,6 +293,7 @@ function ParameterRow({
   existingNames,
   onChange,
   onRemove,
+  onPasteExpand,
   disabled,
   showValidation,
 }: {
@@ -274,12 +302,13 @@ function ParameterRow({
   existingNames: string[];
   onChange: (updated: JdbcParameter) => void;
   onRemove: () => void;
+  /** A "name=value" or multi-line paste was detected — apply the parsed pairs atomically. */
+  onPasteExpand: (pairs: { name: string; value: string }[]) => void;
   disabled?: boolean;
   showValidation?: boolean;
 }) {
   const description = getParameterDescription(parameter.name);
   const definition = getParameterDefinition(parameter.name);
-  const isUnknown = parameter.name && !isKnownParameter(parameter.name);
   const isReadOnly = parameter.isDefault && !parameter.isCustom;
 
   // Only show validation errors after save attempt (showValidation is true)
@@ -301,6 +330,17 @@ function ParameterRow({
     onChange({ ...parameter, value });
   };
 
+  // Detects a pasted "name=value" or multi-line "name1=value1\nname2=value2" list and
+  // hands the parsed pairs up for an atomic update (this row plus any new rows after it).
+  const handlePasteExpand = (text: string): boolean => {
+    if (!text.includes('=')) return false;
+    const pairs = parsePastedPairs(text);
+    if (pairs.length === 0) return false;
+
+    onPasteExpand(pairs);
+    return true;
+  };
+
   return (
     <Box className="jdbc-parameter-row">
       <Flex gap="3" align="start" className="jdbc-parameter-row__fields">
@@ -317,7 +357,8 @@ function ParameterRow({
               onChange={handleNameChange}
               disabled={disabled}
               existingNames={existingNames.filter(n => n !== parameter.name)}
-              hasError={shouldShowErrors && !!validation?.error}
+              hasError={shouldShowErrors && Boolean(validation?.error)}
+              onPasteExpand={handlePasteExpand}
             />
           )}
           {shouldShowErrors && validation?.error && (
@@ -335,7 +376,7 @@ function ParameterRow({
             value={parameter.value}
             onChange={handleValueChange}
             disabled={disabled || isReadOnly}
-            hasError={shouldShowErrors && !!valueError}
+            hasError={shouldShowErrors && Boolean(valueError)}
           />
           {shouldShowErrors && valueError && (
             <Flex align="center" gap="1" className="jdbc-parameter-row__error">
@@ -370,21 +411,17 @@ function ParameterRow({
 
       {/* Description and Warnings */}
       <Box className="jdbc-parameter-row__meta">
-        {parameter.name && (
+        {/* Only known parameters have a description to show; unknown ones are covered
+            by the warning below instead of also repeating "unknown" here. */}
+        {parameter.name && definition && (
           <Flex align="center" gap="1" className="jdbc-parameter-row__description">
             <Info size={12} />
             <Text size="1" color="gray">{description}</Text>
-            {definition?.type && (
+            {definition.type && (
               <Text size="1" className="jdbc-parameter-row__type">
                 ({definition.type})
               </Text>
             )}
-          </Flex>
-        )}
-        {isUnknown && !validation?.error && (
-          <Flex align="center" gap="1" className="jdbc-parameter-row__warning">
-            <AlertTriangle size={12} />
-            <Text size="1">Unknown parameter - verify this is correct for your database</Text>
           </Flex>
         )}
         {validation?.warning && (
@@ -417,15 +454,18 @@ function CommonParametersHelp() {
         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         <HelpCircle size={16} />
         <Text size="2" weight="medium">
-          Available JDBC Parameters ({JDBC_PARAMETERS_CONFIG.length} parameters)
+          Common PostgreSQL JDBC Parameters ({JDBC_PARAMETERS_CONFIG.length} parameters)
         </Text>
       </Flex>
-      
+
       {isExpanded && (
         <Box className="jdbc-parameter-editor__help-content">
           <Text size="2" color="gray" className="jdbc-parameter-editor__help-intro">
-            Start typing in the parameter name field to see suggestions, or browse the list below.
-            Parameters with dropdowns will show allowed values automatically.
+            These are PostgreSQL connection parameter names (pgjdbc) and won't apply to an H2
+            data store. Start typing in the parameter name field to see suggestions, or browse
+            the list below. Parameters with dropdowns will show allowed values automatically.
+            You can still enter any other parameter your driver supports — it just won't be
+            validated or auto-completed here.
           </Text>
           
           {categories.map((category) => {
@@ -488,6 +528,26 @@ export function JdbcParameterEditor({
     onChange(newParams);
   }, [parameters, onChange]);
 
+  // Atomically apply a pasted name=value list: the first pair replaces the pasted-into
+  // row, any remaining pairs are inserted as new rows right after it. Must be one onChange
+  // call (not "update row" + "insert rows" separately) or the second call would splice into
+  // a parameters snapshot that doesn't yet reflect the first, silently dropping the update.
+  const handlePasteExpand = useCallback((index: number, pairs: { name: string; value: string }[]) => {
+    if (pairs.length === 0) return;
+    const [first, ...rest] = pairs;
+
+    const newParams = [...parameters];
+    newParams[index] = { ...newParams[index], name: first.name, value: first.value, isCustom: true };
+    newParams.splice(index + 1, 0, ...rest.map(({ name, value }) => ({
+      id: generateId(),
+      name,
+      value,
+      isDefault: false,
+      isCustom: true,
+    })));
+    onChange(newParams);
+  }, [parameters, onChange]);
+
   const handleAdd = useCallback(() => {
     const newParam: JdbcParameter = {
       id: generateId(),
@@ -535,6 +595,7 @@ export function JdbcParameterEditor({
               existingNames={existingNames}
               onChange={(updated) => handleParameterChange(index, updated)}
               onRemove={() => handleRemove(index)}
+              onPasteExpand={(pairs) => handlePasteExpand(index, pairs)}
               disabled={disabled}
               showValidation={showAllValidation}
             />

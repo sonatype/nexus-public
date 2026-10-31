@@ -131,7 +131,7 @@ class MemoryMonitorTest
   }
 
   @Test
-  void threeConsecutiveAboveCritical_logsError() {
+  void threeConsecutiveAboveCritical_logsWarn() {
     MemoryMonitor underTest = monitor(80, 90, 3);
     setHeapPercent(95);
 
@@ -139,24 +139,24 @@ class MemoryMonitorTest
     underTest.check();
     underTest.check();
 
-    assertThat(errorCount()).isEqualTo(1);
-    assertThat(warnCount()).isZero();
+    assertThat(warnCount()).isEqualTo(1);
+    assertThat(errorCount()).isZero();
   }
 
   @Test
-  void warningEscalatesToCritical_logsWarnThenError() {
+  void warningEscalatesToCritical_logsTwoWarns() {
     MemoryMonitor underTest = monitor(80, 90, 3);
 
     setHeapPercent(85);
     underTest.check();
     underTest.check();
-    underTest.check(); // WARN logged here
+    underTest.check(); // WARN logged here (high heap)
 
     setHeapPercent(95);
-    underTest.check(); // ERROR logged here
+    underTest.check(); // WARN logged here (very high heap)
 
-    assertThat(warnCount()).isEqualTo(1);
-    assertThat(errorCount()).isEqualTo(1);
+    assertThat(warnCount()).isEqualTo(2);
+    assertThat(errorCount()).isZero();
   }
 
   @Test
@@ -244,9 +244,9 @@ class MemoryMonitorTest
   }
 
   @Test
-  void twoWarnSamplesThenOneCritical_logsError() {
+  void twoWarnSamplesThenOneCritical_logsWarn() {
     // Debounce counts consecutive samples above ANY threshold; 2 warn + 1 critical = 3 total,
-    // which meets the sustained requirement and correctly triggers ERROR.
+    // which meets the sustained requirement and correctly triggers WARN (very high heap).
     MemoryMonitor underTest = monitor(80, 90, 3);
 
     setHeapPercent(85);
@@ -256,8 +256,8 @@ class MemoryMonitorTest
     setHeapPercent(95);
     underTest.check();
 
-    assertThat(errorCount()).isEqualTo(1);
-    assertThat(warnCount()).isZero();
+    assertThat(warnCount()).isEqualTo(1);
+    assertThat(errorCount()).isZero();
   }
 
   @Test

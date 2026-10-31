@@ -27,7 +27,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.extdirect.model.Responses.success;
 import org.springframework.stereotype.Component;
@@ -49,7 +49,7 @@ public class ExtDirectDispatcher
 
   @Autowired
   public ExtDirectDispatcher(final ExtDirectExceptionHandler exceptionHandler) {
-    this.exceptionHandler = checkNotNull(exceptionHandler);
+    this.exceptionHandler = requireNonNull(exceptionHandler);
   }
 
   @Override

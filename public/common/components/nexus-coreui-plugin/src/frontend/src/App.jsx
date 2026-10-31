@@ -10,13 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, { Suspense, useState, useEffect, useLayoutEffect } from 'react';
+import React, { Suspense, useEffect, useLayoutEffect } from 'react';
 import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
 import { UIRouter, UIView, useRouter } from '@uirouter/react';
-import { ExtJS, UnsavedChangesModal, RouteLoadingFallback, ToastProvider, useToast, bootstrapFromREST, SessionExpiryModal, useSessionExpiry, TooltipContainerProvider as NuiTooltipContainerProvider } from '@sonatype/nexus-ui-plugin';
+import { ExtJS, UnsavedChangesModal, PreviewUnsavedDialog, RouteLoadingFallback, ToastProvider, useToast, bootstrapFromREST, SessionExpiryModal, useSessionExpiry, TooltipContainerProvider as NuiTooltipContainerProvider, OnboardingWizardMount } from '@sonatype/nexus-ui-plugin';
 import LeftNavigationMenuRadix from './components/LeftNavigationMenu/LeftNavigationMenuRadix';
-import { Theme, AlertDialog, Button, Flex } from '@radix-ui/themes';
+import { Theme } from '@radix-ui/themes';
 import { TooltipContainerProvider } from './components/shared/Tooltip/TooltipContainerContext';
 import { getRouter } from './routerConfig/routerConfig';
 import { ROUTE_NAMES } from './routerConfig/routeNames/routeNames';
@@ -25,7 +25,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 import './App.scss';
 import './components/shared/Toast.scss';
-import SystemNotices from './components/widgets/SystemStatusAlerts/SystemNotices';
+import SystemNoticesSwitch from './components/widgets/SystemStatusAlerts/SystemNoticesSwitch';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
 import { useRedirectOnLogout } from './hooks/useRedirectOnLogout';
 import usePreventPushStateOnHash from './hooks/usePreventPushStateOnHash';
@@ -36,67 +36,6 @@ const BRANDING_SANITIZE_OPTIONS = Object.freeze({
   WHOLE_DOCUMENT: true,
   FORCE_BODY: true,
 });
-
-/**
- * Nexus One unsaved changes dialog for Preview UI router navigation.
- * Uses same Radix AlertDialog pattern as SettingsForm.jsx.
- */
-let resolveUnsavedDialog = null;
-let setUnsavedDialogOpen = () => {};
-
-function PreviewUnsavedDialog() {
-  const [open, setOpen] = useState(false);
-
-  // useLayoutEffect so window.showPreviewUnsavedDialog exists before paint; UI-Router
-  // onBefore can run in the same turn as a nav click and would otherwise fall back to ExtJS-style modal.
-  useLayoutEffect(() => {
-    setUnsavedDialogOpen = setOpen;
-    window.showPreviewUnsavedDialog = () => {
-      return new Promise((resolve) => {
-        resolveUnsavedDialog = resolve;
-        setOpen(true);
-      });
-    };
-    return () => {
-      delete window.showPreviewUnsavedDialog;
-    };
-  }, []);
-
-  const handleLeave = () => {
-    if (resolveUnsavedDialog) {
-      resolveUnsavedDialog(true);
-      resolveUnsavedDialog = null;
-    }
-    // Don't call setOpen(false) - AlertDialog.Action closes automatically
-  };
-
-  const handleStay = () => {
-    if (resolveUnsavedDialog) {
-      resolveUnsavedDialog(false);
-      resolveUnsavedDialog = null;
-    }
-    // Don't call setOpen(false) - AlertDialog.Cancel closes automatically
-  };
-
-  return (
-    <AlertDialog.Root open={open} onOpenChange={setOpen}>
-      <AlertDialog.Content maxWidth="450px">
-        <AlertDialog.Title>Unsaved Changes</AlertDialog.Title>
-        <AlertDialog.Description size="2">
-          You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
-        </AlertDialog.Description>
-        <Flex gap="3" mt="4" justify="end">
-          <AlertDialog.Cancel>
-            <Button variant="soft" color="gray" onClick={handleStay}>Stay</Button>
-          </AlertDialog.Cancel>
-          <AlertDialog.Action>
-            <Button variant="solid" color="red" onClick={handleLeave}>Leave</Button>
-          </AlertDialog.Action>
-        </Flex>
-      </AlertDialog.Content>
-    </AlertDialog.Root>
-  );
-}
 
 /**
  * Global session-expired modal (REST 401). Mounted for all routes so interceptors can always notify.
@@ -148,9 +87,6 @@ export function App() {
 
   const isLoginRoute = currentStateName === ROUTE_NAMES.LOGIN;
 
-  // Test hub routes are standalone - no sidebar, no header
-  const isTestHubRoute = currentStateName.startsWith('preview.test');
-
   // Read branding from ExtJS state (available because we wait for ExtJS before rendering)
   const branding = ExtJS.state().getValue('branding');
 
@@ -164,29 +100,10 @@ export function App() {
     return <UIView />;
   }
 
-  // Render minimal layout for test hub routes (standalone, no navigation)
-  // SystemNotices renders ABOVE content (not in grid) since test hub uses full-width layout
-  if (isTestHubRoute) {
-    return (
-      <div className="nxrm-page nxrm-test-hub-page">
-        <SystemNotices />
-        <div className="nxrm-main-content nxrm-main-content--full-width">
-          <Theme appearance={effectiveTheme} accentColor="green" grayColor="slate" radius="medium">
-            <CoreuiToastProvider>
-              <Suspense fallback={<RouteLoadingFallback />}>
-                <UIView />
-              </Suspense>
-            </CoreuiToastProvider>
-          </Theme>
-        </div>
-      </div>
-    );
-  }
-
   // Render standard layout for all other routes
   return (
     <>
-      <SystemNotices />
+      <SystemNoticesSwitch />
 
       {headerEnabled && (
         <div
@@ -199,6 +116,8 @@ export function App() {
       <GlobalHeaderRadix />
 
       <LeftNavigationMenuRadix />
+
+      <OnboardingWizardMount />
 
       <UpgradeModal />
 

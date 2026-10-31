@@ -16,8 +16,10 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="${namespace}">
 
+  <!-- NEXUS-54969: a.* expanded to explicit asset columns (excluding deleted_on/deleted_by). -->
   <select id="findMavenPluginAssetsForNamespace" resultMap="assetResult">
-    SELECT a.*
+    SELECT a.asset_id, a.repository_id, a.path, a.kind, a.component_id, a.asset_blob_id,
+           a.last_downloaded, a.attributes, a.created, a.last_updated, a.asset_blob_size
       FROM maven2_asset a
            INNER JOIN maven2_component c
            USING (component_id)
@@ -25,6 +27,10 @@
        AND c.kind = 'maven-plugin'
        AND c.namespace = #{namespace}
        AND a.path LIKE '%.jar'
+       <if test="softDeleteAvailable">
+         AND a.deleted_on IS NULL
+         AND c.deleted_on IS NULL
+       </if>
        <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
   ORDER BY asset_id
      LIMIT #{limit};

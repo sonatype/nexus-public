@@ -1,0 +1,107 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Application-scoped banner. Full-bleed, top-of-app, above the global header.
+// Colors are driven entirely by Radix color-scale tokens so the banner adapts
+// automatically between light and dark themes.
+
+.nxrm-system-alert {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-3) var(--space-5);
+
+  &__inner {
+    width: 100%;
+  }
+
+  &__lead {
+    min-width: 0; // allow the text column to shrink/wrap
+  }
+
+  &__text {
+    min-width: 0;
+  }
+
+  &__title {
+    display: block;
+  }
+
+  &__message {
+    display: block;
+    color: var(--gray-12);
+    font-weight: 500;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+  }
+
+  &__actions {
+    flex-shrink: 0;
+  }
+
+  &__dismiss {
+    opacity: 0.7;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  // CTA uses the semantic primary color so it stays on-brand regardless of the
+  // surrounding Radix Theme accent (coreui uses a green accent in this branch).
+  // Radix solid Buttons read --accent-indicator (background) and --accent-10
+  // (hover) from their accent scale; remap those to our primary tokens so the
+  // button is driven by the design system and remains light/dark correct.
+  &__cta {
+    --accent-indicator: var(--color-primary);
+    --accent-9: var(--color-primary);
+    --accent-10: var(--color-primary-hover);
+    --accent-contrast: var(--color-text-contrast);
+  }
+
+  // --- Tier color treatments ---
+  // Uses Radix color-scale steps (the design-system primitives), which flip
+  // automatically between light and dark via theme-variables.css. Steps chosen
+  // to match the Nexus One prototype banners:
+  //   bg = step 3, bottom border = step 6, title/icon = step 12.
+  // (The semantic --color-*-bg tokens map to step 2, which is too subtle in
+  // dark mode, so the more saturated step 3 surface is used here.)
+  &--info {
+    background-color: var(--blue-3);
+    border-bottom: 1px solid var(--blue-6);
+    .nxrm-system-alert__icon { color: var(--blue-11); }
+    .nxrm-system-alert__title { color: var(--blue-12); }
+  }
+
+  &--warning {
+    background-color: var(--amber-3);
+    border-bottom: 1px solid var(--amber-6);
+    .nxrm-system-alert__icon { color: var(--amber-12); }
+    .nxrm-system-alert__title { color: var(--amber-12); }
+  }
+
+  &--error {
+    background-color: var(--red-3);
+    border-bottom: 1px solid var(--red-6);
+    .nxrm-system-alert__icon { color: var(--red-12); }
+    .nxrm-system-alert__title { color: var(--red-12); }
+  }
+
+  &--success {
+    background-color: var(--green-3);
+    border-bottom: 1px solid var(--green-6);
+    .nxrm-system-alert__icon { color: var(--green-12); }
+    .nxrm-system-alert__title { color: var(--green-12); }
+  }
+}

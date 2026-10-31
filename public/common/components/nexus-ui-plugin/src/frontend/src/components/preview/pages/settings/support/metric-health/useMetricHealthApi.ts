@@ -73,9 +73,7 @@ export function useMetricHealthApi() {
         return data;
       }
       return [];
-    } catch (err: any) {
-      // If this endpoint fails, we're probably not in clustered mode
-      console.debug('Cluster nodes endpoint not available:', parseApiError(err).message);
+    } catch (_err: any) {
       return [];
     }
   }, []);

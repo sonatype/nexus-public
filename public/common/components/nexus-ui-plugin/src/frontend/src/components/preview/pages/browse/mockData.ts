@@ -856,7 +856,7 @@ export function getMockSearchResults(
     items = items.filter(
       (i) =>
         i.name.toLowerCase().includes(q) ||
-        (i.group && i.group.toLowerCase().includes(q)) ||
+        (i.group?.toLowerCase().includes(q)) ||
         i.version.toLowerCase().includes(q)
     );
   }

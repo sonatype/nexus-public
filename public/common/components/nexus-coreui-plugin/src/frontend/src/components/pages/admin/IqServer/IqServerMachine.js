@@ -188,7 +188,10 @@ export default FormUtils.buildFormMachine({
     isValidUrl: (context) => ValidationUtils.isSecureUrl(context.data.url)
   },
   services: {
-    fetchData: () => Axios.get(IQ_API),
+    fetchData: async () => {
+      await ExtJS.waitForPermissions();
+      return Axios.get(IQ_API);
+    },
     saveData: ({data}) => Axios.put(IQ_API, data),
     verifyConnection: async ({data}) => {
       const response = await Axios.post(IQ_API + '/test-new-connection', data);

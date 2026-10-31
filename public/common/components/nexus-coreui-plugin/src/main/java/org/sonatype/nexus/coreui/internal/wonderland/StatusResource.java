@@ -26,7 +26,7 @@ import org.apache.shiro.authz.annotation.RequiresUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -54,8 +54,8 @@ public class StatusResource
       final ApplicationVersion applicationVersion,
       final NexusEditionSelector nexusEditionSelector)
   {
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.nexusEditionSelector = checkNotNull(nexusEditionSelector);
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.nexusEditionSelector = requireNonNull(nexusEditionSelector);
   }
 
   @GET
@@ -64,6 +64,10 @@ public class StatusResource
   public StatusXO get() {
     StatusXO result = new StatusXO();
     result.setVersion(applicationVersion.getVersion());
+    // Report the real edition short name (PRO, PROPLUS, ENTERPRISE) rather than collapsing the Pro
+    // family to "PRO", so the frontend can distinguish the tiers. The frontend still matches "PRO" by
+    // strict equality and does not yet recognize "PROPLUS"/"ENTERPRISE"; that recognition is owned by a
+    // separate frontend effort and must land before Pro+/Enterprise are shipped.
     result.setEdition(applicationVersion.getEdition());
     result.setIsCloud(CLOUD_EDITION_ID.equals(nexusEditionSelector.getCurrent().getId()));
     return result;

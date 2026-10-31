@@ -14,18 +14,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Box, Button, Card, Flex, Text, Heading, Badge, ScrollArea, Table, TextField, IconButton, Tooltip } from '@radix-ui/themes';
-import { 
-  Info, 
+import {
   ExternalLink,
-  X, 
-  Activity, 
-  Code, 
-  Server, 
-  ChevronRight, 
-  ChevronDown, 
-  FolderTree,
-  Database,
-  Globe,
+  Activity,
+  Server,
+  ChevronRight,
+  ChevronDown,
   Loader2,
   File,
   Folder,
@@ -37,9 +31,7 @@ import {
 import { FormatIcon } from '../../repository/repositories/components/FormatIcon';
 import { interpretExpression } from '../../repository/selectors/cselValidator';
 import { useContentSelectorsApi } from '../../repository/selectors/useContentSelectorsApi';
-import { useRepositoryTree, RepositoryTreeNode } from '../../repository/repositories/useRepositoryTree';
 import { fetchBrowseNodes } from '../../../browse/browse.api';
-import { StatusBadge } from '../../../../shared';
 
 import './SelectionInsights.scss';
 
@@ -58,89 +50,6 @@ interface SelectionInsightsProps {
     description: string;
   } | null;
 }
-
-/**
- * Maps repository node status to StatusBadge status types.
- */
-function mapStatus(status: string): any {
-  switch (status) {
-    case 'online': return 'online';
-    case 'offline': return 'offline';
-    case 'blocked': return 'warning';
-    case 'out-of-service': return 'error';
-    default: return 'unknown';
-  }
-}
-
-/**
- * Renders an icon based on repository type.
- */
-function TypeIcon({ type, size = 14 }: { type: string, size?: number }) {
-  const baseClass = 'repo-type-icon';
-  switch (type) {
-    case 'group': return <FolderTree size={size} className={`${baseClass} ${baseClass}--group`} />;
-    case 'hosted': return <Database size={size} className={`${baseClass} ${baseClass}--hosted`} />;
-    case 'proxy': return <Globe size={size} className={`${baseClass} ${baseClass}--proxy`} />;
-    default: return <Database size={size} className={baseClass} />;
-  }
-}
-
-interface MemberTreeNodeProps {
-  node: RepositoryTreeNode;
-  depth: number;
-  expandedIds: Set<string>;
-  onToggle: (id: string) => void;
-}
-
-const MemberTreeNode = ({ node, depth, expandedIds, onToggle }: MemberTreeNodeProps) => {
-  const isExpanded = expandedIds.has(node.id);
-  const hasChildren = node.children && node.children.length > 0;
-
-  return (
-    <Box className="selection-insights__tree-node-container">
-      <Flex 
-        className="selection-insights__tree-node"
-        align="center"
-        gap="2"
-        py="1"
-        style={{ paddingLeft: `${depth * 16}px` }}
-        onClick={() => node.type === 'group' && onToggle(node.id)}
-      >
-        <TypeIcon type={node.type} />
-        
-        <Text size="1" weight="medium" className="selection-insights__tree-node-name">
-          {node.name}
-        </Text>
-        
-        <StatusBadge status={mapStatus(node.status)} size="small" />
-        
-        <Box className="selection-insights__tree-node-chevron-wrapper">
-          {node.type === 'group' && (
-            node.isLoading ? (
-              <Loader2 size={10} className="selection-insights__spinner" />
-            ) : (
-              isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />
-            )
-          )}
-        </Box>
-      </Flex>
-
-      {hasChildren && isExpanded && (
-        <Box>
-          {node.children!.map(child => (
-            <MemberTreeNode 
-              key={child.id}
-              node={child} 
-              depth={depth + 1} 
-              expandedIds={expandedIds} 
-              onToggle={onToggle}
-            />
-          ))}
-        </Box>
-      )}
-    </Box>
-  );
-};
 
 // --- Content Tree Components ---
 
@@ -349,14 +258,6 @@ export function SelectionInsights({ repository, allRepositories, selectedFormat,
   const { previewContentSelector } = useContentSelectorsApi();
 
   const repoName = allRepositories ? '*' : repository?.name;
-
-  // Repository Hierarchy Tree (Group Membership)
-  const { 
-    tree: groupTree, 
-    loading: groupTreeLoading,
-    expandedIds: groupExpandedIds, 
-    toggleExpand: toggleGroupExpand 
-  } = useRepositoryTree(repository?.name || '');
 
   // Load root file tree nodes
   useEffect(() => {

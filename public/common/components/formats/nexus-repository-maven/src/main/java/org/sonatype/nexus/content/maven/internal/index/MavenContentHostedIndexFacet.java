@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedIndexFacet
 
 import org.apache.maven.index.reader.Record;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -48,7 +48,7 @@ public class MavenContentHostedIndexFacet
       final MavenIndexPublisher mavenIndexPublisher)
   {
     super(mavenIndexPublisher);
-    this.duplicateDetectionStrategyProvider = checkNotNull(duplicateDetectionStrategyProvider);
+    this.duplicateDetectionStrategyProvider = requireNonNull(duplicateDetectionStrategyProvider);
   }
 
   @Override

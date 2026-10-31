@@ -45,7 +45,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.bcpg.ArmoredInputStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Basic implementation of snapshots for apt datastore repositories.
@@ -74,7 +74,7 @@ public abstract class AptSnapshotFacetSupport
   }
 
   protected void createSnapshot(final String id, final Iterable<SnapshotItem> snapshots) throws IOException {
-    checkNotNull(id);
+    requireNonNull(id);
     AptContentFacet contentFacet = facet(AptContentFacet.class);
     for (SnapshotItem item : snapshots) {
       String assetPath = createAssetPath(id, item.specifier.path);
@@ -88,8 +88,8 @@ public abstract class AptSnapshotFacetSupport
   @Override
   @Nullable
   public Content getSnapshotFile(final String id, final String path) {
-    checkNotNull(id);
-    checkNotNull(path);
+    requireNonNull(id);
+    requireNonNull(path);
 
     String assetPath = createAssetPath(id, path);
     AptContentFacet contentFacet = facet(AptContentFacet.class);
@@ -99,7 +99,7 @@ public abstract class AptSnapshotFacetSupport
 
   @Override
   public void deleteSnapshot(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
 
     AptContentFacet contentFacet = facet(AptContentFacet.class);
     String path = createAssetPath(id, StringUtils.EMPTY);

@@ -12,195 +12,91 @@
  */
 package org.sonatype.nexus.internal.capability.storage.datastore.cleanup;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.sonatype.nexus.capability.CapabilityIdentity;
-import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorageImpl;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemDAO;
-import org.sonatype.nexus.testdb.DataSessionRule;
-import org.sonatype.nexus.transaction.UnitOfWork;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mock;
+import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemTestSupport;
+import org.sonatype.nexus.internal.capability.storage.upgrade.UpgradeCapabilityStorage;
+import org.sonatype.nexus.testdb.DataSessionConfiguration;
+import org.sonatype.nexus.testdb.DatabaseTest;
+import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
 import static java.util.Collections.emptyMap;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.aMapWithSize;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link CleanupCapabilityDuplicatesService}
+ * Real-database tests for {@link CleanupCapabilityDuplicatesService}, exercising the
+ * {@link UpgradeCapabilityStorage} direct-SQL path on {@code capability_storage_item}.
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
-public class CleanupCapabilityDuplicatesServiceTest
+class CleanupCapabilityDuplicatesServiceTest
 {
-  @Rule
-  public DataSessionRule sessionRule = new DataSessionRule().access(CapabilityStorageItemDAO.class);
+  @DataSessionConfiguration(daos = {CapabilityStorageItemDAO.class})
+  TestDataSessionSupplier dataSessionSupplier;
 
-  @Mock
-  private EventManager eventManager;
-
-  private CapabilityStorageImpl capabilityStorage;
-
-  private CleanupCapabilityDuplicatesService underTest;
-
-  @Before
-  public void start() {
-    capabilityStorage = new CapabilityStorageImpl(sessionRule);
-    capabilityStorage.setDependencies(eventManager);
-    underTest = new CleanupCapabilityDuplicatesService(capabilityStorage);
-
-    UnitOfWork.beginBatch(() -> sessionRule.openSession(DEFAULT_DATASTORE_NAME));
+  private UpgradeCapabilityStorage store() {
+    return new UpgradeCapabilityStorage(dataSessionSupplier);
   }
 
-  @After
-  public void tearDown() {
-    UnitOfWork.end();
+  private CleanupCapabilityDuplicatesService service() {
+    return new CleanupCapabilityDuplicatesService(store());
   }
 
-  @Test
-  public void testCleanup() throws Exception {
-    prepareTestCapabilitiesWithDuplicates();
+  @DatabaseTest
+  void cleanup_removesDuplicatesKeepingOnePerGroup() throws Exception {
+    insertN(5, "test-capability-1", emptyMap());
+    insertN(5, "test-capability-2", props("repository", "maven-central"));
+    insertN(1, "test-capability-2", props("repository", "maven-proxy"));
+    insertN(5, "test-capability-3", props("repository", "nuget-proxy"));
+    insertN(5, "test-capability-3", props("repository", "nuget-group"));
+    insertN(2, "test-capability-4", props("repository", "nuget-group", "auth", "false"));
 
-    assertThat(capabilityStorage.getAll(), aMapWithSize(23));
-
-    Map<CapabilityStorageItem, List<CapabilityIdentity>> duplicates = underTest.browseCapabilityDuplicates();
-    assertThat(duplicates.keySet(), hasSize(5));
-    assertCapabilitiesCount(duplicates, 22);
+    CleanupCapabilityDuplicatesService underTest = service();
+    assertThat(store().getAll()).hasSize(23);
+    assertThat(underTest.browseCapabilityDuplicates().keySet()).hasSize(5);
 
     underTest.doCleanup();
 
-    assertThat(capabilityStorage.getAll(), aMapWithSize(6));
-    duplicates = underTest.browseCapabilityDuplicates();
-    assertCapabilitiesCount(duplicates, 0);
+    assertThat(store().getAll()).hasSize(6);
+    assertThat(underTest.browseCapabilityDuplicates()).isEmpty();
   }
 
-  @Test
-  public void testCleanupDoesNotTouchUniqueRecords() throws Exception {
-    prepareUniqueTestCapabilities();
+  @DatabaseTest
+  void cleanup_doesNotTouchUniqueRecords() throws Exception {
+    insertN(1, "test-capability-1", emptyMap());
+    insertN(1, "test-capability-1", props("repository", "maven-central"));
+    insertN(1, "test-capability-2", emptyMap());
+    insertN(1, "test-capability-2", props("repository", "maven-central", "test", "test"));
+    insertN(1, "test-capability-3", emptyMap());
 
-    assertThat(capabilityStorage.getAll(), aMapWithSize(5));
-
-    assertTrue(underTest.browseCapabilityDuplicates().isEmpty());
+    CleanupCapabilityDuplicatesService underTest = service();
+    assertThat(underTest.browseCapabilityDuplicates()).isEmpty();
 
     underTest.doCleanup();
 
-    assertThat(capabilityStorage.getAll(), aMapWithSize(5));
+    assertThat(store().getAll()).hasSize(5);
   }
 
-  @Test
-  public void testCleanupNotNeeded() throws Exception {
+  @DatabaseTest
+  void cleanup_notNeeded_isNoOp() {
+    CleanupCapabilityDuplicatesService underTest = service();
+
     underTest.doCleanup();
 
-    Map<CapabilityStorageItem, List<CapabilityIdentity>> duplicates = underTest.browseCapabilityDuplicates();
-    assertCapabilitiesCount(duplicates, 0);
+    assertThat(underTest.browseCapabilityDuplicates()).isEmpty();
   }
 
-  private static void assertCapabilitiesCount(
-      final Map<CapabilityStorageItem, List<CapabilityIdentity>> capabilities,
-      final int expectedCount)
-  {
-    AtomicInteger count = new AtomicInteger();
-    capabilities.keySet().forEach(type -> {
-      count.addAndGet(capabilities.get(type).size());
-    });
-
-    assertThat(count.get(), is(expectedCount));
-  }
-
-  private void prepareTestCapabilitiesWithDuplicates() throws SQLException {
-    try (Connection connection = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
-      String sql = "DROP INDEX IF EXISTS uk_capability_storage_item_type_props";
-      connection.prepareStatement(sql).executeUpdate();
+  private static Map<String, String> props(final String... kv) {
+    Map<String, String> map = new HashMap<>();
+    for (int i = 0; i < kv.length; i += 2) {
+      map.put(kv[i], kv[i + 1]);
     }
-
-    createTestCapabilities(5, "test-capability-1", emptyMap());
-
-    createTestCapabilities(5, "test-capability-2", new HashMap<String, String>()
-    {
-      {
-        put("repository", "maven-central");
-      }
-    });
-    createTestCapabilities(1, "test-capability-2", new HashMap<String, String>()
-    {
-      {
-        put("repository", "maven-proxy");
-      }
-    });
-
-    createTestCapabilities(5, "test-capability-3", new HashMap<String, String>()
-    {
-      {
-        put("repository", "nuget-proxy");
-      }
-    });
-    createTestCapabilities(5, "test-capability-3", new HashMap<String, String>()
-    {
-      {
-        put("repository", "nuget-group");
-      }
-    });
-
-    createTestCapabilities(2, "test-capability-4", new HashMap<String, String>()
-    {
-      {
-        put("repository", "nuget-group");
-        put("auth", "false");
-      }
-    });
+    return map;
   }
 
-  private void prepareUniqueTestCapabilities() {
-    createTestCapabilities(1, "test-capability-1", emptyMap());
-    createTestCapabilities(1, "test-capability-1", new HashMap<String, String>()
-    {
-      {
-        put("repository", "maven-central");
-      }
-    });
-
-    createTestCapabilities(1, "test-capability-2", emptyMap());
-    createTestCapabilities(1, "test-capability-2", new HashMap<String, String>()
-    {
-      {
-        put("repository", "maven-central");
-        put("test", "test");
-      }
-    });
-
-    createTestCapabilities(1, "test-capability-3", emptyMap());
-  }
-
-  private void createTestCapabilities(
-      final int count,
-      final String typeId,
-      final Map<String, String> properties)
-  {
-    // duplicate
+  private void insertN(final int count, final String type, final Map<String, String> properties) throws Exception {
     for (int i = 0; i < count; i++) {
-      capabilityStorage.add(
-          capabilityStorage.newStorageItem(
-              1,
-              typeId,
-              true,
-              "notes",
-              properties));
+      CapabilityStorageItemTestSupport.insert(dataSessionSupplier, type, properties);
     }
   }
 }

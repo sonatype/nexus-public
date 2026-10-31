@@ -21,7 +21,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -37,7 +37,7 @@ public class BlobstoreSecretsMigrationStep_2_11
 
   @Autowired
   public BlobstoreSecretsMigrationStep_2_11(final UpgradeTaskScheduler startupScheduler) {
-    this.startupScheduler = checkNotNull(startupScheduler);
+    this.startupScheduler = requireNonNull(startupScheduler);
   }
 
   @Override

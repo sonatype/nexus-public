@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 
@@ -54,8 +54,8 @@ public class LastDownloadedHandler
       final LastDownloadedAttributeHandler lastDownloadedAttributeHandler,
       final GlobalRepositorySettings globalRepositorySettings)
   {
-    this.lastDownloadedAttributeHandler = checkNotNull(lastDownloadedAttributeHandler);
-    this.globalRepositorySettings = checkNotNull(globalRepositorySettings);
+    this.lastDownloadedAttributeHandler = requireNonNull(lastDownloadedAttributeHandler);
+    this.globalRepositorySettings = requireNonNull(globalRepositorySettings);
   }
 
   @Override

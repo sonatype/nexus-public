@@ -54,6 +54,10 @@ export function useExtComponent(extContainerRef, extView, extParams, currentTitl
 
   // Render and track the Ext JS component
   useEffect(() => {
+    if (!extContainerRef?.current) {
+      return;
+    }
+
     if (!extComponent) {
       setExtComponent(renderExtComponent(
           extContainerRef,

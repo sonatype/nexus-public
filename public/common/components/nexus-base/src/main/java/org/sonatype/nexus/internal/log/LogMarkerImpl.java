@@ -23,7 +23,7 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -43,8 +43,8 @@ public class LogMarkerImpl
 
   @Autowired
   public LogMarkerImpl(final LogManager logManager, final EventManager eventManager) {
-    this.logManager = checkNotNull(logManager);
-    this.eventManager = checkNotNull(eventManager);
+    this.logManager = requireNonNull(logManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override

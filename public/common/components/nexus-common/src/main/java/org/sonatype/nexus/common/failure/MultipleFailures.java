@@ -20,8 +20,7 @@ import javax.annotation.Nullable;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to collect and throw multiple {@link Throwable}s.
@@ -46,7 +45,7 @@ public class MultipleFailures
 
   public void add(final Throwable failure) {
     log.trace("Adding: {}", failure);
-    failures.add(checkNotNull(failure));
+    failures.add(requireNonNull(failure));
   }
 
   public int size() {

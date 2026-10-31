@@ -37,10 +37,10 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Servlet filter to add error page rendering.
@@ -61,7 +61,7 @@ public class ErrorPageFilter
 
   @Autowired
   public ErrorPageFilter(final XFrameOptions xFrameOptions) {
-    this.xFrameOptions = checkNotNull(xFrameOptions);
+    this.xFrameOptions = requireNonNull(xFrameOptions);
   }
 
   @Override
@@ -89,13 +89,15 @@ public class ErrorPageFilter
       chain.doFilter(request, response);
     }
     catch (Exception e) {
-      // NEXUS-49601: Rethrow EofException as IOException (unwrapped) so Jetty properly aborts the response.
-      // If the exception is not thrown, Jetty's handleException() doesn't abort early and continues to
-      // the COMPLETE state, which validates Content-Length vs bytes written, causing spurious
+      // NEXUS-49601 / NEXUS-53768: Rethrow the unwrapped EofException so Jetty properly aborts the response.
+      // NEXUS-53768 extends the original direct-instanceof check to detect an EofException anywhere in the
+      // cause chain (e.g. wrapped in UncheckedIOException on the PyPI group serve path). If not rethrown,
+      // Jetty continues to the COMPLETE state and validates Content-Length vs bytes written, causing spurious
       // "Insufficient content written" errors when clients disconnect during large file transfers.
-      if (e instanceof EofException) {
+      EofException eofException = findEofException(e);
+      if (eofException != null) {
         log.debug("Client terminated connection", e);
-        Throwables.propagateIfPossible(e, ServletException.class, IOException.class);
+        throw eofException;
       }
 
       ErrorPageServlet.attachCause(request, e);
@@ -112,5 +114,14 @@ public class ErrorPageFilter
       }
       response.sendError(errorCode);
     }
+  }
+
+  private static EofException findEofException(final Throwable throwable) {
+    for (Throwable cause : Throwables.getCausalChain(throwable)) {
+      if (cause instanceof EofException) {
+        return (EofException) cause;
+      }
+    }
+    return null;
   }
 }

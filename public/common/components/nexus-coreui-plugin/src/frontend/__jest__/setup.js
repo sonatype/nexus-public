@@ -80,7 +80,8 @@ global.NX = {
     error: jest.fn()
   },
   Permissions: {
-    check: jest.fn()
+    check: jest.fn(),
+    permissions: {},
   },
   getApplication: jest.fn(() => ({})),
   app: {

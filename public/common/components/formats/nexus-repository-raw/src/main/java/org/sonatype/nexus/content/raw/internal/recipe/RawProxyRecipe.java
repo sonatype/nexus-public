@@ -13,8 +13,7 @@
 package org.sonatype.nexus.content.raw.internal.recipe;
 
 import javax.annotation.Nonnull;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Provider;
+
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -35,14 +34,16 @@ import org.sonatype.nexus.repository.view.ViewFacet;
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher;
 import org.sonatype.nexus.repository.view.matchers.SuffixMatcher;
 
+import jakarta.inject.Provider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 import static org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers.and;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * Raw proxy repository recipe.
@@ -85,23 +86,23 @@ public class RawProxyRecipe
       final RoutingRuleHandler routingRuleHandler)
   {
     super(type, format);
-    this.httpClientFacet = checkNotNull(httpClientFacet);
-    this.negativeCacheFacet = checkNotNull(negativeCacheFacet);
-    this.proxyFacet = checkNotNull(proxyFacet);
-    this.purgeUnusedFacet = checkNotNull(purgeUnusedFacet);
-    this.negativeCacheHandler = checkNotNull(negativeCacheHandler);
-    this.proxyHandler = checkNotNull(proxyHandler);
-    this.routingRuleHandler = checkNotNull(routingRuleHandler);
+    this.httpClientFacet = requireNonNull(httpClientFacet);
+    this.negativeCacheFacet = requireNonNull(negativeCacheFacet);
+    this.proxyFacet = requireNonNull(proxyFacet);
+    this.purgeUnusedFacet = requireNonNull(purgeUnusedFacet);
+    this.negativeCacheHandler = requireNonNull(negativeCacheHandler);
+    this.proxyHandler = requireNonNull(proxyHandler);
+    this.routingRuleHandler = requireNonNull(routingRuleHandler);
   }
 
   @Override
   public void apply(final @Nonnull Repository repository) throws Exception {
+    repository.attach(contentFacet.get());
     repository.attach(securityFacet.get());
     repository.attach(configure(viewFacet.get()));
     repository.attach(httpClientFacet.get());
     repository.attach(negativeCacheFacet.get());
     repository.attach(proxyFacet.get());
-    repository.attach(contentFacet.get());
     repository.attach(maintenanceFacet.get());
     repository.attach(searchFacet.get());
     repository.attach(browseFacet.get());

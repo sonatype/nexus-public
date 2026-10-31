@@ -28,11 +28,12 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class ContentDirectorTest
 {
   @Mock
@@ -58,11 +59,11 @@ public class ContentDirectorTest
 
   private ContentDirector underTest;
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    // Use an anonymous implementation that just uses defaults
     underTest = new ContentDirector()
     {
+      // Use an anonymous implementation that just uses defaults
     };
   }
 
@@ -103,8 +104,7 @@ public class ContentDirectorTest
   @Test
   public void testRedeployAllowedWhenWritePolicyAllow() {
     Configuration config = mock(Configuration.class);
-    org.sonatype.nexus.common.collect.NestedAttributesMap attributes =
-        mock(org.sonatype.nexus.common.collect.NestedAttributesMap.class);
+    NestedAttributesMap attributes = mock();
 
     when(destination.getConfiguration()).thenReturn(config);
     when(config.attributes("storage")).thenReturn(attributes);
@@ -116,8 +116,7 @@ public class ContentDirectorTest
   @Test
   public void testRedeployNotAllowedWhenWritePolicyDeny() {
     Configuration config = mock(Configuration.class);
-    org.sonatype.nexus.common.collect.NestedAttributesMap attributes =
-        mock(org.sonatype.nexus.common.collect.NestedAttributesMap.class);
+    NestedAttributesMap attributes = mock();
 
     when(destination.getConfiguration()).thenReturn(config);
     when(config.attributes("storage")).thenReturn(attributes);
@@ -130,20 +129,19 @@ public class ContentDirectorTest
   public void testCopyComponentDelegatesToContentFacet() {
     ContentFacet contentFacet = mock(ContentFacet.class);
     FluentComponents components = mock(FluentComponents.class);
-    FluentComponentBuilder builder = mock(FluentComponentBuilder.class);
+    FluentComponentBuilder builder = mock(Answers.RETURNS_SELF);
     FluentComponent created = mock(FluentComponent.class);
 
     when(destination.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(contentFacet.components()).thenReturn(components);
     when(components.name(anyString())).thenReturn(builder);
-    when(builder.namespace(anyString())).thenReturn(builder);
-    when(builder.version(anyString())).thenReturn(builder);
     when(builder.getOrCreate()).thenReturn(created);
 
     when(component.name()).thenReturn("artifact");
     when(component.namespace()).thenReturn("org.example");
     when(component.version()).thenReturn("1.0");
     when(component.attributes()).thenReturn(new NestedAttributesMap("attributes", new HashMap<>()));
+    when(component.kind()).thenReturn("provider");
 
     FluentComponent result = underTest.copyComponent(component, destination);
     assertThat(result, is(created));
@@ -151,6 +149,7 @@ public class ContentDirectorTest
     verify(components).name("artifact");
     verify(builder).namespace("org.example");
     verify(builder).version("1.0");
+    verify(builder).kind("provider");
     verify(builder).getOrCreate();
   }
 }

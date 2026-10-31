@@ -24,20 +24,21 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.validation.ValidationException;
-import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.io.Cooperation;
 import org.sonatype.nexus.common.template.EscapeHelper;
-import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheInvalidationEvent;
 import org.sonatype.nexus.outbound.context.OutboundRequestContext;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.ETagHeaderUtils;
@@ -51,6 +52,7 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryAttributesDesEvent;
 import org.sonatype.nexus.repository.firewall.FirewallHeaderProvider;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
@@ -72,8 +74,8 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import jakarta.validation.ValidationException;
+import jakarta.validation.constraints.NotNull;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -87,18 +89,20 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.util.EntityUtils;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.isNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUESTS_LOG_ONLY;
 
 /**
@@ -110,6 +114,8 @@ public abstract class ProxyFacetSupport
     extends FacetSupport
     implements ProxyFacet
 {
+  private static final String DUMMY = "dummy";
+
   public static final String BYPASS_HTTP_ERRORS_HEADER_NAME = "BYPASS_HTTP_ERRORS";
 
   public static final String BYPASS_HTTP_ERRORS_HEADER_VALUE = "true";
@@ -215,6 +221,9 @@ public abstract class ProxyFacetSupport
 
   private EscapeHelper escapeHelper;
 
+  @Nullable
+  private String urlEscapeRulesConfig;
+
   private EncodingHelper encodingHelper;
 
   private static final String CTX_REQ_STOPWATCH = "request.stopwatch";
@@ -266,7 +275,8 @@ public abstract class ProxyFacetSupport
   protected void configureUrlEscapeRules(
       @Nullable @Value("${nexus.proxy.url.escape.rules:#{null}}") final String urlEscapeRulesConfig)
   {
-    this.escapeHelper = new EscapeHelper(urlEscapeRulesConfig);
+    // Store the raw configuration - will be parsed in doConfigure() when we have repository name
+    this.urlEscapeRulesConfig = urlEscapeRulesConfig;
   }
 
   @Autowired
@@ -303,7 +313,7 @@ public abstract class ProxyFacetSupport
 
   @Autowired
   protected void configureAntiSsrfService(final AntiSsrfService antiSsrfService) {
-    this.antiSsrfService = checkNotNull(antiSsrfService);
+    this.antiSsrfService = requireNonNull(antiSsrfService);
   }
 
   @VisibleForTesting
@@ -333,19 +343,49 @@ public abstract class ProxyFacetSupport
   protected void doConfigure(final Configuration configuration) throws Exception {
     config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, ProxyConfig.class);
 
-    String storedToken =
-        repositoryAttributeService().getRepositoryAttribute(getRepository(), CACHE_TOKEN_ATTRIBUTE, null);
-
-    cacheControllerHolder = new CacheControllerHolder(
-        new CacheController((int) config.getContentMaxAge().getSeconds(), null),
-        new CacheController((int) config.getMetadataMaxAge().getSeconds(), storedToken));
-
     // normalize URL path to contain trailing slash
     config.remoteUrl = normalizeURLPath(config.remoteUrl);
 
+    // Parse repository-specific URL escape rules
+    String repositoryName = getRepository().getName();
+    Map<String, String> repoRules = UrlEscapeRulesParser.parseRepositoryRules(
+        urlEscapeRulesConfig, repositoryName);
+
+    // Prepare EscapeHelper with appropriate rules
+    // Behavior for repository-specific URL escape rules:
+    // 1. Repository NOT in config → use DEFAULT_RULES (standard encoding rules)
+    // 2. Repository with empty {} → use DEFAULT_RULES (same as not in config)
+    // 3. Repository with custom rules → merge custom rules with DEFAULT_RULES
+    //
+    // Notes:
+    // - DEFAULT_RULES are: %→%25, :→%3A, space→%20
+    // - Custom rules override defaults for matching characters
+    // - The escapeHelper is always created to support encoding operations
+    if (repoRules != null && !repoRules.isEmpty()) {
+      // Merge DEFAULT_RULES with repository-specific rules
+      Map<String, String> mergedRules = EscapeHelper.getDefaultRules(); // Start with defaults
+      mergedRules.putAll(repoRules); // Override/add with repository-specific rules
+      log.debug("Using repository-specific URL escape rules for {}", repositoryName);
+      this.escapeHelper = new EscapeHelper(mergedRules);
+    }
+    else {
+      log.debug("Using built-in default URL escape rules for repository {}", repositoryName);
+      this.escapeHelper = new EscapeHelper(); // Uses DEFAULT_RULES (%:%25, ::%3A, :%20)
+    }
+
+    // Enable two-stage URL encoding when preserveEncodedCharacters is enabled
+    // This preserves encoded characters in proxy URLs (e.g., %2B for + in PyPI versions)
+    //
+    // The preserveEncodedCharacters checkbox is the primary control:
+    // - When true: two-stage encoding is active with custom or default rules
+    // - When false: standard single-stage encoding (legacy behavior)
+    //
+    // Repository-specific rules customize the encoding behavior but do not enable encoding on their own.
+    // An empty {} config is treated the same as no configuration (uses defaults, no encoding unless checkbox is on).
     if (config.preserveEncodedCharacters) {
       this.encodingHelper = new EncodingHelper(escapeHelper);
-      log.debug("Preserve encoded characters enabled for repository: {}", getRepository().getName());
+      log.debug("Two-stage URL encoding enabled for repository: {} (custom rules: {})",
+          repositoryName, repoRules != null && !repoRules.isEmpty());
     }
     else {
       this.encodingHelper = null;
@@ -376,8 +416,21 @@ public abstract class ProxyFacetSupport
   }
 
   @Override
-  protected void doStart() throws Exception {
+  protected void doStart() {
     httpClient = facet(HttpClientFacet.class);
+
+    String storedToken =
+        repositoryAttributeService().getRepositoryAttribute(getRepository(), METADATA_CACHE_TOKEN_ATTRIBUTE, DUMMY);
+    String cachedStoredToken =
+        repositoryAttributeService().getRepositoryAttribute(getRepository(), CONTENT_CACHE_TOKEN_ATTRIBUTE, DUMMY);
+
+    if (DUMMY.equals(storedToken) || DUMMY.equals(cachedStoredToken)) {
+      throw new RuntimeException("ContentFacet must be registered before ProxyFacet");
+    }
+
+    cacheControllerHolder = new CacheControllerHolder(
+        new CacheController((int) config.getContentMaxAge().getSeconds(), cachedStoredToken),
+        new CacheController((int) config.getMetadataMaxAge().getSeconds(), storedToken));
 
     if (remoteUrlChanged) {
       remoteUrlChanged = false;
@@ -398,12 +451,12 @@ public abstract class ProxyFacetSupport
 
   @Override
   public Content get(final Context context) throws IOException {
-    checkNotNull(context);
+    requireNonNull(context);
     Content content = maybeGetCachedContent(context);
     boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
     String format = getRepository().getFormat().getValue();
     getEventManager().post(new ProxyRequestEvent(format, isReplication));
-    if (!isStale(context, content)) {
+    if (!isReplication && !isStale(context, content)) {
       getEventManager().post(new ProxyCacheHitEvent(format, isReplication));
       return content;
     }
@@ -433,7 +486,7 @@ public abstract class ProxyFacetSupport
     return get(context, content);
   }
 
-  private void sendProxyThrottledRequestEventIfNeeded(final Context context, boolean isBlocked) {
+  private void sendProxyThrottledRequestEventIfNeeded(final Context context, final boolean isBlocked) {
     if (!context.getAttributes().contains(PROXY_THROTTLED_ANALYTICS_MARKED)) {
       getEventManager().post(new ProxyThrottledRequestEvent(isBlocked));
     }
@@ -453,17 +506,45 @@ public abstract class ProxyFacetSupport
    * Attempt to retrieve from the remote using proxy co-operation
    */
   protected Content get(final Context context, @Nullable final Content staleContent) throws IOException {
-    return proxyCooperation.on(() -> doGet(context, staleContent))
+    Content content = proxyCooperation.on(() -> doGet(context, staleContent))
         .checkFunction(() -> {
           Content latestContent = maybeGetCachedContent(context);
-          if (!isStale(context, latestContent)) {
-            boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
+          boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
+          if (!isReplication && !isStale(context, latestContent)) {
             getEventManager().post(new ProxyCacheHitEvent(getRepository().getFormat().getValue(), isReplication));
             return Optional.of(latestContent);
           }
           return Optional.empty();
         })
         .cooperate(getRequestKey(context));
+
+    // A HEAD leader returns a header-only payload - it reports the upstream Content-Length but
+    // has no body - which a GET can never write, failing the response with
+    // "written 0 < N content-length". Such a GET must fetch the body itself. The key is left
+    // method-insensitive on purpose so GET-to-GET cooperation keeps shielding the remote.
+    if (isHeaderOnlyPayloadUnusableFor(context, content)) {
+      log.debug("Discarding header-only payload from a HEAD-led cooperation; re-fetching for {} {}",
+          context.getRequest().getAction(), getUrl(context));
+      // Not closed deliberately: this instance is shared with the HEAD thread that led the
+      // cooperation and may still be serving it. HeaderOnlyPayload holds no body to release
+      // (its close() only consumes an entity that is null by construction), so dropping the
+      // reference leaks nothing.
+      return doGet(context, staleContent);
+    }
+
+    return content;
+  }
+
+  /**
+   * A header-only payload carries a Content-Length with an empty body, which only a HEAD response
+   * can honour. Any other method receiving one must fetch the content itself.
+   *
+   * @see HeaderOnlyPayload
+   */
+  private boolean isHeaderOnlyPayloadUnusableFor(final Context context, @Nullable final Content content) {
+    return content != null
+        && content.getPayload() instanceof HeaderOnlyPayload
+        && !isHeadRequest(context);
   }
 
   /**
@@ -626,8 +707,7 @@ public abstract class ProxyFacetSupport
     }
   }
 
-  @VisibleForTesting
-  <X extends Throwable> String buildLogContentMessage(
+  protected static String buildLogContentMessage(
       @Nullable final Content content,
       @Nullable final StatusLine statusLine)
   {
@@ -652,11 +732,52 @@ public abstract class ProxyFacetSupport
 
   @Override
   public void invalidateProxyCaches() {
-    log.info("Invalidating proxy caches of {}", getRepository().getName());
-    cacheControllerHolder.invalidateCaches();
+    if (!EventHelper.isReplicating()) {
+      log.info("Invalidating proxy caches of {}", getRepository().getName());
+      invalidateMetadataCache();
+      invalidateContentCache();
+      getEventManager().post(new RepositoryCacheInvalidationEvent(getRepository().getName()));
+    }
+  }
 
-    // Post event to synchronize cache token across nodes
-    postCacheTokenEvent(getRepository(), cacheControllerHolder.getContentCacheController().current().getCacheToken());
+  protected void invalidateContentCache() {
+    if (!EventHelper.isReplicating()) {
+      CacheController contentCacheController = cacheControllerHolder.getContentCacheController();
+      storeContentCacheToken(contentCacheController.invalidateCache());
+    }
+  }
+
+  protected void invalidateMetadataCache() {
+    if (!EventHelper.isReplicating()) {
+      CacheController metadataCacheController = cacheControllerHolder.getMetadataCacheController();
+      storeMetadataCacheToken(metadataCacheController.invalidateCache());
+    }
+  }
+
+  @Override
+  public boolean hasContentFor(final Context context) {
+    // Calls getCachedContent directly rather than delegating to maybeGetCachedContent, which sets
+    // {@link #MISSING_BLOB_SKIP_NEGATIVE_CACHE} on the context when a MissingBlobException is caught.
+    // That flag is read by NegativeCacheHandler.skipNegativeCacheForMissingBlob and suppresses NFC caching
+    // for the current request; if it fired from a read-only probe it would permanently defeat NFC's
+    // upstream-shielding role for that path, because subsequent 404 responses could never be NFC-cached.
+    // Probe paths must therefore stay free of fetch-path side effects.
+    try {
+      return getCachedContent(context) != null;
+    }
+    catch (MissingBlobException e) {
+      // Blob metadata exists but the blob is missing: from the caller's perspective this is "no content locally
+      // available". Do NOT set MISSING_BLOB_SKIP_NEGATIVE_CACHE — this is a probe, not a fetch.
+      return false;
+    }
+    catch (IOException | RuntimeException e) {
+      // Best-effort: any lookup failure is treated as "not locally available" so callers safely fall through
+      // to their existing behavior. Log at WARN so a genuine storage regression is visible in operator logs
+      // rather than silently degrading callers to stale-NFC behavior.
+      log.warn("hasContentFor lookup failed for {} — treating as no local content on this node",
+          context.getRequest().getPath(), e);
+      return false;
+    }
   }
 
   private Content maybeGetCachedContent(final Context context) throws IOException {
@@ -727,9 +848,10 @@ public abstract class ProxyFacetSupport
       if (url.contains("://")) {
         uri = new URI(url);
       }
-      // Use two-stage encoding when preserveEncodedCharacters is enabled
+      // Use two-stage encoding when preserveEncodedCharacters is enabled. The trailing slash must survive:
+      // upstreams such as a chained Nexus PyPI repository return different relative links for "pkg/" and "pkg".
       else if (encodingHelper != null) {
-        String baseEncoded = encodingHelper.encodeUrlSegments(url);
+        String baseEncoded = encodingHelper.encodeUrlSegmentsPreserveTrailing(url);
         String finalEncoded = encodeUrl(baseEncoded);
         uri = config.remoteUrl.resolve(finalEncoded);
       }
@@ -932,7 +1054,7 @@ public abstract class ProxyFacetSupport
   /**
    * Gets URLs from header to handle 300 (multiple locations) responses.
    */
-  protected List<String> extractUrls(HttpResponse response) {
+  protected List<String> extractUrls(final HttpResponse response) {
     Header[] locationHeaders = response.getHeaders(HttpHeaders.LINK);
     List<String> urls = new ArrayList<>();
     Pattern pattern = Pattern.compile(ALTERNATIVE_URLS_PATTERN);
@@ -1163,7 +1285,7 @@ public abstract class ProxyFacetSupport
    */
   protected String encodePathForRemote(final String path) throws UnsupportedEncodingException {
     if (encodingHelper != null) {
-      String baseEncoded = encodingHelper.encodeUrlSegments(path);
+      String baseEncoded = encodingHelper.encodeUrlSegmentsPreserveTrailing(path);
       return encodeUrl(baseEncoded);
     }
     // Legacy behavior (preserveEncodedCharacters == false)
@@ -1188,9 +1310,31 @@ public abstract class ProxyFacetSupport
   }
 
   @Subscribe
-  public void on(final RepositoryCacheSyncTokenEvent event) {
-    if (!event.isLocal() && getRepository().getName().equals(event.getRepositoryName())) {
-      cacheControllerHolder.getMetadataCacheController().setCache(event.getToken());
+  public void on(final ContentRepositoryAttributesDesEvent event) {
+    String repositoryName = getRepository().getName();
+    if (EventHelper.isReplicating() && Objects.equals(repositoryName, event.getRepoName())) {
+      if (CONTENT_CACHE_TOKEN_ATTRIBUTE.equals(event.getKey())) {
+        Optional
+            .ofNullable(repositoryAttributeService.getRepositoryAttribute(getRepository(),
+                CONTENT_CACHE_TOKEN_ATTRIBUTE, DUMMY))
+            .filter(val -> !DUMMY.equals(val))
+            .ifPresent(contentCacheToken -> {
+              cacheControllerHolder.getContentCacheController().setCache(contentCacheToken);
+              log.debug("repository:{}, contentCacheToken:{}", repositoryName, contentCacheToken);
+              facet(NegativeCacheFacet.class).invalidate();
+            });
+      }
+      else if (METADATA_CACHE_TOKEN_ATTRIBUTE.equals(event.getKey())) {
+        Optional
+            .ofNullable(repositoryAttributeService.getRepositoryAttribute(getRepository(),
+                METADATA_CACHE_TOKEN_ATTRIBUTE, DUMMY))
+            .filter(val -> !DUMMY.equals(val))
+            .ifPresent(metadataCacheToken -> {
+              cacheControllerHolder.getMetadataCacheController().setCache(metadataCacheToken);
+              log.debug("repository:{}, metadataCacheToken:{}", repositoryName, metadataCacheToken);
+              facet(NegativeCacheFacet.class).invalidate();
+            });
+      }
     }
   }
 

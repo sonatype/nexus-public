@@ -15,8 +15,7 @@ package org.sonatype.nexus.common.entity;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link EntityId} backed by a {@link UUID}.
@@ -34,7 +33,7 @@ public class EntityUUID
   }
 
   public EntityUUID(final UUID id) {
-    this.id = checkNotNull(id);
+    this.id = requireNonNull(id);
   }
 
   public UUID uuid() {

@@ -96,7 +96,19 @@ export default class ValidationUtils {
 
     const isPortValid = port !== '0';
 
-    const isPathnameValid = URL_PATHNAME_REGEX.test(decodeURIComponent(pathname));
+    // decodeURIComponent throws URIError on malformed percent escapes (e.g.
+    // 'https://example.com/%'), which `new URL` accepts. Left unguarded that
+    // exception escaped isUrl into callers' validation paths — in a form machine it
+    // propagated out of the change handler and dropped the keystroke instead of
+    // showing an error. An undecodable path is simply not a valid URL.
+    let decodedPathname;
+    try {
+      decodedPathname = decodeURIComponent(pathname);
+    } catch {
+      return false;
+    }
+
+    const isPathnameValid = URL_PATHNAME_REGEX.test(decodedPathname);
 
     return isProtocolValid && isHostnameValid && isPortValid && isPathnameValid;
   }

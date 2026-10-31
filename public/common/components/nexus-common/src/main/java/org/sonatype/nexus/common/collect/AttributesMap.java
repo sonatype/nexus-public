@@ -34,8 +34,8 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Container for [String -> Object] attributes.
@@ -51,7 +51,7 @@ public class AttributesMap
   protected final Map<String, Object> backing;
 
   public AttributesMap(final Map<String, Object> backing) {
-    this.backing = checkNotNull(backing);
+    this.backing = requireNonNull(backing);
   }
 
   public AttributesMap() {
@@ -119,7 +119,7 @@ public class AttributesMap
    */
   @Nullable
   public Object get(final String key) {
-    checkNotNull(key);
+    requireNonNull(key);
     return backing.get(key);
   }
 
@@ -185,7 +185,7 @@ public class AttributesMap
    */
   @Nullable
   public <T> T get(final String key, final TypeToken<T> type) {
-    checkNotNull(type);
+    requireNonNull(type);
     Object value = get(key);
     return coerce(value, type);
   }
@@ -195,7 +195,7 @@ public class AttributesMap
    */
   @Nullable
   public <T> T get(final String key, final Class<T> type) {
-    checkNotNull(type);
+    requireNonNull(type);
     return get(key, TypeToken.of(type));
   }
 
@@ -216,7 +216,7 @@ public class AttributesMap
    */
   @Nullable
   public <T> T get(final String key, final Class<T> type, @Nullable final T defaultValue) {
-    checkNotNull(type);
+    requireNonNull(type);
     return get(key, TypeToken.of(type), defaultValue);
   }
 
@@ -249,7 +249,7 @@ public class AttributesMap
    * Require attribute value with coercion support.
    */
   public <T> T require(final String key, final TypeToken<T> type) {
-    checkNotNull(type);
+    requireNonNull(type);
     Object value = require(key);
     return coerce(value, type);
   }
@@ -258,7 +258,7 @@ public class AttributesMap
    * Require attribute value with coercion support.
    */
   public <T> T require(final String key, final Class<T> type) {
-    checkNotNull(type);
+    requireNonNull(type);
     return require(key, TypeToken.of(type));
   }
 
@@ -267,7 +267,7 @@ public class AttributesMap
    */
   @Nullable
   public Object set(final String key, @Nullable final Object value) {
-    checkNotNull(key);
+    requireNonNull(key);
     if (value == null) {
       return remove(key);
     }
@@ -299,7 +299,7 @@ public class AttributesMap
    */
   @Nullable
   public Object remove(final String key) {
-    checkNotNull(key);
+    requireNonNull(key);
     Object removed = backing.remove(key);
     if (removed != null) {
       log.trace("Removed: {}", key);
@@ -319,7 +319,7 @@ public class AttributesMap
    * Check if attributes contains given key.
    */
   public boolean contains(final String key) {
-    checkNotNull(key);
+    requireNonNull(key);
     return backing.containsKey(key);
   }
 

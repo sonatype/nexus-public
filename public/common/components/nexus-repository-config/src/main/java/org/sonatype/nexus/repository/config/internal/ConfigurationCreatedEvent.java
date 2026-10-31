@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class ConfigurationCreatedEvent
     extends EventWithSource
@@ -30,7 +30,7 @@ public class ConfigurationCreatedEvent
   }
 
   public ConfigurationCreatedEvent(final ConfigurationData configuration) {
-    this.repositoryName = checkNotNull(configuration).getRepositoryName();
+    this.repositoryName = requireNonNull(configuration).getRepositoryName();
   }
 
   @Override

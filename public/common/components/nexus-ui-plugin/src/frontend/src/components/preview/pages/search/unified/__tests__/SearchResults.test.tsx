@@ -12,10 +12,12 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import { SearchResults } from '../SearchResults';
+import * as formatLogos from '../formatLogos';
+import { formatDateTime } from '../../../../shared';
 
 // Helper to wrap components with Radix Theme
 function renderWithTheme(ui) {
@@ -113,11 +115,28 @@ describe('SearchResults', () => {
       expect(countElements.length).toBeGreaterThan(0);
     });
 
-    it('renders total count with + when hasMore is true', () => {
+    it('renders total count with + when hasMore is true and no exact total is known', () => {
       renderWithTheme(
         <SearchResults {...defaultProps} hasMore={true} totalCount={50} />
       );
       expect(screen.getAllByText('50+').length).toBeGreaterThan(0);
+    });
+
+    it('renders the exact backend total without "+" even while more pages remain', () => {
+      // The true match count is authoritative: paging must never reduce the
+      // heading to the loaded subset, and a known exact total is never a cap.
+      renderWithTheme(
+        <SearchResults {...defaultProps} hasMore={true} totalCount={50} total={4888} />
+      );
+      expect(screen.getAllByText('4,888').length).toBeGreaterThan(0);
+      expect(screen.queryByText('4,888+')).not.toBeInTheDocument();
+      expect(screen.queryByText('50+')).not.toBeInTheDocument();
+    });
+
+    it('announces the result count in an aria-live region', () => {
+      renderWithTheme(<SearchResults {...defaultProps} total={4888} />);
+      const status = screen.getByRole('status');
+      expect(status).toHaveTextContent('4,888');
     });
 
     it('renders filter input', () => {
@@ -205,23 +224,164 @@ describe('SearchResults', () => {
   });
 
   describe('sort dropdown', () => {
-    it('renders sort dropdown', () => {
-      renderWithTheme(<SearchResults {...defaultProps} sortBy="lastUpdated" />);
-      expect(screen.getAllByRole('combobox').length).toBeGreaterThan(0);
+    // jsdom lacks the pointer-capture / scrollIntoView APIs Radix Select touches
+    // when opening.
+    beforeAll(() => {
+      window.HTMLElement.prototype.hasPointerCapture = jest.fn(() => false);
+      window.HTMLElement.prototype.releasePointerCapture = jest.fn();
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
     });
 
-    it('displays current sort option', () => {
-      renderWithTheme(<SearchResults {...defaultProps} sortBy="lastUpdated" />);
-      expect(screen.getAllByText(/Latest Release/).length).toBeGreaterThan(0);
+    /**
+     * The header is rendered three times (mobile / tablet / desktop) because
+     * visibility is CSS-driven, so every query below takes the first match.
+     */
+    function sortTrigger() {
+      return screen.getAllByRole('combobox', { name: /^Sort:/ })[0];
+    }
+
+    /**
+     * Radix Select mounts its content asynchronously (popper positioning, item
+     * registration), so the open must be awaited or those updates land outside
+     * act() and React warns.
+     */
+    async function openSortDropdown() {
+      await userEvent.click(sortTrigger());
+      await screen.findByRole('listbox');
+    }
+
+    it('renders the sort dropdown labelled with the active option', () => {
+      renderWithTheme(
+        <SearchResults {...defaultProps} sortField="lastUpdated" sortDirection="desc" />,
+      );
+      // The accessible name must contain the visible label text (WCAG 2.5.3),
+      // which reads "sort: Last updated — Newest first".
+      expect(sortTrigger()).toHaveAccessibleName('Sort: Last updated — Newest first');
     });
 
-    it('accepts sortBy and onSortChange props', () => {
+    // The closed trigger has no group heading to supply the field name and no
+    // open list to show which direction is checked, so its text must name both
+    // — the direction arrow beside it is decorative and cannot carry that.
+    it.each([
+      ['lastUpdated', 'desc', 'Last updated — Newest first'],
+      ['lastUpdated', 'asc', 'Last updated — Oldest first'],
+      ['name', 'asc', 'Name — A-Z'],
+      ['name', 'desc', 'Name — Z-A'],
+      ['repository', 'asc', 'Repository — A-Z'],
+      ['repository', 'desc', 'Repository — Z-A'],
+    ] as const)(
+      'names field and direction in the closed trigger for %s %s',
+      (sortField, sortDirection, label) => {
+        renderWithTheme(
+          <SearchResults {...defaultProps} sortField={sortField} sortDirection={sortDirection} />,
+        );
+
+        // No listbox is mounted, so this is genuinely the closed state.
+        expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+        expect(sortTrigger()).toHaveTextContent(label);
+        expect(sortTrigger()).toHaveAccessibleName(`Sort: ${label}`);
+      },
+    );
+
+    it('defaults to last updated, newest first, when no sort props are supplied', () => {
+      renderWithTheme(<SearchResults {...defaultProps} />);
+      expect(sortTrigger()).toHaveTextContent('Last updated — Newest first');
+    });
+
+    it('offers a field-grouped option for every sortable field and direction', async () => {
+      renderWithTheme(<SearchResults {...defaultProps} />);
+      await openSortDropdown();
+
+      // Group headings name the field; each option names its direction. Scope the heading lookup
+      // to the open listbox: the result cards below carry their own "Last updated" label, so an
+      // unscoped getByText would match both the dropdown heading and the cards.
+      const listbox = within(screen.getByRole('listbox'));
+      for (const heading of ['Last updated', 'Name', 'Repository']) {
+        expect(listbox.getByText(heading)).toBeInTheDocument();
+      }
+      for (const direction of ['Newest first', 'Oldest first', 'A-Z', 'Z-A']) {
+        expect(screen.getAllByRole('option', { name: direction }).length).toBeGreaterThan(0);
+      }
+      // 3 fields x 2 directions.
+      expect(screen.getAllByRole('option')).toHaveLength(6);
+    });
+
+    it.each([
+      ['Name', 'A-Z', 'name', 'asc'],
+      ['Name', 'Z-A', 'name', 'desc'],
+      ['Last updated', 'Newest first', 'lastUpdated', 'desc'],
+      ['Last updated', 'Oldest first', 'lastUpdated', 'asc'],
+    ])(
+      'reports %s / %s as onSortChange(%s, %s)',
+      async (_field, directionLabel, expectedField, expectedDirection) => {
+        const onSortChange = jest.fn();
+        // Start from a sort that none of the cases under test already equals, so
+        // every selection is a genuine change.
+        renderWithTheme(
+          <SearchResults
+            {...defaultProps}
+            sortField="repository"
+            sortDirection="asc"
+            onSortChange={onSortChange}
+          />,
+        );
+        await openSortDropdown();
+        await userEvent.click(screen.getAllByRole('option', { name: directionLabel })[0]);
+
+        expect(onSortChange).toHaveBeenCalledWith(expectedField, expectedDirection);
+      },
+    );
+
+    it('is keyboard operable: the trigger is focusable and opens on Enter', async () => {
+      renderWithTheme(
+        <SearchResults {...defaultProps} sortField="lastUpdated" sortDirection="desc" />,
+      );
+
+      const trigger = sortTrigger();
+      trigger.focus();
+      expect(trigger).toHaveFocus();
+
+      // Radix Select opens from the keyboard; no pointer involved.
+      fireEvent.keyDown(trigger, { key: 'Enter' });
+      expect(await screen.findByRole('option', { name: 'Oldest first' })).toBeInTheDocument();
+    });
+
+    it('selects an option from the keyboard', async () => {
       const onSortChange = jest.fn();
       renderWithTheme(
-        <SearchResults {...defaultProps} sortBy="name" onSortChange={onSortChange} />
+        <SearchResults
+          {...defaultProps}
+          sortField="lastUpdated"
+          sortDirection="desc"
+          onSortChange={onSortChange}
+        />,
       );
-      expect(screen.getAllByRole('combobox').length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Name/).length).toBeGreaterThan(0);
+
+      const trigger = sortTrigger();
+      trigger.focus();
+      fireEvent.keyDown(trigger, { key: 'Enter' });
+
+      const option = await screen.findByRole('option', { name: 'Oldest first' });
+      fireEvent.keyDown(option, { key: 'Enter' });
+
+      expect(onSortChange).toHaveBeenCalledWith('lastUpdated', 'asc');
+    });
+
+    it('conveys direction with an icon alongside the text, not by colour', () => {
+      const { container } = renderWithTheme(
+        <SearchResults {...defaultProps} sortField="name" sortDirection="asc" />,
+      );
+      // lucide-react renders an <svg class="lucide lucide-arrow-up ...">
+      expect(container.querySelector('svg.lucide-arrow-up')).toBeInTheDocument();
+      expect(container.querySelector('svg.lucide-arrow-down')).not.toBeInTheDocument();
+      // The label states the direction in words as well.
+      expect(sortTrigger()).toHaveTextContent('Name — A-Z');
+    });
+
+    it('renders the dropdown even when there are no results to sort', () => {
+      renderWithTheme(<SearchResults {...defaultProps} results={[]} totalCount={0} />);
+      expect(screen.getByText('No components found')).toBeInTheDocument();
+      expect(sortTrigger()).toBeInTheDocument();
     });
   });
 
@@ -272,32 +432,124 @@ describe('SearchResults', () => {
       expect(onNameFilterChange).toHaveBeenCalledWith('lodash');
     });
 
-    it('hides the name filter input when a specific format is selected', () => {
+    it('renders the name filter input even when a specific format is selected (AT-016)', () => {
+      // A deep link can carry both a format and a query; gating the input on
+      // format used to leave that query with nowhere to show.
       renderWithTheme(
-        <SearchResults
-          {...defaultProps}
-          selectedFormat="maven"
-          nameFilter=""
-          onNameFilterChange={jest.fn()}
-        />,
+        <SearchResults {...defaultProps} nameFilter="commons" onNameFilterChange={jest.fn()} />,
       );
-      expect(
-        screen.queryByPlaceholderText(/filter by component name or version/i),
-      ).not.toBeInTheDocument();
+      const inputs = screen.getAllByPlaceholderText(/filter by component name or version/i);
+      expect(inputs.length).toBeGreaterThan(0);
+      expect(inputs[0]).toHaveValue('commons');
     });
 
-    it('shows the name filter input when no format is selected (all formats)', () => {
+    it('renders the name filter input with no format selected (AT-016)', () => {
       renderWithTheme(
-        <SearchResults
-          {...defaultProps}
-          selectedFormat=""
-          nameFilter=""
-          onNameFilterChange={jest.fn()}
-        />,
+        <SearchResults {...defaultProps} nameFilter="" onNameFilterChange={jest.fn()} />,
       );
       expect(
         screen.getAllByPlaceholderText(/filter by component name or version/i).length,
       ).toBeGreaterThan(0);
+    });
+
+    it('cancels a pending debounce on unmount', () => {
+      // Clicking a result card mid-type unmounts this component with the 500ms
+      // timer still pending; letting it fire pushes a filter change into the
+      // parent's search machine after the user has navigated away.
+      jest.useFakeTimers();
+      try {
+        const onNameFilterChange = jest.fn();
+        const { unmount } = renderWithTheme(
+          <SearchResults {...defaultProps} onNameFilterChange={onNameFilterChange} />,
+        );
+        const filterInput = screen.getAllByPlaceholderText(/filter by component name/i)[0];
+
+        fireEvent.change(filterInput, { target: { value: 'test' } });
+        unmount();
+        jest.advanceTimersByTime(500);
+
+        expect(onNameFilterChange).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
+  describe('result card memoization', () => {
+    // SearchResultCard is memoized. Counting its renders directly would mean
+    // wrapping or mocking the component under test, so instead we spy on
+    // getFormatLogo, which the card body calls exactly once per render. The
+    // spy keeps the real implementation, so the call count is a faithful
+    // render count for the real component.
+    let renderSpy;
+
+    beforeEach(() => {
+      renderSpy = jest.spyOn(formatLogos, 'getFormatLogo');
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    function cardRenderCount() {
+      return renderSpy.mock.calls.length;
+    }
+
+    it('does not re-render result cards when the parent re-renders with the same results', () => {
+      const { rerender } = renderWithTheme(<SearchResults {...defaultProps} />);
+      const afterMount = cardRenderCount();
+      expect(afterMount).toBe(mockResults.length);
+
+      // totalCount is consumed by the results header, not by any card, so a
+      // change to it must not cost a card render.
+      rerender(
+        <Theme>
+          <SearchResults {...defaultProps} totalCount={99} />
+        </Theme>
+      );
+
+      expect(cardRenderCount()).toBe(afterMount);
+    });
+
+    it('does not re-render result cards while the user types in the name filter', () => {
+      jest.useFakeTimers();
+      try {
+        renderWithTheme(<SearchResults {...defaultProps} />);
+        const afterMount = cardRenderCount();
+        const filterInput = screen.getAllByPlaceholderText(/filter by component name/i)[0];
+
+        fireEvent.change(filterInput, { target: { value: 'l' } });
+        fireEvent.change(filterInput, { target: { value: 'lo' } });
+        fireEvent.change(filterInput, { target: { value: 'lod' } });
+
+        expect(cardRenderCount()).toBe(afterMount);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('re-renders the affected card when a result lastUpdated changes', () => {
+      // Cards render through the shared formatter (NEXUS-54427), whose wall clock and offset depend
+      // on the timezone of the machine running the suite — jest.config.js pins none. Expectations
+      // are therefore built with the same formatter rather than hardcoded, which keeps the
+      // assertions exact without making them zone-dependent.
+      const { rerender } = renderWithTheme(<SearchResults {...defaultProps} />);
+      expect(screen.getByText(formatDateTime('2024-01-15T10:00:00Z'))).toBeInTheDocument();
+
+      const updatedResults = [
+        { ...mockResults[0], lastUpdated: '2024-09-20T10:00:00Z' },
+        mockResults[1],
+      ];
+      rerender(
+        <Theme>
+          <SearchResults {...defaultProps} results={updatedResults} />
+        </Theme>
+      );
+
+      expect(screen.getByText(formatDateTime('2024-09-20T10:00:00Z'))).toBeInTheDocument();
+      expect(screen.queryByText(formatDateTime('2024-01-15T10:00:00Z'))).not.toBeInTheDocument();
+      // The untouched result keeps its own timestamp.
+      expect(screen.getByText(formatDateTime('2024-01-10T08:00:00Z'))).toBeInTheDocument();
     });
   });
 });

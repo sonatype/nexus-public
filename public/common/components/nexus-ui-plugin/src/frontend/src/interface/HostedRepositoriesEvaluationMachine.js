@@ -46,7 +46,8 @@ export default FormUtils.buildFormMachine({
       monitoringFilter: 'all',
       offsetPage: 0,
       sortField: 'name',
-      sortDirection: 'asc'
+      sortDirection: 'asc',
+      permissionDenied: false
     },
     states: {
       loading: {
@@ -57,7 +58,7 @@ export default FormUtils.buildFormMachine({
               actions: ['setRepositoryData']
             },
             onError: {
-              actions: ['setLoadError']
+              actions: ['setPermissionDenied', 'setLoadError']
             }
           },
           {
@@ -66,7 +67,7 @@ export default FormUtils.buildFormMachine({
               actions: ['setFormatsData']
             },
             onError: {
-              actions: ['setDefaultFormats']
+              actions: ['setPermissionDenied', 'setDefaultFormats']
             }
           },
           {
@@ -75,7 +76,7 @@ export default FormUtils.buildFormMachine({
               actions: ['setExistingSettings']
             },
             onError: {
-              actions: [assign({
+              actions: ['setPermissionDenied', assign({
                 existingSettings: null,
                 hasSelections: false
               })]
@@ -83,6 +84,10 @@ export default FormUtils.buildFormMachine({
           }
         ],
         always: [
+          {
+            target: 'loaded',
+            cond: (context) => context.permissionDenied
+          },
           {
             target: 'loaded',
             cond: (context) => context.repositories !== undefined && context.formats.length > 0 && context.existingSettings !== undefined
@@ -150,6 +155,14 @@ export default FormUtils.buildFormMachine({
           PATCH: {
             target: 'patching',
             cond: 'canSave'
+          },
+          PATCH_SETTINGS: {
+            target: 'patchingSettings',
+            cond: 'canSave'
+          },
+          PATCH_REPOSITORIES: {
+            target: 'patchingRepositories',
+            cond: 'canSave'
           }
         }
       },
@@ -170,6 +183,47 @@ export default FormUtils.buildFormMachine({
             actions: ['setSaveError', 'logSaveError']
           }
         }
+      },
+      patchingSettings: {
+        entry: ['clearSaveError'],
+        invoke: {
+          src: 'patchSettings',
+          onDone: {
+            target: 'loaded',
+            actions: [
+              'clearDirtyFlag',
+              'clearSaveError',
+              'setSavedData'
+            ]
+          },
+          onError: {
+            target: 'loaded',
+            actions: ['setSaveError', 'logSaveError']
+          }
+        }
+      },
+      patchingRepositories: {
+        entry: ['clearSaveError'],
+        invoke: {
+          src: 'patchRepositories',
+          onDone: {
+            target: 'loaded',
+            actions: [
+              'clearDirtyFlag',
+              'clearSaveError',
+              'setSavedData'
+            ]
+          },
+          onError: {
+            target: 'loaded',
+            actions: ['setSaveError', 'logSaveError']
+          }
+        }
+      }
+    },
+    on: {
+      RETRY: {
+        actions: [assign({permissionDenied: false, loadError: null})]
       }
     }
   })
@@ -219,6 +273,18 @@ export default FormUtils.buildFormMachine({
       return {
         existingSettings: event.data?.data || event.data || null
       };
+    }),
+    
+    // Override of FormUtils.setLoadError to surface the backend message body (CLM-42478).
+    setLoadError: assign({
+      loadError: (_, event) => {
+        const message = event.data?.response?.data?.message || event.data?.message;
+        return message ? `${message}` : null;
+      }
+    }),
+
+    setPermissionDenied: assign({
+      permissionDenied: (context, event) => context.permissionDenied || event.data?.response?.status === 403
     }),
 
     validate: assign({
@@ -342,6 +408,48 @@ export default FormUtils.buildFormMachine({
       }
 
       return response;
+    },
+
+    patchSettings: async ({data}) => {
+      const PUBLIC = getPublicAPI();
+      const settings = data.settings || {};
+      const patchPayload = {};
+      if (settings.activityTimeFrame != null && settings.activityTimeFrame !== '') {
+        patchPayload.activityTimeFrame = parseInt(settings.activityTimeFrame, 10);
+      }
+      if (settings.artifactLatestVersions != null && settings.artifactLatestVersions !== '') {
+        patchPayload.artifactLatestVersions = parseInt(settings.artifactLatestVersions, 10);
+      }
+      if (settings.versionDepth != null && settings.versionDepth !== '') {
+        patchPayload.versionDepth = parseInt(settings.versionDepth, 10);
+      }
+      if (settings.policyEvaluationStage) {
+        patchPayload.policyEvaluationStage = settings.policyEvaluationStage.toUpperCase().replace(/-/g, '_');
+      }
+      if (settings.applyToNewRepos !== undefined) {
+        patchPayload.autoEnrollNewRepos = settings.applyToNewRepos;
+      }
+      if (Object.keys(patchPayload).length === 0) {
+        throw new Error('No settings fields provided');
+      }
+      return await Axios.patch(PUBLIC.EVALUATION_SETTINGS, patchPayload);
+    },
+
+    patchRepositories: async ({data}) => {
+      const PUBLIC = getPublicAPI();
+      const repositoriesToAdd = data.repositoriesToAdd || [];
+      const repositoriesToRemove = data.repositoriesToRemove || [];
+      const patchPayload = {};
+      if (repositoriesToAdd.length > 0) {
+        patchPayload.addRepositoryIds = repositoriesToAdd;
+      }
+      if (repositoriesToRemove.length > 0) {
+        patchPayload.removeRepositoryIds = repositoriesToRemove;
+      }
+      if (Object.keys(patchPayload).length === 0) {
+        throw new Error('No repository changes provided');
+      }
+      return await Axios.patch(PUBLIC.EVALUATION_REPOSITORIES, patchPayload);
     }
   }
 });

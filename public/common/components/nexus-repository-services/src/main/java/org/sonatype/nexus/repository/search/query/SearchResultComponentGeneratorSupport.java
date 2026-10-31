@@ -26,7 +26,7 @@ import org.sonatype.nexus.selector.VariableSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.15
@@ -47,9 +47,9 @@ public abstract class SearchResultComponentGeneratorSupport
       final RepositoryManager repositoryManager,
       final ContentPermissionChecker contentPermissionChecker)
   {
-    this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
+    this.variableResolverAdapterManager = requireNonNull(variableResolverAdapterManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.contentPermissionChecker = requireNonNull(contentPermissionChecker);
   }
 
   protected String getPrivilegedRepositoryName(final ComponentSearchResult source) {

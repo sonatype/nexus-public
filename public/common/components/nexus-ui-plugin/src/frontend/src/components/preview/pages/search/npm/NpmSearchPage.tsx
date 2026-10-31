@@ -73,7 +73,7 @@ export function NpmSearchPage({
         name: initialName,
       });
     }
-  }, []); // Only on mount
+  }, [initialName, initialScope, search]); // Only on mount
 
   /**
    * Handle search submission.

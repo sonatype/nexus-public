@@ -23,8 +23,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.HashingInputStream;
 import com.google.common.io.ByteStreams;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link HashCode} helpers.
@@ -41,8 +40,8 @@ public final class Hashes
    * Computes the hash of the given stream using the given algorithm.
    */
   public static HashCode hash(final HashAlgorithm algorithm, final InputStream inputStream) throws IOException {
-    checkNotNull(algorithm);
-    checkNotNull(inputStream);
+    requireNonNull(algorithm);
+    requireNonNull(inputStream);
 
     try (HashingInputStream hashingStream = new HashingInputStream(algorithm.function(), inputStream)) {
       ByteStreams.copy(hashingStream, ByteStreams.nullOutputStream());
@@ -57,8 +56,8 @@ public final class Hashes
       final Iterable<HashAlgorithm> algorithms,
       final InputStream inputStream) throws IOException
   {
-    checkNotNull(algorithms);
-    checkNotNull(inputStream);
+    requireNonNull(algorithms);
+    requireNonNull(inputStream);
 
     try (MultiHashingInputStream hashingStream = MultiHashingInputStreamFactory.input(algorithms, inputStream)) {
       ByteStreams.copy(hashingStream, ByteStreams.nullOutputStream());

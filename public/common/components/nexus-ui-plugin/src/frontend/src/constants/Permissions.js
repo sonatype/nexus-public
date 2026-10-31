@@ -43,11 +43,13 @@ const Permissions = {
   ADMIN: 'nexus:*',
   REPOSITORY_ADMIN: {
     READ: 'nexus:repository-admin:*:*:read',
+    EDIT: 'nexus:repository-admin:*:*:edit',
+    DELETE: 'nexus:repository-admin:*:*:delete',
   },
   SSL_TRUSTSTORE: generatePermissions('ssl-truststore'),
   BLOB_STORES: generatePermissions('blobstores', [READ, CREATE, UPDATE, DELETE]),
   PRIVILEGES: generatePermissions('privileges', [READ, CREATE]),
-  SELECTORS: generatePermissions('selectors', [READ, CREATE]),
+  SELECTORS: generatePermissions('selectors', [READ, CREATE, UPDATE, DELETE]),
   SETTINGS: generatePermissions('settings', [READ, UPDATE]),
   USERS: generatePermissions('users', [READ]),
   ROLES: generatePermissions('roles'),
@@ -60,11 +62,20 @@ const Permissions = {
   LDAP: generatePermissions('ldap'),
   USER_TOKENS_SETTINGS: generatePermissions('usertoken-settings', [READ, UPDATE]),
   USER_TOKENS_USERS: generatePermissions('usertoken-users', [DELETE]),
-  TAGS: generatePermissions('tags', [READ]),
+  SERVICE_ACCOUNTS: generatePermissions('service-accounts', [READ, CREATE, DELETE]),
+  TAGS: generatePermissions('tags', [READ, CREATE, DELETE]),
+  HEALTHCHECK: generatePermissions('healthcheck', [READ, UPDATE]),
+  // Governs the security-alert and license-threat data inside a health check response, separately
+  // from HEALTHCHECK above, which governs the response as a whole.
+  //
+  // READ additionally guards the per-asset Sonatype Lifecycle report: both
+  // HealthCheckFileDetailResource and Classic's NX.proui.controller.HealthCheckAssetDetail gate on
+  // nexus:healthcheckalerts:read, which is a different permission from the UPDATE used above.
+  HEALTHCHECK_ALERTS: generatePermissions('healthcheckalerts', [READ, UPDATE]),
+  IQ_VIOLATION_SUMMARY: generatePermissions('iq-violation-summary', [READ]),
   COMPONENT: generatePermissions('component', [CREATE]),
   SEARCH: generatePermissions('search', [READ]),
   CAPABILITIES: generatePermissions('capabilities'),
-  MIGRATION: generatePermissions('migration', [READ]),
   AUDIT: generatePermissions('audit', [READ]),
 };
 

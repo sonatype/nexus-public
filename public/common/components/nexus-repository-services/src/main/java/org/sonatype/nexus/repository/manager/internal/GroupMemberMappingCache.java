@@ -45,7 +45,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Maintain mapping of which groups a member repository is contained in
@@ -67,7 +67,7 @@ public class GroupMemberMappingCache
   private RepositoryManager repositoryManager;
 
   public void init(final RepositoryManager repositoryManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   private boolean shouldSkipEvent(final String repositoryName) {

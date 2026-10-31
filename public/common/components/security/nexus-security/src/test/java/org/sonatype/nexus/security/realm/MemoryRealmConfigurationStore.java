@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * In-memory {@link RealmConfigurationStore}.
@@ -49,7 +49,7 @@ public class MemoryRealmConfigurationStore
 
   @Override
   public synchronized void save(final RealmConfiguration configuration) {
-    this.model = checkNotNull(configuration);
+    this.model = requireNonNull(configuration);
   }
 
   /**

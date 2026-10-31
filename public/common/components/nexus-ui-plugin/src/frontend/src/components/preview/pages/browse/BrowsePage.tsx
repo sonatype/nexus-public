@@ -20,21 +20,19 @@ import {
   Grid,
   Heading,
   IconButton,
-  ScrollArea,
-  Select,
-  Separator,
+  Link,
   Text,
   TextField,
   Tooltip,
 } from '@radix-ui/themes';
-import { ArrowUpDown, Copy, Filter, FolderTree, Search, X } from 'lucide-react';
+import { Copy, ExternalLink, FolderTree, Search, X } from 'lucide-react';
 import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
-import { ExtJS } from '../../../../interface/ExtJS';
 
 import { RepositoryListTable } from './repository-list/RepositoryListTable';
 import { useRepositoryList, isIqServerEnabled } from './repository-list/useRepositoryList';
 import { useRepositoryListServer, arrayToFilterString } from './repository-list/useRepositoryListServer';
-import { BrowseTree } from './tree/BrowseTree';
+import { BrowseTree, safeDecodeURI } from './tree/BrowseTree';
+import { BROWSE_ROUTE_STATES } from './browse.routes';
 import { DetailPanel, type ComponentData, type AssetData } from './detail/DetailPanel';
 import type { BrowseNode, BrowseTreeRef } from './tree/browse-tree.types';
 import { fetchAsset, fetchComponent, type SearchResultItem } from './browse.api';
@@ -44,21 +42,27 @@ import { FORMAT_LABELS, TYPE_LABELS } from '../settings/repository/repositories/
 import { isHealthCheckSupportedFormat } from '../../../../utils/healthCheckFormats';
 
 import { restClient, ENDPOINTS } from '../../../../interface/api';
+import ExtJS from '../../../../interface/ExtJS';
 import { isMockMode } from '../../config/featureFlags';
 import { MOCK_REPOSITORIES } from './mockData';
 import { ResizablePanel } from './ResizablePanel';
 
 // Import shared components
 import {
-  PageHeader,
   TablePagination,
   useToast,
+  useDebounced,
 } from '../../shared';
+import { useIsLicensedEdition } from '../../shared/hooks';
+import { APIConstants } from '../../../../constants/APIConstants';
 import MalwareBanner from '../../shared/security/MalwareBanner';
 import { BrowseFilterSidebar } from './repository-list/BrowseFilterSidebar';
 import { MobileFilterDrawer } from '../search/unified/MobileFilterDrawer';
 import { Breadcrumbs } from '../search/details/Breadcrumbs';
 import { useBrowseBreadcrumbs } from './useBrowseBreadcrumbs';
+import { useCanDelete } from './useCanDelete';
+import { useRepositoryType } from './useRepositoryType';
+import { htmlViewUrl } from './browse.urls';
 import { InRepositorySearch } from './InRepositorySearch';
 
 import './BrowsePage.scss';
@@ -99,27 +103,29 @@ const STRINGS = {
   filterPlaceholder: 'Filter by name...',
   treeDrawerTitle: 'Repository contents',
   showTree: 'Show tree',
+  /** Matches Classic UI's Component_Asset_Tree_Html_View label. */
+  htmlView: 'HTML View',
+  htmlViewTitle: 'Open the server-rendered HTML view of this repository in a new tab',
 };
-
-/** Sort options for Browse repository list (matches RepositoryListTable columns). */
-const BROWSE_SORT_OPTIONS = [
-  { value: 'name', label: 'Name' },
-  { value: 'type', label: 'Type' },
-  { value: 'format', label: 'Format' },
-  { value: 'status', label: 'Status' },
-];
 
 /** Default page size for Browse repository list (matches Search-like behavior). */
 const BROWSE_DEFAULT_PAGE_SIZE = 40;
 
+/** Fields the repository list can be sorted by. Status is offered as a filter only. */
+const SORTABLE_FIELDS = ['name', 'type', 'format'] as const;
+
 /**
- * Route state names for browse navigation.
+ * The name filter is applied on a debounce so typing does not issue a request per keystroke.
+ * Reuses the app-wide debounce interval (`APIConstants.DEBOUNCE_DELAY`) rather than picking a
+ * local value, so this list settles at the same pace as every other filtered list in the UI.
  */
-const ROUTE_STATES = {
-  base: 'preview.browse.browse',
-  repo: 'preview.browse.browse.repo',
-  path: 'preview.browse.browse.repo.path',
-};
+const NAME_FILTER_DEBOUNCE_MS = APIConstants.DEBOUNCE_DELAY;
+
+/**
+ * Route state names for browse navigation. Aliased to the shared source of truth
+ * ({@link BROWSE_ROUTE_STATES}) so deep-link builders elsewhere target the same states.
+ */
+const ROUTE_STATES = BROWSE_ROUTE_STATES;
 
 /**
  * BrowsePage is the main entry point for the Browse functionality.
@@ -143,7 +149,7 @@ export function BrowsePage(): JSX.Element {
 
   const browseMachine = useMemo(
     () => createBrowseMachine(params.repoName || undefined),
-    [], // eslint-disable-line react-hooks/exhaustive-deps
+    []
   );
 
   const [machineState, send] = useMachine(browseMachine, {
@@ -159,13 +165,26 @@ export function BrowsePage(): JSX.Element {
               'Unable to load asset details. The asset identifier is missing.'
             ));
           }
-          const assetPromise = fetchAsset(ctx.selectedNode.assetId, ctx.selectedRepository);
-          const componentPromise = ctx.selectedNode.componentId
-            ? fetchComponent(ctx.selectedNode.componentId, ctx.selectedRepository).catch(() => null)
-            : Promise.resolve(null);
+          // Classic's order (ComponentAssetTree.setInfoPanelModel): read the asset, then read its
+          // component using `asset.componentId`. An asset browse node carries componentId: null —
+          // the owning component's id only exists on the asset response — so gating the component
+          // fetch on the node's id left componentData null for every asset selection, which is what
+          // emptied the Component Tags tab, reduced dependency snippets to filename-derived
+          // coordinates, and hid the Sonatype Lifecycle tab (NEXUS-54501).
+          const assetId = ctx.selectedNode.assetId;
+          const repositoryName = ctx.selectedRepository;
+          const nodeComponentId = ctx.selectedNode.componentId;
 
-          return Promise.all([assetPromise, componentPromise]).then(
-            ([asset, comp]) => ({
+          return fetchAsset(assetId, repositoryName).then((asset) => {
+            const rawComponentId = asset.componentId || nodeComponentId;
+            // A blob with no owning component is a real state (e.g. a NuGet feed index): resolve to
+            // null rather than requesting a component that does not exist. The panel degrades to no
+            // tags, no snippets, and no Lifecycle tab, exactly as Classic does with its empty model.
+            const componentPromise = rawComponentId
+              ? fetchComponent(rawComponentId, repositoryName).catch(() => null)
+              : Promise.resolve(null);
+
+            return componentPromise.then((comp) => ({
               asset: {
                 id: asset.id,
                 name: asset.name,
@@ -174,18 +193,26 @@ export function BrowsePage(): JSX.Element {
                 size: asset.size,
                 repositoryName: asset.repositoryName,
                 blobCreated: asset.blobCreated || null,
-                blobUpdated: asset.lastModified || null,
+                // ExtDirect readAsset returns blobUpdated; lastModified is a REST-only fallback.
+                // Preferring blobUpdated fixes the empty "Updated" row (NEXUS-54501).
+                blobUpdated: asset.blobUpdated || asset.lastModified || null,
                 lastDownloaded: asset.lastDownloaded || null,
                 path: asset.path || asset.name,
                 downloadUrl: asset.downloadUrl, // absolute URL from server — includes context path, preferred over client-generated URL
                 blobRef: asset.blobRef,
                 createdBy: asset.createdBy,
-                createdByIp: asset.createdByIp, // intentionally not rendered — privacy concern
+                createdByIp: asset.createdByIp, // rendered for Classic parity (NEXUS-54501)
+                containingRepositoryName: asset.containingRepositoryName,
                 checksum: asset.checksum,
                 // Pass through format-specific attributes (e.g. attributes.docker)
                 // so the Attributes tab can surface image metadata (NEXUS-51972).
                 attributes: asset.attributes,
                 registryUrl: asset.registryUrl,
+                // RAW internal component id, straight from ExtDirect readAsset. The tag lookup and
+                // the Lifecycle gate both need this form; componentData.id is the base64
+                // RepositoryItemIDXO the REST API returns, which the ExtDirect methods reject
+                // (same distinction as useCanDelete / NEXUS-54171).
+                componentId: rawComponentId || undefined,
               } as AssetData,
               component: comp ? {
                 id: comp.id,
@@ -195,8 +222,8 @@ export function BrowsePage(): JSX.Element {
                 name: comp.name,
                 version: comp.version || null,
               } as ComponentData : null,
-            }),
-          );
+            }));
+          });
         }
 
         if (ctx.selectedNode.type === 'component' && ctx.selectedNode.componentId) {
@@ -230,16 +257,38 @@ export function BrowsePage(): JSX.Element {
   // ---------------------------------------------------------------------------
   const selectedRepository = machineState.context.selectedRepository;
   const selectedNode = machineState.context.selectedNode;
-  const repositoryUrl = machineState.context.repositoryUrl;
   const assetData = machineState.context.detailData.asset;
   const componentData = machineState.context.detailData.component;
   const detailLoading = machineState.context.detailData.loading;
   const detailError = machineState.context.detailData.error;
-  const filters: BrowseFilters = {
-    formats: machineState.context.filters.formats,
-    types: machineState.context.filters.types,
-    statuses: machineState.context.filters.statuses,
-  };
+
+  // Repository type drives the local capability gate (group repositories cannot
+  // delete content at all); undefined while it resolves, which denies.
+  const selectedRepositoryType = useRepositoryType(selectedRepository);
+
+  // Classic UI parity: link out to the server-rendered repository listing.
+  const htmlViewHref = useMemo(() => htmlViewUrl(selectedRepository), [selectedRepository]);
+
+  // Server-side preflight — see useCanDelete for why this must not become a
+  // client-side ExtJS.checkPermission wildcard check (NEXUS-53861).
+  const canDelete = useCanDelete(
+    selectedNode,
+    selectedRepository,
+    componentData,
+    selectedRepositoryType
+  );
+  const filters: BrowseFilters = useMemo(
+    () => ({
+      formats: machineState.context.filters.formats,
+      types: machineState.context.filters.types,
+      statuses: machineState.context.filters.statuses,
+    }),
+    [
+      machineState.context.filters.formats,
+      machineState.context.filters.types,
+      machineState.context.filters.statuses,
+    ],
+  );
   const nameFilter = machineState.context.filters.nameFilter;
 
   // Measure the sticky header so table column headers stick below it
@@ -257,7 +306,7 @@ export function BrowsePage(): JSX.Element {
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [selectedRepository]);
+  }, []);
 
   // =========================================================================
   // URL Params Sync
@@ -278,10 +327,12 @@ export function BrowsePage(): JSX.Element {
       // (mirrors handleBackToList breadcrumb behavior)
       send({ type: 'BACK' });
     }
-  }, [params.repoName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [params.repoName]);
 
-  // Decode path from URL if present
-  const initialPath = params.path ? decodeURIComponent(params.path) : undefined;
+  // Decode path from URL if present. safeDecodeURI (not a bare decodeURIComponent) so a param that
+  // is not valid percent-encoding — e.g. a deep link to a file literally named "100%.txt" — degrades
+  // to the raw string instead of throwing a URIError here in the render body and blanking the page.
+  const initialPath = params.path ? safeDecodeURI(params.path) : undefined;
 
   // =========================================================================
   // Independent Hooks (unchanged — NOT part of the machine)
@@ -292,6 +343,7 @@ export function BrowsePage(): JSX.Element {
   const {
     repositories: serverRepositories,
     loading: serverLoading,
+    hasLoadedOnce: serverHasLoadedOnce,
     error: serverError,
     filterParams,
     setFilterParams,
@@ -314,6 +366,15 @@ export function BrowsePage(): JSX.Element {
   const toast = useToast();
   const [analyzingRepos, setAnalyzingRepos] = useState<Set<string>>(new Set());
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const isLicensedEdition = useIsLicensedEdition();
+
+  // Soft-delete feature active (flag + PRO/cloud). Deleting hosted content under this mode moves it to
+  // Trash (recoverable) — drives the DetailPanel delete-confirm copy.
+  const softDeleteFeatureEnabled =
+    (ExtJS.state()?.getValue?.('nexus.softDelete.enabled', false) ?? false) &&
+    isLicensedEdition;
+  const softDeleteRetentionDays = ExtJS.state()?.getValue?.('softDeleteRetentionDays');
 
   const handleAnalyze = useCallback(async (repositoryName: string) => {
     setAnalyzingRepos((prev) => new Set(prev).add(repositoryName));
@@ -338,7 +399,22 @@ export function BrowsePage(): JSX.Element {
 
   // Fetch ALL repositories for filter options (using server-side API with large page size)
   const [allReposForFilters, setAllReposForFilters] = useState<RepositoryReference[]>([]);
-  const [filterOptionsLoading, setFilterOptionsLoading] = useState(true);
+  const [_filterOptionsLoading, setFilterOptionsLoading] = useState(true);
+
+  // Soft-delete is gated server-side by enabled + hosted + per-format allowlist, so the delete-confirm
+  // "moved to Trash" copy must apply the same three checks. Resolve the selected repo (type + format)
+  // from the full repository list, and the allowlist from published state ("*" means all formats).
+  const softDeleteFormats = (ExtJS.state()?.getValue?.('softDeleteFormats') as string[] | undefined) ?? [];
+  const selectedRepositoryRef = useMemo(
+    () => allReposForFilters.find((repo) => repo.name === selectedRepository),
+    [allReposForFilters, selectedRepository],
+  );
+  const selectedRepositoryIsHosted = selectedRepositoryRef?.type === 'hosted';
+  const selectedFormatSoftDeleteEligible = !!selectedRepositoryRef
+    && (softDeleteFormats.includes('*')
+      || softDeleteFormats.includes(selectedRepositoryRef.format?.toLowerCase()));
+  const repositorySoftDeleteActive =
+    softDeleteFeatureEnabled && selectedRepositoryIsHosted && selectedFormatSoftDeleteEligible;
 
   useEffect(() => {
     let cancelled = false;
@@ -532,9 +608,8 @@ export function BrowsePage(): JSX.Element {
   // =========================================================================
 
   /**
-   * Handle repository selection from the list (row click, chevron).
+   * Handle repository selection from the list (row click).
    * Navigate to Browse Contents (folder tree) in same tab.
-   * Eye icon uses handleViewProfile in RepositoryListTable to go to repository-profile.
    */
   const handleSelectRepository = useCallback(
     (repoName: string) => {
@@ -599,6 +674,21 @@ export function BrowsePage(): JSX.Element {
   }, [send, selectedRepository, selectedNode, router]);
 
   /**
+   * Handle a *rejected* deletion.
+   *
+   * The node stays selected and the route is left alone — only the affected tree
+   * level is re-read, because a rejected delete can still have partially
+   * succeeded server-side. The tree therefore ends up showing what
+   * the server holds, without this path ever dropping a node on its own.
+   */
+  const handleDeleteFailed = useCallback(() => {
+    const nodeId = selectedNode?.id;
+    if (nodeId && browseTreeRef.current) {
+      browseTreeRef.current.reconcileNode(nodeId);
+    }
+  }, [selectedNode]);
+
+  /**
    * Copy the current Preview UI page URL to clipboard so that opening it in a
    * new tab re-opens the same Browse view instead of navigating to Classic UI.
    */
@@ -644,7 +734,7 @@ export function BrowsePage(): JSX.Element {
               componentId: rawId || searchResult.id,
             };
             send({ type: 'SELECT_NODE', node });
-          } catch (err) {
+          } catch (_err) {
             // Fallback: select node without component ID
             const node: BrowseNode = {
               id: path,
@@ -726,15 +816,34 @@ export function BrowsePage(): JSX.Element {
   );
 
   /**
-   * Handle name filter change.
+   * Handle name filter change. The input value updates immediately so typing stays
+   * responsive; the value actually sent to the server is debounced below.
    */
   const handleNameFilterChange = useCallback(
     (value: string) => {
       send({ type: 'SET_NAME_FILTER', value });
-      syncFiltersToServer(filters, value);
     },
-    [send, filters, syncFiltersToServer],
+    [send],
   );
+
+  // Apply the name filter once typing settles. Only the name filter is sent here — the hook
+  // merges it into the filters already applied, so a checkbox selected while this is pending
+  // is preserved rather than overwritten.
+  const debouncedNameFilter = useDebounced(nameFilter, NAME_FILTER_DEBOUNCE_MS);
+
+  useEffect(() => {
+    // Wait until the debounce has caught up with what the user actually typed. Without this,
+    // a lagging value would be re-applied over a filter change that already carried the
+    // current name (a checkbox click, or a reset), costing an extra request and briefly
+    // showing results for a filter the user had already moved on from.
+    if (debouncedNameFilter !== nameFilter) {
+      return;
+    }
+    const applied = debouncedNameFilter || undefined;
+    if (applied !== filterParams.nameFilter) {
+      setFilterParams({ nameFilter: applied });
+    }
+  }, [debouncedNameFilter, nameFilter, filterParams.nameFilter, setFilterParams]);
 
   // Sync format from URL params
   useEffect(() => {
@@ -750,12 +859,11 @@ export function BrowsePage(): JSX.Element {
         });
       }
     }
-  }, [params.format]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [params.format]);
 
   // Health check filter options (computed from repos)
   const healthCheckOptions = useMemo(() => {
     if (!showHealthCheckColumn) return [];
-    const hcFormats = new Set(['maven2','npm','nuget','pypi','rubygems','cocoapods','conan','conda','go','r','apt']);
     const allRepos = allReposForFilters.length > 0 ? allReposForFilters : serverRepositories;
     let activeCount = 0, analyzeCount = 0, unsupportedCount = 0;
     for (const repo of allRepos) {
@@ -808,31 +916,6 @@ export function BrowsePage(): JSX.Element {
 
     const displayTotal = totalCount.toLocaleString();
 
-    const renderSortDropdown = (triggerStyle?: React.CSSProperties) => (
-      <Select.Root
-        value={sortField}
-        onValueChange={(field) => handleSort(field, sortDirection)}
-        size="2"
-      >
-        <Select.Trigger style={{ width: 180, flexShrink: 0, ...triggerStyle }}>
-          <Flex align="center" gap="2">
-            <ArrowUpDown size={14} aria-hidden />
-            <Text size="2">sort:</Text>
-            <Text size="2">
-              {BROWSE_SORT_OPTIONS.find((o) => o.value === sortField)?.label ?? 'Name'}
-            </Text>
-          </Flex>
-        </Select.Trigger>
-        <Select.Content position="popper" side="bottom" avoidCollisions={false} sideOffset={4}>
-          {BROWSE_SORT_OPTIONS.map((opt) => (
-            <Select.Item key={opt.value} value={opt.value}>
-              {opt.label}
-            </Select.Item>
-          ))}
-        </Select.Content>
-      </Select.Root>
-    );
-
     const filterBarContent = (
       <BrowseFilterSidebar
         formatOptions={filterOptions.formats}
@@ -846,6 +929,7 @@ export function BrowsePage(): JSX.Element {
         selectedProtection={protectionFilter}
         selectedHealthCheck={healthCheckFilter}
         sortField={sortField}
+        sortableFields={SORTABLE_FIELDS}
         sortDirection={sortDirection}
         onFormatsChange={handleFormatsChange}
         onTypesChange={handleTypesChange}
@@ -854,7 +938,6 @@ export function BrowsePage(): JSX.Element {
         onHealthCheckChange={healthCheckOptions.length > 0 ? setHealthCheckFilter : undefined}
         onSortChange={handleSort}
         onResetFilters={handleResetFilters}
-        disabled={isLoading}
       />
     );
 
@@ -938,6 +1021,7 @@ export function BrowsePage(): JSX.Element {
                 <RepositoryListTable
                   repositories={filteredRepositories}
                   loading={isLoading}
+                  hasLoadedOnce={serverHasLoadedOnce}
                   error={hasError}
                   onSelect={handleSelectRepository}
                   healthCheck={repoState.healthCheck}
@@ -1057,6 +1141,28 @@ export function BrowsePage(): JSX.Element {
                       Copy URL
                     </Button>
                   </Tooltip>
+                  {/*
+                    Classic UI parity: the server-rendered HTML view of
+                    the repository. Opens in a new tab like Classic, so it carries
+                    noopener/noreferrer. Classic's neighbouring "Advanced search..."
+                    link is deliberately NOT ported — out of scope for this ticket.
+                  */}
+                  {htmlViewHref && (
+                    <Tooltip content={STRINGS.htmlViewTitle}>
+                      <Link
+                        href={htmlViewHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="2"
+                        data-testid="browse-html-view-link"
+                      >
+                        <Flex as="span" align="center" gap="1">
+                          {STRINGS.htmlView}
+                          <ExternalLink size={14} aria-hidden="true" />
+                        </Flex>
+                      </Link>
+                    </Tooltip>
+                  )}
                 </Flex>
               </Flex>
             </Grid>
@@ -1093,9 +1199,12 @@ export function BrowsePage(): JSX.Element {
                 loading={detailLoading}
                 error={detailError}
                 onDeleted={handleDeleted}
-                canDelete={true}
+                onDeleteFailed={handleDeleteFailed}
+                canDelete={canDelete}
                 activeTab={params.tab || 'summary'}
                 onTabChange={handleTabChange}
+                softDelete={repositorySoftDeleteActive}
+                retentionDays={typeof softDeleteRetentionDays === 'number' ? softDeleteRetentionDays : undefined}
               />
             }
             defaultLeftWidth={400}

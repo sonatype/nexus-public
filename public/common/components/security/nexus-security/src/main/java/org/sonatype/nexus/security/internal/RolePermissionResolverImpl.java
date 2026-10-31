@@ -23,8 +23,8 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -48,7 +48,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link RolePermissionResolver}.
@@ -57,7 +57,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Qualifier("default")
 public class RolePermissionResolverImpl
-    implements BatchRolePermissionResolver
+    implements BatchRolePermissionResolver, EventAware
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -85,13 +85,11 @@ public class RolePermissionResolverImpl
   public RolePermissionResolverImpl(
       final SecurityConfigurationManager configuration,
       final List<PrivilegeDescriptor> privilegeDescriptors,
-      final EventManager eventManager,
       @Value("${security.roleNotFoundCacheSize:100000}") final int roleNotFoundCacheSize)
   {
-    this.configuration = checkNotNull(configuration);
-    this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
+    this.configuration = requireNonNull(configuration);
+    this.privilegeDescriptors = requireNonNull(privilegeDescriptors);
     this.roleNotFoundCache = CacheBuilder.newBuilder().maximumSize(roleNotFoundCacheSize).build();
-    eventManager.register(this);
   }
 
   /**
@@ -126,7 +124,7 @@ public class RolePermissionResolverImpl
 
   @Override
   public Collection<Permission> resolvePermissionsInRole(final String roleString) {
-    checkNotNull(roleString);
+    requireNonNull(roleString);
 
     // check memory-sensitive cache; use cached value as long as config is not dirty
     Collection<Permission> cachedPermissions = rolePermissionsCache.getIfPresent(roleString);
@@ -301,7 +299,7 @@ public class RolePermissionResolverImpl
    */
   @Nullable
   private PrivilegeDescriptor descriptor(final String privilegeType) {
-    checkNotNull(privilegeType);
+    requireNonNull(privilegeType);
 
     for (PrivilegeDescriptor descriptor : privilegeDescriptors) {
       if (privilegeType.equals(descriptor.getType())) {
@@ -318,7 +316,7 @@ public class RolePermissionResolverImpl
    */
   @Nullable
   private Permission permission(final String privilegeId) {
-    checkNotNull(privilegeId);
+    requireNonNull(privilegeId);
 
     Permission permission = permissionsCache.getIfPresent(privilegeId);
     if (permission == null) {

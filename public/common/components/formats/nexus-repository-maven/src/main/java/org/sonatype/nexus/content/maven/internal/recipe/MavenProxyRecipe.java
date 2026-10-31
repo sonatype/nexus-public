@@ -13,8 +13,7 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import javax.annotation.Nonnull;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Provider;
+
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.content.maven.internal.index.MavenContentProxyIndexFacet;
 import org.sonatype.nexus.repository.Format;
@@ -34,10 +33,13 @@ import org.sonatype.nexus.repository.view.Route.Builder;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
-import org.springframework.stereotype.Component;
+import jakarta.inject.Provider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 
 /**
  * @since 3.26
@@ -76,23 +78,23 @@ public class MavenProxyRecipe
       final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet)
   {
     super(type, format);
-    this.httpClientFacet = checkNotNull(httpClientFacet);
-    this.negativeCacheFacet = checkNotNull(negativeCacheFacet);
-    this.proxyFacet = checkNotNull(proxyFacet);
-    this.purgeUnusedFacet = checkNotNull(purgeUnusedFacet);
-    this.negativeCacheHandler = checkNotNull(negativeCacheHandler);
-    this.proxyHandler = checkNotNull(proxyHandler);
-    this.mavenProxyIndexFacet = checkNotNull(mavenProxyIndexFacet);
+    this.httpClientFacet = requireNonNull(httpClientFacet);
+    this.negativeCacheFacet = requireNonNull(negativeCacheFacet);
+    this.proxyFacet = requireNonNull(proxyFacet);
+    this.purgeUnusedFacet = requireNonNull(purgeUnusedFacet);
+    this.negativeCacheHandler = requireNonNull(negativeCacheHandler);
+    this.proxyHandler = requireNonNull(proxyHandler);
+    this.mavenProxyIndexFacet = requireNonNull(mavenProxyIndexFacet);
   }
 
   @Override
   public void apply(@Nonnull final Repository repository) throws Exception {
+    repository.attach(mavenContentFacet.get());
     repository.attach(securityFacet.get());
     repository.attach(configure(viewFacet.get()));
     repository.attach(httpClientFacet.get());
     repository.attach(negativeCacheFacet.get());
     repository.attach(proxyFacet.get());
-    repository.attach(mavenContentFacet.get());
     repository.attach(purgeUnusedFacet.get());
     repository.attach(searchFacet.get());
     repository.attach(browseFacet.get());

@@ -47,6 +47,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
     ExtJS: {
       checkPermission: jest.fn(),
       showSuccessMessage: jest.fn(),
+      waitForPermissions: jest.fn().mockResolvedValue(undefined),
     }
   };
 });

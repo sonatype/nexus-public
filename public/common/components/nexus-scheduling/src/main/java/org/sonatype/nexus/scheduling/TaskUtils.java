@@ -23,7 +23,7 @@ import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import org.springframework.stereotype.Component;
@@ -50,7 +50,7 @@ public class TaskUtils
       final Provider<TaskScheduler> taskSchedulerProvider,
       final TaskResultStateStore taskResultStateStoreProvider)
   {
-    this.taskSchedulerProvider = checkNotNull(taskSchedulerProvider);
+    this.taskSchedulerProvider = requireNonNull(taskSchedulerProvider);
     this.taskResultStateStore = taskResultStateStoreProvider;
   }
 

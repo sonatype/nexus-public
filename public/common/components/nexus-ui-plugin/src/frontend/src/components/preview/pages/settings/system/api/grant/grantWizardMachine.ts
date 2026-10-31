@@ -60,7 +60,7 @@ export function initialGrantWizardContext(): GrantWizardContext {
 
 function canAdvanceFrom2(ctx: GrantWizardContext): boolean {
   if (ctx.mode === 'existing') {
-    return !!ctx.existingRoleId;
+    return Boolean(ctx.existingRoleId);
   }
   const id = ctx.newRoleId.trim();
   return NEW_ROLE_ID_PATTERN.test(id) && ctx.newRoleName.trim().length > 0;
@@ -107,7 +107,7 @@ export function createGrantWizardMachine() {
               actions: assign({ mode: 'create' as const, existingRoleId: null }),
             },
             SET_NEW_ROLE_FIELD: {
-              actions: assign((ctx, e) => {
+              actions: assign((_ctx, e) => {
                 if (e.type !== 'SET_NEW_ROLE_FIELD') {
                   return {};
                 }

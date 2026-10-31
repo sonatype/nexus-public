@@ -89,6 +89,8 @@ class S3BlobStoreDescriptorTest
     });
 
     lenient().when(blobStoreManager.browse()).thenAnswer(invocation -> blobStores.values());
+    lenient().when(capabilityRegistryProvider.get()).thenReturn(capabilityRegistry);
+    lenient().when(capabilityRegistry.get(any(Predicate.class))).thenReturn(List.of());
   }
 
   @AfterEach
@@ -170,7 +172,7 @@ class S3BlobStoreDescriptorTest
     config.setName("self");
     config.setAttributes(selfAttributes);
 
-    ValidationException exception = assertThrows(ValidationException.class, () -> {
+    ValidationErrorsException exception = assertThrows(ValidationErrorsException.class, () -> {
       underTest.validateConfig(config);
     });
     assertEquals("Blob Store 'other' is already using bucket 'bucket'", exception.getMessage());
@@ -208,7 +210,7 @@ class S3BlobStoreDescriptorTest
       config.setName("self");
       config.setAttributes(selfAttributes);
 
-      ValidationException exception = assertThrows(ValidationException.class, () -> {
+      ValidationErrorsException exception = assertThrows(ValidationErrorsException.class, () -> {
         underTest.validateConfig(config);
       });
       assertEquals("Blob Store 'other' is already using bucket 'bucket' with prefix '" + prefixPair[0] + "'",
@@ -393,6 +395,129 @@ class S3BlobStoreDescriptorTest
     assertThrows(ValidationErrorsException.class, () -> {
       underTest.validateConfig(config);
     });
+  }
+
+  @Test
+  void validateRegion_throwsOnInvalidRegion() {
+    MockBlobStoreConfiguration config = new MockBlobStoreConfiguration();
+
+    Map<String, Object> s3Attributes = new HashMap<>();
+    s3Attributes.put("bucket", "bucket");
+    s3Attributes.put("region", "us-invalid-99");
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("s3", s3Attributes);
+
+    config.setName("self");
+    config.setAttributes(attributes);
+
+    assertThrows(ValidationErrorsException.class, () -> underTest.validateConfig(config));
+  }
+
+  @Test
+  void validateRegion_acceptsValidAwsRegion() {
+    MockBlobStoreConfiguration config = new MockBlobStoreConfiguration();
+
+    Map<String, Object> s3Attributes = new HashMap<>();
+    s3Attributes.put("bucket", "bucket");
+    s3Attributes.put("region", "us-east-1");
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("s3", s3Attributes);
+
+    config.setName("self");
+    config.setAttributes(attributes);
+
+    underTest.validateConfig(config);
+  }
+
+  @Test
+  void validateRegion_acceptsDefaultRegion() {
+    MockBlobStoreConfiguration config = new MockBlobStoreConfiguration();
+
+    Map<String, Object> s3Attributes = new HashMap<>();
+    s3Attributes.put("bucket", "bucket");
+    s3Attributes.put("region", "DEFAULT");
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("s3", s3Attributes);
+
+    config.setName("self");
+    config.setAttributes(attributes);
+
+    underTest.validateConfig(config);
+  }
+
+  @Test
+  void validateRegion_acceptsBlankRegion() {
+    MockBlobStoreConfiguration config = new MockBlobStoreConfiguration();
+
+    Map<String, Object> s3Attributes = new HashMap<>();
+    s3Attributes.put("bucket", "bucket");
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("s3", s3Attributes);
+
+    config.setName("self");
+    config.setAttributes(attributes);
+
+    underTest.validateConfig(config);
+  }
+
+  @Test
+  void validateRegion_allowsAnyRegionWithEndpointOverride() {
+    MockBlobStoreConfiguration config = new MockBlobStoreConfiguration();
+
+    Map<String, Object> s3Attributes = new HashMap<>();
+    s3Attributes.put("bucket", "bucket");
+    s3Attributes.put("region", "custom-region");
+    s3Attributes.put("endpoint", "https://minio.company.com:9000");
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("s3", s3Attributes);
+
+    config.setName("self");
+    config.setAttributes(attributes);
+
+    underTest.validateConfig(config);
+  }
+
+  @Test
+  void validateRegion_rejectsUpperCaseRegion() {
+    MockBlobStoreConfiguration config = new MockBlobStoreConfiguration();
+
+    Map<String, Object> s3Attributes = new HashMap<>();
+    s3Attributes.put("bucket", "bucket");
+    s3Attributes.put("region", "US-EAST-1");
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("s3", s3Attributes);
+
+    config.setName("self");
+    config.setAttributes(attributes);
+
+    assertThrows(ValidationErrorsException.class, () -> underTest.validateConfig(config));
+  }
+
+  @Test
+  void validateRegion_allowsAnyRegionWithCustomCapabilityEnabled() {
+    S3BlobStoreDescriptor spyDescriptor =
+        spy(new S3BlobStoreDescriptor(quotaService, blobStoreManager, capabilityRegistryProvider, antiSsrfService));
+    doReturn(true).when(spyDescriptor).isCustomS3RegionCapabilityEnabled();
+
+    MockBlobStoreConfiguration config = new MockBlobStoreConfiguration();
+
+    Map<String, Object> s3Attributes = new HashMap<>();
+    s3Attributes.put("bucket", "bucket");
+    s3Attributes.put("region", "custom-region");
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("s3", s3Attributes);
+
+    config.setName("self");
+    config.setAttributes(attributes);
+
+    spyDescriptor.validateConfig(config);
   }
 
   private BlobStore mockBlobStore(String name, String type, Map<String, Map<String, Object>> attributes) {

@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Export/Import {@link KeyStoreData} data to/from JSON file for support zip.
@@ -39,7 +39,7 @@ public class KeyStoreDataExport
 
   @Autowired
   public KeyStoreDataExport(final PersistentKeyStoreStorageManager keyStoreStorageManager) {
-    this.keyStoreStorageManager = checkNotNull(keyStoreStorageManager);
+    this.keyStoreStorageManager = requireNonNull(keyStoreStorageManager);
   }
 
   @Override

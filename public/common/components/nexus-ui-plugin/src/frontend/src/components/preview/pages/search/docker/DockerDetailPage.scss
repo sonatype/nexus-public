@@ -44,7 +44,7 @@
   &__image-name {
     margin: 0 0 var(--nx-spacing-2x, 8px) 0;
     color: var(--nx-color-text-dark, #666);
-    font-family: monospace;
+    font-family: var(--font-family-mono);
     font-size: 0.875rem;
   }
 
@@ -105,7 +105,7 @@
 
     code {
       flex: 1;
-      font-family: monospace;
+      font-family: var(--font-family-mono);
       font-size: 0.875rem;
     }
   }
@@ -162,14 +162,14 @@
   }
 
   &__tag-name {
-    font-family: monospace;
+    font-family: var(--font-family-mono);
     background-color: var(--nx-color-component-background-hover, #f0f0f0);
     padding: 2px 6px;
     border-radius: 3px;
   }
 
   &__digest {
-    font-family: monospace;
+    font-family: var(--font-family-mono);
     font-size: 0.75rem;
     color: var(--nx-color-text-dark, #666);
   }

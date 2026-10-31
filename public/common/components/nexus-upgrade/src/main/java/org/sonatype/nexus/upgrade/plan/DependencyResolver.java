@@ -32,7 +32,7 @@ import org.codehaus.plexus.util.dag.TopologicalSorter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -63,7 +63,7 @@ public class DependencyResolver<T extends DependencySource<T>>
    */
   @SafeVarargs
   public final void add(final T... sources) {
-    checkNotNull(sources);
+    requireNonNull(sources);
     for (T source : sources) {
       // object equality is important for label generation ATM, so complain if there are duplicates
       checkState(!this.sources.containsValue(source), "Duplicate source: %s", source);
@@ -75,7 +75,7 @@ public class DependencyResolver<T extends DependencySource<T>>
    * Add sources.
    */
   public void add(final Collection<T> sources) {
-    checkNotNull(sources);
+    requireNonNull(sources);
     for (T source : sources) {
       add(source);
     }

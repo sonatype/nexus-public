@@ -17,7 +17,7 @@ import org.sonatype.nexus.distributed.event.service.api.EventType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Indicates that a 'Role' configuration has been created, updated or deleted.
@@ -37,7 +37,7 @@ public class RoleConfigurationEvent
       @JsonProperty("eventType") final EventType eventType)
   {
     super(eventType);
-    this.roleId = checkNotNull(roleId);
+    this.roleId = requireNonNull(roleId);
   }
 
   public String getRoleId() {

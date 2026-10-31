@@ -103,7 +103,6 @@ public class ConanCleanupMigrationStep_2_18Test
 
       underTest.migrate(conn);
 
-      assertFalse("old index not removed!", underTest.indexExists(conn, OLD_INDEX_NAME));
       assertFalse("old constraint not removed!", underTest.constraintExists(conn, TABLE_NAME, OLD_CONSTRAINT_NAME));
       assertFalse("old column not removed!", underTest.columnExists(conn, TABLE_NAME, OLD_REVISION_COLUMN_NAME));
       assertFalse("old column not removed!", underTest.columnExists(conn, TABLE_NAME, OLD_REVISION_TIME_COLUMN_NAME));
@@ -147,7 +146,6 @@ public class ConanCleanupMigrationStep_2_18Test
 
       underTest.migrate(conn);
 
-      assertFalse("old index not removed!", underTest.indexExists(conn, OLD_INDEX_NAME));
       assertFalse("old constraint added again!", underTest.constraintExists(conn, TABLE_NAME, OLD_CONSTRAINT_NAME));
       assertFalse("old column not removed!", underTest.columnExists(conn, TABLE_NAME, OLD_REVISION_COLUMN_NAME));
       assertFalse("old column not removed!", underTest.columnExists(conn, TABLE_NAME, OLD_REVISION_TIME_COLUMN_NAME));

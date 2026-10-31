@@ -14,7 +14,7 @@ package org.sonatype.nexus.capability;
 
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link Capability} related events.
@@ -26,7 +26,7 @@ public abstract class CapabilityEvent
   private final CapabilityReference reference;
 
   public CapabilityEvent(final CapabilityReference reference) {
-    this.reference = checkNotNull(reference);
+    this.reference = requireNonNull(reference);
   }
 
   public CapabilityReference getReference() {
@@ -97,8 +97,8 @@ public abstract class CapabilityEvent
         final Map<String, String> previousProperties)
     {
       super(reference);
-      this.properties = checkNotNull(properties);
-      this.previousProperties = checkNotNull(previousProperties);
+      this.properties = requireNonNull(properties);
+      this.previousProperties = requireNonNull(previousProperties);
     }
 
     @Override
@@ -135,8 +135,8 @@ public abstract class CapabilityEvent
         final Map<String, String> previousProperties)
     {
       super(reference);
-      this.properties = checkNotNull(properties);
-      this.previousProperties = checkNotNull(previousProperties);
+      this.properties = requireNonNull(properties);
+      this.previousProperties = requireNonNull(previousProperties);
     }
 
     @Override
@@ -213,8 +213,8 @@ public abstract class CapabilityEvent
         final Exception failure)
     {
       super(reference);
-      this.failingAction = checkNotNull(failingAction);
-      this.failure = checkNotNull(failure);
+      this.failingAction = requireNonNull(failingAction);
+      this.failure = requireNonNull(failure);
     }
 
     @Override

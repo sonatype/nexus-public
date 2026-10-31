@@ -148,7 +148,14 @@ export default {
       TEST_CONNECTION: 'Test Connection',
       TEST_CONNECTION_ERROR: 'Connection failed, check the logs for more information',
       TEST_CONNECTION_SUCCESS: 'Connection succeeded',
-      TESTING: 'Testing connection'
+      TESTING: 'Testing connection',
+      PRE_SIGNED_URL: {
+        LABEL: 'Direct Download (SAS URLs)',
+        SUBLABEL: 'Reduces server bandwidth and improves download speed.',
+        CHECKBOX_LABEL: 'Redirect downloads directly to Azure Blob Storage',
+        RBAC_NOTE: 'The identity needs an Azure role that can generate a user delegation key — ' +
+                   'any Storage Blob Data role, or Storage Blob Delegator. Verified on save.'
+      }
     },
 
     GOOGLE: {

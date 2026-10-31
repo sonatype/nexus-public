@@ -26,8 +26,18 @@ export interface BreadcrumbItem {
 export interface PageHeaderProps {
   /** Page title (omit for breadcrumbs-only mode) */
   title?: string;
+  /** Heading level for the title — defaults to 'h1'. Use 'h2'/'h3' when this header is rendered inside a parent that already provides an h1 (e.g. embedded modal). */
+  headingAs?: 'h1' | 'h2' | 'h3';
+  /**
+   * Optional count/total rendered inline and baseline-aligned to the right of
+   * the title (e.g. the number of items on a list page), visually secondary to
+   * the title. Matches the Repositories list header pattern.
+   */
+  count?: string | number;
   /** Optional description text */
   description?: string;
+  /** Optional node rendered inline immediately after the description text (e.g. a URL chip) */
+  descriptionSuffix?: React.ReactNode;
   /** Optional action buttons (rendered on the right) */
   actions?: React.ReactNode;
   /** Optional breadcrumb navigation */
@@ -73,7 +83,10 @@ export interface PageHeaderProps {
  */
 export function PageHeader({
   title,
+  headingAs = 'h1',
+  count,
   description,
+  descriptionSuffix,
   actions,
   breadcrumbs,
   className = '',
@@ -129,14 +142,31 @@ export function PageHeader({
         <Flex align="center" justify="between" gap="4">
           <Flex direction="column" gap="1">
             {title && (
-              <Heading as="h1" size="6" weight="bold">
-                {title}
-              </Heading>
+              // Title + optional inline count, baseline-aligned (see Repositories header).
+              <Flex align="baseline" gap="2">
+                <Heading as={headingAs} size="6" weight="bold">
+                  {title}
+                </Heading>
+                {count !== undefined && (
+                  <Text size="2" color="gray">
+                    {count}
+                  </Text>
+                )}
+              </Flex>
             )}
             {description && (
-              <Text as="p" size="2" color="gray">
-                {description}
-              </Text>
+              descriptionSuffix ? (
+                <Flex align="center" gap="2">
+                  <Text as="p" size="2" color="gray" style={{ margin: 0 }}>
+                    {description}
+                  </Text>
+                  <Box style={{ flexShrink: 0 }}>{descriptionSuffix}</Box>
+                </Flex>
+              ) : (
+                <Text as="p" size="2" color="gray">
+                  {description}
+                </Text>
+              )
             )}
           </Flex>
 

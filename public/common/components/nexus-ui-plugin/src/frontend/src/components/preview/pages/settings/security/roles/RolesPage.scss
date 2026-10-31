@@ -12,9 +12,6 @@
  */
 
 .roles-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
   padding: var(--space-4, 16px);
   background: var(--color-background, #fff);
   color: var(--color-text-primary, #1a1a1a);
@@ -66,8 +63,7 @@
   }
 
   &__content {
-    flex: 1;
-    // Parent layout (settings-layout-radix__content) handles scrolling
+    // Content flows naturally, parent container handles scrolling
 
     // Add spacing between PageHeader and list content
     .roles-list {

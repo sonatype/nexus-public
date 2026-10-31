@@ -34,7 +34,7 @@ import org.apache.commons.fileupload2.core.FileItemInputIterator;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletRequestContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Servlet multipart-payload adapter.
@@ -47,7 +47,7 @@ class HttpPartIteratorAdapter
   private final HttpServletRequest httpRequest;
 
   public HttpPartIteratorAdapter(final HttpServletRequest httpRequest) {
-    this.httpRequest = checkNotNull(httpRequest);
+    this.httpRequest = requireNonNull(httpRequest);
   }
 
   @Override

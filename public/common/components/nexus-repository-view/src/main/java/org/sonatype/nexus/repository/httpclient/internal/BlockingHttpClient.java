@@ -42,10 +42,10 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.util.Locale.ENGLISH;
+import static java.util.Objects.requireNonNull;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
@@ -108,9 +108,9 @@ public class BlockingHttpClient
       final OutboundRequestMetricRecorder outboundRequestRecorder)
   {
     super(delegate);
-    checkNotNull(config);
-    this.statusObserver = checkNotNull(statusObserver);
-    this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
+    requireNonNull(config);
+    this.statusObserver = requireNonNull(statusObserver);
+    this.autoBlockConfiguration = requireNonNull(autoBlockConfiguration);
     this.outboundRequestRecorder = outboundRequestRecorder;
 
     blocked = config.blocked != null ? config.blocked : false;
@@ -273,6 +273,35 @@ public class BlockingHttpClient
 
   public void setRemoteConnectionStatus(final RemoteConnectionStatus status) {
     this.status = status;
+  }
+
+  /**
+   * Records a connection failure that occurred against the remote, mirroring the IOException
+   * catch in {@link #filter(HttpHost, Filterable)} for facets that issue their own HTTP
+   * requests outside {@code filter()}. When the failure signals the remote is unavailable
+   * (see {@link #isRemoteUnavailable(Exception)}), the remote status is updated: if
+   * auto-block is enabled, the auto-block timer is advanced and the status becomes
+   * {@code AUTO_BLOCKED_UNAVAILABLE}; otherwise the status becomes {@code UNAVAILABLE}.
+   *
+   * <p>
+   * Unlike {@link #filter(HttpHost, Filterable)}, this method does <b>not</b> gate on
+   * {@code mainTarget}: the passed-in {@code target} is used verbatim both to display the
+   * failing URL and as the host the reconnect-probe HEAD is issued against
+   * (see {@link #scheduleCheckStatus(String, org.joda.time.DateTime)}). Callers must therefore
+   * pass a host that is meaningful to auto-block — normally the repository's configured
+   * remote (the {@code mainTarget}), not a helper endpoint on a different host (e.g. an
+   * OAuth realm distinct from the registry). Recording against an unrelated host causes the
+   * probe to check the wrong URL and the auto-block state's {@code requestUrl} to be
+   * misleading.
+   *
+   * @param failure the IOException raised by the failing remote call
+   * @param target the remote host the failed call was directed at; should be the repository's
+   *          configured remote
+   */
+  public void recordConnectionFailure(final IOException failure, final HttpHost target) {
+    if (isRemoteUnavailable(failure)) {
+      updateStatusToUnavailable(getReason(failure), null, target);
+    }
   }
 
   private boolean isRemoteUnavailable(final Exception e) {

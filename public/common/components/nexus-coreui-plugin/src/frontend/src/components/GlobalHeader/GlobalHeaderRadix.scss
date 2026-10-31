@@ -11,6 +11,52 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+// BEM modifiers — preserve inline-style output that previously lived in GlobalHeaderRadix.jsx.
+// Tokens (var(--gray-6), var(--space-3)) match the prior inline values exactly so AC#3
+// ("render identically") holds; do not retune to var(--color-border) — see NEXUS-51836.
+.nxrm-global-header-radix__sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--gray-6);
+  // --color-panel-solid, not --color-surface: surface is a translucent overlay
+  // (rgba(255,255,255,0.85) light / rgba(0,0,0,0.25) dark) and the 25%-opacity
+  // black leaks the page ground through in dark mode, painting the banner gray.
+  background-color: var(--color-panel-solid);
+}
+
+.nxrm-global-header-radix__row {
+  width: 100%;
+}
+
+.nxrm-global-header-radix__side {
+  flex-shrink: 0;
+}
+
+.nxrm-global-header-radix__search {
+  flex: 1 1 0;
+  max-width: 600px;
+  min-width: 200px;
+  display: flex;
+  justify-content: center;
+}
+
+.nxrm-global-header-radix__logo {
+  height: 32px;
+  display: block;
+}
+
+.nxrm-global-header-radix__clickable {
+  cursor: pointer;
+
+  &--disabled {
+    cursor: not-allowed;
+  }
+}
+
 .nxrm-global-header-radix.nx-global-header-2 {
   grid-area: header !important;  // Force into grid
   z-index: 100;
@@ -18,7 +64,7 @@
   max-width: 100%;
   overflow: visible; // Changed from hidden to allow autocomplete dropdown to show
   box-sizing: border-box;
-  background-color: var(--color-surface);
+  background-color: var(--color-panel-solid);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
@@ -91,7 +137,7 @@
   }
   
   [data-theme="dark"] & {
-    background-color: var(--color-surface);
+    background-color: var(--color-panel-solid);
     border-bottom-color: var(--color-border);
   }
 }
@@ -105,9 +151,9 @@
   box-shadow: var(--shadow-5) !important;
 }
 
-// Classic UI unavailable Dialog - ensure it floats above all content
-// This targets the Radix Dialog.Content which renders via portal
-.rt-DialogContent {
+// All Radix Dialog/AlertDialog content — ensure it floats above all content
+// Targets the actual Radix Themes class used by both Dialog and AlertDialog
+.rt-BaseDialogContent {
   background-color: var(--color-panel-solid) !important;
   z-index: 14999 !important;
   border: 1px solid var(--gray-6) !important;
@@ -115,7 +161,7 @@
 }
 
 // Dialog overlay (backdrop) - ensure it dims content behind
-.rt-DialogOverlay {
+.rt-BaseDialogOverlay {
   background-color: rgba(0, 0, 0, 0.5) !important;
   z-index: 14998 !important;
 }

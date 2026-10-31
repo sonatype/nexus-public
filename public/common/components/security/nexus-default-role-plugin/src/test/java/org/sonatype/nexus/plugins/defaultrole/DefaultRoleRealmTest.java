@@ -12,10 +12,12 @@
  */
 package org.sonatype.nexus.plugins.defaultrole;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 import org.sonatype.nexus.security.authz.BatchRolePermissionResolver;
+import org.sonatype.nexus.security.authz.DefaultRoleExemption;
 import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.security.authz.PrincipalPermissionsCacheFactory;
 
@@ -26,6 +28,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.ObjectProvider;
 
 import static java.util.Collections.singleton;
 import static org.hamcrest.CoreMatchers.is;
@@ -45,7 +48,8 @@ public class DefaultRoleRealmTest
 
   @Before
   public void setup() {
-    underTest = new DefaultRoleRealm(new PrincipalPermissionsCacheFactory(false, -1, () -> Time.minutes(2), false, 1));
+    underTest = new DefaultRoleRealm(new PrincipalPermissionsCacheFactory(false, -1, () -> Time.minutes(2), false, 1),
+        providerOf());
   }
 
   @Test
@@ -80,7 +84,8 @@ public class DefaultRoleRealmTest
     BatchRolePermissionResolver resolver = mock(BatchRolePermissionResolver.class);
     when(resolver.resolvePermissionsForRoles(any())).thenReturn(List.of(new WildcardPermission("nexus:foo:read")));
     DefaultRoleRealm caching =
-        new DefaultRoleRealm(new PrincipalPermissionsCacheFactory(true, 250, () -> Time.minutes(60), false, 16));
+        new DefaultRoleRealm(new PrincipalPermissionsCacheFactory(true, 250, () -> Time.minutes(60), false, 16),
+            providerOf());
     caching.setRole("default-role");
     caching.setRolePermissionResolver(resolver);
     PrincipalCollection user = principals("user");
@@ -93,6 +98,52 @@ public class DefaultRoleRealmTest
     }
     assertThat(caching.isPermitted(user, new WildcardPermission("nexus:bar:read")), is(false));
     verify(resolver, times(1)).resolvePermissionsForRoles(any());
+  }
+
+  @Test
+  public void testCacheInvalidation_afterRoleChange_permissionsUpdateImmediately() {
+    // Regression guard for NEXUS-53867: the Shiro authz cache must be cleared when the DefaultRole
+    // capability's configured role is updated, so the new role takes effect on the very next request
+    // with no TTL wait.
+    //
+    // This test drives the DefaultRoleRealm directly (no capability, no event bus) to verify the
+    // cache contract: after invalidatePrincipalPermissions() is called (the method
+    // RealmManagerImpl.clearAuthzRealmCaches() invokes on each realm), a stale cached permission
+    // is evicted and the next isPermitted() re-evaluates against the updated role.
+    BatchRolePermissionResolver resolver = mock(BatchRolePermissionResolver.class);
+    when(resolver.resolvePermissionsForRoles(any()))
+        .thenReturn(List.of(new WildcardPermission("nexus:*:*"))); // nx-admin: all permissions
+    DefaultRoleRealm realm =
+        new DefaultRoleRealm(new PrincipalPermissionsCacheFactory(true, 250, () -> Time.minutes(60), false, 16),
+            providerOf());
+    realm.setRole("nx-admin");
+    realm.setRolePermissionResolver(resolver);
+
+    PrincipalCollection user = principals("testuser");
+    WildcardPermission adminPerm = new WildcardPermission("nexus:users:read");
+
+    // Warm the cache: resolver called exactly once, permission granted.
+    assertThat(realm.isPermitted(user, adminPerm), is(true));
+    verify(resolver, times(1)).resolvePermissionsForRoles(any());
+
+    // Role changes to nx-anonymous (no permissions), but cache has NOT been invalidated yet.
+    when(resolver.resolvePermissionsForRoles(any())).thenReturn(List.of());
+    realm.setRole("nx-anonymous");
+
+    // Without invalidation the stale cache entry still grants the old nx-admin permission.
+    // This is exactly the pre-fix behavior that NEXUS-53867 reported.
+    assertThat(realm.isPermitted(user, adminPerm), is(true)); // stale - bug scenario
+    verify(resolver, times(1)).resolvePermissionsForRoles(any()); // no re-evaluation yet
+
+    // Invalidate: this is what DefaultRoleCapability.onActivate / onPassivate trigger through
+    // eventManager.post(new AuthorizationConfigurationChanged()), which causes
+    // RealmManagerImpl.clearAuthzRealmCaches() to call invalidatePrincipalPermissions() here.
+    realm.invalidatePrincipalPermissions();
+
+    // After invalidation the cache is cleared: the next check re-evaluates with the updated role
+    // and correctly denies the permission - role change takes effect immediately, no TTL wait.
+    assertThat(realm.isPermitted(user, adminPerm), is(false)); // fix confirmed
+    verify(resolver, times(2)).resolvePermissionsForRoles(any()); // re-expanded exactly once
   }
 
   @Test
@@ -113,6 +164,61 @@ public class DefaultRoleRealmTest
     // This realm only authorizes; authentication must be rejected.
     assertThrows(UnsupportedOperationException.class,
         () -> underTest.doGetAuthenticationInfo(new UsernamePasswordToken("user", "pass")));
+  }
+
+  @Test
+  public void testDoGetAuthorizationInfo_exemptRealmIsNotGrantedTheDefaultRole() {
+    // NEXUS-55116: a service account token must not inherit the default role. Its principals carry the
+    // exempt realm name, so nothing is granted even though a role is configured.
+    DefaultRoleRealm realm = realmWithExemptions("ServiceAccountRealm");
+    realm.setRole("default-role");
+
+    AuthorizationInfo authorizationInfo =
+        realm.doGetAuthorizationInfo(principals("sat-account", "ServiceAccountRealm"));
+
+    assertThat(authorizationInfo, nullValue());
+  }
+
+  @Test
+  public void testDoGetAuthorizationInfo_nonExemptRealmStillGrantedWhenExemptionsRegistered() {
+    // The exemption is realm-scoped: an ordinary user from another realm is unaffected by it.
+    DefaultRoleRealm realm = realmWithExemptions("ServiceAccountRealm");
+    realm.setRole("default-role");
+
+    AuthorizationInfo authorizationInfo = realm.doGetAuthorizationInfo(principals("user", "realm"));
+
+    assertThat(authorizationInfo, notNullValue());
+    assertThat(authorizationInfo.getRoles(), is(singleton("default-role")));
+  }
+
+  @Test
+  public void testDoGetAuthorizationInfo_everyRegisteredExemptionIsHonoured() {
+    // Extensibility contract: each registered exemption names one realm, and all of them are excluded.
+    DefaultRoleRealm realm = realmWithExemptions("ServiceAccountRealm", "MyTokenRealm");
+    realm.setRole("default-role");
+
+    assertThat(realm.doGetAuthorizationInfo(principals("sat", "ServiceAccountRealm")), nullValue());
+    assertThat(realm.doGetAuthorizationInfo(principals("tok", "MyTokenRealm")), nullValue());
+  }
+
+  private static DefaultRoleRealm realmWithExemptions(final String... realmNames) {
+    DefaultRoleExemption[] exemptions = Arrays.stream(realmNames)
+        .map(name -> (DefaultRoleExemption) () -> name)
+        .toArray(DefaultRoleExemption[]::new);
+    return new DefaultRoleRealm(
+        new PrincipalPermissionsCacheFactory(false, -1, () -> Time.minutes(2), false, 1), providerOf(exemptions));
+  }
+
+  private static ObjectProvider<DefaultRoleExemption> providerOf(final DefaultRoleExemption... exemptions) {
+    List<DefaultRoleExemption> list = List.of(exemptions);
+    @SuppressWarnings("unchecked")
+    ObjectProvider<DefaultRoleExemption> provider = mock(ObjectProvider.class);
+    when(provider.orderedStream()).thenAnswer(invocation -> list.stream());
+    return provider;
+  }
+
+  private static PrincipalCollection principals(final String userId, final String realmName) {
+    return new SimplePrincipalCollection(userId, realmName);
   }
 
   private static PrincipalCollection principals(final String userId) {

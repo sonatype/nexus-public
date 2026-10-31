@@ -59,7 +59,7 @@ export function formatDate(isoDate: string | null | undefined): string {
     const date = new Date(isoDate);
 
     // Check for invalid date
-    if (isNaN(date.getTime())) {
+    if (Number.isNaN(date.getTime())) {
       return '-';
     }
 
@@ -94,7 +94,7 @@ export function formatRelativeDate(isoDate: string | null | undefined): string {
     const date = new Date(isoDate);
 
     // Check for invalid date
-    if (isNaN(date.getTime())) {
+    if (Number.isNaN(date.getTime())) {
       return 'Never';
     }
 
@@ -195,7 +195,7 @@ export function sanitizeRegistryUrl(value: string | null | undefined): string | 
   if (typeof value !== 'string' || value.length === 0) {
     return undefined;
   }
-  return /^[A-Za-z0-9.\-]+(?::\d+)?(?:\/[A-Za-z0-9._\-/]+)?$/.test(value) ? value : undefined;
+  return /^[A-Za-z0-9.-]+(?::\d+)?(?:\/[A-Za-z0-9._\-/]+)?$/.test(value) ? value : undefined;
 }
 
 /**

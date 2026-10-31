@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.6
@@ -44,8 +44,8 @@ public class CacheHelper
       final Provider<CacheManager> cacheManagerProvider,
       final Provider<CacheBuilder> cacheBuilderProvider)
   {
-    this.cacheManagerProvider = checkNotNull(cacheManagerProvider);
-    this.cacheBuilderProvider = checkNotNull(cacheBuilderProvider);
+    this.cacheManagerProvider = requireNonNull(cacheManagerProvider);
+    this.cacheBuilderProvider = requireNonNull(cacheBuilderProvider);
   }
 
   private CacheManager manager() {
@@ -61,8 +61,8 @@ public class CacheHelper
       final String name,
       final MutableConfiguration<K, V> mutableConfiguration)
   {
-    checkNotNull(name);
-    checkNotNull(mutableConfiguration);
+    requireNonNull(name);
+    requireNonNull(mutableConfiguration);
 
     Cache<K, V> cache = manager()
         .getCache(name, mutableConfiguration.getKeyType(), mutableConfiguration.getValueType());
@@ -79,7 +79,7 @@ public class CacheHelper
   }
 
   public synchronized <K, V> Cache<K, V> getOrCreate(final CacheBuilder<K, V> builder) {
-    checkNotNull(builder);
+    requireNonNull(builder);
 
     Cache<K, V> cache = manager().getCache(builder.getName(), builder.getKeyType(), builder.getValueType());
 

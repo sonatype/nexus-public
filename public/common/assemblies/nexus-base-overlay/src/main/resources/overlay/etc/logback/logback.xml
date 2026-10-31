@@ -9,10 +9,13 @@
 
   <jmxConfigurator/>
 
+  <!-- NEXUS-54602: mask sensitive Set-Cookie tokens (e.g. KEYCLOAK_IDENTITY) at log-write time -->
+  <conversionRule conversionWord="maskedmsg" converterClass="org.sonatype.nexus.logging.MaskingMessageConverter"/>
+
   <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
     <filter class="org.sonatype.nexus.logging.NexusLogFilter" />
     <encoder>
-      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %maskedmsg%n</pattern>
     </encoder>
   </appender>
 
@@ -65,6 +68,11 @@
     </sift>
   </appender>
 
+  <!-- NEXUS-54602 scope note: the request/outbound-request appenders below use a plain %msg (no
+       NexusLayoutEncoder / %maskedmsg), so they are NOT cookie-masked. This is intentional: they
+       carry Jetty RequestLog / outbound-request summary lines, not the org.apache.http.headers
+       DEBUG Set-Cookie output that leaks session tokens. If that logger were ever routed here,
+       switch these encoders to NexusLayoutEncoder (or %maskedmsg) to pick up masking. -->
   <appender name="requestslogfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <File>${karaf.data}/log/request.log</File>
     <Append>true</Append>

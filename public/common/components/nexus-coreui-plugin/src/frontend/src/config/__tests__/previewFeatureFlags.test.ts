@@ -139,13 +139,12 @@ describe('previewFeatureFlags', () => {
       // Enabled — NEXUS-51085
       expect(PREVIEW_FEATURE_FLAGS['security.anonymous']).toBe(true);
       expect(PREVIEW_FEATURE_FLAGS['security.realms']).toBe(true);
-      // Coming Soon
-      expect(PREVIEW_FEATURE_FLAGS['security.ldap']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['security.crowd']).toBe(false);
+      expect(PREVIEW_FEATURE_FLAGS['security.usertokens']).toBe(true); // Enabled — NEXUS-53608
+      expect(PREVIEW_FEATURE_FLAGS['security.ldap']).toBe(true); // Enabled — NEXUS-54147
+      expect(PREVIEW_FEATURE_FLAGS['security.crowd']).toBe(true); // Enabled — NEXUS-54148
       expect(PREVIEW_FEATURE_FLAGS['security.saml']).toBe(true); // NEXUS-52595
-      expect(PREVIEW_FEATURE_FLAGS['security.sslcertificates']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['security.usertokens']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['security.oauth2']).toBe(false);
+      expect(PREVIEW_FEATURE_FLAGS['security.oauth2']).toBe(true); // Enabled — NEXUS-54266
+      expect(PREVIEW_FEATURE_FLAGS['security.sslcertificates']).toBe(true); // Enabled — NEXUS-54265
     });
 
     it('has support features enabled (Sprint 11)', () => {
@@ -168,7 +167,14 @@ describe('previewFeatureFlags', () => {
       // Coming Soon
       expect(PREVIEW_FEATURE_FLAGS['system.upgrade']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['system.emailserver']).toBe(true);
-      expect(PREVIEW_FEATURE_FLAGS['iqserver']).toBe(false);
+      // IQ Server (Lifecycle/Firewall entry page). The
+      // hosted-repo-eval sub-flag was dropped as unused; enablement is gated
+      // by the backend hostedRepositoryEvaluationEnabled State flag.
+      expect(PREVIEW_FEATURE_FLAGS['iqserver-connected']).toBe(true);
+    });
+
+    it('has the Welcome usage metrics tab enabled by default', () => {
+      expect(PREVIEW_FEATURE_FLAGS['welcome.usageMetrics']).toBe(true); // NEXUS-54200
     });
   });
 
@@ -176,14 +182,18 @@ describe('previewFeatureFlags', () => {
     it('returns true for officially enabled features', () => {
       expect(isFeatureEnabled('support.logs')).toBe(true);
       expect(isFeatureEnabled('system.nodes')).toBe(true);
+      expect(isFeatureEnabled('security.ldap')).toBe(true); // Enabled — NEXUS-54147
     });
 
+    // These blocks need a flag that is genuinely still disabled. They used
+    // security.sslcertificates until NEXUS-54265 enabled it; system.upgrade is the
+    // remaining Coming Soon flag. Whoever enables that one next has to move these
+    // over again — or add a test-only flag if none is left.
     it('returns false for disabled features in production', () => {
       window.location.hostname = 'production.example.com';
       window.location.search = '';
 
-      expect(isFeatureEnabled('security.oauth2')).toBe(false);
-      expect(isFeatureEnabled('security.ldap')).toBe(false);
+      expect(isFeatureEnabled('system.upgrade')).toBe(false);
     });
 
     it('returns false for unknown features', () => {
@@ -196,38 +206,38 @@ describe('previewFeatureFlags', () => {
       });
 
       it('returns true when enableWip matches feature key', () => {
-        window.location.search = '?enableWip=security.oauth2';
+        window.location.search = '?enableWip=system.upgrade';
         
-        expect(isFeatureEnabled('security.oauth2')).toBe(true);
+        expect(isFeatureEnabled('system.upgrade')).toBe(true);
       });
 
       it('returns true when enableWip=all', () => {
         window.location.search = '?enableWip=all';
         
-        expect(isFeatureEnabled('security.oauth2')).toBe(true);
+        expect(isFeatureEnabled('system.upgrade')).toBe(true);
         expect(isFeatureEnabled('system.capabilities')).toBe(true);
       });
 
       it('returns false when enableWip does not match', () => {
         window.location.search = '?enableWip=system.capabilities';
         
-        expect(isFeatureEnabled('security.oauth2')).toBe(false);
+        expect(isFeatureEnabled('system.upgrade')).toBe(false);
       });
     });
 
     describe('production mode security', () => {
       it('ignores enableWip param in production', () => {
         window.location.hostname = 'production.example.com';
-        window.location.search = '?enableWip=security.oauth2';
+        window.location.search = '?enableWip=system.upgrade';
         
-        expect(isFeatureEnabled('security.oauth2')).toBe(false);
+        expect(isFeatureEnabled('system.upgrade')).toBe(false);
       });
 
       it('ignores enableWip=all in production', () => {
         window.location.hostname = 'production.example.com';
         window.location.search = '?enableWip=all';
         
-        expect(isFeatureEnabled('security.oauth2')).toBe(false);
+        expect(isFeatureEnabled('system.upgrade')).toBe(false);
       });
     });
   });
@@ -243,21 +253,21 @@ describe('previewFeatureFlags', () => {
     it('returns true for disabled features in development mode', () => {
       window.location.hostname = 'localhost';
       
-      expect(canPreviewWip('security.oauth2')).toBe(true);
+      expect(canPreviewWip('system.upgrade')).toBe(true);
     });
 
     it('returns false for disabled features in production', () => {
       window.location.hostname = 'production.example.com';
       window.location.search = '';
       
-      expect(canPreviewWip('security.oauth2')).toBe(false);
+      expect(canPreviewWip('system.upgrade')).toBe(false);
     });
 
     it('returns true when debug param present', () => {
       window.location.hostname = 'production.example.com';
       window.location.search = '?debug';
       
-      expect(canPreviewWip('security.oauth2')).toBe(true);
+      expect(canPreviewWip('system.upgrade')).toBe(true);
     });
   });
 

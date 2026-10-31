@@ -22,7 +22,7 @@ import java.security.cert.CertificateException;
 
 import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * MyBatis {@link KeyStoreStorage} implementation.
@@ -37,8 +37,8 @@ public class KeyStoreStorageImpl
   private final String keyStoreName;
 
   public KeyStoreStorageImpl(final PersistentKeyStoreStorageManager storage, final String keyStoreName) {
-    this.storage = checkNotNull(storage);
-    this.keyStoreName = checkNotNull(keyStoreName);
+    this.storage = requireNonNull(storage);
+    this.keyStoreName = requireNonNull(keyStoreName);
   }
 
   @Override

@@ -32,7 +32,7 @@ import org.sonatype.nexus.scheduling.TaskInterruptedException;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -64,8 +64,8 @@ public class PurgeUnusedSnapshotsFacetImpl
       @Qualifier(HostedType.NAME) final Type hostedType,
       @Value("${nexus.tasks.purgeUnusedSnapshots.findUnusedLimit:100}") final int findUnusedLimit)
   {
-    this.groupType = checkNotNull(groupType);
-    this.hostedType = checkNotNull(hostedType);
+    this.groupType = requireNonNull(groupType);
+    this.hostedType = requireNonNull(hostedType);
     this.findUnusedLimit = findUnusedLimit;
     checkArgument(findUnusedLimit >= 10 && findUnusedLimit <= 1000,
         "nexus.tasks.purgeUnusedSnapshots.findUnusedLimit must be between 10 and 1000");

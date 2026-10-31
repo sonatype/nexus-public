@@ -18,7 +18,7 @@ import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLogType.NEXUS_LOG_ONLY;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -40,7 +40,7 @@ public class TaskLogCleanupTask
 
   @Autowired
   public TaskLogCleanupTask(final TaskLogCleanup taskLogCleanup) {
-    this.taskLogCleanup = checkNotNull(taskLogCleanup);
+    this.taskLogCleanup = requireNonNull(taskLogCleanup);
   }
 
   @Override

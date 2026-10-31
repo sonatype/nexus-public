@@ -37,7 +37,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder.BEARER_TOKEN_MIGRATION_STARTED;
 
 /**
@@ -78,10 +78,10 @@ public class RepositoriesBearerTokenConfigMigrationTask
       @Value("${nexus.bearer.token.migration.pollIntervalSeconds:30s}") final Duration checkInterval)
   {
     super(nodeHeartbeatManager);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.kv = checkNotNull(kv);
-    this.waitTimeout = checkNotNull(waitTimeout);
-    this.checkInterval = checkNotNull(checkInterval);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.kv = requireNonNull(kv);
+    this.waitTimeout = requireNonNull(waitTimeout);
+    this.checkInterval = requireNonNull(checkInterval);
   }
 
   @Override

@@ -15,12 +15,11 @@ package org.sonatype.nexus.api.rest.selfhosted.blobstore.s3;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.ws.rs.core.Response;
-
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiSoftQuota;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConfigurationMapper;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiModelMapper;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiUpdateValidation;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketSecurity;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
@@ -33,11 +32,13 @@ import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension;
+import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -56,6 +57,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class S3BlobStoreApiResourceTest
@@ -84,19 +86,23 @@ class S3BlobStoreApiResourceTest
   @Mock
   private BlobStore blobstore;
 
-  @InjectMocks
+  @Mock
+  ConstraintViolationFactory constraintViolationFactory;
+
   private S3BlobStoreApiResource underTest;
 
   @BeforeEach
   void setup() {
     underTest = new S3BlobStoreApiResource(blobStoreManager, s3BlobStoreApiUpdateValidation, secretsFactory,
-        applicationVersion);
+        applicationVersion, constraintViolationFactory)
+    {
+    };
   }
 
   @Test
   void createBlobStore() throws Exception {
     when(blobStoreManager.newConfiguration()).thenReturn(blobStoreConfiguration);
-    S3BlobStoreApiModel request = simpleApiModel();
+    S3BlobStoreApiModel request = authApiModel(null, null);
     try (MockedStatic<S3BlobStoreApiModelMapper> modelMapper = mockStatic(S3BlobStoreApiModelMapper.class)) {
       modelMapper.when(
           () -> S3BlobStoreApiModelMapper.map(any(BlobStoreConfiguration.class), any(S3BlobStoreApiModel.class), any(
@@ -118,7 +124,7 @@ class S3BlobStoreApiResourceTest
 
     mockBlobstoreConfig();
     String passwordPlaceholder = PasswordPlaceholder.get();
-    S3BlobStoreApiModel request = spy(authApiModel(passwordPlaceholder, passwordPlaceholder));
+    S3BlobStoreApiModel request = authApiModel(passwordPlaceholder, passwordPlaceholder);
 
     try (MockedStatic<S3BlobStoreApiModelMapper> modelMapper = mockStatic(S3BlobStoreApiModelMapper.class)) {
       modelMapper.when(
@@ -196,23 +202,18 @@ class S3BlobStoreApiResourceTest
     }
   }
 
-  private S3BlobStoreApiModel simpleApiModel() {
-
-    BlobStoreApiSoftQuota softQuota = mock(BlobStoreApiSoftQuota.class);
-    S3BlobStoreApiBucketConfiguration bucketConfiguration = mock(S3BlobStoreApiBucketConfiguration.class);
-
-    return new S3BlobStoreApiModel(BLOBSTORE_NAME, softQuota, bucketConfiguration);
-  }
-
-  private S3BlobStoreApiModel authApiModel(final String secretAccessKey, final String sessionToken) {
+  private static S3BlobStoreApiModel authApiModel(final String secretAccessKey, final String sessionToken) {
     BlobStoreApiSoftQuota softQuota = mock(BlobStoreApiSoftQuota.class);
 
     S3BlobStoreApiBucketSecurity bucketSecurity = new S3BlobStoreApiBucketSecurity("accessKey", secretAccessKey, "role",
         sessionToken);
-    S3BlobStoreApiBucketConfiguration bucketConfiguration = new S3BlobStoreApiBucketConfiguration(null, bucketSecurity,
-        null, null, null, null, null);
 
-    return new S3BlobStoreApiModel(BLOBSTORE_NAME, softQuota, bucketConfiguration);
+    S3BlobStoreApiBucket bucket = new S3BlobStoreApiBucket("us-east-1", "my-bucket", null);
+
+    S3BlobStoreApiBucketConfiguration bucketConfiguration =
+        new S3BlobStoreApiBucketConfiguration(bucket, bucketSecurity, null, null, null, null, null);
+
+    return new S3BlobStoreApiModel(BLOBSTORE_NAME, softQuota, bucketConfiguration, null);
   }
 
   private void mockBlobstoreConfig() {
@@ -227,7 +228,7 @@ class S3BlobStoreApiResourceTest
     when(secretsFactory.from(SESSION_TOKEN_SECRET_ID)).thenReturn(secretSessionToken);
   }
 
-  private Secret mockSecret(final String realValue) {
+  private static Secret mockSecret(final String realValue) {
     Secret secret = mock(Secret.class);
     when(secret.decrypt()).thenReturn(realValue.toCharArray());
 

@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.internal.capability.storage;
 
+import java.util.List;
+
 import org.sonatype.nexus.datastore.api.IterableDataAccess;
+
+import org.apache.ibatis.annotations.Param;
 
 /**
  * {@link CapabilityStorageItemData} access.
@@ -22,4 +26,9 @@ import org.sonatype.nexus.datastore.api.IterableDataAccess;
 public interface CapabilityStorageItemDAO
     extends IterableDataAccess<CapabilityStorageItemData>
 {
+  /**
+   * Browses only the capabilities of the given {@code type}, so a caller that needs a single capability type
+   * does not read and deserialize the entire table.
+   */
+  List<CapabilityStorageItemData> browseByType(@Param("type") String type);
 }

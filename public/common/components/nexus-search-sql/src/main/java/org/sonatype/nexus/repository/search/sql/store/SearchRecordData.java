@@ -34,8 +34,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.unmodifiableCollection;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.sonatype.nexus.repository.search.sql.index.SearchTokenizer.tsEscape;
 
@@ -520,7 +520,7 @@ public class SearchRecordData
 
   @Override
   public void setAttributes(final NestedAttributesMap attributes) {
-    this.attributes = checkNotNull(attributes);
+    this.attributes = requireNonNull(attributes);
   }
 
   @Override
@@ -779,9 +779,9 @@ public class SearchRecordData
     // for BOTH the INSERT and UPDATE clauses, doubling the parameter count.
     //
     // Per-clause usage (then multiply by 2 for INSERT + UPDATE):
-    // - paths: 2× per clause (join + toQuotedTsVector) = 4× total
+    // - paths: 2× per clause (join + toTsVector) = 4× total
     // - All other collections: 1× per clause (toTsVector) = 2× total
-    int insertUpdateParamCount = (paths.size() * 2) + // join + toQuotedTsVector
+    int insertUpdateParamCount = (paths.size() * 2) + // join + toTsVector
         uploaders.size() +
         uploaderIps.size() +
         keywords.size() +

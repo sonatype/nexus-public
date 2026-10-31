@@ -17,7 +17,6 @@ import { useToast } from '../../../shared';
 import {
   uploadToRepository,
   buildUploadFormData,
-  calculateFormDataSize,
   formatBytes,
   formatTime,
   type UploadProgress,
@@ -258,7 +257,7 @@ export function useUploadSubmit(options: UseUploadSubmitOptions = {}): UseUpload
         abortControllerRef.current = null;
       }
     },
-    [handleProgress, maxRetries, retryDelay, onSuccess, onError]
+    [handleProgress, maxRetries, retryDelay, onSuccess, onError, toast.error, toast.success, toast.warning]
   );
 
   /**

@@ -12,7 +12,7 @@
  */
 
 .settings-section {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
 
   &:last-child {
     margin-bottom: 0;
@@ -76,7 +76,7 @@
   &__content {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
+    gap: var(--space-6);
   }
 
   &--collapsed &__header {
@@ -88,7 +88,7 @@
   }
 
   &__separator {
-    margin-top: var(--space-6);
+    margin-top: var(--space-4);
     background-color: var(--color-border);
   }
 }

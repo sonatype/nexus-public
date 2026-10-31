@@ -16,8 +16,9 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 
+const mockGo = jest.fn();
 jest.mock('@uirouter/react', () => ({
-  useRouter: () => ({ stateService: { go: jest.fn() } }),
+  useRouter: () => ({ stateService: { go: mockGo } }),
 }));
 
 const mockGet = jest.fn().mockResolvedValue(null);
@@ -68,6 +69,10 @@ const auditStatus: SecurityStatusData = {
 };
 
 describe('FirewallCell', () => {
+  beforeEach(() => {
+    mockGo.mockClear();
+  });
+
   it('shows Loading state when firewallStatus is not yet available', () => {
     renderWithTheme(<FirewallCell repository={repo} />);
     expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -191,5 +196,24 @@ describe('FirewallCell', () => {
       // Note: "Unprotected" text appears after async firewall status loads -
       // this is a pre-existing timing issue with the test mock setup
     });
+  });
+
+  it('navigates to Settings > Firewall when Configure Firewall is clicked', async () => {
+    // Pass no firewallStatus to trigger unprotected state
+    renderWithTheme(<FirewallCell repository={repo} firewallLoaded hasFirewallLicense />);
+
+    const trigger = screen.getByRole('button', { name: /Firewall: Unprotected.*Click for details/i });
+    fireEvent.click(trigger);
+
+    const modalTitle = await screen.findByText(/Firewall Report – maven-central/);
+    expect(modalTitle).toBeInTheDocument();
+
+    const configureButton = await screen.findByText('Enable Firewall Protection');
+    fireEvent.click(configureButton);
+
+    expect(mockGo).toHaveBeenCalledWith(
+      'preview.admin.repository.repositories.detail',
+      { repositoryName: 'maven-central', tab: 'firewall' },
+    );
   });
 });

@@ -16,6 +16,8 @@ import { Dialog, Flex, Text, Button, Box, Heading } from '@radix-ui/themes';
 import { AlertCircle, LogIn, RefreshCw } from 'lucide-react';
 import { useRouter } from '@uirouter/react';
 
+import './SessionExpiryModal.scss';
+
 export interface SessionExpiryModalProps {
   /** Whether the modal is open */
   isOpen: boolean;
@@ -78,13 +80,7 @@ export function SessionExpiryModal({
         <Flex direction="column" gap="4">
           {/* Header */}
           <Flex align="center" gap="3">
-            <Box
-              style={{
-                background: 'var(--orange-3)',
-                borderRadius: 'var(--radius-3)',
-                padding: 'var(--space-3)',
-              }}
-            >
+            <Box className="nxrm-session-expiry-modal__icon-tile">
               <AlertCircle size={28} color="var(--orange-9)" />
             </Box>
             <Box>

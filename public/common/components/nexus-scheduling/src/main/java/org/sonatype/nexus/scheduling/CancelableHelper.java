@@ -14,7 +14,7 @@ package org.sonatype.nexus.scheduling;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for per-thread storing of cancelable flag.
@@ -35,7 +35,7 @@ public class CancelableHelper
   private static final ThreadLocal<AtomicBoolean> currentFlagHolder = new ThreadLocal<>();
 
   public static void set(final AtomicBoolean flag) {
-    checkNotNull(flag);
+    requireNonNull(flag);
     currentFlagHolder.set(flag);
   }
 

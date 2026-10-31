@@ -23,7 +23,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for {@link Blob} implementations with support for locking.
@@ -44,14 +44,14 @@ public abstract class BlobSupport
   private volatile boolean stale;
 
   public BlobSupport(final BlobId blobId) {
-    this.blobId = checkNotNull(blobId);
+    this.blobId = requireNonNull(blobId);
     lock = new ReentrantLock();
     stale = true;
   }
 
   public void refresh(final Map<String, String> headers, final BlobMetrics metrics) {
-    this.headers = checkNotNull(headers);
-    this.metrics = checkNotNull(metrics);
+    this.headers = requireNonNull(headers);
+    this.metrics = requireNonNull(metrics);
     stale = false;
   }
 

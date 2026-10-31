@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 // NOTE: Specifically not using SecuritySystem here as that is a legacy api and has a lot of cruft
@@ -63,8 +63,8 @@ public class SecurityHelper
    * @throws AuthorizationException
    */
   public void ensurePermitted(final Subject subject, final Permission... permissions) {
-    checkNotNull(subject);
-    checkNotNull(permissions);
+    requireNonNull(subject);
+    requireNonNull(permissions);
     checkArgument(permissions.length != 0);
 
     if (log.isTraceEnabled()) {
@@ -79,8 +79,8 @@ public class SecurityHelper
    * @throws AuthorizationException
    */
   public void ensureAnyPermitted(final Subject subject, final Permission... permissions) {
-    checkNotNull(subject);
-    checkNotNull(permissions);
+    requireNonNull(subject);
+    requireNonNull(permissions);
     checkArgument(permissions.length != 0);
 
     if (log.isTraceEnabled()) {
@@ -107,8 +107,8 @@ public class SecurityHelper
    * Check if subject has ANY of the given permissions.
    */
   public boolean anyPermitted(final Subject subject, final Permission... permissions) {
-    checkNotNull(subject);
-    checkNotNull(permissions);
+    requireNonNull(subject);
+    requireNonNull(permissions);
     checkArgument(permissions.length != 0);
 
     boolean trace = log.isTraceEnabled();
@@ -151,8 +151,8 @@ public class SecurityHelper
    * Check if subject has ALL of the given permissions.
    */
   public boolean allPermitted(final Subject subject, final Permission... permissions) {
-    checkNotNull(subject);
-    checkNotNull(permissions);
+    requireNonNull(subject);
+    requireNonNull(permissions);
     checkArgument(permissions.length != 0);
 
     boolean trace = log.isTraceEnabled();
@@ -189,8 +189,8 @@ public class SecurityHelper
    * @since 3.13
    */
   public boolean[] isPermitted(final Subject subject, final Permission... permissions) {
-    checkNotNull(subject);
-    checkNotNull(permissions);
+    requireNonNull(subject);
+    requireNonNull(permissions);
     checkArgument(permissions.length != 0);
 
     boolean trace = log.isTraceEnabled();

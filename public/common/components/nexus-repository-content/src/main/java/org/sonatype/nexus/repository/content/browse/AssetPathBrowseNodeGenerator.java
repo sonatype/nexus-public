@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.Asset;
 
 import com.google.common.base.Splitter;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
 
 /**
@@ -38,7 +38,7 @@ public abstract class AssetPathBrowseNodeGenerator
 
   @Override
   public List<BrowsePath> computeAssetPaths(final Asset asset) {
-    checkNotNull(asset);
+    requireNonNull(asset);
     List<String> pathSegments = Splitter.on(SLASH_CHAR).omitEmptyStrings().splitToList(asset.path());
     return BrowsePathBuilder.fromPaths(pathSegments, false);
   }

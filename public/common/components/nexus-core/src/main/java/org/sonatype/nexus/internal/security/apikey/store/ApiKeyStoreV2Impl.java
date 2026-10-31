@@ -15,8 +15,13 @@ package org.sonatype.nexus.internal.security.apikey.store;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.crypto.secrets.Secret;
@@ -33,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An {@link ApiKeyStore} implementation which makes use of {@link SecretsService}
@@ -52,7 +57,7 @@ public class ApiKeyStoreV2Impl
       final SecretsService secretsService)
   {
     super(sessionSupplier);
-    this.secretsService = checkNotNull(secretsService);
+    this.secretsService = requireNonNull(secretsService);
   }
 
   @Transactional
@@ -87,9 +92,9 @@ public class ApiKeyStoreV2Impl
 
   @Override
   public int deleteApiKey(final String domain, final PrincipalCollection principals) {
-    return findApiKey(domain, principals)
-        .map(this::deleteApiKey)
-        .orElse(0);
+    return findApiKeys(domain, principals).stream()
+        .mapToInt(this::deleteApiKey)
+        .sum();
   }
 
   @Override
@@ -137,8 +142,8 @@ public class ApiKeyStoreV2Impl
   @Transactional
   @Override
   public Optional<ApiKeyInternal> getApiKey(final String domain, final PrincipalCollection principals) {
-    checkNotNull(domain);
-    checkNotNull(principals);
+    requireNonNull(domain);
+    requireNonNull(principals);
 
     return findApiKey(domain, principals)
         .map(ApiKeyInternal.class::cast);
@@ -284,18 +289,31 @@ public class ApiKeyStoreV2Impl
 
   @Transactional
   protected Optional<ApiKeyV2Data> findApiKey(final String domain, final PrincipalCollection principals) {
-    checkNotNull(domain);
-    checkNotNull(principals);
+    List<ApiKeyV2Data> matches = findApiKeys(domain, principals);
+
+    if (matches.size() > 1) {
+      log.warn("Found {} api key rows for user {} in domain {}; serving the oldest. This normally means rows written "
+          + "before the OrientDB migration coexist with newer ones (NEXUS-54691).",
+          matches.size(), principals.getPrimaryPrincipal(), domain);
+    }
+
+    return matches.stream().findFirst();
+  }
+
+  @Transactional
+  protected List<ApiKeyV2Data> findApiKeys(final String domain, final PrincipalCollection principals) {
+    requireNonNull(domain);
+    requireNonNull(principals);
 
     return dao().findApiKey(domain, principals.getPrimaryPrincipal().toString())
         .stream()
         .filter(principalMatcher(principals))
-        .findFirst();
+        .collect(Collectors.toList());
   }
 
   @Transactional
   protected Stream<ApiKeyV2Data> findApiKeysForUser(final PrincipalCollection principals) {
-    checkNotNull(principals);
+    requireNonNull(principals);
 
     return dao().findApiKeysForUser(principals.getPrimaryPrincipal().toString())
         .stream()
@@ -326,7 +344,36 @@ public class ApiKeyStoreV2Impl
   }
 
   private static Predicate<ApiKeyV2Data> principalMatcher(final PrincipalCollection collection) {
-    return apiKeyData -> apiKeyData.getPrincipals().equals(collection);
+    return apiKeyData -> principalsMatch(apiKeyData.getPrincipals(), collection);
+  }
+
+  /*
+   * Compares principal collections by value instead of calling equals. NexusSimplePrincipalCollection, written by
+   * OrientDB-era releases, narrows Shiro's instanceof-based equals to getClass() and mixes in a RealmCaseMapping that
+   * declares no equals, so a stored legacy collection never matches an equivalent SimplePrincipalCollection built by a
+   * modern login, and the caller silently mints a replacement token (NEXUS-54691). Comparing through the
+   * PrincipalCollection interface keeps this independent of any implementation's equals. Realm names are compared for
+   * exact set equality: matching on overlap would let a single-realm lookup claim a multi-realm token.
+   */
+  private static boolean principalsMatch(final PrincipalCollection stored, final PrincipalCollection sought) {
+    if (!Objects.equals(stored.getPrimaryPrincipal(), sought.getPrimaryPrincipal())) {
+      return false;
+    }
+
+    Set<String> realmNames = stored.getRealmNames();
+    if (!Objects.equals(realmNames, sought.getRealmNames())) {
+      return false;
+    }
+
+    for (String realmName : realmNames) {
+      Set<Object> storedForRealm = new HashSet<>(stored.fromRealm(realmName));
+      Set<Object> soughtForRealm = new HashSet<>(sought.fromRealm(realmName));
+      if (!storedForRealm.equals(soughtForRealm)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @VisibleForTesting

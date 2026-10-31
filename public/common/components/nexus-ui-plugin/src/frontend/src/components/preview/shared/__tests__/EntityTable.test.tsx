@@ -182,7 +182,7 @@ describe('EntityTable', () => {
   });
 
   it('shows sort indicator for sorted column', () => {
-    const { container } = renderWithTheme(
+    renderWithTheme(
       <EntityTable
         data={testData}
         columns={columns}
@@ -267,6 +267,90 @@ describe('EntityTable', () => {
 
     fireEvent.click(screen.getByText('maven-central'));
     expect(mockOnRowClick).not.toHaveBeenCalled();
+  });
+
+  // NEXUS-54435: getRowAriaLabel wins over the hardcoded `View ${rowKey}` on
+  // clickable rows so parents (e.g. UsersPage) can name rows by their actual
+  // destination. The focusable-non-clickable branch (ServiceAccountTokensPage
+  // contract) must stay unchanged.
+  describe('NEXUS-54435: getRowAriaLabel precedence', () => {
+    const FIRST_ROW_NAME = 'maven-central';
+    const FIRST_ROW_ID = '1';
+    const CUSTOM_LABEL_PREFIX = 'Open';
+
+    const customLabel = (item: TestItem) => `${CUSTOM_LABEL_PREFIX} ${item.name}`;
+
+    it('uses getRowAriaLabel over the default label on clickable rows', () => {
+      renderWithTheme(
+        <EntityTable
+          data={testData}
+          columns={columns}
+          getRowKey={(item) => item.id}
+          onRowClick={jest.fn()}
+          getRowAriaLabel={customLabel}
+        />
+      );
+
+      // Custom label present, default `View ${rowKey}` absent.
+      expect(
+        screen.getByRole('button', { name: `${CUSTOM_LABEL_PREFIX} ${FIRST_ROW_NAME}` })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: `View ${FIRST_ROW_ID}` })
+      ).not.toBeInTheDocument();
+    });
+
+    it('falls back to `View ${rowKey}` on clickable rows when getRowAriaLabel is not provided', () => {
+      renderWithTheme(
+        <EntityTable
+          data={testData}
+          columns={columns}
+          getRowKey={(item) => item.id}
+          onRowClick={jest.fn()}
+        />
+      );
+
+      expect(
+        screen.getByRole('button', { name: `View ${FIRST_ROW_ID}` })
+      ).toBeInTheDocument();
+    });
+
+    it('applies getRowAriaLabel on focusable non-clickable rows (existing contract)', () => {
+      const { container } = renderWithTheme(
+        <EntityTable
+          data={testData}
+          columns={columns}
+          getRowKey={(item) => item.id}
+          clickable={false}
+          focusableRows
+          getRowAriaLabel={customLabel}
+        />
+      );
+
+      // No `role="button"` in this mode; assert via the rendered <tr> aria-label.
+      const rows = container.querySelectorAll('tr.entity-table__row');
+      expect(rows[0]).toHaveAttribute(
+        'aria-label',
+        `${CUSTOM_LABEL_PREFIX} ${FIRST_ROW_NAME}`
+      );
+      // The default `View ${rowKey}` MUST NOT bleed into the focusable branch.
+      expect(rows[0]).not.toHaveAttribute('aria-label', `View ${FIRST_ROW_ID}`);
+    });
+
+    it('leaves aria-label unset on rows that are neither clickable nor focusable', () => {
+      const { container } = renderWithTheme(
+        <EntityTable
+          data={testData}
+          columns={columns}
+          getRowKey={(item) => item.id}
+          clickable={false}
+          getRowAriaLabel={customLabel}
+        />
+      );
+
+      const rows = container.querySelectorAll('tr.entity-table__row');
+      expect(rows[0]).not.toHaveAttribute('aria-label');
+    });
   });
 });
 

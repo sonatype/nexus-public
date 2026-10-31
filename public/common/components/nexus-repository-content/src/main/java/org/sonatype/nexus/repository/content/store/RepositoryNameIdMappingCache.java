@@ -31,19 +31,17 @@ import com.google.common.collect.Iterables;
 import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REPOSITORY_SIZE_ENABLED;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * Maintain mapping of repository name and id
  */
-@Lazy
 @Component
 @ConditionalOnProperty(name = REPOSITORY_SIZE_ENABLED, havingValue = "true", matchIfMissing = true)
 public class RepositoryNameIdMappingCache
@@ -68,9 +66,9 @@ public class RepositoryNameIdMappingCache
       final DatabaseCheck databaseCheck)
   {
     this.contentRepositoryStore =
-        Iterables.get(checkNotNull(formatStoreManagers), 0).contentRepositoryStore(DEFAULT_DATASTORE_NAME);
-    this.formatNames = checkNotNull(formats).stream().map(Format::getValue).collect(Collectors.toList());
-    this.databaseCheck = checkNotNull(databaseCheck);
+        Iterables.get(requireNonNull(formatStoreManagers), 0).contentRepositoryStore(DEFAULT_DATASTORE_NAME);
+    this.formatNames = requireNonNull(formats).stream().map(Format::getValue).collect(Collectors.toList());
+    this.databaseCheck = requireNonNull(databaseCheck);
   }
 
   @Subscribe

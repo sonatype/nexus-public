@@ -64,7 +64,7 @@ export function NuGetSearchPage({
     if (initialQuery) {
       search({ query: initialQuery });
     }
-  }, []);
+  }, [initialQuery, search]);
 
   /**
    * Handle search submission.

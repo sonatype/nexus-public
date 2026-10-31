@@ -14,10 +14,9 @@ package org.sonatype.nexus.repository.content.tasks.normalize;
 
 import java.util.Map;
 
-import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 
 public interface NormalizationPriorityService
 {
-  Map<Format, FormatStoreManager> getPrioritizedFormats();
+  Map<String, FormatStoreManager> getPrioritizedFormats();
 }

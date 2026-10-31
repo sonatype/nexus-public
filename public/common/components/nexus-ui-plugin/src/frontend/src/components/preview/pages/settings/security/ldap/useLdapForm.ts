@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef, useEffect } from 'react';
 import { useForm } from '../../../../../../interface/form';
 import { useToast } from '../../../../shared';
 import { createLdapFormMachine } from './ldapFormMachine';
@@ -20,6 +20,7 @@ import { LdapServer, LdapFormData, LdapSchemaTemplate } from './types';
 export interface UseLdapFormOptions {
   serverId?: string;
   server?: LdapServer | null;
+  existingNames?: string[];
   onSave?: (data: LdapFormData) => Promise<void>;
   onCancel: () => void;
   createServer: (data: LdapFormData) => Promise<LdapServer>;
@@ -32,6 +33,7 @@ export interface UseLdapFormReturn {
   isCreate: boolean;
   applyTemplate: (template: LdapSchemaTemplate) => void;
   changeProtocol: (protocol: string) => void;
+  confirmPasswordAndSubmit: (password: string) => void;
 }
 
 /**
@@ -46,17 +48,28 @@ export interface UseLdapFormReturn {
 export function useLdapForm({
   serverId,
   server,
+  existingNames,
   onSave,
   onCancel,
   createServer,
   updateServer,
 }: UseLdapFormOptions): UseLdapFormReturn {
   const toast = useToast();
-  const isCreate = !serverId && !server;
+  const isCreate = !(serverId || server);
 
-  // Create the form machine - memoized based on serverId and server
+  // Mutable ref so the machine's validate action always sees the latest list
+  // without needing to recreate the machine (which would reset form state).
+  const existingNamesRef = useRef<string[]>(existingNames ?? []);
+  useEffect(() => {
+    existingNamesRef.current = existingNames ?? [];
+  }, [existingNames]);
+
+  // Create the form machine - memoized based on serverId and server.
+  // existingNamesRef intentionally omitted from deps: it's a stable object
+  // whose .current is kept up-to-date by the effect above.
   const machine = useMemo(
-    () => createLdapFormMachine(serverId, server),
+    () => createLdapFormMachine(serverId, server, existingNamesRef),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable ref, kept current by effect above
     [serverId, server]
   );
 
@@ -67,22 +80,20 @@ export function useLdapForm({
     },
     services: {
       save: async (ctx: { data: LdapFormData; server: LdapServer | null }) => {
-        try {
-          if (isCreate) {
-            await createServer(ctx.data);
-            toast.success(`LDAP server "${ctx.data.name}" created successfully`);
-          } else {
-            await updateServer(ctx.data);
-            toast.success(`LDAP server "${ctx.data.name}" updated successfully`);
-          }
-          if (onSave) {
-            await onSave(ctx.data);
-          }
-          onCancel();
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : 'Operation failed');
-          throw err;
+        // createServer/updateServer call setError on the shared useLdapApi instance (owned by
+        // LdapPage) when they fail, so the error surfaces via the `error` prop passed to
+        // LdapForm → WizardForm. Re-throwing here keeps the XState machine in the error state.
+        if (isCreate) {
+          await createServer(ctx.data);
+          toast.success(`LDAP server "${ctx.data.name}" created successfully`);
+        } else {
+          await updateServer(ctx.data);
+          toast.success(`LDAP server "${ctx.data.name}" updated successfully`);
         }
+        if (onSave) {
+          await onSave(ctx.data);
+        }
+        onCancel();
       },
     },
   });
@@ -111,11 +122,24 @@ export function useLdapForm({
     [form]
   );
 
+  /**
+   * Confirm a re-entered password (edit mode) and submit in the same
+   * synchronous transition, avoiding a setTimeout-based race between the
+   * UPDATE and SUBMIT events.
+   */
+  const confirmPasswordAndSubmit = useCallback(
+    (password: string) => {
+      form.send({ type: 'CONFIRM_PASSWORD_AND_SUBMIT', value: password } as any);
+    },
+    [form]
+  );
+
   return {
     form,
     server: loadedServer,
     isCreate,
     applyTemplate,
     changeProtocol,
+    confirmPasswordAndSubmit,
   };
 }

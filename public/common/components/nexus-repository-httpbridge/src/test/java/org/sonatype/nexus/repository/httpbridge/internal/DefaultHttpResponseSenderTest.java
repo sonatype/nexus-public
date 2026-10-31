@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.sonatype.nexus.bootstrap.jetty.NexusReasonPhraseCustomizer;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
@@ -38,10 +39,16 @@ import org.mockito.Spy;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.junit.runner.RunWith;
@@ -150,20 +157,86 @@ public class DefaultHttpResponseSenderTest
     order.verifyNoMoreInteractions();
   }
 
+  /**
+   * NEXUS-53528: for an error response with no payload and a non-null status message, the message
+   * is written into the response body (text/plain) so it survives an HTTP/2 hop (GCLB, Cloudflare,
+   * AWS ALB) that strips the HTTP/1.1 reason phrase. The reason phrase is still set on the status
+   * line for HTTP/1.1 clients via {@code setStatus} / the Jetty reason-phrase patch.
+   */
   @Test
-  public void customStatusMessageIsMaintained() throws Exception {
+  public void customStatusMessageIsWrittenToBody() throws Exception {
     when(request.getAction()).thenReturn(HttpMethods.GET);
 
     underTest.send(request, HttpResponses.forbidden("You can't see this"), httpServletResponse);
 
-    verify(httpServletResponse).sendError(403, "You can't see this");
+    byte[] expected = "You can't see this".getBytes(StandardCharsets.UTF_8);
+    verify(httpServletResponse).setStatus(403);
+    verify(httpServletResponse).setContentType("text/plain;charset=utf-8");
+    verify(httpServletResponse).setContentLengthLong(expected.length);
+    verify(output).write(expected);
+    // sendError must NOT be called on this path; it would reset the buffer and drop the body.
+    verify(httpServletResponse, never()).sendError(anyInt());
+    verify(httpServletResponse, never()).sendError(anyInt(), anyString());
+  }
+
+  /**
+   * NEXUS-53528: an error response with no payload and a null status message has nothing to write
+   * to the body, so it falls back to {@code sendError(code)} to produce a container error page.
+   */
+  @Test
+  public void errorWithNullMessageFallsBackToSendError() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+
+    underTest.send(request, HttpResponses.forbidden(), httpServletResponse);
+
+    verify(httpServletResponse).sendError(403);
+    verify(httpServletResponse, never()).setContentType(anyString());
+    verify(output, never()).write(any(byte[].class));
+  }
+
+  /**
+   * NEXUS-53528: an empty (but non-null) status message is treated the same as null - there is no
+   * useful text to surface, so we fall back to {@code sendError(code)} rather than writing a
+   * zero-length body.
+   */
+  @Test
+  public void errorWithEmptyMessageFallsBackToSendError() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+
+    Response response = new Response.Builder()
+        .status(Status.failure(400, ""))
+        .build();
+
+    underTest.send(request, response, httpServletResponse);
+
+    verify(httpServletResponse).sendError(400);
+    verify(httpServletResponse, never()).setContentType(anyString());
+    verify(output, never()).write(any(byte[].class));
+  }
+
+  /**
+   * NEXUS-53528: a HEAD response must not transfer a body (RFC 9110 §9.3.2). Even when the error
+   * carries a message, the body-write path is skipped for HEAD and we fall back to
+   * {@code sendError(code)} - which lets the container emit a bodyless HEAD response - mirroring the
+   * HEAD guard on the payload branch.
+   */
+  @Test
+  public void errorOnHeadRequestDoesNotWriteBody() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.HEAD);
+
+    underTest.send(request, HttpResponses.notFound("Repository not found"), httpServletResponse);
+
+    verify(httpServletResponse).sendError(404);
+    verify(httpServletResponse, never()).setContentType(anyString());
+    verify(httpServletResponse, never()).setContentLengthLong(anyLong());
+    verify(output, never()).write(any(byte[].class));
   }
 
   /**
    * NEXUS-46395: when an error response carries a payload (e.g. Repository Firewall
    * quarantine bodies returning 403/409 with an RFC 9457 / format-specific report),
-   * the {@code sendError} path is bypassed. We must still forward the custom HTTP/1.1
-   * reason phrase to Jetty's core {@link org.eclipse.jetty.server.Response#setReason}
+   * the {@code sendError} path is bypassed. We must still set the custom HTTP/1.1
+   * reason phrase as the sentinel response header read by NexusReasonPhraseCustomizer (STL-476)
    * so HTTP/1.1 clients (notably Maven 3.9.x) can read it off the status line.
    */
   @Test
@@ -173,6 +246,9 @@ public class DefaultHttpResponseSenderTest
     ServletApiResponse servletApiResponse = org.mockito.Mockito.mock(ServletApiResponse.class);
     org.eclipse.jetty.server.Response coreResponse =
         org.mockito.Mockito.mock(org.eclipse.jetty.server.Response.class);
+    org.eclipse.jetty.http.HttpFields.Mutable coreHeaders =
+        org.mockito.Mockito.mock(org.eclipse.jetty.http.HttpFields.Mutable.class);
+    when(coreResponse.getHeaders()).thenReturn(coreHeaders);
     when(servletApiResponse.getStatus()).thenReturn(403);
     when(servletApiResponse.getOutputStream()).thenReturn(output);
     when(servletApiResponse.getResponse()).thenReturn(coreResponse);
@@ -185,15 +261,16 @@ public class DefaultHttpResponseSenderTest
     underTest.send(request, response, servletApiResponse);
 
     verify(servletApiResponse).setStatus(403);
-    verify(coreResponse).setReason("package-quarantined");
+    // STL-476: producer sets the sentinel reason-phrase header; NexusReasonPhraseCustomizer serializes + strips it.
+    verify(coreHeaders).put(NexusReasonPhraseCustomizer.REASON_PHRASE_HEADER, "package-quarantined");
   }
 
   /**
    * NEXUS-53114: in production the servlet response handed to
    * {@link DefaultHttpResponseSender} is wrapped by Shiro's
    * {@link ShiroHttpServletResponse}. Verify the unwrap path traverses Shiro and
-   * still forwards the custom reason phrase to the core Jetty
-   * {@link org.eclipse.jetty.server.Response}.
+   * still sets the custom reason phrase as the sentinel response header
+   * read by NexusReasonPhraseCustomizer.
    */
   @Test
   public void customStatusMessageWithPayload_unwrapsThroughShiro() throws Exception {
@@ -202,6 +279,9 @@ public class DefaultHttpResponseSenderTest
     ServletApiResponse servletApiResponse = org.mockito.Mockito.mock(ServletApiResponse.class);
     org.eclipse.jetty.server.Response coreResponse =
         org.mockito.Mockito.mock(org.eclipse.jetty.server.Response.class);
+    org.eclipse.jetty.http.HttpFields.Mutable coreHeaders =
+        org.mockito.Mockito.mock(org.eclipse.jetty.http.HttpFields.Mutable.class);
+    when(coreResponse.getHeaders()).thenReturn(coreHeaders);
     when(servletApiResponse.getResponse()).thenReturn(coreResponse);
 
     // ShiroHttpServletResponse is a concrete class that wraps an HttpServletResponse.
@@ -221,6 +301,18 @@ public class DefaultHttpResponseSenderTest
     // setStatus is called on the outer ShiroHttpServletResponse, which delegates to
     // the wrapped servletApiResponse.
     verify(servletApiResponse).setStatus(403);
-    verify(coreResponse).setReason("package-quarantined");
+    // STL-476: producer sets the sentinel reason-phrase header; NexusReasonPhraseCustomizer serializes + strips it.
+    verify(coreHeaders).put(NexusReasonPhraseCustomizer.REASON_PHRASE_HEADER, "package-quarantined");
+  }
+
+  /**
+   * STL-476: {@link DefaultHttpResponseSender} deliberately writes the sentinel header as a literal to avoid a
+   * repository-module dependency on the bootstrap module. This pins that literal to
+   * {@link NexusReasonPhraseCustomizer#REASON_PHRASE_HEADER} so renaming the header value turns a silent
+   * producer/consumer mismatch into a test failure.
+   */
+  @Test
+  public void reasonPhraseHeader_literalMatchesCustomizerConstant() {
+    assertEquals("X-Nexus-Reason-Phrase", NexusReasonPhraseCustomizer.REASON_PHRASE_HEADER);
   }
 }

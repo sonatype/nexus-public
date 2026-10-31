@@ -34,4 +34,16 @@ class UnversionedComponentStoreTest
   protected void testPurge_byComponent() {
     super.testPurge_byComponent();
   }
+
+  @Override
+  @DatabaseTest
+  protected void testPurge_byComponent_resolvesAssetComponents() throws Exception {
+    super.testPurge_byComponent_resolvesAssetComponents();
+  }
+
+  @Override
+  @DatabaseTest
+  protected void testPurge_byComponent_browsesEveryAssetPage() {
+    super.testPurge_byComponent_browsesEveryAssetPage();
+  }
 }

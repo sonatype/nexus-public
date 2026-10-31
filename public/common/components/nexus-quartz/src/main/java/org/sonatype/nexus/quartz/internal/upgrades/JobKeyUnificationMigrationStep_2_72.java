@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Schedules {@link QuartzJobKeyUnificationTask} to unify Task Configuration ID with Quartz Job Key for optimal task
@@ -40,7 +40,7 @@ public class JobKeyUnificationMigrationStep_2_72
 
   @Autowired
   public JobKeyUnificationMigrationStep_2_72(final UpgradeTaskScheduler taskScheduler) {
-    this.taskScheduler = checkNotNull(taskScheduler);
+    this.taskScheduler = requireNonNull(taskScheduler);
   }
 
   @Override

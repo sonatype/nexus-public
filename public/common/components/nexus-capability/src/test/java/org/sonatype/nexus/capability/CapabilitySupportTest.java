@@ -13,19 +13,25 @@
 package org.sonatype.nexus.capability;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.template.TemplateThrowableAdapter;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.formfields.PasswordFormField;
+import org.sonatype.nexus.formfields.StringTextFormField;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -38,6 +44,9 @@ public class CapabilitySupportTest
 {
   @Mock
   private CapabilityContext context;
+
+  @Mock
+  private CapabilityDescriptor descriptor;
 
   @Mock
   private TemplateHelper templateHelper;
@@ -69,6 +78,40 @@ public class CapabilitySupportTest
         .set("cause", new TemplateThrowableAdapter(new Exception()));
     assertEquals("rendered", underTest.render("failure.vm", params));
     verify(templateHelper).render(underTest.getClass().getResource("failure.vm"), params);
+  }
+
+  @Test
+  public void isPasswordPropertyReturnsTrueForEncryptedField() {
+    PasswordFormField secretField = new PasswordFormField("secret", "Secret", "help", false);
+    when(context.descriptor()).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(List.<FormField>of(secretField));
+
+    assertTrue(underTest.isPasswordProperty("secret"));
+  }
+
+  @Test
+  public void isPasswordPropertyReturnsFalseForNonEncryptedField() {
+    StringTextFormField nameField = new StringTextFormField("name", "Name", "help", false);
+    when(context.descriptor()).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(List.<FormField>of(nameField));
+
+    assertFalse(underTest.isPasswordProperty("name"));
+  }
+
+  @Test
+  public void isPasswordPropertyReturnsFalseForUnknownProperty() {
+    when(context.descriptor()).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(List.<FormField>of());
+
+    assertFalse(underTest.isPasswordProperty("unknown"));
+  }
+
+  @Test
+  public void isPasswordPropertyReturnsFalseWhenFormFieldsIsNull() {
+    when(context.descriptor()).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(null);
+
+    assertFalse(underTest.isPasswordProperty("secret"));
   }
 
   private class TestCapability

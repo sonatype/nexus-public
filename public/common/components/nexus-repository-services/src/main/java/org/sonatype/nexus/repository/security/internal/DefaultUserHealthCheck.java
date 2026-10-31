@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_FIPS_ENABLED;
 
 /**
@@ -63,9 +63,9 @@ public class DefaultUserHealthCheck
       final SecurityConfigurationManager securityConfigurationManager,
       final PasswordService passwordService)
   {
-    this.realmManager = checkNotNull(realmManager);
-    this.securityConfigurationManager = checkNotNull(securityConfigurationManager);
-    this.passwordService = checkNotNull(passwordService);
+    this.realmManager = requireNonNull(realmManager);
+    this.securityConfigurationManager = requireNonNull(securityConfigurationManager);
+    this.passwordService = requireNonNull(passwordService);
   }
 
   @Override

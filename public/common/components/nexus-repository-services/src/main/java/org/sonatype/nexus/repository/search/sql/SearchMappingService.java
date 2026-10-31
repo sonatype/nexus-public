@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import org.springframework.stereotype.Component;
 
@@ -38,7 +38,7 @@ public class SearchMappingService
 
   @Autowired
   public SearchMappingService(final List<SearchMappings> searchMappings) {
-    checkNotNull(searchMappings).stream()
+    requireNonNull(searchMappings).stream()
         .map(SearchMappings::get)
         .flatMap(iterable -> StreamSupport.stream(iterable.spliterator(), false))
         .forEach(mapping -> {

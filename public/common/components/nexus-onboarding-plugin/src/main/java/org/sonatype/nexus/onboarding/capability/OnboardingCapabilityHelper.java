@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,7 +27,7 @@ public class OnboardingCapabilityHelper
 
   @Autowired
   public OnboardingCapabilityHelper(final CapabilityRegistry capabilityRegistry) {
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
   }
 
   public OnboardingCapability getOnboardingCapability() {

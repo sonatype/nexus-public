@@ -176,7 +176,7 @@ function matchesFilter(result: CustomSearchResult, filter: CustomFilter): boolea
             return false;
         }
       });
-    case 'keyword':
+    case 'keyword': {
       // Search across multiple fields
       const searchText = [
         result.format,
@@ -202,6 +202,7 @@ function matchesFilter(result: CustomSearchResult, filter: CustomFilter): boolea
         default:
           return false;
       }
+    }
     default:
       return false;
   }

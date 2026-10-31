@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -27,6 +30,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.Event;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ComponentSet;
@@ -35,6 +39,7 @@ import org.sonatype.nexus.repository.content.SqlQueryParameters;
 import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentRestoredEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPreDeleteEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPrePurgeEvent;
@@ -47,8 +52,8 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static java.util.Arrays.stream;
@@ -70,6 +75,13 @@ public class ComponentStore<T extends ComponentDAO>
 
   private static final int ASSET_BROWSE_LIMIT = 1000;
 
+  private SoftDeleteSchemaState softDeleteSchemaState;
+
+  /**
+   * Caps how many unresolved assets are named in the warning logged by {@link #resolveAssetComponents}.
+   */
+  private static final int UNRESOLVED_LOG_LIMIT = 10;
+
   @Autowired
   public ComponentStore(
       final DataSessionSupplier sessionSupplier,
@@ -79,6 +91,16 @@ public class ComponentStore<T extends ComponentDAO>
   {
     super(sessionSupplier, contentStoreName, daoClass);
     this.clustered = clustered;
+  }
+
+  /** Optional so unit tests that construct the store directly return {@code false} (pre-migration). */
+  @Autowired(required = false)
+  public void setSoftDeleteSchemaState(final SoftDeleteSchemaState softDeleteSchemaState) {
+    this.softDeleteSchemaState = softDeleteSchemaState;
+  }
+
+  protected boolean softDeleteAvailable() {
+    return softDeleteSchemaState != null && softDeleteSchemaState.isSoftDeleteAvailable();
   }
 
   /**
@@ -97,7 +119,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().countComponents(repositoryId, kind, filter, filterParams);
+    return dao().countComponents(repositoryId, kind, filter, filterParams, softDeleteAvailable());
   }
 
   /**
@@ -116,7 +138,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().countComponentsWithAssetsBlobs(repositoryId, kind, filter, filterParams);
+    return dao().countComponentsWithAssetsBlobs(repositoryId, kind, filter, filterParams, softDeleteAvailable());
   }
 
   /**
@@ -126,7 +148,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public int countUnnormalized() {
-    return dao().countUnnormalized();
+    return dao().countUnnormalized(softDeleteAvailable());
   }
 
   /**
@@ -151,7 +173,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final Map<String, Object> filterParams)
   {
     return dao().browseComponents(repositoryId, limit, continuationToken, kind, filter,
-        filterParams);
+        filterParams, softDeleteAvailable());
   }
 
   @Transactional
@@ -163,7 +185,8 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().browseComponentsEager(repositoryIds, limit, continuationToken, kind, filter, filterParams);
+    return dao().browseComponentsEager(repositoryIds, limit, continuationToken, kind, filter,
+        filterParams, softDeleteAvailable());
   }
 
   /**
@@ -179,7 +202,7 @@ public class ComponentStore<T extends ComponentDAO>
       final int limit,
       @Nullable final String continuationToken)
   {
-    return dao().browseUnnormalized(limit, continuationToken);
+    return dao().browseUnnormalized(limit, continuationToken, softDeleteAvailable());
   }
 
   /**
@@ -197,7 +220,7 @@ public class ComponentStore<T extends ComponentDAO>
       final int limit,
       @Nullable final String continuationToken)
   {
-    return dao().browseComponentsInRepositories(repositoryIds, limit, continuationToken);
+    return dao().browseComponentsInRepositories(repositoryIds, limit, continuationToken, softDeleteAvailable());
   }
 
   /**
@@ -218,7 +241,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final String continuationToken)
   {
     return dao().browseComponentsBySet(repositoryId,
-        componentSet.namespace(), componentSet.name(), limit, continuationToken);
+        componentSet.namespace(), componentSet.name(), limit, continuationToken, softDeleteAvailable());
   }
 
   /**
@@ -259,7 +282,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Collection<String> browseNamespaces(final int repositoryId) {
-    return dao().browseNamespaces(repositoryId);
+    return dao().browseNamespaces(repositoryId, softDeleteAvailable());
   }
 
   /**
@@ -271,7 +294,23 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Collection<String> browseNames(final int repositoryId, final String namespace) {
-    return dao().browseNames(repositoryId, namespace);
+    return dao().browseNames(repositoryId, namespace, softDeleteAvailable());
+  }
+
+  /**
+   * Check whether a component with the given namespace and name exists in the given repository.
+   * <p>
+   * Index-backed existence probe; prefer this over {@link #browseNames} when only presence (not the
+   * full name list) is needed.
+   *
+   * @param repositoryId the repository to query
+   * @param namespace the namespace to match (empty string for formats without a namespace)
+   * @param name the component name to match
+   * @return {@code true} if at least one matching active component exists
+   */
+  @Transactional
+  public boolean existsByName(final int repositoryId, final String namespace, final String name) {
+    return dao().existsByName(repositoryId, namespace, name, softDeleteAvailable());
   }
 
   /**
@@ -290,7 +329,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Param("limit") final int limit,
       @Nullable @Param("continuationToken") final String continuationToken)
   {
-    return dao().browseSets(repositoryId, limit, continuationToken);
+    return dao().browseSets(repositoryId, limit, continuationToken, softDeleteAvailable());
   }
 
   /**
@@ -307,7 +346,7 @@ public class ComponentStore<T extends ComponentDAO>
       final int limit,
       @Nullable final String continuationToken)
   {
-    return dao().browseComponentsWithAssets(repositoryId, limit, continuationToken);
+    return dao().browseComponentsWithAssets(repositoryId, limit, continuationToken, softDeleteAvailable());
   }
 
   /**
@@ -322,7 +361,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Collection<String> browseVersions(final int repositoryId, final String namespace, final String name) {
-    return dao().browseVersions(repositoryId, namespace, name);
+    return dao().browseVersions(repositoryId, namespace, name, softDeleteAvailable());
   }
 
   @Transactional
@@ -331,7 +370,7 @@ public class ComponentStore<T extends ComponentDAO>
       final String name,
       final Set<Integer> repositoryIds)
   {
-    return dao().browseVersionsByRepoIds(namespace, name, repositoryIds);
+    return dao().browseVersionsByRepoIds(namespace, name, repositoryIds, softDeleteAvailable());
   }
 
   /**
@@ -341,7 +380,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public void createComponent(final ComponentData component) {
-    dao().createComponent(component, clustered);
+    dao().createComponent(component, clustered, softDeleteAvailable());
 
     postCommitEvent(() -> new ComponentCreatedEvent(component));
   }
@@ -354,7 +393,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Optional<Component> readComponent(final int componentId) {
-    return dao().readComponent(componentId);
+    return dao().readComponent(componentId, softDeleteAvailable());
   }
 
   /**
@@ -373,7 +412,7 @@ public class ComponentStore<T extends ComponentDAO>
       final String name,
       final String version)
   {
-    return dao().readCoordinate(repositoryId, namespace, name, version);
+    return dao().readCoordinate(repositoryId, namespace, name, version, softDeleteAvailable());
   }
 
   /**
@@ -392,7 +431,7 @@ public class ComponentStore<T extends ComponentDAO>
       final String version,
       final Set<Integer> repositoryIds)
   {
-    return dao().readCoordinateInRepoIds(namespace, name, version, repositoryIds);
+    return dao().readCoordinateInRepoIds(namespace, name, version, repositoryIds, softDeleteAvailable());
   }
 
   /**
@@ -418,6 +457,21 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
+   * Updates the normalized_version of each of the given components in a single transaction, rather than one
+   * transaction per component - callers repairing/backfilling many rows at once (e.g. a full-table re-scan)
+   * should batch a page of components through this rather than calling {@link #updateComponentNormalizedVersion}
+   * in a loop.
+   *
+   * @param components the components to update
+   */
+  @Transactional
+  public void updateComponentsNormalizedVersion(final Iterable<? extends Component> components) {
+    for (Component component : components) {
+      dao().updateComponentNormalizedVersion(component, clustered);
+    }
+  }
+
+  /**
    * Updates the attributes of the given component in the content data store.
    *
    * @param component the component to update
@@ -430,7 +484,7 @@ public class ComponentStore<T extends ComponentDAO>
       final @Nullable Object value)
   {
     // reload latest attributes, apply change, then update database if necessary
-    dao().readComponentAttributes(component).ifPresent(attributes -> {
+    dao().readComponentAttributes(component, softDeleteAvailable()).ifPresent(attributes -> {
       ((ComponentData) component).setAttributes(attributes);
 
       if (applyAttributeChange(attributes, change, key, value)) {
@@ -474,7 +528,7 @@ public class ComponentStore<T extends ComponentDAO>
       final String name,
       final String version)
   {
-    return dao().readCoordinate(repositoryId, namespace, name, version)
+    return dao().readCoordinate(repositoryId, namespace, name, version, softDeleteAvailable())
         .map(this::deleteComponent)
         .orElse(false);
   }
@@ -510,7 +564,8 @@ public class ComponentStore<T extends ComponentDAO>
   public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo) {
     int purged = 0;
     while (true) {
-      int[] componentIds = dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize());
+      int[] componentIds =
+          dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize(), softDeleteAvailable());
       if (componentIds.length == 0) {
         break; // nothing left to purge
       }
@@ -577,6 +632,7 @@ public class ComponentStore<T extends ComponentDAO>
     }
 
     List<FluentAsset> assets = fetchAssetsFromComponents(components);
+    components.ifPresent(componentList -> resolveAssetComponents(assets, componentList));
 
     if ("H2".equals(thisSession().sqlDialect())) {
       // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
@@ -586,16 +642,184 @@ public class ComponentStore<T extends ComponentDAO>
       purged += dao().purgeSelectedComponents(componentIds);
     }
 
-    components.ifPresent(
-        c -> postCommitEvent(() -> new ComponentsPurgedAuditEvent(repositoryId, Collections.unmodifiableList(c))));
+    components.ifPresent(componentList -> postCommitEvent(
+        () -> new ComponentsPurgedAuditEvent(repositoryId, Collections.unmodifiableList(componentList))));
 
     preCommitEvent(() -> new ComponentPrePurgeEvent(repositoryId, componentIds));
     Supplier<Event> eventSupplier = components.<Supplier<Event>>map(
-        fluentComponents -> () -> new ComponentPurgedEvent(repositoryId, componentIds, assets))
+        componentList -> () -> new ComponentPurgedEvent(repositoryId, componentIds, assets))
         .orElseGet(() -> () -> new ComponentPurgedEvent(repositoryId, componentIds));
     postCommitEvent(eventSupplier);
 
     return purged;
+  }
+
+  /**
+   * Soft-deletes a component by setting deletion metadata.
+   * Fires {@link ComponentDeletedEvent} to trigger search purge.
+   *
+   * @param component the component to soft-delete
+   * @param deletedBy the user who performed the deletion
+   */
+  @Transactional
+  public void softDeleteComponent(
+      final Component component,
+      final String deletedBy)
+  {
+    int componentId = InternalIds.internalComponentId(component);
+    dao().softDeleteComponent(componentId, deletedBy);
+    postCommitEvent(() -> new ComponentDeletedEvent(component));
+  }
+
+  /**
+   * Restores a soft-deleted component by clearing deletion metadata.
+   *
+   * @param component the component to restore
+   */
+  @Transactional
+  public void undoSoftDeleteComponent(final Component component) {
+    int componentId = InternalIds.internalComponentId(component);
+    dao().undoSoftDeleteComponent(componentId);
+    postCommitEvent(() -> new ComponentRestoredEvent(component));
+  }
+
+  /**
+   * Browse soft-deleted components, optionally filtered by repository.
+   */
+  @Transactional
+  public Continuation<ComponentData> browseDeletedComponents(
+      @Nullable final Integer repositoryId,
+      final int limit,
+      @Nullable final String continuationToken)
+  {
+    return dao().browseDeletedComponents(repositoryId, limit, continuationToken);
+  }
+
+  /**
+   * Count soft-deleted components, optionally filtered by repository.
+   */
+  @Transactional
+  public int countDeletedComponents(@Nullable final Integer repositoryId) {
+    return dao().countDeletedComponents(repositoryId);
+  }
+
+  /**
+   * Reads a soft-deleted component by its internal id.
+   */
+  @Transactional
+  public Optional<ComponentData> readDeletedComponent(final int componentId) {
+    return dao().readDeletedComponent(componentId);
+  }
+
+  /**
+   * Returns one drain batch (up to {@code deleteBatchSize}) of soft-deleted component ids older than
+   * {@code olderThan}, oldest-id first. {@code ComponentSoftDeletedEntityService.purgeExpired} loops
+   * over this, cleaning the {@code {format}_component_tag} junction (no FK cascade on
+   * {@code component_id}) and then deleting each batch via {@link #purgeDeletedComponentsByIds}.
+   */
+  @Transactional
+  public List<Integer> selectDeletedComponentIdsBefore(final OffsetDateTime olderThan) {
+    return dao().selectDeletedComponentIdsBefore(olderThan, deleteBatchSize());
+  }
+
+  /**
+   * Permanently deletes the given components and their assets (assets first, to satisfy FK ordering)
+   * in a single transaction. Used by the expire task's bounded drain loop; ids should already be a
+   * single batch ({@code <= deleteBatchSize}).
+   * <p>
+   * Only components still soft-deleted ({@code deleted_on IS NOT NULL}) are removed, so a component
+   * restored between the drain's id selection and this delete is left intact rather than being
+   * permanently destroyed by the racing purge (NEXUS-49147). The returned count therefore reflects
+   * the rows actually purged, which may be fewer than {@code componentIds.length}.
+   *
+   * @return the number of components purged
+   */
+  @Transactional
+  public int purgeDeletedComponentsByIds(final int[] componentIds) {
+    if (componentIds.length == 0) {
+      return 0;
+    }
+    if ("H2".equals(thisSession().sqlDialect())) {
+      // workaround lack of primitive array support in H2
+      return dao().purgeSelectedSoftDeletedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
+    }
+    return dao().purgeSelectedSoftDeletedComponents(componentIds);
+  }
+
+  /**
+   * Populates the {@code component} association of each asset about to be purged, using the components already held in
+   * memory.
+   * <p>
+   * The assets are read with lazy associations, but {@link ComponentPurgedEvent} is only posted once this transaction
+   * has committed, and subscribers may handle it asynchronously on another thread. By then both the asset and the
+   * component rows are gone, so a deferred load resolves to nothing and {@code asset.component()} is empty - unlike a
+   * single asset delete
+   * ({@link org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent AssetDeletedEvent}), where the owning
+   * component is left in place and the deferred load still resolves. Every asset fetched here belongs to one of the
+   * components being purged, so the association is satisfied from memory without issuing any additional queries.
+   */
+  private void resolveAssetComponents(final List<FluentAsset> assets, final List<FluentComponent> componentList) {
+    if (assets.isEmpty() || componentList.isEmpty()) {
+      return;
+    }
+
+    // Unwrap each component up front via a type-safe pattern match, so no unchecked cast can abort the purge
+    // transaction. A component not backed by ComponentData cannot take part in the in-memory resolution; its assets
+    // are counted below as having no matching component.
+    Map<Integer, ComponentData> componentsById = new HashMap<>(componentList.size());
+    for (FluentComponent component : componentList) {
+      if (InternalIds.unwrap(component) instanceof ComponentData componentData && componentData.componentId != null) {
+        componentsById.putIfAbsent(componentData.componentId, componentData);
+      }
+    }
+
+    int noMatchingComponent = 0;
+    int unexpectedDataType = 0;
+    List<String> unresolvedAssets = new ArrayList<>();
+
+    for (FluentAsset asset : assets) {
+      if (!(InternalIds.unwrap(asset) instanceof AssetData assetData)) {
+        unexpectedDataType++;
+        recordUnresolvedAsset(unresolvedAssets, asset, OptionalInt.empty());
+        continue;
+      }
+      // assetData.componentId is the materialized column, not the lazy association. It should always be populated
+      // for assets fetched via the component_id IN (...) filter, but guard defensively: a mismatch here would
+      // indicate a logic error elsewhere, and skipping the asset degrades to the pre-existing behaviour.
+      ComponentData component = assetData.componentId == null ? null : componentsById.get(assetData.componentId);
+      if (component == null) {
+        noMatchingComponent++;
+        recordUnresolvedAsset(unresolvedAssets, asset,
+            assetData.componentId == null ? OptionalInt.empty() : OptionalInt.of(assetData.componentId));
+        continue;
+      }
+      // the component was looked up by the asset's own component id, so it is by construction the component this
+      // asset belongs to; assigning the association also cancels the pending lazy load
+      assetData.setComponent(component);
+    }
+
+    int unresolved = noMatchingComponent + unexpectedDataType;
+    if (unresolved > 0) {
+      // Neither case is expected: every asset here was fetched by the component ids of componentList. Subscribers of
+      // ComponentPurgedEvent see an empty component() for these assets, so downstream systems such as the IQ Server
+      // are never told that they were removed.
+      log.warn("Could not resolve the component association of {} of {} assets being purged; {} had no matching"
+          + " component in the purge batch and {} were not backed by the expected data object."
+          + " Affected assets (up to {} shown): {}",
+          unresolved, assets.size(), noMatchingComponent, unexpectedDataType, UNRESOLVED_LOG_LIMIT,
+          unresolvedAssets);
+    }
+  }
+
+  private static void recordUnresolvedAsset(
+      final List<String> unresolvedAssets,
+      final FluentAsset asset,
+      final OptionalInt componentId)
+  {
+    if (unresolvedAssets.size() < UNRESOLVED_LOG_LIMIT) {
+      unresolvedAssets.add(asset.path() + " (component id "
+          + (componentId.isPresent() ? componentId.getAsInt() : "unknown") + ")");
+    }
   }
 
   private List<FluentAsset> fetchAssetsFromComponents(final Optional<List<FluentComponent>> components) {
@@ -604,19 +828,19 @@ public class ComponentStore<T extends ComponentDAO>
     }
 
     List<FluentComponent> componentList = components.get();
-    if (componentList.isEmpty() || componentList.get(0) == null || componentList.get(0).repository() == null) {
+    if (componentList.isEmpty()) {
       return Collections.emptyList();
     }
 
-    ContentFacetSupport contentFacet = (ContentFacetSupport) componentList.get(0)
-        .repository()
-        .facet(ContentFacet.class);
+    Repository repository = componentList.get(0).repository();
+    if (repository == null) {
+      return Collections.emptyList();
+    }
 
-    List<Integer> componentIds = componentList.stream()
+    ContentFacetSupport contentFacet = (ContentFacetSupport) repository.facet(ContentFacet.class);
+
+    String componentIdsStr = componentList.stream()
         .map(InternalIds::internalComponentId)
-        .toList();
-
-    String componentIdsStr = componentIds.stream()
         .map(String::valueOf)
         .collect(Collectors.joining(", "));
 
@@ -625,17 +849,17 @@ public class ComponentStore<T extends ComponentDAO>
 
     do {
       Continuation<FluentAsset> assetPage = contentFacet.assets()
-          .byFilter("component_id IN (" + componentIdsStr + ")", // Dynamically constructed IN clause
-              Map.of())
+          // byFilter has no parameterized IN form: the filter is inlined via MyBatis ${} substitution. Safe here
+          // because every value is a DB-assigned component id read back as an int, so nothing user-supplied reaches
+          // the SQL - do not extend this filter with values from any other source.
+          .byFilter("component_id IN (" + componentIdsStr + ")", Map.of())
           .browse(ASSET_BROWSE_LIMIT, continuationToken);
 
-      // Get the next continuation token BEFORE consuming the results
-      try {
-        continuationToken = assetPage.nextContinuationToken();
-      }
-      catch (IllegalStateException e) {
-        continuationToken = null;
-      }
+      // Get the next continuation token BEFORE consuming the results. An empty page means there are
+      // no more results, which ContinuationArrayList signals by throwing IllegalStateException from
+      // nextContinuationToken() - guard on isEmpty() rather than catching it, so that an unexpected
+      // IllegalStateException surfaces instead of being silently read as "no more pages".
+      continuationToken = assetPage.isEmpty() ? null : assetPage.nextContinuationToken();
       allAssets.addAll(assetPage);
     }
     while (continuationToken != null);

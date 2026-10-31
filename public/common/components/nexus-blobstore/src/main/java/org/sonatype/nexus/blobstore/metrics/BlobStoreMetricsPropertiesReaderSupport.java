@@ -31,10 +31,10 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Long.parseLong;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Stream.iterate;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -73,7 +73,7 @@ public abstract class BlobStoreMetricsPropertiesReaderSupport<B extends BlobStor
   private void initMetrics(final B blobStore) throws Exception {
     checkState(this.blobStore == null, "Do not initialize twice");
 
-    this.blobStore = checkNotNull(blobStore);
+    this.blobStore = requireNonNull(blobStore);
     doInit(blobStore);
   }
 

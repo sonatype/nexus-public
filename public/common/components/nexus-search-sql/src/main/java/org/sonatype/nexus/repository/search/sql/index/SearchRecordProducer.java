@@ -41,9 +41,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
@@ -79,12 +79,12 @@ public class SearchRecordProducer
       final DatabaseTypeDetector databaseTypeDetector)
   {
     this.searchCustomFieldContributors =
-        QualifierUtil.buildQualifierBeanMap(checkNotNull(searchCustomFieldContributorsList));
-    this.versionNormalizerService = checkNotNull(versionNormalizerService);
-    this.formatToReleaseEvaluators = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatToReleaseEvaluatorsList));
-    this.formatToValidatePath = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatToValidatePathList));
-    this.searchTableDataExtensions = checkNotNull(searchTableDataExtensions);
-    this.databaseTypeDetector = checkNotNull(databaseTypeDetector);
+        QualifierUtil.buildQualifierBeanMap(requireNonNull(searchCustomFieldContributorsList));
+    this.versionNormalizerService = requireNonNull(versionNormalizerService);
+    this.formatToReleaseEvaluators = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatToReleaseEvaluatorsList));
+    this.formatToValidatePath = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatToValidatePathList));
+    this.searchTableDataExtensions = requireNonNull(searchTableDataExtensions);
+    this.databaseTypeDetector = requireNonNull(databaseTypeDetector);
   }
 
   public Optional<SearchRecordData> createSearchRecord(
@@ -119,13 +119,18 @@ public class SearchRecordProducer
     data.setEntityVersion(component.entityVersion());
     data.setAttributes(component.attributes());
 
-    assets.stream()
+    // Always set last_modified to a non-null value. Orphan detection now uses
+    // NOT EXISTS against the component table rather than timestamp comparison,
+    // so last_modified no longer drives orphan detection. The orElse(now()) fallback
+    // ensures the DB column is non-null for components whose assets have no blob.
+    OffsetDateTime lastModified = assets.stream()
         .map(Asset::blob)
         .filter(Optional::isPresent)
         .map(Optional::get)
         .map(AssetBlob::blobCreated)
         .max(OffsetDateTime::compareTo)
-        .ifPresent(data::setLastModified);
+        .orElse(OffsetDateTime.now());
+    data.setLastModified(lastModified);
 
     assets.forEach(asset -> addAssetData(data, component, asset, repository));
     addSearchExtensions(data, component);

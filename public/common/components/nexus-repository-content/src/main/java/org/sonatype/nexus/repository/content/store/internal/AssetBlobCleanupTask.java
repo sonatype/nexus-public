@@ -39,7 +39,7 @@ import org.sonatype.nexus.scheduling.CancelableByRecoveryMode;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getInteger;
@@ -93,8 +93,8 @@ public class AssetBlobCleanupTask
       final BlobStoreManager blobStoreManager,
       @Nullable final RecoveryModeService recoveryModeService)
   {
-    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersList));
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatStoreManagersList));
+    this.blobStoreManager = requireNonNull(blobStoreManager);
     this.recoveryModeService = recoveryModeService;
   }
 
@@ -269,11 +269,13 @@ public class AssetBlobCleanupTask
                 blobRef.getStore(), blobRef);
             successfullyDeleted.add(blobRef);
           }
-          else if (deleteBlobContent(blobStore, blobRef)) {
-            successfullyDeleted.add(blobRef);
-          }
           else {
-            log.warn("Could not delete blob content under {}", blobRef);
+            if (!deleteBlobContent(blobStore, blobRef)) {
+              log.warn(
+                  "Blob content was already absent under {}; database record will still be removed",
+                  blobRef);
+            }
+            successfullyDeleted.add(blobRef);
           }
         }
         catch (Exception e) {
@@ -337,9 +339,11 @@ public class AssetBlobCleanupTask
     if (HARD_DELETE) {
       return blobStore.deleteHard(blobRef.getBlobId());
     }
-    else {
-      return blobStore.delete(blobRef.getBlobId(), "Removing unused asset blob");
+    boolean deleted = blobStore.delete(blobRef.getBlobId(), "Removing unused asset blob");
+    if (!deleted) {
+      blobStore.deleteHard(blobRef.getBlobId());
     }
+    return deleted;
   }
 
   private List<BlobRef> extractBlobRefsFromAssetBlobs(final Continuation<AssetBlob> assetBlobs) {

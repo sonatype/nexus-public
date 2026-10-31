@@ -186,6 +186,29 @@ describe('ValidationUtils', () => {
     it('returns false for invalid hostname', () => {
       expect(ValidationUtils.isUrl('http://fo£o.bar')).toBe(false);
     });
+
+    // NEXUS-54266: `new URL` accepts these, but decodeURIComponent on the pathname
+    // throws URIError. That exception used to escape isUrl into callers' validation
+    // paths; a malformed escape must simply make the URL invalid.
+    it('returns false, and does not throw, for malformed percent escapes', () => {
+      for (const url of [
+        'https://example.com/%',
+        'https://example.com/%zz',
+        'https://example.com/%E0%A4%A',
+        'http://example.com/a%',
+      ]) {
+        expect(() => ValidationUtils.isUrl(url)).not.toThrow();
+        expect(ValidationUtils.isUrl(url)).toBe(false);
+      }
+    });
+
+    it('still accepts well-formed percent escapes', () => {
+      expect(ValidationUtils.isUrl('http://example.com/a%41b')).toBe(true);
+    });
+
+    it('validateIsUrl returns the standard URL error for malformed escapes', () => {
+      expect(ValidationUtils.validateIsUrl('https://example.com/%')).toBe(UIStrings.ERROR.URL_ERROR);
+    });
   });
 
   describe('notUrl', () => {

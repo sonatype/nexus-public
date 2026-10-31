@@ -23,7 +23,6 @@ import {
   SettingsAlert,
   SettingsButton,
 } from '../../../../shared/form';
-import { ExtJS } from '../../../../../../interface/ExtJS';
 import { useS3DropdownValues, useAzureConnectionTest } from './useBlobStores';
 import type { BlobStoreFormData, S3BlobStoreConfig, AzureBlobStoreConfig } from './types';
 import { BLOB_STORE_TYPE_IDS } from './blobStoreFormMachine';

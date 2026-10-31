@@ -20,7 +20,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.capability.RepositoryConditions;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -41,8 +41,8 @@ public class RepositoryConditionsImpl
       final EventManager eventManager,
       final RepositoryManager repositoryManager)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.eventManager = requireNonNull(eventManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Override

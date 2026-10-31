@@ -39,7 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -65,8 +65,8 @@ public class DbDiagnostics
 
   @Autowired
   public DbDiagnostics(ApplicationDirectories directories, final DataStoreManager dataStoreManager) {
-    this.directories = checkNotNull(directories);
-    this.dataStoreManager = checkNotNull(dataStoreManager);
+    this.directories = requireNonNull(directories);
+    this.dataStoreManager = requireNonNull(dataStoreManager);
   }
 
   private Stream<Entry<String, Object>> dataStoreHelper(final DataStore<?> dataStore) {

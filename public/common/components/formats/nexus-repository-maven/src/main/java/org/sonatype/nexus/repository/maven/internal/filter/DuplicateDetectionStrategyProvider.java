@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Provides the configured record duplicate detection strategy. Defaults to
@@ -49,8 +49,8 @@ public class DuplicateDetectionStrategyProvider
       @Value("${nexus.maven.duplicate.detection.heap.max.gb:1}") final int maxHeapGb,
       @Value("${nexus.maven.duplicate.detection.disk.max.gb:10}") final int maxDiskSizeGb)
   {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
-    this.strategy = checkNotNull(strategy);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
+    this.strategy = requireNonNull(strategy);
     this.maxHeapGb = maxHeapGb;
     this.maxDiskSizeGb = maxDiskSizeGb;
   }

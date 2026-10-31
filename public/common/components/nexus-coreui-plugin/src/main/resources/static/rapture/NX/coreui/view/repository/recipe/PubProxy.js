@@ -28,7 +28,8 @@ Ext.define('NX.coreui.view.repository.recipe.PubProxy', {
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
     'NX.coreui.view.repository.facet.BearerHttpClientFacet',
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
-    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet',
+    'NX.coreui.view.repository.facet.FirewallFacet'
   ],
 
   /**
@@ -45,6 +46,10 @@ Ext.define('NX.coreui.view.repository.recipe.PubProxy', {
       {xtype: 'nx-coreui-repository-cleanup-policy-facet'},
       {xtype: 'nx-coreui-repository-httpclient-facet-with-bearer-token'}
     ];
+
+    if (NX.State.getValue('firewallPubFormatEnabled')) {
+      me.items.unshift({xtype: 'nx-coreui-repository-firewall-facet'});
+    }
 
     me.callParent();
     me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_PubFacet_Remote_HelpText'));

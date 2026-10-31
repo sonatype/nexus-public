@@ -13,7 +13,7 @@
 
 package org.sonatype.nexus.audit;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Event fired after {@link AuditData} had been recorded.
@@ -25,7 +25,7 @@ public class AuditDataRecordedEvent
   private final AuditData data;
 
   public AuditDataRecordedEvent(final AuditData data) {
-    this.data = checkNotNull(data);
+    this.data = requireNonNull(data);
   }
 
   public AuditData getData() {

@@ -24,7 +24,7 @@ import org.sonatype.nexus.selector.VariableSource;
 
 import org.apache.shiro.authz.AuthorizationException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for {@link SecurityFacet} implementations.
@@ -46,9 +46,9 @@ public abstract class SecurityFacetSupport
       final VariableResolverAdapter variableResolverAdapter,
       final ContentPermissionChecker contentPermissionChecker)
   {
-    this.securityContributor = checkNotNull(securityContributor);
-    this.variableResolverAdapter = checkNotNull(variableResolverAdapter);
-    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
+    this.securityContributor = requireNonNull(securityContributor);
+    this.variableResolverAdapter = requireNonNull(variableResolverAdapter);
+    this.contentPermissionChecker = requireNonNull(contentPermissionChecker);
   }
 
   @Override
@@ -68,7 +68,7 @@ public abstract class SecurityFacetSupport
 
   @Override
   public void ensurePermitted(final Request request, @Nullable final SelectorEvaluationCache selectorCache) {
-    checkNotNull(request);
+    requireNonNull(request);
 
     // determine permission action from request
     String action = action(request);

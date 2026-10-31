@@ -218,8 +218,9 @@ describe('ProtectAuditPage', () => {
     it('should render within a reasonable max-width container', () => {
       const { container } = renderWithTheme(<ProtectAuditPage />);
 
-      // Check for the root container with max-width style
-      const rootBox = container.querySelector('[style*="max-width"]');
+      // Root container max-width is now applied via the BEM class
+      // .nxrm-protect-audit-page (NEXUS-51836 moved inline styles to scss).
+      const rootBox = container.querySelector('.nxrm-protect-audit-page');
       expect(rootBox).toBeInTheDocument();
     });
   });

@@ -75,7 +75,7 @@ function buildDeepLinkState(hash: string): ApiModuleDeepLinkState {
 }
 
 export function useApiModuleDeepLink(): ApiModuleDeepLinkState {
-  const [tick, setTick] = useState(0);
+  const [_tick, setTick] = useState(0);
 
   useEffect(() => {
     const onHash = () => setTick((t) => t + 1);
@@ -83,5 +83,5 @@ export function useApiModuleDeepLink(): ApiModuleDeepLinkState {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  return useMemo(() => buildDeepLinkState(window.location.hash || ''), [tick]);
+  return useMemo(() => buildDeepLinkState(window.location.hash || ''), []);
 }

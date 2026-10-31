@@ -26,10 +26,12 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.types.GroupType;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.toInternalToken;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.trim;
@@ -59,10 +61,11 @@ abstract class ComponentsResourceSupport
       final ContentAuthHelper contentAuthHelper,
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter)
   {
-    this.contentAuthHelper = checkNotNull(contentAuthHelper);
-    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
+    this.contentAuthHelper = requireNonNull(contentAuthHelper);
+    this.repositoryManagerRESTAdapter = requireNonNull(repositoryManagerRESTAdapter);
   }
 
+  @VisibleForTesting
   List<FluentComponent> browse(final Repository browsedRepository, final String continuationToken) {
     List<FluentComponent> permittedComponents = new ArrayList<>();
     String internalToken = toInternalToken(continuationToken);
@@ -75,7 +78,7 @@ abstract class ComponentsResourceSupport
     return trim(permittedComponents, PAGE_SIZE_LIMIT);
   }
 
-  private Continuation<FluentComponent> getComponents(Repository repository, final String continuationToken) {
+  private Continuation<FluentComponent> getComponents(final Repository repository, final String continuationToken) {
     if (GroupType.NAME.equals(repository.getType().getValue())) {
       return repository.facet(ContentFacet.class)
           .components()
@@ -98,7 +101,7 @@ abstract class ComponentsResourceSupport
     return component -> contentAuthHelper.checkPathPermissions(component.name(), format, repositoryName);
   }
 
-  Predicate<FluentAsset> assetPermitted(Repository repository) {
+  Predicate<FluentAsset> assetPermitted(final Repository repository) {
     String repositoryName = repository.getName();
     Set<String> repoNames = new HashSet<>(repositoryManagerRESTAdapter.findContainingGroups(repositoryName));
     repoNames.add(repositoryName);

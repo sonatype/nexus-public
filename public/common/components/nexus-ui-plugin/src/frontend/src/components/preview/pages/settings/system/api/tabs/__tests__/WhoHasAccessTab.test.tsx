@@ -83,6 +83,15 @@ describe('WhoHasAccessTab', () => {
     expect(screen.getByText(/allows anonymous access/i)).toBeInTheDocument();
   });
 
+  it('does not show anonymous banner when permission metadata is null (unmapped endpoint)', () => {
+    mockedUseEndpointAccess.mockReturnValue({
+      ...idleHook,
+      noMappedPermissions: true,
+    });
+    renderWithTheme(<WhoHasAccessTab active row={baseRow({ permission: null })} />);
+    expect(screen.queryByText(/allows anonymous access/i)).not.toBeInTheDocument();
+  });
+
   it('shows unmapped permissions message from hook', () => {
     mockedUseEndpointAccess.mockReturnValue({
       ...idleHook,

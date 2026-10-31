@@ -249,7 +249,7 @@ export function IdentifyTaskModal({
                 </Text>
                 {error && (
                   <Tooltip content={error}>
-                    <span style={{ display: 'inline-flex', cursor: 'help' }} aria-label="Error details">
+                    <span style={{ display: 'inline-flex', cursor: 'help' }}>
                       <HelpCircle size={18} color="var(--gray-9)" />
                     </span>
                   </Tooltip>

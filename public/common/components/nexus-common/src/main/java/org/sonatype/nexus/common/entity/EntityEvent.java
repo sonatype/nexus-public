@@ -16,8 +16,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.event.HasAffinity;
 import org.sonatype.nexus.common.event.HasLocality;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Entity event.
@@ -37,7 +36,7 @@ public abstract class EntityEvent
   private volatile Entity entity;
 
   public EntityEvent(final EntityMetadata metadata) {
-    this.metadata = checkNotNull(metadata);
+    this.metadata = requireNonNull(metadata);
   }
 
   public EntityId getId() {

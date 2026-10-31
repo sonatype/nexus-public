@@ -464,4 +464,149 @@ describe('ExtJS', () => {
       await expect(promise).resolves.toBeUndefined();
     });
   });
+
+  // NEXUS-54290: under header/token authentication the server-inlined state carries no user
+  // and there is no session cookie, so hasUser() returning false does not mean "no user" until
+  // the first state poll lands.
+  describe('auth state resolution', () => {
+    let stateController;
+    let handlers;
+    let originalExt;
+    let originalNX;
+    let originalBootstrap;
+
+    beforeEach(() => {
+      handlers = {};
+      stateController = {
+        on: jest.fn((event, handler) => { handlers[event] = handler; }),
+        un: jest.fn((event) => { delete handlers[event]; })
+      };
+
+      originalExt = global.Ext;
+      originalNX = global.NX;
+      originalBootstrap = window.__nxRestBootstrap;
+
+      global.Ext = {
+        getApplication: jest.fn(() => ({ getController: jest.fn(() => stateController) }))
+      };
+      global.NX = {
+        getApplication: jest.fn(() => ({})),
+        Security: { hasUser: jest.fn(() => false) },
+        // `receiving` is false from State controller launch until the first poll succeeds
+        State: {
+          getValue: jest.fn((key) => (key === 'receiving' ? false : undefined)),
+          refreshNow: jest.fn()
+        }
+      };
+      delete window.__nxRestBootstrap;
+    });
+
+    afterEach(() => {
+      global.Ext = originalExt;
+      global.NX = originalNX;
+      if (originalBootstrap === undefined) {
+        delete window.__nxRestBootstrap;
+      } else {
+        window.__nxRestBootstrap = originalBootstrap;
+      }
+    });
+
+    describe('isAuthStateResolved', () => {
+      it('is resolved when a user is known', () => {
+        global.NX.Security.hasUser.mockReturnValue(true);
+        expect(ExtJS.isAuthStateResolved()).toBe(true);
+      });
+
+      it('is resolved when the REST bootstrap has answered, even with no user', () => {
+        window.__nxRestBootstrap = { user: null };
+        expect(ExtJS.isAuthStateResolved()).toBe(true);
+      });
+
+      it('is unresolved while the first state poll is outstanding', () => {
+        expect(ExtJS.isAuthStateResolved()).toBe(false);
+      });
+
+      it('is resolved when no state poll is expected', () => {
+        global.NX.State.getValue.mockReturnValue(undefined);
+        expect(ExtJS.isAuthStateResolved()).toBe(true);
+      });
+
+      it('is resolved when reading the state throws', () => {
+        global.NX.State.getValue.mockImplementation(() => {
+          throw new Error('NX.getApplication is not a function');
+        });
+        expect(ExtJS.isAuthStateResolved()).toBe(true);
+      });
+    });
+
+    describe('whenAuthStateResolved', () => {
+      it('resolves without subscribing when the auth state is already known', async () => {
+        global.NX.State.getValue.mockReturnValue(undefined);
+
+        await expect(ExtJS.whenAuthStateResolved()).resolves.toBeUndefined();
+        expect(stateController.on).not.toHaveBeenCalled();
+        expect(global.NX.State.refreshNow).not.toHaveBeenCalled();
+      });
+
+      it('requests an immediate poll and resolves when the user arrives', async () => {
+        const promise = ExtJS.whenAuthStateResolved(5000);
+
+        expect(global.NX.State.refreshNow).toHaveBeenCalled();
+        expect(handlers.userchanged).toBeDefined();
+        expect(handlers.receivingchanged).toBeDefined();
+
+        global.NX.Security.hasUser.mockReturnValue(true);
+        handlers.userchanged();
+
+        await expect(promise).resolves.toBeUndefined();
+        expect(stateController.un).toHaveBeenCalledWith('userchanged', expect.any(Function));
+        expect(stateController.un).toHaveBeenCalledWith('receivingchanged', expect.any(Function));
+      });
+
+      it('resolves after the timeout when no state ever arrives', async () => {
+        await expect(ExtJS.whenAuthStateResolved(10)).resolves.toBeUndefined();
+        expect(stateController.un).toHaveBeenCalled();
+      });
+
+      it('resolves when there is no State controller to subscribe to', async () => {
+        global.Ext.getApplication.mockReturnValue({ getController: jest.fn(() => null) });
+
+        await expect(ExtJS.whenAuthStateResolved()).resolves.toBeUndefined();
+      });
+
+      it('resolves even when requesting a poll throws', async () => {
+        global.NX.State.refreshNow.mockImplementation(() => {
+          throw new Error('polling urls not registered');
+        });
+
+        await expect(ExtJS.whenAuthStateResolved(10)).resolves.toBeUndefined();
+      });
+    });
+
+    describe('onStateChange', () => {
+      it('subscribes and returns an unsubscribe function', () => {
+        const listener = jest.fn();
+
+        const unsubscribe = ExtJS.onStateChange(['userchanged'], listener);
+
+        expect(stateController.on).toHaveBeenCalledWith('userchanged', listener);
+        unsubscribe();
+        expect(stateController.un).toHaveBeenCalledWith('userchanged', listener);
+      });
+
+      it('returns null when there is no State controller', () => {
+        global.Ext.getApplication.mockReturnValue({ getController: jest.fn(() => null) });
+
+        expect(ExtJS.onStateChange(['userchanged'], jest.fn())).toBeNull();
+      });
+
+      it('returns null when the ExtJS application has not launched', () => {
+        global.Ext.getApplication.mockImplementation(() => {
+          throw new Error('not launched');
+        });
+
+        expect(ExtJS.onStateChange(['userchanged'], jest.fn())).toBeNull();
+      });
+    });
+  });
 });

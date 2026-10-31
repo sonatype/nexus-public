@@ -19,8 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A message source which aggregates messages sources in order.
@@ -34,7 +33,7 @@ public class AggregateMessageSource
   private final List<MessageSource> sources = Lists.newArrayList();
 
   public AggregateMessageSource(final List<MessageSource> sources) {
-    checkNotNull(sources);
+    requireNonNull(sources);
     this.sources.addAll(sources);
   }
 

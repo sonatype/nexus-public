@@ -111,7 +111,7 @@ describe('SettingsSection', () => {
   });
 
   it('renders heading with correct size', () => {
-    const { container } = renderWithTheme(<SettingsSection section={mockSection} />);
+    renderWithTheme(<SettingsSection section={mockSection} />);
 
     const heading = screen.getByRole('heading', { name: 'Security' });
     // Radix Heading with size="5" will have specific data attributes or classes

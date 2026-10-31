@@ -17,7 +17,7 @@ import java.util.Arrays;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Event sent just before a large number of {@link Component}s are purged along with their assets.
@@ -31,7 +31,7 @@ public class ComponentPrePurgeEvent
 
   public ComponentPrePurgeEvent(final int contentRepositoryId, final int[] componentIds) { // NOSONAR
     super(contentRepositoryId);
-    this.componentIds = checkNotNull(componentIds);
+    this.componentIds = requireNonNull(componentIds);
   }
 
   public int[] getComponentIds() {

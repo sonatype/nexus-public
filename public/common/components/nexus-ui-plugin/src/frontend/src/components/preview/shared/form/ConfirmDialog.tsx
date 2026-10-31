@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { AlertDialog, Button, Flex, Text, Box, Callout } from '@radix-ui/themes';
 import { Loader2 } from 'lucide-react';
 
@@ -61,6 +61,8 @@ export function ConfirmDialog({
   confirmTestId,
   analyticsId,
 }: ConfirmDialogProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const handleConfirm = () => {
     onConfirm();
     if (!loading) {
@@ -72,7 +74,20 @@ export function ConfirmDialog({
 
   return (
     <AlertDialog.Root open={open} onOpenChange={loading ? undefined : onOpenChange}>
-      <AlertDialog.Content maxWidth="450px">
+      <AlertDialog.Content
+        ref={contentRef}
+        maxWidth="450px"
+        onOpenAutoFocus={(event) => {
+          // Radix moves initial focus to the Cancel button, which makes
+          // VoiceOver announce "Cancel, button" and skip the dialog's title
+          // and message. Focus the dialog container instead (it carries
+          // role="alertdialog" + aria-labelledby=title + aria-describedby=
+          // message) so the screen reader announces the alert text on open
+          // before the user tabs to the actions (NEXUS-53625).
+          event.preventDefault();
+          contentRef.current?.focus();
+        }}
+      >
         <AlertDialog.Title>{title}</AlertDialog.Title>
 
         <AlertDialog.Description size="2">

@@ -196,7 +196,7 @@ describe('useProprietaryApi', () => {
       await act(async () => {
         try {
           await result.current.updateSettings(['maven-releases']);
-        } catch (e) {
+        } catch (_e) {
           // Expected error
         }
       });

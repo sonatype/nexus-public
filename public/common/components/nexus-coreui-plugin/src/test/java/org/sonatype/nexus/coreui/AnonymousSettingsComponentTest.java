@@ -12,22 +12,17 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.validation.Validator;
-
-import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -41,10 +36,6 @@ import static org.mockito.Mockito.when;
 @WithUser
 class AnonymousSettingsComponentTest
 {
-  @ValidationExecutor
-  private final Validator validator =
-      new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
-
   @Mock
   AnonymousManager anonymousManager;
 

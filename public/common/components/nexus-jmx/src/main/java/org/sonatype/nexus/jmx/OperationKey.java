@@ -20,7 +20,7 @@ import javax.management.MBeanParameterInfo;
 
 import com.google.common.collect.ImmutableList;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * MBean operation (method) key.
@@ -34,13 +34,13 @@ public class OperationKey
   private final List<String> types;
 
   public OperationKey(final String name, final String[] types) {
-    this.name = checkNotNull(name);
-    checkNotNull(types);
+    this.name = requireNonNull(name);
+    requireNonNull(types);
     this.types = ImmutableList.copyOf(types);
   }
 
   public OperationKey(final MBeanOperationInfo info) {
-    checkNotNull(info);
+    requireNonNull(info);
     this.name = info.getName();
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     for (MBeanParameterInfo pinfo : info.getSignature()) {

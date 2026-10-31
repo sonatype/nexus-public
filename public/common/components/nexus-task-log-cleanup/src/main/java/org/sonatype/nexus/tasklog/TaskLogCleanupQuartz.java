@@ -23,7 +23,7 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
 
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import org.springframework.stereotype.Component;
 
@@ -46,8 +46,8 @@ public class TaskLogCleanupQuartz
       final TaskScheduler taskScheduler,
       @Value("${nexus.tasks.log.cleanup.cron:0 0 0 * * ?}") final String taskLogCleanupCron)
   {
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.taskLogCleanupCron = checkNotNull(taskLogCleanupCron);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.taskLogCleanupCron = requireNonNull(taskLogCleanupCron);
   }
 
   @Override

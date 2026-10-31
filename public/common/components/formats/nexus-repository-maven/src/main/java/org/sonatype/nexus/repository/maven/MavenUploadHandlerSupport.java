@@ -57,7 +57,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import org.apache.maven.model.Model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -136,8 +135,8 @@ public abstract class MavenUploadHandlerSupport
 
   @Override
   public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
-    checkNotNull(repository);
-    checkNotNull(upload);
+    requireNonNull(repository);
+    requireNonNull(upload);
 
     if (VersionPolicy.SNAPSHOT.equals(getVersionPolicy(repository))) {
       throw new ValidationErrorsException("Upload to snapshot repositories not supported, use the maven client.");

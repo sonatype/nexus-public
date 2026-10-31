@@ -91,9 +91,14 @@ export type NotificationCondition =
   | 'SUCCESS_FAILURE';
 
 /**
- * Form field type for dynamic task properties
+ * Form field type for dynamic task properties.
+ *
+ * Includes both the wire-protocol types (mirroring FormField subclasses on the backend)
+ * and the UI-only types DynamicFormField routes through TASK_FIELD_UI overrides
+ * (alertBanner/staticInfo/planInformation/taskScope/itemselect) — these never come
+ * from /v1/tasks/templates but appear in field.type after TASK_FIELD_UI is applied.
  */
-export type FormFieldType = 
+export type FormFieldType =
   | 'string'
   | 'number'
   | 'text'
@@ -104,7 +109,12 @@ export type FormFieldType =
   | 'repo'
   | 'repo-or-group'
   | 'blobstore'
-  | 'combobox';
+  | 'combobox'
+  | 'alertBanner'
+  | 'staticInfo'
+  | 'planInformation'
+  | 'taskScope'
+  | 'itemselect';
 
 /**
  * Form field definition from TaskTypeXO
@@ -119,9 +129,11 @@ export interface FormField {
   readOnly?: boolean;
   initialValue?: string | number | boolean | null;
   regexValidation?: string;
+  minValue?: string;
+  maxValue?: string;
   attributes?: Record<string, unknown>;
   storeApi?: string;
-  storeFilters?: Array<{ property: string; value: string }>;
+  storeFilters?: Record<string, string>;
   allowAutocomplete?: boolean;
   idMapping?: string;
   nameMapping?: string;
@@ -223,6 +235,14 @@ export interface TasksListProps {
  */
 export interface TaskDetailProps {
   task: Task | null;
+  /**
+   * Latest polled snapshot of the same task. Only its live-derived fields
+   * (status, statusDescription, lastRun, lastRunResult, nextRun, runnable,
+   * stoppable) are overlaid for display; form-bound fields are intentionally
+   * ignored so a poll never clobbers an in-flight edit. See TaskDetail for the
+   * merge strategy.
+   */
+  liveTask?: Task | null;
   /** Task ID from URL/route - used to fetch task when task prop is not yet loaded */
   taskId?: string | null;
   loading?: boolean;
@@ -424,6 +444,32 @@ export const getStatusColor = (status: TaskStatus): string => {
       return 'gray';
   }
 };
+
+/**
+ * The terminal task statuses — the DONE-group outcomes from the backend
+ * `TaskState` enum (OK / FAILED / CANCELED / INTERRUPTED). Once a task reaches
+ * one of these, nothing more changes without a new run, so polling can stop.
+ *
+ * This is the single client-side source of truth; the polling gates on both the
+ * detail and list pages classify statuses through {@link isTerminalStatus} and
+ * {@link isActiveStatus} rather than re-listing the values.
+ */
+export const TERMINAL_TASK_STATUSES: readonly TaskStatus[] = ['OK', 'FAILED', 'CANCELED', 'INTERRUPTED'];
+
+/**
+ * True when a task has reached a terminal outcome and will not change until it
+ * runs again.
+ */
+export const isTerminalStatus = (status?: TaskStatus | null): boolean =>
+  !!status && TERMINAL_TASK_STATUSES.includes(status);
+
+/**
+ * True while a task is actively doing work — RUNNING, or BLOCKED waiting on
+ * another task to finish. These are the statuses worth polling on their own
+ * (a transition is imminent), independent of any post-action refresh window.
+ */
+export const isActiveStatus = (status?: TaskStatus | null): boolean =>
+  status === 'RUNNING' || status === 'BLOCKED';
 
 /**
  * Combine date and time into a single Date object

@@ -26,6 +26,7 @@ export default class ExtJS {
   static urlOf = jest.fn((path) => `https://testurl${path}`);
   static absolutePath = jest.fn((path) => `/absolute${path}`);
   static proLicenseUrl = jest.fn(() => 'https://testurl/PRO-LICENSE.html');
+  static ceLicenseUrl = jest.fn(() => 'https://testurl/CE-LICENSE.html');
 
   static setDirtyStatus = jest.fn((key, isDirty) => {
     window.dirty = window.dirty || [];
@@ -61,7 +62,7 @@ export default class ExtJS {
   };
 
   static formatDate = jest.fn((_date, _format) => '2024-01-01');
-  static isProEdition = jest.fn(() => true);
+  static isLicensedEdition = jest.fn(() => true);
   static checkPermission = jest.fn(() => true);
 
   static useUser = jest.fn(() => ({
@@ -87,10 +88,21 @@ export default class ExtJS {
   static usePermission = jest.fn((getValue) => getValue());
 
   static hasUser = jest.fn(() => true);
+  static isAuthStateResolved = jest.fn(() => true);
+  static whenAuthStateResolved = jest.fn(() => Promise.resolve());
+  static onStateChange = jest.fn(() => () => {});
+  static onPermissionsChange = jest.fn(() => () => {});
   static signOut = jest.fn();
   static showAbout = jest.fn();
   static refresh = jest.fn();
   static search = jest.fn();
   static isExtJsRendered = jest.fn(() => true);
   static waitForExtJs = jest.fn((callback) => callback());
+  static arePermissionsReady = jest.fn(() => true);
+  static waitForPermissions = jest.fn().mockResolvedValue(undefined);
+  static calculateTimeout = jest.fn().mockReturnValue(10000);
 }
+
+// Mirror the production module's `export { ExtJS }` re-export so consumers using
+// `import { ExtJS } from '.../ExtJS'` resolve to the same mock class as the default import.
+export { ExtJS };

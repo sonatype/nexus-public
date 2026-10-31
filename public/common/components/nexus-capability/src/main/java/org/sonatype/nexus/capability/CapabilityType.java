@@ -18,7 +18,7 @@ import jakarta.validation.groups.Default;
 import org.sonatype.nexus.validation.group.Create;
 import org.sonatype.nexus.validation.group.Delete;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Type of a capability.
@@ -34,7 +34,7 @@ public class CapabilityType
   private final String typeId;
 
   public CapabilityType(final String typeId) {
-    this.typeId = checkNotNull(typeId);
+    this.typeId = requireNonNull(typeId);
   }
 
   @Override

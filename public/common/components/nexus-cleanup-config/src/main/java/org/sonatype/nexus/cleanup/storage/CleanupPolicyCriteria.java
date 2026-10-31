@@ -78,7 +78,7 @@ public class CleanupPolicyCriteria
         getIntegerFromCriteriaMap(criteriaMap, LAST_DOWNLOADED_KEY),
         getReleaseType(criteriaMap),
         criteriaMap.get(REGEX_KEY),
-        getIntegerFromCriteriaMap(criteriaMap, RETAIN_KEY),
+        getCountFromCriteriaMap(criteriaMap, RETAIN_KEY),
         criteriaMap.get(RETAIN_SORT_BY_KEY));
   }
 
@@ -122,6 +122,17 @@ public class CleanupPolicyCriteria
 
     if (Strings2.notBlank(value)) {
       return parseInt(value) / (int) DAY_IN_SECONDS;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Integer getCountFromCriteriaMap(final Map<String, String> criteriaMap, final String key) {
+    String value = criteriaMap.get(key);
+
+    if (Strings2.notBlank(value)) {
+      return parseInt(value); // retain is a component count, not a duration -- do not scale
     }
 
     return null;

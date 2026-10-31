@@ -50,7 +50,7 @@ export function ResizablePanel({
       const stored = localStorage.getItem(storageKey);
       if (stored) {
         const width = parseInt(stored, 10);
-        if (!isNaN(width) && width >= minLeftWidth && width <= maxLeftWidth) {
+        if (!Number.isNaN(width) && width >= minLeftWidth && width <= maxLeftWidth) {
           return width;
         }
       }

@@ -15,6 +15,7 @@ import type { Privilege } from '../../../security/privileges/types';
 import type { Role } from '../../../security/roles/types';
 
 import type { EndpointAccessDot } from './endpointAccess';
+import { permissionLogical } from './formatEndpointPermissions';
 import type { MergedApiEndpoint } from './mergeSwaggerPermissions';
 import {
   buildPrivilegeByIdMap,
@@ -42,7 +43,7 @@ export function computeRoleLensAccessById(
       out[id] = row.permission?.authenticated === false ? 'granted' : 'unknown';
       continue;
     }
-    const mode = row.permission?.permissions?.[0]?.logical === 'OR' ? 'OR' : 'AND';
+    const mode = permissionLogical(row.permission);
     const ok = roleSatisfiesRequiredPermissions(roleId, roleById, privilegeById, reqs, mode);
     if (ok) {
       out[id] = 'granted';

@@ -11,44 +11,18 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Box, Flex, Text, Table, Badge, Tooltip } from '@radix-ui/themes';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { NodeInfo } from './types';
-import { useNodesApi } from './useNodesApi';
+import { useNodes } from './useNodes';
 
 import './NodesList.scss';
 
-interface NodesListProps {
-  refreshKey?: number;
-}
-
 /**
- * NodesList - Displays nodes in a table
+ * NodesList - Displays cluster nodes in a table.
  */
-export function NodesList({ refreshKey = 0 }: NodesListProps) {
-  const { fetchNodes } = useNodesApi();
-  const [nodes, setNodes] = useState<NodeInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Load nodes
-  useEffect(() => {
-    const loadNodes = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await fetchNodes();
-        setNodes(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load nodes');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadNodes();
-  }, [fetchNodes, refreshKey]);
+export function NodesList() {
+  const { nodes, loading, error } = useNodes();
 
   if (loading) {
     return (
@@ -99,9 +73,7 @@ export function NodesList({ refreshKey = 0 }: NodesListProps) {
                     )}
                   </Flex>
                 </Table.Cell>
-                <Table.Cell className="nodes-list__cell">
-                  {node.name}
-                </Table.Cell>
+                <Table.Cell className="nodes-list__cell">{node.name}</Table.Cell>
               </Table.Row>
             ))
           )}

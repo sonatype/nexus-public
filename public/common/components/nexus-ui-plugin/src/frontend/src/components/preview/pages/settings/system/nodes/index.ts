@@ -13,7 +13,4 @@
 
 export { NodesPage } from './NodesPage';
 export { NodesList } from './NodesList';
-export { useNodesApi } from './useNodesApi';
 export * from './types';
-
-

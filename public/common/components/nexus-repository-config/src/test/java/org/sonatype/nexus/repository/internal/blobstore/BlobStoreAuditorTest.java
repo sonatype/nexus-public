@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.internal.blobstore;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.audit.AuditData;
@@ -32,6 +33,7 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.junit.runner.RunWith;
@@ -77,8 +79,19 @@ public class BlobStoreAuditorTest
     when(blobStoreConfiguration.getType()).thenReturn(BLOB_STORE_TYPE);
   }
 
+  private void stubPreSignedUrlEnabled(final Boolean value) {
+    Map<String, Map<String, Object>> outer = new HashMap<>();
+    Map<String, Object> configSub = new HashMap<>();
+    if (value != null) {
+      configSub.put("preSignedUrlEnabled", value);
+    }
+    outer.put("s3", configSub);
+    when(blobStoreConfiguration.getAttributes()).thenReturn(outer);
+  }
+
   @Test
-  public void testCreatedEvent_recordsAuditData() {
+  public void testCreatedEvent_recordsAuditData_withPreSignedTrue() {
+    stubPreSignedUrlEnabled(true);
     BlobStoreCreatedEvent event = new BlobStoreCreatedEvent(blobStore);
 
     underTest.on(event);
@@ -96,10 +109,13 @@ public class BlobStoreAuditorTest
     assertThat(attributes.get("name"), is(BLOB_STORE_NAME));
     assertThat(attributes, hasKey("type"));
     assertThat(attributes.get("type"), is(BLOB_STORE_TYPE));
+    assertThat(attributes, hasKey("preSignedUrlEnabled"));
+    assertThat(attributes.get("preSignedUrlEnabled"), is(Boolean.TRUE));
   }
 
   @Test
-  public void testUpdatedEvent_recordsAuditData() {
+  public void testUpdatedEvent_recordsAuditData_withPreSignedFalse() {
+    stubPreSignedUrlEnabled(false);
     BlobStoreUpdatedEvent event = new BlobStoreUpdatedEvent(blobStore);
 
     underTest.on(event);
@@ -107,20 +123,14 @@ public class BlobStoreAuditorTest
     ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
     verify(auditRecorder).record(captor.capture());
 
-    AuditData auditData = captor.getValue();
-    assertThat(auditData.getDomain(), is(BlobStoreAuditor.DOMAIN));
-    assertThat(auditData.getType(), is("updated"));
-    assertThat(auditData.getContext(), is(BLOB_STORE_NAME));
-
-    Map<String, Object> attributes = auditData.getAttributes();
-    assertThat(attributes, hasKey("name"));
-    assertThat(attributes.get("name"), is(BLOB_STORE_NAME));
-    assertThat(attributes, hasKey("type"));
-    assertThat(attributes.get("type"), is(BLOB_STORE_TYPE));
+    Map<String, Object> attributes = captor.getValue().getAttributes();
+    assertThat(attributes, hasKey("preSignedUrlEnabled"));
+    assertThat(attributes.get("preSignedUrlEnabled"), is(Boolean.FALSE));
   }
 
   @Test
-  public void testDeletedEvent_recordsAuditData() {
+  public void testDeletedEvent_recordsAuditData_includesPreSignedWhenPresent() {
+    stubPreSignedUrlEnabled(true);
     BlobStoreDeletedEvent event = new BlobStoreDeletedEvent(blobStore);
 
     underTest.on(event);
@@ -138,6 +148,22 @@ public class BlobStoreAuditorTest
     assertThat(attributes.get("name"), is(BLOB_STORE_NAME));
     assertThat(attributes, hasKey("type"));
     assertThat(attributes.get("type"), is(BLOB_STORE_TYPE));
+    assertThat(attributes, hasKey("preSignedUrlEnabled"));
+    assertThat(attributes.get("preSignedUrlEnabled"), is(Boolean.TRUE));
+  }
+
+  @Test
+  public void testEvent_omitsPreSignedWhenAttributeAbsent() {
+    stubPreSignedUrlEnabled(null);
+    BlobStoreUpdatedEvent event = new BlobStoreUpdatedEvent(blobStore);
+
+    underTest.on(event);
+
+    ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
+    verify(auditRecorder).record(captor.capture());
+
+    Map<String, Object> attributes = captor.getValue().getAttributes();
+    assertThat(attributes, not(hasKey("preSignedUrlEnabled")));
   }
 
   @Test

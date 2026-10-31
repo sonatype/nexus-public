@@ -143,11 +143,26 @@ export default function SearchRadix({ isPreviewUI = false }) {
     setShowSuggestions(false);
     
     if (isPreviewUI) {
-      if (query) {
-        router.stateService.go('preview.browse.search.unified', { q: query });
-      } else {
-        router.stateService.go('preview.browse.search.unified');
-      }
+      // inherit: false — `go` defaults to inheriting the router's cached params,
+      // and those go stale because the search page writes its URL with raw
+      // pushState, which never informs the router. Without this, a fresh search
+      // silently resurrects a format or sort the user had moved on from.
+      // Unspecified params fall back to their declared defaults, all null.
+      //
+      // reload — inherit: false alone still loses the case this fix targets.
+      // Re-submitting a term the router already has cached produces a
+      // same-state/same-params transition, which UI-Router rejects as
+      // 'SameAsCurrent' (see Transition._ignoredReason), so nothing navigates
+      // and the page keeps showing the drilled-down nameOrVersion results.
+      // Naming the state (rather than passing `true`) scopes the forced
+      // re-entry: options.reload === true resolves to the registry root
+      // (stateService.transitionTo), remounting the whole preview shell —
+      // including this header — on every search.
+      router.stateService.go(
+        'preview.browse.search.unified',
+        query ? { q: query } : {},
+        { inherit: false, reload: 'preview.browse.search.unified' },
+      );
     } else {
       const menuCtrl =
         window.Ext && Ext.getApplication && Ext.getApplication().getController

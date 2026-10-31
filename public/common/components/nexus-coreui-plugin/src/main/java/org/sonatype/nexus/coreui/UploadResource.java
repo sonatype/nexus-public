@@ -24,9 +24,15 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.coreui.internal.UploadService;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
+import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.RedeployDisabledException;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.validation.Validate;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -74,19 +80,11 @@ public class UploadResource
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @RequiresPermissions("nexus:component:create")
-  public String postComponent(
+  public Response postComponent(
       @PathParam("repositoryName") final String repositoryName,
       @Context final HttpServletRequest request) throws IOException
   {
-    try {
-      Packet responseJson = new Packet(uploadService.upload(repositoryName, request));
-      return objectMapper.writeValueAsString(responseJson);
-    }
-    catch (Exception e) {
-      log.error("Unable to perform upload to repository {}", repositoryName, e);
-      ErrorPacket responseJson = new ErrorPacket(e.getMessage());
-      return objectMapper.writeValueAsString(Arrays.asList(responseJson));
-    }
+    return doUpload(repositoryName, request, false);
   }
 
   @Timed
@@ -97,11 +95,61 @@ public class UploadResource
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.TEXT_HTML)
   @RequiresPermissions("nexus:component:create")
-  public String postComponentWithHtmlResponse(
+  public Response postComponentWithHtmlResponse(
       @PathParam("repositoryName") final String repositoryName,
       @Context final HttpServletRequest request) throws IOException
   {
-    return htmlWrap(postComponent(repositoryName, request));
+    return doUpload(repositoryName, request, true);
+  }
+
+  /**
+   * NEXUS-53344: shared upload entry point. The body is the same ExtJS-RPC envelope the UI has
+   * always parsed (a {@link Packet} on success or a single-element array of {@link ErrorPacket}
+   * on failure); only the HTTP status differs.
+   *
+   * <p>
+   * {@link IllegalOperationException} (e.g. read-only deployment policy, duplicate-asset on a
+   * hosted format) is mapped to HTTP 400 to match {@code ComponentsResource}. Every other failure
+   * keeps the historical HTTP 200 + {@code success:false} body so the React form machine and the
+   * legacy ExtJS {@code nx-settingsform} continue to surface the error message unchanged.
+   */
+  private Response doUpload(
+      final String repositoryName,
+      final HttpServletRequest request,
+      final boolean htmlWrap) throws IOException
+  {
+    Status status = Status.OK;
+    String body;
+    try {
+      Packet responseJson = new Packet(uploadService.upload(repositoryName, request));
+      body = objectMapper.writeValueAsString(responseJson);
+    }
+    catch (RedeployDisabledException e) {
+      log.debug("Re-deploy denied for repository {}: {}", repositoryName, e.getMessage());
+      status = Status.CONFLICT;
+      body = objectMapper.writeValueAsString(Arrays.asList(new ErrorPacket(e.getMessage())));
+    }
+    catch (ConcurrentOperationException e) {
+      log.debug("Concurrent operation conflict for repository {}: {}", repositoryName, e.getMessage());
+      status = Status.CONFLICT;
+      body = objectMapper.writeValueAsString(Arrays.asList(new ErrorPacket(e.getMessage())));
+    }
+    catch (IllegalOperationException e) {
+      log.warn("Rejected upload to repository {}: {}", repositoryName, e.getMessage());
+      status = Status.BAD_REQUEST;
+      body = objectMapper.writeValueAsString(Arrays.asList(new ErrorPacket(e.getMessage())));
+    }
+    catch (ValidationErrorsException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      log.error("Unable to perform upload to repository {}", repositoryName, e);
+      body = objectMapper.writeValueAsString(Arrays.asList(new ErrorPacket(e.getMessage())));
+    }
+    return Response.status(status)
+        .type(htmlWrap ? MediaType.TEXT_HTML : MediaType.APPLICATION_JSON)
+        .entity(htmlWrap ? htmlWrap(body) : body)
+        .build();
   }
 
   public static class Packet

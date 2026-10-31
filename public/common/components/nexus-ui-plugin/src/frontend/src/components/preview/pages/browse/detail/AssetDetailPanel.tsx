@@ -14,7 +14,6 @@
 import React, { useState, useCallback } from 'react';
 import {
   Box,
-  Card,
   Flex,
   Heading,
   Text,
@@ -30,6 +29,7 @@ import { Trash2, Download, FileArchive, ChevronDown, Copy, Check, Tag, Shield, E
 
 import { ExtJS } from '../../../../../interface/ExtJS';
 import { ConfirmDialog } from '../../../shared/form';
+import { useIsLicensedEdition } from '../../../shared/hooks';
 import { DeepResearchLink } from '../../../shared/DeepResearchLink';
 import { isIqServerEnabled } from '../../browse/repository-list/useRepositoryList';
 import type { AssetDetailPanelProps, AssetAttributes } from './detail.types';
@@ -327,7 +327,7 @@ export function AssetDetailPanel({
 }: AssetDetailPanelProps): JSX.Element {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const iqEnabled = isIqServerEnabled();
-  const isProEdition = ExtJS.isProEdition?.() ?? false;
+  const isLicensedEdition = useIsLicensedEdition();
 
   const {
     name,
@@ -393,7 +393,7 @@ export function AssetDetailPanel({
           <Heading size="4">{displayName}</Heading>
         </Flex>
         <Flex className="detail-panel__actions">
-          {component && component.version && (
+          {component?.version && (
             <DeepResearchLink
               ecosystem={format}
               packageName={format === 'maven2' && component.group ? `${component.group}:${component.name}` : component.name}
@@ -427,7 +427,7 @@ export function AssetDetailPanel({
           <Tabs.Trigger value="summary">{STRINGS.tabs.summary}</Tabs.Trigger>
           <Tabs.Trigger value="usage">{STRINGS.tabs.usage}</Tabs.Trigger>
           <Tabs.Trigger value="attributes">{STRINGS.tabs.attributes}</Tabs.Trigger>
-          {isProEdition && <Tabs.Trigger value="tags">{STRINGS.tabs.tags}</Tabs.Trigger>}
+          {isLicensedEdition && <Tabs.Trigger value="tags">{STRINGS.tabs.tags}</Tabs.Trigger>}
           <Tabs.Trigger value="lifecycle">{STRINGS.tabs.lifecycle}</Tabs.Trigger>
         </Tabs.List>
 
@@ -578,7 +578,7 @@ export function AssetDetailPanel({
         </Tabs.Content>
 
         {/* Component Tags Tab — Pro feature: hidden in CE mode */}
-        {isProEdition && (
+        {isLicensedEdition && (
           <Tabs.Content value="tags">
             <ScrollArea className="detail-panel__tab-content">
               <Box py="4">
@@ -603,7 +603,7 @@ export function AssetDetailPanel({
                 {iqEnabled ? (
                   <>
                     <Text color="gray">Component security analysis available in IQ Server.</Text>
-                    {component && component.version && (
+                    {component?.version && (
                       <Button
                         variant="soft"
                         size="2"
@@ -642,7 +642,7 @@ export function AssetDetailPanel({
       {/* Footer Actions */}
       <Separator size="4" />
       <Flex p="3" gap="2" justify="end">
-        {component && component.version && (
+        {component?.version && (
           <DeepResearchLink
             ecosystem={format}
             packageName={format === 'maven2' && component.group ? `${component.group}:${component.name}` : component.name}

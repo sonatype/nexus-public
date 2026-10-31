@@ -23,7 +23,7 @@ import org.sonatype.nexus.webresources.WebResourceBundle;
 
 import com.google.common.collect.ImmutableList;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.webresources.WebResource.JAVASCRIPT;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +40,7 @@ public class ExtDirectWebResources
 
   @Autowired
   public ExtDirectWebResources(final ApplicationDirectories directories) {
-    this.directories = checkNotNull(directories);
+    this.directories = requireNonNull(directories);
   }
 
   private WebResource create(final String fileName, final String path) {

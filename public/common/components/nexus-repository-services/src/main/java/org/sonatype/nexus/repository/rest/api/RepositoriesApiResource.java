@@ -21,14 +21,16 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 
+import org.sonatype.nexus.repository.manager.RepositoryDeletionService;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
+import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
@@ -46,9 +48,15 @@ public class RepositoriesApiResource
 
   private final AuthorizingRepositoryManager authorizingRepositoryManager;
 
+  private final RepositoryDeletionService repositoryDeletionService;
+
   @Autowired
-  public RepositoriesApiResource(final AuthorizingRepositoryManager authorizingRepositoryManager) {
-    this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
+  public RepositoriesApiResource(
+      final AuthorizingRepositoryManager authorizingRepositoryManager,
+      final RepositoryDeletionService repositoryDeletionService)
+  {
+    this.authorizingRepositoryManager = requireNonNull(authorizingRepositoryManager);
+    this.repositoryDeletionService = requireNonNull(repositoryDeletionService);
   }
 
   @Override
@@ -56,8 +64,17 @@ public class RepositoriesApiResource
   @Path("/{repositoryName}")
   @RequiresAuthentication
   public Response deleteRepository(@PathParam("repositoryName") final String repositoryName) throws Exception {
-    boolean isDeleted = authorizingRepositoryManager.delete(repositoryName);
-    return Response.status(isDeleted ? NO_CONTENT : NOT_FOUND).build();
+    // The soft-delete-vs-hard-delete decision and the per-repository DELETE authorization are owned
+    // by RepositoryDeletionService (NEXUS-49147). Authorization/validation failures and missing
+    // repositories map to 404, preserving this endpoint's existing contract.
+    try {
+      repositoryDeletionService.delete(repositoryName);
+      return Response.status(NO_CONTENT).build();
+    }
+    catch (AuthorizationException | IllegalArgumentException | IllegalStateException e) {
+      // MissingRepositoryException extends IllegalStateException and is covered above.
+      return Response.status(NOT_FOUND).build();
+    }
   }
 
   @POST

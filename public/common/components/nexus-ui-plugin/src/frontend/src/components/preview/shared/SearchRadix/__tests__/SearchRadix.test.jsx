@@ -141,13 +141,60 @@ describe('SearchRadix', () => {
       const input = screen.getByPlaceholderText(/search/i);
       fireEvent.change(input, {target: {value: 'my-lib'}});
       fireEvent.keyDown(input, {key: 'Enter'});
-      expect(mockGo).toHaveBeenCalledWith(ROUTES.previewSearchUnified, {q: 'my-lib'});
+      expect(mockGo).toHaveBeenCalledWith(
+        ROUTES.previewSearchUnified,
+        {q: 'my-lib'},
+        {inherit: false, reload: ROUTES.previewSearchUnified},
+      );
     });
 
     it('navigates to previewSearchUnified without params on Enter with empty query', () => {
       render(<SearchRadix isPreviewUI routes={ROUTES} />);
       fireEvent.keyDown(screen.getByPlaceholderText(/search/i), {key: 'Enter'});
-      expect(mockGo).toHaveBeenCalledWith(ROUTES.previewSearchUnified);
+      expect(mockGo).toHaveBeenCalledWith(
+        ROUTES.previewSearchUnified,
+        {},
+        {inherit: false, reload: ROUTES.previewSearchUnified},
+      );
+    });
+
+    it('navigates without inheriting stale router params (AT-017)', () => {
+      render(<SearchRadix isPreviewUI routes={ROUTES} />);
+      const input = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(input, {target: {value: 'shared02'}});
+      fireEvent.keyDown(input, {key: 'Enter'});
+      expect(mockGo).toHaveBeenCalledWith(
+        ROUTES.previewSearchUnified,
+        {q: 'shared02'},
+        {inherit: false, reload: ROUTES.previewSearchUnified},
+      );
+    });
+
+    it('resets params on an empty search (AT-017)', () => {
+      render(<SearchRadix isPreviewUI routes={ROUTES} />);
+      fireEvent.keyDown(screen.getByPlaceholderText(/search/i), {key: 'Enter'});
+      expect(mockGo).toHaveBeenCalledWith(
+        ROUTES.previewSearchUnified,
+        {},
+        {inherit: false, reload: ROUTES.previewSearchUnified},
+      );
+    });
+
+    it('forces the transition when the term matches the router cache (AT-017)', () => {
+      // inherit: false alone is not enough. The search page writes its URL with
+      // raw pushState, so the router keeps a stale `q`; re-submitting that same
+      // term produces a same-state/same-params transition, which UI-Router
+      // rejects as 'SameAsCurrent' and the page never re-syncs. The reload
+      // option names the state rather than passing `true`, which would resolve
+      // to the registry root and remount the whole preview shell.
+      render(<SearchRadix isPreviewUI routes={ROUTES} />);
+      const input = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(input, {target: {value: 'spring'}});
+      fireEvent.keyDown(input, {key: 'Enter'});
+
+      const [, , options] = mockGo.mock.calls.at(-1);
+      expect(options.reload).toBe(ROUTES.previewSearchUnified);
+      expect(options.reload).not.toBe(true);
     });
   });
 

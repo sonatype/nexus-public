@@ -50,7 +50,7 @@ export function useRolesForm({
   updateRole,
 }: UseRolesFormOptions): UseRolesFormReturn {
   const toast = useToast();
-  const isCreate = !roleId && !role;
+  const isCreate = !(roleId || role);
 
   const machine = useMemo(
     () => createRolesFormMachine(roleId, role),

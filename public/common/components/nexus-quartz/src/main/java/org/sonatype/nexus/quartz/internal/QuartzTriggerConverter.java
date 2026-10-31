@@ -40,7 +40,7 @@ import org.quartz.TriggerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.quartz.TriggerBuilder.newTrigger;
 import static org.sonatype.nexus.scheduling.schedule.Schedule.SCHEDULE_DAYS_TO_RUN;
 import static org.sonatype.nexus.scheduling.schedule.Schedule.SCHEDULE_START_AT;
@@ -59,14 +59,14 @@ public class QuartzTriggerConverter
   private final ScheduleFactory scheduleFactory;
 
   public QuartzTriggerConverter(final ScheduleFactory scheduleFactory) {
-    this.scheduleFactory = checkNotNull(scheduleFactory);
+    this.scheduleFactory = requireNonNull(scheduleFactory);
   }
 
   /**
    * Converts a Nexus {@link Schedule} into a Quartz {@link Trigger}.
    */
   public TriggerBuilder convert(final Schedule schedule) {
-    checkNotNull(schedule);
+    requireNonNull(schedule);
 
     TriggerBuilder triggerBuilder;
 
@@ -177,7 +177,7 @@ public class QuartzTriggerConverter
    * as the {@link Trigger#getJobDataMap()} is used as the source of configuration.
    */
   public Schedule convert(final Trigger trigger) {
-    checkNotNull(trigger);
+    requireNonNull(trigger);
 
     JobDataMap jobData = trigger.getJobDataMap();
     String type = jobData.getString(Schedule.SCHEDULE_TYPE);

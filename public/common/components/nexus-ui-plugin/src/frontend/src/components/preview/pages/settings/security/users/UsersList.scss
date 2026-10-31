@@ -14,8 +14,8 @@
 .users-list {
   display: flex;
   gap: var(--space-4);
-  height: 100%;
   width: 100%;
+  align-items: flex-start;
 
   &__sidebar {
     flex-shrink: 0;
@@ -38,16 +38,8 @@
     width: 100%;
   }
 
-  &__table {
-    flex: 1;
-  }
-
   &__summary {
     padding: var(--space-3);
     text-align: center;
-  }
-
-  &__help {
-    margin-top: var(--space-4);
   }
 }

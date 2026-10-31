@@ -12,17 +12,6 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Response;
-
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailConfiguration;
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailValidation;
 import org.sonatype.nexus.common.text.Strings2;
@@ -31,6 +20,17 @@ import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.validation.Validate;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.mail2.core.EmailException;
@@ -38,6 +38,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -51,16 +52,19 @@ public class EmailConfigurationApiResource
   private final EmailManager emailManager;
 
   @Autowired
-  public EmailConfigurationApiResource(EmailManager emailManager) {
+  public EmailConfigurationApiResource(final EmailManager emailManager) {
     this.emailManager = emailManager;
   }
 
+  @Override
   @GET
   @RequiresPermissions("nexus:settings:read")
   public ApiEmailConfiguration getEmailConfiguration() {
     return convert(emailManager.getConfiguration());
   }
 
+  @Consumes(APPLICATION_JSON)
+  @Override
   @PUT
   @RequiresAuthentication
   @Validate
@@ -69,11 +73,13 @@ public class EmailConfigurationApiResource
     emailManager.setConfiguration(convert(apiEmailConfiguration), apiEmailConfiguration.getPassword());
   }
 
+  @Override
   @POST
   @Path("/verify")
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
-  public Response testEmailConfiguration(@NotNull String verificationAddress) {
+  @Validate
+  public Response testEmailConfiguration(@Valid @NotNull @Email final String verificationAddress) {
     EmailConfiguration emailConfiguration = emailManager.getConfiguration();
 
     if (emailConfiguration == null) {
@@ -91,7 +97,13 @@ public class EmailConfigurationApiResource
     catch (EmailException e) {
       log.warn("Unable to send verification", e);
       Throwable rootCause = ExceptionUtils.getRootCause(e);
-      String exceptionMessage = rootCause.getMessage().replace(rootCause.getClass().getName() + ": ", "");
+      if (rootCause == null) {
+        rootCause = e;
+      }
+      String rawMessage = rootCause.getMessage();
+      String exceptionMessage = rawMessage != null
+          ? rawMessage.replace(rootCause.getClass().getName() + ": ", "")
+          : rootCause.getClass().getSimpleName();
 
       return Response.status(BAD_REQUEST)
           .entity(new ApiEmailValidation(false, exceptionMessage))
@@ -100,6 +112,7 @@ public class EmailConfigurationApiResource
     }
   }
 
+  @Override
   @DELETE
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
@@ -107,7 +120,7 @@ public class EmailConfigurationApiResource
     emailManager.setConfiguration(emailManager.newConfiguration(), Strings2.EMPTY);
   }
 
-  private EmailConfiguration convert(ApiEmailConfiguration apiEmailConfiguration) {
+  private EmailConfiguration convert(final ApiEmailConfiguration apiEmailConfiguration) {
 
     EmailConfiguration emailConfiguration = emailManager.newConfiguration();
     emailConfiguration.setEnabled(apiEmailConfiguration.isEnabled());
@@ -131,7 +144,7 @@ public class EmailConfigurationApiResource
     return emailConfiguration;
   }
 
-  private ApiEmailConfiguration convert(EmailConfiguration emailConfiguration) {
+  private ApiEmailConfiguration convert(final EmailConfiguration emailConfiguration) {
     if (emailConfiguration == null) {
       return new ApiEmailConfiguration();
     }

@@ -39,8 +39,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.REBUILD_DELETED_BLOB_INDEX_KEY;
 
 @Component
@@ -65,8 +65,8 @@ public class DatastoreFileBlobDeletionIndex
       @Value("${nexus.file.deletion.migrate.delay:60s}") final Duration migrationDelay)
   {
     super(softDeletedBlobsStore);
-    this.periodicJobService = checkNotNull(periodicJobService);
-    this.migrationDelay = checkNotNull(migrationDelay);
+    this.periodicJobService = requireNonNull(periodicJobService);
+    this.migrationDelay = requireNonNull(migrationDelay);
     checkArgument(!migrationDelay.isNegative(), "Non-negative nexus.file.deletion.migrate.delay required");
   }
 

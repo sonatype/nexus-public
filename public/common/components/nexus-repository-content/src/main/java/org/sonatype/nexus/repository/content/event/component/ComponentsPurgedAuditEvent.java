@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 import org.sonatype.nexus.repository.content.store.internal.ComponentAuditor;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Designed to inform a {@link ComponentAuditor} that some {@link Component}'s from a {@link Repository}, purged and
@@ -38,8 +38,8 @@ public class ComponentsPurgedAuditEvent
    * @throws NullPointerException - if components is null
    */
   public ComponentsPurgedAuditEvent(Integer repositoryId, final List<Component> components) {
-    super(checkNotNull(repositoryId));
-    this.components = checkNotNull(components);
+    super(requireNonNull(repositoryId));
+    this.components = requireNonNull(components);
   }
 
   public List<Component> getComponents() {

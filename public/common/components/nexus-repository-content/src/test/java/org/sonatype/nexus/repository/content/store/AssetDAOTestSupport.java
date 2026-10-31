@@ -28,7 +28,6 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
-import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.AssetInfo;
@@ -56,7 +55,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.content.store.ComponentDAOTestSupport.browseComponents;
 import static org.sonatype.nexus.repository.content.store.ComponentDAOTestSupport.countComponents;
@@ -152,7 +150,7 @@ public abstract class AssetDAOTestSupport
       session.getTransaction().commit();
     }
 
-    // TRY CREATE AGAIN
+    // TRY CREATE AGAIN — with MERGE/upsert (soft-delete support), duplicate path is an update
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
@@ -161,30 +159,30 @@ public abstract class AssetDAOTestSupport
       duplicate.repositoryId = asset1.repositoryId;
       duplicate.setPath(asset1.path());
       duplicate.setKind(asset1.kind());
+      duplicate.setComponent(component1);
       duplicate.setAttributes(newAttributes("duplicate"));
       duplicate.setLastUpdated(OffsetDateTime.now());
       dao.createAsset(duplicate, entityVersionEnabled);
 
       session.getTransaction().commit();
-      fail("Cannot create the same component twice");
     }
-    catch (DuplicateKeyException e) {
-      logger.debug("Got expected exception", e);
-    }
+
+    // Sync in-memory asset1 with the upserted attributes so subsequent assertions match DB state
+    asset1.setAttributes(newAttributes("duplicate"));
 
     // READ
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertFalse(dao.readPath(repositoryId, "test-path").isPresent());
+      assertFalse(dao.readPath(repositoryId, "test-path", true).isPresent());
 
-      tempResult = dao.readPath(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1, true).get();
       assertThat(tempResult, samePath(asset1));
       assertThat(tempResult, sameKind(asset1));
       assertThat(tempResult, sameAttributes(asset1));
 
-      tempResult = dao.readPath(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2, true).get();
       assertThat(tempResult, samePath(asset2));
       assertThat(tempResult, sameKind(asset2));
       assertThat(tempResult, sameAttributes(asset2));
@@ -200,7 +198,7 @@ public abstract class AssetDAOTestSupport
       AssetDAO dao = session.access(TestAssetDAO.class);
       ComponentDAO componentDAO = session.access(TestComponentDAO.class);
 
-      tempResult = dao.readPath(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1, true).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -210,15 +208,15 @@ public abstract class AssetDAOTestSupport
       asset1.setKind("new-kind-1");
       dao.updateAssetKind(asset1, entityVersionEnabled);
 
-      tempResult = dao.readPath(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1, true).get();
       assertThat(tempResult, samePath(asset1));
       assertThat(tempResult, sameKind(asset1));
       assertThat(tempResult, sameAttributes(asset1));
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes have changed
-      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 6 : null);
+      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 7 : null);
 
-      tempResult = dao.readPath(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2, true).get();
 
       oldCreated = tempResult.created();
       oldLastUpdated = tempResult.lastUpdated();
@@ -229,13 +227,13 @@ public abstract class AssetDAOTestSupport
       asset2.setKind("new-kind-2");
       dao.updateAssetKind(asset2, entityVersionEnabled);
 
-      tempResult = dao.readPath(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2, true).get();
       assertThat(tempResult, samePath(asset2));
       assertThat(tempResult, sameKind(asset2));
       assertThat(tempResult, sameAttributes(asset2));
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes have changed
-      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 8 : null);
+      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 9 : null);
 
       session.getTransaction().commit();
     }
@@ -250,7 +248,7 @@ public abstract class AssetDAOTestSupport
       AssetDAO dao = session.access(TestAssetDAO.class);
       ComponentDAO componentDAO = session.access(TestComponentDAO.class);
 
-      tempResult = dao.readPath(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1, true).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -258,29 +256,29 @@ public abstract class AssetDAOTestSupport
       asset1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
       dao.updateAssetAttributes(asset1, entityVersionEnabled);
 
-      tempResult = dao.readPath(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1, true).get();
       assertThat(tempResult, samePath(asset1));
       assertThat(tempResult, sameKind(asset1));
       assertThat(tempResult, sameAttributes(asset1));
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes changed again
-      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 9 : null);
+      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 10 : null);
 
-      tempResult = dao.readPath(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2, true).get();
 
       oldCreated = tempResult.created();
       oldLastUpdated = tempResult.lastUpdated();
 
       dao.updateAssetAttributes(asset2, entityVersionEnabled);
 
-      tempResult = dao.readPath(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2, true).get();
       assertThat(tempResult, samePath(asset2));
       assertThat(tempResult, sameKind(asset2));
       assertThat(tempResult, sameAttributes(asset2));
       assertThat(tempResult.created(), is(oldCreated));
       assertThat(tempResult.lastUpdated(), is(oldLastUpdated)); // won't have changed as attributes haven't changed
-      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 9 : null); // version shouldn't
-                                                                                                  // change
+      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 10 : null); // version shouldn't
+                                                                                                   // change
 
       session.getTransaction().commit();
     }
@@ -302,7 +300,7 @@ public abstract class AssetDAOTestSupport
       assertTrue(dao.deleteAssets(repositoryId, 0));
 
       assertThat(browseAssets(dao, repositoryId, null, 10, null), emptyIterable());
-      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 9 : null);
+      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 10 : null);
       assertEntityVersion(component2.componentId, componentDAO, entityVersionEnabled ? 3 : null);
 
       AssetData candidate = new AssetData();
@@ -330,7 +328,7 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -338,7 +336,7 @@ public abstract class AssetDAOTestSupport
 
       dao.markAsDownloaded(asset, 0L);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
       assertTrue(tempResult.lastDownloaded().isPresent());
       assertTrue(tempResult.lastDownloaded().get().isAfter(oldLastUpdated));
       assertThat(tempResult.created(), is(oldCreated));
@@ -354,7 +352,7 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -362,7 +360,7 @@ public abstract class AssetDAOTestSupport
 
       dao.markAsDownloaded(asset, 0L);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
       assertTrue(tempResult.lastDownloaded().isPresent());
       assertTrue(tempResult.lastDownloaded().get().isAfter(oldLastDownloaded));
       assertThat(tempResult.created(), is(oldCreated));
@@ -472,7 +470,7 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -481,7 +479,7 @@ public abstract class AssetDAOTestSupport
       asset.setAssetBlob(assetBlob1);
       dao.updateAssetBlobLink(asset, entityVersionEnabled);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
       assertTrue(tempResult.blob().isPresent());
       assertThat(tempResult.blob().get(), sameBlob(assetBlob1));
       assertThat(tempResult, sameBlob(asset));
@@ -503,7 +501,7 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -512,7 +510,7 @@ public abstract class AssetDAOTestSupport
       asset.setAssetBlob(assetBlob2);
       dao.updateAssetBlobLink(asset, entityVersionEnabled);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
       assertTrue(tempResult.blob().isPresent());
       assertThat(tempResult.blob().get(), sameBlob(assetBlob2));
       assertThat(tempResult, sameBlob(asset));
@@ -536,7 +534,7 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -545,7 +543,7 @@ public abstract class AssetDAOTestSupport
       asset.setAssetBlob(assetBlob2);
       dao.updateAssetBlobLink(asset, entityVersionEnabled);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
       assertTrue(tempResult.blob().isPresent());
       assertThat(tempResult.blob().get(), sameBlob(assetBlob2));
       assertThat(tempResult, sameBlob(asset));
@@ -570,7 +568,7 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -579,7 +577,7 @@ public abstract class AssetDAOTestSupport
       asset.setAssetBlob(null);
       dao.updateAssetBlobLink(asset, entityVersionEnabled);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
       assertFalse(tempResult.blob().isPresent());
       assertThat(tempResult.created().truncatedTo(ChronoUnit.SECONDS), is(oldCreated.truncatedTo(ChronoUnit.SECONDS)));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated));
@@ -599,7 +597,7 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -608,7 +606,7 @@ public abstract class AssetDAOTestSupport
       asset.setAssetBlob(null);
       dao.updateAssetBlobLink(asset, entityVersionEnabled);
 
-      tempResult = dao.readPath(repositoryId, asset.path()).get();
+      tempResult = dao.readPath(repositoryId, asset.path(), true).get();
       assertFalse(tempResult.blob().isPresent());
 
       assertThat(tempResult.created().truncatedTo(ChronoUnit.SECONDS), is(oldCreated.truncatedTo(ChronoUnit.SECONDS)));
@@ -648,7 +646,7 @@ public abstract class AssetDAOTestSupport
       // now gather them back by browsing
       generatedRepositories().forEach(r -> browseComponents(componentDAO, r.repositoryId, null, 10, null).stream()
           .map(ComponentData.class::cast)
-          .map(assetDao::browseComponentAssets)
+          .map(c -> assetDao.browseComponentAssets(c, true))
           .forEach(browsedAssets::addAll));
     }
 
@@ -666,7 +664,7 @@ public abstract class AssetDAOTestSupport
     component.componentId = null;
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       assertTrue(session.access(TestAssetDAO.class)
-          .browseComponentAssets(component)
+          .browseComponentAssets(component, true)
           .stream()
           .map(Asset::component)
           .map(Optional::get)
@@ -832,11 +830,11 @@ public abstract class AssetDAOTestSupport
       assertThat(countAssets(dao, repositoryId), is(5));
 
       Collection<Asset> assets =
-          dao.readPathsFromRepository(repositoryId, List.of(asset1.path(), asset2.path(), asset3.path()));
+          dao.readPathsFromRepository(repositoryId, List.of(asset1.path(), asset2.path(), asset3.path()), true);
 
       assertThat(assets.size(), is(3));
 
-      assets = dao.readPathsFromRepository(repositoryId, List.of(asset4.path(), asset5.path()));
+      assets = dao.readPathsFromRepository(repositoryId, List.of(asset4.path(), asset5.path()), true);
 
       assertThat(assets.size(), is(2));
     }
@@ -859,10 +857,10 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertTrue(dao.readPath(repositoryId, asset1.path()).isPresent());
-      assertTrue(dao.readPath(repositoryId, asset2.path()).isPresent());
+      assertTrue(dao.readPath(repositoryId, asset1.path(), true).isPresent());
+      assertTrue(dao.readPath(repositoryId, asset2.path(), true).isPresent());
 
-      int[] assetIds = dao.selectNotRecentlyDownloaded(repositoryId, 3, 10);
+      int[] assetIds = dao.selectNotRecentlyDownloaded(repositoryId, 3, 10, true);
       assertThat(assetIds, is(new int[]{2}));
 
       if ("H2".equals(session.sqlDialect())) {
@@ -872,8 +870,8 @@ public abstract class AssetDAOTestSupport
         dao.purgeSelectedAssets(assetIds, false);
       }
 
-      assertTrue(dao.readPath(repositoryId, asset1.path()).isPresent());
-      assertFalse(dao.readPath(repositoryId, asset2.path()).isPresent());
+      assertTrue(dao.readPath(repositoryId, asset1.path(), true).isPresent());
+      assertFalse(dao.readPath(repositoryId, asset2.path(), true).isPresent());
     }
   }
 
@@ -893,12 +891,12 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(asset1.assetId).get();
+      tempResult = dao.readAsset(asset1.assetId, true).get();
       assertThat(tempResult, samePath(asset1));
       assertThat(tempResult, sameKind(asset1));
       assertThat(tempResult, sameAttributes(asset1));
 
-      tempResult = dao.readAsset(asset2.assetId).get();
+      tempResult = dao.readAsset(asset2.assetId, true).get();
       assertThat(tempResult, samePath(asset2));
       assertThat(tempResult, sameKind(asset2));
       assertThat(tempResult, sameAttributes(asset2));
@@ -921,14 +919,14 @@ public abstract class AssetDAOTestSupport
 
       assertThat(
           dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
-              null, null, Map.of(), 10),
+              null, null, Map.of(), 10, true),
           emptyIterable());
 
       dao.createAsset(asset1, false);
 
       assertThat(
           dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
-              null, null, Map.of(), 10),
+              null, null, Map.of(), 10, true),
           contains(allOf(samePath(asset1), sameAttributes(asset1))));
 
       dao.createAsset(asset2, false);
@@ -938,7 +936,7 @@ public abstract class AssetDAOTestSupport
       // browse all assets
       assertThat(
           dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
-              null, null, Map.of(), 10),
+              null, null, Map.of(), 10, true),
           contains(allOf(samePath(asset1), sameAttributes(asset1)), allOf(samePath(asset2), sameAttributes(asset2)),
               allOf(samePath(asset3), sameAttributes(asset3)), allOf(samePath(asset4), sameAttributes(asset4))));
 
@@ -958,7 +956,7 @@ public abstract class AssetDAOTestSupport
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      Continuation<Asset> assets = dao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null);
+      Continuation<Asset> assets = dao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null, true);
       assertThat(assets.size(), is(5));
       // each asset should contain a blob and should belong to a component
       for (Asset asset : assets) {
@@ -1001,7 +999,7 @@ public abstract class AssetDAOTestSupport
       session.getTransaction().commit();
 
       // Browse and verify ordering: should be newest first (DESC order)
-      Continuation<Asset> page1 = assetDao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null);
+      Continuation<Asset> page1 = assetDao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null, true);
 
       assertThat(page1.size(), is(4));
 
@@ -1051,7 +1049,7 @@ public abstract class AssetDAOTestSupport
       session.getTransaction().commit();
 
       // Test pagination: get first 2 assets
-      Continuation<Asset> page1 = assetDao.browseEagerAssetsInRepository(repositoryId, null, 2, null, null);
+      Continuation<Asset> page1 = assetDao.browseEagerAssetsInRepository(repositoryId, null, 2, null, null, true);
       assertThat(page1.size(), is(2));
 
       String continuationToken = page1.nextContinuationToken();
@@ -1063,7 +1061,7 @@ public abstract class AssetDAOTestSupport
           AssetBlobCreatedContinuationToken.decode(continuationToken),
           2,
           null,
-          null);
+          null, true);
       assertThat(page2.size(), is(2));
 
       // Verify no overlap between pages
@@ -1090,7 +1088,7 @@ public abstract class AssetDAOTestSupport
           AssetBlobCreatedContinuationToken.decode(continuationToken2),
           2,
           null,
-          null);
+          null, true);
       assertThat(page3.size(), is(1)); // Only 1 left
       assertThat(page3.toArray(new Asset[0])[0].path(), is("/path4")); // Oldest
     }
@@ -1121,7 +1119,7 @@ public abstract class AssetDAOTestSupport
       session.getTransaction().commit();
 
       // Browse and verify secondary ordering by asset_id ASC when blob_created is the same
-      Continuation<Asset> assets = assetDao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null);
+      Continuation<Asset> assets = assetDao.browseEagerAssetsInRepository(repositoryId, null, 10, null, null, true);
 
       assertThat(assets.size(), is(3));
       Asset[] assetArray = assets.toArray(new Asset[0]);
@@ -1180,7 +1178,7 @@ public abstract class AssetDAOTestSupport
       OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
       dao.lastDownloaded(asset1.assetId, dateTime);
 
-      Optional<OffsetDateTime> actual = dao.readAsset(asset1.assetId).get().lastDownloaded();
+      Optional<OffsetDateTime> actual = dao.readAsset(asset1.assetId, true).get().lastDownloaded();
       assertThat(actual.map(t -> t.truncatedTo(ChronoUnit.SECONDS)).orElse(null),
           is(dateTime.truncatedTo(ChronoUnit.SECONDS)));
 
@@ -1205,7 +1203,7 @@ public abstract class AssetDAOTestSupport
       OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
       dao.lastUpdated(asset1.assetId, dateTime);
 
-      OffsetDateTime actual = dao.readAsset(asset1.assetId).get().lastUpdated();
+      OffsetDateTime actual = dao.readAsset(asset1.assetId, true).get().lastUpdated();
       assertThat(actual.truncatedTo(ChronoUnit.SECONDS), is(dateTime.truncatedTo(ChronoUnit.SECONDS)));
 
       assertEntityVersion(componentData.componentId, session.access(TestComponentDAO.class),
@@ -1226,9 +1224,9 @@ public abstract class AssetDAOTestSupport
       dao.createAsset(asset1, false);
       dao.createAsset(asset2, false);
 
-      assertThat(dao.browseAssets(repositoryId, 1000, null, null, "true or true", null), hasSize(1));
-      assertThat(dao.countAssets(repositoryId, null, "true or true", null), equalTo(1));
-      assertThat(dao.browseAssetsInRepositories(Set.of(repositoryId), null, null, "true or true", null, 1000),
+      assertThat(dao.browseAssets(repositoryId, 1000, null, null, "true or true", null, true), hasSize(1));
+      assertThat(dao.countAssets(repositoryId, null, "true or true", null, true), equalTo(1));
+      assertThat(dao.browseAssetsInRepositories(Set.of(repositoryId), null, null, "true or true", null, 1000, true),
           hasSize(1));
     }
   }
@@ -1251,7 +1249,7 @@ public abstract class AssetDAOTestSupport
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
-      dao.readPath(repositoryId, asset2.path()).get();
+      dao.readPath(repositoryId, asset2.path(), true).get();
       asset2.setAssetBlob(assetBlob);
       dao.updateAssetBlobLink(asset2, false);
       session.getTransaction().commit();
@@ -1259,7 +1257,7 @@ public abstract class AssetDAOTestSupport
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
-      tempResult = dao.findByBlobRef(repositoryId, assetBlob.blobRef()).get();
+      tempResult = dao.findByBlobRef(repositoryId, assetBlob.blobRef(), true).get();
       assertThat(tempResult.path(), is(asset2.path()));
     }
   }
@@ -1272,7 +1270,7 @@ public abstract class AssetDAOTestSupport
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
-      Collection<Asset> assets = dao.findByComponentIds(Set.of(1), null, Map.of(), false);
+      Collection<Asset> assets = dao.findByComponentIds(Set.of(1), null, Map.of(), false, true);
 
       Optional<Asset> assetOpt = assets.stream().findFirst();
       assertThat(assetOpt.isPresent(), is(true));
@@ -1295,9 +1293,9 @@ public abstract class AssetDAOTestSupport
       OffsetDateTime baseTime = OffsetDateTime.of(2022, 4, 24, 15, 18, 22,
           111111000, ZoneOffset.UTC);
       Collection<AssetInfo> found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime,
-          baseTime.plus(1, ChronoUnit.MILLIS), List.of(), null, null, 100);
+          baseTime.plus(1, ChronoUnit.MILLIS), List.of(), null, null, 100, true);
       assertThat(found, emptyIterable());
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, List.of(), null, null, 10);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, List.of(), null, null, 10, true);
       assertThat(found, emptyIterable());
 
       AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
@@ -1332,26 +1330,26 @@ public abstract class AssetDAOTestSupport
       createAssets(dao, entityVersionEnabled, asset1, asset2, asset3, asset4, asset5, asset6);
 
       found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS),
-          List.of(), null, null, 100);
+          List.of(), null, null, 100, true);
       assertThat(found.size(), is(2));
 
       found =
-          dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, List.of(), null, null, 100);
+          dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, List.of(), null, null, 100, true);
       assertThat(found.size(), is(4));
 
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, List.of(), null, null, 1);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, List.of(), null, null, 1, true);
       assertThat(found.size(), is(1));
 
       found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1),
-          List.of(".*/asset1/.*"), null, null, 100);
+          List.of(".*/asset1/.*"), null, null, 100, true);
       assertThat(found.size(), is(1));
 
       found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1),
-          List.of(".*/asset3/.*", ".*/asset5/.*"), null, null, 100);
+          List.of(".*/asset3/.*", ".*/asset5/.*"), null, null, 100, true);
       assertThat(found.size(), is(2));
 
       found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1),
-          List.of(".*/asset.?/a.*\\.jar.*"), null, null, 100);
+          List.of(".*/asset.?/a.*\\.jar.*"), null, null, 100, true);
       assertThat(found.size(), is(6));
     }
   }
@@ -1364,9 +1362,9 @@ public abstract class AssetDAOTestSupport
           111111000, ZoneOffset.UTC);
       Collection<AssetInfo> found =
           dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS),
-              List.of(), null, null, 100);
+              List.of(), null, null, 100, true);
       assertThat(found, emptyIterable());
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, List.of(), null, null, 10);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, List.of(), null, null, 10, true);
       assertThat(found, emptyIterable());
 
       AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
@@ -1396,11 +1394,11 @@ public abstract class AssetDAOTestSupport
       createAssets(dao, entityVersionEnabled, asset1, asset2, asset3, asset4);
 
       found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS),
-          List.of(), null, null, 100);
+          List.of(), null, null, 100, true);
       assertThat(found.size(), is(4));
 
       found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId,
-          baseTime.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS), List.of(), null, null, 100);
+          baseTime.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS), List.of(), null, null, 100, true);
       assertThat(found.size(), is(0));
     }
   }
@@ -1438,7 +1436,7 @@ public abstract class AssetDAOTestSupport
 
       assertThat(countAssets(dao, repositoryId), is(5));
       assertThat(dao.readPathsFromRepository(repositoryId,
-          List.of(asset1.path(), asset2.path(), asset3.path(), asset4.path(), asset5.path())).size(),
+          List.of(asset1.path(), asset2.path(), asset3.path(), asset4.path(), asset5.path()), true).size(),
           is(5));
 
       assertEntityVersion(component1.componentId, session.access(TestComponentDAO.class),
@@ -1503,14 +1501,14 @@ public abstract class AssetDAOTestSupport
       session.getTransaction().commit();
 
       // existing asset + blob + component
-      assertThat(assetDao.assetRecordsExist(assetBlob.blobRef(), null, null), is(true));
+      assertThat(assetDao.assetRecordsExist(assetBlob.blobRef(), null, null, true), is(true));
 
       // random blob is not exists
       BlobRef blobRef = new BlobRef("default", UUID.randomUUID().toString());
-      assertThat(assetDao.assetRecordsExist(blobRef, null, null), is(false));
+      assertThat(assetDao.assetRecordsExist(blobRef, null, null, true), is(false));
 
       // record still exists without a component
-      assertThat(assetDao.assetRecordsExist(assetBlobWithoutComponent.blobRef(), null, null), is(true));
+      assertThat(assetDao.assetRecordsExist(assetBlobWithoutComponent.blobRef(), null, null, true), is(true));
     }
   }
 
@@ -1531,7 +1529,7 @@ public abstract class AssetDAOTestSupport
   }
 
   static int countAssets(final AssetDAO dao, final int repositoryId) {
-    return dao.countAssets(repositoryId, null, null, null);
+    return dao.countAssets(repositoryId, null, null, null, true);
   }
 
   static Continuation<Asset> browseAssets(
@@ -1541,7 +1539,7 @@ public abstract class AssetDAOTestSupport
       final int limit,
       final String continuationToken)
   {
-    return dao.browseAssets(repositoryId, limit, continuationToken, kind, null, null);
+    return dao.browseAssets(repositoryId, limit, continuationToken, kind, null, null, true);
   }
 
   protected void createAssets(
@@ -1565,7 +1563,7 @@ public abstract class AssetDAOTestSupport
       final ComponentDAO componentDAO,
       final Integer expectedEntityVersion)
   {
-    Optional<Component> component = componentDAO.readComponent(componentId);
+    Optional<Component> component = componentDAO.readComponent(componentId, true);
     assertThat(component.isPresent(), is(true));
     assertThat(component.get().entityVersion(), is(expectedEntityVersion));
   }

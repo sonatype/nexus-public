@@ -43,7 +43,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Builds the UI-facing permission map from JAX-RS resources, merged with {@link PermissionMappingService} rows.
@@ -74,8 +74,8 @@ public class EndpointPermissionRegistry
       final PermissionMappingService permissionMappingService,
       final ObjectProvider<SwaggerModel> swaggerModelProvider)
   {
-    this.permissionMappingService = checkNotNull(permissionMappingService);
-    this.swaggerModelProvider = checkNotNull(swaggerModelProvider);
+    this.permissionMappingService = requireNonNull(permissionMappingService);
+    this.swaggerModelProvider = requireNonNull(swaggerModelProvider);
   }
 
   /**

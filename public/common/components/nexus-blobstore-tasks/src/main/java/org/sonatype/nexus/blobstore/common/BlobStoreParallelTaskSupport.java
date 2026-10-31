@@ -26,7 +26,7 @@ import com.google.common.base.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for tasks that applies to blobstores
@@ -60,7 +60,7 @@ public abstract class BlobStoreParallelTaskSupport
 
   @Autowired
   public void install(final BlobStoreManager blobStoreManager) {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
   }
 
   @Override

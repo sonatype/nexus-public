@@ -22,7 +22,7 @@ import org.apache.commons.jexl3.JexlException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.common.text.Strings2.upper;
 import static org.sonatype.nexus.selector.CselValidator.validateCselExpression;
@@ -47,8 +47,8 @@ public class SelectorFactory
 
   @Autowired
   public SelectorFactory(final ConstraintViolationFactory constraintViolationFactory, final CselToSql cselToSql) {
-    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
-    this.cselToSql = checkNotNull(cselToSql);
+    this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
+    this.cselToSql = requireNonNull(cselToSql);
   }
 
   /**

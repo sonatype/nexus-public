@@ -28,7 +28,7 @@ import org.apache.shiro.subject.support.SubjectCallable;
 import org.apache.shiro.subject.support.SubjectRunnable;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 // FIXME: Rename to TaskSubject or drop task concept and change to SystemSubject?
 
@@ -64,7 +64,7 @@ public class FakeAlmightySubject
   private final PrincipalCollection principalCollection;
 
   private FakeAlmightySubject(final String fakeUserId, final String realmName) {
-    this.fakeUserId = checkNotNull(fakeUserId);
+    this.fakeUserId = requireNonNull(fakeUserId);
     this.principalCollection = new SimplePrincipalCollection(fakeUserId, realmName);
   }
 

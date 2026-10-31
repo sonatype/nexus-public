@@ -23,7 +23,7 @@ import org.sonatype.nexus.thread.internal.MDCAwareRunnable;
 import org.apache.shiro.concurrent.SubjectAwareExecutorService;
 import org.apache.shiro.subject.Subject;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A modification of Shiro's {@link SubjectAwareExecutorService} that in turn returns
@@ -37,8 +37,8 @@ public class NexusExecutorService
   private final Supplier<Subject> subjectSupplier;
 
   public NexusExecutorService(final ExecutorService target, final Supplier<Subject> subjectSupplier) {
-    super(checkNotNull(target));
-    this.subjectSupplier = checkNotNull(subjectSupplier);
+    super(requireNonNull(target));
+    this.subjectSupplier = requireNonNull(subjectSupplier);
   }
 
   /**

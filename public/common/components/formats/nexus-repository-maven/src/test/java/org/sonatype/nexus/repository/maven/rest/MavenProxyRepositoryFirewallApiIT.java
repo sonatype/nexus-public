@@ -217,7 +217,7 @@ public class MavenProxyRepositoryFirewallApiIT
    * Helper method to create a standard maven proxy repository API request
    */
   private MavenProxyRepositoryApiRequest createRequest(String name, FirewallAttributes firewall) {
-    StorageAttributes storage = new StorageAttributes("default", true);
+    StorageAttributes storage = new StorageAttributes("default", true, false);
     ProxyAttributes proxy = new ProxyAttributes("https://repo1.maven.org/maven2", 1440, 1440, null);
     NegativeCacheAttributes negativeCache = new NegativeCacheAttributes(true, 1440);
     HttpClientAttributesWithPreemptiveAuth httpClient = new HttpClientAttributesWithPreemptiveAuth(

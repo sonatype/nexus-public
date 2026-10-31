@@ -21,8 +21,8 @@ import org.sonatype.nexus.common.event.Event;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Base event emitted by content stores.
@@ -55,7 +55,7 @@ public class ContentStoreEvent
 
   void setRepositorySupplier(final Supplier<Optional<Repository>> repositorySupplier) {
     checkState(this.repositorySupplier == null, "Repository supplier is already set");
-    this.repositorySupplier = checkNotNull(repositorySupplier);
+    this.repositorySupplier = requireNonNull(repositorySupplier);
   }
 
   @Override

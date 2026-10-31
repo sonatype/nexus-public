@@ -28,7 +28,11 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker;
+import org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -60,9 +64,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
-import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 
 /**
  * Tests for ExtJS firewall configuration UI scenarios through {@link RepositoryUiService}.
@@ -112,10 +113,10 @@ class FirewallRepositoryUiServiceTest
   private RepositoryPermissionChecker repositoryPermissionChecker;
 
   @Mock
-  private org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker failedRepositoryTracker;
+  private FailedRepositoryTracker failedRepositoryTracker;
 
   @Mock
-  private org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder;
+  private HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder;
 
   @Mock
   private Format format;
@@ -123,8 +124,7 @@ class FirewallRepositoryUiServiceTest
   @Mock
   private Repository repository;
 
-  @Mock
-  private RepositoryXO repositoryXO;
+  private RepositoryXO repositoryXO = repositoryXO("npm-proxy", "npm", true);
 
   @Mock
   private Configuration configuration;
@@ -168,17 +168,13 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testCreateRepositoryWithFirewallEnabled() throws Exception {
     // Scenario 1: Create repository with firewall enabled
-    when(repositoryXO.getName()).thenReturn("npm-proxy");
-    when(repositoryXO.getFormat()).thenReturn("npm");
-    when(repositoryXO.getOnline()).thenReturn(true);
-
     Map<String, Map<String, Object>> testAttributes = new HashMap<>();
     Map<String, Object> firewallAttributes = new HashMap<>();
     firewallAttributes.put(FIREWALL_ENABLED, true);
     firewallAttributes.put(FIREWALL_MODE, "AUDIT");
     testAttributes.put("firewall", firewallAttributes);
 
-    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+    repositoryXO.setAttributes(testAttributes);
 
     underTest.update(repositoryXO);
 
@@ -190,10 +186,6 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testEditRepositoryToChangeFirewallMode() throws Exception {
     // Scenario 2: Edit repository to change firewall mode from AUDIT to QUARANTINE
-    when(repositoryXO.getName()).thenReturn("npm-proxy");
-    when(repositoryXO.getFormat()).thenReturn("npm");
-    when(repositoryXO.getOnline()).thenReturn(true);
-
     // Existing configuration has AUDIT mode
     Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
     Map<String, Object> storedFirewall = new HashMap<>();
@@ -210,7 +202,7 @@ class FirewallRepositoryUiServiceTest
     updatedFirewall.put(FIREWALL_MODE, "QUARANTINE");
     updatedAttributes.put("firewall", updatedFirewall);
 
-    when(repositoryXO.getAttributes()).thenReturn(updatedAttributes);
+    repositoryXO.setAttributes(updatedAttributes);
 
     underTest.update(repositoryXO);
 
@@ -221,17 +213,13 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testPCCSOptionForNpmRepository() throws Exception {
     // Scenario 3: PCCS mode should be allowed for npm repositories
-    when(repositoryXO.getName()).thenReturn("npm-proxy");
-    when(repositoryXO.getFormat()).thenReturn("npm");
-    when(repositoryXO.getOnline()).thenReturn(true);
-
     Map<String, Map<String, Object>> testAttributes = new HashMap<>();
     Map<String, Object> firewallAttributes = new HashMap<>();
     firewallAttributes.put(FIREWALL_ENABLED, true);
     firewallAttributes.put(FIREWALL_MODE, "PCCS");
     testAttributes.put("firewall", firewallAttributes);
 
-    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+    repositoryXO.setAttributes(testAttributes);
 
     underTest.update(repositoryXO);
 
@@ -242,9 +230,7 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testPCCSOptionForPyPiRepository() throws Exception {
     // Scenario 3: PCCS mode should be allowed for pypi repositories
-    when(repositoryXO.getName()).thenReturn("pypi-proxy");
-    when(repositoryXO.getFormat()).thenReturn("pypi");
-    when(repositoryXO.getOnline()).thenReturn(true);
+    repositoryXO = repositoryXO("pypi-proxy", "pypi", true);
 
     Map<String, Map<String, Object>> testAttributes = new HashMap<>();
     Map<String, Object> firewallAttributes = new HashMap<>();
@@ -252,7 +238,7 @@ class FirewallRepositoryUiServiceTest
     firewallAttributes.put(FIREWALL_MODE, "PCCS");
     testAttributes.put("firewall", firewallAttributes);
 
-    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+    repositoryXO.setAttributes(testAttributes);
 
     underTest.update(repositoryXO);
 
@@ -263,17 +249,13 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testFirewallDisabledClearsMode() throws Exception {
     // Scenario 4: When firewall is unchecked, mode should be cleared
-    when(repositoryXO.getName()).thenReturn("npm-proxy");
-    when(repositoryXO.getFormat()).thenReturn("npm");
-    when(repositoryXO.getOnline()).thenReturn(true);
-
     Map<String, Map<String, Object>> testAttributes = new HashMap<>();
     Map<String, Object> firewallAttributes = new HashMap<>();
     firewallAttributes.put(FIREWALL_ENABLED, false);
     firewallAttributes.put(FIREWALL_MODE, null); // Mode cleared when disabled
     testAttributes.put("firewall", firewallAttributes);
 
-    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+    repositoryXO.setAttributes(testAttributes);
 
     underTest.update(repositoryXO);
 
@@ -285,9 +267,7 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testFirewallSectionAppearsInMavenProxyRepository() throws Exception {
     // Scenario 5: Firewall section should appear in all proxy repository forms
-    when(repositoryXO.getName()).thenReturn("maven-proxy");
-    when(repositoryXO.getFormat()).thenReturn("maven2");
-    when(repositoryXO.getOnline()).thenReturn(true);
+    repositoryXO = repositoryXO("maven-proxy", "maven2", true);
 
     Map<String, Map<String, Object>> testAttributes = new HashMap<>();
     Map<String, Object> firewallAttributes = new HashMap<>();
@@ -295,7 +275,7 @@ class FirewallRepositoryUiServiceTest
     firewallAttributes.put(FIREWALL_MODE, "AUDIT");
     testAttributes.put("firewall", firewallAttributes);
 
-    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+    repositoryXO.setAttributes(testAttributes);
 
     underTest.update(repositoryXO);
 
@@ -307,9 +287,7 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testFirewallSectionAppearsInDockerProxyRepository() throws Exception {
     // Scenario 5: Firewall section should appear in all proxy repository forms
-    when(repositoryXO.getName()).thenReturn("docker-proxy");
-    when(repositoryXO.getFormat()).thenReturn("docker");
-    when(repositoryXO.getOnline()).thenReturn(true);
+    repositoryXO = repositoryXO("docker-proxy", "docker", true);
 
     Map<String, Map<String, Object>> testAttributes = new HashMap<>();
     Map<String, Object> firewallAttributes = new HashMap<>();
@@ -317,7 +295,7 @@ class FirewallRepositoryUiServiceTest
     firewallAttributes.put(FIREWALL_MODE, "QUARANTINE");
     testAttributes.put("firewall", firewallAttributes);
 
-    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+    repositoryXO.setAttributes(testAttributes);
 
     underTest.update(repositoryXO);
 
@@ -329,16 +307,14 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testFirewallSectionAppearsInNuGetProxyRepository() throws Exception {
     // Scenario 5: Firewall section should appear in all proxy repository forms
-    when(repositoryXO.getName()).thenReturn("nuget-proxy");
-    when(repositoryXO.getFormat()).thenReturn("nuget");
-    when(repositoryXO.getOnline()).thenReturn(true);
+    repositoryXO = repositoryXO("nuget-proxy", "nuget", true);
 
     Map<String, Map<String, Object>> testAttributes = new HashMap<>();
     Map<String, Object> firewallAttributes = new HashMap<>();
     firewallAttributes.put(FIREWALL_ENABLED, false);
     testAttributes.put("firewall", firewallAttributes);
 
-    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+    repositoryXO.setAttributes(testAttributes);
 
     underTest.update(repositoryXO);
 
@@ -350,10 +326,6 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testTransitionFromDisabledToEnabled() throws Exception {
     // Test transitioning from firewall disabled to enabled with mode selection
-    when(repositoryXO.getName()).thenReturn("npm-proxy");
-    when(repositoryXO.getFormat()).thenReturn("npm");
-    when(repositoryXO.getOnline()).thenReturn(true);
-
     // Initially disabled
     Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
     Map<String, Object> storedFirewall = new HashMap<>();
@@ -369,7 +341,7 @@ class FirewallRepositoryUiServiceTest
     updatedFirewall.put(FIREWALL_MODE, "AUDIT");
     updatedAttributes.put("firewall", updatedFirewall);
 
-    when(repositoryXO.getAttributes()).thenReturn(updatedAttributes);
+    repositoryXO.setAttributes(updatedAttributes);
 
     underTest.update(repositoryXO);
 
@@ -443,10 +415,6 @@ class FirewallRepositoryUiServiceTest
   @Test
   void testChangingModeBetweenAllOptions() throws Exception {
     // Test changing mode between all valid options for npm
-    when(repositoryXO.getName()).thenReturn("npm-proxy");
-    when(repositoryXO.getFormat()).thenReturn("npm");
-    when(repositoryXO.getOnline()).thenReturn(true);
-
     // Test AUDIT -> QUARANTINE
     testModeChange("AUDIT", "QUARANTINE");
 
@@ -472,11 +440,19 @@ class FirewallRepositoryUiServiceTest
     updatedFirewall.put(FIREWALL_MODE, toMode);
     updatedAttributes.put("firewall", updatedFirewall);
 
-    when(repositoryXO.getAttributes()).thenReturn(updatedAttributes);
+    repositoryXO.setAttributes(updatedAttributes);
 
     underTest.update(repositoryXO);
 
     assertEquals(toMode, updatedAttributes.get("firewall").get(FIREWALL_MODE));
+  }
+
+  private static RepositoryXO repositoryXO(String name, String format, boolean online) {
+    RepositoryXO xo = new RepositoryXO();
+    xo.setName(name);
+    xo.setFormat(format);
+    xo.setOnline(online);
+    return xo;
   }
 
   private boolean isValidFirewallMode(String format, String mode) {

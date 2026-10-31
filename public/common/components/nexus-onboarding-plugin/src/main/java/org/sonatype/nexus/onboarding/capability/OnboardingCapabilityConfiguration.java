@@ -18,7 +18,7 @@ import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 
 import com.google.common.collect.Maps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class OnboardingCapabilityConfiguration
     extends CapabilityConfigurationSupport
@@ -36,7 +36,7 @@ public class OnboardingCapabilityConfiguration
   private boolean registrationCompleted;
 
   public OnboardingCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
+    requireNonNull(properties);
     this.registrationStarted = parseBoolean(properties.get(REGISTRATION_STARTED), DEFAULT_REGISTRATION_STARTED);
     this.registrationCompleted = parseBoolean(properties.get(REGISTRATION_COMPLETED), DEFAULT_REGISTRATION_COMPLETED);
   }

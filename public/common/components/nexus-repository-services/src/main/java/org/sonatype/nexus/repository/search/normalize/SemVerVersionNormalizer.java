@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.repository.search.normalize;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
@@ -30,9 +27,15 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  * Build metadata (+xyz) is stripped and ignored for sorting per SemVer spec.
  *
  * Covers: npm, Helm, Cargo, Pub, Terraform, Ansible Galaxy, Swift
+ *
+ * Not itself a Spring bean: {@link VersionNormalizerService} resolves normalizers by qualifier via
+ * {@link org.sonatype.nexus.common.QualifierUtil#buildQualifierBeanMap}, which keys each bean off its
+ * runtime class's {@code @Qualifier} annotation rather than the Spring bean-definition qualifier. Several
+ * {@code @Bean} factory methods returning this same shared instance under different qualifiers would all
+ * resolve to the same key and collide in that map. Each covered format instead gets its own trivial
+ * subclass (e.g. {@link NpmVersionNormalizer}) carrying its own {@code @Qualifier}, so every format
+ * resolves to a distinct map entry while still sharing this class's logic.
  */
-@Component
-@Qualifier("npm")
 public class SemVerVersionNormalizer
     implements VersionNormalizer
 {

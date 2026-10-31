@@ -13,8 +13,7 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import javax.annotation.Nonnull;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Provider;
+
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.content.maven.internal.index.MavenContentGroupIndexFacet;
 import org.sonatype.nexus.repository.Format;
@@ -31,10 +30,13 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
-import org.springframework.stereotype.Component;
+import jakarta.inject.Provider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 
 /**
  * @since 3.25
@@ -70,19 +72,19 @@ public class MavenGroupRecipe
       final MavenContentIndexGroupHandler indexGroupHandler)
   {
     super(type, format);
-    this.mavenGroupIndexFacet = checkNotNull(mavenGroupIndexFacet);
-    this.mavenGroupFacet = checkNotNull(mavenGroupFacet);
-    this.mavenPurgeSnapshotsFacet = checkNotNull(mavenPurgeSnapshotsFacet);
-    this.groupHandler = checkNotNull(groupHandler);
-    this.mergingGroupHandler = checkNotNull(mergingGroupHandler);
-    this.indexGroupHandler = checkNotNull(indexGroupHandler);
+    this.mavenGroupIndexFacet = requireNonNull(mavenGroupIndexFacet);
+    this.mavenGroupFacet = requireNonNull(mavenGroupFacet);
+    this.mavenPurgeSnapshotsFacet = requireNonNull(mavenPurgeSnapshotsFacet);
+    this.groupHandler = requireNonNull(groupHandler);
+    this.mergingGroupHandler = requireNonNull(mergingGroupHandler);
+    this.indexGroupHandler = requireNonNull(indexGroupHandler);
   }
 
   @Override
   public void apply(@Nonnull final Repository repository) throws Exception {
     repository.attach(securityFacet.get());
-    repository.attach(mavenGroupFacet.get());
     repository.attach(mavenContentFacet.get());
+    repository.attach(mavenGroupFacet.get());
     repository.attach(mavenGroupIndexFacet.get());
     repository.attach(browseFacet.get());
     repository.attach(mavenPurgeSnapshotsFacet.get());

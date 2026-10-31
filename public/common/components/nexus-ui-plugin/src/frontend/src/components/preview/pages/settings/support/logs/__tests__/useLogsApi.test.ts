@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act, } from '@testing-library/react';
 
 import { useLogsApi } from '../useLogsApi';
 import { LOGS_API } from '../types';

@@ -13,7 +13,7 @@
 
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Flex, Text, Heading, Box, Link } from '@radix-ui/themes';
+import { Flex, Heading, Box, Link } from '@radix-ui/themes';
 import { X, Download } from 'lucide-react';
 
 import { SettingsButton } from '../../../../shared/form';

@@ -16,7 +16,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Configuration adapter for {@code [Orient]IdentityCapability}.
@@ -27,7 +27,7 @@ public class IdentityCapabilityConfiguration
     extends CapabilityConfigurationSupport
 {
   public IdentityCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
+    requireNonNull(properties);
     // No specific configuration
   }
 }

@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 
 import org.joda.time.DateTime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Remote connection status.
@@ -44,7 +44,7 @@ public class RemoteConnectionStatus
       final RemoteConnectionStatusType type,
       @Nullable final String reason)
   {
-    this.type = checkNotNull(type);
+    this.type = requireNonNull(type);
     this.reason = reason;
   }
 

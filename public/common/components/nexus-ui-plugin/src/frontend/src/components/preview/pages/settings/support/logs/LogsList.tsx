@@ -11,15 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Box, Flex, Text, Table } from '@radix-ui/themes';
 import { Search, Pencil, ArrowUp, ArrowDown, FileText, Loader2 } from 'lucide-react';
 import { HumanReadableUtils } from '../../../../../../interface/HumanReadableUtils';
 import { DateTime } from 'luxon';
 
 import { SettingsTextInput, SettingsAlert } from '../../../../shared/form';
-import { useLogsApi } from './useLogsApi';
-import { LogFile, LogSortField, SortDirection } from './types';
+import { useLogsList } from './useLogsList';
+import { LogSortField } from './types';
 
 import './LogsList.scss';
 
@@ -31,99 +31,30 @@ interface LogsListProps {
  * LogsList - Displays a searchable, sortable list of log files
  */
 export function LogsList({ onSelect }: LogsListProps) {
-  const [logs, setLogs] = useState<LogFile[]>([]);
-  const [filter, setFilter] = useState('');
-  const [sortField, setSortField] = useState<LogSortField>('fileName');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    filteredLogs,
+    filter,
+    sortField,
+    sortDirection,
+    error,
+    isLoading,
+    setFilter,
+    handleSort,
+  } = useLogsList();
 
-  const { fetchLogs, error, setError } = useLogsApi();
-
-  // Load logs on mount
-  useEffect(() => {
-    let mounted = true;
-    
-    const loadLogs = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchLogs();
-        if (mounted) {
-          setLogs(data);
-        }
-      } catch (err) {
-        // Error is handled by the hook
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadLogs();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [fetchLogs]);
-
-  // Filter and sort logs
-  const filteredLogs = useMemo(() => {
-    let result = [...logs];
-
-    // Apply filter
-    if (filter) {
-      const lowerFilter = filter.toLowerCase();
-      result = result.filter((log) =>
-        log.fileName.toLowerCase().includes(lowerFilter)
-      );
-    }
-
-    // Apply sort
-    result.sort((a, b) => {
-      let comparison = 0;
-      switch (sortField) {
-        case 'fileName':
-          comparison = a.fileName.localeCompare(b.fileName);
-          break;
-        case 'size':
-          comparison = a.size - b.size;
-          break;
-        case 'lastModified':
-          comparison = a.lastModified - b.lastModified;
-          break;
-      }
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-
-    return result;
-  }, [logs, filter, sortField, sortDirection]);
-
-  // Handle column header click for sorting
-  const handleSort = useCallback((field: LogSortField) => {
-    if (sortField === field) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  }, [sortField]);
-
-  // Render sort icon
-  const renderSortIcon = (field: LogSortField) => {
+  const renderSortIcon = useCallback((field: LogSortField) => {
     if (sortField !== field) return null;
     return sortDirection === 'asc' ? (
       <ArrowUp size={14} className="logs-list__sort-icon" />
     ) : (
       <ArrowDown size={14} className="logs-list__sort-icon" />
     );
-  };
+  }, [sortField, sortDirection]);
 
-  // Format file size
   const formatSize = (bytes: number): string => {
     return HumanReadableUtils.bytesToString(bytes);
   };
 
-  // Format date
   const formatDate = (timestamp: number): string => {
     return DateTime.fromMillis(timestamp).toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS);
   };
@@ -155,7 +86,7 @@ export function LogsList({ onSelect }: LogsListProps) {
       {/* Error alert */}
       {error && (
         <Box mb="3">
-          <SettingsAlert type="error" onClose={() => setError(null)}>
+          <SettingsAlert type="error">
             {error}
           </SettingsAlert>
         </Box>
@@ -238,5 +169,3 @@ export function LogsList({ onSelect }: LogsListProps) {
 }
 
 export default LogsList;
-
-

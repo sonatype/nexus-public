@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.log.overrides.datastore;
 
 import org.sonatype.nexus.common.entity.ContinuationAware;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Data object for the {@code logging_overrides} table.
@@ -32,8 +32,8 @@ public class LoggingOverridesData
   }
 
   public LoggingOverridesData(final String name, final String level) {
-    this.name = checkNotNull(name);
-    this.level = checkNotNull(level);
+    this.name = requireNonNull(name);
+    this.level = requireNonNull(level);
   }
 
   public String getName() {

@@ -13,10 +13,11 @@
 package org.sonatype.nexus.blobstore.internal.softdeleted;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.softdeleted.BlobLocationUpdate;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlob;
@@ -26,8 +27,11 @@ import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Implementation of {@link SoftDeletedBlobsStore}
@@ -38,6 +42,9 @@ public class SoftDeletedBlobsStoreImpl
     extends ConfigStoreSupport<SoftDeletedBlobsDAO>
     implements SoftDeletedBlobsStore
 {
+  /** Guard against accidental million-row IN-clauses; well above S3 compact's 333/batch. */
+  private static final int DELETE_RECORDS_MAX_BATCH = 1000;
+
   @Autowired
   public SoftDeletedBlobsStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
@@ -87,6 +94,18 @@ public class SoftDeletedBlobsStoreImpl
   @Override
   public void deleteRecord(final String sourceBlobStoreName, final BlobId blobId) {
     dao().deleteRecord(sourceBlobStoreName, blobId.toString());
+  }
+
+  @Transactional
+  @Override
+  public void deleteRecords(final String sourceBlobStoreName, final Collection<BlobId> blobIds) {
+    if (blobIds == null || blobIds.isEmpty()) {
+      return;
+    }
+    checkArgument(blobIds.size() <= DELETE_RECORDS_MAX_BATCH,
+        "deleteRecords batch must be <= %s; got %s", DELETE_RECORDS_MAX_BATCH, blobIds.size());
+    Collection<String> ids = blobIds.stream().map(BlobId::toString).collect(Collectors.toList());
+    dao().deleteRecords(sourceBlobStoreName, ids);
   }
 
   @Override

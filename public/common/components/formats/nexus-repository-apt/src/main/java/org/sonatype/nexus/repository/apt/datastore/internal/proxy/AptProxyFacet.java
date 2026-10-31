@@ -56,6 +56,7 @@ import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.apt.debian.Utils.isDebPackageContentType;
+import static org.sonatype.nexus.repository.apt.internal.ReleaseName.INRELEASE;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
 
 /**
@@ -75,21 +76,20 @@ public class AptProxyFacet
 
   @Override
   protected Content getCachedContent(final Context context) {
-    return facet(AptContentFacet.class).get(assetPath(context)).orElse(null);
+    return content().get(assetPath(context)).orElse(null);
   }
 
   @Override
   protected Content store(final Context context, final Content content) throws IOException {
     String path = assetPath(context);
-    if (path.endsWith(RELEASE)) {
-      // Whenever we fetch a new release file, make sure we get the signature
-      // and package files that go along with it.
-      cacheControllerHolder.getMetadataCacheController().invalidateCache();
-      postCacheTokenEvent(getRepository(),
-          cacheControllerHolder.getMetadataCacheController().current().getCacheToken());
+
+    // Whenever we fetch a new release file mark related metadata as stale to ensure checksums match
+    if (path.endsWith("/" + RELEASE) || path.endsWith("/" + INRELEASE)) {
+      // invalidate before storing to avoid invalidating the content we just retrieved
+      invalidateMetadataCache();
     }
 
-    FluentAsset asset = facet(AptContentFacet.class).put(path, content).markAsCached(content);
+    FluentAsset asset = content().put(path, content);
 
     // Store package metadata in KV store for .deb packages (enables O(1) metadata rebuilds)
     if (isDebPackageContentType(path)) {
@@ -155,7 +155,7 @@ public class AptProxyFacet
     CacheInfo cacheInfo = cacheController.current();
     Content oldVersion;
     try {
-      oldVersion = facet(AptContentFacet.class).get(spec.path).orElse(null);
+      oldVersion = content().get(spec.path).orElse(null);
     }
     catch (MissingBlobException e) {
       // Treat a missing blob as a cache miss so we fetch fresh from upstream
@@ -178,8 +178,7 @@ public class AptProxyFacet
         contentAttrs.set(Content.CONTENT_LAST_MODIFIED, getDateHeader(response, HttpHeaders.LAST_MODIFIED));
         contentAttrs.set(Content.CONTENT_ETAG, getQuotedStringHeader(response, HttpHeaders.ETAG));
         contentAttrs.set(CacheInfo.class, cacheInfo);
-        Content storedContent =
-            facet(AptContentFacet.class).put(spec.path, fetchedContent).markAsCached(fetchedContent).download();
+        Content storedContent = content().put(spec.path, fetchedContent).download();
         return Optional.of(new SnapshotItem(spec, storedContent));
       }
 
@@ -242,14 +241,14 @@ public class AptProxyFacet
   }
 
   protected void doIndicateVerified(final Content content, final CacheInfo cacheInfo, final String assetPath) {
-    AptContentFacet contentFacet = facet(AptContentFacet.class);
+    AptContentFacet contentFacet = content();
 
     Asset asset = content.getAttributes().get(Asset.class);
     if (asset != null) {
       contentFacet.assets().with(asset).markAsCached(cacheInfo);
       return;
     }
-    facet(AptContentFacet.class).getAsset(assetPath)
+    content().getAsset(assetPath)
         .ifPresent(a -> contentFacet.assets().with(a).markAsCached(cacheInfo));
   }
 
@@ -261,5 +260,14 @@ public class AptProxyFacet
         || HttpStatus.SC_INTERNAL_SERVER_ERROR <= status.getStatusCode()) {
       throw new ProxyServiceException(httpResponse);
     }
+  }
+
+  private AptContentFacet content() {
+    return facet(AptContentFacet.class);
+  }
+
+  @Override
+  public void invalidateMetadataCache() {
+    super.invalidateMetadataCache();
   }
 }

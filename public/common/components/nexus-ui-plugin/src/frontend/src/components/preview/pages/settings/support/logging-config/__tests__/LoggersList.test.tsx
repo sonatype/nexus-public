@@ -16,13 +16,13 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { Theme } from '@radix-ui/themes';
 
 import { LoggersList } from '../LoggersList';
-import * as useLoggingConfigApiModule from '../useLoggingConfigApi';
+import * as useLoggersListModule from '../useLoggersList';
 
-// Mock the API hook
-jest.mock('../useLoggingConfigApi');
+// Mock the integration hook
+jest.mock('../useLoggersList');
 
-const mockedUseLoggingConfigApi = useLoggingConfigApiModule.useLoggingConfigApi as jest.MockedFunction<
-  typeof useLoggingConfigApiModule.useLoggingConfigApi
+const mockedUseLoggersList = useLoggersListModule.useLoggersList as jest.MockedFunction<
+  typeof useLoggersListModule.useLoggersList
 >;
 
 // Wrapper component for Radix Theme
@@ -36,28 +36,49 @@ const mockLoggers = [
   { name: 'org.apache', level: 'WARN' as const, override: true },
 ];
 
+function makeHook(overrides: Partial<ReturnType<typeof useLoggersListModule.useLoggersList>> = {}) {
+  return {
+    filteredLoggers: mockLoggers,
+    loggers: mockLoggers,
+    filter: '',
+    levelFilter: [] as string[],
+    sortField: 'name' as const,
+    sortDirection: 'asc' as const,
+    error: null,
+    isLoading: false,
+    filterSections: [
+      {
+        id: 'level',
+        label: 'Log Level',
+        type: 'checkbox' as const,
+        options: ['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map((l) => ({
+          value: l,
+          label: l,
+          count: mockLoggers.filter((lg) => lg.level === l).length,
+        })),
+        value: [] as string[],
+        defaultExpanded: true,
+      },
+    ],
+    setFilter: jest.fn(),
+    setLevelFilter: jest.fn(),
+    handleSort: jest.fn(),
+    handleFilterChange: jest.fn(),
+    handleClearFilters: jest.fn(),
+    ...overrides,
+  };
+}
+
 describe('LoggersList', () => {
   const mockOnSelect = jest.fn();
-  const mockSetError = jest.fn();
-  const mockFetchLoggers = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFetchLoggers.mockResolvedValue(mockLoggers);
-    mockedUseLoggingConfigApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchLoggers: mockFetchLoggers,
-      fetchLogger: jest.fn(),
-      updateLogger: jest.fn(),
-      resetLogger: jest.fn(),
-      resetAllLoggers: jest.fn(),
-    });
+    mockedUseLoggersList.mockReturnValue(makeHook());
   });
 
   it('renders loading state initially', () => {
-    mockFetchLoggers.mockImplementation(() => new Promise(() => {}));
+    mockedUseLoggersList.mockReturnValue(makeHook({ isLoading: true, filteredLoggers: [], loggers: [] }));
 
     render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
@@ -99,32 +120,24 @@ describe('LoggersList', () => {
     expect(mockOnSelect).toHaveBeenCalledWith('ROOT');
   });
 
-  it('filters loggers by name', async () => {
-    render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
+  it('calls setFilter when filter input changes', async () => {
+    const mockSetFilter = jest.fn();
+    mockedUseLoggersList.mockReturnValue(makeHook({ setFilter: mockSetFilter }));
 
-    await waitFor(() => {
-      expect(screen.getByText('ROOT')).toBeInTheDocument();
-    });
+    render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
     const filterInput = screen.getByPlaceholderText('Filter by logger name');
     fireEvent.change(filterInput, { target: { value: 'sonatype' } });
 
-    await waitFor(() => {
-      expect(screen.getByText('org.sonatype.nexus')).toBeInTheDocument();
-      expect(screen.queryByText('ROOT')).not.toBeInTheDocument();
-      expect(screen.queryByText('org.apache')).not.toBeInTheDocument();
-    });
+    expect(mockSetFilter).toHaveBeenCalledWith('sonatype', expect.anything());
   });
 
   it('shows empty message when no loggers match filter', async () => {
+    mockedUseLoggersList.mockReturnValue(
+      makeHook({ filteredLoggers: [], loggers: mockLoggers, filter: 'nonexistent' })
+    );
+
     render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('ROOT')).toBeInTheDocument();
-    });
-
-    const filterInput = screen.getByPlaceholderText('Filter by logger name');
-    fireEvent.change(filterInput, { target: { value: 'nonexistent' } });
 
     await waitFor(() => {
       expect(screen.getByText('No loggers match your filters')).toBeInTheDocument();
@@ -138,47 +151,33 @@ describe('LoggersList', () => {
       expect(screen.getByText('ROOT')).toBeInTheDocument();
     });
 
-    // Logger Name header should be clickable for sorting
     const nameHeader = screen.getByRole('columnheader', { name: /logger name/i });
     expect(nameHeader).toBeInTheDocument();
 
-    // Clicking the header shouldn't cause an error
     fireEvent.click(nameHeader);
 
-    // Data should still be visible after clicking
     await waitFor(() => {
       expect(screen.getByText('ROOT')).toBeInTheDocument();
     });
   });
 
-  it('sorts by level when header is clicked', async () => {
+  it('calls handleSort when Logger Level header is clicked', async () => {
+    const mockHandleSort = jest.fn();
+    mockedUseLoggersList.mockReturnValue(makeHook({ handleSort: mockHandleSort }));
+
     render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText('ROOT')).toBeInTheDocument();
     });
 
-    // Click on Logger Level header
     fireEvent.click(screen.getByText('Logger Level'));
 
-    // Levels should be sorted alphabetically
-    await waitFor(() => {
-      const rows = screen.getAllByRole('row');
-      expect(rows[1]).toHaveTextContent('DEBUG');
-    });
+    expect(mockHandleSort).toHaveBeenCalledWith('level');
   });
 
   it('displays error alert when fetch fails', async () => {
-    mockedUseLoggingConfigApi.mockReturnValue({
-      loading: false,
-      error: 'Failed to load loggers',
-      setError: mockSetError,
-      fetchLoggers: mockFetchLoggers.mockRejectedValue(new Error('Failed to load loggers')),
-      fetchLogger: jest.fn(),
-      updateLogger: jest.fn(),
-      resetLogger: jest.fn(),
-      resetAllLoggers: jest.fn(),
-    });
+    mockedUseLoggersList.mockReturnValue(makeHook({ error: 'Failed to load loggers', filteredLoggers: [], loggers: [] }));
 
     render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
@@ -188,7 +187,7 @@ describe('LoggersList', () => {
   });
 
   it('shows empty message when no loggers exist', async () => {
-    mockFetchLoggers.mockResolvedValue([]);
+    mockedUseLoggersList.mockReturnValue(makeHook({ filteredLoggers: [], loggers: [] }));
 
     render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
@@ -208,24 +207,12 @@ describe('LoggersList', () => {
     expect(screen.getByText('Logger Level')).toBeInTheDocument();
   });
 
-  describe('level filter (bug 4rq9)', () => {
-    const loggersWithMixedLevels = [
-      { name: 'root-logger', level: 'INFO' as const, override: false },
-      { name: 'debug-logger-1', level: 'DEBUG' as const, override: true },
-      { name: 'debug-logger-2', level: 'DEBUG' as const, override: true },
-      { name: 'warn-logger', level: 'WARN' as const, override: true },
-      { name: 'trace-logger', level: 'TRACE' as const, override: true },
-    ];
-
-    beforeEach(() => {
-      mockFetchLoggers.mockResolvedValue(loggersWithMixedLevels);
-    });
-
+  describe('level filter sidebar', () => {
     it('renders the FilterSidebar with Log Level section', async () => {
       render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
       await waitFor(() => {
-        expect(screen.getByText('root-logger')).toBeInTheDocument();
+        expect(screen.getByText('ROOT')).toBeInTheDocument();
       });
 
       expect(screen.getByText('Log Level')).toBeInTheDocument();
@@ -235,46 +222,42 @@ describe('LoggersList', () => {
       render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
       await waitFor(() => {
-        expect(screen.getByTestId('loggers-counter')).toHaveTextContent('Showing 5 of 5 loggers');
+        expect(screen.getByTestId('loggers-counter')).toHaveTextContent('Showing 3 of 3 loggers');
       });
     });
 
-    it('filters loggers by level when checkbox is clicked', async () => {
+    it('calls handleFilterChange when a level checkbox is clicked', async () => {
+      const mockHandleFilterChange = jest.fn();
+      mockedUseLoggersList.mockReturnValue(makeHook({ handleFilterChange: mockHandleFilterChange }));
+
       render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
       await waitFor(() => {
-        expect(screen.getByText('root-logger')).toBeInTheDocument();
+        expect(screen.getByText('ROOT')).toBeInTheDocument();
       });
 
       const debugCheckbox = screen.getByRole('checkbox', { name: /DEBUG/i });
       fireEvent.click(debugCheckbox);
 
-      await waitFor(() => {
-        expect(screen.getByText('debug-logger-1')).toBeInTheDocument();
-        expect(screen.getByText('debug-logger-2')).toBeInTheDocument();
-        expect(screen.queryByText('root-logger')).not.toBeInTheDocument();
-        expect(screen.queryByText('warn-logger')).not.toBeInTheDocument();
-      });
+      expect(mockHandleFilterChange).toHaveBeenCalled();
     });
 
-    it('name filter and level filter work together (AND logic)', async () => {
+    it('renders filtered loggers when filteredLoggers is a subset', async () => {
+      const debugOnly = [{ name: 'debug-logger-1', level: 'DEBUG' as const, override: true }];
+      mockedUseLoggersList.mockReturnValue(
+        makeHook({
+          filteredLoggers: debugOnly,
+          loggers: mockLoggers,
+          filter: '',
+        })
+      );
+
       render(<LoggersList onSelect={mockOnSelect} />, { wrapper: TestWrapper });
 
       await waitFor(() => {
-        expect(screen.getByText('root-logger')).toBeInTheDocument();
-      });
-
-      const debugCheckbox = screen.getByRole('checkbox', { name: /DEBUG/i });
-      fireEvent.click(debugCheckbox);
-
-      const filterInput = screen.getByPlaceholderText('Filter by logger name');
-      fireEvent.change(filterInput, { target: { value: 'logger-1' } });
-
-      await waitFor(() => {
         expect(screen.getByText('debug-logger-1')).toBeInTheDocument();
-        expect(screen.queryByText('debug-logger-2')).not.toBeInTheDocument();
+        expect(screen.queryByText('ROOT')).not.toBeInTheDocument();
       });
     });
   });
 });
-

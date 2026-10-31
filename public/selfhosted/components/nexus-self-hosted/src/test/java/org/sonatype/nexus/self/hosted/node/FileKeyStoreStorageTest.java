@@ -59,7 +59,7 @@ public class FileKeyStoreStorageTest
     kpgen.initialize(512);
     KeyPair keyPair = kpgen.generateKeyPair();
     Certificate cert = CertificateUtil.generateCertificate(keyPair.getPublic(), keyPair.getPrivate(), "SHA1WITHRSA", 7,
-        "testing", "Nexus", "Sonatype", "Fulton", "MD", "USA");
+        "testing", "Nexus", "Sonatype", "Fulton", "MD", "US");
     keyStore.setCertificateEntry(CERT_ALIAS, cert);
     return keyStore;
   }

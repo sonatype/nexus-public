@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, waitFor, } from '@testing-library/react';
 import Axios from 'axios';
 import { useRepositories, clearRepositoriesCache } from '../useRepositories';
 

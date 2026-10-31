@@ -41,9 +41,8 @@ import {ROUTING_RULES_URL} from './facets/GenericOptionsConfiguration';
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {DOCKER_HUB_URL} from './facets/DockerIndexConfiguration';
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const ExtJS = {
     checkPermission: jest.fn(),
     requestConfirmation: jest.fn(),
     useState: (fn) => fn(),
@@ -59,8 +58,13 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     isProEdition: jest.fn().mockReturnValue(true),
     showSuccessMessage: jest.fn(),
     showErrorMessage: jest.fn(),
-  }
-}));
+  };
+  return {
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+    ExtJS,
+    useIsLicensedEdition: (...args) => ExtJS.isProEdition(...args),
+  };
+});
 
 const REPOSITORIES_SERVICE = [
   {
@@ -310,6 +314,12 @@ describe('RepositoriesForm', () => {
     when(Axios.get)
       .calledWith(expect.stringContaining(ROUTING_RULES_URL))
       .mockResolvedValue({data: ROUTING_RULES_RESPONSE});
+    when(Axios.get)
+      .calledWith('/service/rest/beta/repositories')
+      .mockResolvedValue({data: []});
+    when(Axios.get)
+      .calledWith('service/rest/v1/repositories/firewall/format-capabilities')
+      .mockResolvedValue({data: []});
   });
 
   it('filters types by format', async () => {
@@ -919,7 +929,11 @@ describe('RepositoriesForm', () => {
           indexType: "REGISTRY",
           indexUrl: null,
           cacheForeignLayers: false,
-          foreignLayerUrlWhitelist: []
+          foreignLayerUrlWhitelist: [],
+          layerDownloadTimeoutMinutes: null
+        },
+        firewall: {
+          mode: "DISABLED"
         },
         proxy: {
           remoteUrl: "https://test.com",
@@ -1059,7 +1073,11 @@ describe('RepositoriesForm', () => {
           indexType: 'CUSTOM',
           indexUrl: 'https://custom.index.com/',
           cacheForeignLayers: false,
-          foreignLayerUrlWhitelist: []
+          foreignLayerUrlWhitelist: [],
+          layerDownloadTimeoutMinutes: null
+        },
+        firewall: {
+          mode: 'DISABLED'
         }
       };
       const certificateDetails = {
@@ -1379,9 +1397,9 @@ describe('RepositoriesForm', () => {
         expect(screen.getByText('Delete repository?')).toBeInTheDocument();
       });
 
-      // Type repository name to confirm
-      const input = screen.getByPlaceholderText(`Type "${repo.name}" to confirm`);
-      fireEvent.change(input, { target: { value: repo.name } });
+      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
+      fireEvent.change(input, { target: { value: 'Delete' } });
 
       // Wait for button to become enabled
       await waitFor(() => {

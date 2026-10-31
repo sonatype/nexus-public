@@ -29,7 +29,7 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.internal.security.secrets.tasks.ReEncryptTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -281,7 +281,7 @@ public class ReEncryptPrincipalsTaskTest
     verify(pbeCipherFactory, times(1)).create(any(), eq("salt"), eq("iv"), eq(10000));
   }
 
-  private static @NotNull ResultSet getMockResultSet() throws SQLException {
+  private static @Nonnull ResultSet getMockResultSet() throws SQLException {
     ResultSet mockResultSet = mock(ResultSet.class);
     // only one page of results
     when(mockResultSet.isBeforeFirst()).thenReturn(true, false);

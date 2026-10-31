@@ -622,6 +622,63 @@ public class DefaultCapabilityRegistryTest
   }
 
   @Test
+  public void refreshReferencesOfTypeUsesScopedStorageQueryOnly() {
+    CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(Collections.singletonList(
+        new PasswordFormField("password", "password", "Sensitive field", FormField.MANDATORY)));
+
+    final Map<String, String> props = Maps.newHashMap();
+    props.put("p1", "v1");
+    props.put("password", secretsService.encryptMaven("", "admin123".toCharArray(), "").getId());
+
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(props);
+    CapabilityIdentity fooId = capabilityIdentity("foo");
+    when(capabilityStorage.getAllByType(CAPABILITY_TYPE.toString())).thenReturn(ImmutableMap.of(fooId, item));
+
+    underTest.pullAndRefreshReferencesOfType(CAPABILITY_TYPE);
+
+    assertThat(underTest.getAll(), hasSize(1));
+    assertEquals("v1", underTest.getAll().iterator().next().properties().get("p1"));
+    // materialized via the scoped by-type query, never the full-table read
+    verify(capabilityStorage).getAllByType(CAPABILITY_TYPE.toString());
+    verify(capabilityStorage, never()).getAll();
+  }
+
+  @Test
+  public void refreshReferencesOfTypeSkipsTheStorageQueryWhenTypeAlreadyPresent() {
+    CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(Collections.singletonList(
+        new PasswordFormField("password", "password", "Sensitive field", FormField.MANDATORY)));
+
+    final Map<String, String> props = Maps.newHashMap();
+    props.put("p1", "v1");
+    props.put("password", secretsService.encryptMaven("", "admin123".toCharArray(), "").getId());
+
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(props);
+    CapabilityIdentity fooId = capabilityIdentity("foo");
+    when(capabilityStorage.getAllByType(CAPABILITY_TYPE.toString())).thenReturn(ImmutableMap.of(fooId, item));
+
+    // First call materializes the capability of this type from the DB.
+    underTest.pullAndRefreshReferencesOfType(CAPABILITY_TYPE);
+    // A second call (as concurrent auth threads would make during the HA create->use window) finds the type
+    // already present under the lock and must skip the DB read -- at most one getAllByType() per populate.
+    underTest.pullAndRefreshReferencesOfType(CAPABILITY_TYPE);
+
+    assertThat(underTest.getAll(), hasSize(1));
+    verify(capabilityStorage, times(1)).getAllByType(CAPABILITY_TYPE.toString());
+  }
+
+  @Test
   public void migrateCapabilityWithSecrets() {
     CapabilityReference reference = createCapabilityWithSecret("my-secret");
 
@@ -1040,5 +1097,33 @@ public class DefaultCapabilityRegistryTest
     assertThat(underTest.getAll(), hasSize(1));
     assertThat(underTest.get(id1), is(notNullValue()));
     assertThat(underTest.get(id2), is(nullValue()));
+  }
+
+  /**
+   * A capability reference must be published into the shared {@code references} map BEFORE its
+   * {@code create()}/{@code load()}/{@code activate()} fire their events: handlers such as
+   * {@code CapabilityOfTypeExistsCondition} enumerate {@link org.sonatype.nexus.capability.CapabilityRegistry#getAll()}
+   * during the Created event and must find the newly-created capability, otherwise a first-of-type condition
+   * latches unsatisfied and never re-checks.
+   */
+  @Test
+  public void referenceIsPublishedBeforeItsCreatedEventFires() {
+    final Boolean[] presentWhenCreatedEventFired = {null};
+    doAnswer(inv -> {
+      Object event = inv.getArgument(0);
+      if (event instanceof CapabilityEvent.Created created) {
+        CapabilityIdentity id = created.getReference().context().id();
+        presentWhenCreatedEventFired[0] = underTest.references.containsKey(id);
+      }
+      return null;
+    }).when(eventQueue).post(any());
+
+    CapabilityReference reference = underTest.add(CAPABILITY_TYPE, true, null, null);
+
+    assertThat("Created event should have fired", presentWhenCreatedEventFired[0], is(notNullValue()));
+    assertThat("reference must be findable via getAll()/get() while its Created event fires",
+        presentWhenCreatedEventFired[0], is(true));
+    assertThat("reference remains published after it is fully built",
+        underTest.references.containsKey(reference.context().id()), is(true));
   }
 }

@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { DockerDetail, DockerDetailState, DockerTag } from './docker.types';
+import type { DockerDetailState, DockerTag } from './docker.types';
 // TODO: replace with real API call when migrating to classic UI API (pre-existing from PR #15732, NEXUS-51698)
 import { mockDetailApi } from './mockData';
 import { sanitizeRegistryUrl } from '../../browse/detail/detail.utils';

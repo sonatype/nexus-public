@@ -18,16 +18,27 @@ import { RolesPage } from '../RolesPage';
 import { useRolesApi } from '../useRolesApi';
 import { ExtJS } from '../../../../../../../interface/ExtJS';
 import { ToastProvider } from '../../../../../shared/Toast';
+import {
+  getCurrentHash,
+  installHashStub,
+  setInitialHash,
+  uninstallHashStub,
+} from './testUtils/hashStub';
 
 // Mock dependencies
 jest.mock('../useRolesApi');
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     checkPermission: jest.fn(),
+    // RolesPage reads permissions through the provider-independent ExtJS.usePermission
+    // (NEXUS-54212); delegate to the getter so tests keep driving behavior via checkPermission.
+    usePermission: jest.fn((getValue: () => boolean) => getValue()),
+    useUser: jest.fn(() => ({ id: 'admin' })),
   },
 }));
 
-// Mock child components
+// Mock child components. NEXUS-54589: RolesList now takes only (onSelect, onCreate); the
+// actions column and its per-row permission props are gone. Row click passes just the role id.
 jest.mock('../RolesList', () => ({
   RolesList: ({ onSelect }: any) => (
     <div data-testid="roles-list">
@@ -36,36 +47,37 @@ jest.mock('../RolesList', () => ({
   ),
 }));
 
-jest.mock('../RoleForm', () => {
-  const React = jest.requireActual('react');
-  return {
-    RoleForm: ({ onCancel, onComplete, onValidationChange, wizardStep }: any) => {
-      // Step 3 is the final "Contained Roles" step - disabled when no privileges selected
-      React.useEffect(() => {
-        if (wizardStep === 3) {
-          onValidationChange?.(false); // No privileges selected - Create Role disabled (P0 fix)
-        } else {
-          onValidationChange?.(true);
-        }
-      }, [onValidationChange, wizardStep]);
+jest.mock('../RoleForm', () => ({
+  RoleForm: ({ onCancel, onComplete, isCreate }: any) => (
+    <div data-testid="role-form" data-is-create={String(!!isCreate)}>
+      <button onClick={onCancel}>Cancel</button>
+      <button onClick={() => onComplete?.()}>Complete</button>
+    </div>
+  ),
+}));
 
-      return (
-        <div data-testid="role-form">
-          <div data-testid={`wizard-step-${wizardStep}`}>Step {wizardStep}</div>
-          <button onClick={onCancel}>Cancel</button>
-          <button onClick={() => onComplete?.()}>
-            Complete
-          </button>
-        </div>
+const mockRoleDetailTestState: { autoInvokeOnDelete: boolean } = { autoInvokeOnDelete: false };
+
+jest.mock('../RoleDetail', () => {
+  // jest.mock() hoists above imports; require react here or ReactMod is undefined.
+  const ReactMod = require('react');
+  return {
+    RoleDetail: ({ role, canEdit, canDelete, onDelete }: any) => {
+      ReactMod.useEffect(() => {
+        if (mockRoleDetailTestState.autoInvokeOnDelete) {
+          onDelete?.();
+        }
+      }, [onDelete]);
+      return ReactMod.createElement(
+        'div',
+        {
+          'data-testid': 'role-detail',
+          'data-can-edit': String(!!canEdit),
+          'data-can-delete': String(!!canDelete),
+        },
+        `Role Detail${role ? `: ${role.name}` : ''}`,
       );
     },
-  };
-});
-
-jest.mock('../RoleProfilePage', () => {
-  const React = jest.requireActual('react');
-  return {
-    RoleProfilePage: () => <div data-testid="role-profile-page">Role Profile Page</div>,
   };
 });
 
@@ -92,9 +104,17 @@ const renderWithTheme = (component: React.ReactNode) => {
 };
 
 describe('RolesPage', () => {
+  beforeAll(() => {
+    installHashStub({ dispatchOnAssign: true });
+  });
+
+  afterAll(() => {
+    uninstallHashStub();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
-    window.location.hash = '';
+    setInitialHash('');
     mockCheckPermission.mockReturnValue(true);
     mockUseRolesApi.mockReturnValue({
       loading: false,
@@ -126,135 +146,141 @@ describe('RolesPage', () => {
     expect(screen.getByRole('button', { name: 'Create Role' })).toBeInTheDocument();
   });
 
-  it('Create Role button has blue accent color', () => {
-    mockCheckPermission.mockReturnValue(true);
-    renderWithTheme(<RolesPage />);
-    const btn = screen.getByRole('button', { name: 'Create Role' });
-    // Radix Button with color="blue" highContrast sets data-accent-color="blue"
-    expect(btn).toHaveAttribute('data-accent-color', 'blue');
-  });
-
-  it('should hide Create Role button when user lacks permission', () => {
+  it('should disable Create Role button when user lacks permission', () => {
     mockCheckPermission.mockImplementation((perm: string) => perm !== 'nexus:roles:create');
     (global as any).NX.Permissions.check.mockImplementation((perm: string) => perm !== 'nexus:roles:create');
     renderWithTheme(<RolesPage />);
-    
-    expect(screen.queryByRole('button', { name: 'Create Role' })).not.toBeInTheDocument();
+
+    // Large create button is shown but disabled (NEXUS-54212), not hidden.
+    expect(screen.getByRole('button', { name: 'Create Role' })).toBeDisabled();
   });
 
   it('should show RolesList by default', () => {
     renderWithTheme(<RolesPage />);
-    
+
     expect(screen.getByTestId('roles-list')).toBeInTheDocument();
   });
 
-  it('should navigate to wizard when Create Role is clicked', async () => {
+  it('should navigate to the create route when Create Role is clicked', async () => {
     renderWithTheme(<RolesPage />);
-    
+
     fireEvent.click(screen.getByRole('button', { name: 'Create Role' }));
-    
-    expect(window.location.hash).toBe('#preview/admin/security/roles/create');
+
+    expect(getCurrentHash()).toBe('#preview/admin/security/roles/create');
   });
 
-  it('should render wizard when hash is create', async () => {
-    window.location.hash = '#preview/admin/security/roles/create';
+  it('should render flat create form when hash is create', async () => {
+    setInitialHash('#preview/admin/security/roles/create');
     renderWithTheme(<RolesPage />);
 
-    expect(screen.getByTestId('wizard-form')).toBeInTheDocument();
-    expect(screen.getByTestId('role-form')).toBeInTheDocument();
-    expect(screen.getByText('Step 1: Type')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('role-form')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('role-form')).toHaveAttribute('data-is-create', 'true');
+    expect(screen.getByText('Create Role')).toBeInTheDocument();
   });
 
-  it('should navigate through wizard steps', async () => {
-    window.location.hash = '#preview/admin/security/roles/create';
+  // NEXUS-54589 AC1: single row-click destination — no /profile suffix, no second mode arg.
+  it('should navigate to the role detail URL when a role is selected', async () => {
     renderWithTheme(<RolesPage />);
 
-    // Step 0: Role Type - wait for mock RoleForm to render
-    await waitFor(() => {
-      expect(screen.getByTestId('wizard-step-0')).toBeInTheDocument();
-    });
-
-    // Click Next via submit button
-    fireEvent.submit(screen.getByTestId('wizard-form'));
-
-    // Step 1: Setup
-    await waitFor(() => {
-      expect(screen.getByTestId('wizard-step-1')).toBeInTheDocument();
-    });
-
-    // Click Next via submit button
-    fireEvent.submit(screen.getByTestId('wizard-form'));
-
-    // Step 2: Privileges
-    await waitFor(() => {
-      expect(screen.getByTestId('wizard-step-2')).toBeInTheDocument();
-    });
-
-    // Click Next via submit button
-    fireEvent.submit(screen.getByTestId('wizard-form'));
-
-    // Step 3: Contained Roles (final step)
-    await waitFor(() => {
-      expect(screen.getByTestId('wizard-step-3')).toBeInTheDocument();
-    });
-  });
-
-  it('P0: should disable Create Role button on final step when no privileges selected', async () => {
-    window.location.hash = '#preview/admin/security/roles/create';
-    renderWithTheme(<RolesPage />);
-
-    // Wait for initial step to render
-    await waitFor(() => {
-      expect(screen.getByTestId('wizard-step-0')).toBeInTheDocument();
-    });
-
-    // Navigate through all steps to reach final step
-    fireEvent.submit(screen.getByTestId('wizard-form')); // Go to step 1
-    await waitFor(() => {
-      expect(screen.getByTestId('wizard-step-1')).toBeInTheDocument();
-    });
-
-    fireEvent.submit(screen.getByTestId('wizard-form')); // Go to step 2
-    await waitFor(() => {
-      expect(screen.getByTestId('wizard-step-2')).toBeInTheDocument();
-    });
-
-    fireEvent.submit(screen.getByTestId('wizard-form')); // Go to step 3 (final)
-    await waitFor(() => {
-      expect(screen.getByTestId('wizard-step-3')).toBeInTheDocument();
-    });
-
-    // Button should be disabled because no privileges selected (isRoleFormValid = false)
-    await waitFor(() => {
-      const createButton = screen.getByTestId('form-submit');
-      expect(createButton).toBeDisabled();
-    });
-  });
-
-  it('should navigate to role profile when a role is selected', async () => {
-    renderWithTheme(<RolesPage />);
-    
     fireEvent.click(screen.getByText('Select Role'));
-    
-    expect(window.location.hash).toBe('#preview/admin/security/roles/test-role/profile');
+
+    expect(getCurrentHash()).toBe('#preview/admin/security/roles/test-role');
   });
 
-  it('should render role profile when hash has profile suffix', async () => {
-    window.location.hash = '#preview/admin/security/roles/test-role/profile';
+  // NEXUS-54589: any legacy /profile suffix in a bookmarked URL still resolves to the unified
+  // detail route (parseRoute treats it as the role id segment's tail). Guard so a rename of
+  // parseRoute doesn't quietly break bookmarks.
+  it('should treat a legacy /profile suffix as the unified detail route', async () => {
+    setInitialHash('#preview/admin/security/roles/test-role/profile');
     renderWithTheme(<RolesPage />);
-    
+
     await waitFor(() => {
-      expect(screen.getByTestId('role-profile-page')).toBeInTheDocument();
+      expect(screen.getByTestId('role-detail')).toBeInTheDocument();
     });
+    expect(screen.queryByTestId('role-profile-page')).not.toBeInTheDocument();
   });
 
-  it('should render edit wizard when hash has role ID', async () => {
-    window.location.hash = '#preview/admin/security/roles/test-role';
+  it('should render editable RoleDetail when hash has role ID and user has update permission', async () => {
+    setInitialHash('#preview/admin/security/roles/test-role');
     renderWithTheme(<RolesPage />);
-    
+
     await waitFor(() => {
-      expect(screen.getByTestId('wizard-form')).toBeInTheDocument();
+      expect(screen.getByTestId('role-detail')).toBeInTheDocument();
     });
+    expect(screen.getByTestId('role-detail')).toHaveAttribute('data-can-edit', 'true');
+    expect(screen.getByText(/Edit Test Role/)).toBeInTheDocument();
+  });
+
+  // NEXUS-54589 AC2: user with view-only permission on an editable role sees the read-only
+  // RoleDetail branch (canEdit=false; RoleDetail internally routes to the read-only render).
+  it('should render RoleDetail with canEdit=false when the user lacks the update permission', async () => {
+    mockCheckPermission.mockImplementation((perm: string) => perm === 'nexus:roles:read');
+    setInitialHash('#preview/admin/security/roles/test-role');
+    renderWithTheme(<RolesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('role-detail')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('role-detail')).toHaveAttribute('data-can-edit', 'false');
+    // Header shows the plain role name, not the "Edit {name}" wording.
+    expect(screen.queryByText(/Edit Test Role/)).not.toBeInTheDocument();
+  });
+
+  // NEXUS-54589 AC2: system-protected roles (nx-admin, nx-anonymous) come back with
+  // readOnly=true; render with canEdit=false regardless of the user's update permission.
+  it('should render RoleDetail with canEdit=false when the role is backend-flagged readOnly=true', async () => {
+    const readOnlyRole = { ...mockRole, readOnly: true };
+    mockUseRolesApi.mockReturnValue({
+      loading: false,
+      error: null,
+      setError: jest.fn(),
+      fetchRoles: jest.fn().mockResolvedValue([readOnlyRole]),
+      fetchRoleReferences: jest.fn().mockResolvedValue([]),
+      fetchRoleSources: jest.fn().mockResolvedValue([]),
+      fetchRolesFromSource: jest.fn().mockResolvedValue([]),
+      fetchPrivilegeReferences: jest.fn().mockResolvedValue([]),
+      findRole: jest.fn().mockResolvedValue(readOnlyRole),
+      createRole: jest.fn(),
+      updateRole: jest.fn(),
+      deleteRole: jest.fn(),
+    });
+    setInitialHash('#preview/admin/security/roles/test-role');
+    renderWithTheme(<RolesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('role-detail')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('role-detail')).toHaveAttribute('data-can-edit', 'false');
+  });
+
+  // NEXUS-54589 AC0: external-source roles (LDAP/SAML/Crowd/OAuth2) that the backend
+  // does NOT flag readOnly must render editable, not the read-only view.
+  // Reproduces the pre-fix bug where isReadOnlyRole locked every external role.
+  it('should render RoleDetail with canEdit=true for an external role when readOnly is false', async () => {
+    const externalRole = { ...mockRole, source: 'LDAP', readOnly: false };
+    mockUseRolesApi.mockReturnValue({
+      loading: false,
+      error: null,
+      setError: jest.fn(),
+      fetchRoles: jest.fn().mockResolvedValue([externalRole]),
+      fetchRoleReferences: jest.fn().mockResolvedValue([]),
+      fetchRoleSources: jest.fn().mockResolvedValue([]),
+      fetchRolesFromSource: jest.fn().mockResolvedValue([]),
+      fetchPrivilegeReferences: jest.fn().mockResolvedValue([]),
+      findRole: jest.fn().mockResolvedValue(externalRole),
+      createRole: jest.fn(),
+      updateRole: jest.fn(),
+      deleteRole: jest.fn(),
+    });
+    setInitialHash('#preview/admin/security/roles/test-role');
+    renderWithTheme(<RolesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('role-detail')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('role-detail')).toHaveAttribute('data-can-edit', 'true');
     expect(screen.getByText(/Edit Test Role/)).toBeInTheDocument();
   });
 
@@ -263,9 +289,125 @@ describe('RolesPage', () => {
       ...mockUseRolesApi(),
       error: 'Test error message',
     });
-    
+
     renderWithTheme(<RolesPage />);
-    
+
     expect(screen.getByText('Test error message')).toBeInTheDocument();
+  });
+
+  describe('Delete confirmation modal', () => {
+    const CONFIRMATION_WORD = 'Delete';
+    const CONFIRMATION_PLACEHOLDER = new RegExp(`type "${CONFIRMATION_WORD}" to confirm`, 'i');
+
+    beforeEach(() => {
+      mockRoleDetailTestState.autoInvokeOnDelete = true;
+    });
+
+    afterEach(() => {
+      mockRoleDetailTestState.autoInvokeOnDelete = false;
+    });
+
+    it('does not render the modal until handleDelete opens the dialog', async () => {
+      mockRoleDetailTestState.autoInvokeOnDelete = false;
+      setInitialHash('#preview/admin/security/roles/test-role');
+      renderWithTheme(<RolesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('role-detail')).toBeInTheDocument();
+      });
+      expect(screen.queryByPlaceholderText(CONFIRMATION_PLACEHOLDER)).not.toBeInTheDocument();
+    });
+
+    it('renders the role name inside the modal description once opened', async () => {
+      setInitialHash('#preview/admin/security/roles/test-role');
+      renderWithTheme(<RolesPage />);
+
+      const input = await screen.findByPlaceholderText(CONFIRMATION_PLACEHOLDER);
+      expect(input).toBeInTheDocument();
+      expect(screen.getByText(/All data associated with/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Test Role/).length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('keeps the confirm button disabled until the user types the confirmation word', async () => {
+      setInitialHash('#preview/admin/security/roles/test-role');
+      renderWithTheme(<RolesPage />);
+
+      const input = await screen.findByPlaceholderText(CONFIRMATION_PLACEHOLDER);
+      const confirmButton = screen.getByRole('button', { name: /^delete$/i });
+      expect(confirmButton).toBeDisabled();
+
+      fireEvent.change(input, { target: { value: 'delete role' } });
+      expect(confirmButton).toBeDisabled();
+
+      fireEvent.change(input, { target: { value: CONFIRMATION_WORD.toLowerCase() } });
+      expect(confirmButton).not.toBeDisabled();
+    });
+
+    it('calls deleteRole and navigates back to the list on confirmation', async () => {
+      const mockDeleteRole = jest.fn().mockResolvedValue(undefined);
+      mockUseRolesApi.mockReturnValue({
+        loading: false,
+        error: null,
+        setError: jest.fn(),
+        fetchRoles: jest.fn().mockResolvedValue([mockRole]),
+        fetchRoleReferences: jest.fn().mockResolvedValue([]),
+        fetchRoleSources: jest.fn().mockResolvedValue([]),
+        fetchRolesFromSource: jest.fn().mockResolvedValue([]),
+        fetchPrivilegeReferences: jest.fn().mockResolvedValue([]),
+        findRole: jest.fn().mockResolvedValue(mockRole),
+        createRole: jest.fn(),
+        updateRole: jest.fn(),
+        deleteRole: mockDeleteRole,
+      });
+      setInitialHash('#preview/admin/security/roles/test-role');
+      renderWithTheme(<RolesPage />);
+
+      const input = await screen.findByPlaceholderText(CONFIRMATION_PLACEHOLDER);
+      fireEvent.change(input, { target: { value: CONFIRMATION_WORD } });
+      fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+
+      await waitFor(() => {
+        expect(mockDeleteRole).toHaveBeenCalledWith('test-role');
+      });
+      await waitFor(() => {
+        expect(getCurrentHash()).toBe('#preview/admin/security/roles');
+      });
+    });
+
+    it('does not render the modal when the user lacks delete permission', async () => {
+      mockCheckPermission.mockImplementation((perm: string) => perm !== 'nexus:roles:delete');
+      setInitialHash('#preview/admin/security/roles/test-role');
+      renderWithTheme(<RolesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('role-detail')).toBeInTheDocument();
+      });
+      expect(screen.queryByPlaceholderText(CONFIRMATION_PLACEHOLDER)).not.toBeInTheDocument();
+    });
+
+    it('does not render the modal for a backend-readOnly role even when the user has delete permission', async () => {
+      const readOnlyRole = { ...mockRole, readOnly: true };
+      mockUseRolesApi.mockReturnValue({
+        loading: false,
+        error: null,
+        setError: jest.fn(),
+        fetchRoles: jest.fn().mockResolvedValue([readOnlyRole]),
+        fetchRoleReferences: jest.fn().mockResolvedValue([]),
+        fetchRoleSources: jest.fn().mockResolvedValue([]),
+        fetchRolesFromSource: jest.fn().mockResolvedValue([]),
+        fetchPrivilegeReferences: jest.fn().mockResolvedValue([]),
+        findRole: jest.fn().mockResolvedValue(readOnlyRole),
+        createRole: jest.fn(),
+        updateRole: jest.fn(),
+        deleteRole: jest.fn(),
+      });
+      setInitialHash('#preview/admin/security/roles/test-role');
+      renderWithTheme(<RolesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('role-detail')).toBeInTheDocument();
+      });
+      expect(screen.queryByPlaceholderText(CONFIRMATION_PLACEHOLDER)).not.toBeInTheDocument();
+    });
   });
 });

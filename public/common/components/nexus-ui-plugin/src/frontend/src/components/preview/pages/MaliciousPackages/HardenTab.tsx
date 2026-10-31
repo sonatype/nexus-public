@@ -12,8 +12,8 @@
  */
 
 import React, { useMemo, useRef, useState, useCallback, useEffect } from 'react';
-import { Box, Button, Callout, Flex, Heading, Text } from '@radix-ui/themes';
-import { AlertTriangle, CheckCircle, ExternalLink } from 'lucide-react';
+import { Callout, Flex, Text } from '@radix-ui/themes';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 
 import ProtectQuickConfig from '../Protect/ProtectQuickConfig';
 import type { ProtectDataSnapshot } from '../Protect/useProtectData';
@@ -146,6 +146,10 @@ export function HardenTab({ protectData }: HardenTabProps): React.ReactElement {
         onRepoChanged={handleRepoChanged}
         hardenedRepos={hardenedRepos}
       />
+      {/* Audit Trail section - hidden until audit module page is ready (NEXUS-53823)
+          To restore, add Box, Button, Heading to the @radix-ui/themes import
+          and ExternalLink to the lucide-react import.
+
       <Box mt="4">
         <Heading size="3">Audit Trail</Heading>
         <Text size="2" color="gray" mt="2">
@@ -155,6 +159,7 @@ export function HardenTab({ protectData }: HardenTabProps): React.ReactElement {
           Open Audit Module <ExternalLink size={14} />
         </Button>
       </Box>
+      */}
     </Flex>
   );
 }

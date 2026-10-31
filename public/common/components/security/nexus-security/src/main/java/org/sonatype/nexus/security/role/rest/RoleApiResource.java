@@ -14,22 +14,9 @@ package org.sonatype.nexus.security.role.rest;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.DefaultValue;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response.Status;
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -41,18 +28,34 @@ import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.ReadonlyRoleException;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.security.role.RoleAssignabilityChecker;
 import org.sonatype.nexus.security.role.RoleContainsItselfException;
+import org.sonatype.nexus.validation.Validate;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import jakarta.validation.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 /**
@@ -84,9 +87,38 @@ public class RoleApiResource
 
   private final SecuritySystem securitySystem;
 
+  private final RoleAssignabilityChecker roleAssignabilityChecker;
+
   @Autowired
-  public RoleApiResource(final SecuritySystem securitySystem) {
-    this.securitySystem = checkNotNull(securitySystem);
+  public RoleApiResource(
+      final SecuritySystem securitySystem,
+      final RoleAssignabilityChecker roleAssignabilityChecker)
+  {
+    this.securitySystem = requireNonNull(securitySystem);
+    this.roleAssignabilityChecker = requireNonNull(roleAssignabilityChecker);
+  }
+
+  @Override
+  @GET
+  @Path("/assignable")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:roles:read")
+  public List<RoleXOResponse> getAssignableRoles(
+      @DefaultValue(DEFAULT_SOURCE) @QueryParam("source") final String source)
+  {
+    log.debug("Getting assignable roles for current user");
+
+    try {
+      return securitySystem.listRoles(source)
+          .stream()
+          .filter(role -> roleAssignabilityChecker.isRoleAssignable(role.getRoleId()))
+          .map(RoleXOResponse::fromRole)
+          .sorted(Comparator.comparing(RoleXOResponse::getId))
+          .toList();
+    }
+    catch (NoSuchAuthorizationManagerException e) {
+      throw buildBadSourceException(source);
+    }
   }
 
   @Override
@@ -119,11 +151,21 @@ public class RoleApiResource
   @POST
   @RequiresAuthentication
   @RequiresPermissions("nexus:roles:create")
-  public RoleXOResponse create(@NotNull @Valid final RoleXORequest roleXO) {
+  @Validate
+  public RoleXOResponse create(
+      @DefaultValue(DEFAULT_SOURCE) @QueryParam("source") final String source,
+      @NotNull @Valid final RoleXORequest roleXO)
+  {
     try {
-      Role role = getDefaultAuthorizationManager().addRole(fromXO(roleXO));
-
+      AuthorizationManager manager = securitySystem.getAuthorizationManager(source);
+      Role requested = fromXO(roleXO, source);
+      // a new role has no prior state, so every child role and privilege it names is a new grant
+      ensureCallerMayGrant(requested, null);
+      Role role = manager.addRole(requested);
       return RoleXOResponse.fromRole(role);
+    }
+    catch (NoSuchAuthorizationManagerException e) {
+      throw buildBadSourceException(source);
     }
     catch (DuplicateRoleException e) {
       throw buildDuplicateRoleException(roleXO.getId());
@@ -133,6 +175,9 @@ public class RoleApiResource
     }
     catch (NoSuchPrivilegeException e) {
       throw buildContainedPrivilegeNotFoundException(e.getPrivilegeId(), roleXO.getId());
+    }
+    catch (RoleContainsItselfException e) {
+      throw buildRoleContainsItselfException(e.getRoleId());
     }
   }
 
@@ -161,19 +206,31 @@ public class RoleApiResource
   @Path("/{id}")
   @RequiresAuthentication
   @RequiresPermissions("nexus:roles:update")
-  public void update(@PathParam("id") @NotEmpty final String id, @NotNull @Valid final RoleXORequest roleXO) {
+  @Validate
+  public void update(
+      @PathParam("id") @NotEmpty final String id,
+      @DefaultValue(DEFAULT_SOURCE) @QueryParam("source") final String source,
+      @NotNull @Valid final RoleXORequest roleXO)
+  {
     try {
       if (!roleXO.getId().equals(id)) {
         throw buildRoleConflictException(roleXO.getId(), id);
       }
 
-      AuthorizationManager authorizationManager = getDefaultAuthorizationManager();
-      int latestVersion = authorizationManager.getRole(id).getVersion();
-      Role role = fromXO(roleXO);
+      AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(source);
+      // read the pre-update state exactly once and use that single snapshot both for the version and for deciding
+      // which grants are new, so the authorization decision cannot be raced against a concurrent change
+      Role current = authorizationManager.getRole(id);
+      Role role = fromXO(roleXO, source);
       role.setRoleId(id);
-      role.setVersion(latestVersion);
+      role.setVersion(current.getVersion());
+
+      ensureCallerMayGrant(role, current);
 
       authorizationManager.updateRole(role);
+    }
+    catch (NoSuchAuthorizationManagerException e) {
+      throw buildBadSourceException(source);
     }
     catch (ReadonlyRoleException e) {
       throw buildReadonlyRoleException(id);
@@ -197,10 +254,16 @@ public class RoleApiResource
   @Path("/{id}")
   @RequiresAuthentication
   @RequiresPermissions("nexus:roles:delete")
-  public void delete(@PathParam("id") @NotEmpty final String id) {
-    AuthorizationManager authorizationManager = getDefaultAuthorizationManager();
+  public void delete(
+      @PathParam("id") @NotEmpty final String id,
+      @DefaultValue(DEFAULT_SOURCE) @QueryParam("source") final String source)
+  {
     try {
+      AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(source);
       authorizationManager.deleteRole(id);
+    }
+    catch (NoSuchAuthorizationManagerException e) { // NOSONAR
+      throw buildBadSourceException(source);
     }
     catch (NoSuchRoleException e) { // NOSONAR
       throw buildRoleNotFoundException(id);
@@ -208,6 +271,31 @@ public class RoleApiResource
     catch (ReadonlyRoleException e) { // NOSONAR
       throw buildReadonlyRoleException(id);
     }
+  }
+
+  /**
+   * Rejects the change unless the caller already holds every child role and privilege it would newly grant.
+   * Without this check, a caller holding only {@code nexus:roles:update} could grant themselves administrator
+   * (NEXUS-53397).
+   *
+   * @param desired the role as it would be persisted
+   * @param current the pre-change state of the role, or {@code null} when creating
+   */
+  private void ensureCallerMayGrant(final Role desired, @Nullable final Role current) {
+    Set<String> ungrantable = roleAssignabilityChecker.findUngrantableAdditions(desired, current);
+    if (!ungrantable.isEmpty()) {
+      throw buildGrantNotPermittedException(desired.getRoleId(), ungrantable);
+    }
+  }
+
+  private WebApplicationMessageException buildGrantNotPermittedException(
+      final String roleId,
+      final Set<String> ungrantable)
+  {
+    // the rejection is logged once, inside RoleAssignabilityChecker.findUngrantableAdditions, so every entry point
+    // shares one greppable line
+    return new WebApplicationMessageException(Status.FORBIDDEN,
+        String.format("\"%s\"", RoleAssignabilityChecker.grantForbiddenMessage(ungrantable)), APPLICATION_JSON);
   }
 
   private WebApplicationMessageException buildBadSourceException(final String source) {
@@ -224,7 +312,7 @@ public class RoleApiResource
   private WebApplicationMessageException buildReadonlyRoleException(final String id) {
     log.debug("attempt to modify/delete readonly role {}", id);
     return new WebApplicationMessageException(Status.BAD_REQUEST, String.format(ROLE_INTERNAL, id),
-        MediaType.APPLICATION_JSON);
+        APPLICATION_JSON);
   }
 
   private WebApplicationMessageException buildRoleNotFoundException(final String id) {
@@ -253,28 +341,17 @@ public class RoleApiResource
   private WebApplicationMessageException buildRoleConflictException(final String xoId, final String pathId) {
     log.debug("XO id {} and path id {} do not match", xoId, pathId);
     return new WebApplicationMessageException(Status.CONFLICT, String.format(ROLE_CONFLICT, xoId, pathId),
-        MediaType.APPLICATION_JSON);
+        APPLICATION_JSON);
   }
 
   private WebApplicationMessageException buildRoleContainsItselfException(final String roleId) {
     log.debug("Role {} cannot contain itself either directly or indirectly.", roleId);
     return new WebApplicationMessageException(Status.BAD_REQUEST, String.format(ROLE_CONTAINS_ITSELF, roleId),
-        MediaType.APPLICATION_JSON);
+        APPLICATION_JSON);
   }
 
-  private Role fromXO(final RoleXORequest roleXO) {
-    return new Role(roleXO.getId(), roleXO.getName(), roleXO.getDescription(), DEFAULT_SOURCE, false,
+  private Role fromXO(final RoleXORequest roleXO, final String source) {
+    return new Role(roleXO.getId(), roleXO.getName(), roleXO.getDescription(), source, false,
         roleXO.getRoles(), roleXO.getPrivileges());
-  }
-
-  private AuthorizationManager getDefaultAuthorizationManager() {
-    try {
-      return securitySystem.getAuthorizationManager(DEFAULT_SOURCE);
-    }
-    // this should never happen, the default source is always available
-    catch (NoSuchAuthorizationManagerException e) {
-      log.error("Unable to retrieve the default authorization manager", e);
-      return null;
-    }
   }
 }

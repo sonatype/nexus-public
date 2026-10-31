@@ -62,9 +62,39 @@ public interface RepositoryManager
 
   void delete(String name) throws Exception;
 
+  /**
+   * Soft-delete a repository: stop it, untrack it, and mark the configuration as deleted.
+   * The configuration remains in the database and can be restored within the retention period.
+   */
+  void softDelete(String name, String deletedBy) throws Exception;
+
+  /**
+   * Restore a previously soft-deleted repository: re-instantiate, track, start,
+   * and clear the soft-delete markers from the configuration.
+   */
+  Repository restoreFromSoftDelete(String name) throws Exception;
+
+  /**
+   * Hard-delete a soft-deleted repository: run full content cleanup (facet deletion),
+   * remove secrets, and permanently delete the configuration.
+   */
+  void hardDelete(String name) throws Exception;
+
   boolean isBlobstoreUsed(String blobStoreName);
 
   long blobstoreUsageCount(String blobStoreName);
+
+  /**
+   * Returns the set of blob store names referenced by any repository's {@code storage.blobStoreName}, read
+   * authoritatively from the shared configuration store in a single query. Intended for callers that need the
+   * in-use state of many blob stores at once (e.g. the blob store list UI) without an {@link #isBlobstoreUsed}
+   * call per blob store. See NEXUS-54229.
+   *
+   * @apiNote This covers repository usage only; it does NOT include blob stores referenced solely as members of
+   *          a group blob store (that is {@code blobStoreManager.blobStoreUsageCount()}). Callers deciding whether
+   *          a blob store is deletable must combine both, exactly as {@link #isBlobstoreUsed} does.
+   */
+  Set<String> blobstoresInUse();
 
   /**
    * Returns a set of group repositories who directly or transitively contain the specified repository

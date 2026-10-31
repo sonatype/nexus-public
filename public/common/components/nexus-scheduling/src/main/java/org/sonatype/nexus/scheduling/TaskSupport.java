@@ -24,7 +24,7 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 /**
@@ -76,7 +76,7 @@ public abstract class TaskSupport
 
   @Override
   public void configure(final TaskConfiguration configuration) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     configuration.validate();
     this.configuration.apply(configuration);

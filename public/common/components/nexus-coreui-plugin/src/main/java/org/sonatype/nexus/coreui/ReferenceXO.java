@@ -19,7 +19,8 @@ import jakarta.validation.constraints.NotBlank;
  * Reference exchange object.
  *
  * @since 3.0
- * @deprecated in favor of same class in the nexus-extdirect-api-common module
+ * @deprecated in favor of {@link org.sonatype.nexus.api.common.shared.security.model.ReferenceXO} in the
+ *             nexus-api-common-shared module
  */
 @Deprecated
 public class ReferenceXO

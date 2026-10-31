@@ -44,6 +44,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -265,7 +266,34 @@ public class ApiKeyDAOTest
     apiKeyDAO.save(entity1);
     apiKeyDAO.save(entity2);
 
-    assertThat(apiKeyDAO.browseAllSince(entity2Date.minusSeconds(1L), 10), contains(token(entity2)));
+    assertThat(apiKeyDAO.browseAllSince(entity2Date.minusSeconds(1L), "", new ApiKeyToken(new char[0]), 10),
+        contains(token(entity2)));
+  }
+
+  @Test
+  public void testBrowseAllSince_doesNotSkipRecordsSharingATimestamp() {
+    ApiKeyData entity1 = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL);
+    ApiKeyData entity2 = anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL);
+
+    OffsetDateTime shared = OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+    entity1.setCreated(shared);
+    entity2.setCreated(shared);
+
+    apiKeyDAO.save(entity1);
+    apiKeyDAO.save(entity2);
+
+    OffsetDateTime epoch = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+    Collection<ApiKeyData> page1 = apiKeyDAO.browseAllSince(epoch, "", new ApiKeyToken(new char[0]), 1);
+    assertThat(page1, hasSize(1));
+    ApiKeyData first = page1.iterator().next();
+
+    Collection<ApiKeyData> page2 = apiKeyDAO.browseAllSince(
+        first.getCreated(), first.getDomain(), first.getToken(), 1);
+    assertThat(page2, hasSize(1));
+
+    // the two pages must cover both records, not the same one twice
+    assertThat(new String(page2.iterator().next().getApiKey()), is(not(new String(first.getApiKey()))));
   }
 
   @Test

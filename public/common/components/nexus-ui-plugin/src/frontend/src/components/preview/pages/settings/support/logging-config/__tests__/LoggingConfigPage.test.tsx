@@ -16,21 +16,21 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { LoggingConfigPage } from '../LoggingConfigPage';
-import * as useLoggingConfigApiModule from '../useLoggingConfigApi';
+import * as useLoggingConfigModule from '../useLoggingConfig';
 import { ToastProvider } from '../../../../../shared/Toast';
 
-// Mock the API hook
-jest.mock('../useLoggingConfigApi');
+// Mock the integration hook
+jest.mock('../useLoggingConfig');
 
 // Mock ExtJS
-const mockCheckPermission = jest.fn((perm) => true);
+const mockCheckPermission = jest.fn(() => true);
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     checkPermission: (perm: string) => mockCheckPermission(perm),
   },
 }));
 
-// Mock child components
+// Mock child components so we only test LoggingConfigPage's own behavior
 jest.mock('../LoggersList', () => ({
   LoggersList: function MockLoggersList({ onSelect }: { onSelect: (name: string) => void }) {
     return (
@@ -66,8 +66,8 @@ jest.mock('../LoggerForm', () => ({
   },
 }));
 
-const mockedUseLoggingConfigApi = useLoggingConfigApiModule.useLoggingConfigApi as jest.MockedFunction<
-  typeof useLoggingConfigApiModule.useLoggingConfigApi
+const mockedUseLoggingConfig = useLoggingConfigModule.useLoggingConfig as jest.MockedFunction<
+  typeof useLoggingConfigModule.useLoggingConfig
 >;
 
 // Wrapper component for Radix Theme and Toast context
@@ -79,26 +79,41 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
-describe('LoggingConfigPage', () => {
-  const mockResetAllLoggers = jest.fn();
-  const mockSetError = jest.fn();
+function makeHook(
+  overrides: Partial<ReturnType<typeof useLoggingConfigModule.useLoggingConfig>> = {}
+): ReturnType<typeof useLoggingConfigModule.useLoggingConfig> {
+  return {
+    viewMode: 'list',
+    selectedLogger: null,
+    deleteDialogOpen: false,
+    resetAllDialogOpen: false,
+    isDeleting: false,
+    isResettingAll: false,
+    error: null,
+    refreshKey: 0,
+    handleSelectLogger: jest.fn(),
+    handleCreate: jest.fn(),
+    handleBack: jest.fn(),
+    handleSave: jest.fn(),
+    handleDeleteClick: jest.fn(),
+    handleDeleteConfirm: jest.fn(),
+    handleCancelDelete: jest.fn(),
+    handleResetAll: jest.fn(),
+    handleResetAllConfirm: jest.fn(),
+    handleCancelResetAll: jest.fn(),
+    clearError: jest.fn(),
+    ...overrides,
+  };
+}
 
+describe('LoggingConfigPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockResetAllLoggers.mockResolvedValue(undefined);
-    mockedUseLoggingConfigApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchLoggers: jest.fn().mockResolvedValue([]),
-      fetchLogger: jest.fn().mockResolvedValue(null),
-      updateLogger: jest.fn().mockResolvedValue(undefined),
-      resetLogger: jest.fn().mockResolvedValue(undefined),
-      resetAllLoggers: mockResetAllLoggers,
-    });
+    mockCheckPermission.mockReturnValue(true);
+    mockedUseLoggingConfig.mockReturnValue(makeHook());
   });
 
-  it('renders the loggers list by default', () => {
+  it('renders the loggers list in list view', () => {
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
     expect(screen.getByTestId('loggers-list')).toBeInTheDocument();
@@ -106,99 +121,120 @@ describe('LoggingConfigPage', () => {
     expect(screen.getByText('Control logging levels')).toBeInTheDocument();
   });
 
-  it('displays page header with actions', () => {
+  it('displays page header with action buttons when user can update', () => {
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-    expect(screen.getByRole('heading', { name: 'Logging' })).toBeInTheDocument();
     expect(screen.getByText('Create Logger')).toBeInTheDocument();
     expect(screen.getByText('Reset to Default Levels')).toBeInTheDocument();
   });
 
-  it('shows create form when Create Logger button is clicked', async () => {
+  it('calls handleCreate when Create Logger button is clicked', () => {
+    const mockHandleCreate = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ handleCreate: mockHandleCreate }));
+
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
     fireEvent.click(screen.getByText('Create Logger'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('logger-form')).toBeInTheDocument();
-    });
+    expect(mockHandleCreate).toHaveBeenCalled();
   });
 
-  it('navigates to logger detail when a logger is selected', async () => {
+  it('renders create form when viewMode is create', () => {
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ viewMode: 'create' }));
+
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+    expect(screen.getByTestId('logger-form')).toBeInTheDocument();
+    // Page header uses 'Create Logger' as h1 title; mock form also shows it as a span
+    expect(screen.getAllByText('Create Logger').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders detail form when viewMode is detail and selectedLogger is set', () => {
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ viewMode: 'detail', selectedLogger: 'org.sonatype' }));
+
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+    expect(screen.getByTestId('logger-form')).toBeInTheDocument();
+    expect(screen.getByText('Edit org.sonatype')).toBeInTheDocument();
+  });
+
+  it('calls handleSelectLogger when a logger row is clicked', () => {
+    const mockHandleSelectLogger = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ handleSelectLogger: mockHandleSelectLogger }));
+
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
     fireEvent.click(screen.getByText('Select Logger'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('logger-form')).toBeInTheDocument();
-      expect(screen.getByText('Edit org.sonatype')).toBeInTheDocument();
-    });
+    expect(mockHandleSelectLogger).toHaveBeenCalledWith('org.sonatype');
   });
 
-  it('returns to list view when cancel is clicked', async () => {
+  it('calls handleBack when cancel is clicked in the form', () => {
+    const mockHandleBack = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ viewMode: 'create', handleBack: mockHandleBack }));
+
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-    // Go to create mode
-    fireEvent.click(screen.getByText('Create Logger'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('logger-form')).toBeInTheDocument();
-    });
-
-    // Click cancel
     fireEvent.click(screen.getByText('Cancel'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('loggers-list')).toBeInTheDocument();
-    });
+    expect(mockHandleBack).toHaveBeenCalled();
   });
 
-  it('opens confirmation dialog when Reset to Default Levels is clicked', async () => {
+  it('calls handleSave when save is clicked in the form', () => {
+    const mockHandleSave = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ viewMode: 'create', handleSave: mockHandleSave }));
+
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByText('Save'));
+
+    expect(mockHandleSave).toHaveBeenCalled();
+  });
+
+  it('calls handleResetAll when Reset to Default Levels is clicked', () => {
+    const mockHandleResetAll = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ handleResetAll: mockHandleResetAll }));
+
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
     fireEvent.click(screen.getByText('Reset to Default Levels'));
 
-    await waitFor(() => {
-      expect(screen.getByText('Reset All Loggers')).toBeInTheDocument();
-      expect(screen.getByText(/Are you sure you want to reset all loggers/)).toBeInTheDocument();
-    });
+    expect(mockHandleResetAll).toHaveBeenCalled();
   });
 
-  it('calls resetAllLoggers when confirm button is clicked in dialog', async () => {
+  it('opens reset confirmation dialog when resetAllDialogOpen is true', () => {
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ resetAllDialogOpen: true }));
+
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-    // Open the dialog
-    fireEvent.click(screen.getByText('Reset to Default Levels'));
+    expect(screen.getByText('Reset All Loggers')).toBeInTheDocument();
+    expect(screen.getByText(/Are you sure you want to reset all loggers/)).toBeInTheDocument();
+  });
 
-    await waitFor(() => {
-      expect(screen.getByText('Reset All Loggers')).toBeInTheDocument();
-    });
+  it('calls handleResetAllConfirm when Reset All is confirmed in the dialog', () => {
+    const mockHandleResetAllConfirm = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(
+      makeHook({ resetAllDialogOpen: true, handleResetAllConfirm: mockHandleResetAllConfirm })
+    );
 
-    // Click the confirm button in the dialog
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
     fireEvent.click(screen.getByRole('button', { name: 'Reset All' }));
 
-    await waitFor(() => {
-      expect(mockResetAllLoggers).toHaveBeenCalled();
-    });
+    expect(mockHandleResetAllConfirm).toHaveBeenCalled();
   });
 
-  it('does not reset if user clicks cancel in confirmation dialog', async () => {
+  it('calls handleCancelResetAll when reset dialog cancel is clicked', () => {
+    const mockHandleCancelResetAll = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(
+      makeHook({ resetAllDialogOpen: true, handleCancelResetAll: mockHandleCancelResetAll })
+    );
+
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-    // Open the dialog
-    fireEvent.click(screen.getByText('Reset to Default Levels'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Reset All Loggers')).toBeInTheDocument();
-    });
-
-    // Click cancel
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
-    await waitFor(() => {
-      expect(screen.queryByText('Reset All Loggers')).not.toBeInTheDocument();
-    });
-    expect(mockResetAllLoggers).not.toHaveBeenCalled();
+    expect(mockHandleCancelResetAll).toHaveBeenCalled();
   });
 
   it('hides action buttons when user lacks update permission', () => {
@@ -210,76 +246,67 @@ describe('LoggingConfigPage', () => {
     expect(screen.queryByText('Reset to Default Levels')).not.toBeInTheDocument();
   });
 
-  it('displays error alert when error occurs', () => {
-    mockedUseLoggingConfigApi.mockReturnValue({
-      loading: false,
-      error: 'Failed to reset loggers',
-      setError: mockSetError,
-      fetchLoggers: jest.fn().mockResolvedValue([]),
-      fetchLogger: jest.fn().mockResolvedValue(null),
-      updateLogger: jest.fn().mockResolvedValue(undefined),
-      resetLogger: jest.fn().mockResolvedValue(undefined),
-      resetAllLoggers: mockResetAllLoggers,
-    });
+  it('displays error alert when hook returns an error', () => {
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ error: 'Failed to reset loggers' }));
 
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
     expect(screen.getByText('Failed to reset loggers')).toBeInTheDocument();
   });
 
-  it('opens confirmation dialog when individual logger Delete is clicked', async () => {
-    mockCheckPermission.mockReturnValue(true);
+  it('calls clearError when error alert is closed', () => {
+    const mockClearError = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ error: 'Some error', clearError: mockClearError }));
 
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-    // Select a logger to go to detail view
-    fireEvent.click(screen.getByText('Select Logger'));
+    // SettingsAlert renders a dismiss button with aria-label="Dismiss"
+    const closeButton = screen.getByRole('button', { name: /dismiss/i });
+    fireEvent.click(closeButton);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('logger-form')).toBeInTheDocument();
-    });
-
-    // Click delete in the form
-    const deleteButton = await screen.findByText('Delete');
-    fireEvent.click(deleteButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Delete Logger Override')).toBeInTheDocument();
-      expect(screen.getByText(/Remove the custom log level for "org.sonatype"/)).toBeInTheDocument();
-    });
+    expect(mockClearError).toHaveBeenCalled();
   });
 
-  it('calls resetLogger when individual delete is confirmed', async () => {
-    mockCheckPermission.mockReturnValue(true);
-
-    const mockResetLogger = jest.fn().mockResolvedValue(undefined);
-    mockedUseLoggingConfigApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchLoggers: jest.fn().mockResolvedValue([]),
-      fetchLogger: jest.fn().mockResolvedValue({ name: 'org.sonatype', level: 'DEBUG' }),
-      updateLogger: jest.fn().mockResolvedValue(undefined),
-      resetLogger: mockResetLogger,
-      resetAllLoggers: mockResetAllLoggers,
-    });
+  it('opens delete dialog when deleteDialogOpen is true', () => {
+    mockedUseLoggingConfig.mockReturnValue(
+      makeHook({ viewMode: 'detail', selectedLogger: 'org.sonatype', deleteDialogOpen: true })
+    );
 
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-    fireEvent.click(screen.getByText('Select Logger'));
+    expect(screen.getByText('Delete Logger Override')).toBeInTheDocument();
+    expect(screen.getByText(/Remove the custom log level for "org.sonatype"/)).toBeInTheDocument();
+  });
 
-    const deleteButton = await screen.findByText('Delete');
-    fireEvent.click(deleteButton);
+  it('calls handleDeleteClick when Delete button is clicked in the form', () => {
+    const mockHandleDeleteClick = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(
+      makeHook({ viewMode: 'detail', selectedLogger: 'org.sonatype', handleDeleteClick: mockHandleDeleteClick })
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText('Delete Logger Override')).toBeInTheDocument();
-    });
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByText('Delete'));
+
+    expect(mockHandleDeleteClick).toHaveBeenCalled();
+  });
+
+  it('calls handleDeleteConfirm when delete is confirmed in the dialog', () => {
+    const mockHandleDeleteConfirm = jest.fn();
+    mockedUseLoggingConfig.mockReturnValue(
+      makeHook({
+        viewMode: 'detail',
+        selectedLogger: 'org.sonatype',
+        deleteDialogOpen: true,
+        handleDeleteConfirm: mockHandleDeleteConfirm,
+      })
+    );
+
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
     fireEvent.click(screen.getByRole('button', { name: /^Delete$/ }));
 
-    await waitFor(() => {
-      expect(mockResetLogger).toHaveBeenCalledWith('org.sonatype');
-    });
+    expect(mockHandleDeleteConfirm).toHaveBeenCalled();
   });
 
   describe('Breadcrumb navigation for list view', () => {
@@ -292,7 +319,6 @@ describe('LoggingConfigPage', () => {
     it('renders Logging as current page in breadcrumbs on list view', () => {
       const { container } = render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-      // Logging should be the current page (span with aria-current)
       const currentBreadcrumb = container.querySelector('[aria-current="page"]');
       expect(currentBreadcrumb).toBeInTheDocument();
       expect(currentBreadcrumb?.textContent).toBe('Logging');
@@ -309,48 +335,77 @@ describe('LoggingConfigPage', () => {
   });
 
   describe('Breadcrumb navigation for detail view', () => {
-    it('renders breadcrumb with logger name in detail view', async () => {
+    it('renders breadcrumb with logger name as current page in detail view', () => {
+      mockedUseLoggingConfig.mockReturnValue(makeHook({ viewMode: 'detail', selectedLogger: 'org.sonatype' }));
+
       const { container } = render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-      fireEvent.click(screen.getByText('Select Logger'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('logger-form')).toBeInTheDocument();
-      });
-
-      // org.sonatype should be the current page (span with aria-current)
       const currentBreadcrumb = container.querySelector('[aria-current="page"]');
       expect(currentBreadcrumb).toBeInTheDocument();
       expect(currentBreadcrumb?.textContent).toBe('org.sonatype');
     });
 
-    it('renders Logging as clickable breadcrumb in detail view', async () => {
+    it('renders Logging as clickable breadcrumb in detail view', () => {
+      mockedUseLoggingConfig.mockReturnValue(makeHook({ viewMode: 'detail', selectedLogger: 'org.sonatype' }));
+
       render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-      fireEvent.click(screen.getByText('Select Logger'));
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Logging' })).toBeInTheDocument();
-      });
+      expect(screen.getByRole('button', { name: 'Logging' })).toBeInTheDocument();
     });
 
-    it('navigates back to list when Logging breadcrumb is clicked in detail view', async () => {
+    it('calls handleBack when Logging breadcrumb is clicked in detail view', () => {
+      const mockHandleBack = jest.fn();
+      mockedUseLoggingConfig.mockReturnValue(
+        makeHook({ viewMode: 'detail', selectedLogger: 'org.sonatype', handleBack: mockHandleBack })
+      );
+
       render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-      fireEvent.click(screen.getByText('Select Logger'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('logger-form')).toBeInTheDocument();
-      });
-
-      // Click the Logging breadcrumb to go back to list
       fireEvent.click(screen.getByRole('button', { name: 'Logging' }));
 
-      await waitFor(() => {
-        expect(screen.getByTestId('loggers-list')).toBeInTheDocument();
-      });
+      expect(mockHandleBack).toHaveBeenCalled();
+    });
+
+    it('renders create breadcrumb in create view', () => {
+      mockedUseLoggingConfig.mockReturnValue(makeHook({ viewMode: 'create' }));
+
+      const { container } = render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+      const currentBreadcrumb = container.querySelector('[aria-current="page"]');
+      expect(currentBreadcrumb?.textContent).toBe('Create');
+    });
+  });
+
+  it('does not render LoggersList in detail view', () => {
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ viewMode: 'detail', selectedLogger: 'org.sonatype' }));
+
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+    expect(screen.queryByTestId('loggers-list')).not.toBeInTheDocument();
+  });
+
+  it('renders help section in list view', () => {
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+    expect(screen.getByText('About Logging Configuration')).toBeInTheDocument();
+  });
+
+  it('does not render help section in create view', () => {
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ viewMode: 'create' }));
+
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+    expect(screen.queryByText('About Logging Configuration')).not.toBeInTheDocument();
+  });
+
+  it('passes refreshKey to LoggersList as key prop (remounts on change)', async () => {
+    mockedUseLoggingConfig.mockReturnValue(makeHook({ refreshKey: 5 }));
+
+    render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+    // The key is passed as React key so remounting is handled — list should be present
+    await waitFor(() => {
+      expect(screen.getByTestId('loggers-list')).toBeInTheDocument();
     });
   });
 });
-
-

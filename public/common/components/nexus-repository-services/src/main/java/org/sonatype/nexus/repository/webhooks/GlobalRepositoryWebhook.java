@@ -30,7 +30,7 @@ import org.sonatype.nexus.webhooks.WebhookPayload;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -50,8 +50,8 @@ public class GlobalRepositoryWebhook
 
   @Autowired
   public GlobalRepositoryWebhook(final NodeAccess nodeAccess, final InitiatorProvider initiatorProvider) {
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.initiatorProvider = checkNotNull(initiatorProvider);
+    this.nodeAccess = requireNonNull(nodeAccess);
+    this.initiatorProvider = requireNonNull(initiatorProvider);
   }
 
   @Override
@@ -109,8 +109,8 @@ public class GlobalRepositoryWebhook
         final Date timestamp,
         final String initiator)
     {
-      this.action = checkNotNull(action);
-      this.repository = checkNotNull(repository);
+      this.action = requireNonNull(action);
+      this.repository = requireNonNull(repository);
       setNodeId(nodeId);
       setTimestamp(timestamp);
       setInitiator(initiator);
@@ -133,9 +133,9 @@ public class GlobalRepositoryWebhook
       private final String type;
 
       public RepositoryPayload(final String name, final Type type, final Format format) {
-        this.name = checkNotNull(name);
-        this.type = checkNotNull(type).getValue();
-        this.format = checkNotNull(format).getValue();
+        this.name = requireNonNull(name);
+        this.type = requireNonNull(type).getValue();
+        this.format = requireNonNull(format).getValue();
       }
 
       public String getFormat() {

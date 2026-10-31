@@ -72,7 +72,7 @@ export function RubyGemsSearchPage({
         version: initialVersion,
       });
     }
-  }, []); // Only on mount
+  }, [initialName, initialVersion, search]); // Only on mount
 
   /**
    * Handle search submission.

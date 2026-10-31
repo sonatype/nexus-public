@@ -20,7 +20,7 @@ import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_ITERATION_PHC;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
 
@@ -48,11 +48,11 @@ public class HashingHandlerFactoryImpl
 
   @Autowired
   public HashingHandlerFactoryImpl(final CryptoHelper cryptoHelper) {
-    this.cryptoHelper = checkNotNull(cryptoHelper);
+    this.cryptoHelper = requireNonNull(cryptoHelper);
   }
 
   public HashingHandler create(final String encryptedSecret) throws CipherException {
-    checkNotNull(encryptedSecret);
+    requireNonNull(encryptedSecret);
     EncryptedSecret parsedEncryptedSecret = EncryptedSecret.parse(encryptedSecret);
     String algorithm = parsedEncryptedSecret.getAlgorithm();
     byte[] salt = fromBase64(parsedEncryptedSecret.getSalt());

@@ -15,7 +15,9 @@ package org.sonatype.nexus.repository.search.sql.store.upgrade.task;
 import java.util.Collections;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -33,7 +35,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
@@ -68,8 +70,8 @@ public class ReIndexSearchFilterByPatternTask
       final SqlSearchIndexService sqlSearchIndexService,
       @Value("${nexus.reindex.search.by.pattern.batchSize:500}") final int batchSize)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.sqlSearchIndexService = checkNotNull(sqlSearchIndexService);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.sqlSearchIndexService = requireNonNull(sqlSearchIndexService);
     this.batchSize = batchSize > 0 ? batchSize : DEFAULT_BATCH_SIZE;
   }
 
@@ -103,6 +105,14 @@ public class ReIndexSearchFilterByPatternTask
       FluentQuery<FluentComponent> filteredQuery = fluentComponents.byFilter(filterCondition, Collections.emptyMap());
 
       return reindexFilteredComponents(repository, filteredQuery);
+    }
+    catch (MissingFacetException | InvalidStateException e) {
+      // Repository was deleted concurrently mid-iteration (NEXUS-53351); skip it with a WARN
+      // rather than ERROR, since this is an expected benign condition.
+      // See RepositoryTaskSupport.execute() for the full InvalidStateException trade-off rationale.
+      log.warn("Skipping repository '{}' as it appears to have been removed during re-index: {}",
+          repository.getName(), e.getMessage());
+      return 0;
     }
     catch (Exception e) {
       log.error("Error processing repository {}: {}", repository.getName(), e.getMessage(), e);

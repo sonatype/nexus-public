@@ -53,7 +53,7 @@ public class Maven2ComponentStore
 
   @Transactional
   public Set<GAV> findGavsWithSnaphots(final int repositoryId, final int minimumRetained) {
-    return dao().findGavsWithSnaphots(repositoryId, minimumRetained);
+    return dao().findGavsWithSnaphots(repositoryId, minimumRetained, softDeleteAvailable());
   }
 
   @Transactional
@@ -64,26 +64,21 @@ public class Maven2ComponentStore
       final String baseVersion,
       final String releaseVersion)
   {
-    return dao().findComponentsForGav(repositoryId, name, group, baseVersion, releaseVersion);
+    return dao().findComponentsForGav(repositoryId, name, group, baseVersion, releaseVersion, softDeleteAvailable());
   }
 
   @Transactional
   public Set<String> getBaseVersions(final int repositoryId, final String namespace, final String name) {
-    return dao().getBaseVersions(repositoryId, namespace, name);
+    return dao().getBaseVersions(repositoryId, namespace, name, softDeleteAvailable());
   }
 
   @Transactional
   public int[] selectSnapshotsAfterRelease(final int repositoryId, final int gracePeriod) {
-    return dao().selectSnapshotsAfterRelease(gracePeriod, repositoryId);
+    return dao().selectSnapshotsAfterRelease(gracePeriod, repositoryId, softDeleteAvailable());
   }
 
   /**
    * Selects snapshot components ids last used before provided date
-   *
-   * @param repositoryId the repository to select from
-   * @param olderThan selects component before this date
-   * @param limit limit the selection
-   * @return snapshot components last used before provided date
    */
   @Transactional
   public Collection<Integer> selectUnusedSnapshots(
@@ -91,6 +86,6 @@ public class Maven2ComponentStore
       final LocalDate olderThan,
       final long limit)
   {
-    return dao().selectUnusedSnapshots(repositoryId, olderThan, limit);
+    return dao().selectUnusedSnapshots(repositoryId, olderThan, limit, softDeleteAvailable());
   }
 }

@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.storage.BlobMetadataStorage;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -65,13 +65,13 @@ public class ContentFacetDependencies
       final VersionNormalizerService versionNormalizerService,
       @Nullable final RepositoryMoveService moveService)
   {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
-    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
-    this.clientInfoProvider = checkNotNull(clientInfoProvider);
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.assetBlobValidators = checkNotNull(assetBlobValidators);
-    this.blobMetadataStorage = checkNotNull(blobMetadataStorage);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.dataSessionSupplier = requireNonNull(dataSessionSupplier);
+    this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
+    this.clientInfoProvider = requireNonNull(clientInfoProvider);
+    this.nodeAccess = requireNonNull(nodeAccess);
+    this.assetBlobValidators = requireNonNull(assetBlobValidators);
+    this.blobMetadataStorage = requireNonNull(blobMetadataStorage);
     this.versionNormalizerService = versionNormalizerService;
     this.maybeMoveService = Optional.ofNullable(moveService);
   }

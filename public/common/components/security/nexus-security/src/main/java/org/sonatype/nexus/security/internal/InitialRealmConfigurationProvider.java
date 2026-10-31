@@ -21,7 +21,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Initial {@link RealmConfiguration} provider.
@@ -37,7 +37,7 @@ public class InitialRealmConfigurationProvider
 
   @Autowired
   public InitialRealmConfigurationProvider(final RealmConfigurationStore store) {
-    this.store = checkNotNull(store);
+    this.store = requireNonNull(store);
   }
 
   @Override

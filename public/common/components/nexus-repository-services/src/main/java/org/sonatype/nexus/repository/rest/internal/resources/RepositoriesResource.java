@@ -13,22 +13,24 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
 
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.rest.api.RepositoryXO;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.RepositoriesResourceDoc;
 import org.sonatype.nexus.rest.Resource;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import org.apache.shiro.authz.annotation.RequiresUser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
-import org.springframework.stereotype.Component;
 
 /**
  * @since 3.9
@@ -46,21 +48,23 @@ public class RepositoriesResource
 
   @Autowired
   public RepositoriesResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter) {
-    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
+    this.repositoryManagerRESTAdapter = requireNonNull(repositoryManagerRESTAdapter);
   }
 
+  @RequiresUser
   @GET
   @Override
   public List<RepositoryXO> getRepositories() {
     return repositoryManagerRESTAdapter.getRepositories();
   }
 
+  @RequiresUser
   @GET
   @Override
   @Path("/{repositoryName}")
   public RepositoryXO getRepository(@PathParam("repositoryName") final String repositoryName) {
     return RepositoryXO.fromRepository(
-        repositoryManagerRESTAdapter.getReadableRepository(repositoryName),
+        repositoryManagerRESTAdapter.getRepository(repositoryName),
         repositoryManagerRESTAdapter.getRepositorySize(repositoryName).orElse(null));
   }
 }

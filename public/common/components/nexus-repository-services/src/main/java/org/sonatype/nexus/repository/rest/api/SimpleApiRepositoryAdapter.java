@@ -15,10 +15,10 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationConstants;
@@ -51,7 +51,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REPLICATION_HTTP_ENABLED;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.GROUP_WRITE_MEMBER;
@@ -72,7 +72,7 @@ public class SimpleApiRepositoryAdapter
 
   @VisibleForTesting
   @Autowired
-  void setDatabaseCheck(DatabaseCheck databaseCheck) {
+  void setDatabaseCheck(final DatabaseCheck databaseCheck) {
     this.databaseCheck = databaseCheck;
   }
 
@@ -82,7 +82,7 @@ public class SimpleApiRepositoryAdapter
 
   @Autowired
   public SimpleApiRepositoryAdapter(final RoutingRuleStore routingRuleStore) {
-    this.routingRuleStore = checkNotNull(routingRuleStore);
+    this.routingRuleStore = requireNonNull(routingRuleStore);
   }
 
   @Override
@@ -140,8 +140,9 @@ public class SimpleApiRepositoryAdapter
     String blobStoreName = configuration.get(ConfigurationConstants.BLOB_STORE_NAME, String.class);
     Boolean strictContentTypeValidation =
         configuration.get(ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION, Boolean.class, Boolean.TRUE);
+    Boolean globalDistribution = configuration.get(ConfigurationConstants.GLOBAL_DISTRIBUTION, Boolean.class);
 
-    return new StorageAttributes(blobStoreName, strictContentTypeValidation);
+    return new StorageAttributes(blobStoreName, strictContentTypeValidation, globalDistribution);
   }
 
   protected HostedStorageAttributes getHostedStorageAttributes(final Repository repository) {
@@ -150,10 +151,11 @@ public class SimpleApiRepositoryAdapter
     String blobStoreName = configuration.get(ConfigurationConstants.BLOB_STORE_NAME, String.class);
     Boolean strictContentTypeValidation =
         configuration.get(ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION, Boolean.class, Boolean.TRUE);
+    Boolean globalDistribution = configuration.get(ConfigurationConstants.GLOBAL_DISTRIBUTION, Boolean.class);
     String writePolicy =
         toString(configuration.get(ConfigurationConstants.WRITE_POLICY), ConfigurationConstants.WRITE_POLICY_DEFAULT);
 
-    return new HostedStorageAttributes(blobStoreName, strictContentTypeValidation, writePolicy);
+    return new HostedStorageAttributes(blobStoreName, strictContentTypeValidation, globalDistribution, writePolicy);
   }
 
   protected GroupDeployAttributes getGroupAttributes(final Repository repository) {
@@ -237,7 +239,7 @@ public class SimpleApiRepositoryAdapter
   }
 
   protected ReplicationAttributes getReplicationAttributes(final Repository repository) {
-    boolean isPostgresql = (null == databaseCheck) ? false : databaseCheck.isPostgresql();
+    boolean isPostgresql = null == databaseCheck ? false : databaseCheck.isPostgresql();
 
     Configuration configuration = repository.getConfiguration();
 

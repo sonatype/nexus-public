@@ -26,7 +26,6 @@ import org.sonatype.nexus.security.user.UserManager;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 
 /**
  * REST API representation of a user.
@@ -39,17 +38,14 @@ public class ApiUser
   @Schema(description = NexusSecurityApiConstants.USER_ID_DESCRIPTION)
   private String userId;
 
-  @NotEmpty
-  @Schema(description = NexusSecurityApiConstants.FIRST_NAME_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.FIRST_NAME_DESCRIPTION, nullable = true)
   private String firstName;
 
-  @NotEmpty
-  @Schema(description = NexusSecurityApiConstants.LAST_NAME_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.LAST_NAME_DESCRIPTION, nullable = true)
   private String lastName;
 
-  @NotEmpty
   @Email
-  @Schema(description = NexusSecurityApiConstants.EMAIL_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.EMAIL_DESCRIPTION, nullable = true)
   private String emailAddress;
 
   @NotBlank

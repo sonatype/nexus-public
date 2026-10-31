@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link MBean} builder.
@@ -47,7 +47,7 @@ public class MBeanBuilder
   private Descriptor descriptor;
 
   public MBeanBuilder(final String className) {
-    this.className = checkNotNull(className);
+    this.className = requireNonNull(className);
   }
 
   public MBeanBuilder description(final String description) {
@@ -61,13 +61,13 @@ public class MBeanBuilder
   }
 
   public void attribute(final MBeanAttribute attribute) {
-    checkNotNull(attribute);
+    requireNonNull(attribute);
     log.debug("Adding attribute: {}", attribute);
     attributes.add(attribute);
   }
 
   public void operation(final MBeanOperation operation) {
-    checkNotNull(operation);
+    requireNonNull(operation);
     log.debug("Adding operation: {}", operation);
     operations.add(operation);
   }

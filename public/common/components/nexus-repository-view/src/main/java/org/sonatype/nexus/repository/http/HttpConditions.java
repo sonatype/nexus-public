@@ -35,7 +35,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_MODIFIED;
@@ -86,7 +86,7 @@ public class HttpConditions
    */
   @Nonnull
   public static Request makeUnconditional(@Nonnull final Request request) {
-    checkNotNull(request);
+    requireNonNull(request);
     final Headers stashedHeaders = new Headers();
     for (String httpHeader : SUPPORTED_HEADERS) {
       List<String> headerValues = request.getHeaders().getAll(httpHeader);
@@ -106,7 +106,7 @@ public class HttpConditions
    */
   @Nonnull
   public static Request makeConditional(@Nonnull final Request request) {
-    checkNotNull(request);
+    requireNonNull(request);
     final Headers stashedHeaders = getConditionalHeaders(request);
     for (Entry<String, String> entry : stashedHeaders.entries()) {
       request.getHeaders().set(entry.getKey(), stashedHeaders.getAll(entry.getKey()));

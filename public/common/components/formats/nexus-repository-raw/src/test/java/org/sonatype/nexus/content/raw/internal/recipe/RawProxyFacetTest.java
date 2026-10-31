@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
@@ -30,8 +31,8 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,20 +40,20 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class RawProxyFacetTest
+class RawProxyFacetTest
 {
   private RawProxyFacet rawProxyFacet;
 
   private QueryParameterForwardingHelper queryParamHelper;
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeEach
+  void setUp() throws Exception {
     rawProxyFacet = new RawProxyFacet();
-    configureEscapeRules(rawProxyFacet);
+    // Initialize EscapeHelper which is needed for URL encoding
+    ReflectionTestUtils.setField(rawProxyFacet, "escapeHelper", new EscapeHelper((String) null));
     queryParamHelper = rawProxyFacet.queryParamHelper;
   }
 
@@ -61,6 +62,18 @@ public class RawProxyFacetTest
    * from the request.
    */
   private Context mockContext(final String assetPath, final Parameters parameters) {
+    return mockContext(assetPath, parameters, new AttributesMap());
+  }
+
+  /**
+   * Creates a mocked Context with explicit request attributes — used to simulate ViewServlet
+   * storing {@code RAW_QUERY_STRING_ATTR} on the request before dispatch.
+   */
+  private Context mockContext(
+      final String assetPath,
+      final Parameters parameters,
+      final AttributesMap requestAttributes)
+  {
     Context context = mock(Context.class);
     Request request = mock(Request.class);
     AttributesMap attributes = new AttributesMap();
@@ -73,46 +86,47 @@ public class RawProxyFacetTest
     when(context.getAttributes()).thenReturn(attributes);
     when(context.getRequest()).thenReturn(request);
     when(request.getParameters()).thenReturn(parameters);
+    when(request.getAttributes()).thenReturn(requestAttributes);
     return context;
   }
 
   @Test
-  public void testEncodeUrlWithCaret() throws UnsupportedEncodingException {
+  void testEncodeUrlWithCaret() throws UnsupportedEncodingException {
     String url = "http://example.com/path^test";
     String expectedEncodedUrl = "http://example.com/path%5Etest";
     assertEncodedUrl(url, expectedEncodedUrl, "^");
   }
 
   @Test
-  public void testEncodeUrlWithHash() throws UnsupportedEncodingException {
+  void testEncodeUrlWithHash() throws UnsupportedEncodingException {
     String url = "http://example.com/path#test";
     String expectedEncodedUrl = "http://example.com/path%23test";
     assertEncodedUrl(url, expectedEncodedUrl, "#");
   }
 
   @Test
-  public void testEncodeUrlWithQuestionMark() throws UnsupportedEncodingException {
+  void testEncodeUrlWithQuestionMark() throws UnsupportedEncodingException {
     String url = "http://example.com/path?test";
     String expectedEncodedUrl = "http://example.com/path%3Ftest";
     assertEncodedUrl(url, expectedEncodedUrl, "?");
   }
 
   @Test
-  public void testEncodedUrlWithNarrowNoBreakSpace() throws UnsupportedEncodingException {
+  void testEncodedUrlWithNarrowNoBreakSpace() throws UnsupportedEncodingException {
     String url = "http://example.com/path\u202Ftest";
     String expectedEncodedUrl = "http://example.com/path%E2%80%AFtest";
     assertEncodedUrl(url, expectedEncodedUrl, "\u202F");
   }
 
   @Test
-  public void testEncodedUrlWithLeftSquareBracket() throws UnsupportedEncodingException {
+  void testEncodedUrlWithLeftSquareBracket() throws UnsupportedEncodingException {
     String url = "http://example.com/path[test";
     String expectedEncodedUrl = "http://example.com/path%5Btest";
     assertEncodedUrl(url, expectedEncodedUrl, "[");
   }
 
   @Test
-  public void testEncodedUrlWithRightSquareBracket() throws UnsupportedEncodingException {
+  void testEncodedUrlWithRightSquareBracket() throws UnsupportedEncodingException {
     String url = "http://example.com/path]test";
     String expectedEncodedUrl = "http://example.com/path%5Dtest";
     assertEncodedUrl(url, expectedEncodedUrl, "]");
@@ -124,7 +138,7 @@ public class RawProxyFacetTest
       String character) throws UnsupportedEncodingException
   {
     String actualEncodedUrl = rawProxyFacet.encodeUrl(url);
-    assertEquals("Failed to encode character: " + character, expectedEncodedUrl, actualEncodedUrl);
+    assertThat("Failed to encode character: " + character, actualEncodedUrl, is(expectedEncodedUrl));
   }
 
   // --- getUrl tests (NEXUS-49835) ---
@@ -135,7 +149,7 @@ public class RawProxyFacetTest
    * Integration test 1: getUrl() with no query parameters returns path only.
    */
   @Test
-  public void getUrl_noQueryParameters_returnsPathOnly() {
+  void getUrl_noQueryParameters_returnsPathOnly() {
     Parameters parameters = new Parameters();
     Context context = mockContext("/some/file.txt", parameters);
 
@@ -150,7 +164,7 @@ public class RawProxyFacetTest
    * later in buildFetchHttpRequest().
    */
   @Test
-  public void getUrl_withQueryParameters_returnsPathOnly() {
+  void getUrl_withQueryParameters_returnsPathOnly() {
     Parameters parameters = new Parameters();
     parameters.set("version", "1.2.3");
     Context context = mockContext("/file.txt", parameters);
@@ -170,7 +184,7 @@ public class RawProxyFacetTest
    * Test buildFetchHttpRequest with no query parameters - URI unchanged.
    */
   @Test
-  public void buildFetchHttpRequest_noQueryParameters_uriUnchanged() {
+  void buildFetchHttpRequest_noQueryParameters_uriUnchanged() {
     Parameters parameters = new Parameters();
     Context context = mockContext("/file.txt", parameters);
     URI uri = URI.create("http://example.com/file.txt");
@@ -186,7 +200,7 @@ public class RawProxyFacetTest
    * Test buildFetchHttpRequest with query parameters - appends to URI.
    */
   @Test
-  public void buildFetchHttpRequest_withQueryParameters_appendsToUri() throws Exception {
+  void buildFetchHttpRequest_withQueryParameters_appendsToUri() throws Exception {
     configureQueryParamForwarding(true, Collections.emptyList());
 
     Parameters parameters = new Parameters();
@@ -208,7 +222,7 @@ public class RawProxyFacetTest
    * Test buildFetchHttpRequest with query parameters containing spaces - they are URL-encoded.
    */
   @Test
-  public void buildFetchHttpRequest_queryParameterWithSpaces_encodedProperly() throws Exception {
+  void buildFetchHttpRequest_queryParameterWithSpaces_encodedProperly() throws Exception {
     configureQueryParamForwarding(true, Collections.emptyList());
 
     Parameters parameters = new Parameters();
@@ -226,7 +240,7 @@ public class RawProxyFacetTest
    * Test buildFetchHttpRequest with stale content - calls super with modified URI.
    */
   @Test
-  public void buildFetchHttpRequest_withStaleContent_callsSuperWithModifiedUri() throws Exception {
+  void buildFetchHttpRequest_withStaleContent_callsSuperWithModifiedUri() throws Exception {
     configureQueryParamForwarding(true, Collections.emptyList());
 
     Parameters parameters = new Parameters();
@@ -247,7 +261,7 @@ public class RawProxyFacetTest
    * Test: Integration - buildFetchHttpRequest with exclusions.
    */
   @Test
-  public void buildFetchHttpRequest_withExclusions_filtersExcludedParams() throws Exception {
+  void buildFetchHttpRequest_withExclusions_filtersExcludedParams() throws Exception {
     configureQueryParamForwarding(true, Collections.singletonList("token"));
 
     Parameters parameters = new Parameters();
@@ -269,7 +283,7 @@ public class RawProxyFacetTest
    * Test: cacheKey includes query parameters when forwarding is enabled.
    */
   @Test
-  public void cacheKey_withQueryParamsForwardingEnabled_includesQueryParams() throws Exception {
+  void cacheKey_withQueryParamsForwardingEnabled_includesQueryParams() throws Exception {
     configureQueryParamForwarding(true, Collections.emptyList());
 
     Parameters parameters = new Parameters();
@@ -284,7 +298,7 @@ public class RawProxyFacetTest
    * Test: cacheKey with forwarding disabled uses path only (ignores query params).
    */
   @Test
-  public void cacheKey_withQueryParamsForwardingDisabled_usesPathOnly() throws Exception {
+  void cacheKey_withQueryParamsForwardingDisabled_usesPathOnly() throws Exception {
     configureQueryParamForwarding(false, Collections.emptyList());
 
     Parameters parameters = new Parameters();
@@ -299,7 +313,7 @@ public class RawProxyFacetTest
    * Test: cacheKey without query params uses path only.
    */
   @Test
-  public void cacheKey_withoutQueryParams_usesPathOnly() throws Exception {
+  void cacheKey_withoutQueryParams_usesPathOnly() throws Exception {
     configureQueryParamForwarding(true, Collections.emptyList());
 
     Parameters parameters = new Parameters();
@@ -313,7 +327,7 @@ public class RawProxyFacetTest
    * Test: cacheKey with only excluded params uses path only (excluded params not in cache key).
    */
   @Test
-  public void cacheKey_withOnlyExcludedParams_usesPathOnly() throws Exception {
+  void cacheKey_withOnlyExcludedParams_usesPathOnly() throws Exception {
     configureQueryParamForwarding(true, Arrays.asList("api_key", "session_id"));
 
     Parameters parameters = new Parameters();
@@ -329,7 +343,7 @@ public class RawProxyFacetTest
    * Test: cacheKey with mixed (excluded + forwarded) params includes only forwarded params.
    */
   @Test
-  public void cacheKey_withMixedParams_includesOnlyForwardedParams() throws Exception {
+  void cacheKey_withMixedParams_includesOnlyForwardedParams() throws Exception {
     configureQueryParamForwarding(true, Collections.singletonList("api_key"));
 
     Parameters parameters = new Parameters();
@@ -345,7 +359,7 @@ public class RawProxyFacetTest
    * Test: Different query params produce different cache keys (no collision).
    */
   @Test
-  public void cacheKey_differentQueryParams_produceDifferentKeys() throws Exception {
+  void cacheKey_differentQueryParams_produceDifferentKeys() throws Exception {
     configureQueryParamForwarding(true, Collections.emptyList());
 
     Parameters params1 = new Parameters();
@@ -368,7 +382,7 @@ public class RawProxyFacetTest
    * Test: Same query params in different order produce the same cache key (sorted).
    */
   @Test
-  public void cacheKey_sameParamsReordered_produceSameKey() throws Exception {
+  void cacheKey_sameParamsReordered_produceSameKey() throws Exception {
     configureQueryParamForwarding(true, Collections.emptyList());
 
     Parameters params1 = new Parameters();
@@ -394,7 +408,7 @@ public class RawProxyFacetTest
    * per-repo configuration.
    */
   @Test
-  public void configureQueryParamForwarding_featureFlagDisabled_alwaysDisablesForwarding() throws Exception {
+  void configureQueryParamForwarding_featureFlagDisabled_alwaysDisablesForwarding() throws Exception {
     Configuration configuration = mock(Configuration.class);
     NestedAttributesMap rawAttributes = new NestedAttributesMap("raw", new java.util.HashMap<>());
     rawAttributes.set("forwardQueryParameters", Boolean.TRUE);
@@ -411,6 +425,73 @@ public class RawProxyFacetTest
   }
 
   /**
+   * Integration test: simulates ViewServlet storing RAW_QUERY_STRING_ATTR on the request,
+   * then verifies RawProxyFacet reads it and forwards ?flag without an = sign.
+   */
+  @Test
+  void buildFetchHttpRequest_valuelessParamViaRawQueryStringAttr_forwardedWithoutEquals() throws Exception {
+    configureQueryParamForwarding(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("flag", ""); // Servlet API maps ?flag → "" (same as ?flag=)
+    parameters.set("query", "hello");
+
+    AttributesMap requestAttributes = new AttributesMap();
+    requestAttributes.set(Request.RAW_QUERY_STRING_ATTR, "flag&query=hello");
+
+    Context context = mockContext("/get", parameters, requestAttributes);
+    URI uri = URI.create("http://example.com/get");
+
+    HttpRequestBase request = rawProxyFacet.buildFetchHttpRequest(uri, context, null);
+
+    String finalUri = request.getURI().toString();
+    assertThat("valueless flag must be forwarded without = sign",
+        finalUri, not(containsString("flag=")));
+    assertThat(finalUri, containsString("flag"));
+    assertThat(finalUri, containsString("query=hello"));
+  }
+
+  /**
+   * When RAW_QUERY_STRING_ATTR is absent (dispatch path not via ViewServlet), a parameter whose value
+   * happens to be empty is forwarded with an = sign (the conservative fallback).
+   */
+  @Test
+  void buildFetchHttpRequest_valuelessParamWithNoRawQueryStringAttr_forwardedWithEquals() throws Exception {
+    configureQueryParamForwarding(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("flag", ""); // Servlet API maps ?flag= → "" (or any empty-value param)
+
+    Context context = mockContext("/get", parameters); // no RAW_QUERY_STRING_ATTR
+    URI uri = URI.create("http://example.com/get");
+
+    HttpRequestBase request = rawProxyFacet.buildFetchHttpRequest(uri, context, null);
+
+    assertThat("without RAW_QUERY_STRING_ATTR the param is forwarded with = sign (conservative fallback)",
+        request.getURI().toString(), is("http://example.com/get?flag="));
+  }
+
+  /**
+   * Percent-encoded valueless param name: ?%66lag (encoded "flag") must be decoded and matched
+   * against servlet-decoded parameter names, then forwarded without =.
+   */
+  @Test
+  void buildFetchHttpRequest_percentEncodedValuelessParamName_decodedAndForwardedWithoutEquals() throws Exception {
+    configureQueryParamForwarding(true, Collections.emptyList());
+    Parameters parameters = new Parameters();
+    parameters.set("flag", ""); // Servlet decodes %66lag to "flag" and maps it to ""
+    AttributesMap requestAttributes = new AttributesMap();
+    requestAttributes.set(Request.RAW_QUERY_STRING_ATTR, "%66lag");
+    Context context = mockContext("/get", parameters, requestAttributes);
+    URI uri = URI.create("http://example.com/get");
+    HttpRequestBase request = rawProxyFacet.buildFetchHttpRequest(uri, context, null);
+    String finalUri = request.getURI().toString();
+    assertThat("percent-encoded valueless param name must be forwarded without = sign",
+        finalUri, not(containsString("flag=")));
+    assertThat(finalUri, containsString("flag"));
+  }
+
+  /**
    * Configures the facet's query parameter forwarding helper for testing.
    */
   private void configureQueryParamForwarding(
@@ -419,10 +500,6 @@ public class RawProxyFacetTest
   {
     queryParamHelper.updateConfig(forwardQueryParameters,
         excludedQueryParameters != null ? excludedQueryParameters : Collections.emptyList());
-  }
-
-  private static void configureEscapeRules(final RawProxyFacet facet) {
-    ReflectionTestUtils.invokeMethod(facet, "configureUrlEscapeRules", (String) null);
   }
 
   private static void configureQueryParamForwarding(final RawProxyFacet facet, final Configuration configuration) {

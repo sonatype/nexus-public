@@ -15,7 +15,7 @@ package org.sonatype.nexus.security;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A Shiro filter chain (mapping between a path pattern and a filter expression).
@@ -29,8 +29,8 @@ public class FilterChain
   private final String filterExpression;
 
   public FilterChain(final String pathPattern, final String... filterExpressions) {
-    this.pathPattern = checkNotNull(pathPattern);
-    this.filterExpression = Stream.of(checkNotNull(filterExpressions))
+    this.pathPattern = requireNonNull(pathPattern);
+    this.filterExpression = Stream.of(requireNonNull(filterExpressions))
         .collect(Collectors.joining(","));
   }
 

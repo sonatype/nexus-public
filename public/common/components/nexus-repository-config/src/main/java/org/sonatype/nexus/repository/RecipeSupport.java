@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.recipe.RouterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for {@link Recipe} implementations.
@@ -42,8 +42,8 @@ public abstract class RecipeSupport
   private DatabaseCheck databaseCheck;
 
   protected RecipeSupport(final Type type, final Format format) {
-    this.type = checkNotNull(type);
-    this.format = checkNotNull(format);
+    this.type = requireNonNull(type);
+    this.format = requireNonNull(format);
   }
 
   @Override
@@ -71,7 +71,7 @@ public abstract class RecipeSupport
 
   @Autowired
   public void setBrowseUnsupportedHandler(final BrowseUnsupportedHandler browseUnsupportedHandler) {
-    this.browseUnsupportedHandler = checkNotNull(browseUnsupportedHandler);
+    this.browseUnsupportedHandler = requireNonNull(browseUnsupportedHandler);
   }
 
   @Autowired

@@ -41,7 +41,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     })),
     useUser: jest.fn(),
     usePermission: jest.fn(() => true),
-    checkPermission: jest.fn(() => true)
+    checkPermission: jest.fn(() => true),
+    waitForPermissions: jest.fn().mockResolvedValue(undefined),
   }
 }));
 
@@ -120,9 +121,7 @@ describe('BlobStoresList', function() {
 
     renderComponent();
 
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
-
-    expect(screen.getByText('There are no blob stores available')).toBeInTheDocument();
+    expect(await screen.findByText('There are no blob stores available')).toBeInTheDocument();
   });
 
   it('renders the rows', async function() {

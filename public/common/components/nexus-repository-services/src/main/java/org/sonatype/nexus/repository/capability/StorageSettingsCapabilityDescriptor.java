@@ -75,7 +75,7 @@ public class StorageSettingsCapabilityDescriptor
             messages.lastDownloadedIntervalLabel(),
             MANDATORY)
                 .withInitialValue(DEFAULT_LAST_DOWNLOADED_INTERVAL.toHours())
-                .withMinimumValue(1));
+                .withMinimumValue(StorageSettingsCapabilityConfiguration.MINIMUM_LAST_DOWNLOADED_INTERVAL_HOURS));
   }
 
   @Override

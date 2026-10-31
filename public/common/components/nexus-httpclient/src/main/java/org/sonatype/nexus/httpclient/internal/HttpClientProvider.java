@@ -20,7 +20,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link HttpClient} (and {@link CloseableHttpClient}) provider via {@link HttpClientManager}.
@@ -35,7 +35,7 @@ public class HttpClientProvider
 
   @Autowired
   public HttpClientProvider(final HttpClientManager httpClientManager) {
-    this.httpClientManager = checkNotNull(httpClientManager);
+    this.httpClientManager = requireNonNull(httpClientManager);
   }
 
   @Override

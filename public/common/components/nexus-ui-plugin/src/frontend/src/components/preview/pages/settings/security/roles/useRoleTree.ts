@@ -264,7 +264,7 @@ export function useRoleTree(rootRoleId: string, options: UseRoleTreeOptions = {}
 
     let privileges: Privilege[] = (role.privileges || [])
       .map(pId => privilegeMap.get(pId))
-      .filter((p): p is Privilege => !!p);
+      .filter((p): p is Privilege => Boolean(p));
 
     if (role.roles) {
       role.roles.forEach(nestedRoleId => {
@@ -505,7 +505,7 @@ export function useCombinedRoleTree(
       if (rootNode) roots.push(rootNode);
     }
     return mergeRoleTreesWithDedupe(roots, new Set<string>());
-  }, [loading, roleIds.join(','), allRoles.length, buildTree]);
+  }, [loading, allRoles.length, buildTree, roleIds]);
 
   const filterNodes = useCallback(
     (nodes: SecurityTreeNode[]): { filtered: SecurityTreeNode[]; anyVisible: boolean } => {
@@ -580,7 +580,7 @@ export function useCombinedRoleTree(
       collect(roleId);
     }
     return allPrivs;
-  }, [loading, roleIds.join(','), allRoles.length, roleMap, privilegeMap]);
+  }, [loading, allRoles.length, roleMap, privilegeMap, roleIds]);
 
   const expandAll = useCallback(() => {
     const allNodeIds = new Set<string>();

@@ -43,9 +43,10 @@ import AptEnforceDistributionConfiguration from './facets/AptEnforceDistribution
 import AptSigningConfiguration from './facets/AptSigningConfiguration';
 import AptFlatConfiguration from './facets/AptFlatConfiguration';
 import TerraformSigningConfiguration from './facets/TerraformSigningConfiguration';
-import TerraformStateBackendEncryptionConfiguration from './facets/TerraformStateBackendEncryptionConfiguration';
 import AlpineSigningConfiguration from './facets/AlpineSigningConfiguration';
 import RawQueryParamsConfiguration from './facets/RawQueryParamsConfiguration';
+import HuggingFaceXetConfiguration from './facets/HuggingFaceXetConfiguration';
+import FirewallConfiguration from './facets/FirewallConfiguration';
 
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {
@@ -54,7 +55,8 @@ import {
   validateDockerIndexUrl,
   validateNugetQueryCacheItemMaxAge,
   validateWritableMember,
-  validateDockerSubdomain
+  validateDockerSubdomain,
+  validateLayerDownloadTimeout
 } from './RepositoryFormValidators';
 
 import {mergeDeepRight} from 'ramda';
@@ -288,6 +290,7 @@ const repositoryFormats = {
     facets: [
       RepositoryConnectorsConfiguration,
       RegistryApiSupportConfiguration,
+      FirewallConfiguration,
       ...genericFacets.proxy
     ],
     defaultValues: {
@@ -303,7 +306,11 @@ const repositoryFormats = {
         indexType: DOCKER_INDEX_TYPES.registry,
         indexUrl: null,
         cacheForeignLayers: false,
-        foreignLayerUrlWhitelist: []
+        foreignLayerUrlWhitelist: [],
+        layerDownloadTimeoutMinutes: null
+      },
+      firewall: {
+        mode: 'DISABLED'
       }
     },
     validators: (data) => ({
@@ -314,7 +321,8 @@ const repositoryFormats = {
         subdomain: validateDockerSubdomain(data)
       },
       dockerProxy: {
-        indexUrl: validateDockerIndexUrl(data)
+        indexUrl: validateDockerIndexUrl(data),
+        layerDownloadTimeoutMinutes: validateLayerDownloadTimeout(data)
       }
     })
   },
@@ -449,34 +457,22 @@ const repositoryFormats = {
       ...genericValidators.group(data)
     })
   },
-  terraformbackend_hosted: {
-    facets: [TerraformStateBackendEncryptionConfiguration, ...genericFacets.hosted],
+  conda_proxy: {
+    facets: [
+      GenericStorageConfiguration,
+      GenericProxyConfiguration,
+      GenericOptionsConfiguration,
+      GenericCleanupConfiguration,
+      GenericHttpAuthConfiguration,
+      PreEmptiveAuthConfiguration,
+      GenericHttpReqConfiguration
+    ],
     defaultValues: {
-      ...genericDefaultValues.hosted,
-      terraformStateBackend: {
-        encryption: {
-          enabled: true,  // Always enabled - encryption is mandatory
-          encryptionKey: ''
-        },
-        lockTimeoutMinutes: 30,
-        maxStateSizeMB: 256
-      }
+      ...genericDefaultValues.proxy
     },
-    validators: (data) => {
-      const baseValidators = genericValidators.hosted(data);
-
-      // Encryption is MANDATORY - always validate encryption key
-      return {
-        ...baseValidators,
-        terraformStateBackend: {
-          encryption: {
-            encryptionKey: ValidationUtils.validateNotBlank(data.terraformStateBackend?.encryption?.encryptionKey)
-          },
-          lockTimeoutMinutes: validateLockTimeout(data.terraformStateBackend?.lockTimeoutMinutes),
-          maxStateSizeMB: validateMaxStateSize(data.terraformStateBackend?.maxStateSizeMB)
-        }
-      };
-    }
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
   },
   conda_hosted: {
     facets: [...genericFacets.hosted],
@@ -535,6 +531,26 @@ const repositoryFormats = {
     validators: (data) => ({
       ...genericValidators.group(data)
     })
+  },
+  huggingface_proxy: {
+    facets: [
+      GenericStorageConfiguration,
+      HuggingFaceXetConfiguration,
+      GenericProxyConfiguration,
+      GenericOptionsConfiguration,
+      GenericCleanupConfiguration,
+      GenericHttpAuthConfiguration,
+      GenericHttpReqConfiguration
+    ],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      xet: {
+        enabled: false
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
   }
 };
 
@@ -546,20 +562,3 @@ export const getDefaultValues = (format, type) =>
 
 export const getValidators = (format, type) =>
   repositoryFormats[`${format}_${type}`]?.validators || genericValidators[type] || (() => ({}));
-
-// Terraform State Backend validators
-const validateLockTimeout = (value) => {
-  if (value === undefined || value === null || value === '') {
-    return null;
-  }
-  return ValidationUtils.isInRange({value, min: 1, max: 1440, allowDecimals: false}) ||
-    ValidationUtils.validateNotBlank(value);
-};
-
-const validateMaxStateSize = (value) => {
-  if (value === undefined || value === null || value === '') {
-    return null;
-  }
-  return ValidationUtils.isInRange({value, min: 1, max: 512, allowDecimals: false}) ||
-    ValidationUtils.validateNotBlank(value);
-};

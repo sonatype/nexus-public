@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Schedules {@link RecalculateBlobStoreSizeTask} for blob stores with negative count or size metrics.
@@ -51,7 +51,7 @@ public class ScheduleRecalculateForNegativeMetricsMigrationStep
 
   @Autowired
   public ScheduleRecalculateForNegativeMetricsMigrationStep(final UpgradeTaskScheduler upgradeTaskScheduler) {
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
+    this.upgradeTaskScheduler = requireNonNull(upgradeTaskScheduler);
   }
 
   @Override

@@ -82,7 +82,7 @@ export function useForm<TData>(
     if (state.matches('saved') || state.matches('deleted')) {
       clearDirtyState(formId);
     }
-  }, [state.value, formId]);
+  }, [formId, state.matches]);
 
   // Cleanup on unmount - only if pristine (router handles dirty case)
   useEffect(() => {
@@ -199,6 +199,14 @@ export function useForm<TData>(
     send({ type: 'STAY' });
   }, [send]);
 
+  // Escape hatch for parent-owned discard flows (e.g. SettingsForm's Discard
+  // dialog): unregister this form from window.dirty synchronously so the
+  // router's onBefore hook does not prompt again after the parent's own
+  // confirmation.
+  const clearDirty = useCallback(() => {
+    clearDirtyState(formId);
+  }, [formId]);
+
   // ============================================
   // Return
   // ============================================
@@ -241,6 +249,7 @@ export function useForm<TData>(
     requestCancel,
     confirmCancel,
     stay,
+    clearDirty,
 
     // Raw access (escape hatch)
     state,

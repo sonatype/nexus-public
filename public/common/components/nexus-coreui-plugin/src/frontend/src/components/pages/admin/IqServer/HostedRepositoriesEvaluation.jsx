@@ -25,7 +25,8 @@ import {
   NxTabList,
   NxTab,
   NxTabPanel,
-  NxCounter
+  NxCounter,
+  NxLoadWrapper
 } from '@sonatype/react-shared-components';
 
 import SettingsTab from './HostedRepositoriesEvaluationSettingsTab';
@@ -45,7 +46,7 @@ export default function HostedRepositoriesEvaluation() {
   // creating a new machine instance that fetches latest numberOfMonitoredRepositories.
   // This ensures the badge always shows the current count when visible.
   const {params} = useCurrentStateAndParams();
-  const [current] = useMachine(HostedRepositoriesEvaluationMachine);
+  const [current, send] = useMachine(HostedRepositoriesEvaluationMachine);
 
   const rawTab = parseInt(params?.activeTab, 10);
   const initialTabIndex = rawTab === 1 ? 1 : 0;
@@ -59,16 +60,22 @@ export default function HostedRepositoriesEvaluation() {
     applyToNewRepos: false
   });
   const [selectedRepositories, setSelectedRepositories] = useState([]);
-  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [isSettingsDirty, setIsSettingsDirty] = useState(false);
+  const [isReposDirty, setIsReposDirty] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigationRoute, setPendingNavigationRoute] = useState(null);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
+  const isLoading = current.matches('loading');
   const hasSelections = current.context.hasSelections || false;
   const globalConfigAvailable = current.context.globalConfigAvailable || false;
   // Badge count is fetched fresh on component mount (when user navigates to this page)
   const numberOfMonitoredRepositories = current.context.numberOfMonitoredRepositories || 0;
   const existingSettings = current.context.existingSettings;
+  const permissionDenied = current.context.permissionDenied || false;
+  const loadError = permissionDenied
+    ? UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.PERMISSION_DENIED
+    : null;
 
   useEffect(() => {
     if (globalConfigAvailable && existingSettings && !settingsLoaded) {
@@ -86,7 +93,7 @@ export default function HostedRepositoriesEvaluation() {
   }, [globalConfigAvailable, existingSettings, settingsLoaded]);
 
   function navigateBack() {
-    if (isFormDirty || selectedRepositories.length > 0) {
+    if (isSettingsDirty || isReposDirty) {
       setPendingNavigationRoute(ROUTE_NAMES.ADMIN.IQ.SONATYPE_LIFECYCLE.ROOT);
       setShowUnsavedModal(true);
       return;
@@ -101,7 +108,7 @@ export default function HostedRepositoriesEvaluation() {
     } else {
       setActiveTabIndex(1);
     }
-    setIsFormDirty(false);
+    setIsSettingsDirty(false);
   }
 
   function handleRepositorySelectionChange(newSelection) {
@@ -110,7 +117,8 @@ export default function HostedRepositoriesEvaluation() {
 
   function handleConfirmUnsavedChanges() {
     setShowUnsavedModal(false);
-    setIsFormDirty(false);
+    setIsSettingsDirty(false);
+    setIsReposDirty(false);
     setSettingsData({
       activityTimeFrame: '',
       artifactLatestVersions: '',
@@ -132,7 +140,7 @@ export default function HostedRepositoriesEvaluation() {
   function handleBreadcrumbClick(e, targetRoute) {
     e.preventDefault();
     e.stopPropagation();
-    if (isFormDirty || selectedRepositories.length > 0) {
+    if (isSettingsDirty || isReposDirty) {
       setPendingNavigationRoute(targetRoute);
       setShowUnsavedModal(true);
     } else {
@@ -168,67 +176,77 @@ export default function HostedRepositoriesEvaluation() {
 
       <ContentBody>
         <Section>
-          {!globalConfigAvailable ? (
-            <>
-              <ProgressSteps
-                steps={[
-                  UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.settings,
-                  UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.repositories
-                ]}
-                currentStep={activeStepIndex}
-              />
-              {activeStepIndex === 0 && (
-                <SettingsTab
-                  initialData={settingsData}
-                  onNext={handleNext}
-                  onCancel={navigateBack}
-                  onFormChange={() => setIsFormDirty(true)}
+          <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={() => send('RETRY')}>
+            {!globalConfigAvailable ? (
+              <>
+                <ProgressSteps
+                  steps={[
+                    UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.settings,
+                    UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.repositories
+                  ]}
+                  currentStep={activeStepIndex}
                 />
-              )}
-              {activeStepIndex === 1 && (
-                <RepositoriesTab
-                  settingsData={settingsData}
-                  initialSelectedRepositories={selectedRepositories}
-                  onSelectionChange={handleRepositorySelectionChange}
-                  globalConfigAvailable={globalConfigAvailable}
-                  onBack={() => setActiveStepIndex(0)}
-                />
-              )}
-            </>
-          ) : (
-            <NxTabs activeTab={activeTabIndex} onTabSelect={setActiveTabIndex}>
-              <NxTabList>
-                <NxTab>
-                  {UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.monitoringSettings}
-                </NxTab>
-                <NxTab>
-                  {UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.monitoredRepositories}
-                  {numberOfMonitoredRepositories > 0 && (
-                    <NxCounter className={activeTabIndex === 1 ? 'nx-counter--active' : ''}>
-                      {numberOfMonitoredRepositories}
-                    </NxCounter>
-                  )}
-                </NxTab>
-              </NxTabList>
-              <NxTabPanel>
-                <SettingsTab
-                  initialData={settingsData}
-                  onNext={handleNext}
-                  onCancel={navigateBack}
-                  onFormChange={() => setIsFormDirty(true)}
-                  globalConfigAvailable={globalConfigAvailable}
-                />
-              </NxTabPanel>
-              <NxTabPanel>
-                <RepositoriesTab
-                  settingsData={settingsData}
-                  initialSelectedRepositories={selectedRepositories}
-                  onSelectionChange={handleRepositorySelectionChange}
-                  globalConfigAvailable={globalConfigAvailable}
-                />
-              </NxTabPanel>
-            </NxTabs>
-          )}
+                {activeStepIndex === 0 && (
+                  <SettingsTab
+                    initialData={settingsData}
+                    onNext={handleNext}
+                    onCancel={navigateBack}
+                    onFormChange={() => setIsSettingsDirty(true)}
+                    current={current}
+                    send={send}
+                  />
+                )}
+                {activeStepIndex === 1 && (
+                  <RepositoriesTab
+                    settingsData={settingsData}
+                    initialSelectedRepositories={selectedRepositories}
+                    onSelectionChange={handleRepositorySelectionChange}
+                    globalConfigAvailable={globalConfigAvailable}
+                    onBack={() => setActiveStepIndex(0)}
+                  />
+                )}
+              </>
+            ) : (
+              <NxTabs activeTab={activeTabIndex} onTabSelect={setActiveTabIndex}>
+                <NxTabList>
+                  <NxTab>
+                    {UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.monitoringSettings}
+                  </NxTab>
+                  <NxTab>
+                    {UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.monitoredRepositories}
+                    {numberOfMonitoredRepositories > 0 && (
+                      <NxCounter className={activeTabIndex === 1 ? 'nx-counter--active' : ''}>
+                        {numberOfMonitoredRepositories}
+                      </NxCounter>
+                    )}
+                  </NxTab>
+                </NxTabList>
+                <NxTabPanel>
+                  <SettingsTab
+                    initialData={settingsData}
+                    onNext={handleNext}
+                    onCancel={navigateBack}
+                    onFormChange={() => setIsSettingsDirty(true)}
+                    onCancelEdit={() => setIsSettingsDirty(false)}
+                    globalConfigAvailable={globalConfigAvailable}
+                    onUpdateSuccess={() => router.stateService.go(ROUTE_NAMES.ADMIN.IQ.SONATYPE_LIFECYCLE.ROOT)}
+                    current={current}
+                    send={send}
+                  />
+                </NxTabPanel>
+                <NxTabPanel>
+                  <RepositoriesTab
+                    settingsData={settingsData}
+                    initialSelectedRepositories={selectedRepositories}
+                    onSelectionChange={handleRepositorySelectionChange}
+                    globalConfigAvailable={globalConfigAvailable}
+                    onDirtyChange={setIsReposDirty}
+                    onCancelEdit={() => setIsReposDirty(false)}
+                  />
+                </NxTabPanel>
+              </NxTabs>
+            )}
+          </NxLoadWrapper>
         </Section>
       </ContentBody>
 

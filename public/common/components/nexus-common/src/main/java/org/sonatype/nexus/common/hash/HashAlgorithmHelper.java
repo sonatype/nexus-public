@@ -28,8 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.google.common.hash.HashCode;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -57,8 +57,8 @@ public class HashAlgorithmHelper
       final File content,
       final Iterable<HashAlgorithm> hashAlgorithms) throws IOException
   {
-    checkNotNull(content);
-    checkNotNull(hashAlgorithms);
+    requireNonNull(content);
+    requireNonNull(hashAlgorithms);
 
     Map<HashAlgorithm, MessageDigest> hashAlgorithmMessageDigestMap = new HashMap<>();
     for (HashAlgorithm hashAlgorithm : hashAlgorithms) {

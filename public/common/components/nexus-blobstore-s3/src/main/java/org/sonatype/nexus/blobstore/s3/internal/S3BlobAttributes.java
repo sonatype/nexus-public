@@ -22,7 +22,7 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link BlobAttributes} backed by {@link S3PropertiesFile}
@@ -43,7 +43,7 @@ public class S3BlobAttributes
       final Map<String, String> headers,
       final BlobMetrics metrics)
   {
-    super(new S3PropertiesFile(s3, bucket, key), checkNotNull(headers), checkNotNull(metrics));
+    super(new S3PropertiesFile(s3, bucket, key), requireNonNull(headers), requireNonNull(metrics));
   }
 
   public boolean load() throws IOException {

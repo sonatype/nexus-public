@@ -18,7 +18,7 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
-import jakarta.inject.Named;
+import org.springframework.stereotype.Component;
 
 /**
  * SwaggerContributor that post-processes the OpenAPI model to fix the InputStream schema.
@@ -29,11 +29,10 @@ import jakarta.inject.Named;
  * NEXUS-46395: migrated from Swagger 1.x to OpenAPI 3.x. The {@code definitions} map at the top
  * level was relocated under {@code components.schemas} in OpenAPI 3.0.
  */
-@Named
+@Component
 public class InputStreamSwaggerContributor
     implements SwaggerContributor
 {
-
   @Override
   public void contribute(final OpenAPI openApi) {
     Components components = openApi.getComponents();

@@ -52,7 +52,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.CREATED;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.DELETED;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
@@ -86,7 +86,7 @@ public class AuthorizationManagerImpl
   {
     this.configuration = configuration;
     this.eventManager = eventManager;
-    this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
+    this.privilegeDescriptors = requireNonNull(privilegeDescriptors);
   }
 
   @Override
@@ -367,7 +367,7 @@ public class AuthorizationManagerImpl
     if (!EventHelper.isReplicating()) {
       return;
     }
-    checkNotNull(event);
+    requireNonNull(event);
 
     String roleId = event.getRoleId();
     EventType eventType = event.getEventType();
@@ -392,7 +392,7 @@ public class AuthorizationManagerImpl
     if (!EventHelper.isReplicating()) {
       return;
     }
-    checkNotNull(event);
+    requireNonNull(event);
 
     String privilegeId = event.getPrivilegeId();
     EventType eventType = event.getEventType();

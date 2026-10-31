@@ -39,7 +39,6 @@ import {
   NOTES_MAX_LENGTH,
   isRetainSupportedFormat,
   isRepositoriesFieldSupportedFormat,
-  isReleaseType,
 } from './types';
 
 import './CleanupPolicyForm.scss';
@@ -78,6 +77,7 @@ export function CleanupPolicyForm({
     isRetainEnabled: checkRetainEnabled,
     isRetainAllFormatsEnabled,
     fetchRepositories,
+    isRenormalizationInProgress,
   } = useCleanupPoliciesApi();
 
   const isEnhancedCleanupEnabled = useMemo(() => isRetainAllFormatsEnabled(), [isRetainAllFormatsEnabled]);
@@ -179,8 +179,7 @@ export function CleanupPolicyForm({
     const incomingRepos = policy.repositories ?? [];
     setSelectedRepos(incomingRepos);
     setInitialRepos(incomingRepos);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCreate, policy?.name, formData.format]);
+  }, [isCreate, policy?.name, formData.format, policy?.repositories]);
 
   const handleReposChange = useCallback(
     (items: RepositoryOption[]) => {
@@ -202,8 +201,9 @@ export function CleanupPolicyForm({
   );
 
   const showRetain = useMemo(() => {
-    return isRetainSupportedFormat(formData.format) && checkRetainEnabled(formData.format);
-  }, [formData.format, checkRetainEnabled]);
+    return isRetainSupportedFormat(formData.format) &&
+      (checkRetainEnabled(formData.format) || isRenormalizationInProgress(formData.format));
+  }, [formData.format, checkRetainEnabled, isRenormalizationInProgress]);
 
   const hasOtherCriteriaSelected = useMemo(() => {
     return !!(
@@ -239,6 +239,19 @@ export function CleanupPolicyForm({
   const isRetainDisabled = useMemo(() => {
     return !hasOtherCriteriaSelected || !hasReleaseTypeSelected;
   }, [hasOtherCriteriaSelected, hasReleaseTypeSelected]);
+
+  const retainUnavailableMessage = useMemo(() => {
+    if (!formData.format || !isRetainSupportedFormat(formData.format)) {
+      return null;
+    }
+    if (!isRetainAllFormatsEnabled() || !hasReleaseTypeSelected) {
+      return null;
+    }
+    if (isRenormalizationInProgress(formData.format)) {
+      return 'The ability to retain a select number of most-recent versions is temporarily unavailable while a migration task runs. It will be automatically re-enabled once the migration task completes.';
+    }
+    return null;
+  }, [formData.format, isRetainAllFormatsEnabled, hasReleaseTypeSelected, isRenormalizationInProgress]);
 
   const retainDisabledReason = useMemo(() => {
     if (isMaven && !hasReleaseTypeSelected && !hasOtherCriteriaSelected) {
@@ -520,6 +533,13 @@ export function CleanupPolicyForm({
               )}
 
               {/* Retain Versions (Exclusion Criteria) */}
+              {retainUnavailableMessage && (
+                <Box mt="3">
+                  <SettingsAlert type="info">
+                    {retainUnavailableMessage}
+                  </SettingsAlert>
+                </Box>
+              )}
               {showRetain && (
                 <Box className="cleanup-policy-form__criteria-item cleanup-policy-form__exclusion">
                   <Flex align="center" gap="2" className="cleanup-policy-form__exclusion-header">

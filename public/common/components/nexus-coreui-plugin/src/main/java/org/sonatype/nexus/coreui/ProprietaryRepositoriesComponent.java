@@ -36,7 +36,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRIETARY_COMPONENTS;
 import org.springframework.stereotype.Component;
@@ -58,7 +58,7 @@ public class ProprietaryRepositoriesComponent
 
   @Autowired
   public ProprietaryRepositoriesComponent(final AuthorizingRepositoryManager authorizingRepositoryManager) {
-    this.repositoryManager = checkNotNull(authorizingRepositoryManager);
+    this.repositoryManager = requireNonNull(authorizingRepositoryManager);
   }
 
   /**

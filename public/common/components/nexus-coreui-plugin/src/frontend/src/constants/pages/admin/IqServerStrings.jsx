@@ -22,6 +22,8 @@ export default {
       icon: faShieldAlt
     },
 
+    CONNECTION_SETTINGS_BREADCRUMB: 'Connection Settings',
+
     OPEN_DASHBOARD: 'Open IQ Server Dashboard',
     OPEN_DASHBOARD_LINK: 'IQ Server Dashboard',
 
@@ -138,7 +140,8 @@ export default {
         MESSAGE: 'You have unsaved changes. Are you sure you want to leave? All changes will be lost.',
         CANCEL: 'Cancel',
         CONTINUE: 'Continue'
-      }
+      },
+      PERMISSION_DENIED: 'It appears you do not have permission to access this page. If you believe this to be incorrect please contact your administrator.'
     },
     GLOBAL_EVALUATION_SETTINGS: {
       title: 'Evaluation Settings',

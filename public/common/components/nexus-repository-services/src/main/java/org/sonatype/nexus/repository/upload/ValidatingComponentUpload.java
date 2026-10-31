@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 
@@ -42,8 +42,8 @@ public class ValidatingComponentUpload
   private final ValidationErrorsException validationErrorsException;
 
   public ValidatingComponentUpload(final UploadDefinition uploadDefinition, final ComponentUpload componentUpload) {
-    this.uploadDefinition = checkNotNull(uploadDefinition);
-    this.componentUpload = checkNotNull(componentUpload);
+    this.uploadDefinition = requireNonNull(uploadDefinition);
+    this.componentUpload = requireNonNull(componentUpload);
     this.validationErrorsException = new ValidationErrorsException();
   }
 

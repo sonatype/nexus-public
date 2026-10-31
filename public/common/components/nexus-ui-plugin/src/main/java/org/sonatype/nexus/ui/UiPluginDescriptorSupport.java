@@ -18,7 +18,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for {@link UiPluginDescriptor} implementations.
@@ -33,7 +33,7 @@ public abstract class UiPluginDescriptorSupport
   private final String name;
 
   public UiPluginDescriptorSupport(final String name) {
-    this.name = checkNotNull(name);
+    this.name = requireNonNull(name);
   }
 
   @Override

@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENABLED;
@@ -61,7 +61,7 @@ public class ApiPermissionsResource
 
   @Autowired
   public ApiPermissionsResource(final EndpointPermissionRegistry registry) {
-    this.registry = checkNotNull(registry);
+    this.registry = requireNonNull(registry);
   }
 
   @GET

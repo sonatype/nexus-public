@@ -23,7 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Maintains cache details a cached resource. {@link CacheController} relies on information provided by this
@@ -65,7 +65,7 @@ public class CacheInfo
   private final String cacheToken;
 
   public CacheInfo(final DateTime lastVerified, @Nullable final String cacheToken) {
-    this.lastVerified = checkNotNull(lastVerified);
+    this.lastVerified = requireNonNull(lastVerified);
     this.cacheToken = cacheToken;
   }
 

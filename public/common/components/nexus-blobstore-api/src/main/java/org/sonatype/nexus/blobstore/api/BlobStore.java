@@ -197,6 +197,14 @@ public interface BlobStore
   Blob copy(BlobId blobId, Map<String, String> headers);
 
   /**
+   * Returns true if this blob store supports server-side copy (e.g. Azure server-side copy),
+   * avoiding client-side re-download and re-upload.
+   */
+  default boolean supportsServerSideCopy() {
+    return false;
+  }
+
+  /**
    * Returns true if the internal blob move is supported for a source and target blobstore of the same type.
    *
    * @since 3.8
@@ -348,6 +356,23 @@ public interface BlobStore
       final String prefix,
       final OffsetDateTime fromDateTime,
       final OffsetDateTime toDateTime);
+
+  /**
+   * As {@link #getBlobIdUpdatedSinceStream(String, OffsetDateTime, OffsetDateTime)}, offering the concurrency a
+   * caller is willing to fund for the blob attribute reads the scan performs.
+   *
+   * <p>
+   * Implementations that read sequentially ignore it, as does {@code null}. Supplying concurrency leaves the order of
+   * the returned ids unspecified, since they are emitted as their reads finish.
+   */
+  default Stream<BlobId> getBlobIdUpdatedSinceStream(
+      final String prefix,
+      final OffsetDateTime fromDateTime,
+      final OffsetDateTime toDateTime,
+      @Nullable final BlobScanConcurrency concurrency)
+  {
+    return getBlobIdUpdatedSinceStream(prefix, fromDateTime, toDateTime);
+  }
 
   /**
    * Get a {@link Stream} of direct-path {@link BlobId}s under the specified path prefix.

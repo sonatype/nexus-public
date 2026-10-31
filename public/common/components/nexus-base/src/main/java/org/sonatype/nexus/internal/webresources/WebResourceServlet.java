@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.net.HttpHeaders.CACHE_CONTROL;
 import static com.google.common.net.HttpHeaders.CONTENT_LENGTH;
@@ -48,6 +47,7 @@ import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static com.google.common.net.HttpHeaders.X_XSS_PROTECTION;
 import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static jakarta.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Provides access to resources via configured {@link WebResourceService}.
@@ -76,9 +76,9 @@ public class WebResourceServlet
       final XFrameOptions xframeOptions,
       @Value("${nexus.webresources.maxAge:30days}") final Time maxAge)
   {
-    this.webResources = checkNotNull(webResources);
-    this.maxAgeSeconds = checkNotNull(maxAge.toSeconds());
-    this.xframeOptions = checkNotNull(xframeOptions);
+    this.webResources = requireNonNull(webResources);
+    this.maxAgeSeconds = requireNonNull(maxAge.toSeconds());
+    this.xframeOptions = requireNonNull(xframeOptions);
     log.info("Max-age: {} ({} seconds)", maxAge, maxAgeSeconds);
   }
 
@@ -135,7 +135,7 @@ public class WebResourceServlet
       resource = ((Prepareable) resource).prepare();
       checkState(resource != null, "Prepared resource is null");
     }
-    checkNotNull(resource);
+    requireNonNull(resource);
 
     String contentType = resource.getContentType();
     if (contentType == null) {

@@ -340,17 +340,17 @@ public abstract class AssetStoreTestSupport
         ComponentDAO componentDao = session.access(TestComponentDAO.class);
         AssetDAO assetDao = session.access(TestAssetDAO.class);
 
-        assertTrue(assetDao.readPath(repositoryId, asset1.path()).isPresent());
-        assertTrue(assetDao.readPath(repositoryId, asset2.path()).isPresent());
-        assertTrue(assetDao.readPath(repositoryId, asset3.path()).isPresent());
+        assertTrue(assetDao.readPath(repositoryId, asset1.path(), true).isPresent());
+        assertTrue(assetDao.readPath(repositoryId, asset2.path(), true).isPresent());
+        assertTrue(assetDao.readPath(repositoryId, asset3.path(), true).isPresent());
 
         Optional<Component> component = componentDao.readCoordinate(repositoryId,
-            component1.namespace(), component1.name(), component1.version());
+            component1.namespace(), component1.name(), component1.version(), true);
         assertTrue(component.isPresent());
         assertEntityVersion(component.get(), entityVersioningEnabled ? 2 : null);
 
         component = componentDao.readCoordinate(repositoryId,
-            component2.namespace(), component2.name(), component2.version());
+            component2.namespace(), component2.name(), component2.version(), true);
         assertTrue(component.isPresent());
         assertEntityVersion(component.get(), entityVersioningEnabled ? 3 : null);
 
@@ -363,12 +363,12 @@ public abstract class AssetStoreTestSupport
       try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
         ComponentDAO componentDao = session.access(TestComponentDAO.class);
         Optional<Component> component = componentDao.readCoordinate(repositoryId,
-            component2.namespace(), component2.name(), component2.version());
+            component2.namespace(), component2.name(), component2.version(), true);
         assertTrue(component.isPresent());
         assertEntityVersion(component.get(), entityVersioningEnabled ? 4 : null);
 
         component = componentDao.readCoordinate(repositoryId,
-            component1.namespace(), component1.name(), component1.version());
+            component1.namespace(), component1.name(), component1.version(), true);
         assertTrue(component.isPresent());
         assertEntityVersion(component.get(), entityVersioningEnabled ? 2 : null);
       }
@@ -390,7 +390,7 @@ public abstract class AssetStoreTestSupport
   }
 
   private void assertEntityVersion(final Integer componentId, final Integer entityVersion) {
-    Optional<Component> dbComponent = componentStore.dao().readComponent(componentId);
+    Optional<Component> dbComponent = componentStore.dao().readComponent(componentId, true);
     assertThat(dbComponent.isPresent(), Matchers.is(true));
     assertThat(dbComponent.get().entityVersion(), is(entityVersion));
   }

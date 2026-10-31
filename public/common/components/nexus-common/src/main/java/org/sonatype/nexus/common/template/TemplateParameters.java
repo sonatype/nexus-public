@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.template;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to build template parameters map.
@@ -27,7 +27,7 @@ public class TemplateParameters
   private final Map<String, Object> params;
 
   public TemplateParameters(final Map<String, Object> params) {
-    this.params = checkNotNull(params);
+    this.params = requireNonNull(params);
   }
 
   public TemplateParameters() {

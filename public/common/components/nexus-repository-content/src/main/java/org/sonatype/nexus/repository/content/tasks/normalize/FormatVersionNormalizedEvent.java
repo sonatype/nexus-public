@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.content.tasks.normalize;
 
 import org.sonatype.nexus.common.event.EventWithSource;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Nexus Event to indicate if the NormalizeComponentVersionTask has finished for the specified format
@@ -29,7 +29,7 @@ public class FormatVersionNormalizedEvent
   }
 
   public FormatVersionNormalizedEvent(final String format) {
-    this.format = checkNotNull(format);
+    this.format = requireNonNull(format);
   }
 
   public String getFormat() {

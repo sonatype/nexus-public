@@ -111,6 +111,14 @@ public interface FluentComponents
   Collection<String> names(String namespace);
 
   /**
+   * Check whether a component with the given namespace and name exists in the repository.
+   * <p>
+   * Index-backed existence probe; prefer this over {@link #names(String)} when only presence (not
+   * the full name list) is required.
+   */
+  boolean existsByName(String namespace, String name);
+
+  /**
    * Browse through component sets in the repository.
    */
   Continuation<ComponentSetData> sets(int limit, @Nullable String continuationToken);

@@ -34,8 +34,8 @@ import org.sonatype.nexus.common.atlas.SystemInformationManager;
 
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import org.springframework.stereotype.Component;
 
@@ -66,8 +66,8 @@ public class SystemInformationManagerImpl
       final CacheHelper cacheHelper,
       @Value("${nexus.system.info.cache.duration:3600}") final int cacheDurationSec)
   {
-    this.systemInformationGenerator = checkNotNull(systemInformationGenerator);
-    this.cacheHelper = checkNotNull(cacheHelper);
+    this.systemInformationGenerator = requireNonNull(systemInformationGenerator);
+    this.cacheHelper = requireNonNull(cacheHelper);
 
     checkState(cacheDurationSec >= 0, "Initial cache duration should be positive");
     this.cacheDurationSec = cacheDurationSec;

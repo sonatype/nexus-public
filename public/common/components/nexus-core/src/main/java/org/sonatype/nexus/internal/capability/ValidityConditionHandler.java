@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Handles capability automatic removing by reacting to capability validity condition being satisfied/unsatisfied.
@@ -55,10 +55,10 @@ public class ValidityConditionHandler
       final Conditions conditions,
       final DefaultCapabilityReference reference)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.conditions = checkNotNull(conditions);
-    this.reference = checkNotNull(reference);
+    this.eventManager = requireNonNull(eventManager);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
+    this.conditions = requireNonNull(conditions);
+    this.reference = requireNonNull(reference);
   }
 
   @AllowConcurrentEvents

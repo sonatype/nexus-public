@@ -14,11 +14,7 @@ package org.sonatype.nexus.security.internal.rest;
 
 import java.util.Collection;
 import java.util.Collections;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.ws.rs.core.Response.Status;
 
-import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.internal.RealmToSource;
@@ -33,8 +29,8 @@ import org.sonatype.nexus.security.user.UserStatus;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
+import jakarta.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +42,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
 import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -72,9 +69,6 @@ class UserApiResourceTest
   private static final String LDAP_REALM_NAME = "LdapRealm";
 
   private static final String NEXUS_AUTHENTICATING_REALM_NAME = "NexusAuthenticatingRealm";
-
-  @ValidationExecutor
-  private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
   @Mock
   private SecuritySystem securitySystem;

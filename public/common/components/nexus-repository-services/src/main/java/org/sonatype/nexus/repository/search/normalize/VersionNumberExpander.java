@@ -36,6 +36,12 @@ public class VersionNumberExpander
 {
   private static final String NUMBER_FORMAT = "%09d";
 
+  private static final String SEGMENT_PREFIX = "1";
+
+  private static final String PREFIXED_NUMBER_FORMAT = SEGMENT_PREFIX + NUMBER_FORMAT;
+
+  private static final Pattern DIGITS = Pattern.compile("\\d+");
+
   private VersionNumberExpander() {
   }
 
@@ -46,7 +52,7 @@ public class VersionNumberExpander
       return "";
     }
 
-    Matcher matcher = Pattern.compile("\\d+").matcher(version);
+    Matcher matcher = DIGITS.matcher(version);
     StringBuffer result = new StringBuffer();
     while (matcher.find()) {
       try {
@@ -60,5 +66,42 @@ public class VersionNumberExpander
 
     matcher.appendTail(result);
     return result.toString();
+  }
+
+  /**
+   * Same width expansion as {@link #expand(String)}, but every expanded number is additionally
+   * prefixed with a {@code 1}.
+   *
+   * This lifts real version segments out of the {@code 0} leading-digit space so that a tier marker
+   * prefixed with {@code 0} sorts below any real segment, at any segment depth. Formats whose keys
+   * append a tier marker to a variable number of segments require this; without it the marker
+   * outranks the digit a deeper version carries in the same position.
+   */
+  public static String expandPrefixed(String version) {
+    if (StringUtils.isBlank(version)) {
+      return "";
+    }
+
+    Matcher matcher = DIGITS.matcher(version);
+    StringBuffer result = new StringBuffer();
+    while (matcher.find()) {
+      try {
+        matcher.appendReplacement(result, String.format(PREFIXED_NUMBER_FORMAT, Long.parseLong(matcher.group())));
+      }
+      catch (NumberFormatException e) {
+        log.debug("Unable to parse number as long '{}'", matcher.group());
+        matcher.appendReplacement(result, SEGMENT_PREFIX + matcher.group());
+      }
+    }
+
+    matcher.appendTail(result);
+    return result.toString();
+  }
+
+  /**
+   * Expands a single number to the same prefixed form used by {@link #expandPrefixed(String)}.
+   */
+  public static String padPrefixed(long number) {
+    return String.format(PREFIXED_NUMBER_FORMAT, number);
   }
 }

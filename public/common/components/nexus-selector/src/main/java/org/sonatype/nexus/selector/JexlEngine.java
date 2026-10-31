@@ -24,7 +24,7 @@ import org.apache.commons.jexl3.JexlInfo;
 import org.apache.commons.jexl3.internal.Engine;
 import org.apache.commons.jexl3.parser.ASTJexlScript;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.regex.Pattern.compile;
@@ -51,7 +51,7 @@ public class JexlEngine
    * Parses the given string as JEXL and returns the parsed expression as a script.
    */
   public ASTJexlScript parseExpression(final String expression) {
-    String source = trimSource(checkNotNull(expression));
+    String source = trimSource(requireNonNull(expression));
     return parse(CALLER_INFO, source, null, false, true);
   }
 

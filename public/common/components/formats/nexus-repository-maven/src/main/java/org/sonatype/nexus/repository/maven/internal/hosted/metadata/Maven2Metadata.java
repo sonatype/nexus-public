@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Maven 2 metadata VO.
@@ -367,8 +367,8 @@ public class Maven2Metadata
   }
 
   public static Plugin newPlugin(final String artifactId, final String prefix, final String name) {
-    checkNotNull(artifactId);
-    checkNotNull(prefix);
+    requireNonNull(artifactId);
+    requireNonNull(prefix);
     return new Plugin(artifactId, prefix, Strings.isNullOrEmpty(name) ? artifactId : name);
   }
 
@@ -376,8 +376,8 @@ public class Maven2Metadata
       final DateTime lastUpdated,
       final List<Plugin> plugins)
   {
-    checkNotNull(lastUpdated);
-    checkNotNull(plugins);
+    requireNonNull(lastUpdated);
+    requireNonNull(plugins);
     return new Maven2Metadata(Level.GROUP, lastUpdated, null, null, null, plugins, null, null);
   }
 
@@ -389,11 +389,11 @@ public class Maven2Metadata
       @Nullable final String release,
       final Iterable<String> versions)
   {
-    checkNotNull(lastUpdated);
-    checkNotNull(groupId);
-    checkNotNull(artifactId);
-    checkNotNull(latest);
-    checkNotNull(versions);
+    requireNonNull(lastUpdated);
+    requireNonNull(groupId);
+    requireNonNull(artifactId);
+    requireNonNull(latest);
+    requireNonNull(versions);
     final BaseVersions bvs = new BaseVersions(latest, release, versions);
     return new Maven2Metadata(Level.ARTIFACT, lastUpdated, groupId, artifactId, null, null, bvs, null);
   }
@@ -404,9 +404,9 @@ public class Maven2Metadata
       @Nullable final String classifier,
       final String version)
   {
-    checkNotNull(lastUpdated);
-    checkNotNull(extension);
-    checkNotNull(version);
+    requireNonNull(lastUpdated);
+    requireNonNull(extension);
+    requireNonNull(version);
     return new Snapshot(lastUpdated, extension, classifier, version);
   }
 
@@ -419,10 +419,10 @@ public class Maven2Metadata
       final int snapshotBuildNumber,
       @Nullable final List<Snapshot> snapshots)
   {
-    checkNotNull(lastUpdated);
-    checkNotNull(groupId);
-    checkNotNull(artifactId);
-    checkNotNull(version);
+    requireNonNull(lastUpdated);
+    requireNonNull(groupId);
+    requireNonNull(artifactId);
+    requireNonNull(version);
     checkArgument(snapshotTimestamp > 0);
     checkArgument(snapshotBuildNumber > 0);
     final Snapshots snaps = new Snapshots(snapshotTimestamp, snapshotBuildNumber, snapshots);
@@ -434,9 +434,9 @@ public class Maven2Metadata
       final String artifactId,
       final String version)
   {
-    checkNotNull(groupId);
-    checkNotNull(artifactId);
-    checkNotNull(version);
+    requireNonNull(groupId);
+    requireNonNull(artifactId);
+    requireNonNull(version);
     final Snapshots snaps = new Snapshots(null, 1, null);
     return new Maven2Metadata(Level.BASEVERSION, DateTime.now(), groupId, artifactId, version, null, null, snaps);
   }

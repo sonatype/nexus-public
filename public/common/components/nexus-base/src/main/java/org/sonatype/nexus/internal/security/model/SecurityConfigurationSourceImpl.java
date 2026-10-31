@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 
 /**
@@ -55,7 +55,7 @@ public class SecurityConfigurationSourceImpl
       final SecurityConfigurationImpl securityConfiguration,
       @Qualifier("static") @Nullable final SecurityConfigurationSource securityDefaults)
   {
-    this.securityConfiguration = checkNotNull(securityConfiguration);
+    this.securityConfiguration = requireNonNull(securityConfiguration);
     this.securityDefaults = securityDefaults;
   }
 

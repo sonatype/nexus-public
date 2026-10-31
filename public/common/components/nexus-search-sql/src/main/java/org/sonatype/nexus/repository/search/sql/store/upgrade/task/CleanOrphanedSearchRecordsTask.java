@@ -29,7 +29,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Cleans up orphaned search records.
@@ -51,8 +51,8 @@ public class CleanOrphanedSearchRecordsTask
       final SearchStore searchStore,
       final RepositoryManager repositoryManager)
   {
-    this.searchStore = checkNotNull(searchStore);
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.searchStore = requireNonNull(searchStore);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Override

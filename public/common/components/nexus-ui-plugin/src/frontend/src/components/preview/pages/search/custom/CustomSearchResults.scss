@@ -162,7 +162,7 @@
   }
 
   &__version {
-    font-family: 'JetBrains Mono', 'Monaco', monospace;
+    font-family: var(--font-family-mono);
     font-size: 13px;
     padding: 4px 8px;
     background: var(--search-bg-input, #374151);

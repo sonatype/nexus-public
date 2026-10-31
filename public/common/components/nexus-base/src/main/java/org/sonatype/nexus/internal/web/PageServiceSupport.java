@@ -26,8 +26,8 @@ import org.sonatype.nexus.servlet.XFrameOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support service to write a rendered HTML page
@@ -47,11 +47,11 @@ public abstract class PageServiceSupport
       final XFrameOptions xFrameOptions,
       final String templateResource)
   {
-    this.templateHelper = checkNotNull(templateHelper);
-    this.xFrameOptions = checkNotNull(xFrameOptions);
+    this.templateHelper = requireNonNull(templateHelper);
+    this.xFrameOptions = requireNonNull(xFrameOptions);
 
     template = getClass().getResource(templateResource);
-    checkNotNull(template);
+    requireNonNull(template);
   }
 
   /**

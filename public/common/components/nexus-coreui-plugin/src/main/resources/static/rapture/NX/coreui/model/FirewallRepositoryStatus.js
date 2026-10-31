@@ -33,6 +33,10 @@ Ext.define('NX.coreui.model.FirewallRepositoryStatus', {
     {name:'severeComponentCount', type: 'int'},
     {name:'reportUrl', type: 'string', sortType: 'asUCText'},
     {name:'message', type: 'string', sortType: 'asUCText'},
-    {name:'errorMessage', type: 'string', sortType: 'asUCText'}
+    {name:'errorMessage', type: 'string', sortType: 'asUCText'},
+    // Epoch-milliseconds — Java side is Long, which overflows ExtJS 'int' (32-bit). Use 'number'.
+    // NEXUS-52787: this is the audit-enabled watermark, NOT a per-run "last success" timestamp.
+    // See FirewallRepositoryStatusXO#lastCrawlDate JavaDoc before labelling the column.
+    {name:'lastCrawlDate', type: 'number'}
   ]
 });

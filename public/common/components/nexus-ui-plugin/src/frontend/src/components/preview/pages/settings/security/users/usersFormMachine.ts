@@ -20,6 +20,8 @@ import {
   UserFormData,
   DEFAULT_SOURCE,
   isExternalUser,
+  RestUser,
+  restToUser,
 } from './types';
 
 /**
@@ -37,40 +39,6 @@ const isSourceExternalGuard = (
   _context: unknown,
   event: { type: string; value?: string }
 ) => Boolean(event.value) && event.value !== DEFAULT_SOURCE;
-
-/**
- * REST API user response shape
- */
-interface RestUser {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  emailAddress: string;
-  source: string;
-  status: 'active' | 'disabled';
-  roles: string[];
-  externalRoles?: string[];
-  readOnly?: boolean;
-}
-
-/**
- * Convert REST user to UI User model
- */
-function restToUser(rest: RestUser): User {
-  return {
-    userId: rest.userId,
-    realm: rest.source,
-    source: rest.source,
-    firstName: rest.firstName,
-    lastName: rest.lastName,
-    emailAddress: rest.emailAddress,
-    email: rest.emailAddress,
-    status: rest.status,
-    roles: rest.roles || [],
-    externalRoles: rest.externalRoles,
-    readOnly: rest.readOnly,
-  };
-}
 
 /**
  * Find a user by ID and source from the REST API.
@@ -182,7 +150,7 @@ function validateUser(
 /**
  * User source reference for dropdowns
  */
-interface UserSourceRef {
+export interface UserSourceRef {
   id: string;
   name: string;
 }
@@ -190,7 +158,7 @@ interface UserSourceRef {
 /**
  * Role reference for transfer lists and Inspector
  */
-interface RoleRef {
+export interface RoleRef {
   id: string;
   name: string;
   source?: string;
@@ -230,6 +198,11 @@ export function createUsersFormMachine(
       user: preloadedUser ?? (null as User | null),
       allRoles: [] as RoleRef[],
       userSources: [] as UserSourceRef[],
+      // Baseline role IDs at load time. Frozen so form-side edits to data.roles
+      // do not mutate the snapshot; rolesDirty compares data.roles against this.
+      initialRoles: preloadedUser?.roles
+        ? [...preloadedUser.roles]
+        : ([] as string[]),
     },
     actions: {
       validate: assign((ctx: FormContext<UserFormData>) => ({
@@ -238,6 +211,13 @@ export function createUsersFormMachine(
           isCreate,
           isExternalUser(ctx.data.source || DEFAULT_SOURCE)
         ),
+      })),
+      // Set both data.<field> and pristineData.<field> to the same value.
+      // Used after an out-of-band save (toolbar status toggle) so pristine
+      // tracking does not flag a field the server has already accepted.
+      syncField: assign((context: any, event: any) => ({
+        data: { ...context.data, [event.name]: event.value },
+        pristineData: { ...context.pristineData, [event.name]: event.value },
       })),
       // Custom action: update source and clear local-only fields when switching to external
       changeSource: assign((context: any, event: any) => {
@@ -359,6 +339,7 @@ export function createUsersFormMachine(
           user,
           allRoles,
           userSources,
+          initialRoles: [...(initialData.roles ?? [])],
         };
       },
       // save service is provided via useForm options
@@ -377,6 +358,9 @@ export function createUsersFormMachine(
           actions: ['changeSource', 'validate', 'computePristine'],
         },
       ],
+      SYNC_FIELD: {
+        actions: ['syncField', 'computePristine'],
+      },
     },
     // Source variant sub-states within the editing state.
     // Local users have full form fields including password.

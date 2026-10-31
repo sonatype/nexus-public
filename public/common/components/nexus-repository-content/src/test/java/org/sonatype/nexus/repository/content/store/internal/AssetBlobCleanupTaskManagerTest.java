@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store.internal;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryStartedEvent;
@@ -166,5 +167,24 @@ public class AssetBlobCleanupTaskManagerTest
     taskManager.stop();
 
     inOrder.verifyNoMoreInteractions();
+  }
+
+  @Test
+  public void doesNotScheduleWhileReplicatingButSchedulesOnLaterLocalStart() throws Exception {
+    AssetBlobCleanupTaskManager taskManager = new AssetBlobCleanupTaskManager(taskScheduler);
+    taskManager.start();
+    InOrder inOrder = inOrder(taskScheduler);
+
+    // A replicated repository start (a peer's config replayed under replication) must not schedule the clustered
+    // cleanup task -- QuartzSchedulerSPI forbids scheduling during replication -- and must not claim the
+    // format/store, otherwise the failed schedule would never be retried and the task would stay unscheduled.
+    EventHelper.asReplicating(() -> taskManager.on(new RepositoryStartedEvent(mavenReleaseRepository)));
+    inOrder.verify(taskScheduler, never()).scheduleTask(any(), any());
+
+    // A later local (non-replicating) start of the same format+store still schedules the task.
+    taskManager.on(new RepositoryStartedEvent(mavenReleaseRepository));
+    inOrder.verify(taskScheduler).scheduleTask(any(), any());
+
+    taskManager.stop();
   }
 }

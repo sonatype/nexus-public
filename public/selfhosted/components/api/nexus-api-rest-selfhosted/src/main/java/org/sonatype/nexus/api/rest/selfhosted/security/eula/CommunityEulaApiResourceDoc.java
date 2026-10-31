@@ -16,6 +16,8 @@ import org.sonatype.nexus.api.rest.selfhosted.security.eula.model.EulaStatus;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
@@ -27,7 +29,8 @@ public interface CommunityEulaApiResourceDoc
 {
   @Operation(summary = "Get the current Community Eula status.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Successful response")
+      @ApiResponse(responseCode = "200", description = "Successful response",
+          content = @Content(schema = @Schema(implementation = EulaStatus.class)))
   // NEXUS-46395 TODO: examples= attribute dropped during sweep; restore via
   // @Content(examples = @ExampleObject(value = "{ ... }"))
   })

@@ -466,7 +466,10 @@ Ext.define('NX.coreui.controller.Users', {
             && (selectedModel.get('userId') !== NX.State.getValue('anonymousUsername'));
 
         if (enableButton && skipCurrentUser) {
-          enableButton = (selectedModel.get('userId') !== NX.State.getUser().id);
+          // NX.State.getUser() is undefined for anonymous subjects; treat "no current user"
+          // as "not the current user" so the button remains enabled (NEXUS-47114).
+          var currentUser = NX.State.getUser();
+          enableButton = (!currentUser || selectedModel.get('userId') !== currentUser.id);
         }
       }
 

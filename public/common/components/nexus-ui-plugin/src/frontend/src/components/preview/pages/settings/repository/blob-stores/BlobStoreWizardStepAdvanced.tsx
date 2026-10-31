@@ -21,6 +21,7 @@ import {
   SettingsCheckbox,
   SettingsButton,
 } from '../../../../shared/form';
+import { useIsLicensedEdition } from '../../../../shared/hooks';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import type { BlobStoreFormData, S3BlobStoreConfig, S3FailoverBucket } from './types';
 import { BLOB_STORE_TYPE_IDS } from './blobStoreFormMachine';
@@ -46,7 +47,7 @@ export function BlobStoreWizardStepAdvanced({
   quotaTypes,
   validationErrors,
 }: BlobStoreWizardStepAdvancedProps) {
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const isFailoverAvailable = ExtJS.state().getValue('S3FailoverEnabled', false);
 
   const config = (data.bucketConfiguration || {}) as S3BlobStoreConfig;
@@ -96,7 +97,7 @@ export function BlobStoreWizardStepAdvanced({
             value={adv.maxConnectionPoolSize?.toString() || ''}
             onChange={(v) => {
               const n = parseInt(String(v), 10);
-              onChange('bucketConfiguration.advancedBucketConnection.maxConnectionPoolSize', isNaN(n) ? undefined : n);
+              onChange('bucketConfiguration.advancedBucketConnection.maxConnectionPoolSize', Number.isNaN(n) ? undefined : n);
             }}
             placeholder="100"
             type="number"
@@ -105,10 +106,10 @@ export function BlobStoreWizardStepAdvanced({
             name="s3-path-style"
             label="Use path-style access"
             description="Use path-style URLs for all requests"
-            checked={adv.forcePathStyle || false}
+            checked={adv.forcePathStyle}
             onChange={(v) => onChange('bucketConfiguration.advancedBucketConnection.forcePathStyle', v)}
           />
-          {isFailoverAvailable && isProEdition && (
+          {isFailoverAvailable && isLicensedEdition && (
             <>
               <Text weight="medium" size="2" mb="2" as="p">
                 Replication Buckets
@@ -155,7 +156,7 @@ export function BlobStoreWizardStepAdvanced({
         <SettingsCheckbox
           name="soft-quota-enabled"
           label="Enable soft quota"
-          checked={softQuota.enabled || false}
+          checked={softQuota.enabled}
           onChange={(v) =>
             updateField('softQuota', {
               ...softQuota,
@@ -187,7 +188,7 @@ export function BlobStoreWizardStepAdvanced({
                 const n = parseInt(String(v), 10);
                 updateField('softQuota', {
                   ...softQuota,
-                  limit: isNaN(n) ? undefined : n,
+                  limit: Number.isNaN(n) ? undefined : n,
                 });
               }}
               placeholder="1024"

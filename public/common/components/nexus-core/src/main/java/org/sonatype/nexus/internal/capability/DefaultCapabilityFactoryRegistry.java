@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link CapabilityFactoryRegistry} implementation.
@@ -62,14 +62,14 @@ class DefaultCapabilityFactoryRegistry
       final List<CapabilityFactory> factoriesList,
       final CapabilityDescriptorRegistry capabilityDescriptorRegistry)
   {
-    this.capabilityDescriptorRegistry = checkNotNull(capabilityDescriptorRegistry);
-    this.factories = QualifierUtil.buildQualifierBeanMap(checkNotNull(factoriesList));
+    this.capabilityDescriptorRegistry = requireNonNull(capabilityDescriptorRegistry);
+    this.factories = QualifierUtil.buildQualifierBeanMap(requireNonNull(factoriesList));
     this.dynamicFactories = Maps.newConcurrentMap();
   }
 
   @Override
   public CapabilityFactoryRegistry register(final CapabilityType type, final CapabilityFactory factory) {
-    checkNotNull(factory);
+    requireNonNull(factory);
     checkArgument(!factories.containsKey(type.toString()), "Factory already registered for %s", type);
     checkArgument(!dynamicFactories.containsKey(type.toString()), "Factory already registered for %s", type);
 
@@ -91,9 +91,9 @@ class DefaultCapabilityFactoryRegistry
 
   @Override
   public CapabilityFactory get(final CapabilityType type) {
-    CapabilityFactory factory = factories.get(checkNotNull(type).toString());
+    CapabilityFactory factory = factories.get(requireNonNull(type).toString());
     if (factory == null) {
-      factory = dynamicFactories.get(checkNotNull(type).toString());
+      factory = dynamicFactories.get(requireNonNull(type).toString());
     }
     if (factory == null) {
       final CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);

@@ -38,11 +38,11 @@ public class DebianVersionNormalizer
    */
   private static final int MAX_VERSION_LENGTH = 256;
 
-  private static final String PRE_RELEASE_KEY = "a";
+  private static final String PRE_RELEASE_KEY = "0a";
 
-  private static final String RELEASE_KEY = "c";
+  private static final String RELEASE_KEY = "0c";
 
-  private static final String POST_RELEASE_KEY = "d";
+  private static final String POST_RELEASE_KEY = "0d";
 
   @Override
   public String getNormalizedVersion(final String version) {
@@ -57,12 +57,12 @@ public class DebianVersionNormalizer
     String trimmed = version.trim();
 
     // Parse epoch
-    String epoch = "000000000";
+    String epoch = VersionNumberExpander.padPrefixed(0);
     int colonIndex = trimmed.indexOf(':');
     if (colonIndex >= 0) {
       String epochStr = trimmed.substring(0, colonIndex);
       try {
-        epoch = String.format("%09d", Long.parseLong(epochStr));
+        epoch = VersionNumberExpander.padPrefixed(Long.parseLong(epochStr));
       }
       catch (NumberFormatException e) {
         // invalid epoch, keep default
@@ -90,7 +90,7 @@ public class DebianVersionNormalizer
     result.append(epoch).append(".").append(normalizedUpstream);
 
     if (!debianRevision.isEmpty()) {
-      result.append(".").append(VersionNumberExpander.expand(debianRevision));
+      result.append(".").append(VersionNumberExpander.expandPrefixed(debianRevision));
     }
 
     return result.toString();
@@ -108,12 +108,12 @@ public class DebianVersionNormalizer
       String basePart = version.substring(0, tildeIndex);
       String preReleasePart = version.substring(tildeIndex + 1);
       // Guard against a bare trailing tilde (e.g. "1.0~") where preReleasePart is empty.
-      // VersionNumberExpander.expand("") returns "", which would leave a trailing "." in the
+      // VersionNumberExpander.expandPrefixed("") returns "", which would leave a trailing "." in the
       // sort key. Substitute "0" so the key remains well-formed.
       String expandedPre = preReleasePart.isEmpty()
-          ? VersionNumberExpander.expand("0")
-          : VersionNumberExpander.expand(preReleasePart);
-      return VersionNumberExpander.expand(basePart) + "." + PRE_RELEASE_KEY + "." + expandedPre;
+          ? VersionNumberExpander.expandPrefixed("0")
+          : VersionNumberExpander.expandPrefixed(preReleasePart);
+      return VersionNumberExpander.expandPrefixed(basePart) + "." + PRE_RELEASE_KEY + "." + expandedPre;
     }
     else if (version.contains("+")) {
       // Plus: post-release. Split at first plus.
@@ -122,13 +122,13 @@ public class DebianVersionNormalizer
       String postReleasePart = version.substring(plusIndex + 1);
       // Same trailing-empty guard as the tilde branch above.
       String expandedPost = postReleasePart.isEmpty()
-          ? VersionNumberExpander.expand("0")
-          : VersionNumberExpander.expand(postReleasePart);
-      return VersionNumberExpander.expand(basePart) + "." + POST_RELEASE_KEY + "." + expandedPost;
+          ? VersionNumberExpander.expandPrefixed("0")
+          : VersionNumberExpander.expandPrefixed(postReleasePart);
+      return VersionNumberExpander.expandPrefixed(basePart) + "." + POST_RELEASE_KEY + "." + expandedPost;
     }
     else {
       // Normal release
-      return VersionNumberExpander.expand(version) + "." + RELEASE_KEY;
+      return VersionNumberExpander.expandPrefixed(version) + "." + RELEASE_KEY;
     }
   }
 }

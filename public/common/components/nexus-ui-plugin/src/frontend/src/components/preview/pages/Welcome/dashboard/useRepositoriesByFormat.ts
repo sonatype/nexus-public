@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { restClient, parseApiError } from '../../../../../interface/api';
 import { isHealthCheckSupportedFormat } from '../../../../../utils/healthCheckFormats';
 
@@ -92,7 +92,7 @@ export function useRepositoriesByFormat(): UseRepositoriesByFormatResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
 
-  const fetchRepositories = async () => {
+  const fetchRepositories = useCallback(async () => {
     setLoading(true);
     setError(undefined);
 
@@ -110,11 +110,11 @@ export function useRepositoriesByFormat(): UseRepositoriesByFormatResult {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchRepositories();
-  }, []);
+  }, [fetchRepositories]);
 
   // Group by format - REAL DATA ONLY
   const data = useMemo((): RepositoryFormatSummary[] => {

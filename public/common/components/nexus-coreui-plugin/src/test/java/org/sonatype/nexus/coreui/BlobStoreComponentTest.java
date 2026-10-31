@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
@@ -37,13 +38,14 @@ import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension.RegisterValidator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.lang.Math.pow;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -57,6 +59,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -68,6 +71,10 @@ import static org.mockito.Mockito.when;
 @WithUser
 class BlobStoreComponentTest
 {
+  @RegisterValidator
+  @Mock
+  UniqueBlobStoreNameValidator validator;
+
   @Mock
   private BlobStoreManager blobStoreManager;
 
@@ -93,6 +100,8 @@ class BlobStoreComponentTest
 
   @BeforeEach
   void setup() {
+    lenient().when(validator.isValid(any(), any())).thenReturn(true);
+    lenient().when(repositoryManager.blobstoresInUse()).thenReturn(Collections.emptySet());
     underTest = new BlobStoreComponent(blobStoreManager, store, blobStoreDescriptorProvider, List.of(),
         applicationDirectories, repositoryManager, permissionChecker, blobStoreTaskService);
   }
@@ -658,6 +667,23 @@ class BlobStoreComponentTest
     ArgumentCaptor<BlobStoreConfiguration> captor = ArgumentCaptor.forClass(BlobStoreConfiguration.class);
     verify(blobStoreManager).update(captor.capture());
     assertThat(captor.getValue().getAttributes().get("s3").get("secretAccessKey"), is("new-actual-secret"));
+  }
+
+  @Test
+  void testAsBlobStoreXO_inUseReflectsProvidedRepositoryUsageSet() {
+    MockBlobStoreConfiguration used = new MockBlobStoreConfiguration()
+        .withName("used-store")
+        .withType("File")
+        .withAttributes(new HashMap<>(Map.of("file", new HashMap<>(Map.of("path", "path")))));
+    MockBlobStoreConfiguration unused = new MockBlobStoreConfiguration()
+        .withName("unused-store")
+        .withType("File")
+        .withAttributes(new HashMap<>(Map.of("file", new HashMap<>(Map.of("path", "path")))));
+
+    // The batch set (RepositoryManager.blobstoresInUse) drives withInUse -- "used-store" is referenced, the other is
+    // not.
+    assertThat(underTest.asBlobStoreXO(used, Collections.emptyList(), Set.of("used-store")).isInUse(), is(true));
+    assertThat(underTest.asBlobStoreXO(unused, Collections.emptyList(), Set.of("used-store")).isInUse(), is(false));
   }
 
   private static MockBlobStoreConfiguration mockConfig(final String name, final long quotaLimitBytes) {

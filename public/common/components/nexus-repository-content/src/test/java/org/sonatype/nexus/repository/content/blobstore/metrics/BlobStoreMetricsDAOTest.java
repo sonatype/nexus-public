@@ -79,6 +79,41 @@ public class BlobStoreMetricsDAOTest
   }
 
   @Test
+  public void renameMetricsSucceeds() {
+    BlobStoreMetricsEntity entity = new BlobStoreMetricsEntity();
+    entity.setBlobStoreName("store-a");
+    entity.setBlobCount(42);
+    entity.setTotalSize(1024);
+    dao.initializeMetrics("store-a");
+    dao.updateMetrics(entity);
+
+    dao.rename("store-a", "store-a-member");
+
+    BlobStoreMetricsEntity renamed = dao.get("store-a-member");
+    assertThat(renamed, is(notNullValue()));
+    assertThat(renamed.getBlobStoreName(), is("store-a-member"));
+    assertThat(renamed.getBlobCount(), is(42L));
+    assertThat(renamed.getTotalSize(), is(1024L));
+    assertThat(dao.get("store-a"), is(nullValue()));
+  }
+
+  @Test(expected = DuplicateKeyException.class)
+  public void renameMetricsFailsWhenTargetNameExists() {
+    dao.initializeMetrics("store-a");
+    dao.initializeMetrics("store-b");
+
+    dao.rename("store-a", "store-b");
+  }
+
+  @Test
+  public void renameMetricsForNonExistentStoreIsNoOp() {
+    dao.rename("non-existent", "new-name");
+
+    assertThat(dao.get("non-existent"), is(nullValue()));
+    assertThat(dao.get("new-name"), is(nullValue()));
+  }
+
+  @Test
   public void incrementalUpdateOfMetricsSucceeds() {
     dao.initializeMetrics("test");
     BlobStoreMetricsEntity blobStoreMetricsEntity = new BlobStoreMetricsEntity();
@@ -214,4 +249,5 @@ public class BlobStoreMetricsDAOTest
     assertThat(actual.getUploadSuccessfulRequests(), is(0L));
     assertThat(actual.getUploadTimeOnRequests(), is(0L));
   }
+
 }

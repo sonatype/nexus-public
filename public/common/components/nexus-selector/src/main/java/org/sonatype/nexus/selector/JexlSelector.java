@@ -19,7 +19,7 @@ import java.util.Set;
 
 import org.apache.commons.jexl3.JexlContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.Boolean.TRUE;
 
 /**
@@ -37,7 +37,7 @@ public class JexlSelector
   protected final JexlExpression expression;
 
   public JexlSelector(final JexlExpression expression) {
-    this.expression = checkNotNull(expression);
+    this.expression = requireNonNull(expression);
   }
 
   @Override

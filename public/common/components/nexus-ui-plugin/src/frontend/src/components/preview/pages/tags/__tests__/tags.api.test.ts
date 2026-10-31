@@ -35,9 +35,9 @@ jest.mock('../../../../../interface/api', () => ({
   },
 }));
 
-import { fetchTags, fetchTagDetail, fetchFilteredTags, createTag, deleteTag } from '../tags.api';
+import { fetchTagDetail, createTag } from '../tags.api';
 import { restClient } from '../../../../../interface/api';
-import { mockTags, mockTagDetail } from './mockData';
+import { mockTagDetail } from './mockData';
 
 // Get mock references
 const mockRestClient = restClient as jest.Mocked<typeof restClient>;
@@ -45,34 +45,6 @@ const mockRestClient = restClient as jest.Mocked<typeof restClient>;
 describe('tags.api', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('fetchTags', () => {
-    it('should fetch tags using REST API', async () => {
-      mockRestClient.get.mockResolvedValue(mockTags);
-
-      const result = await fetchTags();
-
-      expect(mockRestClient.get).toHaveBeenCalledWith('/service/rest/v1/tags');
-      expect(result).toEqual(mockTags);
-    });
-
-    it('should return empty array when response is not an array', async () => {
-      mockRestClient.get.mockResolvedValue(null);
-
-      const result = await fetchTags();
-
-      expect(result).toEqual([]);
-    });
-
-    it('should throw error when API fails', async () => {
-      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const error = new Error('Network error');
-      mockRestClient.get.mockRejectedValue(error);
-
-      await expect(fetchTags()).rejects.toThrow('Network error');
-      errorSpy.mockRestore();
-    });
   });
 
   describe('fetchTagDetail', () => {
@@ -99,83 +71,6 @@ describe('tags.api', () => {
       mockRestClient.get.mockRejectedValue(error);
 
       await expect(fetchTagDetail('release-1.0')).rejects.toThrow('Network error');
-      errorSpy.mockRestore();
-    });
-  });
-
-  describe('fetchFilteredTags', () => {
-    const mockFilters = {
-      nameFilter: 'release',
-      componentCounts: ['1-10', '10-100'],
-      activityDays: ['7', '30'],
-    };
-
-    const mockResponse = {
-      items: mockTags,
-      totalCount: 10,
-      page: 0,
-      pageSize: 25,
-    };
-
-    it('should fetch filtered tags with all parameters', async () => {
-      mockRestClient.get.mockResolvedValue(mockResponse);
-
-      const result = await fetchFilteredTags(
-        mockFilters,
-        'name',
-        'asc',
-        0,
-        25
-      );
-
-      expect(mockRestClient.get).toHaveBeenCalledWith(
-        expect.stringContaining('/service/rest/internal/ui/tags/filtered?')
-      );
-      expect(mockRestClient.get).toHaveBeenCalledWith(
-        expect.stringContaining('nameFilter=release')
-      );
-      expect(mockRestClient.get).toHaveBeenCalledWith(
-        expect.stringContaining('componentCounts=1-10%2C10-100')
-      );
-      expect(mockRestClient.get).toHaveBeenCalledWith(
-        expect.stringContaining('activityDays=7%2C30')
-      );
-      expect(mockRestClient.get).toHaveBeenCalledWith(
-        expect.stringContaining('sortField=name')
-      );
-      expect(mockRestClient.get).toHaveBeenCalledWith(
-        expect.stringContaining('sortDirection=asc')
-      );
-      expect(result).toEqual(mockResponse);
-    });
-
-    it('should fetch filtered tags with minimal parameters', async () => {
-      mockRestClient.get.mockResolvedValue(mockResponse);
-
-      const emptyFilters = {
-        nameFilter: '',
-        componentCounts: [],
-        activityDays: [],
-      };
-
-      await fetchFilteredTags(emptyFilters, 'name', 'desc', 1, 50);
-
-      expect(mockRestClient.get).toHaveBeenCalledWith(
-        expect.stringContaining('page=1')
-      );
-      expect(mockRestClient.get).toHaveBeenCalledWith(
-        expect.stringContaining('pageSize=50')
-      );
-    });
-
-    it('should throw error when API fails', async () => {
-      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const error = new Error('Network error');
-      mockRestClient.get.mockRejectedValue(error);
-
-      await expect(
-        fetchFilteredTags(mockFilters, 'name', 'asc', 0, 25)
-      ).rejects.toThrow('Network error');
       errorSpy.mockRestore();
     });
   });
@@ -215,21 +110,4 @@ describe('tags.api', () => {
     });
   });
 
-  describe('deleteTag', () => {
-    it('should delete a tag by name', async () => {
-      mockRestClient.delete.mockResolvedValue(undefined);
-
-      await deleteTag('old-tag');
-
-      expect(mockRestClient.delete).toHaveBeenCalledWith('/service/rest/v1/tags/old-tag');
-    });
-
-    it('should throw error when delete fails', async () => {
-      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      mockRestClient.delete.mockRejectedValue(new Error('Not found'));
-
-      await expect(deleteTag('missing')).rejects.toThrow('Not found');
-      errorSpy.mockRestore();
-    });
-  });
 });

@@ -18,7 +18,7 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -38,11 +38,14 @@ public class UniqueBlobStoreNameValidator
 
   @Autowired
   public UniqueBlobStoreNameValidator(final BlobStoreManager blobStoreManager) {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
   }
 
   @Override
   public boolean isValid(final String s, final ConstraintValidatorContext constraintValidatorContext) {
+    if (s == null) {
+      return true;
+    }
     return !blobStoreManager.exists(s);
   }
 }

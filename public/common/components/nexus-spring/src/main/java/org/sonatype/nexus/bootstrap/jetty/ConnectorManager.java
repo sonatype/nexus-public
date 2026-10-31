@@ -175,6 +175,9 @@ public class ConnectorManager
     final List<ConnectorConfiguration> result = new ArrayList<>();
     try {
       verifyConfiguration(HttpScheme.HTTP);
+      // STL-476: ensure the reason-phrase customizer is on the shared httpConfig the main HTTP connector uses,
+      // even if a booted jetty.xml lacks the declarative <Call name="addCustomizer"> block.
+      ensureReasonPhraseCustomizer(bean(HTTP_CONFIG_ID, HttpConfiguration.class));
       final int port = defaultConnector(HttpScheme.HTTP).getPort();
       result.add(new ConnectorConfiguration()
       {
@@ -199,6 +202,8 @@ public class ConnectorManager
     }
     try {
       verifyConfiguration(HttpScheme.HTTPS);
+      // STL-476: same safeguard for the shared httpsConfig used by the main HTTPS connector.
+      ensureReasonPhraseCustomizer(bean(HTTPS_CONFIG_ID, HttpConfiguration.class));
       final int port = defaultConnector(HttpScheme.HTTPS).getPort();
       result.add(new ConnectorConfiguration()
       {
@@ -228,14 +233,36 @@ public class ConnectorManager
    * Returns the OOTB defined configuration for given HTTP scheme.
    */
   private HttpConfiguration defaultHttpConfiguration(final HttpScheme httpScheme) {
+    final HttpConfiguration httpConfiguration;
     if (HttpScheme.HTTP == httpScheme) {
-      return bean(HTTP_CONFIG_ID, HttpConfiguration.class);
+      httpConfiguration = bean(HTTP_CONFIG_ID, HttpConfiguration.class);
     }
     else if (HttpScheme.HTTPS == httpScheme) {
-      return bean(HTTPS_CONFIG_ID, HttpConfiguration.class);
+      httpConfiguration = bean(HTTPS_CONFIG_ID, HttpConfiguration.class);
     }
     else {
       throw new UnsupportedHttpSchemeException(httpScheme);
+    }
+    ensureReasonPhraseCustomizer(httpConfiguration);
+    return httpConfiguration;
+  }
+
+  /**
+   * Belt-and-braces registration of {@link NexusReasonPhraseCustomizer} (STL-476). The customizer is wired
+   * declaratively in {@code jetty.xml}, which exists in three overlay copies (base plus the self-hosted and cloud
+   * distributions) and can be bypassed by a custom {@code nexus-args} file or a mounted {@code jetty.xml}. This
+   * guard runs at startup over the shared {@code httpConfig}/{@code httpsConfig} beans (see
+   * {@link #buildDefaultConnectors()}) so the default HTTP/HTTPS connectors always carry it, and again for any
+   * dynamically registered connector (see {@link #defaultHttpConfiguration(HttpScheme)}). If a deployment booted
+   * without it, custom reason phrases would regress to canonical <em>and</em> the internal
+   * {@link NexusReasonPhraseCustomizer#REASON_PHRASE_HEADER} sentinel would leak to clients because nothing strips
+   * it. The XML remains the documented wiring; the guard is idempotent, so it is a no-op when jetty.xml already
+   * added the customizer. Relies on Jetty reading {@code HttpConfiguration#getCustomizers()} per request, so
+   * mutating the shared instance after the connector is built still takes effect.
+   */
+  private static void ensureReasonPhraseCustomizer(final HttpConfiguration httpConfiguration) {
+    if (httpConfiguration.getCustomizers().stream().noneMatch(NexusReasonPhraseCustomizer.class::isInstance)) {
+      httpConfiguration.addCustomizer(new NexusReasonPhraseCustomizer());
     }
   }
 

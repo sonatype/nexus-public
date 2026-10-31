@@ -35,7 +35,6 @@ export default function ProtectOverview({ protectData, onGoToQuickConfig }: Prot
     loading,
     hcSummary,
     iqAudit,
-    hasFirewall,
     hasIqConnection,
     hcInstanceEnabled,
     canUpdateHealthCheck,

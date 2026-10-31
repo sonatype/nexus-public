@@ -20,16 +20,20 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class SpaceUsedQuotaTest
@@ -89,5 +93,19 @@ public class SpaceUsedQuotaTest
   public void noLimitIsInvalid() {
     when(attributesMap.get(eq(LIMIT_KEY), eq(Number.class))).thenReturn(null);
     quota.validateConfig(config);
+  }
+
+  @Test
+  public void shouldEscape_htmlMetacharsInMessage_butNotInBlobStoreName() {
+    when(config.getName()).thenReturn("poc<img src=x onerror=alert(1)>");
+    when(metrics.getTotalSize()).thenReturn(20L);
+
+    var result = quota.check(blobStore);
+
+    assertThat("Raw HTML tag must not appear in message", result.getMessage(), not(containsString("<img")));
+    assertThat("Escaped HTML entity must appear in message", result.getMessage(),
+        containsString("&lt;img src=x onerror=alert(1)&gt;"));
+    assertEquals("blobStoreName must carry the raw unescaped name for API consumers",
+        "poc<img src=x onerror=alert(1)>", result.getBlobStoreName());
   }
 }

@@ -46,7 +46,7 @@ import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.node.datastore.NodeHeartbeatManager.NODE_ID;
 import org.springframework.stereotype.Component;
 
@@ -93,14 +93,14 @@ public class KeyAccessValidatorImpl
       final Clock clock,
       @Value("${nexus.distributed.events.fetch.interval.seconds:5}") final int pollIntervalSeconds)
   {
-    this.encryptionKeyValidator = checkNotNull(encryptionKeyValidator);
+    this.encryptionKeyValidator = requireNonNull(encryptionKeyValidator);
     this.nodeHeartbeatManager = nodeHeartbeatManager;
-    this.periodicJobService = checkNotNull(periodicJobService);
-    this.eventManager = checkNotNull(eventManager);
-    this.objectMapper = checkNotNull(objectMapper);
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
-    this.clock = checkNotNull(clock);
+    this.periodicJobService = requireNonNull(periodicJobService);
+    this.eventManager = requireNonNull(eventManager);
+    this.objectMapper = requireNonNull(objectMapper);
+    this.nodeAccess = requireNonNull(nodeAccess);
+    this.globalKeyValueStore = requireNonNull(globalKeyValueStore);
+    this.clock = requireNonNull(clock);
     this.timeoutSeconds = pollIntervalSeconds * 2;
   }
 

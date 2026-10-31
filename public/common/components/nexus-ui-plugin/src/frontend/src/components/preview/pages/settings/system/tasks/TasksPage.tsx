@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box } from '@radix-ui/themes';
 import { Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
@@ -22,7 +22,8 @@ import { TasksList } from './TasksList';
 import { TaskDetail } from './TaskDetail';
 import { TaskForm } from './TaskForm';
 import { useTasksApi } from './useTasksApi';
-import { Task, TaskType, TaskFormData, TasksPageProps } from './types';
+import { usePolling, POLL_INTERVAL_MS, POST_ACTION_POLL_COUNT } from './usePolling';
+import { Task, TaskType, TaskFormData, TasksPageProps, isActiveStatus, isTerminalStatus } from './types';
 
 import './TasksPage.scss';
 
@@ -88,6 +89,23 @@ export function TasksPage({ className }: TasksPageProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Live status polling state (NEXUS-53525).
+  //   liveTask        – latest polled snapshot, kept SEPARATE from `task` (the
+  //                     form seed) so a poll never recreates the detail form
+  //                     machine or clobbers an in-flight edit.
+  //   taskNotFound    – set when a poll 404s (task deleted server-side); stops
+  //                     the loop and degrades to a not-found state.
+  //   detailPollsLeft – remaining polls in the post-action window (see
+  //                     POST_ACTION_POLL_COUNT) that bridges WAITING→RUNNING.
+  const [liveTask, setLiveTask] = useState<Task | null>(null);
+  const [taskNotFound, setTaskNotFound] = useState(false);
+  const [detailPollsLeft, setDetailPollsLeft] = useState(0);
+
+  // Mirror selectedTaskId into a ref so an in-flight poll can detect that the
+  // route moved on before its response landed (stale-response protection).
+  const selectedTaskIdRef = useRef<string | null>(selectedTaskId);
+  selectedTaskIdRef.current = selectedTaskId;
+
   // Listen for hash changes (browser back/forward)
   useEffect(() => {
     const handleHashChange = () => setRouteState(parseTasksRoute(window.location.hash));
@@ -125,6 +143,14 @@ export function TasksPage({ className }: TasksPageProps) {
     loadTaskTypes();
   }, [fetchTaskTypes]);
 
+  // Reset the live-status slices whenever the selected task changes so a new
+  // detail page never shows the previous task's polled status while loading.
+  useEffect(() => {
+    setLiveTask(null);
+    setTaskNotFound(false);
+    setDetailPollsLeft(0);
+  }, [selectedTaskId]);
+
   // Load task details when selected
   useEffect(() => {
     if (selectedTaskId && viewMode === 'detail') {
@@ -145,6 +171,59 @@ export function TasksPage({ className }: TasksPageProps) {
       loadTask();
     }
   }, [selectedTaskId, viewMode, fetchTask, setError]);
+
+  // --- Live status polling for the detail route (NEXUS-53525) -----------------
+  // The status that drives the gate is the freshest one we have: a polled
+  // snapshot if present, otherwise the loaded seed.
+  const detailStatus = (liveTask && liveTask.id === selectedTaskId)
+    ? liveTask.status
+    : task?.status;
+
+  // Poll while on the detail route for a task that is either actively working
+  // (RUNNING/BLOCKED) or inside the post-action window. A terminal status, a
+  // 404, or leaving the detail route all stop the loop — so an idle WAITING
+  // task that the user merely views is not polled.
+  const detailPollingEnabled =
+    viewMode === 'detail' &&
+    !!selectedTaskId &&
+    !taskNotFound &&
+    !isTerminalStatus(detailStatus) &&
+    (isActiveStatus(detailStatus) || detailPollsLeft > 0);
+
+  const pollDetailStatus = useCallback(async () => {
+    const id = selectedTaskIdRef.current;
+    if (!id) {
+      return;
+    }
+    const polled = await fetchTask(id); // non-404 errors propagate and are swallowed by usePolling
+    // Ignore a response that resolved after we navigated to a different task.
+    if (selectedTaskIdRef.current !== id) {
+      return;
+    }
+    if (polled === null) {
+      // 404: the task was deleted server-side. Degrade to a not-found state
+      // (this also flips detailPollingEnabled to false, ending the loop).
+      setTaskNotFound(true);
+      return;
+    }
+    setLiveTask(polled);
+    // Burn down the post-action window only while the task is NOT actively running.
+    // Once it is RUNNING/BLOCKED we reset the window to 0 on purpose: from that point
+    // `isActiveStatus` alone keeps the interval alive (see `detailPollingEnabled`), so
+    // the window's only job is to bridge the brief gap before the server flips to
+    // RUNNING. (A second Run on an already-active task re-arms the window in handleRun,
+    // but the next active poll zeroes it again — harmless, since active status is what
+    // drives polling then.)
+    setDetailPollsLeft((remaining) => (isActiveStatus(polled.status) ? 0 : Math.max(0, remaining - 1)));
+  }, [fetchTask]);
+
+  // pollOnEnable is false: the seed loaded on mount is already fresh, and Run/Stop
+  // trigger their own immediate pollNow(), so there is never a duplicate fetch.
+  const { pollNow: pollDetailNow } = usePolling(pollDetailStatus, {
+    intervalMs: POLL_INTERVAL_MS,
+    enabled: detailPollingEnabled,
+    pollOnEnable: false,
+  });
 
   // Clear success message after delay
   useEffect(() => {
@@ -200,35 +279,43 @@ export function TasksPage({ className }: TasksPageProps) {
     navigateTo(BASE_PATH);
   }, [task]);
 
-  // Handle run
+  // Handle run / stop — reconciled with polling (NEXUS-53525).
+  // Instead of the old one-shot refetch (which raced the server and left the
+  // badge stuck at WAITING), we open the post-action window and trigger a single
+  // immediate poll. The window + interval then carry the badge through
+  // WAITING → RUNNING → terminal. We deliberately do NOT setTask here: status
+  // flows via the separate liveTask slice so the form seed stays stable.
   const handleRun = useCallback(async () => {
     if (!task) return;
-    
+
     try {
       await runTask(task.id);
       setSuccessMessage(`Task started: ${task.name}`);
-      // Refresh to update status
-      const updatedTask = await fetchTask(task.id);
-      if (updatedTask) setTask(updatedTask);
+      setDetailPollsLeft(POST_ACTION_POLL_COUNT);
+      pollDetailNow();
     } catch (err) {
-      // Error is set by the API hook
+      // Swallowed intentionally: useTasksApi already surfaces the error to the user.
+      // We deliberately leave the post-action poll window unopened on failure — if the
+      // run/stop didn't start, there is nothing new to poll for. (setDetailPollsLeft +
+      // pollDetailNow run only on the success path above.)
     }
-  }, [task, runTask, fetchTask]);
+  }, [task, runTask, pollDetailNow]);
 
-  // Handle stop
   const handleStop = useCallback(async () => {
     if (!task) return;
-    
+
     try {
       await stopTask(task.id);
       setSuccessMessage(`Task stopped: ${task.name}`);
-      // Refresh to update status
-      const updatedTask = await fetchTask(task.id);
-      if (updatedTask) setTask(updatedTask);
+      setDetailPollsLeft(POST_ACTION_POLL_COUNT);
+      pollDetailNow();
     } catch (err) {
-      // Error is set by the API hook
+      // Swallowed intentionally: useTasksApi already surfaces the error to the user.
+      // We deliberately leave the post-action poll window unopened on failure — if the
+      // run/stop didn't start, there is nothing new to poll for. (setDetailPollsLeft +
+      // pollDetailNow run only on the success path above.)
     }
-  }, [task, stopTask, fetchTask]);
+  }, [task, stopTask, pollDetailNow]);
 
   // Navigation helper for Settings breadcrumb
   const navigateToSettings = () => {
@@ -334,9 +421,21 @@ export function TasksPage({ className }: TasksPageProps) {
           />
         )}
 
-        {viewMode === 'detail' && (
+        {viewMode === 'detail' && taskNotFound && (
+          <Box className="tasks-page__alerts">
+            <SettingsAlert type="error">
+              This task no longer exists. It may have been deleted.
+            </SettingsAlert>
+            <SettingsButton variant="secondary" onClick={handleBack} testId="task-not-found-back">
+              Back to Tasks
+            </SettingsButton>
+          </Box>
+        )}
+
+        {viewMode === 'detail' && !taskNotFound && (
           <TaskDetail
             task={task}
+            liveTask={liveTask}
             taskId={selectedTaskId}
             loading={loading && !task}
             canEdit={canUpdate}

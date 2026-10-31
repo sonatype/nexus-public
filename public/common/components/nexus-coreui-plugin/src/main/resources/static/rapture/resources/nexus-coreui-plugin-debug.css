@@ -129,3 +129,8 @@
     overflow: hidden;
     white-space: nowrap;
 }
+
+.nxrm-version-depth-hint {
+    font-size: 12px;
+    color: #666;
+}

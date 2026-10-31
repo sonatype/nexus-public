@@ -13,7 +13,10 @@
 package org.sonatype.nexus.internal.security.apikey.upgrade;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,7 +32,7 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.internal.security.apikey.ApiKeyServiceImpl.MIGRATION_COMPLETE;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -51,6 +54,13 @@ public class ApiKeyToSecretsTask
 
   static final String TYPE_ID = "nexus.apikey.secrets";
 
+  /**
+   * Lower bound for the migration cursor. The query uses a strict greater-than comparison, so this must sit below
+   * every real record. A previous value of "this year, with the year replaced by 2000" silently skipped anything
+   * older. OffsetDateTime.MIN is not usable: its year is outside the range a timestamp column accepts.
+   */
+  static final OffsetDateTime EPOCH = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
   private final ApiKeyStoreImpl apiKeyStoreV1;
 
   private final ApiKeyStoreV2Impl apiKeyStoreV2;
@@ -66,9 +76,9 @@ public class ApiKeyToSecretsTask
       @Value("${nexus.distributed.events.fetch.interval.seconds:5}") final int interval,
       final GlobalKeyValueStore kv)
   {
-    this.apiKeyStoreV1 = checkNotNull(apiKeyStoreV1);
-    this.apiKeyStoreV2 = checkNotNull(apiKeyStoreV2);
-    this.kv = checkNotNull(kv);
+    this.apiKeyStoreV1 = requireNonNull(apiKeyStoreV1);
+    this.apiKeyStoreV2 = requireNonNull(apiKeyStoreV2);
+    this.kv = requireNonNull(kv);
     // We convert this to millis and double it to allow for a good window
     this.synchronizationDelayMs = interval * 2_000;
   }
@@ -82,41 +92,77 @@ public class ApiKeyToSecretsTask
   protected Object execute() throws Exception {
     final int pageSize = 100;
 
-    OffsetDateTime last = OffsetDateTime.now().withYear(2000); // 2000 for the beginning of time
+    OffsetDateTime last = EPOCH;
+    String lastDomain = "";
+    String lastToken = "";
+    List<String> failedRecords = new ArrayList<>();
     Collection<ApiKeyData> data;
     do {
-      data = apiKeyStoreV1.browseAllSince(last, pageSize);
+      data = apiKeyStoreV1.browseAllSince(last, lastDomain, lastToken, pageSize);
       for (ApiKeyData key : data) {
         CancelableHelper.checkCancellation();
-        migrateRecord(key);
+        if (!migrateRecord(key)) {
+          // the cursor still advances past a failed record: this scan does not retry it. Any failure below aborts
+          // the task without setting the completion flag, so the next run rescans from EPOCH and picks it up again.
+          failedRecords.add(identify(key));
+        }
         last = key.getCreated();
+        lastDomain = key.getDomain();
+        lastToken = new String(key.getApiKey());
       }
     }
     while (data.size() == pageSize);
+
+    if (!failedRecords.isEmpty()) {
+      log.error("Api key migration failed for {} record(s): {}; {} was not set, so reads continue to use the v1 "
+          + "table. The task runs again on restart.", failedRecords.size(), failedRecords, MIGRATION_COMPLETE);
+      throw new IllegalStateException(
+          String.format("Api key migration failed for %d record(s)", failedRecords.size()));
+    }
 
     kv.setBoolean(MIGRATION_COMPLETE, true);
 
     // We intentionally do not check for cancellation in this section
     final long end = System.currentTimeMillis() + synchronizationDelayMs;
     while (end > System.currentTimeMillis()) {
-      data = apiKeyStoreV1.browseAllSince(last, pageSize);
+      data = apiKeyStoreV1.browseAllSince(last, lastDomain, lastToken, pageSize);
       for (ApiKeyData key : data) {
-        migrateRecord(key);
+        if (!migrateRecord(key)) {
+          failedRecords.add(identify(key));
+        }
         last = key.getCreated();
+        lastDomain = key.getDomain();
+        lastToken = new String(key.getApiKey());
       }
 
       Thread.sleep(100);
     }
 
+    if (!failedRecords.isEmpty()) {
+      log.error("Api key migration completed with {} failed record(s) during the synchronization window: {}; {} "
+          + "is already set, so those keys must be investigated.", failedRecords.size(), failedRecords,
+          MIGRATION_COMPLETE);
+      throw new IllegalStateException(
+          String.format("Api key migration failed for %d record(s) during synchronization", failedRecords.size()));
+    }
+
     return null;
   }
 
-  private void migrateRecord(final ApiKeyData key) {
+  /**
+   * Identifies a record for operator troubleshooting without exposing the key itself.
+   */
+  private static String identify(final ApiKeyData key) {
+    return key.getDomain() + ":" + key.getPrimaryPrincipal();
+  }
+
+  private boolean migrateRecord(final ApiKeyData key) {
     String primary = key.getPrimaryPrincipal();
     String domain = key.getDomain();
     try {
       log.trace("Migrating {} in {}", primary, domain);
       apiKeyStoreV2.persistApiKey(domain, key.getPrincipals(), key.getApiKey(), key.getCreated());
+      return true;
     }
     catch (DuplicateKeyException e) {
       log.debug("ApiKey for {} in {} appears to have been migrated.", primary, domain, e);
@@ -127,9 +173,11 @@ public class ApiKeyToSecretsTask
             apiKeyStoreV2.deleteApiKey(domain, key.getPrincipals());
             apiKeyStoreV2.persistApiKey(domain, key.getPrincipals(), key.getApiKey(), key.getCreated());
           });
+      return true;
     }
     catch (Exception e) {
       log.warn("Unable to migrate record for user {} for {}", primary, domain, e);
+      return false;
     }
   }
 }

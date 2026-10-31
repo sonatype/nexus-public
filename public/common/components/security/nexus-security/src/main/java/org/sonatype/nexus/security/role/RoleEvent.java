@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.role;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link Role} event.
@@ -24,7 +24,7 @@ public abstract class RoleEvent
   private final Role role;
 
   public RoleEvent(final Role role) {
-    this.role = checkNotNull(role);
+    this.role = requireNonNull(role);
   }
 
   public Role getRole() {

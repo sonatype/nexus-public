@@ -15,6 +15,8 @@ import React from 'react';
 import { Box, Button, Flex, Heading, Text as RadixText } from '@radix-ui/themes';
 import { ChevronRight } from 'lucide-react';
 
+import './PageHeader.scss';
+
 export interface BreadcrumbItem {
   /** Display label */
   label: string;
@@ -126,24 +128,23 @@ export function PageHeader({
 
       {/* Main Header */}
       <Flex align="center" justify="between" gap="4">
-        <Flex align="center" gap="2">
-          <Heading as="h1" size="6" weight="bold">
-            {title}
-          </Heading>
-          {description && (
-            <RadixText size="2" color="gray">
-              {description}
-            </RadixText>
-          )}
-        </Flex>
+        <Heading as="h1" size="6" weight="bold">
+          {title}
+        </Heading>
 
         {/* Actions */}
         {actions && (
-          <Flex gap="2" style={{ flexShrink: 0 }}>
+          <Flex gap="2" className="nxrm-page-header__actions">
             {actions}
           </Flex>
         )}
       </Flex>
+
+      {description && (
+        <RadixText as="p" size="2" color="gray" mt="1">
+          {description}
+        </RadixText>
+      )}
 
       {/* Children (e.g., filters, search inputs) */}
       {children && <Box mt="3">{children}</Box>}

@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Applies defaults to {@link HttpClientPlan}.
@@ -63,26 +63,26 @@ public class DefaultsCustomizer
       @Value("${nexus.httpclient.bufferSize:8k}") final ByteSize bufferSize,
       @Value("${nexus.httpclient.retryCount:2}") final int retryCount)
   {
-    this.userAgentGenerator = checkNotNull(userAgentGenerator);
+    this.userAgentGenerator = requireNonNull(userAgentGenerator);
 
-    this.requestTimeout = checkNotNull(requestTimeout);
+    this.requestTimeout = requireNonNull(requestTimeout);
     log.debug("Request timeout: {}", requestTimeout);
 
-    this.connectionRequestTimeout = checkNotNull(connectionRequestTimeout);
+    this.connectionRequestTimeout = requireNonNull(connectionRequestTimeout);
     log.debug("Connection request timeout: {}", connectionRequestTimeout);
 
-    this.keepAliveDuration = checkNotNull(keepAliveDuration);
+    this.keepAliveDuration = requireNonNull(keepAliveDuration);
     log.debug("Keep-alive duration: {}", keepAliveDuration);
 
-    this.bufferSize = checkNotNull(bufferSize);
+    this.bufferSize = requireNonNull(bufferSize);
     log.debug("Buffer-size: {}", bufferSize);
 
-    this.retryCount = checkNotNull(retryCount);
+    this.retryCount = requireNonNull(retryCount);
   }
 
   @Override
   public void customize(final HttpClientPlan plan) {
-    checkNotNull(plan);
+    requireNonNull(plan);
 
     plan.setUserAgentBase(userAgentGenerator.generate());
 

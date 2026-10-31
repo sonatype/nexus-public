@@ -41,6 +41,12 @@ jest.mock('../../../../../utils/firewallFormats', () => ({
   isFirewallSupportedFormat: () => true,
 }));
 
+import { ExtJS } from '../../../../../interface/ExtJS';
+import Permissions from '../../../../../constants/Permissions';
+// ProtectBulkActionModal reads permissions through the provider-independent ExtJS.usePermission
+// (NEXUS-54212); spy on checkPermission so tests keep driving behavior via permission strings.
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
+
 import ProtectBulkActionModal from '../ProtectBulkActionModal';
 
 const CANDIDATES: RepoWithProtection[] = [
@@ -71,6 +77,12 @@ const CANDIDATES: RepoWithProtection[] = [
 const renderWithTheme = (ui: React.ReactElement) => render(<Theme>{ui}</Theme>);
 
 describe('ProtectBulkActionModal', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Default: user has all write permissions so pre-existing behavior is exercised.
+    mockCheckPermission.mockReturnValue(true);
+  });
+
   it('renders healthcheck title when action is healthcheck', () => {
     renderWithTheme(
       <ProtectBulkActionModal
@@ -148,5 +160,81 @@ describe('ProtectBulkActionModal', () => {
       />
     );
     expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
+  });
+
+  describe('confirm gating (NEXUS-54212)', () => {
+    const renderModal = (action: 'healthcheck' | 'firewall' | 'cleanup') =>
+      renderWithTheme(
+        <ProtectBulkActionModal
+          open={true}
+          onOpenChange={jest.fn()}
+          action={action}
+          candidates={CANDIDATES}
+          onComplete={jest.fn()}
+        />
+      );
+
+    it('firewall: shows Confirm with repository-admin edit', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT);
+      renderModal('firewall');
+      expect(screen.getByRole('button', { name: 'Confirm' })).toBeInTheDocument();
+    });
+
+    it('firewall: hides Confirm without repository-admin edit', () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderModal('firewall');
+      expect(screen.queryByRole('button', { name: 'Confirm' })).not.toBeInTheDocument();
+    });
+
+    it('cleanup: hides Confirm without tasks:create', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT);
+      renderModal('cleanup');
+      expect(screen.queryByRole('button', { name: 'Confirm' })).not.toBeInTheDocument();
+    });
+
+    it('healthcheck: hides Confirm without healthcheck:update', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT);
+      renderModal('healthcheck');
+      expect(screen.queryByRole('button', { name: 'Confirm' })).not.toBeInTheDocument();
+    });
+
+    it('Cancel stays visible even without any write permission', () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderModal('firewall');
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    });
+
+    it('recomputes Confirm when the action changes on a reused instance', () => {
+      // The modal is a single instance reused across open/close cycles in ProtectQuickConfig, so a
+      // permission value frozen at first mount would strand a permitted action. This user holds
+      // repository-admin:edit but not healthcheck:update.
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT);
+      const { rerender } = renderWithTheme(
+        <ProtectBulkActionModal
+          open={true}
+          onOpenChange={jest.fn()}
+          action="healthcheck"
+          candidates={CANDIDATES}
+          onComplete={jest.fn()}
+        />
+      );
+      // healthcheck needs healthcheck:update, which this user lacks → no Confirm.
+      expect(screen.queryByRole('button', { name: 'Confirm' })).not.toBeInTheDocument();
+
+      // Re-open for firewall on the SAME instance (no unmount). canConfirm must recompute for
+      // repository-admin:edit, which the user holds → Confirm appears.
+      rerender(
+        <Theme>
+          <ProtectBulkActionModal
+            open={true}
+            onOpenChange={jest.fn()}
+            action="firewall"
+            candidates={CANDIDATES}
+            onComplete={jest.fn()}
+          />
+        </Theme>
+      );
+      expect(screen.getByRole('button', { name: 'Confirm' })).toBeInTheDocument();
+    });
   });
 });

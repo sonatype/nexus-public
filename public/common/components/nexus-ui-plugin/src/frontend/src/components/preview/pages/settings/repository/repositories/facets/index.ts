@@ -24,6 +24,8 @@ export { AptFacet } from './AptFacet';
 export { DockerFacet } from './DockerFacet';
 export { MavenFacet } from './MavenFacet';
 export { NugetFacet } from './NugetFacet';
+export { HuggingFaceFacet } from './HuggingFaceFacet';
 export { PyPiFacet } from './PyPiFacet';
 export { RawFacet } from './RawFacet';
 export { YumFacet } from './YumFacet';
+export { TerraformFacet } from './TerraformFacet';

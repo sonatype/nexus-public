@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { Box, Flex, Text, Badge } from '@radix-ui/themes';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, } from 'lucide-react';
 
 import { SettingsButton } from '../form';
 

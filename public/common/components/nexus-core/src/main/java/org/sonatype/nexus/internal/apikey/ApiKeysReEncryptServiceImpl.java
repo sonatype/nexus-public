@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.crypto.secrets.SecretsService.SECRETS_MIGRATION_VERSION;
 
@@ -58,9 +58,9 @@ public class ApiKeysReEncryptServiceImpl
       final Cooperation2Factory cooperationFactory,
       @Value("${nexus.secrets.cooperation.enabled:true}") final boolean cooperationEnabled)
   {
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.databaseCheck = checkNotNull(databaseCheck);
-    this.cooperation = checkNotNull(cooperationFactory).configure()
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.databaseCheck = requireNonNull(databaseCheck);
+    this.cooperation = requireNonNull(cooperationFactory).configure()
         .enabled(cooperationEnabled)
         .build(getClass()); // before re-encrypt-task
   }

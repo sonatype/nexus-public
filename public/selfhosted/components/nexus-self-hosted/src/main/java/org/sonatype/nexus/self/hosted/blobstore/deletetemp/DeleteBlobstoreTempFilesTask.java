@@ -23,7 +23,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.self.hosted.blobstore.deletetemp.DeleteBlobstoreTempFilesTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.self.hosted.blobstore.deletetemp.DeleteBlobstoreTempFilesTaskDescriptor.DAYS_OLDER_THAN;
 
@@ -37,7 +37,7 @@ public class DeleteBlobstoreTempFilesTask
 
   @Autowired
   public DeleteBlobstoreTempFilesTask(final BlobStoreManager blobStoreManager) {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
   }
 
   @Override

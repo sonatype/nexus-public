@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.common.io;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.io.ByteSize.ByteUnit.BYTES;
 import static org.sonatype.nexus.common.io.ByteSize.ByteUnit.GIGABYTES;
 import static org.sonatype.nexus.common.io.ByteSize.ByteUnit.KILOBYTES;
@@ -80,7 +80,7 @@ public final class ByteSize
 
   public ByteSize(final long value, final ByteUnit unit) {
     this.value = value;
-    this.unit = checkNotNull(unit);
+    this.unit = requireNonNull(unit);
   }
 
   public long value() {

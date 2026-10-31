@@ -19,8 +19,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 import com.google.common.collect.ForwardingList;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link List} wrapper that automatically detaches from the original in response to a mutating request
@@ -49,9 +48,9 @@ public class DetachingList<V>
    * @param detach The detach strategy
    */
   public DetachingList(final List<V> backing, final BooleanSupplier allowDetach, final Function<V, V> detach) {
-    this.backing = checkNotNull(backing);
-    this.allowDetach = checkNotNull(allowDetach);
-    this.detach = checkNotNull(detach);
+    this.backing = requireNonNull(backing);
+    this.allowDetach = requireNonNull(allowDetach);
+    this.detach = requireNonNull(detach);
   }
 
   /**

@@ -31,7 +31,7 @@ interface ExpressionPreviewProps {
 export function ExpressionPreview({ expression }: ExpressionPreviewProps) {
   const interpretation = useMemo(() => interpretExpression(expression), [expression]);
 
-  if (!expression.trim() || !interpretation.success) {
+  if (!(expression.trim() && interpretation.success)) {
     return null;
   }
 

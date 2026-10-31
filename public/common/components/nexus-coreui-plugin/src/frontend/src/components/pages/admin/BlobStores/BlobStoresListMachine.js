@@ -16,7 +16,7 @@
  */
 import Axios from 'axios';
 import {assign} from 'xstate';
-import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import {ListMachineUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 
 const BLOB_STORES_URL = 'service/rest/internal/ui/blobstores';
 
@@ -49,6 +49,9 @@ export default ListMachineUtils.buildListMachine({
     })
   },
   services: {
-    fetchData: () => Axios.get(BLOB_STORES_URL)
+    fetchData: async () => {
+      await ExtJS.waitForPermissions();
+      return Axios.get(BLOB_STORES_URL);
+    }
   }
 });

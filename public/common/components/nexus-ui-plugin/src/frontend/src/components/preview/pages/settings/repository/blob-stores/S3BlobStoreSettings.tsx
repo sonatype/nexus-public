@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Cloud, Plus, Trash2, AlertTriangle, Info } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import {
@@ -23,8 +23,9 @@ import {
   SettingsAlert,
   SettingsButton
 } from '../../../../shared/form';
+import { useIsLicensedEdition } from '../../../../shared/hooks';
 import { useS3DropdownValues } from './useBlobStores';
-import type { BlobStoreFormData, S3BlobStoreConfig, S3FailoverBucket } from './types';
+import type { BlobStoreFormData, S3BlobStoreConfig, } from './types';
 import './S3BlobStoreSettings.scss';
 
 interface S3BlobStoreSettingsProps {
@@ -137,9 +138,8 @@ export default function S3BlobStoreSettings({
   errors = {},
 }: S3BlobStoreSettingsProps) {
   const { values: dropdownValues, loading: dropdownLoading } = useS3DropdownValues();
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['basic']));
 
-  const isProEdition = ExtJS.isProEdition();
+  const isLicensedEdition = useIsLicensedEdition();
   const isFailoverAvailable = ExtJS.state().getValue('S3FailoverEnabled', false);
 
   const config: S3BlobStoreConfig = (data.bucketConfiguration as S3BlobStoreConfig) || {
@@ -148,18 +148,6 @@ export default function S3BlobStoreSettings({
     encryption: {},
     advancedBucketConnection: {},
     failoverBuckets: []
-  };
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
-      const next = new Set(prev);
-      if (next.has(section)) {
-        next.delete(section);
-      } else {
-        next.add(section);
-      }
-      return next;
-    });
   };
 
   const updateBucket = (field: string, value: unknown) => {
@@ -260,7 +248,7 @@ export default function S3BlobStoreSettings({
           disabled={disabled}
         />
 
-        {isProEdition && (
+        {isLicensedEdition && (
           <SettingsCheckbox
             name="s3-presigned"
             label={STRINGS.BASIC.PRESIGNED.label}

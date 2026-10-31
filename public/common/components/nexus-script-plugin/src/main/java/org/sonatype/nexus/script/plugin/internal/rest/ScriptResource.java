@@ -12,16 +12,12 @@
  */
 package org.sonatype.nexus.script.plugin.internal.rest;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.script.ScriptService;
@@ -36,28 +32,35 @@ import org.sonatype.nexus.script.plugin.internal.ScriptingDisabledException;
 import org.sonatype.nexus.script.plugin.internal.security.ScriptPermission;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.validation.Validate;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import org.springframework.stereotype.Component;
 
 /**
  * BREAD resource for managing {@link Script} instances.
@@ -91,16 +94,20 @@ public class ScriptResource
       final ScriptService scriptService,
       final EventManager eventManager)
   {
-    this.scriptManager = checkNotNull(scriptManager);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.scriptService = checkNotNull(scriptService);
-    this.eventManager = checkNotNull(eventManager);
+    this.scriptManager = requireNonNull(scriptManager);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.scriptService = requireNonNull(scriptService);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override
   @Timed
   @ExceptionMetered
   @Operation(summary = "List all stored scripts")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Stored scripts returned",
+          content = @Content(array = @ArraySchema(schema = @Schema(implementation = ScriptXO.class))))
+  })
   @RequiresPermissions("nexus:script:*:browse")
   public List<ScriptXO> browse() {
     List<ScriptXO> storedScripts = new ArrayList<>();
@@ -113,7 +120,11 @@ public class ScriptResource
   @Timed
   @ExceptionMetered
   @Operation(summary = "Read stored script by name")
-  @ApiResponses(@ApiResponse(responseCode = "404", description = "No script with the specified name"))
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Script returned",
+          content = @Content(schema = @Schema(implementation = ScriptXO.class))),
+      @ApiResponse(responseCode = "404", description = "No script with the specified name")
+  })
   public ScriptXO read(@PathParam("name") final String name) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.READ));
     return convert(findOr404(name));
@@ -128,6 +139,7 @@ public class ScriptResource
       @ApiResponse(responseCode = "404", description = "No script with the specified name"),
       @ApiResponse(responseCode = "410", description = "Script updating is disabled")
   })
+  @Validate
   public void edit(@PathParam("name") final String name, @NotNull @Valid final ScriptXO scriptXO) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.EDIT));
     checkArgument(name.equals(scriptXO.getName()),
@@ -153,6 +165,7 @@ public class ScriptResource
       @ApiResponse(responseCode = "410", description = "Script creation is disabled")
   })
   @RequiresPermissions("nexus:script:*:add")
+  @Validate
   public void add(@NotNull @Valid final ScriptXO scriptXO) {
     log.debug("Adding Script named: {}", scriptXO.getName());
     try {
@@ -184,11 +197,23 @@ public class ScriptResource
   @ExceptionMetered
   @Operation(summary = "Run stored script by name")
   @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Script executed successfully",
+          content = @Content(schema = @Schema(implementation = ScriptResultXO.class))),
       @ApiResponse(responseCode = "404", description = "No script with the specified name"),
+      @ApiResponse(responseCode = "410", description = "Script execution is disabled"),
       @ApiResponse(responseCode = "500", description = "Script execution failed with exception")
   })
   public ScriptResultXO run(@PathParam("name") final String name, final String args) {
     securityHelper.ensurePermitted(scriptPermission(name, RUN_ACTION));
+
+    if (!scriptManager.isEnabled()) {
+      log.debug("Script execution blocked - scripting is disabled");
+      throw new WebApplicationException(
+          Response.status(Response.Status.GONE)
+              .entity(new ScriptResultXO(name, "Script execution is disabled"))
+              .build());
+    }
+
     log.debug("Running Script named: {}", name); // NOSONAR
     Script script = findOr404(name);
 

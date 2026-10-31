@@ -19,7 +19,7 @@ import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 /**
@@ -34,8 +34,8 @@ public class RepositoryItemIDXO
   private String id;
 
   public RepositoryItemIDXO(String repositoryId, String id) {
-    this.repositoryId = checkNotNull(repositoryId);
-    this.id = checkNotNull(id);
+    this.repositoryId = requireNonNull(repositoryId);
+    this.id = requireNonNull(id);
   }
 
   public String getRepositoryId() {

@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * POJO {@link BlobStoreConfiguration} for tests only
@@ -90,7 +90,7 @@ public class MockBlobStoreConfiguration
 
   @Override
   public NestedAttributesMap attributes(final String key) {
-    checkNotNull(key);
+    requireNonNull(key);
 
     if (attributes == null) {
       attributes = Maps.newHashMap();

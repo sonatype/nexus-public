@@ -44,7 +44,7 @@ import org.sonatype.nexus.rest.Resource;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.coreui.internal.blobstore.BlobStoreInternalResource.RESOURCE_PATH;
 import org.springframework.stereotype.Component;
 
@@ -94,15 +94,15 @@ public class BlobStoreInternalResource
       final List<BlobStoreQuota> quotaFactoriesList,
       final RepositoryManager repositoryManager)
   {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.store = checkNotNull(store);
-    this.blobStoreDescriptorProvider = checkNotNull(blobStoreDescriptorProvider);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.store = requireNonNull(store);
+    this.blobStoreDescriptorProvider = requireNonNull(blobStoreDescriptorProvider);
     this.blobStoreQuotaTypes = QualifierUtil.buildQualifierBeanMap(quotaFactoriesList)
         .entrySet()
         .stream()
         .map(BlobStoreQuotaTypesUIResponse::new)
         .toList();
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @RequiresAuthentication

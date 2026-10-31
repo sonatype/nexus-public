@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Primary
 @Component
@@ -38,19 +38,19 @@ class DefaultCapabilityDescriptorRegistry
 
   @Autowired
   DefaultCapabilityDescriptorRegistry(final DefaultCapabilityDescriptorProvider defaultCapabilityDescriptorProvider) {
-    this.defaultCapabilityDescriptorProvider = checkNotNull(defaultCapabilityDescriptorProvider);
+    this.defaultCapabilityDescriptorProvider = requireNonNull(defaultCapabilityDescriptorProvider);
     this.dynamicDescriptors = new CopyOnWriteArraySet<CapabilityDescriptor>();
   }
 
   @Override
   public CapabilityDescriptorRegistry register(final CapabilityDescriptor capabilityDescriptor) {
-    dynamicDescriptors.add(checkNotNull(capabilityDescriptor));
+    dynamicDescriptors.add(requireNonNull(capabilityDescriptor));
     return this;
   }
 
   @Override
   public CapabilityDescriptorRegistry unregister(final CapabilityDescriptor capabilityDescriptor) {
-    dynamicDescriptors.remove(checkNotNull(capabilityDescriptor));
+    dynamicDescriptors.remove(requireNonNull(capabilityDescriptor));
     return this;
   }
 

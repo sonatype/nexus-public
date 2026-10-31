@@ -22,7 +22,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.sonatype.nexus.blobstore.SelectOption;
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class CustomS3RegionCapabilityConfiguration
     extends CapabilityConfigurationSupport
@@ -34,7 +34,7 @@ public class CustomS3RegionCapabilityConfiguration
 
   @Autowired
   public CustomS3RegionCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
+    requireNonNull(properties);
     this.customRegions = properties.get(REGIONS);
   }
 

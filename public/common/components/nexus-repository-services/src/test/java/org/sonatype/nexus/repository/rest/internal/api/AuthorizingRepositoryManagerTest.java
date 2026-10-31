@@ -13,6 +13,8 @@
 
 package org.sonatype.nexus.repository.rest.internal.api;
 
+import java.util.Optional;
+
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
@@ -35,7 +37,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -46,8 +50,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.EDIT;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class AuthorizingRepositoryManagerTest
@@ -78,8 +80,7 @@ public class AuthorizingRepositoryManagerTest
     when(repositoryManager.get(anyString())).thenReturn(repository);
     when(repositoryManager.get(eq("absent"))).thenReturn(null);
 
-    RepositoryCacheInvalidationService repositoryCacheInvalidationService =
-        new RepositoryCacheInvalidationService(repositoryManager, eventManager);
+    RepositoryCacheInvalidationService repositoryCacheInvalidationService = new RepositoryCacheInvalidationService();
     authorizingRepositoryManager = new AuthorizingRepositoryManagerImpl(
         repositoryManager, repositoryPermissionChecker, taskScheduler, repositoryCacheInvalidationService);
   }
@@ -203,16 +204,16 @@ public class AuthorizingRepositoryManagerTest
   @Test
   public void invalidateCacheProxyRepository() throws Exception {
     when(repository.getType()).thenReturn(new ProxyType());
-    ProxyFacet proxyFacet = mock(ProxyFacet.class);
-    when(repository.facet(ProxyFacet.class)).thenReturn(proxyFacet);
-    NegativeCacheFacet negativeCacheFacet = mock(NegativeCacheFacet.class);
-    when(repository.facet(NegativeCacheFacet.class)).thenReturn(negativeCacheFacet);
+    ProxyFacet proxyFacet = mock();
+    when(repository.optionalFacet(ProxyFacet.class)).thenReturn(Optional.of(proxyFacet));
+    NegativeCacheFacet negativeCacheFacet = mock();
+    when(repository.optionalFacet(NegativeCacheFacet.class)).thenReturn(Optional.of(negativeCacheFacet));
 
     authorizingRepositoryManager.invalidateCache("repository");
 
     verify(repositoryManager).get(eq("repository"));
     verify(repositoryPermissionChecker).ensureUserCanAdmin(eq(EDIT), eq(repository));
-    verify(repository).facet(ProxyFacet.class);
+    verify(repository).optionalFacet(ProxyFacet.class);
     verify(proxyFacet).invalidateProxyCaches();
     verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, proxyFacet);
   }
@@ -221,13 +222,13 @@ public class AuthorizingRepositoryManagerTest
   public void invalidateCacheGroupRepository() throws Exception {
     when(repository.getType()).thenReturn(new GroupType());
     GroupFacet groupFacet = mock(GroupFacet.class);
-    when(repository.facet(GroupFacet.class)).thenReturn(groupFacet);
+    when(repository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
 
     authorizingRepositoryManager.invalidateCache("repository");
 
     verify(repositoryManager).get(eq("repository"));
     verify(repositoryPermissionChecker).ensureUserCanAdmin(eq(EDIT), eq(repository));
-    verify(repository).facet(GroupFacet.class);
+    verify(repository).optionalFacet(GroupFacet.class);
     verify(groupFacet).invalidateGroupCaches();
     verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, groupFacet);
   }

@@ -47,7 +47,7 @@ import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher;
 import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.25
@@ -152,121 +152,121 @@ public abstract class MavenRecipeSupport
 
   @Autowired
   public void setArchetypeCatalogHandler(final MavenArchetypeCatalogHandler archetypeCatalogHandler) {
-    this.archetypeCatalogHandler = checkNotNull(archetypeCatalogHandler);
+    this.archetypeCatalogHandler = requireNonNull(archetypeCatalogHandler);
   }
 
   @Autowired
   public void setBrowseFacet(final Provider<BrowseFacet> browseFacet) {
-    this.browseFacet = checkNotNull(browseFacet);
+    this.browseFacet = requireNonNull(browseFacet);
   }
 
   @Autowired
   public void setConditionalRequestHandler(final ConditionalRequestHandler conditionalRequestHandler) {
-    this.conditionalRequestHandler = checkNotNull(conditionalRequestHandler);
+    this.conditionalRequestHandler = requireNonNull(conditionalRequestHandler);
   }
 
   @Autowired
   public void setContentDispositionHandler(final ContentDispositionHandler contentDispositionHandler) {
-    this.contentDispositionHandler = checkNotNull(contentDispositionHandler);
+    this.contentDispositionHandler = requireNonNull(contentDispositionHandler);
   }
 
   @Autowired
   public void setContentHeadersHandler(final ContentHeadersHandler contentHeadersHandler) {
-    this.contentHeadersHandler = checkNotNull(contentHeadersHandler);
+    this.contentHeadersHandler = requireNonNull(contentHeadersHandler);
   }
 
   @Autowired
   public void setExceptionHandler(final ExceptionHandler exceptionHandler) {
-    this.exceptionHandler = checkNotNull(exceptionHandler);
+    this.exceptionHandler = requireNonNull(exceptionHandler);
   }
 
   @Autowired
   public void setHandlerContributor(final HandlerContributor handlerContributor) {
-    this.handlerContributor = checkNotNull(handlerContributor);
+    this.handlerContributor = requireNonNull(handlerContributor);
   }
 
   @Autowired
   public void setLastDownloadedHandler(final LastDownloadedHandler lastDownloadedHandler) {
-    this.lastDownloadedHandler = checkNotNull(lastDownloadedHandler);
+    this.lastDownloadedHandler = requireNonNull(lastDownloadedHandler);
   }
 
   @Autowired
   public void setMavenArchetypeCatalogFacet(final Provider<MavenArchetypeCatalogFacet> mavenArchetypeCatalogFacet) {
-    this.mavenArchetypeCatalogFacet = checkNotNull(mavenArchetypeCatalogFacet);
+    this.mavenArchetypeCatalogFacet = requireNonNull(mavenArchetypeCatalogFacet);
   }
 
   @Autowired
   public void setMavenContentFacet(final Provider<MavenContentFacet> mavenContentFacet) {
-    this.mavenContentFacet = checkNotNull(mavenContentFacet);
+    this.mavenContentFacet = requireNonNull(mavenContentFacet);
   }
 
   @Autowired
   public void setMavenContentHandler(final MavenContentHandler mavenContentHandler) {
-    this.mavenContentHandler = checkNotNull(mavenContentHandler);
+    this.mavenContentHandler = requireNonNull(mavenContentHandler);
   }
 
   @Autowired
   public void setMavenMaintenanceFacet(final Provider<MavenMaintenanceFacet> mavenMaintenanceFacet) {
-    this.mavenMaintenanceFacet = checkNotNull(mavenMaintenanceFacet);
+    this.mavenMaintenanceFacet = requireNonNull(mavenMaintenanceFacet);
   }
 
   @Autowired
   public void setMavenMetadataRebuildFacet(final Provider<MavenMetadataRebuildFacet> mavenMetadataRebuildFacet) {
-    this.mavenMetadataRebuildFacet = checkNotNull(mavenMetadataRebuildFacet);
+    this.mavenMetadataRebuildFacet = requireNonNull(mavenMetadataRebuildFacet);
   }
 
   @Autowired
   public void setMavenMetadataRebuildHandler(final MavenMetadataRebuildHandler mavenMetadataRebuildHandler) {
-    this.mavenMetadataRebuildHandler = checkNotNull(mavenMetadataRebuildHandler);
+    this.mavenMetadataRebuildHandler = requireNonNull(mavenMetadataRebuildHandler);
   }
 
   @Autowired
   public void setMavenPathParser(final MavenPathParser mavenPathParser) {
-    this.mavenPathParser = checkNotNull(mavenPathParser);
+    this.mavenPathParser = requireNonNull(mavenPathParser);
   }
 
   @Autowired
   public void setPartialFetchHandler(final PartialFetchHandler partialFetchHandler) {
-    this.partialFetchHandler = checkNotNull(partialFetchHandler);
+    this.partialFetchHandler = requireNonNull(partialFetchHandler);
   }
 
   @Autowired
   public void setRemoveSnapshotsFacet(final Provider<RemoveSnapshotsFacet> removeSnapshotsFacet) {
-    this.removeSnapshotsFacet = checkNotNull(removeSnapshotsFacet);
+    this.removeSnapshotsFacet = requireNonNull(removeSnapshotsFacet);
   }
 
   @Autowired
   public void setRoutingHandler(final RoutingRuleHandler routingHandler) {
-    this.routingHandler = checkNotNull(routingHandler);
+    this.routingHandler = requireNonNull(routingHandler);
   }
 
   @Autowired
   public void setSearchFacet(final Provider<SearchFacet> searchFacet) {
-    this.searchFacet = checkNotNull(searchFacet);
+    this.searchFacet = requireNonNull(searchFacet);
   }
 
   @Autowired
   public void setSecurityFacet(final Provider<MavenSecurityFacet> securityFacet) {
-    this.securityFacet = checkNotNull(securityFacet);
+    this.securityFacet = requireNonNull(securityFacet);
   }
 
   @Autowired
   public void setSecurityHandler(final SecurityHandler securityHandler) {
-    this.securityHandler = checkNotNull(securityHandler);
+    this.securityHandler = requireNonNull(securityHandler);
   }
 
   @Autowired
   public void setTimingHandler(final TimingHandler timingHandler) {
-    this.timingHandler = checkNotNull(timingHandler);
+    this.timingHandler = requireNonNull(timingHandler);
   }
 
   @Autowired
   public void setVersionPolicyHandler(final VersionPolicyHandler versionPolicyHandler) {
-    this.versionPolicyHandler = checkNotNull(versionPolicyHandler);
+    this.versionPolicyHandler = requireNonNull(versionPolicyHandler);
   }
 
   @Autowired
   public void setViewFacet(final Provider<ConfigurableViewFacet> viewFacet) {
-    this.viewFacet = checkNotNull(viewFacet);
+    this.viewFacet = requireNonNull(viewFacet);
   }
 }

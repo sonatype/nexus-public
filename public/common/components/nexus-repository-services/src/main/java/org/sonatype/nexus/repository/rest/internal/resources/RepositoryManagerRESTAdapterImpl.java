@@ -44,7 +44,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.Optional.ofNullable;
@@ -83,10 +83,10 @@ public class RepositoryManagerRESTAdapterImpl
       final RepositoryPermissionChecker repositoryPermissionChecker,
       @Nullable final RepositoryMetricsService repositoryMetricsService)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.configurationStore = checkNotNull(configurationStore);
-    this.recipes = QualifierUtil.buildQualifierBeanMap(checkNotNull(recipesList));
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.configurationStore = requireNonNull(configurationStore);
+    this.recipes = QualifierUtil.buildQualifierBeanMap(requireNonNull(recipesList));
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
     this.repositoryMetricsService = Optional.ofNullable(repositoryMetricsService);
   }
 

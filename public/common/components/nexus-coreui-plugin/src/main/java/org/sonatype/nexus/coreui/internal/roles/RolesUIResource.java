@@ -27,7 +27,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
@@ -53,7 +53,7 @@ public class RolesUIResource
 
   @Autowired
   public RolesUIResource(final List<AuthorizationManager> authorizationManagers) {
-    this.authorizationManagers = checkNotNull(authorizationManagers);
+    this.authorizationManagers = requireNonNull(authorizationManagers);
   }
 
   /**

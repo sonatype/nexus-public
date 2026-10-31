@@ -56,6 +56,6 @@ public class AptAssetStore
       @Nullable final String continuationToken,
       final String pathPattern)
   {
-    return dao().browsePackageIndexAssets(repositoryId, limit, continuationToken, pathPattern);
+    return dao().browsePackageIndexAssets(repositoryId, limit, continuationToken, pathPattern, softDeleteAvailable());
   }
 }

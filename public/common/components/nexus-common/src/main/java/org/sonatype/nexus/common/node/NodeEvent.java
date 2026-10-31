@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.common.node;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Abstract super class for node events.
@@ -24,7 +24,7 @@ public abstract class NodeEvent
   private final String nodeId;
 
   public NodeEvent(final String nodeId) {
-    this.nodeId = checkNotNull(nodeId);
+    this.nodeId = requireNonNull(nodeId);
   }
 
   public String getNodeId() {

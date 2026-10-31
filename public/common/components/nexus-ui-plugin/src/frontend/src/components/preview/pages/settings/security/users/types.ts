@@ -29,6 +29,42 @@ export interface User {
 }
 
 /**
+ * Wire shape returned by the REST API. Kept separate from `User` so the
+ * UI can normalize (e.g. alias `emailAddress` -> `email`, default `roles`).
+ * Shared here so `useUsersApi` and `usersFormMachine` cannot drift.
+ */
+export interface RestUser {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  emailAddress: string;
+  source: string;
+  status: 'active' | 'disabled';
+  roles: string[];
+  externalRoles?: string[];
+  readOnly?: boolean;
+}
+
+/**
+ * Normalize a REST user payload into the UI `User` model.
+ */
+export function restToUser(rest: RestUser): User {
+  return {
+    userId: rest.userId,
+    realm: rest.source,
+    source: rest.source,
+    firstName: rest.firstName,
+    lastName: rest.lastName,
+    emailAddress: rest.emailAddress,
+    email: rest.emailAddress,
+    status: rest.status,
+    roles: rest.roles || [],
+    externalRoles: rest.externalRoles,
+    readOnly: rest.readOnly,
+  };
+}
+
+/**
  * User source/realm information
  */
 export interface UserSource {
@@ -98,47 +134,13 @@ export interface UsersPageProps {
  * Props for UsersList component
  */
 export interface UsersListProps {
-  /** Row click and View (eye) icon: navigate to User Profile */
+  /** Row click: navigate to Edit (for update-permitted users) or read-only User Profile. Parent owns the permission branch. */
   onSelect: (userId: string, realm: string) => void;
-  /** Edit (pencil) icon: navigate to Edit form */
-  onEdit?: (userId: string, realm: string) => void;
-  onDelete?: (userId: string, userName?: string) => void;
+  /** Optional per-row aria-label producer. Lets the parent set an accessible name that matches the row's actual destination. */
+  getRowAriaLabel?: (user: User) => string;
   onCreate: () => void;
-  canEdit?: boolean;
-  canDelete?: boolean;
   /** When true, fetches OAuth2 users and hides the source filter (cloud distribution only) */
   isCloud?: boolean;
-}
-
-/**
- * Props for UserDetail component
- */
-export interface UserDetailProps {
-  userId: string;
-  realm: string;
-  onClose: () => void;
-  onDelete: () => void;
-}
-
-/**
- * Props for UserForm component
- */
-export interface UserFormProps {
-  user?: User | null;
-  /** When editing, pass route params so form can load user before parent fetch completes */
-  userId?: string | null;
-  userSource?: string | null;
-  isCreate: boolean;
-  onSave: (data: UserFormData) => Promise<void>;
-  onCancel: () => void;
-  onDelete?: () => void;
-  loading?: boolean;
-  error?: string;
-  wizardStep?: number;
-  hideActions?: boolean;
-  onValidationChange?: (isValid: boolean) => void;
-  onDirtyChange?: (isDirty: boolean) => void;
-  onSubmitRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 /**
@@ -168,7 +170,42 @@ export const getFullName = (user: Pick<User, 'firstName' | 'lastName'>): string 
 /**
  * Get source label (Local vs external source name)
  */
-export const getSourceLabel = (source: string): string => 
+export const getSourceLabel = (source: string): string =>
   isExternalUser(source) ? source : 'Local';
 
+/**
+ * Context for evaluating whether a user is protected from deletion.
+ * Callers pass primitives read from ExtJS state, keeping this helper React-free.
+ */
+export interface ProtectionContext {
+  anonymousUsername?: string | null;
+  currentUserId?: string | null;
+}
 
+/**
+ * Returns a human-readable reason if the user is protected from deletion, else null.
+ * A protected user has the Delete button rendered but disabled with this reason as tooltip.
+ */
+export const getUserProtectionReason = (
+  user: Pick<User, 'userId' | 'source'>,
+  ctx: ProtectionContext,
+): string | null => {
+  if (isExternalUser(user.source)) {
+    return 'External users cannot be deleted from Nexus.';
+  }
+  if (ctx.anonymousUsername && user.userId === ctx.anonymousUsername) {
+    return 'The anonymous user is a system account and cannot be deleted.';
+  }
+  if (ctx.currentUserId && user.userId === ctx.currentUserId) {
+    return 'You cannot delete your own account.';
+  }
+  return null;
+};
+
+/**
+ * True when the user is protected from deletion (see getUserProtectionReason).
+ */
+export const isProtectedUser = (
+  user: Pick<User, 'userId' | 'source'>,
+  ctx: ProtectionContext,
+): boolean => getUserProtectionReason(user, ctx) !== null;

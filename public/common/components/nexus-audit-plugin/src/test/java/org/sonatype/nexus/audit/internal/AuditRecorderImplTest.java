@@ -12,35 +12,39 @@
  */
 package org.sonatype.nexus.audit.internal;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditDataRecordedEvent;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
-public class AuditRecorderImplTest
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class AuditRecorderImplTest
 {
   private static final String INITIATOR = "test/1.2.3.4";
 
@@ -61,8 +65,8 @@ public class AuditRecorderImplTest
   @InjectMocks
   private AuditRecorderImpl underTest;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     when(initiatorProvider.get()).thenReturn(INITIATOR);
     when(nodeAccess.getId()).thenReturn(NODE_ID);
     underTest.setEnabled(true);
@@ -77,7 +81,7 @@ public class AuditRecorderImplTest
   }
 
   @Test
-  public void testNoRecordStoredIfDisabled() {
+  void testNoRecordStoredIfDisabled() {
     AuditData data = makeAuditData();
     underTest.setEnabled(false);
     underTest.record(data);
@@ -86,7 +90,7 @@ public class AuditRecorderImplTest
   }
 
   @Test
-  public void testDefaultsAreFilledInIfMissing() {
+  void testDefaultsAreFilledInIfMissing() {
     AuditData data = makeAuditData();
     underTest.record(data);
 
@@ -100,7 +104,7 @@ public class AuditRecorderImplTest
   }
 
   @Test
-  public void testUnknownIsReplacedIfPrincipalIsPresent() {
+  void testUnknownIsReplacedIfPrincipalIsPresent() {
     when(initiatorProvider.get()).thenReturn("*UNKNOWN/1.2.3.4");
 
     AuditData data = makeAuditData();
@@ -119,7 +123,7 @@ public class AuditRecorderImplTest
   }
 
   @Test
-  public void testEventFiredWhenDataRecorded() {
+  void testEventFiredWhenDataRecorded() {
     AuditData data = makeAuditData();
     underTest.record(data);
 
@@ -127,5 +131,38 @@ public class AuditRecorderImplTest
     verifyNoMoreInteractions(eventManager);
 
     assertThat(eventCaptor.getValue(), notNullValue());
+  }
+
+  @Test
+  void testRecordThrowsNpeWhenDomainIsNull() {
+    AuditData data = new AuditData();
+    data.setType("bar");
+    data.setContext("baz");
+    // domain intentionally left null
+
+    assertThrows(NullPointerException.class, () -> underTest.record(data));
+    verifyNoInteractions(eventManager);
+  }
+
+  @Test
+  void testRecordThrowsNpeWhenTypeIsNull() {
+    AuditData data = new AuditData();
+    data.setDomain("foo");
+    data.setContext("baz");
+    // type intentionally left null
+
+    assertThrows(NullPointerException.class, () -> underTest.record(data));
+    verifyNoInteractions(eventManager);
+  }
+
+  @Test
+  void testRecordThrowsNpeEvenWhenDisabled() {
+    // Precondition must fire before the enabled gate
+    underTest.setEnabled(false);
+    AuditData data = new AuditData();
+    // domain and type both null
+
+    assertThrows(NullPointerException.class, () -> underTest.record(data));
+    verifyNoInteractions(eventManager);
   }
 }

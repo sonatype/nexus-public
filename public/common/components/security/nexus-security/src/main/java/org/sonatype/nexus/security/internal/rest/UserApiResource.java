@@ -49,7 +49,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.user.UserSearchCriteria.FALL_BACK_USER_LIMIT_TO_AVOID_OOM;
 
 /**
@@ -77,7 +77,7 @@ public class UserApiResource
   public UserApiResource(
       final SecuritySystem securitySystem)
   {
-    this.securitySystem = checkNotNull(securitySystem);
+    this.securitySystem = requireNonNull(securitySystem);
   }
 
   @Override

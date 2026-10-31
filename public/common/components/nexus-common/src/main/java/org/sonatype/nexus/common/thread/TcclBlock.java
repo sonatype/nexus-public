@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.common.thread;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to simplify boilerplate to begin (capture, set) and restore the current Thread's context-class-loader.
@@ -46,7 +46,7 @@ public final class TcclBlock
    * Set the Thread-context-class-loader to given class-loader and return reference to restore.
    */
   public static TcclBlock begin(final ClassLoader classLoader) {
-    checkNotNull(classLoader);
+    requireNonNull(classLoader);
 
     // capture
     Thread thread = Thread.currentThread();
@@ -62,7 +62,7 @@ public final class TcclBlock
    * Helper to return block using class-loader of given type.
    */
   public static TcclBlock begin(final Class<?> type) {
-    checkNotNull(type);
+    requireNonNull(type);
     return begin(type.getClassLoader());
   }
 
@@ -70,7 +70,7 @@ public final class TcclBlock
    * Helper to return block using class-loader of given owner.
    */
   public static TcclBlock begin(final Object owner) {
-    checkNotNull(owner);
+    requireNonNull(owner);
     return begin(owner.getClass().getClassLoader());
   }
 }

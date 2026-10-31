@@ -16,7 +16,6 @@ import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {
   NxSystemNotice,
 } from '@sonatype/react-shared-components';
-import CEHardLimitAlert from './CELimits/CEHardLimitAlert';
 import TelemetryWarningBanner from '../../shared/telemetry/TelemetryWarningBanner';
 
 import './SystemNotices.scss';
@@ -24,14 +23,18 @@ import UpgradeAlert from './UpgradeAlert/UpgradeAlert';
 import LicenseExpiryAlert from './LicenseExpiryAlert/LicenseExpiryAlert';
 import RecoveryModeAlert from './RecoveryModeAlert/RecoveryModeAlert';
 
-export default function SystemNotices () {
+export default function SystemNotices ({isPreviewUI = false} = {}) {
   const recoveryModeEnabled = ExtJS.useState(() => ExtJS.state().getValue('recovery.mode.enabled'));
+
+  // In Preview UI the recovery banner is rendered separately by the Radix
+  // SystemAlerts host, so skip the classic RecoveryModeAlert here to avoid a
+  // duplicate. All other banners render as before.
+  const showClassicRecoveryAlert = recoveryModeEnabled && !isPreviewUI;
 
   return <NxSystemNotice.Container className="nxrm-system-notices">
     <TelemetryWarningBanner />
-    <CEHardLimitAlert />
 
-    {recoveryModeEnabled ? <RecoveryModeAlert /> : <UpgradeAlert />}
+    {showClassicRecoveryAlert ? <RecoveryModeAlert /> : <UpgradeAlert />}
 
     <LicenseExpiryAlert />
   </NxSystemNotice.Container>;

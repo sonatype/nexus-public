@@ -65,10 +65,13 @@ describe('FeatureGate', () => {
   });
 
   describe('with a disabled feature key', () => {
-    // Using security.oauth2 since security.anonymous is now enabled (NEXUS-51085)
+    // Needs a flag that is genuinely still disabled. This fixture has already been moved
+    // twice — security.anonymous (NEXUS-51085), security.oauth2 (NEXUS-54266) — and
+    // security.sslcertificates is now enabled too (NEXUS-54265). system.upgrade is the last
+    // Coming Soon flag; whoever enables it will need a test-only flag instead.
     it('renders SettingsNotAvailablePage instead of children', () => {
       render(
-        <FeatureGate featureKey="security.oauth2" featureName="OAuth2">
+        <FeatureGate featureKey="system.upgrade" featureName="Upgrade">
           <div data-testid="child-content">Child content</div>
         </FeatureGate>
       );
@@ -79,13 +82,13 @@ describe('FeatureGate', () => {
 
     it('passes featureName to SettingsNotAvailablePage', () => {
       render(
-        <FeatureGate featureKey="security.oauth2" featureName="OAuth2">
+        <FeatureGate featureKey="system.upgrade" featureName="Upgrade">
           <div>Child content</div>
         </FeatureGate>
       );
 
       expect(
-        screen.getByText(/OAuth2 is still being prepared for the Nexus One UI/i)
+        screen.getByText(/Upgrade is still being prepared for the Nexus One UI/i)
       ).toBeInTheDocument();
     });
   });
@@ -108,12 +111,12 @@ describe('withFeatureGate', () => {
 
   describe('with a disabled feature key', () => {
     it('renders SettingsNotAvailablePage with the correct featureName', () => {
-      const GatedPage = withFeatureGate(SamplePage, 'security.oauth2', 'OAuth2');
+      const GatedPage = withFeatureGate(SamplePage, 'system.upgrade', 'Upgrade');
       render(<GatedPage />);
 
       expect(screen.queryByTestId('sample-page')).not.toBeInTheDocument();
       expect(
-        screen.getByText(/OAuth2 is still being prepared for the Nexus One UI/i)
+        screen.getByText(/Upgrade is still being prepared for the Nexus One UI/i)
       ).toBeInTheDocument();
     });
   });

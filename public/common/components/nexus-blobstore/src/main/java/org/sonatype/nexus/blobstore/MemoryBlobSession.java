@@ -29,7 +29,7 @@ import com.google.common.hash.HashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Simple in-memory {@link BlobSession}.
@@ -49,7 +49,7 @@ public class MemoryBlobSession
   private final Set<BlobId> deletes = new HashSet<>();
 
   public MemoryBlobSession(final BlobStore blobStore) {
-    this.blobStore = checkNotNull(blobStore);
+    this.blobStore = requireNonNull(blobStore);
   }
 
   @Override

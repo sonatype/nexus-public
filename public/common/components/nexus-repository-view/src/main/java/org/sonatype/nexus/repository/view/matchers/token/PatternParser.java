@@ -19,9 +19,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Parses a template pattern (see {@link TokenParser} for syntax) into a series of {@link Token}s.
@@ -47,7 +47,7 @@ public class PatternParser
   private static final List<Character> NONE = Collections.<Character>emptyList();
 
   public PatternParser(final String tokenPattern) {
-    checkNotNull(tokenPattern);
+    requireNonNull(tokenPattern);
 
     parseTemplate(new StringCharacterIterator(tokenPattern));
   }

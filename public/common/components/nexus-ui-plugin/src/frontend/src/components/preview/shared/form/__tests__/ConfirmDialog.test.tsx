@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 import { ConfirmDialog } from '../ConfirmDialog';
@@ -37,6 +37,34 @@ describe('ConfirmDialog', () => {
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
     expect(screen.getByText('Test Title')).toBeInTheDocument();
     expect(screen.getByText('Test message')).toBeInTheDocument();
+  });
+
+  it('announces the alert on open: labelled by title, described by message, focus on the dialog (NEXUS-53625)', async () => {
+    renderWithTheme(
+      <ConfirmDialog
+        {...defaultProps}
+        title="Delete LDAP Server"
+        message="Are you sure you want to delete this server?"
+        confirmLabel="Delete Server"
+      />
+    );
+
+    const dialog = screen.getByRole('alertdialog');
+
+    // Programmatic name (title) and description (message) are wired up so a
+    // screen reader can announce both when focus enters the container.
+    const labelledBy = dialog.getAttribute('aria-labelledby');
+    const describedBy = dialog.getAttribute('aria-describedby');
+    expect(labelledBy).toBeTruthy();
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(labelledBy as string)).toHaveTextContent('Delete LDAP Server');
+    expect(document.getElementById(describedBy as string)).toHaveTextContent(
+      'Are you sure you want to delete this server?'
+    );
+
+    // Initial focus lands on the dialog container (not the Cancel button), so
+    // VoiceOver reads the title + message on open instead of "Cancel, button".
+    await waitFor(() => expect(dialog).toHaveFocus());
   });
 
   it('does not render when closed', () => {

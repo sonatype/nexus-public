@@ -27,20 +27,6 @@
       node_id VARCHAR(100),
       attributes JSONB
     );
-
-<!-- 
-    CREATE INDEX IF NOT EXISTS idx_audit_events_domain_timestamp
-      ON audit_events (domain, timestamp DESC);
-
-    CREATE INDEX IF NOT EXISTS idx_audit_events_type
-      ON audit_events (type);
-
-    CREATE INDEX IF NOT EXISTS idx_audit_events_initiator
-      ON audit_events (initiator);
-
-    CREATE INDEX IF NOT EXISTS idx_audit_events_context
-      ON audit_events (context);
--->
   </insert>
 
   <insert id="createSchema" databaseId="H2">
@@ -54,20 +40,6 @@
       node_id VARCHAR(100),
       attributes JSON
     );
-
-<!-- 
-    CREATE INDEX IF NOT EXISTS idx_audit_events_domain_timestamp
-      ON audit_events (domain, timestamp DESC);
-
-    CREATE INDEX IF NOT EXISTS idx_audit_events_type
-      ON audit_events (type);
-
-    CREATE INDEX IF NOT EXISTS idx_audit_events_initiator
-      ON audit_events (initiator);
-
-    CREATE INDEX IF NOT EXISTS idx_audit_events_context
-      ON audit_events (context);
- -->
   </insert>
 
   <resultMap id="auditEventResult" type="org.sonatype.nexus.audit.internal.store.AuditEventData">
@@ -80,6 +52,16 @@
     <result property="nodeId" column="node_id"/>
     <result property="attributes" column="attributes" typeHandler="org.sonatype.nexus.datastore.mybatis.handlers.AttributesTypeHandler"/>
   </resultMap>
+
+  <!--
+    Match every row whose context "belongs to" repositoryName. context holds either the bare
+    repo name (repo-level events) or "<repo>:<suffix>" (component/asset events).
+  -->
+  <sql id="repositoryNameCondition">
+    <if test="repositoryName != null">
+      AND (context = #{repositoryName} OR context LIKE #{repositoryName} || ':%')
+    </if>
+  </sql>
 
   <sql id="whereClause">
     <where>
@@ -98,9 +80,7 @@
       <if test="endDate != null">
         AND timestamp &lt;= #{endDate}
       </if>
-      <if test="repositoryName != null">
-        AND (context = #{repositoryName} OR context LIKE #{repositoryName} || ':%')
-      </if>
+      <include refid="repositoryNameCondition"/>
     </where>
   </sql>
 
@@ -150,9 +130,7 @@
       <if test="endDate != null">
         AND timestamp &lt;= #{endDate}
       </if>
-      <if test="repositoryName != null">
-        AND (context = #{repositoryName} OR context LIKE #{repositoryName} || ':%')
-      </if>
+      <include refid="repositoryNameCondition"/>
     </where>
   </sql>
 
@@ -169,5 +147,23 @@
     FROM audit_events
     <include refid="whereClauseMultipleDomains"/>
   </select>
+
+  <!-- PostgreSQL does not allow LIMIT directly on DELETE; use a subquery. -->
+  <delete id="deleteOlderThan" databaseId="PostgreSQL">
+    DELETE FROM audit_events
+    WHERE id IN (
+      SELECT id FROM audit_events
+      WHERE timestamp &lt; #{cutoff}
+      ORDER BY timestamp ASC
+      LIMIT #{batchSize}
+    )
+  </delete>
+
+  <!-- H2 supports LIMIT directly on DELETE. -->
+  <delete id="deleteOlderThan" databaseId="H2">
+    DELETE FROM audit_events
+    WHERE timestamp &lt; #{cutoff}
+    LIMIT #{batchSize}
+  </delete>
 
 </mapper>

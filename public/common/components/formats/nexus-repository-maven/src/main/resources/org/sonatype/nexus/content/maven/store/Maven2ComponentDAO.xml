@@ -37,6 +37,7 @@
   <select id="findGavsWithSnaphots" resultType="org.sonatype.nexus.content.maven.store.GAV">
     SELECT namespace as "group", name, base_version, COUNT(*) AS count FROM maven2_component
     WHERE repository_id = #{repositoryId} AND base_version LIKE '%-SNAPSHOT'
+      <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
     GROUP BY namespace, name, base_version
     HAVING COUNT(*) &gt; #{minimumRetained};
   </select>
@@ -60,8 +61,12 @@
     </collection>
   </resultMap>
 
+  <!-- NEXUS-54969: c.* expanded to explicit component columns (excluding deleted_on/deleted_by). Includes
+       Maven's extra base_version column, which Maven2ComponentData maps. -->
   <select id="findComponentsForGav" resultType="Maven2ComponentData" resultMap="BlobComponentAssetsDataMap">
-    SELECT c.*, a.asset_id, a.asset_blob_id, b.blob_created
+    SELECT c.component_id, c.repository_id, c.namespace, c.name, c.kind, c.version,
+           c.normalized_version, c.attributes, c.created, c.last_updated, c.entity_version, c.base_version,
+           a.asset_id, a.asset_blob_id, b.blob_created
     FROM maven2_component c
            LEFT JOIN maven2_asset as a ON c.component_id = a.component_id
            LEFT JOIN maven2_asset_blob as b ON a.asset_blob_id = b.asset_blob_id
@@ -70,6 +75,10 @@
       AND (c.base_version = #{baseVersion} OR
            c.base_version = #{releaseVersion})
       AND c.base_version LIKE '%-SNAPSHOT'
+      <if test="softDeleteAvailable">
+        AND c.deleted_on IS NULL
+        AND (a.asset_id IS NULL OR a.deleted_on IS NULL)
+      </if>
     ORDER BY version DESC;
   </select>
 
@@ -80,7 +89,11 @@
   AND snapshots.namespace = releases.namespace
   AND snapshots.base_version LIKE '%-SNAPSHOT'
   AND snapshots.last_updated &lt;= (CURRENT_TIMESTAMP - CAST(#{gracePeriod} AS INT) * INTERVAL '1' DAY)
-  AND releases.base_version = REPLACE(snapshots.base_version, '-SNAPSHOT', '');
+  AND releases.base_version = REPLACE(snapshots.base_version, '-SNAPSHOT', '')
+  <if test="softDeleteAvailable">
+    AND snapshots.deleted_on IS NULL
+    AND releases.deleted_on IS NULL
+  </if>;
   </select>
 
   <select id="selectUnusedSnapshots" resultType="Integer">
@@ -90,6 +103,10 @@
            LEFT JOIN maven2_asset_blob ON maven2_asset.asset_blob_id = maven2_asset_blob.asset_blob_id
     WHERE maven2_component.repository_id = #{repositoryId}
       AND maven2_component.base_version LIKE '%-SNAPSHOT'
+      <if test="softDeleteAvailable">
+        AND maven2_component.deleted_on IS NULL
+        AND maven2_asset.deleted_on IS NULL
+      </if>
     GROUP BY maven2_component.component_id
     HAVING max(coalesce(maven2_asset.last_downloaded, maven2_asset_blob.blob_created)) &lt; #{olderThan}
     ORDER BY maven2_component.component_id
@@ -101,7 +118,8 @@
       FROM maven2_component
      WHERE namespace = #{namespace}
        AND name = #{name}
-       AND repository_id = #{repositoryId};
+       AND repository_id = #{repositoryId}
+       <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
   </select>
 
 </mapper>

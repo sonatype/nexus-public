@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.sonatype.nexus.ssl.plugin.internal.TrustStoreImpl.TRUSTED_CERTIFICATES_MIGRATION_COMPLETE;
 
 /**
@@ -53,9 +53,9 @@ public class TrustedCertificateMigrationService
       final TrustedSSLCertificateStore trustedSSLCertificateStore,
       final GlobalKeyValueStore globalKeyValueStore)
   {
-    this.trustedSSLCertificateStore = checkNotNull(trustedSSLCertificateStore);
-    this.keyStoreManager = checkNotNull(keyStoreManager);
-    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
+    this.trustedSSLCertificateStore = requireNonNull(trustedSSLCertificateStore);
+    this.keyStoreManager = requireNonNull(keyStoreManager);
+    this.globalKeyValueStore = requireNonNull(globalKeyValueStore);
   }
 
   public void migrate() {

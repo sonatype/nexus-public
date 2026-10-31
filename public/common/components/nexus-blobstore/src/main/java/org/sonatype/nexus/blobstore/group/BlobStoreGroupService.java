@@ -22,9 +22,17 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 public interface BlobStoreGroupService
 {
   /**
-   * Are blob store groups enabled, i.e. can they be created and modified?
+   * Are blob store groups enabled, i.e. can they be used and modified?
    */
   boolean isEnabled();
+
+  /**
+   * Can a new Blob Store Group be created? Returns {@code false} on CE (requires Pro license).
+   * Defaults to {@link #isEnabled()} for backwards compatibility.
+   */
+  default boolean canCreate() {
+    return isEnabled();
+  }
 
   /**
    * Takes a {@link BlobStore} and creates a {@link BlobStoreGroup} that contains the original blob store

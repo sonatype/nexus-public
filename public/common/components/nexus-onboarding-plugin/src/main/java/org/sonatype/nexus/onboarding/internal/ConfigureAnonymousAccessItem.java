@@ -19,7 +19,7 @@ import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,7 +35,7 @@ public class ConfigureAnonymousAccessItem
 
   @Autowired
   public ConfigureAnonymousAccessItem(final AnonymousManager anonymousManager) {
-    this.anonymousManager = checkNotNull(anonymousManager);
+    this.anonymousManager = requireNonNull(anonymousManager);
   }
 
   @Override

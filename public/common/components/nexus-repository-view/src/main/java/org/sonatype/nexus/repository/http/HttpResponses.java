@@ -18,11 +18,10 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
 
-import com.google.common.base.Joiner;
 import com.google.common.net.HttpHeaders;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.http.HttpStatus.*;
 
 /**
@@ -148,9 +147,9 @@ public class HttpResponses
       final String authenticationScheme,
       final String realmName)
   {
-    checkNotNull(message);
-    checkNotNull(authenticationScheme);
-    checkNotNull(realmName);
+    requireNonNull(message);
+    requireNonNull(authenticationScheme);
+    requireNonNull(realmName);
     return new Response.Builder()
         .status(Status.failure(UNAUTHORIZED, message))
         .header(HttpHeaders.WWW_AUTHENTICATE, String.format("%s realm=\"%s\"", authenticationScheme, realmName))
@@ -184,12 +183,12 @@ public class HttpResponses
   // Method not allowed: 405
 
   public static Response methodNotAllowed(final String methodName, final String... allowedMethods) {
-    checkNotNull(methodName);
-    checkNotNull(allowedMethods);
+    requireNonNull(methodName);
+    requireNonNull(allowedMethods);
     checkArgument(allowedMethods.length != 0);
     return new Response.Builder()
         .status(Status.failure(METHOD_NOT_ALLOWED, methodName))
-        .header(HttpHeaders.ALLOW, Joiner.on(',').join(allowedMethods))
+        .header(HttpHeaders.ALLOW, String.join(",", allowedMethods))
         .build();
   }
 

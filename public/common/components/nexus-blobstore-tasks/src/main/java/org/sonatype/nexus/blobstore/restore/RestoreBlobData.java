@@ -20,7 +20,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
@@ -49,14 +49,14 @@ public abstract class RestoreBlobData
       final BlobStore blobStore,
       final RepositoryManager repositoryManager)
   {
-    checkNotNull(repositoryManager);
-    checkNotNull(blobProperties);
+    requireNonNull(repositoryManager);
+    requireNonNull(blobProperties);
 
     this.blob = blob;
     this.blobProperties = blobProperties;
     this.blobStore = blobStore;
     this.repository = repositoryManager
-        .get(checkNotNull(getProperty(HEADER_PREFIX + REPO_NAME_HEADER), "Blob properties missing repository name"));
+        .get(requireNonNull(getProperty(HEADER_PREFIX + REPO_NAME_HEADER), "Blob properties missing repository name"));
   }
 
   public Blob getBlob() {

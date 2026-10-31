@@ -56,6 +56,38 @@ public class EscapeHelperTest
     assertThat(underTest.uriSegments("foo:path/bar:baz"), is("foo%3Apath/bar%3Abaz"));
   }
 
+  /**
+   * The base {@link EscapeHelper#uriSegments} method uses {@code String.split("/")}, which drops
+   * trailing empty segments — this is the original behavior and other formats (raw, apt, yum,
+   * huggingface) rely on it. This test locks that behavior in.
+   */
+  @Test
+  public void testUriSegments_dropsTrailingSlash() {
+    assertThat(underTest.uriSegments("simple/flask/"), is("simple/flask"));
+    assertThat(underTest.uriSegments("a/b/c/"), is("a/b/c"));
+  }
+
+  /**
+   * {@link EscapeHelper#uriSegmentsPreserveTrailing} is the PyPI-specific variant that preserves
+   * trailing empty segments. Upstream PEP 503 simple indexes serve DIFFERENT link prefixes for
+   * {@code /simple/pkg/} ({@code ../../packages/...}) vs {@code /simple/pkg} ({@code ../packages/...}),
+   * so silently dropping the trailing slash on the outbound proxy request pulls back one-level-short
+   * links that then resolve to a wrong upstream URL on the next fetch.
+   */
+  @Test
+  public void testUriSegmentsPreserveTrailing_preservesTrailingSlash() {
+    assertThat(underTest.uriSegmentsPreserveTrailing("simple/flask/"), is("simple/flask/"));
+    assertThat(underTest.uriSegmentsPreserveTrailing("simple/flask"), is("simple/flask"));
+    assertThat(underTest.uriSegmentsPreserveTrailing("a/b/c/"), is("a/b/c/"));
+    // Trailing double slash preserved too (signed URLs sign exact bytes; NEXUS-52769).
+    assertThat(underTest.uriSegmentsPreserveTrailing("simple/flask//"), is("simple/flask//"));
+    // Empty leading segment (absolute path style) preserved.
+    assertThat(underTest.uriSegmentsPreserveTrailing("/simple/flask/"), is("/simple/flask/"));
+    // Same encoding of special chars as the base method.
+    assertThat(underTest.uriSegmentsPreserveTrailing("foo/bar baz/"), is("foo/bar%20baz/"));
+    assertThat(underTest.uriSegmentsPreserveTrailing("foo:path/bar:baz"), is("foo%3Apath/bar%3Abaz"));
+  }
+
   @Test
   public void testCustomRules_emptyRules() {
     EscapeHelper customHelper = new EscapeHelper("");
@@ -84,7 +116,7 @@ public class EscapeHelperTest
 
   @Test
   public void testCustomRules_nullRulesUsesDefaults() {
-    EscapeHelper customHelper = new EscapeHelper(null);
+    EscapeHelper customHelper = new EscapeHelper((String) null);
 
     assertThat(customHelper.uriSegments("foo/bar+baz"), is("foo/bar+baz"));
     assertThat(customHelper.uriSegments("foo/bar%baz"), is("foo/bar%25baz"));

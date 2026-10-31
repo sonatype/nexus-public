@@ -50,7 +50,7 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
@@ -87,17 +87,17 @@ public class UploadManagerImpl
       final EventManager eventManager,
       final Set<ComponentUploadExtension> componentsUploadExtensions)
   {
-    this.uploadHandlers = QualifierUtil.buildQualifierBeanMap(checkNotNull(uploadHandlersList));
+    this.uploadHandlers = QualifierUtil.buildQualifierBeanMap(requireNonNull(uploadHandlersList));
     this.uploadDefinitions = Collections
         .unmodifiableList(uploadHandlers.values()
             .stream()
             .filter(UploadHandler::supportsApiUpload)
             .map(UploadHandler::getDefinition)
             .collect(toList()));
-    this.multipartHelper = checkNotNull(multipartHelper);
-    this.uploadComponentProcessor = checkNotNull(uploadComponentProcessor);
-    this.eventManager = checkNotNull(eventManager);
-    this.componentUploadExtensions = checkNotNull(componentsUploadExtensions);
+    this.multipartHelper = requireNonNull(multipartHelper);
+    this.uploadComponentProcessor = requireNonNull(uploadComponentProcessor);
+    this.eventManager = requireNonNull(eventManager);
+    this.componentUploadExtensions = requireNonNull(componentsUploadExtensions);
   }
 
   @Override
@@ -107,8 +107,8 @@ public class UploadManagerImpl
 
   @Override
   public UploadResponse handle(final Repository repository, final HttpServletRequest request) throws IOException {
-    checkNotNull(repository);
-    checkNotNull(request);
+    requireNonNull(repository);
+    requireNonNull(request);
 
     if (!repository.getConfiguration().isOnline()) {
       throw new ValidationErrorsException("Repository offline");
@@ -151,7 +151,7 @@ public class UploadManagerImpl
 
   @Override
   public UploadDefinition getByFormat(final String format) {
-    checkNotNull(format);
+    requireNonNull(format);
 
     UploadHandler handler = uploadHandlers.get(format);
     return handler != null ? handler.getDefinition() : null;

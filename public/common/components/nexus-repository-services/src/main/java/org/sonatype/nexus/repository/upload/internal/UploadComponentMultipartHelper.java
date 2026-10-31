@@ -48,7 +48,7 @@ import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletDiskFileUpl
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import org.springframework.stereotype.Component;
 
@@ -66,7 +66,7 @@ public class UploadComponentMultipartHelper
 
   @Autowired
   public UploadComponentMultipartHelper(final TempBlobFactory tempBlobFactory) {
-    this.tempBlobFactory = checkNotNull(tempBlobFactory);
+    this.tempBlobFactory = requireNonNull(tempBlobFactory);
   }
 
   /**

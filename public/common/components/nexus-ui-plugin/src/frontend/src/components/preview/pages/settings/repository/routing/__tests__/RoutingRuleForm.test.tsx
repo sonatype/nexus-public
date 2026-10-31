@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { RoutingRuleForm } from '../RoutingRuleForm';
 import { useRoutingRulesForm } from '../useRoutingRulesForm';
@@ -49,7 +49,7 @@ jest.mock('../RoutingRuleMatcher', () => {
         React.createElement('input', {
           'data-testid': 'matcher-input',
           value: props.matchers[0] || '',
-          onChange: function(e) { props.onChange([e.target.value]); }
+          onChange: (e) => { props.onChange([e.target.value]); }
         }),
         props.error && React.createElement('span', { 'data-testid': 'matcher-error' }, props.error)
       );

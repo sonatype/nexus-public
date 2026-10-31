@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.sql.query.syntax;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a {@link StringTerm} which should be treated as having a trailing wildcard
@@ -24,7 +24,7 @@ public record WildcardTerm(String term, boolean isAllowTokenization)
     implements StringTerm
 {
   public WildcardTerm {
-    checkNotNull(term);
+    requireNonNull(term);
   }
 
   public WildcardTerm(final String term) {

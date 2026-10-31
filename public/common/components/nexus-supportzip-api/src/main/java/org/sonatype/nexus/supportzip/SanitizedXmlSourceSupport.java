@@ -36,8 +36,8 @@ import org.sonatype.nexus.common.io.SafeXml;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link FileContentSourceSupport} that allows XSLT rewrites of existing XML content. Note that the transform
@@ -64,7 +64,7 @@ public class SanitizedXmlSourceSupport
       final String stylesheet)
   {
     super(type, path, file, priority);
-    this.stylesheet = checkNotNull(stylesheet);
+    this.stylesheet = requireNonNull(stylesheet);
   }
 
   @Override

@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -49,6 +50,8 @@ import org.sonatype.nexus.repository.apt.internal.debian.ControlFile.Paragraph;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore;
+import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore.DistComponentArchKey;
+import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore.FileMetadata;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -117,13 +120,6 @@ public class AptProxyMetadataFacet
    * Length of hash prefix to display in debug logs (first 8 hex characters).
    */
   private static final int HASH_PREFIX_LENGTH = 8;
-
-  /**
-   * Separator for composite keys (component|architecture) in CompressingTempFileStore.
-   */
-  private static final String SLICE_KEY_SEPARATOR = "|";
-
-  private static final String SLICE_KEY_SEPARATOR_PATTERN = "\\|";
 
   private static final Comparator<PackageEntry> STABLE_COMPARATOR = Comparator
       .comparing(PackageEntry::packageName)
@@ -637,9 +633,10 @@ public class AptProxyMetadataFacet
     Map<String, PackageEntry> cachedByFilename = new HashMap<>();
     allCachedPackages.values().forEach(e -> cachedByFilename.put(e.filename(), e));
 
-    // Add slices for cached architectures not advertised by upstream
-    // This ensures cached packages persist even if upstream stops advertising their architecture
-    Set<String> missingArchitectures = findMissingArchitectures(allCachedPackages, slices);
+    // Add slices for architectures that were in the previous Release but dropped by upstream.
+    // Reads the local previously-generated Release file so the detection is scoped to this
+    // distribution only (not cross-distribution KV data).
+    Set<String> missingArchitectures = findMissingArchitectures(distribution, slices);
     addSlicesForMissingArchitectures(slices, missingArchitectures);
 
     try (CompressingTempFileStore store = new CompressingTempFileStore()) {
@@ -672,11 +669,6 @@ public class AptProxyMetadataFacet
             }
           }
 
-          // Additionally, include ALL cached packages matching this slice's architecture
-          // This ensures cached packages persist even if deleted from upstream and not in previousEntries
-          // (NEXUS-49457: Keep cached packages available after upstream deletion)
-          addCachedPackagesForArchitecture(cachedEntries, allCachedPackages, slice);
-
           // 5. Merge: upstream first, then cached overrides (cached has correct local checksums)
           Map<String, PackageEntry> merged = new LinkedHashMap<>();
           merged.putAll(upstreamEntries);
@@ -699,7 +691,7 @@ public class AptProxyMetadataFacet
               slice.architecture());
 
           // Write with deterministic ordering - use composite key for store
-          String storeKey = slice.component() + SLICE_KEY_SEPARATOR + slice.architecture();
+          DistComponentArchKey storeKey = new DistComponentArchKey(distribution, slice.component(), slice.architecture());
           Writer writer = writersBySlice.computeIfAbsent(slice, k -> store.openOutput(storeKey));
           for (PackageEntry entry : sortedEntries) {
             writer.write(entry.indexSection());
@@ -713,13 +705,17 @@ public class AptProxyMetadataFacet
         }
       }
 
-      // Store package index files - parse composite key to get component and arch
-      for (Map.Entry<String, CompressingTempFileStore.FileMetadata> entry : store.getFiles().entrySet()) {
-        String[] parts = entry.getKey().split(SLICE_KEY_SEPARATOR_PATTERN);
-        String component = parts[0];
-        String arch = parts[1];
-        storePackageIndexFiles(aptFacet, distribution, component, arch, entry.getValue(),
+      // Store package index files
+      Map<String, Map<String, Map<String, FileMetadata>>> pkgIndexes = store.getFiles();
+      for (Entry<String, Map<String, Map<String, FileMetadata>>> distEntry : pkgIndexes.entrySet()) {
+          for (Entry<String, Map<String, FileMetadata>> componentEntry : distEntry.getValue().entrySet()) {
+          String component = componentEntry.getKey();
+          for (Entry<String, FileMetadata> archEntry : componentEntry.getValue().entrySet()) {
+            String arch = archEntry.getKey();
+            storePackageIndexFiles(aptFacet, distribution, component, arch, archEntry.getValue(),
             md5Builder, sha256Builder);
+          }
+        }
       }
     }
 
@@ -784,7 +780,7 @@ public class AptProxyMetadataFacet
 
           architectures.add(arch);
           // Use composite key with DEFAULT_COMPONENT
-          String storeKey = DEFAULT_COMPONENT + SLICE_KEY_SEPARATOR + arch;
+          DistComponentArchKey storeKey = new DistComponentArchKey(distribution, DEFAULT_COMPONENT, arch);
           Writer writer = writersByArch.computeIfAbsent(arch, k -> store.openOutput(storeKey));
           for (PackageEntry entry : sortedEntries) {
             writer.write(entry.indexSection());
@@ -798,13 +794,17 @@ public class AptProxyMetadataFacet
         }
       }
 
-      // Store package index files - parse composite key to get component and arch
-      for (Map.Entry<String, CompressingTempFileStore.FileMetadata> entry : store.getFiles().entrySet()) {
-        String[] parts = entry.getKey().split(SLICE_KEY_SEPARATOR_PATTERN);
-        String component = parts[0];
-        String arch = parts[1];
-        storePackageIndexFiles(aptFacet, distribution, component, arch, entry.getValue(),
+      // Store package index files
+      Map<String, Map<String, Map<String, FileMetadata>>> pkgIndexes = store.getFiles();
+      for (Entry<String, Map<String, Map<String, FileMetadata>>> distEntry : pkgIndexes.entrySet()) {
+          for (Entry<String, Map<String, FileMetadata>> componentEntry : distEntry.getValue().entrySet()) {
+          String component = componentEntry.getKey();
+          for (Entry<String, FileMetadata> archEntry : componentEntry.getValue().entrySet()) {
+            String arch = archEntry.getKey();
+            storePackageIndexFiles(aptFacet, distribution, component, arch, archEntry.getValue(),
             md5Builder, sha256Builder);
+          }
+        }
       }
     }
 
@@ -998,8 +998,7 @@ public class AptProxyMetadataFacet
       return Map.of();
     }
 
-    // Parse the existing file - it might be upstream or previously generated
-    // The merge algorithm handles both cases correctly
+    // Parse the previously generated Packages file for this distribution/component/arch
     return parsePackagesFile(content.get());
   }
 
@@ -1115,56 +1114,61 @@ public class AptProxyMetadataFacet
   }
 
   /**
-   * Adds all cached packages matching a slice's architecture to the cached entries map.
-   * This ensures cached packages persist even when deleted from upstream (NEXUS-49457).
+   * Finds architectures that were previously in this distribution's Release file but are
+   * no longer advertised by upstream. Uses the locally stored Release file so the detection
+   * is scoped to this distribution only — not cross-distribution KV data. Supports NEXUS-49457.
    *
-   * @param cachedEntries mutable map to add matching packages to
-   * @param allCachedPackages all cached packages from KV store
-   * @param slice the slice containing the architecture to match
-   */
-  private void addCachedPackagesForArchitecture(
-      final Map<String, PackageEntry> cachedEntries,
-      final Map<String, PackageEntry> allCachedPackages,
-      final Slice slice)
-  {
-    int beforeCount = cachedEntries.size();
-    int matchingArchCount = 0;
-    for (PackageEntry cached : allCachedPackages.values()) {
-      if (cached.architecture().equals(slice.architecture())) {
-        matchingArchCount++;
-        cachedEntries.putIfAbsent(cached.key(), cached);
-      }
-    }
-    int addedCount = cachedEntries.size() - beforeCount;
-
-    log.debug("Found {} cached entries for {}/{}: {} from requiredFilenames, {} added from " +
-        "architecture-based inclusion (total {} matching '{}' in KV store)",
-        cachedEntries.size(), slice.component(), slice.architecture(),
-        beforeCount, addedCount, matchingArchCount, slice.architecture());
-  }
-
-  /**
-   * Finds architectures that are present in cached packages but not advertised by upstream.
-   * This supports NEXUS-49457 by identifying cached packages that need slices preserved.
+   * <p>
+   * Slice creation semantics after this change:
+   * <ol>
+   * <li>Arch present in upstream Release → slice created from upstream data.</li>
+   * <li>Arch in prior local Release but dropped by upstream → slice preserved so
+   * previously-cached packages survive via the {@code previousEntries} mechanism.</li>
+   * <li>Arch in KV store only, never written into any local Release → slice
+   * <em>not</em> created. This differs from the old KV-scan behavior (removed in
+   * NEXUS-53742) but is correct: a package that was never proxied through this
+   * distribution has no prior Release entry to preserve.</li>
+   * </ol>
    *
-   * @param allCachedPackages all cached packages from KV store
-   * @param slices upstream slices discovered from Release file
-   * @return set of architectures present in cache but missing from upstream
+   * @param distribution the distribution being rebuilt (e.g. "focal")
+   * @param slices upstream slices discovered from the upstream Release file
+   * @return set of architectures present in the previous local Release but missing from upstream
    */
   private Set<String> findMissingArchitectures(
-      final Map<String, PackageEntry> allCachedPackages,
-      final Set<Slice> slices)
+      final String distribution,
+      final Set<Slice> slices) throws IOException
   {
-    Set<String> cachedArchitectures = allCachedPackages.values()
-        .stream()
-        .map(PackageEntry::architecture)
-        .collect(Collectors.toSet());
+    Set<String> previousArchitectures = loadArchitecturesFromPreviousRelease(distribution);
+    if (previousArchitectures.isEmpty()) {
+      return Set.of();
+    }
     Set<String> upstreamArchitectures = slices.stream()
         .map(Slice::architecture)
         .collect(Collectors.toSet());
-    Set<String> missingArchitectures = new HashSet<>(cachedArchitectures);
+    Set<String> missingArchitectures = new HashSet<>(previousArchitectures);
     missingArchitectures.removeAll(upstreamArchitectures);
     return missingArchitectures;
+  }
+
+  /**
+   * Reads the locally stored Release file for the given distribution and extracts the
+   * Architectures field. Returns an empty set if no previous Release exists.
+   */
+  private Set<String> loadArchitecturesFromPreviousRelease(final String distribution) throws IOException {
+    boolean isFlat = content().isFlat();
+    String releasePath = isFlat ? "/Release" : "/dists/" + distribution + "/Release";
+    Optional<Content> content = content().get(releasePath);
+    if (content.isEmpty()) {
+      return Set.of();
+    }
+    try (InputStream is = content.get().openInputStream()) {
+      String releaseText = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+      Matcher m = ARCHITECTURES_PATTERN.matcher(releaseText);
+      if (m.find()) {
+        return new HashSet<>(Arrays.asList(m.group(1).trim().split("\\s+")));
+      }
+    }
+    return Set.of();
   }
 
   /**

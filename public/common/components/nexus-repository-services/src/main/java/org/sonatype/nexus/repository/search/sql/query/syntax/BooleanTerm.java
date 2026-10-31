@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.repository.search.sql.query.syntax;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public record BooleanTerm(Boolean term)
     implements SingleValueTerm<Boolean>
 {
   public BooleanTerm {
-    checkNotNull(term);
+    requireNonNull(term);
   }
 
   @Override

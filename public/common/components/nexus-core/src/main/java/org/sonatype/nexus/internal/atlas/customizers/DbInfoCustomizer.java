@@ -25,7 +25,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.HIGH;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.DBINFO;
 import org.springframework.stereotype.Component;
@@ -44,7 +44,7 @@ public class DbInfoCustomizer
 
   @Autowired
   public DbInfoCustomizer(final DbDiagnostics dbDiagnostics) {
-    this.dbDiagnostics = checkNotNull(dbDiagnostics);
+    this.dbDiagnostics = requireNonNull(dbDiagnostics);
   }
 
   @Override

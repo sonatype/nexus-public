@@ -18,7 +18,7 @@ import java.util.List;
 
 import org.sonatype.nexus.repository.view.Content;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * The asset paths that were uploaded.
@@ -33,17 +33,17 @@ public class UploadResponse
 
   public UploadResponse(final List<String> assetPaths) {
     this.contents = Collections.emptyList();
-    this.assetPaths = checkNotNull(assetPaths);
+    this.assetPaths = requireNonNull(assetPaths);
   }
 
   public UploadResponse(final Collection<Content> contents, final List<String> assetPaths) {
-    this.contents = checkNotNull(contents);
-    this.assetPaths = checkNotNull(assetPaths);
+    this.contents = requireNonNull(contents);
+    this.assetPaths = requireNonNull(assetPaths);
   }
 
   public UploadResponse(final Content content, final List<String> assetPaths) {
-    this.contents = Collections.singletonList(checkNotNull(content));
-    this.assetPaths = checkNotNull(assetPaths);
+    this.contents = Collections.singletonList(requireNonNull(content));
+    this.assetPaths = requireNonNull(assetPaths);
   }
 
   public List<String> getAssetPaths() {

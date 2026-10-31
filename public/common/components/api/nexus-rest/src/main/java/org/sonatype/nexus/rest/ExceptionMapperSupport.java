@@ -16,11 +16,10 @@ import java.util.UUID;
 
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 
 /**
@@ -35,8 +34,9 @@ public abstract class ExceptionMapperSupport<E extends Throwable>
 
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
+  @Override
   public Response toResponse(final E exception) {
-    checkNotNull(exception);
+    requireNonNull(exception);
 
     // Generate unique identifier
     final String id = generateFaultId();
@@ -45,7 +45,7 @@ public abstract class ExceptionMapperSupport<E extends Throwable>
     if (log.isTraceEnabled()) {
       log.trace("(ID {}) Mapping exception: " + exception, id, exception);
     }
-    else {
+    else if (log.isDebugEnabled()) {
       log.debug("(ID {}) Mapping exception: " + exception, id);
     }
 

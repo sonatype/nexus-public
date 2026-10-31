@@ -13,7 +13,6 @@
 
 import { useState, useCallback } from 'react';
 import { restClient, parseApiError } from '../../../../../interface/api';
-import { ExtJS } from '../../../../../interface/ExtJS';
 import { useToast } from '../../../shared';
 
 import type {

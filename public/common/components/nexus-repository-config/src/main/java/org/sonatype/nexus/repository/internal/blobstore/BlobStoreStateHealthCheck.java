@@ -16,18 +16,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import jakarta.inject.Provider;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
+import org.apache.commons.text.StringEscapeUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 import static java.lang.String.format;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * Inform on the health of all BlobStores based on their lifecycle state.
@@ -41,14 +42,14 @@ public class BlobStoreStateHealthCheck
 
   @Autowired
   public BlobStoreStateHealthCheck(final Provider<BlobStoreManager> blobStoreManagerProvider) {
-    this.blobStoreManagerProvider = Preconditions.checkNotNull(blobStoreManagerProvider);
+    this.blobStoreManagerProvider = Objects.requireNonNull(blobStoreManagerProvider);
   }
 
   @Override
   protected Result check() {
     final List<String> blobStores = StreamSupport.stream(blobStoreManagerProvider.get().browse().spliterator(), false)
         .map(blobStore -> {
-          final String name = blobStore.getBlobStoreConfiguration().getName();
+          final String name = StringEscapeUtils.escapeHtml4(blobStore.getBlobStoreConfiguration().getName());
           if (!blobStore.isStarted()) {
             return format("Blob store '%s' reports as not started", name);
           }

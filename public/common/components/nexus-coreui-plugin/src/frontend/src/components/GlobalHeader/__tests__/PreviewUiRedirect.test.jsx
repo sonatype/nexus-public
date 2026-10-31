@@ -46,6 +46,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   restClient: {
     post: (...args) => mockRestClientPost(...args),
   },
+  useSideNavbarOpenState: () => [true],
+  HelpMenu: () => <div data-testid="help-menu" />,
 }));
 
 jest.mock('@uirouter/react', () => ({
@@ -58,10 +60,8 @@ jest.mock('../../../contexts/ThemeContext', () => ({
 
 jest.mock('../SearchRadix', () => () => <div data-testid="search-radix" />);
 jest.mock('../SystemStatusRadix', () => () => <div data-testid="system-status" />);
-jest.mock('../HelpMenuRadix', () => () => <div data-testid="help-menu" />);
 jest.mock('../LoginAndUserButtonRadix', () => () => <div data-testid="login-button" />);
 jest.mock('../../ThemeSwitcher/ThemeSwitcher', () => () => null);
-jest.mock('../../../hooks/useSideNavbarCollapsedState', () => () => [true]);
 
 import GlobalHeaderRadix from '../GlobalHeaderRadix';
 

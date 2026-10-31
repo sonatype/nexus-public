@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
@@ -88,7 +88,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   },
   Utils: {
     isBlank: jest.fn((v) => !v || !v.trim()),
-    notBlank: jest.fn((v) => v && v.trim()),
+    notBlank: jest.fn((v) => v?.trim()),
   },
   FormUtils: {
     fieldProps: jest.fn(() => ({})),
@@ -162,6 +162,7 @@ const renderWithTheme = (component: React.ReactElement) => {
 describe('UploadFormContainer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    window.dirty = [];
     mockUseUploadDefinition.mockReturnValue(defaultDefinitionResult);
     mockUseUploadForm.mockReturnValue(defaultFormResult);
     mockUseUploadableRepositories.mockReturnValue({
@@ -547,5 +548,71 @@ describe('UploadFormContainer', () => {
     renderWithTheme(<UploadFormContainer />);
     expect(screen.getByText('Target Repository')).toBeInTheDocument();
     expect(screen.getByText('Repository')).toBeInTheDocument();
+  });
+
+  describe('unsaved changes guard', () => {
+    const withFile = (overrides = {}) => ({
+      ...defaultFormResult,
+      formData: {
+        assets: [{ file: new File(['x'], 'test.jar'), extension: 'jar' }],
+        componentFields: { groupId: 'com.test', artifactId: 'test', version: '1.0.0' },
+      },
+      ...overrides,
+    });
+
+    it('does not register the form in window.dirty when pristine', () => {
+      mockUseUploadForm.mockReturnValue({ ...defaultFormResult, isDirty: false });
+
+      renderWithTheme(<UploadFormContainer />);
+
+      expect(window.dirty).not.toContain('upload-form');
+    });
+
+    it('registers the form in window.dirty when dirty', () => {
+      mockUseUploadForm.mockReturnValue({ ...defaultFormResult, isDirty: true });
+
+      renderWithTheme(<UploadFormContainer />);
+
+      expect(window.dirty).toContain('upload-form');
+    });
+
+    it('unregisters the form from window.dirty on unmount', () => {
+      mockUseUploadForm.mockReturnValue({ ...defaultFormResult, isDirty: true });
+
+      const { unmount } = renderWithTheme(<UploadFormContainer />);
+      expect(window.dirty).toContain('upload-form');
+
+      unmount();
+
+      expect(window.dirty).not.toContain('upload-form');
+    });
+
+    it('clears dirty registration and navigates back after a successful upload', async () => {
+      const mockSubmit = jest.fn().mockResolvedValue({ success: true, componentName: 'test' });
+      mockUseUploadForm.mockReturnValue(withFile({ isDirty: true, submit: mockSubmit }));
+
+      renderWithTheme(<UploadFormContainer />);
+      expect(window.dirty).toContain('upload-form');
+
+      await userEvent.click(screen.getByTestId('form-submit'));
+
+      await waitFor(() => expect(mockGo).toHaveBeenCalledWith('preview.browse.upload.list'));
+      expect(window.dirty).not.toContain('upload-form');
+    });
+
+    it('keeps the form dirty when the upload fails', async () => {
+      const mockSubmit = jest.fn().mockResolvedValue({ success: false, error: 'Upload failed' });
+      mockUseUploadForm.mockReturnValue(withFile({ isDirty: true, submit: mockSubmit }));
+
+      renderWithTheme(<UploadFormContainer />);
+
+      await userEvent.click(screen.getByTestId('form-submit'));
+
+      // Wait for the error to surface so the post-submit state update settles
+      // inside act, then assert the guard registration is untouched.
+      expect(await screen.findByText('Upload failed')).toBeInTheDocument();
+      expect(window.dirty).toContain('upload-form');
+      expect(mockGo).not.toHaveBeenCalledWith('preview.browse.upload.list');
+    });
   });
 });

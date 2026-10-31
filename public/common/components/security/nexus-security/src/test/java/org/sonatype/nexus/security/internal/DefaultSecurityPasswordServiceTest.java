@@ -13,11 +13,13 @@
 package org.sonatype.nexus.security.internal;
 
 import java.security.spec.InvalidKeySpecException;
+import java.util.concurrent.TimeUnit;
 
 import org.sonatype.nexus.crypto.HashingHandler;
 import org.sonatype.nexus.crypto.internal.HashingHandlerFactory;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
 
+import com.google.common.base.Ticker;
 import org.apache.shiro.crypto.hash.Hash;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +31,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -48,7 +53,7 @@ public class DefaultSecurityPasswordServiceTest
   @Before
   public void setUp() throws Exception {
     underTest = new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), "shiro1", null,
-        hashingHandlerFactory);
+        hashingHandlerFactory, true, 1000, 60);
     when(hashingHandlerFactory.create(any(String.class), any(byte[].class), any())).thenReturn(hashingHandler);
     when(hashingHandlerFactory.create(any(String.class))).thenReturn(hashingHandler);
   }
@@ -145,5 +150,153 @@ public class DefaultSecurityPasswordServiceTest
     String password = "admin123";
     String badHash = "$PBKDF2WithHmacSHA256$i=10000$invalid$hash";
     assertThat(underTest.passwordsMatch(password, badHash), is(false));
+  }
+
+  @Test
+  public void testSuccessfulVerificationIsCached() throws InvalidKeySpecException {
+    String password = "admin123";
+    String hash = "$PBKDF2WithHmacSHA256$i=10000$c2FsdHNhbHQ=$aGFzaGhhc2g=";
+    when(hashingHandler.verify(any(char[].class), eq(hash))).thenReturn(true);
+
+    assertThat(underTest.passwordsMatch(password, hash), is(true));
+    assertThat(underTest.passwordsMatch(password, hash), is(true));
+
+    // Second identical request is served from the cache; the (expensive) verify runs only once.
+    verify(hashingHandler, times(1)).verify(any(char[].class), eq(hash));
+  }
+
+  @Test
+  public void testFailedVerificationIsNotCached() throws InvalidKeySpecException {
+    String password = "wrong";
+    String hash = "$PBKDF2WithHmacSHA256$i=10000$c2FsdHNhbHQ=$aGFzaGhhc2g=";
+    when(hashingHandler.verify(any(char[].class), eq(hash))).thenReturn(false);
+
+    assertThat(underTest.passwordsMatch(password, hash), is(false));
+    assertThat(underTest.passwordsMatch(password, hash), is(false));
+
+    // Failures must keep paying the full hashing cost so brute-force guessing stays throttled.
+    verify(hashingHandler, times(2)).verify(any(char[].class), eq(hash));
+  }
+
+  @Test
+  public void testCacheKeyIncludesSubmittedPassword() throws InvalidKeySpecException {
+    String hash = "$PBKDF2WithHmacSHA256$i=10000$c2FsdHNhbHQ=$aGFzaGhhc2g=";
+    when(hashingHandler.verify(any(char[].class), eq(hash))).thenReturn(true);
+
+    assertThat(underTest.passwordsMatch("passwordOne", hash), is(true));
+    assertThat(underTest.passwordsMatch("passwordTwo", hash), is(true));
+
+    // A different submitted password must not hit the first password's cache entry.
+    verify(hashingHandler, times(2)).verify(any(char[].class), eq(hash));
+  }
+
+  @Test
+  public void testCacheKeyIncludesStoredHash() throws InvalidKeySpecException {
+    String password = "admin123";
+    String hashBeforeChange = "$PBKDF2WithHmacSHA256$i=10000$c2FsdC1vbmU=$aGFzaC1vbmU=";
+    String hashAfterChange = "$PBKDF2WithHmacSHA256$i=10000$c2FsdC10d28=$aGFzaC10d28=";
+    when(hashingHandler.verify(any(char[].class), eq(hashBeforeChange))).thenReturn(true);
+    when(hashingHandler.verify(any(char[].class), eq(hashAfterChange))).thenReturn(true);
+
+    assertThat(underTest.passwordsMatch(password, hashBeforeChange), is(true));
+    // A changed password produces a new stored hash, so the prior entry must not be reused.
+    assertThat(underTest.passwordsMatch(password, hashAfterChange), is(true));
+
+    verify(hashingHandler, times(1)).verify(any(char[].class), eq(hashBeforeChange));
+    verify(hashingHandler, times(1)).verify(any(char[].class), eq(hashAfterChange));
+  }
+
+  @Test
+  public void testVerificationNotCachedWhenCacheDisabled() throws InvalidKeySpecException {
+    DefaultSecurityPasswordService noCache = new DefaultSecurityPasswordService(new LegacyNexusPasswordService(),
+        "shiro1", null, hashingHandlerFactory, false, 1000, 60);
+    String password = "admin123";
+    String hash = "$PBKDF2WithHmacSHA256$i=10000$c2FsdHNhbHQ=$aGFzaGhhc2g=";
+    when(hashingHandler.verify(any(char[].class), eq(hash))).thenReturn(true);
+
+    assertThat(noCache.passwordsMatch(password, hash), is(true));
+    assertThat(noCache.passwordsMatch(password, hash), is(true));
+
+    verify(hashingHandler, times(2)).verify(any(char[].class), eq(hash));
+  }
+
+  @Test
+  public void testUnicodePasswordCachingIsKeyedCorrectly() throws InvalidKeySpecException {
+    String hash = "$PBKDF2WithHmacSHA256$i=10000$c2FsdHNhbHQ=$aGFzaGhhc2g=";
+    when(hashingHandler.verify(any(char[].class), eq(hash))).thenReturn(true);
+
+    // Multi-byte + surrogate-pair (emoji) password: repeating it must hit the cache (UTF-8 round-trips stably).
+    assertThat(underTest.passwordsMatch("p\u00e9\u4e2d\ud83d\ude00", hash), is(true));
+    assertThat(underTest.passwordsMatch("p\u00e9\u4e2d\ud83d\ude00", hash), is(true));
+    verify(hashingHandler, times(1)).verify(any(char[].class), eq(hash));
+
+    // A different Unicode password (differs only in the final emoji) must NOT collide on the same cache key.
+    assertThat(underTest.passwordsMatch("p\u00e9\u4e2d\ud83d\ude01", hash), is(true));
+    verify(hashingHandler, times(2)).verify(any(char[].class), eq(hash));
+  }
+
+  @Test
+  public void testCachedSuccessExpiresAfterConfiguredTtl() throws InvalidKeySpecException {
+    MutableTicker ticker = new MutableTicker();
+    DefaultSecurityPasswordService underTestWithTtl = new DefaultSecurityPasswordService(
+        new LegacyNexusPasswordService(), "shiro1", null, hashingHandlerFactory, true, 1000, 2, ticker);
+    String password = "admin123";
+    String hash = "$PBKDF2WithHmacSHA256$i=10000$c2FsdHNhbHQ=$aGFzaGhhc2g=";
+    when(hashingHandler.verify(any(char[].class), eq(hash))).thenReturn(true);
+
+    assertThat(underTestWithTtl.passwordsMatch(password, hash), is(true)); // verify #1, cached
+    assertThat(underTestWithTtl.passwordsMatch(password, hash), is(true)); // served from cache
+    verify(hashingHandler, times(1)).verify(any(char[].class), eq(hash));
+
+    ticker.advanceSeconds(3); // exceed the 2s expireAfterWrite
+
+    assertThat(underTestWithTtl.passwordsMatch(password, hash), is(true)); // entry expired -> verify #2
+    verify(hashingHandler, times(2)).verify(any(char[].class), eq(hash));
+  }
+
+  @Test
+  public void testNullSubmittedPasswordReturnsFalse() {
+    String hash = "$PBKDF2WithHmacSHA256$i=10000$c2FsdHNhbHQ=$aGFzaGhhc2g=";
+    assertThat(underTest.passwordsMatch(null, hash), is(false));
+    // Early return before any hashing/cache work.
+    verifyNoInteractions(hashingHandler);
+  }
+
+  @Test
+  public void testNullStoredHashReturnsFalse() {
+    assertThat(underTest.passwordsMatch("admin123", (String) null), is(false));
+    verifyNoInteractions(hashingHandler);
+  }
+
+  @Test
+  public void testHashOverloadBypassesCredentialCache() {
+    // The Hash-accepting overload delegates straight to Shiro; it never consults or populates the
+    // string-keyed verified-credentials cache (nor the Nexus HashingHandler path), so repeated calls are
+    // independent. This documents that intentional behaviour for future maintainers.
+    String password = "testpassword";
+    Hash hash = underTest.hashPassword(password);
+
+    assertThat(underTest.passwordsMatch(password, hash), is(true));
+    assertThat(underTest.passwordsMatch(password, hash), is(true));
+
+    verifyNoInteractions(hashingHandler);
+  }
+
+  /**
+   * Manually-advanced {@link Ticker} so cache-expiry behaviour can be tested deterministically without sleeping.
+   */
+  private static final class MutableTicker
+      extends Ticker
+  {
+    private long nanos;
+
+    @Override
+    public long read() {
+      return nanos;
+    }
+
+    void advanceSeconds(final long seconds) {
+      nanos += TimeUnit.SECONDS.toNanos(seconds);
+    }
   }
 }

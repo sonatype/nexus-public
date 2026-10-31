@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
-import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
+import org.sonatype.nexus.swagger.EditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
@@ -27,10 +27,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * @since 3.24
  */
-@JsonFilter(SwaggerEditionVisibility.NAME)
+@JsonFilter(EditionVisibility.NAME)
 @JsonIgnoreProperties({"format", "type"})
 public class RawHostedRepositoryApiRequest
-    extends HostedRepositoryApiRequest
+    extends HostedRepositoryApiRequest<HostedStorageAttributes>
 {
   private final RawAttributes raw;
 

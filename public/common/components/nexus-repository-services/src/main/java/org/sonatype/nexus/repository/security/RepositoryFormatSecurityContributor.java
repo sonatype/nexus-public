@@ -19,8 +19,8 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.security.config.MutableSecurityContributor;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.BreadActions.ADD;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
@@ -43,7 +43,7 @@ public class RepositoryFormatSecurityContributor
   private final Format format;
 
   public RepositoryFormatSecurityContributor(final Format format) {
-    this.format = checkNotNull(format);
+    this.format = requireNonNull(format);
   }
 
   /**
@@ -66,7 +66,7 @@ public class RepositoryFormatSecurityContributor
    * Add security configuration for given repository.
    */
   public void add(final Repository repository) {
-    checkNotNull(repository);
+    requireNonNull(repository);
     final String format = repository.getFormat().getValue();
     final String name = repository.getName();
 
@@ -85,7 +85,7 @@ public class RepositoryFormatSecurityContributor
    * Remove security configuration for given repository.
    */
   public void remove(final Repository repository) {
-    checkNotNull(repository);
+    requireNonNull(repository);
     final String format = repository.getFormat().getValue();
     final String name = repository.getName();
     final List<String> privilegeIds = asList(

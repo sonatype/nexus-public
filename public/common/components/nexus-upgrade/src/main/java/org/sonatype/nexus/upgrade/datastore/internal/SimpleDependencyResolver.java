@@ -29,7 +29,7 @@ import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * This resolver will return a new collection which contains the steps in order of {@link DependsOn}.
@@ -45,7 +45,7 @@ class SimpleDependencyResolver
   private final Collection<DatabaseMigrationStep> steps;
 
   SimpleDependencyResolver(final Collection<DatabaseMigrationStep> steps) {
-    this.steps = checkNotNull(steps);
+    this.steps = requireNonNull(steps);
   }
 
   /**

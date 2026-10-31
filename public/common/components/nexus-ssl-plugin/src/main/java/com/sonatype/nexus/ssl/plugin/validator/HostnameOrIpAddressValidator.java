@@ -29,6 +29,9 @@ public class HostnameOrIpAddressValidator
 {
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
     return InternetDomainName.isValid(value) || InetAddresses.isInetAddress(value);
   }
 }

@@ -217,7 +217,7 @@ export function validateRoutingRuleForm(data: RoutingRuleFormData): RoutingRuleF
     for (const matcher of validMatchers) {
       try {
         new RegExp(matcher);
-      } catch (e) {
+      } catch (_e) {
         errors.matchers = `Invalid regex pattern: ${matcher}`;
         break;
       }

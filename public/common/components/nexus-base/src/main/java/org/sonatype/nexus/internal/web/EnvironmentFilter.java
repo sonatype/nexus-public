@@ -36,11 +36,11 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.CONTENT_SECURITY_POLICY;
 import static com.google.common.net.HttpHeaders.SERVER;
 import static com.google.common.net.HttpHeaders.STRICT_TRANSPORT_SECURITY;
 import static com.google.common.net.HttpHeaders.X_CONTENT_TYPE_OPTIONS;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Sets up the basic environment for web-requests.
@@ -69,13 +69,13 @@ public class EnvironmentFilter
       @Value("${nexus.header.server:true}") final boolean includeServerHeader)
   {
     // cache "Server" header value
-    checkNotNull(applicationVersion);
+    requireNonNull(applicationVersion);
 
     this.serverHeader = includeServerHeader
         ? "Nexus/%s (%s)".formatted(applicationVersion.getVersion(), applicationVersion.getEdition())
         : null;
 
-    this.baseUrlManager = checkNotNull(baseUrlManager);
+    this.baseUrlManager = requireNonNull(baseUrlManager);
   }
 
   @Override

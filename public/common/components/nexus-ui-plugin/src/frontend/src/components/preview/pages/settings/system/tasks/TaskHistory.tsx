@@ -26,7 +26,7 @@ import './TaskHistory.scss';
  * A full execution history would require a dedicated API endpoint.
  */
 export function TaskHistory({ task }: TaskHistoryProps) {
-  const hasLastRun = !!task.lastRun;
+  const hasLastRun = Boolean(task.lastRun);
   const isSuccess = task.lastRunResult?.toLowerCase().startsWith('ok');
   const isFailed = task.lastRunResult?.toLowerCase().includes('error') || 
                    task.lastRunResult?.toLowerCase().includes('fail');

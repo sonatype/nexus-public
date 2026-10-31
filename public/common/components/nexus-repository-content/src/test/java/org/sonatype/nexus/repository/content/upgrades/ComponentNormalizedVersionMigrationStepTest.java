@@ -19,7 +19,7 @@ import java.util.Arrays;
 
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.kv.GlobalKeyValueStore;
+import org.sonatype.nexus.kv.upgrade.UpgradeNexusKeyValueStore;
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTaskDescriptor;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
@@ -60,7 +60,7 @@ public class ComponentNormalizedVersionMigrationStepTest
   private UpgradeTaskScheduler upgradeTaskScheduler;
 
   @Mock
-  private GlobalKeyValueStore globalKeyValueStore;
+  private UpgradeNexusKeyValueStore keyValueStore;
 
   @Mock
   private TaskScheduler scheduler;
@@ -81,7 +81,7 @@ public class ComponentNormalizedVersionMigrationStepTest
     when(nuget.getValue()).thenReturn("nuget");
 
     migrationStep =
-        new ComponentNormalizedVersionMigrationStep(Arrays.asList(nuget, maven2), globalKeyValueStore, scheduler,
+        new ComponentNormalizedVersionMigrationStep(Arrays.asList(nuget, maven2), keyValueStore, scheduler,
             upgradeTaskScheduler);
 
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
@@ -98,7 +98,7 @@ public class ComponentNormalizedVersionMigrationStepTest
   @Test
   public void testChecksum_order() {
     ComponentNormalizedVersionMigrationStep migrationStep2 =
-        new ComponentNormalizedVersionMigrationStep(Arrays.asList(maven2, nuget), globalKeyValueStore, scheduler,
+        new ComponentNormalizedVersionMigrationStep(Arrays.asList(maven2, nuget), keyValueStore, scheduler,
             upgradeTaskScheduler);
 
     assertThat(migrationStep.getChecksum(), is(migrationStep2.getChecksum()));
@@ -110,7 +110,7 @@ public class ComponentNormalizedVersionMigrationStepTest
   @Test
   public void testChecksum_different() {
     ComponentNormalizedVersionMigrationStep migrationStep2 =
-        new ComponentNormalizedVersionMigrationStep(Arrays.asList(nuget), globalKeyValueStore, scheduler,
+        new ComponentNormalizedVersionMigrationStep(Arrays.asList(nuget), keyValueStore, scheduler,
             upgradeTaskScheduler);
 
     assertThat(migrationStep.getChecksum(), not(migrationStep2.getChecksum()));

@@ -54,7 +54,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Stream.empty;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.common.entity.Continuations.BROWSE_LIMIT;
@@ -138,8 +138,8 @@ public class BlobRepositoryMismatchTask
       @Value("${blob.repository.name.mismatch.skipProcessing:false}") final boolean skipProcessing)
   {
     super(resolveConcurrencyLimit(concurrencyLimit));
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.taskResultStateStore = checkNotNull(taskResultStateStore);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.taskResultStateStore = requireNonNull(taskResultStateStore);
     this.skipProcessing = skipProcessing;
   }
 
@@ -169,7 +169,7 @@ public class BlobRepositoryMismatchTask
 
   @Override
   public void configure(final TaskConfiguration configuration) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     // Call super configure first to apply the new configuration
     super.configure(configuration);

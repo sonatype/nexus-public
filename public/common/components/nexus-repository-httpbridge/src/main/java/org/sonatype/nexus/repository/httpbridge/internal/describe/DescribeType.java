@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.httpbridge.internal.describe;
 
 import org.sonatype.nexus.common.text.Strings2;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Describe type.
@@ -30,7 +30,7 @@ public enum DescribeType
    * Parse type from flags. Either explicit HTML or JSON, or anything else will default to HTML.
    */
   public static DescribeType parse(String flags) {
-    checkNotNull(flags);
+    requireNonNull(flags);
     flags = Strings2.upper(flags).trim();
     if (flags.isEmpty()) {
       return HTML;

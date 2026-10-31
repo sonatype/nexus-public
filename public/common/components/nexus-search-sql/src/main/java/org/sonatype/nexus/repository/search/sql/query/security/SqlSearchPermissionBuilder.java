@@ -52,9 +52,9 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchWildcardValidator.containsWildcards;
@@ -83,10 +83,10 @@ public class SqlSearchPermissionBuilder
       final SelectorManager selectorManager,
       final SearchContentSelectorSqlFilterGenerator contentSelectorFilterGenerator)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.selectorManager = checkNotNull(selectorManager);
-    this.contentSelectorFilterGenerator = checkNotNull(contentSelectorFilterGenerator);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.selectorManager = requireNonNull(selectorManager);
+    this.contentSelectorFilterGenerator = requireNonNull(contentSelectorFilterGenerator);
   }
 
   /**

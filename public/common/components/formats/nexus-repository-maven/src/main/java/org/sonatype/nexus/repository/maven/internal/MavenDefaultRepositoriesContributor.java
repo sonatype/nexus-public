@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe;
 
 import org.springframework.context.annotation.Lazy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import org.springframework.stereotype.Component;
 
@@ -60,7 +60,7 @@ public class MavenDefaultRepositoriesContributor
 
   @Autowired
   public MavenDefaultRepositoriesContributor(@Lazy final RepositoryManager repositoryManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Override

@@ -16,6 +16,7 @@
  */
 
 import ExtJS from "./ExtJS";
+import { resolveEditionId } from "./editionUtils";
 
 /**
  * This is used to check the visibility of route defined with UIRouter. It expects a visibilityRequirements block
@@ -32,6 +33,11 @@ import ExtJS from "./ExtJS";
  *   permissionPrefixes: string []
  *   editions: string []
  *   requiresUser: boolean
+ *
+ * `editions` values are stable editionId identifiers (e.g. `'nexus-enterprise-edition'`) published
+ * by StatusStateContributor / EditionStateContributor. Prefer the exported edition constants
+ * (`EDITION_PRO`, `EDITION_ENTERPRISE`, …) over inline strings. The predicate falls back to the
+ * short-name edition when the state key is absent so gated routes stay visible.
  *
  * @param visibilityRequirements
  * @returns {boolean}
@@ -125,7 +131,7 @@ export function isVisible(visibilityRequirements) {
     return false;
   }
 
-  // check that edition requirements are met, i.e. must be PRO or COMMUNITY
+  // check that edition requirements are met against the stable editionId identifier
   if (editions && !meetsEditionRequirement(editions)) {
     return false;
   }
@@ -135,7 +141,7 @@ export function isVisible(visibilityRequirements) {
     return false;
   }
 
-  if (requiresUser && !Security.hasUser()) {
+  if (requiresUser && !Security.hasUser() && !hasAnonymousPermissions()) {
     return false
   }
 
@@ -269,10 +275,22 @@ function isTheRequiredCapabilityPresentAndActive(capability) {
   return activeTypes.includes(capability) && createdTypes.includes(capability);
 }
 
-function meetsEditionRequirement(editions) {
-  return editions.some((edition) => {
-    return NX.State.getEdition() === edition;
-  });
+/**
+ * Route-visibility predicate for the `editions` field in a visibilityRequirements block.
+ * Compares each entry against the stable edition identifier published by the backend
+ * ({@code editionId} state key, e.g. {@code nexus-professional-edition}) rather than the
+ * ambiguous short name — self-hosted Pro and cloud both report {@code PRO} as short name.
+ *
+ * Delegates the editionId lookup to {@link resolveEditionId}, which also handles the
+ * short-name fallback used when StatusStateContributor's try/catch swallows the primary
+ * publish.
+ *
+ * Exported so route-parity tests (AT-015) can call the real predicate against real route
+ * configuration instead of reimplementing the filter.
+ */
+export function meetsEditionRequirement(editions) {
+  const currentEditionId = resolveEditionId(NX.State);
+  return editions.some((edition) => currentEditionId === edition);
 }
 
 function isClustered() {
@@ -295,6 +313,25 @@ function hasValidDependencies() {
       !!window.NX.getApplication();
 
   return !!(Application && State && Permissions && Security && appReady);
+}
+
+// A `requiresUser` route should also be visible to an anonymous subject that has
+// been granted permissions (e.g. anonymous assigned nx-admin — NEXUS-47114).
+// Per-route permission checks above already filter routes the anonymous user
+// cannot access, so this only re-opens routes the anonymous user genuinely has
+// rights to.
+//
+// Permissions live at NX.Permissions.permissions (a flat map of id → permitted),
+// populated by NX.controller.Permissions from rapture_Security.getPermissions.
+// They are NOT contributed to NX.State — SecurityComponent.getState() only
+// contributes `user` and `anonymousUsername`.
+function hasAnonymousPermissions() {
+  const Security = NX?.Security;
+  if (!Security || Security.hasUser()) {
+    return false;
+  }
+  const perms = NX?.Permissions?.permissions;
+  return !!perms && Object.keys(perms).length > 0;
 }
 
 export function useIsVisible(visibilityRequirements) {

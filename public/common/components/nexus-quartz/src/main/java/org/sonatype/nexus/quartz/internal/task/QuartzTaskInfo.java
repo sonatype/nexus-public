@@ -35,8 +35,8 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 import static org.sonatype.nexus.scheduling.TaskState.WAITING;
 
@@ -86,9 +86,9 @@ public class QuartzTaskInfo
       final QuartzTaskState taskState,
       @Nullable final QuartzTaskFuture taskFuture)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.scheduler = checkNotNull(scheduler);
-    this.jobKey = checkNotNull(jobKey);
+    this.eventManager = requireNonNull(eventManager);
+    this.scheduler = requireNonNull(scheduler);
+    this.jobKey = requireNonNull(jobKey);
     this.removed = false;
     setNexusTaskState(taskFuture != null ? RUNNING : WAITING, taskState, taskFuture);
   }
@@ -102,8 +102,8 @@ public class QuartzTaskInfo
       final QuartzTaskState taskState,
       @Nullable final QuartzTaskFuture taskFuture)
   {
-    checkNotNull(newState);
-    checkNotNull(taskState);
+    requireNonNull(newState);
+    requireNonNull(taskState);
     checkState(!newState.isRunning() || taskFuture != null, "Running task must have future");
 
     final TaskConfiguration config = taskState.getConfiguration();

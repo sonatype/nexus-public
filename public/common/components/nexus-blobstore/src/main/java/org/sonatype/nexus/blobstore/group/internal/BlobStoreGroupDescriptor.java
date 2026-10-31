@@ -45,10 +45,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.CONFIG_KEY;
@@ -104,10 +104,10 @@ public class BlobStoreGroupDescriptor
       final List<FillPolicy> fillPoliciesList)
   {
     super(quotaService);
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.blobStoreUtil = checkNotNull(blobStoreUtil);
-    this.blobStoreGroupService = checkNotNull(blobStoreGroupService)::getIfAvailable;
-    this.fillPolicies = QualifierUtil.buildQualifierBeanMap(checkNotNull(fillPoliciesList));
+    this.blobStoreManager = requireNonNull(blobStoreManager);
+    this.blobStoreUtil = requireNonNull(blobStoreUtil);
+    this.blobStoreGroupService = requireNonNull(blobStoreGroupService)::getIfAvailable;
+    this.fillPolicies = QualifierUtil.buildQualifierBeanMap(requireNonNull(fillPoliciesList));
     this.members = new ItemselectFormField(
         MEMBERS_KEY,
         messages.membersLabel(),
@@ -161,6 +161,9 @@ public class BlobStoreGroupDescriptor
     super.validateConfig(config);
     validateEnabled();
     String name = config.getName();
+    if (!blobStoreManager.exists(name)) {
+      validateCanCreate();
+    }
 
     String fillPolicy = config.attributes(CONFIG_KEY).get(FILL_POLICY_KEY, String.class);
     if (StringUtils.isBlank(fillPolicy)) {
@@ -180,6 +183,14 @@ public class BlobStoreGroupDescriptor
   private void validateEnabled() {
     if (!isEnabled()) {
       throw new ValidationErrorsException("Blob store groups are not enabled");
+    }
+  }
+
+  private void validateCanCreate() {
+    BlobStoreGroupService service = blobStoreGroupService.get();
+    if (service != null && !service.canCreate()) {
+      throw new ValidationErrorsException(
+          "Creating Blob Store Groups requires Sonatype Nexus Repository Pro");
     }
   }
 

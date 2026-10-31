@@ -42,7 +42,6 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJob;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState;
-import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -75,10 +74,10 @@ import org.quartz.core.QuartzScheduler;
 import org.quartz.spi.JobStore;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.filterKeys;
 import static java.util.Collections.emptyMap;
+import static java.util.Objects.requireNonNull;
 import static org.quartz.JobKey.jobKey;
 import static org.quartz.TriggerBuilder.newTrigger;
 import static org.quartz.TriggerKey.triggerKey;
@@ -109,8 +108,6 @@ public abstract class QuartzSchedulerSPI
   public static final String MISSING_TRIGGER_RECOVERY = ".missingTriggerRecovery";
 
   public static final String MISSING_TRIGGER_DEFAULT_MESSAGE = "Job with key '%s' is missing its trigger";
-
-  public static final String PLAN_RECONCILIATION_TASK_ID = "blobstore.planReconciliation";
 
   protected static final String GROUP_NAME = "nexus";
 
@@ -151,13 +148,13 @@ public abstract class QuartzSchedulerSPI
       final DatabaseStatusDelayedExecutor delayedExecutor,
       @Value("${nexus.quartz.recoverInterruptedJobs:true}") final boolean recoverInterruptedJobs)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.jobStoreProvider = checkNotNull(jobStoreProvider);
-    this.schedulerProvider = checkNotNull(schedulerProvider);
-    this.lastShutdownTimeService = checkNotNull(lastShutdownTimeService);
+    this.eventManager = requireNonNull(eventManager);
+    this.nodeAccess = requireNonNull(nodeAccess);
+    this.jobStoreProvider = requireNonNull(jobStoreProvider);
+    this.schedulerProvider = requireNonNull(schedulerProvider);
+    this.lastShutdownTimeService = requireNonNull(lastShutdownTimeService);
     this.recoverInterruptedJobs = recoverInterruptedJobs;
-    this.delayedExecutor = checkNotNull(delayedExecutor);
+    this.delayedExecutor = requireNonNull(delayedExecutor);
 
     this.scheduleFactory = new QuartzScheduleFactory();
     this.triggerConverter = new QuartzTriggerConverter(this.scheduleFactory);
@@ -635,7 +632,7 @@ public abstract class QuartzSchedulerSPI
 
   @Override
   public boolean isTriggerMissing(final TaskInfo taskInfo) {
-    checkNotNull(taskInfo);
+    requireNonNull(taskInfo);
 
     if (!(taskInfo instanceof QuartzTaskInfo quartzTaskInfo)) {
       return false;
@@ -660,11 +657,6 @@ public abstract class QuartzSchedulerSPI
       if (old != null) {
         return updateJob(old, config, schedule);
       }
-
-      if (PLAN_RECONCILIATION_TASK_ID.equals(config.getTypeId()) && findTaskByTypeId(config.getTypeId()).isPresent()) {
-        log.warn("Task {} already scheduled, ignoring", PLAN_RECONCILIATION_TASK_ID);
-        throw new ValidationErrorsException("Task {} already exist, ignoring", PLAN_RECONCILIATION_TASK_ID);
-      }
       return createNewJob(config, schedule);
     }
     catch (SchedulerException e) {
@@ -681,15 +673,6 @@ public abstract class QuartzSchedulerSPI
           log.isDebugEnabled() ? e : e.getMessage());
       return Optional.empty();
     }
-  }
-
-  private Optional<QuartzTaskInfo> findTaskByTypeId(final String typeId) throws SchedulerException {
-    Map<JobKey, QuartzTaskInfo> tasks = allTasks();
-    return tasks.entrySet()
-        .stream()
-        .filter(entry -> entry.getValue().getConfiguration().getTypeId().equals(typeId))
-        .findFirst()
-        .map(Entry::getValue);
   }
 
   protected QuartzTaskInfo createNewJob(
@@ -898,7 +881,7 @@ public abstract class QuartzSchedulerSPI
    */
   @Guarded(by = STARTED)
   public boolean cancelJob(final JobKey jobKey) {
-    checkNotNull(jobKey);
+    requireNonNull(jobKey);
 
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       return scheduler.interrupt(jobKey);
@@ -987,8 +970,8 @@ public abstract class QuartzSchedulerSPI
   @Nullable
   @Override
   public TaskInfo getTaskByTypeId(final String typeId, final Map<String, String> config) {
-    checkNotNull(typeId);
-    checkNotNull(config);
+    requireNonNull(typeId);
+    requireNonNull(config);
     return listsTasks().stream()
         .filter(t -> typeId.equals(t.getTypeId()))
         .filter(matchConfig(config))
@@ -1014,8 +997,8 @@ public abstract class QuartzSchedulerSPI
 
   @Override
   public boolean findAndSubmit(final String typeId, final Map<String, String> config) {
-    checkNotNull(typeId);
-    checkNotNull(config);
+    requireNonNull(typeId);
+    requireNonNull(config);
     TaskInfo taskInfo = getTaskByTypeId(typeId, config);
     if (taskInfo == null) {
       return false;

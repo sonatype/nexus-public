@@ -117,9 +117,6 @@ export const mockPermissions = {
     CREATE: 'nexus:capabilities:create', 
     UPDATE: 'nexus:capabilities:update', 
     DELETE: 'nexus:capabilities:delete' 
-  },
-  MIGRATION: { 
-    READ: 'nexus:migration:read' 
   }
 };
 
@@ -141,6 +138,7 @@ export const mockExtJS = {
   urlOf: jest.fn().mockImplementation((path) => `http://localhost:8081${path}`),
   setDirtyStatus: jest.fn(),
   waitForExtJs: jest.fn().mockResolvedValue(true),
+  waitForPermissions: jest.fn().mockResolvedValue(undefined),
   fetchAuthenticationToken: jest.fn().mockResolvedValue('mock-token'),
   requestExtConfirmation: jest.fn().mockResolvedValue(true),
   useState: jest.fn().mockImplementation((selector) => {
@@ -154,7 +152,7 @@ export const mockExtJS = {
   // Authentication
   signOut: jest.fn(),
   // Edition helpers
-  isProEdition: jest.fn().mockReturnValue(true),
+  isLicensedEdition: jest.fn().mockReturnValue(true),
   isCommunityEdition: jest.fn().mockReturnValue(false),
   isOssEdition: jest.fn().mockReturnValue(false),
   // Status hook
@@ -566,6 +564,9 @@ export const mockUtils = {
  */
 export const createNexusUiPluginMock = (overrides = {}) => ({
   ExtJS: { ...mockExtJS, ...(overrides.ExtJS || {}) },
+  // Edition helper — mirrors mockExtJS.isLicensedEdition so components calling the hook directly
+  // (not via ExtJS.isLicensedEdition()) still get a sensible default.
+  useIsLicensedEdition: overrides.useIsLicensedEdition || jest.fn().mockReturnValue(true),
   Permissions: { ...mockPermissions, ...(overrides.Permissions || {}) },
   APIConstants: { ...mockAPIConstants, ...(overrides.APIConstants || {}) },
   ExtAPIUtils: { ...mockExtAPIUtils, ...(overrides.ExtAPIUtils || {}) },
@@ -588,7 +589,7 @@ export const createNexusUiPluginMock = (overrides = {}) => ({
   // Page hash utility
   isPageHashIncluding: overrides.isPageHashIncluding || jest.fn().mockReturnValue(false),
   // Login components
-  LoginPage: overrides.LoginPage || jest.fn().mockImplementation(({ logoConfig }) => 
+  LoginPage: overrides.LoginPage || jest.fn().mockImplementation(() =>
     require('react').createElement('div', { 'data-testid': 'login-page' }, 'LoginPage')
   ),
   // XState form infrastructure (used by form machines)
@@ -609,7 +610,7 @@ export const createNexusUiPluginMock = (overrides = {}) => ({
     HTTP: '/service/rest/v1/http-settings',
     ANONYMOUS: '/service/rest/v1/security/anonymous',
     SSL: '/service/rest/v1/ssl',
-    CLEANUP_POLICIES: '/service/rest/v1/cleanup-policies',
+    CLEANUP_POLICIES: '/service/rest/internal/cleanup-policies',
   },
   API_INTERNAL_UI: overrides.API_INTERNAL_UI || '/service/rest/internal/ui',
   restClient: overrides.restClient || {

@@ -12,25 +12,26 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.user;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
 import jakarta.ws.rs.core.Response.Status;
-
-import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
-import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
 import org.sonatype.nexus.security.internal.rest.ApiUser;
 import org.sonatype.nexus.security.internal.rest.ApiUserStatus;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
+import org.sonatype.nexus.security.user.DuplicateUserException;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
@@ -39,19 +40,18 @@ import org.sonatype.nexus.security.user.UserStatus;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -69,9 +69,6 @@ import static org.mockito.Mockito.when;
 class UserApiResourceTest
 {
   public static final String USER_ID = "jsmith";
-
-  @ValidationExecutor
-  private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
   @Mock
   private SecuritySystem securitySystem;
@@ -142,6 +139,22 @@ class UserApiResourceTest
     assertThat(ex.getResponse().getStatusInfo(), is(Status.NOT_FOUND));
   }
 
+  @Test
+  void testCreateUser_duplicateUser() throws Exception {
+    User user = createUser();
+    when(securitySystem.addUser(user, "admin123")).thenThrow(new DuplicateUserException(user.getUserId()));
+
+    ApiCreateUser createUser = new ApiCreateUser(USER_ID, "John", "Smith", "jsmith@example.org", "admin123",
+        ApiUserStatus.disabled, Collections.singleton("nx-admin"));
+
+    ValidationErrorsException ex =
+        assertThrows(ValidationErrorsException.class, () -> underTest.createUser(createUser));
+    assertThat(ex.getValidationErrors().size(), is(1));
+    assertThat(ex.getValidationErrors().get(0).getId(), is("userId"));
+    assertThat(ex.getValidationErrors().get(0).getMessage(),
+        is(String.format("User '%s' already exists.", USER_ID)));
+  }
+
   /*
    * Update user
    */
@@ -194,6 +207,79 @@ class UserApiResourceTest
     WebApplicationMessageException ex = assertThrows(WebApplicationMessageException.class,
         () -> underTest.updateUser("fred", apiUser), "The path's userId does not match the body");
     assertThat(ex.getResponse().getStatusInfo(), is(Status.BAD_REQUEST));
+  }
+
+  /**
+   * Verifies that LDAP users can be updated without lastName.
+   * Previously this would fail validation, but NEXUS-53662 fixed this
+   * to align with Swagger spec which only marks status as required.
+   */
+  @Test
+  void testUpdateUser_externalSource_withoutLastName() throws Exception {
+    ApiUser apiUser = new ApiUser(USER_ID, "John", null, "john@example.org",
+        "LDAP", ApiUserStatus.disabled, false, Collections.singleton("nx-admin"), Collections.emptySet());
+
+    underTest.updateUser(USER_ID, apiUser);
+
+    verify(securitySystem).setUsersRoles(USER_ID, "LDAP",
+        apiUser.getRoles()
+            .stream()
+            .map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r))
+            .collect(Collectors.toSet()));
+  }
+
+  /**
+   * Verifies that local users can be updated without lastName.
+   * The field is now optional to match Swagger specification.
+   */
+  @Test
+  void testUpdateUser_localSource_withoutLastName() throws Exception {
+    ApiUser apiUser = new ApiUser(USER_ID, "John", null, "john@example.org",
+        UserManager.DEFAULT_SOURCE, ApiUserStatus.disabled, false, Collections.singleton("nx-admin"), null);
+
+    underTest.updateUser(USER_ID, apiUser);
+
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(securitySystem).updateUser(captor.capture());
+    assertNull(captor.getValue().getLastName());
+    assertEquals("John", captor.getValue().getFirstName());
+    assertEquals("john@example.org", captor.getValue().getEmailAddress());
+  }
+
+  /**
+   * Verifies that local users can be updated without firstName.
+   * The field is now optional to match Swagger specification.
+   */
+  @Test
+  void testUpdateUser_localSource_withoutFirstName() throws Exception {
+    ApiUser apiUser = new ApiUser(USER_ID, null, "Smith", "john@example.org",
+        UserManager.DEFAULT_SOURCE, ApiUserStatus.disabled, false, Collections.singleton("nx-admin"), null);
+
+    underTest.updateUser(USER_ID, apiUser);
+
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(securitySystem).updateUser(captor.capture());
+    assertNull(captor.getValue().getFirstName());
+    assertEquals("Smith", captor.getValue().getLastName());
+    assertEquals("john@example.org", captor.getValue().getEmailAddress());
+  }
+
+  /**
+   * Verifies that local users can be updated without emailAddress.
+   * The field is now optional to match Swagger specification.
+   */
+  @Test
+  void testUpdateUser_localSource_withoutEmailAddress() throws Exception {
+    ApiUser apiUser = new ApiUser(USER_ID, "John", "Smith", null,
+        UserManager.DEFAULT_SOURCE, ApiUserStatus.disabled, false, Collections.singleton("nx-admin"), null);
+
+    underTest.updateUser(USER_ID, apiUser);
+
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(securitySystem).updateUser(captor.capture());
+    assertNull(captor.getValue().getEmailAddress());
+    assertEquals("John", captor.getValue().getFirstName());
+    assertEquals("Smith", captor.getValue().getLastName());
   }
 
   @Test

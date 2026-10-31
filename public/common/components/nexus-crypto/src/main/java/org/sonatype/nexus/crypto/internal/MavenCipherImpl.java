@@ -24,7 +24,7 @@ import org.sonatype.nexus.crypto.maven.MavenCipher;
 import com.google.common.base.CharMatcher;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import org.springframework.stereotype.Component;
 
@@ -58,8 +58,8 @@ public class MavenCipherImpl
 
   @Override
   public String encrypt(final CharSequence str, final String passPhrase) {
-    checkNotNull(str);
-    checkNotNull(passPhrase);
+    requireNonNull(str);
+    requireNonNull(passPhrase);
     return SHIELD_BEGIN + doEncrypt(str, passPhrase) + SHIELD_END;
   }
 
@@ -69,15 +69,15 @@ public class MavenCipherImpl
 
   @Override
   public String decrypt(final String str, final String passPhrase) {
-    checkNotNull(str);
-    checkNotNull(passPhrase);
+    requireNonNull(str);
+    requireNonNull(passPhrase);
     return doDecrypt(peel(str), passPhrase).toString();
   }
 
   @Override
   public char[] decryptChars(final String str, final String passPhrase) {
-    checkNotNull(str);
-    checkNotNull(passPhrase);
+    requireNonNull(str);
+    requireNonNull(passPhrase);
     CharBuffer charBuffer = doDecrypt(peel(str), passPhrase);
     char[] chars = new char[charBuffer.remaining()];
     charBuffer.get(chars);

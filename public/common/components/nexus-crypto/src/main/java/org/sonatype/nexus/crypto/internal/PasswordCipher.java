@@ -28,7 +28,7 @@ import org.sonatype.nexus.crypto.CryptoHelper;
 import com.google.common.base.Throwables;
 import org.bouncycastle.util.encoders.Base64Encoder;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Cipher implementation compatible with encryption used by plexus-cipher versions [1.6,].
@@ -57,15 +57,15 @@ public class PasswordCipher
   private final SecureRandom secureRandom;
 
   public PasswordCipher(final CryptoHelper cryptoHelper) {
-    this.cryptoHelper = checkNotNull(cryptoHelper);
+    this.cryptoHelper = requireNonNull(cryptoHelper);
     this.base64Encoder = new Base64Encoder();
     this.secureRandom = cryptoHelper.createSecureRandom();
     this.secureRandom.setSeed(System.nanoTime());
   }
 
   public byte[] encrypt(final byte[] payload, final String passPhrase) {
-    checkNotNull(payload);
-    checkNotNull(passPhrase);
+    requireNonNull(payload);
+    requireNonNull(passPhrase);
     try {
       byte[] salt = new byte[SALT_SIZE];
       secureRandom.nextBytes(salt);
@@ -90,8 +90,8 @@ public class PasswordCipher
   }
 
   public byte[] decrypt(final byte[] payload, final String passPhrase) {
-    checkNotNull(payload);
-    checkNotNull(passPhrase);
+    requireNonNull(payload);
+    requireNonNull(passPhrase);
     try {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       base64Encoder.decode(payload, 0, payload.length, baos);

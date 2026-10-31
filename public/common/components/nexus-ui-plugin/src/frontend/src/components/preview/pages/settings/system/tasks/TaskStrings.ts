@@ -24,4 +24,10 @@ export const TASK_TYPE_SELECTOR = {
 export const DYNAMIC_FORM_FIELDS = {
   ALL_REPOSITORIES_LABEL: '(All Repositories)',
   ALL_REPOSITORIES_VALUE: '*',
+  // Backend BlobStoreComponent.readWithAll() / readNoneGroupEntriesIncludingEntryForAll()
+  // emit a synthetic BlobStoreXO whose name is "(All Blob Stores)" and the descriptor
+  // uses idMapping("name") — so the persisted value equals the label.
+  // Coupling documented in NEXUS-53356 (2026-06).
+  ALL_BLOB_STORES_LABEL: '(All Blob Stores)',
+  ALL_BLOB_STORES_VALUE: '(All Blob Stores)',
 };

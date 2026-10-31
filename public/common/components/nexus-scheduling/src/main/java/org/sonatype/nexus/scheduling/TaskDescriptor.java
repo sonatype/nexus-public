@@ -89,8 +89,17 @@ public interface TaskDescriptor
 
   /**
    * Allows the descriptor to complete the configuration of the task before it is stored.
-   * 
+   *
    * @param config Instance of the task configuration to be completed.
    */
   void completeConfiguration(TaskConfiguration config);
+
+  /**
+   * Returns {@code true} if at most one instance of this task type should exist in the scheduler at any time.
+   * When {@code true}, the task scheduler will reject a second scheduling request if a task of this type
+   * already exists in the job store.
+   */
+  default boolean isSingletonTaskType() {
+    return false;
+  }
 }

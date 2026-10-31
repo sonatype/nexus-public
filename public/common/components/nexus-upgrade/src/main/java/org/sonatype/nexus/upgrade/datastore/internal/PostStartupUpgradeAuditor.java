@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.upgrade.events.UpgradeEventSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +39,7 @@ public class PostStartupUpgradeAuditor
 
   @Autowired
   public PostStartupUpgradeAuditor(final EventManager eventManager) {
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override

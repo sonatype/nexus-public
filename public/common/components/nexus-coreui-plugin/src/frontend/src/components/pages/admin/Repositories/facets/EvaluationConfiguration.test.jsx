@@ -25,6 +25,7 @@ describe('EvaluationConfiguration', () => {
     {
       context: {
         data: {
+          format: 'maven2',
           attributes: {
             evaluation: {
               mode: 'INHERIT'
@@ -56,7 +57,7 @@ describe('EvaluationConfiguration', () => {
 
     // Mock Axios GET for global settings
     Axios.get.mockImplementation((url) => {
-      if (url === '/service/rest/v1/evaluation/settings') {
+      if (url === 'service/rest/v1/evaluation/settings') {
         return Promise.resolve({ data: mockGlobalSettings });
       }
       return Promise.resolve({ data: {} });
@@ -81,6 +82,7 @@ describe('EvaluationConfiguration', () => {
       {
         context: {
           data: {
+            format: 'maven2',
             attributes: {
               evaluation: {
                 mode: 'OVERRIDE',
@@ -119,7 +121,7 @@ describe('EvaluationConfiguration', () => {
 
     // Wait for global settings to be fetched
     await waitFor(() => {
-      expect(Axios.get).toHaveBeenCalledWith('/service/rest/v1/evaluation/settings');
+      expect(Axios.get).toHaveBeenCalledWith('service/rest/v1/evaluation/settings');
     });
 
     const activityTimeFrameSelect = screen.getByLabelText('Activity Time Frame');
@@ -171,6 +173,7 @@ describe('EvaluationConfiguration', () => {
       {
         context: {
           data: {
+            format: 'maven2',
             attributes: {
               evaluation: {
                 mode: 'OVERRIDE',
@@ -213,6 +216,7 @@ describe('EvaluationConfiguration', () => {
         matches: jest.fn().mockReturnValue(false),
         context: {
           data: {
+            format: 'maven2',
             attributes: {
               evaluation: {
                 mode: 'OVERRIDE',
@@ -242,13 +246,14 @@ describe('EvaluationConfiguration', () => {
     render(<EvaluationConfiguration parentMachine={mockParentMachine} />);
 
     await waitFor(() => {
-      expect(Axios.get).toHaveBeenCalledWith('/service/rest/v1/evaluation/settings');
+      expect(Axios.get).toHaveBeenCalledWith('service/rest/v1/evaluation/settings');
     });
   });
 
   it('normalizes policyEvaluationStage format from API (STAGE_RELEASE to stage-release)', async () => {
     Axios.get.mockResolvedValue({
       data: {
+        format: 'maven2',
         activityTimeFrame: 30,
         artifactLatestVersions: 3,
         policyEvaluationStage: 'STAGE_RELEASE'
@@ -284,6 +289,7 @@ describe('EvaluationConfiguration', () => {
       {
         context: {
           data: {
+            format: 'maven2',
             attributes: {
               evaluation: {
                 mode: 'OVERRIDE',
@@ -327,5 +333,38 @@ describe('EvaluationConfiguration', () => {
     const {container} = render(<EvaluationConfiguration parentMachine={mockParentMachine} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  describe('unsupported formats', () => {
+    const machineFor = (format, pristineMode) => [
+      {
+        context: {
+          data: {
+            format,
+            attributes: {evaluation: {mode: pristineMode || 'INHERIT'}}
+          },
+          pristineData: pristineMode ? {attributes: {evaluation: {mode: pristineMode}}} : {name: ''}
+        }
+      },
+      mockSend
+    ];
+
+    it('hides the facet for an unsupported format, even when the repository is monitored', () => {
+      const {container} = render(<EvaluationConfiguration parentMachine={machineFor('raw', 'INHERIT')} />);
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('hides the facet when creating a repository in an unsupported format', () => {
+      const {container} = render(<EvaluationConfiguration parentMachine={machineFor('docker')} />);
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('shows the facet for a supported format that is not monitored', () => {
+      render(<EvaluationConfiguration parentMachine={machineFor('npm', 'DISABLE')} />);
+
+      expect(screen.getByText('Inherit from global evaluation settings')).toBeInTheDocument();
+    });
   });
 });

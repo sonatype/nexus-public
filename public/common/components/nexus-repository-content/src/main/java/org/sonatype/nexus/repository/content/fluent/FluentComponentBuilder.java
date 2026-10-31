@@ -46,7 +46,8 @@ public interface FluentComponentBuilder
   FluentComponentBuilder version(String version);
 
   /**
-   * Continue building the component using the given normalized_version.
+   * Continue building the component using the given normalized_version. Setting the version will also compute this
+   * value and invoking this manually should not generally be required
    */
   FluentComponentBuilder normalizedVersion(String normalizedVersion);
 
@@ -69,7 +70,7 @@ public interface FluentComponentBuilder
 
   /**
    * Find components within a group repository members
-   * 
+   *
    * @return stream of distinct components
    */
   Optional<FluentComponent> findInMembers();

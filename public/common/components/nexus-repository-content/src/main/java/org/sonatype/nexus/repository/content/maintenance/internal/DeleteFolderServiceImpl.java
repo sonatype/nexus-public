@@ -12,17 +12,27 @@
  */
 package org.sonatype.nexus.repository.content.maintenance.internal;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
+import org.sonatype.nexus.common.app.softdelete.SoftDeletedEntityInfo;
+import org.sonatype.nexus.common.app.softdelete.TrashIndexRecorder;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
@@ -33,14 +43,22 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeData;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
+import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
+import org.sonatype.nexus.repository.content.maintenance.SingleAssetMaintenanceFacet;
+import org.sonatype.nexus.repository.content.store.AssetStore;
+import org.sonatype.nexus.repository.content.store.ComponentStore;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.apache.shiro.subject.Subject;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -48,7 +66,7 @@ import com.google.common.base.Splitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.time.OffsetDateTime.now;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
@@ -75,6 +93,11 @@ public class DeleteFolderServiceImpl
 
   private final DatabaseCheck databaseCheck;
 
+  private final SoftDeleteFormatGate softDeleteFormatGate;
+
+  @Autowired(required = false)
+  private TrashIndexRecorder trashIndexRecorder;
+
   @Autowired
   public DeleteFolderServiceImpl(
       final BrowseNodeQueryService browseNodeQueryService,
@@ -82,14 +105,16 @@ public class DeleteFolderServiceImpl
       final ContentPermissionChecker contentPermissionChecker,
       final VariableResolverAdapterManager variableResolverAdapterManager,
       final SecurityHelper securityHelper,
-      final DatabaseCheck databaseCheck)
+      final DatabaseCheck databaseCheck,
+      final SoftDeleteFormatGate softDeleteFormatGate)
   {
-    this.browseNodeQueryService = checkNotNull(browseNodeQueryService);
-    this.configuration = checkNotNull(configuration);
-    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
-    this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.databaseCheck = checkNotNull(databaseCheck);
+    this.browseNodeQueryService = requireNonNull(browseNodeQueryService);
+    this.configuration = requireNonNull(configuration);
+    this.contentPermissionChecker = requireNonNull(contentPermissionChecker);
+    this.variableResolverAdapterManager = requireNonNull(variableResolverAdapterManager);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.databaseCheck = requireNonNull(databaseCheck);
+    this.softDeleteFormatGate = requireNonNull(softDeleteFormatGate);
   }
 
   @Override
@@ -100,7 +125,11 @@ public class DeleteFolderServiceImpl
 
     boolean canDeleteComponent = canDeleteComponent(repository);
 
-    if (this.databaseCheck.isPostgresql()) {
+    // The plain deleteFolders() path removes assets/components but relies on the asynchronous browse-node
+    // trimming that reacts to hard-delete events. Soft-delete records deletions as UPDATEs (deleted_on),
+    // which never fire those events, so browse nodes would linger and 404 on click. Use the browse-node-aware
+    // path (which removes nodes synchronously) whenever soft-delete is enabled, in addition to PostgreSQL.
+    if (this.databaseCheck.isPostgresql() || softDeleteFormatGate.isEnabled()) {
       deleteFoldersAndBrowseNode(repository, treePath, timestamp, contentFacet, contentMaintenance, maxNodes,
           canDeleteComponent);
     }
@@ -145,12 +174,12 @@ public class DeleteFolderServiceImpl
             // After deleting the asset, check if the component has any remaining assets
             // If not, delete the component to prevent orphaned components
             if (assetDeleted && canDeleteComponent) {
-              checkDeleteComponentWithAssets(timestamp, contentFacet, contentMaintenance, node);
+              checkDeleteComponentWithAssets(repository, timestamp, contentFacet, contentMaintenance, node);
             }
           }
           else {
             // For nodes with only component or only asset, use the original logic
-            checkDeleteComponent(timestamp, contentFacet, contentMaintenance, canDeleteComponent, node);
+            checkDeleteComponent(repository, timestamp, contentFacet, contentMaintenance, canDeleteComponent, node);
             checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
           }
         }
@@ -262,6 +291,7 @@ public class DeleteFolderServiceImpl
   }
 
   boolean checkDeleteComponent(
+      final Repository repository,
       final OffsetDateTime timestamp,
       final ContentFacet contentFacet,
       final ContentMaintenanceFacet contentMaintenance,
@@ -271,7 +301,7 @@ public class DeleteFolderServiceImpl
     if (canDeleteComponent && node.getAssetId() == null && node.getComponentId() != null) {
       return contentFacet.components()
           .find(node.getComponentId())
-          .map(component -> deleteComponent(component, timestamp, contentMaintenance))
+          .map(component -> deleteComponent(repository, component, timestamp, contentMaintenance))
           .orElse(true); // If component not found, consider it already deleted
     }
     return true; // No component associated with this node or cannot delete
@@ -290,6 +320,7 @@ public class DeleteFolderServiceImpl
    *         false only if component deletion was attempted and failed
    */
   boolean checkDeleteComponentWithAssets(
+      final Repository repository,
       final OffsetDateTime timestamp,
       final ContentFacet contentFacet,
       final ContentMaintenanceFacet contentMaintenance,
@@ -303,7 +334,7 @@ public class DeleteFolderServiceImpl
             boolean hasAssets = component.assets().stream().findAny().isPresent();
             if (!hasAssets) {
               // No assets left, delete the component
-              return deleteComponent(component, timestamp, contentMaintenance);
+              return deleteComponent(repository, component, timestamp, contentMaintenance);
             }
             else {
               // Component still has assets, don't delete it yet
@@ -335,6 +366,7 @@ public class DeleteFolderServiceImpl
   }
 
   private boolean deleteComponent(
+      final Repository repository,
       final FluentComponent component,
       final OffsetDateTime timestamp,
       final ContentMaintenanceFacet contentMaintenance)
@@ -342,6 +374,9 @@ public class DeleteFolderServiceImpl
     OffsetDateTime lastUpdated = component.lastUpdated();
     if (timestamp.isAfter(lastUpdated)) {
       try {
+        if (shouldSoftDelete(repository)) {
+          return softDeleteComponent(repository, component, contentMaintenance, timestamp);
+        }
         contentMaintenance.deleteComponent(component);
         return true;
       }
@@ -367,8 +402,25 @@ public class DeleteFolderServiceImpl
     if (timestamp.isAfter(asset.blob().map(AssetBlob::blobCreated).orElse(now()))
         && canDeleteAsset(repositoryName, format, variableResolverAdapter, asset)) {
       try {
+        if (shouldSoftDelete(repository)) {
+          return softDeleteAsset(repository, asset, contentMaintenance, timestamp);
+        }
         contentMaintenance.deleteAsset(asset);
         return true;
+      }
+      catch (WebApplicationException e) {
+        // A 409 Conflict means the format's referential-integrity guard rejected the deletion
+        // (e.g. a Docker/OCI blob still referenced by a live manifest). This is expected
+        // behaviour, not an application error — log at debug and skip.
+        if (e.getResponse().getStatus() == Response.Status.CONFLICT.getStatusCode()) {
+          log.debug("Skipping deletion of referenced asset '{}' (409 Conflict): {}",
+              asset.path(), e.getMessage());
+        }
+        else {
+          log.error("Failed to delete asset '{}' (HTTP {}): skipping.", asset.path(),
+              e.getResponse().getStatus(), e);
+        }
+        return false;
       }
       catch (Exception e) {
         log.error("Failed to delete an asset - skipping.", e);
@@ -376,6 +428,103 @@ public class DeleteFolderServiceImpl
       }
     }
     return false;
+  }
+
+  /**
+   * Resolves the current subject's principal for the {@code deleted_by} audit field, falling back to {@code "system"}
+   * for an anonymous/unauthenticated subject (principal can be {@code null}). Mirrors
+   * {@code ContentDeletionService.softDeleteContext()} so the folder-delete path is consistent and NPE-safe.
+   */
+  private String currentPrincipalOrSystem() {
+    Subject subject = securityHelper.subject();
+    return subject != null && subject.getPrincipal() != null ? subject.getPrincipal().toString() : "system";
+  }
+
+  private boolean shouldSoftDelete(final Repository repository) {
+    return softDeleteFormatGate.isEnabled()
+        && HostedType.NAME.equals(repository.getType().getValue())
+        && softDeleteFormatGate.isEnabledForFormat(repository.getFormat().getValue());
+  }
+
+  private boolean softDeleteComponent(
+      final Repository repository,
+      final FluentComponent component,
+      final ContentMaintenanceFacet contentMaintenance,
+      final OffsetDateTime folderDeleteStarted)
+  {
+    ContentFacetSupport contentFacet = (ContentFacetSupport) repository.facet(ContentFacet.class);
+    String deletedBy = currentPrincipalOrSystem();
+
+    ComponentStore<?> componentStore = contentFacet.stores().componentStore;
+    AssetStore<?> assetStore = contentFacet.stores().assetStore;
+
+    componentStore.softDeleteComponent(component, deletedBy);
+    assetStore.softDeleteComponentAssets(component, deletedBy);
+    assetStore.reSoftDeleteComponentAssets(component, deletedBy, folderDeleteStarted);
+    contentMaintenance.afterComponentSoftDeleted(component);
+    recordComponentInTrashIndex(repository, component, contentFacet, deletedBy);
+
+    log.info("Soft-deleted component '{}' in repository '{}'", component.name(), repository.getName());
+    return true;
+  }
+
+  private boolean softDeleteAsset(
+      final Repository repository,
+      final FluentAsset asset,
+      final ContentMaintenanceFacet contentMaintenance,
+      final OffsetDateTime folderDeleteStarted)
+  {
+    ContentFacetSupport contentFacet = (ContentFacetSupport) repository.facet(ContentFacet.class);
+    String deletedBy = currentPrincipalOrSystem();
+
+    // Referential-integrity guard (NEXUS-54127): refuse soft-deleting an asset still referenced by a
+    // live/restorable sibling (e.g. a Docker/OCI blob referenced by a manifest), mirroring the hard-delete
+    // guard in the format's ContentMaintenanceFacet.deleteAsset so folder-delete cannot strand referenced content.
+    contentMaintenance.validateAssetDeletable(asset);
+
+    AssetStore<?> assetStore = contentFacet.stores().assetStore;
+    assetStore.softDeleteAsset(asset, deletedBy);
+    contentMaintenance.afterAssetSoftDeleted(asset);
+    recordAssetInTrashIndex(repository, asset, contentFacet, deletedBy);
+
+    asset.component()
+        .ifPresent(component -> handleAssetSoftDeleteCascade(repository, component, contentFacet, contentMaintenance,
+            deletedBy, folderDeleteStarted));
+
+    log.info("Soft-deleted asset '{}' in repository '{}'", asset.path(), repository.getName());
+    return true;
+  }
+
+  private void handleAssetSoftDeleteCascade(
+      final Repository repository,
+      final org.sonatype.nexus.repository.content.Component component,
+      final ContentFacetSupport contentFacet,
+      final ContentMaintenanceFacet contentMaintenance,
+      final String deletedBy,
+      final OffsetDateTime folderDeleteStarted)
+  {
+    try {
+      boolean shouldCascade = false;
+      if (contentMaintenance instanceof SingleAssetMaintenanceFacet) {
+        shouldCascade = true;
+      }
+      else if (contentMaintenance instanceof LastAssetMaintenanceFacet) {
+        Collection<Asset> remaining = contentFacet.stores().assetStore.browseComponentAssets(component);
+        shouldCascade = remaining.isEmpty();
+      }
+
+      if (shouldCascade) {
+        log.info("Auto-soft-deleting component (no remaining active assets) in repository '{}'",
+            repository.getName());
+        contentFacet.stores().componentStore.softDeleteComponent(component, deletedBy);
+        contentFacet.stores().assetStore.reSoftDeleteComponentAssets(component, deletedBy, folderDeleteStarted);
+        contentMaintenance.afterComponentSoftDeleted(component);
+        recordComponentInTrashIndex(repository, component, contentFacet, deletedBy);
+      }
+    }
+    catch (Exception e) {
+      log.warn("Could not evaluate cascade for component in repository '{}'", repository.getName(), e);
+    }
   }
 
   private boolean canDeleteAsset(
@@ -402,6 +551,106 @@ public class DeleteFolderServiceImpl
   @VisibleForTesting
   boolean canDeleteComponent(final Repository repository) {
     return securityHelper.isPermitted(new RepositoryViewPermission(repository, DELETE))[0];
+  }
+
+  private void recordAssetInTrashIndex(
+      final Repository repository,
+      final FluentAsset asset,
+      final ContentFacetSupport contentFacet,
+      final String deletedBy)
+  {
+    if (trashIndexRecorder == null) {
+      return;
+    }
+    try {
+      String repoName = repository.getName();
+      String format = repository.getFormat().getValue();
+      String externalId = InternalIds.toExternalId(InternalIds.internalAssetId(asset)).getValue();
+      String encodedId = encodeIdentifier(repoName, externalId);
+
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put("repositoryName", repoName);
+      metadata.put("format", format);
+      metadata.put("path", asset.path());
+      metadata.put("repositoryId", contentFacet.contentRepositoryId());
+
+      asset.component().ifPresent(component -> {
+        String compExternalId = InternalIds.toExternalId(
+            InternalIds.internalComponentId(component)).getValue();
+        metadata.put("parentComponentId", encodeIdentifier(repoName, compExternalId));
+      });
+
+      SoftDeletedEntityInfo info = new SoftDeletedEntityInfo(
+          "asset", encodedId, asset.path(), now(), deletedBy, metadata);
+      trashIndexRecorder.record(info);
+    }
+    catch (Exception e) {
+      log.warn("Failed to record asset in trash index", e);
+    }
+  }
+
+  private void recordComponentInTrashIndex(
+      final Repository repository,
+      final org.sonatype.nexus.repository.content.Component component,
+      final ContentFacetSupport contentFacet,
+      final String deletedBy)
+  {
+    if (trashIndexRecorder == null) {
+      return;
+    }
+    try {
+      String repoName = repository.getName();
+      String format = repository.getFormat().getValue();
+      String externalId = InternalIds.toExternalId(
+          InternalIds.internalComponentId(component)).getValue();
+      String encodedId = encodeIdentifier(repoName, externalId);
+
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put("repositoryName", repoName);
+      metadata.put("format", format);
+      metadata.put("repositoryId", contentFacet.contentRepositoryId());
+      metadata.put("namespace", component.namespace());
+      metadata.put("name", component.name());
+      metadata.put("version", component.version());
+      metadata.put("kind", component.kind());
+
+      SoftDeletedEntityInfo info = new SoftDeletedEntityInfo(
+          "component", encodedId, componentDisplayName(component), now(), deletedBy, metadata);
+      trashIndexRecorder.record(info);
+      // Subsume ALL of this component's child-asset Trash entries under the component -- matching the single
+      // component soft-delete path -- so an asset soft-deleted before this folder operation is not left as a
+      // separate top-level row while also appearing as a child of the expanded component.
+      trashIndexRecorder.removeByParentComponent(encodedId);
+    }
+    catch (Exception e) {
+      log.warn("Failed to record component in trash index", e);
+    }
+  }
+
+  /**
+   * Builds a {@code namespace:name:version} display name (omitting empty parts) so that components which
+   * share a name but differ by version are distinguishable in Trash, matching the per-component
+   * soft-delete path ({@code ComponentSoftDeletedEntityService}).
+   */
+  @VisibleForTesting
+  static String componentDisplayName(final org.sonatype.nexus.repository.content.Component component) {
+    StringBuilder sb = new StringBuilder();
+    String namespace = component.namespace();
+    if (namespace != null && !namespace.isEmpty()) {
+      sb.append(namespace).append(':');
+    }
+    sb.append(component.name());
+    String version = component.version();
+    if (version != null && !version.isEmpty()) {
+      sb.append(':').append(version);
+    }
+    return sb.toString();
+  }
+
+  private static String encodeIdentifier(final String repositoryName, final String externalId) {
+    return Base64.getUrlEncoder()
+        .withoutPadding()
+        .encodeToString((repositoryName + ":" + externalId).getBytes(StandardCharsets.UTF_8));
   }
 
   @VisibleForTesting
@@ -432,12 +681,14 @@ public class DeleteFolderServiceImpl
       // After deleting the asset, check if the component has any remaining assets
       // If not, delete the component to prevent orphaned components
       if (assetDeleted && canDeleteComponent) {
-        componentDeleted = checkDeleteComponentWithAssets(timestamp, contentFacet, contentMaintenance, node);
+        componentDeleted =
+            checkDeleteComponentWithAssets(repository, timestamp, contentFacet, contentMaintenance, node);
       }
     }
     else {
       // For nodes with only component or only asset, use the original logic
-      componentDeleted = checkDeleteComponent(timestamp, contentFacet, contentMaintenance, canDeleteComponent, node);
+      componentDeleted =
+          checkDeleteComponent(repository, timestamp, contentFacet, contentMaintenance, canDeleteComponent, node);
       assetDeleted = checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
     }
 

@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.core.Base64Variant;
 import com.fasterxml.jackson.core.Base64Variants;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -48,6 +49,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public abstract class AbstractJsonTypeHandler<T>
     extends CipherAwareTypeHandler<T>
 {
+  private static final int MAX_JSON_STRING_LENGTH = 20_000_000;
+
   private static final Base64Variant BASE_64 = Base64Variants.getDefaultVariant();
 
   private static final Class<?> H2_JDBC_PREPARED_STATEMENT = getH2JdbcPreparedStatement();
@@ -67,9 +70,15 @@ public abstract class AbstractJsonTypeHandler<T>
    * @param mapperFactory Factory that supplies prototype mappers for further customization
    */
   protected ObjectMapper buildObjectMapper(final Supplier<ObjectMapper> mapperFactory) {
-    return mapperFactory.get()
+    ObjectMapper mapper = mapperFactory.get()
         .registerModule(new JavaTimeModule())
         .registerModule(new Jdk8Module());
+    mapper.getFactory()
+        .setStreamReadConstraints(
+            StreamReadConstraints.builder()
+                .maxStringLength(MAX_JSON_STRING_LENGTH)
+                .build());
+    return mapper;
   }
 
   /**

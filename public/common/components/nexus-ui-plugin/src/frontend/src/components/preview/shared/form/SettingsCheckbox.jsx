@@ -90,7 +90,7 @@ SettingsCheckbox.propTypes = {
   /** Change handler (receives checked state and event) */
   onChange: PropTypes.func,
   /** Description text below label */
-  description: PropTypes.string,
+  description: PropTypes.node,
   /** Disable checkbox */
   disabled: PropTypes.bool,
   /** Additional CSS class */

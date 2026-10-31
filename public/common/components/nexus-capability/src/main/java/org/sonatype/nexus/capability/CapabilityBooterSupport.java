@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for components which need to handle capability registration upon booting.
@@ -58,8 +58,8 @@ public abstract class CapabilityBooterSupport
 
   @Autowired
   public final void injectDependencies(final DatabaseCheck dbCheck, final CapabilityRegistry registry) {
-    this.dbCheck = checkNotNull(dbCheck);
-    this.registry = checkNotNull(registry);
+    this.dbCheck = requireNonNull(dbCheck);
+    this.registry = requireNonNull(registry);
   }
 
   @Subscribe

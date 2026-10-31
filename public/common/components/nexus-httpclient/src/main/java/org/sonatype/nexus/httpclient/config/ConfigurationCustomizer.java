@@ -42,7 +42,7 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
@@ -92,12 +92,12 @@ public class ConfigurationCustomizer
   private final HttpClientConfiguration configuration;
 
   public ConfigurationCustomizer(final HttpClientConfiguration configuration) {
-    this.configuration = checkNotNull(configuration);
+    this.configuration = requireNonNull(configuration);
   }
 
   @Override
   public void customize(final HttpClientPlan plan) {
-    checkNotNull(plan);
+    requireNonNull(plan);
 
     if (configuration.getConnection() != null) {
       apply(configuration.getConnection(), plan);

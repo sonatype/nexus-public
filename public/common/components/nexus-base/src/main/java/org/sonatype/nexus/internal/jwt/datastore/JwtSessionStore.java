@@ -21,16 +21,16 @@ import org.sonatype.nexus.security.jwt.JwtSessionRevocationService;
 import org.sonatype.nexus.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Named;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
  * Store for managing revoked JWT sessions.
  */
-@Named
+@Component
 @ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtSessionStore
     extends ConfigStoreSupport<JwtSessionDAO>
@@ -45,7 +45,7 @@ public class JwtSessionStore
   @Autowired
   public JwtSessionStore(final DataSessionSupplier sessionSupplier, final DatabaseCheck databaseCheck) {
     super(sessionSupplier);
-    this.databaseCheck = checkNotNull(databaseCheck);
+    this.databaseCheck = requireNonNull(databaseCheck);
   }
 
   private boolean hasTypeColumn() {

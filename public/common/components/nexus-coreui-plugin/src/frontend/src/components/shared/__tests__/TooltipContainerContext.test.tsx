@@ -31,19 +31,20 @@ const renderWithTheme = (ui: React.ReactElement) => {
 };
 
 describe('TooltipContainerProvider', () => {
-  it('renders a portal container with z-index 14999', () => {
+  // Positioning, z-index, and overflow rules for the portal container live in
+  // TooltipContainerContext.scss (NEXUS-51836 moved them off the inline style).
+  // The tests below assert the class wiring; the actual CSS values are owned by
+  // the stylesheet and verified visually.
+  it('renders a portal container with the nxrm-tooltip-container class', () => {
     const { container } = renderWithTheme(
       <TooltipContainerProvider>
         <div data-testid="child">Child content</div>
       </TooltipContainerProvider>
     );
 
-    // The portal container is the first div child with aria-hidden attribute
     const portalContainer = container.querySelector('[aria-hidden="true"]');
     expect(portalContainer).toBeInTheDocument();
-
-    // Verify z-index is 14999 (above ExtJS animating components at 10000, below masks at 20000+)
-    expect(portalContainer).toHaveStyle({ zIndex: '14999' });
+    expect(portalContainer).toHaveClass('nxrm-tooltip-container');
   });
 
   it('renders children correctly', () => {
@@ -67,25 +68,6 @@ describe('TooltipContainerProvider', () => {
     // Wait for useEffect to set the container
     const consumer = await screen.findByTestId('consumer');
     expect(consumer).toHaveTextContent('has-container');
-  });
-
-  it('portal container has correct positioning styles', () => {
-    const { container } = renderWithTheme(
-      <TooltipContainerProvider>
-        <div>Content</div>
-      </TooltipContainerProvider>
-    );
-
-    const portalContainer = container.querySelector('[aria-hidden="true"]');
-    expect(portalContainer).toHaveStyle({
-      position: 'absolute',
-      top: '0px',
-      left: '0px',
-      width: '0px',
-      height: '0px',
-      overflow: 'visible',
-      pointerEvents: 'none',
-    });
   });
 });
 

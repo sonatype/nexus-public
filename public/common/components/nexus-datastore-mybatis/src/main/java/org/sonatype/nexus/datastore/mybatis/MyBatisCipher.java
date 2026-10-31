@@ -32,7 +32,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
 
 /**
@@ -73,7 +73,7 @@ final class MyBatisCipher
       ivValue = encryptionConfig.getIv() != null ? encryptionConfig.getIv() : ivValue;
     }
     this.pbeCipher =
-        checkNotNull(pbeCipherFactory).create(keyForEncryption, saltValue, ivValue, iterationsForEncryption);
+        requireNonNull(pbeCipherFactory).create(keyForEncryption, saltValue, ivValue, iterationsForEncryption);
   }
 
   /**

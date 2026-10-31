@@ -150,7 +150,11 @@ describe('InviteUserForm', () => {
     renderForm({ onCancel });
     fireEvent.click(screen.getByTestId('form-cancel'));
     expect(onCancel).toHaveBeenCalled();
-    expect(screen.queryByText(/unsaved changes/i)).not.toBeInTheDocument();
+    // The discard-confirm AlertDialog should NOT open on an empty form.
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    // The inline "Unsaved changes" indicator is always rendered (so the action bar geometry stays stable across pristine ↔ dirty); when pristine it carries data-pristine="true" and is visually hidden via CSS.
+    const indicator = screen.getByText(/unsaved changes/i);
+    expect(indicator).toHaveAttribute('data-pristine', 'true');
   });
 
   it('shows discard dialog when canceling with filled fields', async () => {

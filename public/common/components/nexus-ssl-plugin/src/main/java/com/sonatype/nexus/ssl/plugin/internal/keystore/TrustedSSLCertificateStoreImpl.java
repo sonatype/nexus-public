@@ -20,7 +20,7 @@ import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -41,7 +41,7 @@ public class TrustedSSLCertificateStoreImpl
       final EventManager eventManager)
   {
     super(sessionSupplier);
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Transactional
@@ -64,8 +64,8 @@ public class TrustedSSLCertificateStoreImpl
   @Transactional
   @Override
   public void save(final String alias, final String pem) {
-    checkNotNull(alias);
-    checkNotNull(pem);
+    requireNonNull(alias);
+    requireNonNull(pem);
     TrustedSSLCertificateData data = new TrustedSSLCertificateData(alias, pem);
     dao().save(data);
     postEvent(alias);
@@ -74,7 +74,7 @@ public class TrustedSSLCertificateStoreImpl
   @Transactional
   @Override
   public void delete(final String alias) {
-    checkNotNull(alias);
+    requireNonNull(alias);
     dao().delete(alias);
     postEvent(alias);
   }

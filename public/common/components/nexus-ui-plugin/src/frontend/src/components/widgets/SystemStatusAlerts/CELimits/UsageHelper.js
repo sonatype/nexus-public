@@ -14,23 +14,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import {indexBy, pathOr, prop} from 'ramda';
+import {ExtJS} from '../../../../interface/ExtJS';
+import {
+  OVER_LIMITS,
+  NEAR_LIMITS,
+  UNDER_LIMITS,
+  CE_REQUESTS_HARD_THRESHOLD,
+  CE_COMPONENTS_HARD_THRESHOLD,
+  STORAGE_KEY_CE_THROTTLING_STATUS,
+  STORAGE_KEY_CE_GRACE_PERIOD_ENDS,
+  isTestSessionActive,
+  getMetricData,
+  resolveThrottlingStatus,
+} from './usageHelperUtils';
 
-const OVER_LIMITS = 'Over limits';
-const NEAR_LIMITS = '75% usage';
-const UNDER_LIMITS = 'Under limits';
+// Re-export the shared constants so existing consumers of this module keep working.
+export {OVER_LIMITS, NEAR_LIMITS, UNDER_LIMITS, CE_REQUESTS_HARD_THRESHOLD, CE_COMPONENTS_HARD_THRESHOLD};
 
-function getMetricData(usage, metricName) {
-  const data = usage?.find(m => m.metricName === metricName) ?? {};
-  const { aggregates = [], thresholds = [], metricValue = 0 } = data;
-  // Handle null values from API after session timeout by providing empty arrays
-  const safeThresholds = thresholds ?? [];
-  const safeAggregates = aggregates ?? [];
-  const thresholdValue = pathOr(0, ['HARD_THRESHOLD', 'thresholdValue'], indexBy(prop('thresholdName'), safeThresholds));
-  const highestRecordedCount = pathOr(0, ['peak_recorded_count_30d', 'value'], indexBy(prop('period'), safeAggregates));
-  return { metricValue, thresholdValue, highestRecordedCount, aggregates: safeAggregates };
-}
+// ExtJS-reading helpers stay per-plugin (usageHelperUtils.js is ExtJS-free);
+// duplicated with the other plugin — keep in lockstep (NEXUS-54019).
 
 function addProductParams() {
   const nodeId = ExtJS.state().getValue('nexus.node.id');
@@ -57,18 +59,30 @@ function useViewPurchaseALicenseUrl() {
   return `http://links.sonatype.com/products/nxrm3/ce/purchase-license?${addProductParams()}`;
 }
 
-function useViewLearnMoreUrl() {
-  if (useThrottlingStatus() === 'OVER_LIMITS_GRACE_PERIOD_ENDED') {
+function buildLearnMoreUrl(throttlingStatus) {
+  if (throttlingStatus === 'OVER_LIMITS_GRACE_PERIOD_ENDED') {
     return `http://links.sonatype.com/products/nxrm3/ce/learn-more-limits-enforced?${addProductParams()}`;
   }
   return `http://links.sonatype.com/products/nxrm3/ce/learn-more?${addProductParams()}`;
 }
 
+function useViewLearnMoreUrl() {
+  return buildLearnMoreUrl(useThrottlingStatus());
+}
+
 function useGracePeriodEndsDate() {
+  const testGracePeriod = isTestSessionActive() && typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY_CE_GRACE_PERIOD_ENDS);
+  if (testGracePeriod) {
+    return new Date(testGracePeriod);
+  }
   return new Date(ExtJS.state().getValue('nexus.community.gracePeriodEnds'));
 }
 
 function useThrottlingStatusValue () {
+  const testOverride = isTestSessionActive() && typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY_CE_THROTTLING_STATUS);
+  if (testOverride) {
+    return testOverride;
+  }
   return ExtJS.state().getValue('nexus.community.throttlingStatus');
 }
 
@@ -84,38 +98,20 @@ function useDaysUntilGracePeriodEnds() {
   const diffInMs = gracePeriodEnds ?
     Date.UTC(gracePeriodEnds.getFullYear(), gracePeriodEnds.getMonth(), gracePeriodEnds.getDate()) -
     Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) : 0;
-  const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+  const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24));
   return diffInDays;
 }
 
 function useThrottlingStatus() {
   const throttlingStatus = ExtJS.useState(useThrottlingStatusValue);
   const diffInDays = useDaysUntilGracePeriodEnds();
-  const duringGracePeriod = diffInDays <= 45 && diffInDays >= 0;
-  const afterGracePeriod = diffInDays < 0;
-
   const isAdmin = ExtJS.useUser()?.administrator;
-
-  if (throttlingStatus === NEAR_LIMITS && !isAdmin) {
-    return 'NEAR_LIMITS_NON_ADMIN';
-  } else if (throttlingStatus === NEAR_LIMITS && !duringGracePeriod && !afterGracePeriod) {
-    return 'NEAR_LIMITS_NEVER_IN_GRACE';
-  } else if (throttlingStatus === OVER_LIMITS && duringGracePeriod && isAdmin) {
-    return 'OVER_LIMITS_IN_GRACE';
-  } else if ((throttlingStatus === UNDER_LIMITS || throttlingStatus === NEAR_LIMITS) && duringGracePeriod && isAdmin) {
-    return 'BELOW_LIMITS_IN_GRACE';
-  } else if (throttlingStatus === OVER_LIMITS && !duringGracePeriod && afterGracePeriod && isAdmin) {
-    return 'OVER_LIMITS_GRACE_PERIOD_ENDED';
-  } else if ((throttlingStatus === NEAR_LIMITS || throttlingStatus === UNDER_LIMITS) && !duringGracePeriod && afterGracePeriod && isAdmin) {
-    return 'BELOW_LIMITS_GRACE_PERIOD_ENDED';
-  } else if (throttlingStatus === OVER_LIMITS && !duringGracePeriod && afterGracePeriod && !isAdmin) {
-    return 'NON_ADMIN_OVER_LIMITS_GRACE_PERIOD_ENDED';
-  }
-  return 'NO_THROTTLING';
+  return resolveThrottlingStatus(throttlingStatus, diffInDays, isAdmin);
 }
 
 export const helperFunctions = {
   useViewLearnMoreUrl,
+  buildLearnMoreUrl,
   useViewPurchaseALicenseUrl,
   useGracePeriodEndDate,
   useThrottlingStatus,

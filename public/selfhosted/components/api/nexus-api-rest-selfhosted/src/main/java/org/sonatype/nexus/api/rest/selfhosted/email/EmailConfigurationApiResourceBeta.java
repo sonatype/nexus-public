@@ -12,16 +12,15 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.ws.rs.Path;
-
 import org.sonatype.nexus.email.EmailManager;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.ws.rs.Path;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.api.rest.selfhosted.email.EmailConfigurationApiResourceBeta.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
-import org.springframework.stereotype.Component;
 
 /**
  * beta endpoint for email configuration REST API
@@ -36,8 +35,10 @@ import org.springframework.stereotype.Component;
 public class EmailConfigurationApiResourceBeta
     extends EmailConfigurationApiResource
 {
+  @Deprecated
   static final String RESOURCE_URI = BETA_API_PREFIX + "/email";
 
+  @Deprecated
   @Autowired
   public EmailConfigurationApiResourceBeta(final EmailManager emailManager) {
     super(emailManager);

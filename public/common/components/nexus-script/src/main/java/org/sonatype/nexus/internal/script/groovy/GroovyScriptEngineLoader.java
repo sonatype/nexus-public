@@ -19,7 +19,7 @@ import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirector
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import org.springframework.stereotype.Component;
 
@@ -40,8 +40,8 @@ public class GroovyScriptEngineLoader
       final ApplicationDirectories applicationDirectories,
       final ScriptEngineManager scriptEngineManager)
   {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
-    this.scriptEngineManager = checkNotNull(scriptEngineManager);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
+    this.scriptEngineManager = requireNonNull(scriptEngineManager);
   }
 
   @Override

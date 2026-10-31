@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
@@ -43,8 +44,9 @@ public class PrivilegeApiResourceBeta
   @Autowired
   public PrivilegeApiResourceBeta(
       final SecuritySystem securitySystem,
+      final SecurityHelper securityHelper,
       final List<PrivilegeDescriptor> privilegeDescriptorsList)
   {
-    super(securitySystem, privilegeDescriptorsList);
+    super(securitySystem, securityHelper, privilegeDescriptorsList);
   }
 }

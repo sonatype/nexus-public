@@ -10,14 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState, useEffect, useMemo} from 'react';
-import {indexBy, prop} from 'ramda';
+import React, {useEffect, useMemo, useState} from 'react';
 
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import Axios from 'axios';
+
+import {FormUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import {useRepositoriesService} from '../RepositoriesContextProvider';
 
-import {NxFormGroup, NxStatefulTransferList, NxFormSelect, NxReadOnly} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxStatefulTransferList, NxReadOnly, NxWarningAlert} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -26,17 +27,10 @@ const {
   EDITOR: {NUGET}
 } = UIStrings.REPOSITORIES;
 
-const NUGET_VERSIONS = {
-  V2: 'NuGet V2',
-  V3: 'NuGet V3'
-};
-
 export default function NugetGroupConfiguration({parentMachine}) {
   const [repositoriesState, repositoriesSend] = useRepositoriesService();
 
   const allRepositories = repositoriesState.context.data;
-
-  const [groupVersion, setGroupVersion] = useState('');
 
   useEffect(() => {
     !allRepositories?.length && repositoriesSend({type: 'LOAD'});
@@ -53,21 +47,60 @@ export default function NugetGroupConfiguration({parentMachine}) {
   } = parentState.context;
   const isEdit = !!name;
 
-  const nugetRepositories = useMemo(
-    () => calculateNugetRepositoriesData(allRepositories, name, setGroupVersion),
+  const chocolateyEnabled = useMemo(() => {
+    try {
+      return ExtJS.state().getValue('nugetChocolateyEnabled') === true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const [nugetProxyVersions, setNugetProxyVersions] = useState({});
+
+  useEffect(() => {
+    Axios.get('/service/rest/beta/repositories').then(({data}) => {
+      const versions = {};
+      data.forEach((repo) => {
+        if (repo.format === 'nuget' && repo.type === 'proxy' && repo.nugetProxy?.nugetVersion) {
+          versions[repo.name] = repo.nugetProxy.nugetVersion;
+        }
+      });
+      setNugetProxyVersions(versions);
+    }).catch((error) => {
+      console.error('Failed to load repository list for NuGet version detection', error);
+    });
+  }, []);
+
+  const availableGroupMembers = useMemo(
+    () =>
+      allRepositories
+        ?.filter((repo) => repo.format === 'nuget' && repo.name !== name)
+        ?.map((repo) => ({id: repo.name, displayName: repo.name})) || [],
     [allRepositories]
   );
 
-  const availableGroupMembers = useMemo(
-    () => getAvailableGroupMembers(nugetRepositories, groupVersion, name),
-    [nugetRepositories, groupVersion]
-  );
-
-  const updateNugetVersion = (event) => {
-    const value = event.currentTarget.value;
-    setGroupVersion(value);
-    sendParent({type: 'UPDATE', name: 'group.memberNames', value: []});
-  };
+  const mixedVersionConflict = useMemo(() => {
+    let firstMemberName = null;
+    let firstMemberVersion = null;
+    for (const memberName of memberNames) {
+      const version = nugetProxyVersions[memberName];
+      if (!version) {
+        continue;
+      }
+      if (!firstMemberName) {
+        firstMemberName = memberName;
+        firstMemberVersion = version;
+      } else if (version !== firstMemberVersion) {
+        return {
+          conflictingName: memberName,
+          conflictingVersion: version === 'V3' ? 'v3' : 'v2',
+          firstMemberName,
+          firstMemberVersion: firstMemberVersion === 'V3' ? 'v3' : 'v2'
+        };
+      }
+    }
+    return null;
+  }, [memberNames, nugetProxyVersions]);
 
   return (
     <>
@@ -78,78 +111,24 @@ export default function NugetGroupConfiguration({parentMachine}) {
         </NxReadOnly>
       )}
       <h2 className="nx-h2">{EDITOR.GROUP_CAPTION}</h2>
-      <>
-        <NxFormGroup
-          label={NUGET.GROUP_VERSION.LABEL}
-          sublabel={NUGET.GROUP_VERSION.SUBLABEL}
-          className="nxrm-form-group-nuget-protocol-version"
-          isRequired
-        >
-          <NxFormSelect
-            id="nuget-version"
-            name="nuget-version"
-            value={groupVersion}
-            onChange={updateNugetVersion}
-          >
-            {Object.entries(NUGET_VERSIONS)?.map(([k, v]) => (
-              <option key={v} value={k}>
-                {v}
-              </option>
-            ))}
-          </NxFormSelect>
-        </NxFormGroup>
-
-        <NxFormGroup label={EDITOR.MEMBERS_LABEL} isRequired>
-          <NxStatefulTransferList
-            allItems={availableGroupMembers}
-            selectedItems={availableGroupMembers.length ? memberNames : []}
-            onChange={FormUtils.handleUpdate('group.memberNames', sendParent)}
-            allowReordering
-          />
-        </NxFormGroup>
-      </>
+      <NxFormGroup label={EDITOR.MEMBERS_LABEL} isRequired>
+        <NxStatefulTransferList
+          allItems={availableGroupMembers}
+          selectedItems={availableGroupMembers.length ? memberNames : []}
+          onChange={FormUtils.handleUpdate('group.memberNames', sendParent)}
+          allowReordering
+        />
+      </NxFormGroup>
+      {mixedVersionConflict && !chocolateyEnabled && (
+        <NxWarningAlert>
+          {NUGET.MIXED_VERSION_WARNING(
+            mixedVersionConflict.conflictingName,
+            mixedVersionConflict.conflictingVersion,
+            mixedVersionConflict.firstMemberName,
+            mixedVersionConflict.firstMemberVersion
+          )}
+        </NxWarningAlert>
+      )}
     </>
   );
 }
-
-const getVersionFromMembers = (memberNames, repositoriesByName) => {
-  if (!repositoriesByName) return;
-  for (let memberName of memberNames) {
-    const member = repositoriesByName[memberName];
-    if (member.nugetVersion) {
-      return member.nugetVersion;
-    } else if (member.memberNames) {
-      member.nugetVersion = getVersionFromMembers(member.memberNames, repositoriesByName);
-      return member.nugetVersion;
-    }
-  }
-};
-
-const calculateNugetRepositoriesData = (allRepositories, repoName, setGroupVersion) => {
-  const nugetRepositories = allRepositories.filter((repo) => repo.format === 'nuget');
-
-  const nugetRepositoriesByName = indexBy(prop('name'), nugetRepositories);
-
-  nugetRepositories.forEach((repo) => {
-    if (repo.memberNames) {
-      repo.nugetVersion = getVersionFromMembers(repo.memberNames, nugetRepositoriesByName);
-    }
-  });
-
-  const initialGroupVersion = nugetRepositoriesByName[repoName]?.nugetVersion || 'V3';
-
-  setGroupVersion(initialGroupVersion);
-
-  return nugetRepositories;
-};
-
-const getAvailableGroupMembers = (nugetRepositories, groupVersion, repoName) => {
-  return (
-    nugetRepositories
-      ?.filter(
-        (repo) =>
-          (repo.nugetVersion === groupVersion || !repo.nugetVersion) && repo.name !== repoName
-      )
-      ?.map((repo) => ({id: repo.name, displayName: repo.name})) || []
-  );
-};

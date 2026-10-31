@@ -107,7 +107,7 @@ class MyBatisDataStoreTest
     when(directories.getConfigDirectory(any())).thenReturn(new File("target/test-classes").getAbsoluteFile());
     when(declaredAccessType.getDaoClass()).thenReturn(TestDAO.class);
     underTest = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
 
     configuration.setName("nexus");
     configuration.setAttributes(Map.of("jdbcUrl", "jdbc:h2:mem:${storeName}"));
@@ -138,7 +138,7 @@ class MyBatisDataStoreTest
     h2Config.setAttributes(Map.of("jdbcUrl", "jdbc:h2:file:/tmp/test"));
 
     MyBatisDataStore h2Store = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     h2Store.setConfiguration(h2Config);
 
     assertThat(h2Store.isH2Database(), is(true));
@@ -153,7 +153,7 @@ class MyBatisDataStoreTest
     h2Config.setAttributes(attributes);
 
     MyBatisDataStore h2Store = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     h2Store.setConfiguration(h2Config);
 
     HikariConfig hikariConfig = h2Store.configureHikari("test-h2", attributes);
@@ -173,7 +173,7 @@ class MyBatisDataStoreTest
     postgresConfig.setAttributes(Map.of("jdbcUrl", "jdbc:postgresql://localhost/test"));
 
     MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     postgresStore.setConfiguration(postgresConfig);
 
     assertThat(postgresStore.isH2Database(), is(false));
@@ -188,7 +188,7 @@ class MyBatisDataStoreTest
     postgresConfig.setAttributes(attributes);
 
     MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     postgresStore.setConfiguration(postgresConfig);
 
     HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
@@ -205,6 +205,65 @@ class MyBatisDataStoreTest
   }
 
   @Test
+  void testPostgresHikariConfigReservesTwoExtraPoolSlotsWhenImmediateConsistencyEnabled() throws Exception {
+    // With immediate cross-node consistency enabled, the default pool is bumped by two so the distributed-event
+    // LISTEN/NOTIFY listener and publisher each have a reserved connection (NEXUS-54229).
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    Map<String, String> attributes = Map.of("jdbcUrl", "jdbc:postgresql://localhost:5432/test");
+    postgresConfig.setAttributes(attributes);
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true, true, true);
+    postgresStore.setConfiguration(postgresConfig);
+
+    HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
+
+    assertThat("immediate consistency should add two slots to the default pool size",
+        hikariConfig.getMaximumPoolSize(), equalTo(102));
+  }
+
+  @Test
+  void testPostgresHikariConfigAddsTwoToProvidedPoolSizeWhenImmediateConsistencyEnabled() throws Exception {
+    // The +2 reservation is applied on top of an operator-provided maximumPoolSize, not just the default.
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    Map<String, String> attributes = Map.of(
+        "jdbcUrl", "jdbc:postgresql://localhost:5432/test",
+        "advanced", "maximumPoolSize=50");
+    postgresConfig.setAttributes(attributes);
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true, true, true);
+    postgresStore.setConfiguration(postgresConfig);
+
+    HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
+
+    assertThat("immediate consistency should add two slots on top of the provided pool size",
+        hikariConfig.getMaximumPoolSize(), equalTo(52));
+  }
+
+  @Test
+  void testPostgresHikariConfigLeavesProvidedPoolSizeUnchangedWhenImmediateConsistencyDisabled() throws Exception {
+    // Without immediate consistency the operator-provided pool size must be used verbatim (no +2).
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    Map<String, String> attributes = Map.of(
+        "jdbcUrl", "jdbc:postgresql://localhost:5432/test",
+        "advanced", "maximumPoolSize=50");
+    postgresConfig.setAttributes(attributes);
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true, true, false);
+    postgresStore.setConfiguration(postgresConfig);
+
+    HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
+
+    assertThat("pool size should equal the provided value when immediate consistency is disabled",
+        hikariConfig.getMaximumPoolSize(), equalTo(50));
+  }
+
+  @Test
   void testPostgresHikariConfigAllowsTimeoutOverride() throws Exception {
     // Test that the initialization timeout can be overridden via advanced configuration
     DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
@@ -215,7 +274,7 @@ class MyBatisDataStoreTest
     postgresConfig.setAttributes(attributes);
 
     MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     postgresStore.setConfiguration(postgresConfig);
 
     HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
@@ -223,6 +282,52 @@ class MyBatisDataStoreTest
     assertNotNull(hikariConfig);
     assertThat("Advanced config should override default initializationFailTimeout",
         hikariConfig.getInitializationFailTimeout(), equalTo(120000L));
+  }
+
+  @Test
+  void testPostgresHikariConfigAppliesAdvancedDriverProperty() throws Exception {
+    // Test that advanced properties which are NOT HikariConfig pool settings (e.g. JDBC
+    // driver-level connection properties like loggerLevel) are routed to the DataSource
+    // instead of being rejected by HikariConfig's Properties constructor (NEXUS-53610).
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    Map<String, String> attributes = Map.of(
+        "jdbcUrl", "jdbc:postgresql://localhost:5432/test",
+        "advanced", "loggerLevel=DEBUG");
+    postgresConfig.setAttributes(attributes);
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true, true, false);
+    postgresStore.setConfiguration(postgresConfig);
+
+    HikariConfig hikariConfig = assertDoesNotThrow(() -> postgresStore.configureHikari("test-postgres", attributes),
+        "Advanced JDBC driver properties should not be rejected by HikariConfig");
+
+    assertThat("loggerLevel should be applied as a DataSource property",
+        hikariConfig.getDataSourceProperties().getProperty("loggerLevel"), is("DEBUG"));
+  }
+
+  @Test
+  void testPostgresHikariConfigAppliesBothPoolAndDriverAdvancedProperties() throws Exception {
+    // Test that a mix of a pool-level override and a driver-level property in the same
+    // advanced string are both applied, each to the correct destination.
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    Map<String, String> attributes = Map.of(
+        "jdbcUrl", "jdbc:postgresql://localhost:5432/test",
+        "advanced", "initializationFailTimeout=120000\nsocketTimeout=30000");
+    postgresConfig.setAttributes(attributes);
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true, true, false);
+    postgresStore.setConfiguration(postgresConfig);
+
+    HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
+
+    assertThat("initializationFailTimeout should still be applied as a pool setting",
+        hikariConfig.getInitializationFailTimeout(), equalTo(120000L));
+    assertThat("socketTimeout should be applied as a DataSource property",
+        hikariConfig.getDataSourceProperties().getProperty("socketTimeout"), is("30000"));
   }
 
   @Test
@@ -239,11 +344,11 @@ class MyBatisDataStoreTest
     postgresConfig2.setAttributes(attributes2);
 
     MyBatisDataStore postgresStore1 = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     postgresStore1.setConfiguration(postgresConfig1);
 
     MyBatisDataStore postgresStore2 = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     postgresStore2.setConfiguration(postgresConfig2);
 
     HikariConfig hikariConfig1 = postgresStore1.configureHikari("test-postgres-1", attributes1);
@@ -273,7 +378,7 @@ class MyBatisDataStoreTest
     postgresConfig.setAttributes(attributes);
 
     MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, false);
+        List.of(declaredAccessType), List.of(), true, false, false);
     postgresStore.setConfiguration(postgresConfig);
 
     HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
@@ -308,7 +413,7 @@ class MyBatisDataStoreTest
     postgresConfig.setAttributes(Map.of("jdbcUrl", "jdbc:postgresql://localhost:5432/test"));
 
     MyBatisDataStore disabledStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, false);
+        List.of(declaredAccessType), List.of(), true, false, false);
     disabledStore.setConfiguration(postgresConfig);
     disabledStore.setDataSource(dataSource);
 
@@ -328,7 +433,7 @@ class MyBatisDataStoreTest
     h2Config.setAttributes(Map.of("jdbcUrl", "jdbc:h2:mem:testdb"));
 
     MyBatisDataStore store = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     store.setConfiguration(h2Config);
 
     assertThat(store.isH2Database(), is(true));
@@ -341,7 +446,7 @@ class MyBatisDataStoreTest
     h2Config.setAttributes(Map.of("jdbcUrl", "jdbc:h2:file:/tmp/nexus"));
 
     MyBatisDataStore store = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     store.setConfiguration(h2Config);
 
     assertThat(store.isH2Database(), is(true));
@@ -354,7 +459,7 @@ class MyBatisDataStoreTest
     h2Config.setAttributes(Map.of()); // no jdbcUrl
 
     MyBatisDataStore store = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     store.setConfiguration(h2Config);
 
     assertThat(store.isH2Database(), is(false));
@@ -367,7 +472,7 @@ class MyBatisDataStoreTest
     h2Config.setAttributes(Map.of("jdbcUrl", "JDBC:H2:mem:testdb"));
 
     MyBatisDataStore store = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
-        List.of(declaredAccessType), List.of(), true, true);
+        List.of(declaredAccessType), List.of(), true, true, false);
     store.setConfiguration(h2Config);
 
     assertThat(store.isH2Database(), is(true));

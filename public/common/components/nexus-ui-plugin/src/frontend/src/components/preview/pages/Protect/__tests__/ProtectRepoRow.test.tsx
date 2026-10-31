@@ -12,18 +12,22 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme, Table } from '@radix-ui/themes';
 
 import type { RepoWithProtection } from '../../MalwareRisk/useQuickActionsData';
 
-jest.mock('../../../../../interface/api', () => ({
-  restClient: { post: jest.fn(), delete: jest.fn() },
-  ENDPOINTS: {
-    HEALTH_CHECK_ANALYZE: (name: string) => `/v1/repositories/${name}/health-check`,
-    REPOSITORY_HEALTH_CHECK: (name: string) => `/v1/repositories/${name}/health-check`,
-  },
-}));
+jest.mock('../../../../../interface/api', () => {
+  const actual = jest.requireActual('../../../../../interface/api');
+  return {
+    ...actual,
+    restClient: { post: jest.fn(), delete: jest.fn() },
+    ENDPOINTS: {
+      HEALTH_CHECK_ANALYZE: (name: string) => `/v1/repositories/${name}/health-check`,
+      REPOSITORY_HEALTH_CHECK: (name: string) => `/v1/repositories/${name}/health-check`,
+    },
+  };
+});
 
 jest.mock('../../../shared/security/useFirewallEnable', () => ({
   disableFirewall: jest.fn(),
@@ -31,8 +35,9 @@ jest.mock('../../../shared/security/useFirewallEnable', () => ({
   enableFirewallQuarantine: jest.fn(),
 }));
 
+const mockToastError = jest.fn();
 jest.mock('../../../shared', () => ({
-  useToast: () => ({ success: jest.fn(), error: jest.fn() }),
+  useToast: () => ({ success: jest.fn(), error: mockToastError }),
 }));
 
 jest.mock('../../../shared/security/malwareRemediatorTask', () => ({
@@ -48,7 +53,17 @@ jest.mock('../../settings/repository/repositories/components/FormatIcon', () => 
   FormatIcon: ({ format }: { format: string }) => <span data-testid="format-icon">{format}</span>,
 }));
 
+import { ExtJS } from '../../../../../interface/ExtJS';
+import Permissions from '../../../../../constants/Permissions';
+// ProtectRepoRow reads permissions through the provider-independent ExtJS.usePermission
+// (NEXUS-54212); spy on checkPermission so tests keep driving behavior via permission strings.
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
+
 import ProtectRepoRow from '../ProtectRepoRow';
+import { restClient } from '../../../../../interface/api';
+
+const mockDelete = restClient.delete as jest.Mock;
+const mockPost = restClient.post as jest.Mock;
 
 const MAVEN_REPO: RepoWithProtection = {
   name: 'maven-central',
@@ -88,6 +103,12 @@ const renderRow = (props: Partial<React.ComponentProps<typeof ProtectRepoRow>> =
   );
 
 describe('ProtectRepoRow', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Default: user has all write permissions so pre-existing behavior is exercised.
+    mockCheckPermission.mockReturnValue(true);
+  });
+
   it('renders the repository name', () => {
     renderRow();
     expect(screen.getByText('maven-central')).toBeInTheDocument();
@@ -141,5 +162,81 @@ describe('ProtectRepoRow', () => {
     renderRow({ hasIqConnection: false });
     const dashes = screen.getAllByText('—');
     expect(dashes.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('toggling the health check switch off calls DELETE on REPOSITORY_HEALTH_CHECK', async () => {
+    mockDelete.mockResolvedValue(undefined);
+    renderRow({ repo: { ...MAVEN_REPO, rhcEnabled: true } });
+
+    fireEvent.click(screen.getByRole('switch'));
+
+    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/v1/repositories/maven-central/health-check'));
+  });
+
+  it('toggling the health check switch on calls POST on HEALTH_CHECK_ANALYZE', async () => {
+    mockPost.mockResolvedValue(undefined);
+    renderRow({ repo: { ...MAVEN_REPO, rhcEnabled: false } });
+
+    fireEvent.click(screen.getByRole('switch'));
+
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/v1/repositories/maven-central/health-check', {})
+    );
+  });
+
+  it('toasts the unwrapped backend message when enabling health check 409s (capability disabled)', async () => {
+    mockPost.mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 409,
+        data: { id: '*', message: '"Repository Health Check instance capability is not enabled"' },
+      },
+    });
+    renderRow({ repo: { ...MAVEN_REPO, rhcEnabled: false } });
+
+    fireEvent.click(screen.getByRole('switch'));
+
+    await waitFor(() =>
+      expect(mockToastError).toHaveBeenCalledWith('Repository Health Check instance capability is not enabled')
+    );
+  });
+
+  describe('write gating (NEXUS-54212)', () => {
+    const fwRadios = () =>
+      screen.queryAllByRole('radio').filter((r) => r.getAttribute('name') === 'fw-maven-central');
+    const mpRadios = () =>
+      screen.queryAllByRole('radio').filter((r) => r.getAttribute('name') === 'mp-maven-central');
+
+    it('shows protection + remediation radios with edit + tasks:create', () => {
+      mockCheckPermission.mockImplementation(
+        (p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT || p === Permissions.TASKS.CREATE,
+      );
+      renderRow();
+      expect(fwRadios()).toHaveLength(3);
+      expect(mpRadios()).toHaveLength(3);
+    });
+
+    it('hides protection radios without repository-admin edit', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.TASKS.CREATE);
+      renderRow();
+      expect(fwRadios()).toHaveLength(0);
+      // Remediation radios remain because tasks:create is granted.
+      expect(mpRadios()).toHaveLength(3);
+    });
+
+    it('hides remediation radios without tasks:create', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT);
+      renderRow();
+      expect(mpRadios()).toHaveLength(0);
+      // Protection radios remain because repository-admin edit is granted.
+      expect(fwRadios()).toHaveLength(3);
+    });
+
+    it('hides both radio groups for a read-only user', () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderRow();
+      expect(fwRadios()).toHaveLength(0);
+      expect(mpRadios()).toHaveLength(0);
+    });
   });
 });

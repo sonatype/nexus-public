@@ -12,9 +12,9 @@
  */
 
 import React, { useMemo } from 'react';
-import { Box, Flex, Text, Heading } from '@radix-ui/themes';
+import { Box, Flex, Text, } from '@radix-ui/themes';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Loader2, AlertTriangle, X, UserX } from 'lucide-react';
+import { Loader2, AlertTriangle, X, } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import {
@@ -230,6 +230,7 @@ export function AnonymousPage({ className }: AnonymousPageProps) {
             </Flex>
             <Dialog.Close asChild>
               <button
+                type="button"
                 className="anonymous-page__modal-close"
                 aria-label="Close"
                 onClick={anonForm.handleCancelDisable}

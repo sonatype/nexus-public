@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository;
 
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class CleanupDryRunEvent
 {
@@ -25,7 +25,7 @@ public class CleanupDryRunEvent
   private final Map<String, Object> reference;
 
   public CleanupDryRunEvent(final Map<String, Object> reference) {
-    this.reference = checkNotNull(reference);
+    this.reference = requireNonNull(reference);
   }
 
   public Map<String, Object> getReference() {

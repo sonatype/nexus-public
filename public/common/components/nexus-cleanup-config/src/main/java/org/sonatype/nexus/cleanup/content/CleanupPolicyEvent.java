@@ -14,7 +14,7 @@ package org.sonatype.nexus.cleanup.content;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link CleanupPolicy} event.
@@ -25,7 +25,7 @@ public abstract class CleanupPolicyEvent
   private final CleanupPolicy cleanupPolicy;
 
   public CleanupPolicyEvent(final CleanupPolicy cleanupPolicy) {
-    this.cleanupPolicy = checkNotNull(cleanupPolicy);
+    this.cleanupPolicy = requireNonNull(cleanupPolicy);
   }
 
   public CleanupPolicy getCleanupPolicy() {

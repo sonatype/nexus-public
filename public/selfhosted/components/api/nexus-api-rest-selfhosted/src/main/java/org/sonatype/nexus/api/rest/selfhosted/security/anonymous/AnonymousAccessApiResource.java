@@ -12,27 +12,27 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.anonymous;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.Valid;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Produces;
-
 import org.sonatype.nexus.api.rest.selfhosted.security.anonymous.model.AnonymousAccessSettingsXO;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
+import org.sonatype.nexus.validation.Validate;
 
+import jakarta.validation.Valid;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Produces;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
@@ -54,8 +54,8 @@ public class AnonymousAccessApiResource
       final AnonymousManager anonymousManager,
       final RealmSecurityManager realmSecurityManager)
   {
-    this.anonymousManager = checkNotNull(anonymousManager);
-    this.realmSecurityManager = checkNotNull(realmSecurityManager);
+    this.anonymousManager = requireNonNull(anonymousManager);
+    this.realmSecurityManager = requireNonNull(realmSecurityManager);
   }
 
   @GET
@@ -69,6 +69,7 @@ public class AnonymousAccessApiResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
   @Override
+  @Validate
   public AnonymousAccessSettingsXO update(@Valid final AnonymousAccessSettingsXO anonymousXO) {
     Realm realm = validate(anonymousXO);
     AnonymousConfiguration configuration = anonymousManager.newConfiguration();

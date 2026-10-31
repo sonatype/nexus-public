@@ -66,6 +66,36 @@ class StatusResourceTest
   }
 
   @Test
+  void getReturnsProPlusEditionUnchanged() {
+    when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
+    when(applicationVersion.getEdition()).thenReturn("PROPLUS");
+    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
+    when(nexusEdition.getId()).thenReturn("nexus-professional-plus-edition");
+
+    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
+    StatusXO result = underTest.get();
+
+    assertThat(result.getEdition(), is("PROPLUS"));
+    assertThat(result.getIsCloud(), is(false));
+    verify(applicationVersion).getEdition();
+  }
+
+  @Test
+  void getReturnsEnterpriseEditionUnchanged() {
+    when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
+    when(applicationVersion.getEdition()).thenReturn("ENTERPRISE");
+    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
+    when(nexusEdition.getId()).thenReturn("nexus-enterprise-edition");
+
+    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
+    StatusXO result = underTest.get();
+
+    assertThat(result.getEdition(), is("ENTERPRISE"));
+    assertThat(result.getIsCloud(), is(false));
+    verify(applicationVersion).getEdition();
+  }
+
+  @Test
   void getReturnsOssEdition() {
     when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
     when(applicationVersion.getEdition()).thenReturn("OSS");

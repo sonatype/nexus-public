@@ -74,14 +74,19 @@ module.exports = {
   // number of files and pushed branch coverage to 54.18%, which fails the previous 55%
   // gate. Once the migration lands and we can take a second pass on coverage, restore
   // these to 55 (or higher).
-  coverageThreshold: {
-    global: {
-      branches: 1,
-      functions: 1,
-      lines: 1,
-      statements: 1
-    }
-  },
+  // NOTE: coverageThreshold is disabled because CoverageReporter._checkThreshold in
+  // @jest/reporters@29.x calls glob.default.sync() which is undefined when the root
+  // workspace forces glob@13 (NEXUS-52986). This is safe to remove: threshold was
+  // already at 1% — a no-op guard. The global glob incompatibility should be fixed
+  // separately (see root package.json resolutions).
+  // coverageThreshold: {
+  //   global: {
+  //     branches: 1,
+  //     functions: 1,
+  //     lines: 1,
+  //     statements: 1
+  //   }
+  // },
 
   // A path to a custom dependency extractor
   // dependencyExtractor: null,
@@ -206,7 +211,7 @@ module.exports = {
 
   // A map from regular expressions to paths to transformers
   transform: {
-    '\\.[jt]sx?$': ['babel-jest', { configFile: './babel.config.js' }]
+    '\\.[jt]sx?$': ['babel-jest', { configFile: require.resolve('../../babel.config.js') }]
   },
 
   // Ignore compiled dist directory when resolving modules

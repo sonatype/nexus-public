@@ -145,6 +145,22 @@
     }
   }
 
+  // Real button so sorting is keyboard operable; the header cell keeps its own padding.
+  &__sort-button {
+    all: unset;
+    display: block;
+    width: 100%;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+
+    &:focus-visible {
+      outline: 2px solid var(--blue-8, #3b82f6);
+      outline-offset: 2px;
+      border-radius: var(--radius-1, 2px);
+    }
+  }
+
   &__sort-icon {
     color: var(--gray-9, #71717a);
     flex-shrink: 0;
@@ -210,11 +226,25 @@
   }
 
   &__fingerprint {
-    font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+    font-family: var(--font-family-mono);
     color: var(--gray-11, #6f6f78);
 
     [data-theme='dark'] & {
       color: var(--gray-11, #9898a1);
+    }
+  }
+
+  // Keyboard/screen-reader path into the certificate; the row click is mouse-only.
+  &__row-edit-button {
+    all: unset;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--blue-8, #3b82f6);
+      outline-offset: 2px;
+      border-radius: var(--radius-1, 2px);
     }
   }
 

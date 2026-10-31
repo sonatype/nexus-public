@@ -17,7 +17,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper for working with <a href="http://en.wikipedia.org/wiki/ISO_8601">ISO 8601<a/> dates.
@@ -38,12 +38,12 @@ public class Iso8601Date
   }
 
   public static Date parse(final String value) throws ParseException {
-    checkNotNull(value);
+    requireNonNull(value);
     return getFormat().parse(value);
   }
 
   public static String format(final Date date) {
-    checkNotNull(date);
+    requireNonNull(date);
     return getFormat().format(date);
   }
 }

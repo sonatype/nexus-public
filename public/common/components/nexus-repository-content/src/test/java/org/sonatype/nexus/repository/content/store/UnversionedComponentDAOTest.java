@@ -40,6 +40,12 @@ class UnversionedComponentDAOTest
 
   @Override
   @DatabaseTest
+  protected void testExistsByName() {
+    super.testExistsByName();
+  }
+
+  @Override
+  @DatabaseTest
   protected void testContinuationBrowsing() {
     super.testContinuationBrowsing();
   }
@@ -102,5 +108,17 @@ class UnversionedComponentDAOTest
   @DatabaseTest
   protected void testReadCoordinateInRepoIds() {
     super.testReadCoordinateInRepoIds();
+  }
+
+  @Override
+  @DatabaseTest
+  protected void testPurgeSelectedSoftDeletedComponentsRespectsRestoreGuard() {
+    super.testPurgeSelectedSoftDeletedComponentsRespectsRestoreGuard();
+  }
+
+  @Override
+  @DatabaseTest(h2 = false, postgresql = true)
+  protected void testCreateComponentReturnsNullIdWhenRepositoryDeleted() {
+    super.testCreateComponentReturnsNullIdWhenRepositoryDeleted();
   }
 }

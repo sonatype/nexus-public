@@ -13,16 +13,16 @@
 package org.sonatype.nexus.repository.view.matchers.logic;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Matcher;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Logical OR matcher.
@@ -40,14 +40,14 @@ public class OrMatcher
 
   @VisibleForTesting
   public OrMatcher(final List<Matcher> matchers) {
-    this.matchers = checkNotNull(matchers);
+    this.matchers = requireNonNull(matchers);
   }
 
   @Override
   public boolean matches(final Context context) {
-    checkNotNull(context);
+    requireNonNull(context);
     if (log.isDebugEnabled()) {
-      log.debug("Matching: {}", Joiner.on(" OR ").join(matchers));
+      log.debug("Matching: {}", matchers.stream().map(String::valueOf).collect(Collectors.joining(" OR ")));
     }
     for (Matcher matcher : matchers) {
       boolean matched = matcher.matches(context);

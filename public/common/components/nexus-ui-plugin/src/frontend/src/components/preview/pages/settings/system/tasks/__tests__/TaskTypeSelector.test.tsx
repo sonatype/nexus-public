@@ -376,6 +376,46 @@ describe('TaskTypeSelector', () => {
   });
 });
 
+/**
+ * Simulate the internal /repositories endpoint: filter a master repo list by the format/type
+ * query params (comma-separated, `!`-prefixed excludes), sort by name, and prepend the
+ * "(All Repositories)" entry when withAll=true. Mirrors the real server so tests can assert the
+ * options the descriptor-driven fetch renders verbatim. (facets/versionPolicies can't be derived
+ * from format/type; facet tests mock the endpoint directly.)
+ */
+function serveInternalRepos(
+  url: string,
+  master: { name: string; format: string; type: string }[],
+): { id: string; name: string }[] {
+  const params = new URL(url, 'http://localhost').searchParams;
+  const csv = (v: string | null) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : []);
+  const includes = (list: string[]) => list.filter((x) => !x.startsWith('!'));
+  const excludes = (list: string[]) => list.filter((x) => x.startsWith('!')).map((x) => x.slice(1));
+  const fmt = csv(params.get('format'));
+  const typ = csv(params.get('type'));
+  const matches = (val: string, all: string[]) => {
+    const inc = includes(all);
+    const exc = excludes(all);
+    if (exc.includes(val)) return false;
+    return inc.length === 0 || inc.includes(val);
+  };
+  const filtered = master
+    .filter((r) => matches(r.format, fmt) && matches(r.type, typ))
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((r) => ({ id: r.name, name: r.name }));
+  const all: { id: string; name: string }[] = params.get('withAll') === 'true'
+    ? [{ id: '*', name: '(All Repositories)' }]
+    : [];
+  return [...all, ...filtered];
+}
+
+/** Prepend the synthetic "(All Repositories)" entry to a verbatim facet-filtered list when the
+ *  query requested withAll=true (facet tests supply the repo list directly). */
+function withAllEntry(url: string, list: { id: string; name: string }[]): { id: string; name: string }[] {
+  return url.includes('withAll=true') ? [{ id: '*', name: '(All Repositories)' }, ...list] : list;
+}
+
 describe('DynamicFormFields', () => {
   const mockGet = (restClient.get as jest.Mock);
   const mockCombobox = (SettingsCombobox as jest.Mock);
@@ -510,18 +550,108 @@ describe('DynamicFormFields', () => {
     });
   });
 
+  describe('NEXUS-53360 script and h2 task fields', () => {
+    it('renders the script source field as a sized <textarea> (metadata overrides field.type)', async () => {
+      // field.type is deliberately 'string' to prove TASK_FIELD_UI.source (type:'text', rows:12) wins.
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithFields('script', [{ id: 'source', label: 'source', type: 'string' }])}
+          values={{ source: '' }}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        const el = screen.getByTestId('input-source');
+        expect(el.tagName).toBe('TEXTAREA');
+        expect(el).toHaveAttribute('rows', '12');
+      });
+      expect(screen.getByText('Script Source')).toBeInTheDocument();
+    });
+
+    it('renders the script language field as a plain text input', async () => {
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithFields('script', [{ id: 'language', label: 'language', type: 'string' }])}
+          values={{ language: 'groovy' }}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        const el = screen.getByTestId('input-language');
+        expect(el.tagName).toBe('INPUT');
+        expect(el.getAttribute('type')).toBe('text');
+      });
+    });
+
+    it('renders the multinode field as a checkbox, not a required text field', async () => {
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithFields('script', [{ id: 'multinode', label: 'multinode', type: 'checkbox' }])}
+          values={{ multinode: 'false' }}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        const el = screen.getByTestId('input-multinode');
+        expect(el.getAttribute('type')).toBe('checkbox');
+      });
+    });
+
+    it('renders the H2 backup location field as a text input', async () => {
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithFields('h2.backup.task', [{ id: 'location', label: 'location', type: 'string' }])}
+          values={{ location: '' }}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        const el = screen.getByTestId('input-location');
+        expect(el.tagName).toBe('INPUT');
+        expect(el.getAttribute('type')).toBe('text');
+      });
+    });
+
+    it('falls back to rows=4 for a text-type field with no explicit rows in metadata', async () => {
+      // Verifies ui?.rows ?? 4: a 'text' field not listed in TASK_FIELD_UI (unknown task type)
+      // must still render as a <textarea> with the default row count of 4.
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithFields('some.other.task', [{ id: 'notes', label: 'Notes', type: 'text' }])}
+          values={{ notes: '' }}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        const el = screen.getByTestId('input-notes');
+        expect(el.tagName).toBe('TEXTAREA');
+        expect(el).toHaveAttribute('rows', '4');
+      });
+    });
+  });
+
   describe('per-task repository filters', () => {
+    const master = [
+      { name: 'maven-central', format: 'maven2', type: 'proxy' },
+      { name: 'maven-releases', format: 'maven2', type: 'hosted' },
+      { name: 'maven-group', format: 'maven2', type: 'group' },
+      { name: 'pypi-hosted', format: 'pypi', type: 'hosted' },
+      { name: 'pypi-proxy', format: 'pypi', type: 'proxy' },
+      { name: 'npm-hosted', format: 'npm', type: 'hosted' },
+      { name: 'composer-hosted', format: 'composer', type: 'hosted' },
+    ];
     beforeEach(() => {
       mockGet.mockImplementation((url: string) => {
+        if (url.startsWith('/service/rest/internal/ui/repositories')) {
+          return Promise.resolve(serveInternalRepos(url, master));
+        }
         if (url === '/service/rest/v1/repositories') {
-          return Promise.resolve([
-            { name: 'maven-central', format: 'maven2', type: 'proxy' },
-            { name: 'maven-releases', format: 'maven2', type: 'hosted' },
-            { name: 'maven-group', format: 'maven2', type: 'group' },
-            { name: 'pypi-hosted', format: 'pypi', type: 'hosted' },
-            { name: 'pypi-proxy', format: 'pypi', type: 'proxy' },
-            { name: 'npm-hosted', format: 'npm', type: 'hosted' },
-          ]);
+          return Promise.resolve(master);
         }
         return Promise.resolve([]);
       });
@@ -590,6 +720,51 @@ describe('DynamicFormFields', () => {
       });
     });
 
+    it('NEXUS-53354 RebuildMaven2MetadataTask shows only hosted Maven repos plus (All Repositories)', async () => {
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithId('repository.maven.rebuild-metadata')}
+          values={{}}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        const values = valuesPassedTo('repositoryName');
+        expect(values).toEqual(['*', 'maven-releases']);
+      });
+    });
+
+    it('NEXUS-53354 RebuildNpmMetadataTask shows only hosted npm repos plus (All Repositories)', async () => {
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithId('repository.npm.rebuild-metadata')}
+          values={{}}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        const values = valuesPassedTo('repositoryName');
+        expect(values).toEqual(['*', 'npm-hosted']);
+      });
+    });
+
+    it('NEXUS-53354 RebuildComposerMetadataTask shows only hosted Composer repos plus (All Repositories)', async () => {
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithId('repository.composer.rebuild-metadata')}
+          values={{}}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        const values = valuesPassedTo('repositoryName');
+        expect(values).toEqual(['*', 'composer-hosted']);
+      });
+    });
+
     it('PyPiMarkMetadataForRebuildTask shows only hosted PyPi repos and does NOT include (All Repositories)', async () => {
       renderWithTheme(
         <DynamicFormFields
@@ -651,10 +826,10 @@ describe('DynamicFormFields', () => {
       mockGet.mockImplementation((url: string) => {
         if (url.startsWith('/service/rest/internal/ui/repositories')) {
           capturedUrl = url;
-          return Promise.resolve([
+          return Promise.resolve(withAllEntry(url, [
             { id: 'maven-snapshots', name: 'maven-snapshots' },
             { id: 'maven-public', name: 'maven-public' },
-          ]);
+          ]));
         }
         return Promise.resolve([]);
       });
@@ -681,10 +856,10 @@ describe('DynamicFormFields', () => {
         if (url.startsWith('/service/rest/internal/ui/repositories')) {
           capturedUrl = url;
           // Server response would exclude any docker-group since it lacks DockerGCFacet.
-          return Promise.resolve([
+          return Promise.resolve(withAllEntry(url, [
             { id: 'docker-hosted', name: 'docker-hosted' },
             { id: 'docker-proxy', name: 'docker-proxy' },
-          ]);
+          ]));
         }
         return Promise.resolve([]);
       });
@@ -711,10 +886,10 @@ describe('DynamicFormFields', () => {
       mockGet.mockImplementation((url: string) => {
         if (url.startsWith('/service/rest/internal/ui/repositories')) {
           expect(url).toContain('facets=org.sonatype.nexus.repository.purge.PurgeUnusedFacet');
-          return Promise.resolve([
+          return Promise.resolve(withAllEntry(url, [
             { id: 'maven-central', name: 'maven-central' },
             { id: 'pypi-proxy', name: 'pypi-proxy' },
-          ]);
+          ]));
         }
         if (url === '/service/rest/v1/repositories') {
           return Promise.resolve([
@@ -737,6 +912,37 @@ describe('DynamicFormFields', () => {
       await waitFor(() => {
         const values = valuesPassedTo('repositoryName');
         expect(values).toEqual(['*', 'maven-central', 'pypi-proxy']);
+      });
+    });
+
+    it('NEXUS-53354 RemoveSnapshotsTask passes facets AND versionPolicies=!RELEASE to the server', async () => {
+      // RemoveSnapshotsFacet is registered on maven2-hosted-snapshot/mixed; RELEASE-only repos
+      // are excluded. Mirrors the PurgeMavenUnusedSnapshotsTask precedent.
+      let capturedUrl = '';
+      mockGet.mockImplementation((url: string) => {
+        if (url.startsWith('/service/rest/internal/ui/repositories')) {
+          capturedUrl = url;
+          return Promise.resolve(withAllEntry(url, [
+            { id: 'maven-snapshots', name: 'maven-snapshots' },
+            { id: 'maven-mixed', name: 'maven-mixed' },
+          ]));
+        }
+        return Promise.resolve([]);
+      });
+
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithId('repository.maven.remove-snapshots')}
+          values={{}}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(capturedUrl).toContain('facets=org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet');
+        expect(capturedUrl).toContain('versionPolicies=%21RELEASE');
+        const values = valuesPassedTo('repositoryName');
+        expect(values).toEqual(['*', 'maven-snapshots', 'maven-mixed']);
       });
     });
   });
@@ -771,22 +977,26 @@ describe('DynamicFormFields', () => {
   describe('repository filtering per task type (NEXUS-53043)', () => {
     const repoField = { id: 'repositoryName', label: 'Repository', type: 'string' };
 
+    const master = [
+      { name: 'apt-hosted-1', format: 'apt', type: 'hosted' },
+      { name: 'apt-proxy-1', format: 'apt', type: 'proxy' },
+      { name: 'helm-hosted-1', format: 'helm', type: 'hosted' },
+      { name: 'helm-proxy-1', format: 'helm', type: 'proxy' },
+      { name: 'alpine-hosted-1', format: 'alpine', type: 'hosted' },
+      { name: 'alpine-proxy-1', format: 'alpine', type: 'proxy' },
+      { name: 'yum-hosted-1', format: 'yum', type: 'hosted' },
+      { name: 'yum-proxy-1', format: 'yum', type: 'proxy' },
+      { name: 'rubygems-hosted-1', format: 'rubygems', type: 'hosted' },
+      { name: 'rubygems-proxy-1', format: 'rubygems', type: 'proxy' },
+      { name: 'maven-hosted-1', format: 'maven2', type: 'hosted' },
+    ];
     beforeEach(() => {
       mockGet.mockImplementation((url: string) => {
+        if (url.startsWith('/service/rest/internal/ui/repositories')) {
+          return Promise.resolve(serveInternalRepos(url, master));
+        }
         if (url === '/service/rest/v1/repositories') {
-          return Promise.resolve([
-            { name: 'apt-hosted-1', format: 'apt', type: 'hosted' },
-            { name: 'apt-proxy-1', format: 'apt', type: 'proxy' },
-            { name: 'helm-hosted-1', format: 'helm', type: 'hosted' },
-            { name: 'helm-proxy-1', format: 'helm', type: 'proxy' },
-            { name: 'alpine-hosted-1', format: 'alpine', type: 'hosted' },
-            { name: 'alpine-proxy-1', format: 'alpine', type: 'proxy' },
-            { name: 'yum-hosted-1', format: 'yum', type: 'hosted' },
-            { name: 'yum-proxy-1', format: 'yum', type: 'proxy' },
-            { name: 'rubygems-hosted-1', format: 'rubygems', type: 'hosted' },
-            { name: 'rubygems-proxy-1', format: 'rubygems', type: 'proxy' },
-            { name: 'maven-hosted-1', format: 'maven2', type: 'hosted' },
-          ]);
+          return Promise.resolve(master);
         }
         return Promise.resolve([]);
       });
@@ -904,6 +1114,56 @@ describe('DynamicFormFields', () => {
         expect(values[0]).toBe('*');
         expect(values).toContain('apt-hosted-1');
         expect(values).toContain('maven-hosted-1');
+      });
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // malware.remediator repository filter — NEXUS-53359
+  // ────────────────────────────────────────────────────────────────────────────
+  describe('malware.remediator repository filter (NEXUS-53359)', () => {
+    const repoField = { id: 'repositoryName', label: 'Repository', type: 'string' };
+
+    const master = [
+      { name: 'maven-proxy', format: 'maven2', type: 'proxy' },
+      { name: 'npm-proxy', format: 'npm', type: 'proxy' },
+      { name: 'nuget-proxy', format: 'nuget', type: 'proxy' },
+      { name: 'pypi-proxy', format: 'pypi', type: 'proxy' },
+      { name: 'maven-hosted', format: 'maven2', type: 'hosted' }, // excluded: not proxy
+      { name: 'docker-proxy', format: 'docker', type: 'proxy' },  // excluded: format not allowed
+    ];
+    beforeEach(() => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.startsWith('/service/rest/internal/ui/repositories')) {
+          return Promise.resolve(serveInternalRepos(url, master));
+        }
+        if (url === '/service/rest/v1/repositories') {
+          return Promise.resolve(master);
+        }
+        return Promise.resolve([]);
+      });
+    });
+
+    function valuesPassedTo(fieldId: string): string[] {
+      const calls = mockCombobox.mock.calls.filter(
+        ([props]: [{ name: string }]) => props.name === fieldId
+      );
+      const call = calls[calls.length - 1];
+      return call ? call[0].options.map((o: { value: string }) => o.value) : [];
+    }
+
+    it('lists only proxy maven2/npm/nuget/pypi repos plus (All Repositories)', async () => {
+      renderWithTheme(
+        <DynamicFormFields
+          taskType={makeTaskTypeWithFields('malware.remediator', [repoField])}
+          values={{}}
+          onChange={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        const values = valuesPassedTo('repositoryName');
+        expect(values).toEqual(['*', 'maven-proxy', 'npm-proxy', 'nuget-proxy', 'pypi-proxy']);
       });
     });
   });
@@ -1074,12 +1334,16 @@ describe('DynamicFormFields', () => {
      * the test selects one via the `repositoryName` value.
      */
     function configureAptRepoListMock() {
+      const master = [
+        { name: 'apt-hosted-1', format: 'apt', type: 'hosted' },
+        { name: 'apt-proxy-1', format: 'apt', type: 'proxy' },
+      ];
       mockGet.mockImplementation((url: string) => {
+        if (url.startsWith('/service/rest/internal/ui/repositories')) {
+          return Promise.resolve(serveInternalRepos(url, master));
+        }
         if (url === '/service/rest/v1/repositories') {
-          return Promise.resolve([
-            { name: 'apt-hosted-1', format: 'apt', type: 'hosted' },
-            { name: 'apt-proxy-1', format: 'apt', type: 'proxy' },
-          ]);
+          return Promise.resolve(master);
         }
         return Promise.resolve([]);
       });
@@ -1271,9 +1535,11 @@ describe('DynamicFormFields with includeFormatEntries', () => {
       if (url === '/service/rest/v1/repositories') {
         return Promise.resolve([{name: 'maven-public'}, {name: 'npm-hosted'}]);
       }
-      if (url === '/service/rest/internal/ui/repositories?withFormats=true&withAll=true') {
-        // Backend omits (All Repositories) in this mock to prove the frontend adds it regardless
+      if (url === '/service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+        // The endpoint returns the (All Repositories) entry (withAll) plus the per-format
+        // (All <format>) entries (withFormats); the frontend renders them verbatim.
         return Promise.resolve([
+          {id: '*', name: '(All Repositories)'},
           {id: '*-maven2', name: '(All maven2 Repositories)'},
           {id: '*-npm', name: '(All npm Repositories)'},
           {id: 'maven-public', name: 'maven-public'},
@@ -1297,7 +1563,7 @@ describe('DynamicFormFields with includeFormatEntries', () => {
     );
 
     await waitFor(() => {
-      expect(mockGet).toHaveBeenCalledWith('/service/rest/internal/ui/repositories?withFormats=true&withAll=true');
+      expect(mockGet).toHaveBeenCalledWith('/service/rest/internal/ui/repositories?withAll=true&withFormats=true');
     });
 
     await waitFor(() => {
@@ -1306,7 +1572,7 @@ describe('DynamicFormFields with includeFormatEntries', () => {
       );
       expect(comboboxCalls.length).toBeGreaterThan(0);
       const lastOptions: {value: string; label: string}[] = comboboxCalls[comboboxCalls.length - 1][0].options;
-      // (All Repositories) must be first, added by the frontend regardless of backend response
+      // (All Repositories) is first, returned by the endpoint (withAll) and rendered verbatim
       expect(lastOptions[0]).toEqual({value: '*', label: '(All Repositories)'});
       expect(lastOptions.some((o) => o.value === '*-maven2')).toBe(true);
       expect(lastOptions.some((o) => o.label === '(All maven2 Repositories)')).toBe(true);
@@ -1320,7 +1586,7 @@ describe('DynamicFormFields with includeFormatEntries', () => {
     });
 
     mockGet.mockImplementation((url: string) => {
-      if (url === '/service/rest/internal/ui/repositories?withFormats=true&withAll=true') {
+      if (url === '/service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
         return withFormatsPromise;
       }
       return Promise.resolve([]);

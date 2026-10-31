@@ -62,6 +62,15 @@
     WHERE source_blob_store_name = #{sourceBlobStoreName} AND blob_id = #{blobId};
   </delete>
 
+  <delete id="deleteRecords">
+    DELETE FROM soft_deleted_blobs
+    WHERE source_blob_store_name = #{sourceBlobStoreName}
+      AND blob_id IN
+      <foreach item="id" collection="blobIds" open="(" separator="," close=")">
+        #{id}
+      </foreach>
+  </delete>
+
   <delete id="deleteAllRecords">
     DELETE FROM soft_deleted_blobs
     WHERE source_blob_store_name = #{sourceBlobStoreName}

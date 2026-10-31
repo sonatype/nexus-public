@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Internationalization access.
@@ -54,7 +54,7 @@ public class I18N
    * @return {@link MessageSource} instance; never null
    */
   public static MessageSource of(final Class<?>... types) {
-    checkNotNull(types);
+    requireNonNull(types);
     checkArgument(types.length > 0);
     return new ResourceBundleMessageSource().add(/* bundle is not required */ false, types);
   }
@@ -66,7 +66,7 @@ public class I18N
    */
   @SuppressWarnings({"unchecked"})
   public static <T extends MessageBundle> T create(final Class<T> type) {
-    checkNotNull(type);
+    requireNonNull(type);
     return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[]{type}, new Handler(type));
   }
 
@@ -81,7 +81,7 @@ public class I18N
     private final MessageSource messages;
 
     public Handler(final Class<? extends MessageBundle> type) {
-      this.type = checkNotNull(type);
+      this.type = requireNonNull(type);
       this.messages = I18N.of(type);
     }
 

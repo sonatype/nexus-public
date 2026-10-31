@@ -41,17 +41,21 @@ jest.mock('axios', () => ({
   get: jest.fn()
 }));
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
-    isProEdition: jest.fn(),
-    state: jest.fn().mockReturnValue({
-      getValue: jest.fn()
-    }),
-    useUser: jest.fn(),
-    useState: jest.fn()
-  },
-}));
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const isProEdition = jest.fn();
+  return {
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+    ExtJS: {
+      isProEdition,
+      state: jest.fn().mockReturnValue({
+        getValue: jest.fn()
+      }),
+      useUser: jest.fn(),
+      useState: jest.fn()
+    },
+    useIsLicensedEdition: (...args) => isProEdition(...args),
+  };
+});
 
 const selectors = {
   ...TestUtils.selectors,
@@ -63,7 +67,16 @@ const selectors = {
 };
 
 describe('MaliciousRiskOnDisk', () => {
+  let mockSetCookie;
+
   beforeEach(() => {
+    mockSetCookie = jest.fn();
+    Object.defineProperty(document, 'cookie', {
+      get: () => '',
+      set: mockSetCookie,
+      configurable: true,
+    });
+
     ExtJS.useState.mockImplementation((fn) => {
       if (fn === useThrottlingStatusValue) return 'Under limits';
       if (fn === useGracePeriodEndsDate) return new Date('');
@@ -86,7 +99,9 @@ describe('MaliciousRiskOnDisk', () => {
     const rerender = jest.fn();
     const toggle = jest.fn();
 
-    render(<MaliciousRiskOnDisk rerender={rerender} toggle={toggle} />);
+    await act(async () => {
+      render(<MaliciousRiskOnDisk rerender={rerender} toggle={toggle} />);
+    });
   }
 
   it('does not render if user is not logged', async () => {
@@ -114,6 +129,7 @@ describe('MaliciousRiskOnDisk', () => {
   });
 
   it('does not render if feature flag is false', async () => {
+    ExtJS.useUser.mockReturnValue({'administrator': true});
     when(ExtJS.state().getValue)
         .calledWith(MALWARE_RISK_ENABLED)
         .mockReturnValue(false);
@@ -124,7 +140,23 @@ describe('MaliciousRiskOnDisk', () => {
     expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
+  it('does not render if feature flag is false even when malwareCount > 0', async () => {
+    ExtJS.useUser.mockReturnValue({'administrator': true});
+    when(ExtJS.state().getValue)
+        .calledWith(MALWARE_RISK_ENABLED)
+        .mockReturnValue(false);
+    when(ExtJS.state().getValue)
+        .calledWith('nexus.malware.count')
+        .mockReturnValue(maliciousRiskOnDiskResponse);
+    await act(async () => {
+      render(<MaliciousRiskOnDisk />);
+    });
+
+    expect(selectors.queryAlert()).not.toBeInTheDocument();
+  });
+
   it('does not render if malicious count is 0', async () => {
+    ExtJS.useUser.mockReturnValue({'administrator': true});
     when(ExtJS.state().getValue)
         .calledWith('nexus.malware.count')
         .mockReturnValue(maliciousRiskOnDiskResponseWithCount0);
@@ -194,20 +226,13 @@ describe('MaliciousRiskOnDisk', () => {
     const isAdmin = true;
     const isProEdition = true;
 
-    const setCookie = jest.fn();
-    Object.defineProperty(document, 'cookie', {
-      get: () => '',
-      set: setCookie,
-      configurable: true,
-    });
-
     await renderView(isAdmin, isProEdition);
 
     const closeButton = selectors.queryButton('Close');
     expect(closeButton).toBeInTheDocument();
 
     userEvent.click(closeButton);
-    expect(setCookie).toHaveBeenCalledWith('MALWARE_BANNER=close; path=/');
+    expect(mockSetCookie).toHaveBeenCalledWith('MALWARE_BANNER=close; path=/');
   });
 
   it('expands and collapses on toggle', async () => {
@@ -279,17 +304,15 @@ describe('MaliciousRiskOnDisk', () => {
   });
 
   it('does not render the banner if cookie "MALWARE_BANNER" is close', async () => {
-    const getCookie = jest.fn(() => 'MALWARE_BANNER=close');
     Object.defineProperty(document, 'cookie', {
-      get: getCookie,
-      set: jest.fn(),
+      get: () => 'MALWARE_BANNER=close',
+      set: mockSetCookie,
       configurable: true,
     });
 
     await act(async () => {
       render(<MaliciousRiskOnDisk />);
     });
-    expect(getCookie).toHaveBeenCalled();
     expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 

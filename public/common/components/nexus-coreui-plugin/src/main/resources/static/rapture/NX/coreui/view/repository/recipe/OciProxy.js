@@ -14,10 +14,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+/*global Ext, NX*/
+
 /**
  * Repository "Settings" form for an OCI Proxy repository.
- *
- * @since 3.91
  */
 Ext.define('NX.coreui.view.repository.recipe.OciProxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
@@ -30,7 +30,8 @@ Ext.define('NX.coreui.view.repository.recipe.OciProxy', {
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
     'NX.coreui.view.repository.facet.HttpClientFacet',
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
-    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet',
+    'NX.coreui.view.repository.facet.FirewallFacet'
   ],
 
   /**
@@ -50,16 +51,12 @@ Ext.define('NX.coreui.view.repository.recipe.OciProxy', {
       {xtype: 'nx-coreui-repository-httpclient-facet'}
     ];
 
-    me.callParent();
-
-    // The OCI proxy backend (OciProxyRepositoryApiRequestToConfigurationConverter#normalizeRemoteUrl)
-    // accepts oci:// and oci+http:// in addition to http/https — they're rewritten to https/http
-    // on save. The shared 'nx-url' vtype on the inherited remoteUrl field would reject those
-    // schemes client-side before the backend ever sees them, so swap it for the OCI-specific
-    // 'nx-oci-url' vtype defined in NX.util.Validator.
-    var remoteUrlField = me.down('#remoteUrl');
-    if (remoteUrlField) {
-      remoteUrlField.vtype = 'nx-oci-url';
+    // FIRE-956: oci is outside FirewallSupportedFormat, so the Firewall facet is only offered when
+    // the limited-support override is enabled. Mirrors PubProxy.js.
+    if (NX.State.getValue('firewallLimitedSupportFormatsEnabled')) {
+      me.items.unshift({xtype: 'nx-coreui-repository-firewall-facet'});
     }
+
+    me.callParent();
   }
 });

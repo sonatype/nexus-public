@@ -35,6 +35,8 @@ public class UserSearchCriteria
 
   private Integer limit;
 
+  private Integer offset;
+
   public UserSearchCriteria() {
   }
 
@@ -86,5 +88,13 @@ public class UserSearchCriteria
 
   public void setLimit(final Integer limit) {
     this.limit = limit;
+  }
+
+  public Integer getOffset() {
+    return offset;
+  }
+
+  public void setOffset(final Integer offset) {
+    this.offset = offset;
   }
 }

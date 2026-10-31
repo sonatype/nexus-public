@@ -27,6 +27,8 @@ import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.time.UTC;
+import org.sonatype.nexus.datastore.api.ForeignKeyViolationException;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.AttributeChangeSet;
@@ -44,8 +46,8 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.hash.HashCode;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
@@ -81,29 +83,29 @@ public class FluentAssetBuilderImpl
   private Map<String, Object> attributes;
 
   public FluentAssetBuilderImpl(final ContentFacetSupport facet, final AssetStore<?> assetStore, final String path) {
-    this.facet = checkNotNull(facet);
-    this.assetStore = checkNotNull(assetStore);
+    this.facet = requireNonNull(facet);
+    this.assetStore = requireNonNull(assetStore);
     assetData = new AssetData();
     assetData.setRepositoryId(facet.contentRepositoryId());
-    assetData.setPath(checkNotNull(path));
+    assetData.setPath(requireNonNull(path));
     assetData.setKind(EMPTY);
   }
 
   public FluentAssetBuilderImpl(final ContentFacetSupport facet, final AssetStore<?> assetStore, final Asset asset) {
-    this.facet = checkNotNull(facet);
-    this.assetStore = checkNotNull(assetStore);
-    this.assetData = (AssetData) checkNotNull(asset);
+    this.facet = requireNonNull(facet);
+    this.assetStore = requireNonNull(assetStore);
+    this.assetData = (AssetData) requireNonNull(asset);
   }
 
   @Override
   public FluentAssetBuilder kind(final String kind) {
-    assetData.setKind(checkNotNull(kind));
+    assetData.setKind(requireNonNull(kind));
     return this;
   }
 
   @Override
   public FluentAssetBuilder component(final Component component) {
-    assetData.setComponent(checkNotNull(component));
+    assetData.setComponent(requireNonNull(component));
     return this;
   }
 
@@ -123,8 +125,8 @@ public class FluentAssetBuilderImpl
 
   @Override
   public FluentAssetBuilder attributes(final String key, final Object value) {
-    checkNotNull(key);
-    checkNotNull(value);
+    requireNonNull(key);
+    requireNonNull(value);
     if (attributes == null) {
       attributes = new HashMap<>();
     }
@@ -166,7 +168,15 @@ public class FluentAssetBuilderImpl
       assetData.setLastDownloaded(now);
     }
 
-    assetStore.createAsset(assetData);
+    try {
+      assetStore.createAsset(assetData);
+    }
+    catch (ForeignKeyViolationException e) {
+      throw new ConcurrentOperationException(
+          "Upload failed: component was concurrently deleted. Please retry.", e);
+    }
+
+    facet.cleanupTrashIndex(assetData.path());
 
     return assetData;
   }

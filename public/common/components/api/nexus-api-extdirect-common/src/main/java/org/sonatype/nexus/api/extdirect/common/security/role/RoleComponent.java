@@ -13,7 +13,11 @@
 package org.sonatype.nexus.api.extdirect.common.security.role;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -23,12 +27,13 @@ import jakarta.validation.groups.Default;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
-import org.sonatype.nexus.api.extdirect.common.security.model.ReferenceXO;
+import org.sonatype.nexus.api.common.shared.security.model.ReferenceXO;
 import org.sonatype.nexus.api.extdirect.common.security.role.model.RoleXO;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.security.role.RoleAssignabilityChecker;
 import org.sonatype.nexus.validation.Validate;
 import org.sonatype.nexus.validation.group.Create;
 import org.sonatype.nexus.validation.group.Update;
@@ -37,10 +42,11 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
+import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 import org.springframework.stereotype.Component;
 
@@ -56,10 +62,17 @@ public class RoleComponent
 
   private final List<AuthorizationManager> authorizationManagers;
 
+  private final RoleAssignabilityChecker roleAssignabilityChecker;
+
   @Autowired
-  public RoleComponent(final SecuritySystem securitySystem, final List<AuthorizationManager> authorizationManagers) {
-    this.securitySystem = checkNotNull(securitySystem);
-    this.authorizationManagers = checkNotNull(authorizationManagers);
+  public RoleComponent(
+      final SecuritySystem securitySystem,
+      final List<AuthorizationManager> authorizationManagers,
+      final RoleAssignabilityChecker roleAssignabilityChecker)
+  {
+    this.securitySystem = requireNonNull(securitySystem);
+    this.authorizationManagers = requireNonNull(authorizationManagers);
+    this.roleAssignabilityChecker = requireNonNull(roleAssignabilityChecker);
   }
 
   /**
@@ -144,16 +157,19 @@ public class RoleComponent
     if ("LDAP".equals(roleXO.getSource())) {
       securitySystem.getAuthorizationManager(roleXO.getSource()).getRole(roleXO.getId());
     }
-    return convert(securitySystem.getAuthorizationManager(DEFAULT_SOURCE)
-        .addRole(
-            new Role(
-                roleXO.getId(),
-                roleXO.getName(),
-                roleXO.getDescription(),
-                roleXO.getSource(),
-                false,
-                roleXO.getRoles(),
-                roleXO.getPrivileges())));
+    Role requested = new Role(
+        roleXO.getId(),
+        roleXO.getName(),
+        roleXO.getDescription(),
+        roleXO.getSource(),
+        false,
+        roleXO.getRoles(),
+        roleXO.getPrivileges());
+
+    // a new role has no prior state, so every child role and privilege it names is a new grant
+    ensureCallerMayGrant(requested, null);
+
+    return convert(securitySystem.getAuthorizationManager(DEFAULT_SOURCE).addRole(requested));
   }
 
   /**
@@ -169,6 +185,12 @@ public class RoleComponent
   @RequiresPermissions("nexus:roles:update")
   @Validate(groups = {Update.class, Default.class})
   public RoleXO update(@NotNull @Valid final RoleXO roleXO) throws NoSuchAuthorizationManagerException {
+    AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(DEFAULT_SOURCE);
+    // read the pre-update state once and derive both the persisted version and the grant check from that single
+    // snapshot, so the authorization decision is consistent with the state it is written against (mirrors
+    // RoleApiResource.update)
+    Role current = authorizationManager.getRole(roleXO.getId());
+
     Role roleToUpdate = new Role();
     roleToUpdate.setRoleId(roleXO.getId());
     roleToUpdate.setName(roleXO.getName());
@@ -177,9 +199,11 @@ public class RoleComponent
     roleToUpdate.setReadOnly(false);
     roleToUpdate.setRoles(roleXO.getRoles());
     roleToUpdate.setPrivileges(roleXO.getPrivileges());
-    roleToUpdate.setVersion(Integer.parseInt(roleXO.getVersion()));
-    return convert(securitySystem.getAuthorizationManager(DEFAULT_SOURCE)
-        .updateRole(roleToUpdate));
+    roleToUpdate.setVersion(current.getVersion());
+
+    ensureCallerMayGrant(roleToUpdate, current);
+
+    return convert(authorizationManager.updateRole(roleToUpdate));
   }
 
   /**
@@ -195,6 +219,28 @@ public class RoleComponent
   @Validate
   public void remove(@NotEmpty final String id) throws NoSuchAuthorizationManagerException {
     securitySystem.getAuthorizationManager(DEFAULT_SOURCE).deleteRole(id);
+  }
+
+  /**
+   * Rejects the change unless the caller already holds every child role and privilege it would newly grant.
+   * Without this check, a caller holding only {@code nexus:roles:update} could grant themselves administrator
+   * (NEXUS-53397).
+   *
+   * <p>
+   * This mirrors the enforcement on the REST path in {@code RoleApiResource}; the decision is shared via
+   * {@link RoleAssignabilityChecker} so the two cannot drift. The failure is signalled as an
+   * {@link AuthorizationException} because that is what the ExtDirect layer already maps for the client.
+   *
+   * @param desired the role as it would be persisted
+   * @param current the pre-change state of the role, or {@code null} when creating
+   */
+  private void ensureCallerMayGrant(final Role desired, @Nullable final Role current) {
+    // the rejection is logged once, inside RoleAssignabilityChecker.findUngrantableAdditions, so every entry point
+    // shares one greppable line
+    Set<String> ungrantable = roleAssignabilityChecker.findUngrantableAdditions(desired, current);
+    if (!ungrantable.isEmpty()) {
+      throw new AuthorizationException(RoleAssignabilityChecker.grantForbiddenMessage(ungrantable));
+    }
   }
 
   /**

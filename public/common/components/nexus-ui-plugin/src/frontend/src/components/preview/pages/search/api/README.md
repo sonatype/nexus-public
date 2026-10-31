@@ -75,13 +75,13 @@ const search = async (params) => {
 
 **API Endpoint:**
 ```
-GET /service/rest/v1/search?format=npm&q={query}&npm.scope={scope}
+GET /service/rest/v1/search?format=npm&q={query}&group={scope}
 ```
 
 **npm-specific params:**
 - `format=npm`
 - `q` - Free text query
-- `npm.scope` - @scope (e.g., @angular)
+- `group` - @scope (e.g., @angular) — surfaced in the sidebar as "Scope" via the generic Group filter's aliasLabel
 - `repository` - Repository name
 - `continuationToken` - Pagination
 
@@ -110,14 +110,14 @@ GET /service/rest/v1/search?format=nuget&q={query}&nuget.id={packageId}
 
 **API Endpoint:**
 ```
-GET /service/rest/v1/search?format=docker&q={query}&docker.imageName={name}
+GET /service/rest/v1/search?format=docker&q={query}&name={imageName}
 ```
 
 **Docker-specific params:**
 - `format=docker`
 - `q` - Free text query
-- `docker.imageName` - Image name (e.g., nginx)
-- `docker.imageTag` - Image tag (e.g., latest)
+- `name` - Image name (e.g., nginx) — surfaced in the sidebar as "Image Name" via the generic Name filter's aliasLabel
+- `version` - Image tag (e.g., latest) — surfaced in the sidebar as "Image Tag" via the generic Version filter's aliasLabel
 - `repository` - Repository name
 - `continuationToken` - Pagination
 

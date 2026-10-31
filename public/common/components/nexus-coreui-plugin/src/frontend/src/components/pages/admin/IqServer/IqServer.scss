@@ -29,6 +29,31 @@
   }
 }
 
+// PageHeader uses display: flex (row) by default; this wrapper forces
+// the breadcrumb to stack above the PageTitle.
+.iq-server-page-header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.iq-server-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+
+  .iq-server-breadcrumb-separator {
+    color: var(--nx-color-text-secondary);
+  }
+
+  .iq-server-breadcrumb-current {
+    color: var(--nx-color-text);
+    font-weight: 600;
+  }
+}
+
 .nxrm-iq-header-layout {
   display: flex;
   width: 100%;

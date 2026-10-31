@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -45,8 +45,8 @@ public class HashAlgorithm
   private final HashFunction function;
 
   public HashAlgorithm(String name, HashFunction function) {
-    this.name = checkNotNull(name);
-    this.function = checkNotNull(function);
+    this.name = requireNonNull(name);
+    this.function = requireNonNull(function);
   }
 
   public String name() {

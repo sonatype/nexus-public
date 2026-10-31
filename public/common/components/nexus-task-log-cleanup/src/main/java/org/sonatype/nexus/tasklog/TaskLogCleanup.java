@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.forceDelete;
 import static org.apache.commons.io.FileUtils.iterateFiles;
 import org.springframework.stereotype.Component;
@@ -51,7 +51,7 @@ public class TaskLogCleanup
   public TaskLogCleanup(
       @Value("${nexus.tasks.log.cleanup.numberOfDays:30}") final Integer numberOfDays)
   {
-    this.numberOfDays = checkNotNull(numberOfDays);
+    this.numberOfDays = requireNonNull(numberOfDays);
   }
 
   void cleanup() {

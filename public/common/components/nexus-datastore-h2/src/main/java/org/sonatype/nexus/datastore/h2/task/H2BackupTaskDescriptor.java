@@ -21,7 +21,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 
 /**
@@ -50,7 +50,7 @@ public class H2BackupTaskDescriptor
         new StringTextFormField(LOCATION, "Location",
             "Specify a directory for the database backup",
             MANDATORY));
-    this.databaseCheck = checkNotNull(databaseCheck);
+    this.databaseCheck = requireNonNull(databaseCheck);
   }
 
   @Override

@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Jackson {@link ObjectMapper} resolver.
@@ -47,7 +47,7 @@ public class ObjectMapperResolver
 
   @Autowired
   public ObjectMapperResolver(@Qualifier("siesta") final jakarta.inject.Provider<ObjectMapper> mapperProvider) {
-    this.mapperProvider = checkNotNull(mapperProvider);
+    this.mapperProvider = requireNonNull(mapperProvider);
   }
 
   @Override

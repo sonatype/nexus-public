@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.transaction.UnitOfWork.Scope.LOCAL_STORE;
 import static org.sonatype.nexus.transaction.UnitOfWork.Scope.TRANSACTIONAL;
@@ -85,15 +85,15 @@ public final class UnitOfWork
 
   private UnitOfWork(final UnitOfWork parent, final TransactionalStore<?> store, final Scope scope) {
     this.parent = parent;
-    this.store = checkNotNull(store);
-    this.scope = checkNotNull(scope);
+    this.store = requireNonNull(store);
+    this.scope = requireNonNull(scope);
   }
 
   /**
    * Begins a unit-of-work which uses a new session for each {@link Transactional} operation.
    */
   public static void begin(final Supplier<? extends TransactionalSession<?>> db) {
-    checkNotNull(db);
+    requireNonNull(db);
     doBegin(db::get, TRANSACTIONAL);
   }
 
@@ -101,7 +101,7 @@ public final class UnitOfWork
    * Begins a unit-of-work which lazily uses the same session for each {@link Transactional} operation.
    */
   public static void beginBatch(final Supplier<? extends TransactionalSession<?>> db) {
-    checkNotNull(db);
+    requireNonNull(db);
     doBegin(db::get, UNIT_OF_WORK);
   }
 
@@ -109,7 +109,7 @@ public final class UnitOfWork
    * Begins a unit-of-work which eagerly uses a given session for each {@link Transactional} operation.
    */
   public static void beginBatch(final TransactionalSession<?> session) {
-    checkNotNull(session);
+    requireNonNull(session);
     doBegin(() -> session, UNIT_OF_WORK);
     currentWork().session = session; // make sure session is immediately available
   }
@@ -252,7 +252,7 @@ public final class UnitOfWork
       final TransactionIsolation isolation)
   {
     if (session == null) {
-      session = checkNotNull(localStore != null ? localStore.openSession(isolation) : store.openSession(isolation));
+      session = requireNonNull(localStore != null ? localStore.openSession(isolation) : store.openSession(isolation));
     }
     return this; // implicitly wraps the new session so we can intercept close
   }

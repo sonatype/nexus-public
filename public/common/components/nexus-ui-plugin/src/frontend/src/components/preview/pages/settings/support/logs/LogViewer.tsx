@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Box, Flex, Text } from '@radix-ui/themes';
 import { Download, Stamp, Loader2 } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
@@ -22,7 +22,7 @@ import {
   SettingsSelect,
   SettingsAlert,
 } from '../../../../shared/form';
-import { useLogsApi } from './useLogsApi';
+import { useLogViewer } from './useLogViewer';
 import { REFRESH_RATES, LOG_SIZES } from './types';
 
 import './LogViewer.scss';
@@ -36,86 +36,25 @@ interface LogViewerProps {
  * LogViewer - Displays log file content with auto-refresh and mark insertion
  */
 export function LogViewer({ filename, onBack }: LogViewerProps) {
-  const [logContent, setLogContent] = useState('');
-  const [refreshPeriod, setRefreshPeriod] = useState(0);
-  const [logSize, setLogSize] = useState(25);
-  const [mark, setMark] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [contentError, setContentError] = useState<string | null>(null);
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const intervalRef = useRef<number | null>(null);
-
-  const { fetchLogContent, insertMark, getDownloadUrl, loading, error, setError } = useLogsApi();
+  const {
+    logContent,
+    isLoading,
+    error,
+    mark,
+    refreshPeriod,
+    logSize,
+    setMark,
+    setRefreshPeriod,
+    setLogSize,
+    handleInsertMark,
+    handleDownload,
+    textareaRef,
+  } = useLogViewer(filename);
 
   // filename comes from the route param (raw: true) and is already unencoded
   const isNexusLog = filename === 'nexus.log';
   const canUpdate = ExtJS.checkPermission('nexus:logging:update');
 
-  // Fetch log content
-  const loadContent = useCallback(async () => {
-    try {
-      setContentError(null);
-      const bytesCount = logSize * -1024; // Negative to get last N bytes
-      const content = await fetchLogContent(filename, bytesCount);
-      setLogContent(content);
-    } catch (err: any) {
-      setContentError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filename, logSize, fetchLogContent]);
-
-  // Initial load
-  useEffect(() => {
-    setIsLoading(true);
-    loadContent();
-  }, [loadContent]);
-
-  // Setup auto-refresh
-  useEffect(() => {
-    // Clear existing interval
-    if (intervalRef.current) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    // Setup new interval if period > 0
-    if (refreshPeriod > 0) {
-      intervalRef.current = window.setInterval(() => {
-        loadContent();
-      }, refreshPeriod * 1000);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
-      }
-    };
-  }, [refreshPeriod, loadContent]);
-
-  // Scroll to bottom when content changes
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
-    }
-  }, [logContent]);
-
-  // Handle mark insertion
-  const handleInsertMark = useCallback(async () => {
-    if (!mark.trim()) return;
-    
-    try {
-      await insertMark(mark || 'MARK');
-      setMark('');
-      // Refresh log content to show the mark
-      await loadContent();
-    } catch (err) {
-      // Error is handled by the hook
-    }
-  }, [mark, insertMark, loadContent]);
-
-  // Handle Enter key on mark input
   const handleMarkKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (event.key === 'Enter') {
@@ -125,22 +64,6 @@ export function LogViewer({ filename, onBack }: LogViewerProps) {
     },
     [handleInsertMark]
   );
-
-  // Handle download
-  const handleDownload = useCallback(() => {
-    const url = ExtJS.urlOf(getDownloadUrl(filename));
-    ExtJS.downloadUrl(url);
-  }, [filename, getDownloadUrl]);
-
-  // Handle refresh period change
-  const handleRefreshPeriodChange = useCallback((value: string) => {
-    setRefreshPeriod(Number(value));
-  }, []);
-
-  // Handle log size change
-  const handleLogSizeChange = useCallback((value: string) => {
-    setLogSize(Number(value));
-  }, []);
 
   return (
     <Box className="log-viewer">
@@ -173,7 +96,7 @@ export function LogViewer({ filename, onBack }: LogViewerProps) {
               <SettingsButton
                 variant="secondary"
                 onClick={handleInsertMark}
-                disabled={loading}
+                disabled={isLoading}
                 icon={Stamp}
               >
                 Insert
@@ -189,7 +112,7 @@ export function LogViewer({ filename, onBack }: LogViewerProps) {
               </Text>
               <SettingsSelect
                 value={String(refreshPeriod)}
-                onChange={handleRefreshPeriodChange}
+                onChange={setRefreshPeriod}
                 options={REFRESH_RATES.map((r) => ({
                   value: String(r.value),
                   label: r.label,
@@ -205,7 +128,7 @@ export function LogViewer({ filename, onBack }: LogViewerProps) {
               </Text>
               <SettingsSelect
                 value={String(logSize)}
-                onChange={handleLogSizeChange}
+                onChange={setLogSize}
                 options={LOG_SIZES.map((s) => ({
                   value: String(s.value),
                   label: s.label,
@@ -218,16 +141,10 @@ export function LogViewer({ filename, onBack }: LogViewerProps) {
       </Box>
 
       {/* Error alerts */}
-      {(error || contentError) && (
+      {error && (
         <Box mb="3">
-          <SettingsAlert
-            type="error"
-            onDismiss={() => {
-              setError(null);
-              setContentError(null);
-            }}
-          >
-            {error || contentError}
+          <SettingsAlert type="error">
+            {error}
           </SettingsAlert>
         </Box>
       )}
@@ -256,5 +173,3 @@ export function LogViewer({ filename, onBack }: LogViewerProps) {
 }
 
 export default LogViewer;
-
-

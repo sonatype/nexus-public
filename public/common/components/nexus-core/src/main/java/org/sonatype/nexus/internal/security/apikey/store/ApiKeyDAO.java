@@ -139,11 +139,19 @@ public interface ApiKeyDAO
 
   /**
    * @param created a date to use as the starting point for the pagination
+   * @param domain the domain of the last record on the previous page
+   * @param token the token of the last record on the previous page. Must be bound as an {@link ApiKeyToken} so
+   *          MyBatis routes it through {@link ApiKeyTokenTypeHandler}, matching the encrypted representation stored in
+   *          the {@code token} column; a plain string comparison would compare against unrelated ciphertext.
    * @param limit the number of records
    *
    * @deprecated exists only for migration
    */
   @Deprecated
-  Collection<ApiKeyData> browseAllSince(@Param("created") OffsetDateTime created, @Param("limit") int limit);
+  Collection<ApiKeyData> browseAllSince(
+      @Param("created") OffsetDateTime created,
+      @Param("domain") String domain,
+      @Param("token") ApiKeyToken token,
+      @Param("limit") int limit);
 
 }

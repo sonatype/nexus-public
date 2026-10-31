@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 
 import com.google.common.collect.Maps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A simple repository configuration object primarily intended for testing. At runtime a database configuration object
@@ -123,7 +123,7 @@ public class SimpleConfiguration
 
   @Override
   public NestedAttributesMap attributes(final String key) {
-    checkNotNull(key);
+    requireNonNull(key);
 
     if (attributes == null) {
       attributes = Maps.newHashMap();

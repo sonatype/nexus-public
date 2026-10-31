@@ -19,8 +19,8 @@ import javax.annotation.Nonnull;
 import com.google.common.collect.Lists;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * View route.
@@ -35,8 +35,8 @@ public class Route
   private final List<Handler> handlers;
 
   public Route(final Matcher matcher, final List<Handler> handlers) {
-    this.matcher = checkNotNull(matcher, "Missing matcher");
-    checkNotNull(handlers, "Missing handlers");
+    this.matcher = requireNonNull(matcher, "Missing matcher");
+    requireNonNull(handlers, "Missing handlers");
     checkArgument(!handlers.isEmpty(), "At least one handler is required");
     this.handlers = handlers;
   }
@@ -74,18 +74,18 @@ public class Route
 
     public Builder matcher(final Matcher matcher) {
       checkState(this.matcher == null, "Only one matcher allowed");
-      this.matcher = checkNotNull(matcher);
+      this.matcher = requireNonNull(matcher);
       return this;
     }
 
     public Builder handler(final Handler handler) {
-      checkNotNull(handler);
+      requireNonNull(handler);
       return addHandler(handler);
     }
 
     // maps the new bridge interface from repository-config onto the view API
     public Builder handler(final org.sonatype.nexus.repository.recipe.Handler handler) {
-      checkNotNull(handler);
+      requireNonNull(handler);
       if (handler instanceof Handler) {
         return addHandler((Handler) handler);
       }

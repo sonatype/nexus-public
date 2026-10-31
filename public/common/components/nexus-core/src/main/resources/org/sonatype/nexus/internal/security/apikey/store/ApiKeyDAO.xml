@@ -158,7 +158,10 @@
     SELECT *
       FROM api_key
      WHERE created > #{created}
-  ORDER BY created
+        OR (created = #{created}
+            AND (domain > #{domain}
+                 OR (domain = #{domain} AND token > #{token})))
+  ORDER BY created, domain, token
      LIMIT #{limit};
   </select>
 

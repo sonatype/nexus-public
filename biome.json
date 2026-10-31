@@ -1,34 +1,94 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.3.7/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true,
-    "defaultBranch": "main"
-  },
-  "files": {
-    "ignoreUnknown": false,
-    "includes": ["**", "!**/target/**", "!**/node_modules/**", "!**/src/main/**"]
-  },
-  "formatter": {
-    "enabled": false,
-    "indentStyle": "space",
-    "lineWidth": 120
-  },
-  "assist": { "actions": { "source": { "organizeImports": "off" } } },
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true, "defaultBranch": "main" },
+  "files": { "ignoreUnknown": false, "includes": ["**", "!**/target", "!**/node_modules", "!**/src/main"] },
+  "formatter": { "enabled": false, "indentStyle": "space", "lineWidth": 120 },
   "linter": {
-    "enabled": false
+    "enabled": true,
+    "includes": ["public/common/components/nexus-ui-plugin/src/frontend/src/**/*.ts", "public/common/components/nexus-ui-plugin/src/frontend/src/**/*.tsx"],
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "useButtonType": "warn",
+        "useSemanticElements": "off",
+        "noLabelWithoutControl": "off",
+        "noSvgWithoutTitle": "off",
+        "noNoninteractiveElementInteractions": "off",
+        "noNoninteractiveElementToInteractiveRole": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "useKeyWithClickEvents": "off",
+        "useFocusableInteractive": "off",
+        "noStaticElementInteractions": "off"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "off",
+        "noExcessiveLinesPerFunction": "off"
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "warn",
+        "noUnusedFunctionParameters": "off",
+        "noSolidDestructuredProps": "off",
+        "useExhaustiveDependencies": "warn",
+        "useHookAtTopLevel": "warn",
+        "noUndeclaredDependencies": "off",
+        "useUniqueElementIds": "off",
+        "noInvalidUseBeforeDeclaration": "warn"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "warn",
+        "noSecrets": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noImplicitAnyLet": "off",
+        "noEvolvingTypes": "off",
+        "noEmptyBlockStatements": "off",
+        "noArrayIndexKey": "warn",
+        "useIterableCallbackReturn": "warn",
+        "noTemplateCurlyInString": "warn",
+        "noDocumentCookie": "warn",
+        "noAssignInExpressions": "warn",
+        "useAwait": "off",
+        "noConsole": {
+          "level": "error",
+          "options": { "allow": ["info", "warn", "error"] }
+        }
+      },
+      "style": "off"
+    }
   },
   "javascript": {
-    "jsxRuntime": "reactClassic",
-    "formatter": {
-      "quoteStyle": "single",
-      "trailingCommas": "none"
-    }
+    "formatter": { "trailingCommas": "none", "quoteStyle": "single" },
+    "globals": ["Ext", "NX", "module", "process", "jest", "describe", "it", "expect", "beforeEach", "afterEach", "test", "vi"],
+    "jsxRuntime": "reactClassic"
   },
-  "json": {
-    "formatter": {
-      "enabled": false
+  "json": { "formatter": { "enabled": false } },
+  "overrides": [
+    {
+      "includes": ["public/common/components/nexus-ui-plugin/src/frontend/src/**/*.tsx"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noReactSpecificProps": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": "off",
+          "security": {
+            "noSecrets": "off"
+          },
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
     }
-  }
+  ],
+  "assist": { "actions": { "source": { "organizeImports": "off" } } }
 }

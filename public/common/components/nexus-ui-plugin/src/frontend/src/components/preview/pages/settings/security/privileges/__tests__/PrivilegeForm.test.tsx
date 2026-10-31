@@ -17,7 +17,7 @@ import { Theme } from '@radix-ui/themes';
 import { PrivilegeForm } from '../PrivilegeForm';
 import { usePrivilegesApi } from '../usePrivilegesApi';
 import { usePrivilegeForm } from '../usePrivilegeForm';
-import { PRIVILEGE_TYPES, PrivilegeType } from '../types';
+import { PRIVILEGE_TYPES, } from '../types';
 
 // Mock dependencies
 jest.mock('../usePrivilegesApi');

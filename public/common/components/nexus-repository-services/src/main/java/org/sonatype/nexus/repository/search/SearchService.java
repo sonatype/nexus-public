@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import org.sonatype.nexus.rest.ValidationErrorsException;
+
 /**
  * This defines the db-agnostic interface for searching. All search requests should go through this.
  *
@@ -22,6 +24,9 @@ public interface SearchService
   /**
    * Search for components with the passed in {@link SearchRequest}
    *
+   * @throws ValidationErrorsException if the request contains invalid characters (e.g. NUL bytes) in any
+   *           field bound to the underlying query (filter property/value, continuation token, sort field,
+   *           repository name)
    * @since 3.38
    */
   SearchResponse search(SearchRequest searchRequest);
@@ -29,6 +34,9 @@ public interface SearchService
   /**
    * Browse through all of the components returned
    *
+   * @throws ValidationErrorsException if the request contains invalid characters (e.g. NUL bytes) in any
+   *           field bound to the underlying query (filter property/value, continuation token, sort field,
+   *           repository name)
    * @since 3.38
    */
   Iterable<ComponentSearchResult> browse(SearchRequest searchRequest);
@@ -36,6 +44,9 @@ public interface SearchService
   /**
    * Return the count of components matching the {@link SearchRequest}
    *
+   * @throws ValidationErrorsException if the request contains invalid characters (e.g. NUL bytes) in any
+   *           field bound to the underlying query (filter property/value, continuation token, sort field,
+   *           repository name)
    * @since 3.38
    */
   long count(SearchRequest searchRequest);

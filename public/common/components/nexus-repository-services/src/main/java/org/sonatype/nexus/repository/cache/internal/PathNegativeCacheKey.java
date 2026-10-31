@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.cache.internal;
 
 import org.sonatype.nexus.repository.cache.NegativeCacheKey;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 // TODO: implement Externalizable
 
@@ -29,7 +29,7 @@ public class PathNegativeCacheKey
   private final String path;
 
   public PathNegativeCacheKey(final String path) {
-    this.path = checkNotNull(path);
+    this.path = requireNonNull(path);
   }
 
   /**
@@ -38,7 +38,7 @@ public class PathNegativeCacheKey
    */
   @Override
   public boolean isParentOf(final NegativeCacheKey key) {
-    checkNotNull(key);
+    requireNonNull(key);
     return path.endsWith("/")
         && key instanceof PathNegativeCacheKey
         && ((PathNegativeCacheKey) key).path.startsWith(path);

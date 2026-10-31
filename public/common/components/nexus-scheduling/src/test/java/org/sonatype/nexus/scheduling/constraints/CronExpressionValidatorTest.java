@@ -54,6 +54,11 @@ public class CronExpressionValidatorTest
   }
 
   @Test
+  public void isValid_nullValue() {
+    assertThat(validator.isValid(null, context), is(true));
+  }
+
+  @Test
   public void isValidStripsJavaElFromExceptionMessage() {
     String value = "value ${java el} {el}";
     when(scheduleFactory.cron(any(Date.class), eq(value))).thenThrow(new IllegalArgumentException(value));

@@ -30,8 +30,9 @@ import com.google.common.net.HttpHeaders;
 import org.apache.http.client.utils.DateUtils;
 import org.joda.time.DateTime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implements partial-fetch semantics (as per RFC 2616) for {@link Status#isSuccessful() successful}
@@ -47,7 +48,7 @@ public class PartialFetchHandler
 
   @Autowired
   public PartialFetchHandler(final RangeParser rangeParser) {
-    this.rangeParser = checkNotNull(rangeParser);
+    this.rangeParser = requireNonNull(rangeParser);
   }
 
   @Nonnull

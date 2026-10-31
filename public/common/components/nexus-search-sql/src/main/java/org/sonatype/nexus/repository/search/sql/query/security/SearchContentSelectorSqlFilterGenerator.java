@@ -36,7 +36,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -64,9 +64,9 @@ public class SearchContentSelectorSqlFilterGenerator
       final SearchMappingService mappingService,
       final DatabaseTypeDetector databaseTypeDetector)
   {
-    checkNotNull(databaseTypeDetector);
-    this.selectorManager = checkNotNull(selectorManager);
-    this.mappingService = checkNotNull(mappingService);
+    requireNonNull(databaseTypeDetector);
+    this.selectorManager = requireNonNull(selectorManager);
+    this.mappingService = requireNonNull(mappingService);
     this.cselToExpressionSupplier = Suppliers.memoize(() -> databaseTypeDetector.isH2()
         ? new H2CselToExpression()
         : new PostgresCselToExpression());

@@ -38,8 +38,10 @@ public class FirewallSupportedFormatTest
         FirewallSupportedFormat.COMPOSER,
         FirewallSupportedFormat.COCOAPODS,
         FirewallSupportedFormat.HUGGINGFACE,
+        FirewallSupportedFormat.SWIFT,
         FirewallSupportedFormat.DOCKER,
-        FirewallSupportedFormat.RAW
+        FirewallSupportedFormat.RAW,
+        FirewallSupportedFormat.PUB
     };
     assertArrayEquals(expectedValues, FirewallSupportedFormat.values());
   }
@@ -61,14 +63,17 @@ public class FirewallSupportedFormatTest
     assertEquals("composer", FirewallSupportedFormat.COMPOSER.getValue());
     assertEquals("cocoapods", FirewallSupportedFormat.COCOAPODS.getValue());
     assertEquals("huggingface", FirewallSupportedFormat.HUGGINGFACE.getValue());
+    assertEquals("swift", FirewallSupportedFormat.SWIFT.getValue());
     assertEquals("docker", FirewallSupportedFormat.DOCKER.getValue());
+    assertEquals("raw", FirewallSupportedFormat.RAW.getValue());
+    assertEquals("pub", FirewallSupportedFormat.PUB.getValue());
   }
 
   @Test
   public void testGetValues() {
     String[] expectedValues = {
         "r", "go", "p2", "rubygems", "npm", "yum", "pypi", "cargo", "conan", "conda", "nuget", "maven2",
-        "composer", "cocoapods", "huggingface", "docker", "raw"
+        "composer", "cocoapods", "huggingface", "swift", "docker", "raw", "pub"
     };
     assertArrayEquals(expectedValues, FirewallSupportedFormat.getValues());
   }

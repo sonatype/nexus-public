@@ -41,8 +41,8 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
 import static org.sonatype.nexus.security.BreadActions.READ;
@@ -70,9 +70,9 @@ public class RepositoryPermissionChecker
       final SelectorManager selectorManager,
       final List<Recipe> recipesList)
   {
-    this.securityHelper = checkNotNull(securityHelper);
-    this.selectorManager = checkNotNull(selectorManager);
-    this.recipes = QualifierUtil.buildQualifierBeanMap(checkNotNull(recipesList));
+    this.securityHelper = requireNonNull(securityHelper);
+    this.selectorManager = requireNonNull(selectorManager);
+    this.recipes = QualifierUtil.buildQualifierBeanMap(requireNonNull(recipesList));
   }
 
   /**

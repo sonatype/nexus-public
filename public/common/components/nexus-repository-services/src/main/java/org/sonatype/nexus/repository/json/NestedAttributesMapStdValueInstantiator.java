@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.ValueInstantiator;
 import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of {@link StdValueInstantiator} that forces the providing and using of one root {@link
@@ -38,7 +38,7 @@ public class NestedAttributesMapStdValueInstantiator
 
   public NestedAttributesMapStdValueInstantiator(final NestedAttributesMap root) {
     super(HashMap.class);
-    this.root = checkNotNull(root);
+    this.root = requireNonNull(root);
   }
 
   /**

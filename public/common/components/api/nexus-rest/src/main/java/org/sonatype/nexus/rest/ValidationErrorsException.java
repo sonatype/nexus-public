@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Thrown when there are request validation errors.
@@ -57,13 +57,13 @@ public class ValidationErrorsException
   }
 
   public ValidationErrorsException withErrors(final ValidationErrorXO... validationErrors) {
-    checkNotNull(validationErrors);
+    requireNonNull(validationErrors);
     errors.addAll(Arrays.asList(validationErrors));
     return this;
   }
 
   public ValidationErrorsException withErrors(final List<ValidationErrorXO> validationErrors) {
-    checkNotNull(validationErrors);
+    requireNonNull(validationErrors);
     errors.addAll(validationErrors);
     return this;
   }

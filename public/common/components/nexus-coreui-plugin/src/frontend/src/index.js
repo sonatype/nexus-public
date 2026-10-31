@@ -15,6 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+import './styles/fonts';
 import './App';
 import { enforceHashRouting } from './hashEnforcement';
 import CommunityEulaOnboarding from './components/pages/onboarding/CommunityEulaOnboarding';

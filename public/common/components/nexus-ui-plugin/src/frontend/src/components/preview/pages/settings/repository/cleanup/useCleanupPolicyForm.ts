@@ -67,7 +67,7 @@ export function useCleanupPolicyForm({
   getRepositories,
 }: UseCleanupPolicyFormOptions): UseCleanupPolicyFormReturn {
   const toast = useToast();
-  const isCreate = !policyName && !policy;
+  const isCreate = !(policyName || policy);
 
   // Create the form machine - memoized based on policyName, policy, and formatCriteria
   const machine = useMemo(

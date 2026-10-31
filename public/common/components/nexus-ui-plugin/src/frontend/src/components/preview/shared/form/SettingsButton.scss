@@ -104,6 +104,12 @@
       outline: 2px solid var(--color-error);
       outline-offset: 2px;
     }
+
+    &:disabled {
+      background-color: var(--color-neutral-300);
+      color: var(--color-text-secondary);
+      opacity: 1;
+    }
   }
 
   &--ghost {

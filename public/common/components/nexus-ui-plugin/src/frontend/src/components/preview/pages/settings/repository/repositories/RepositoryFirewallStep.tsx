@@ -20,13 +20,12 @@
  * button treatment as Malware Defense with outline on selected.
  */
 import React, { useEffect, useState } from 'react';
-import { Box, Flex, Text, Card, Button, Link } from '@radix-ui/themes';
-import { Shield, ExternalLink } from 'lucide-react';
+import { Box, Flex, Text, Card, Button, } from '@radix-ui/themes';
+import { ExternalLink } from 'lucide-react';
 import {
   fetchPccsSupportedFormats,
   useFirewallEnable,
 } from '../../../../shared/security/useFirewallEnable';
-import { ProtectionLevelSelector, type ProtectionLevel } from './ProtectionLevelSelector';
 import { ConfirmDialog } from '../../../../shared/form/ConfirmDialog';
 
 export type ProtectionLevel = 'none' | 'audit' | 'quarantine' | 'pccs';
@@ -50,6 +49,12 @@ export interface RepositoryFirewallStepProps {
   /** Deferred mode: when user selects a level */
   onChoice?: (level: ProtectionLevel) => void;
 }
+
+/**
+ * Caller responsibility: only mount this component when isFirewallSupportedFormat(format)
+ * is true for proxy repositories — there is no internal format guard.
+ * See NEXUS-54536.
+ */
 
 export function RepositoryFirewallStep({
   repositoryName = '',

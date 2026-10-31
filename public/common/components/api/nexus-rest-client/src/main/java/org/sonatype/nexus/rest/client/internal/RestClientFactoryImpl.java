@@ -44,7 +44,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.cache.CacheLoader.from;
 
 /**
@@ -69,17 +69,17 @@ public class RestClientFactoryImpl
 
   @Autowired
   public RestClientFactoryImpl(final Provider<HttpClient> httpClient) {
-    this.httpClient = checkNotNull(httpClient);
+    this.httpClient = requireNonNull(httpClient);
   }
 
   @Override
   public Client create(final RestClientConfiguration configuration) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     try (TcclBlock tccl = TcclBlock.begin(ResteasyClientBuilder.class)) {
       final HttpClient client;
       if (configuration.getHttpClient() != null) {
-        client = checkNotNull(configuration.getHttpClient().get());
+        client = requireNonNull(configuration.getHttpClient().get());
       }
       else {
         client = httpClient.get();

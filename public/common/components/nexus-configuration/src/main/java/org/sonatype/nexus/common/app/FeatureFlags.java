@@ -26,11 +26,21 @@ public class FeatureFlags
   /* Hugging Face format is temporarily hidden behind the feature flag. Default value: false */
   public static final String HUGGING_FACE_FORMAT_ENABLED = "nexus.format.huggingface.enabled";
 
+  /*
+   * Kill switch for the Hugging Face XET protocol (§0.6, §5 of xet-implementation-spec).
+   * Independent of HUGGING_FACE_FORMAT_ENABLED so operators can run the HF format on the
+   * legacy LFS-only download path while the XET protocol is disabled. Default value: false.
+   * When false the recipe skips registering XET routes and the proxy facet does not persist
+   * or emit the X-Xet-Hash content-attribute; instance behaviour is bit-for-bit identical to
+   * a pre-XET Nexus.
+   */
+  public static final String HUGGING_FACE_XET_ENABLED = "nexus.format.huggingface.xet.enabled";
+
+  public static final String HUGGING_FACE_XET_ENABLED_NAMED_VALUE =
+      "${" + HUGGING_FACE_XET_ENABLED + ":false}";
+
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
-
-  /* Terraform Backend format is temporarily hidden behind the feature flag. Default value: false */
-  public static final String TERRAFORM_STATE_BACKEND_FORMAT_ENABLED = "nexus.format.terraform-backend.enabled";
 
   /*
    * Kill switch for the OCI (Open Container Initiative) repository format. When false, the OCI
@@ -40,6 +50,23 @@ public class FeatureFlags
   public static final String OCI_FORMAT_ENABLED = "nexus.format.oci.enabled";
 
   public static final String OCI_FORMAT_ENABLED_NAMED_VALUE = "${nexus.format.oci.enabled:true}";
+
+  /*
+   * Feature flag for Chocolatey-specific NuGet behaviour (LegacyGallery suppression
+   * in v3 hosted service index, and mixed v2+v3 group routing). When true, enables
+   * Chocolatey support. Available values: true, false. Default value: true.
+   */
+  public static final String NUGET_CHOCOLATEY_ENABLED = "nexus.nuget.chocolatey.enabled";
+
+  public static final String NUGET_CHOCOLATEY_ENABLED_NAMED_VALUE = "${nexus.nuget.chocolatey.enabled:true}";
+
+  /*
+   * Swift Firewall support (audit/quarantine) is gated behind this flag, which acts as a
+   * kill-switch. Available values: true, false. Default value: true.
+   */
+  public static final String SWIFT_FIREWALL_ENABLED = "nexus.swift.firewall.enabled";
+
+  public static final String SWIFT_FIREWALL_ENABLED_NAMED_VALUE = "${nexus.swift.firewall.enabled:true}";
 
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   public static final String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
@@ -53,6 +80,21 @@ public class FeatureFlags
   public static final String DATASTORE_CLUSTERED_ENABLED = "nexus.datastore.clustered.enabled";
 
   public static final String DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE = "${nexus.datastore.clustered.enabled:false}";
+
+  /*
+   * Immediate cross-node consistency. When true on a clustered PostgreSQL node, a config/data change also
+   * rings a LISTEN/NOTIFY doorbell on the distributed-event outbox so peers drain and replay it immediately
+   * instead of waiting for the ~5s poll. The NOTIFY is a hint only; the durable event row still carries the
+   * payload and the periodic poll remains the backstop. On by default; set
+   * nexus.cluster.immediate.consistency=false to opt back out, leaving the poll as the sole mechanism exactly
+   * as before. No-op on H2 / single-node deployments. Read at startup (bean registration), so changing it
+   * requires a restart.
+   * Available values: true, false. Default value: true.
+   */
+  public static final String CLUSTER_IMMEDIATE_CONSISTENCY_ENABLED = "nexus.cluster.immediate.consistency";
+
+  public static final String CLUSTER_IMMEDIATE_CONSISTENCY_ENABLED_NAMED_VALUE =
+      "${" + CLUSTER_IMMEDIATE_CONSISTENCY_ENABLED + ":true}";
 
   /* Zero downtime upgrades while clustered. Available values: true, false. Default value: false */
   public static final String CLUSTERED_ZERO_DOWNTIME_ENABLED = "nexus.zero.downtime.enabled";
@@ -121,7 +163,37 @@ public class FeatureFlags
   public static final String RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED_VALUE =
       "${" + RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED + ":true}";
 
+  /**
+   * Feature flag to enable/disable the audit-events cleanup task (retention pruning).
+   */
+  public static final String AUDIT_EVENTS_CLEANUP_TASK_ENABLED = "nexus.audit.events.cleanup.task.enabled";
+
+  public static final String AUDIT_EVENTS_CLEANUP_TASK_ENABLED_NAMED_VALUE =
+      "${" + AUDIT_EVENTS_CLEANUP_TASK_ENABLED + ":true}";
+
   public static final String FIREWALL_ONBOARDING_ENABLED = "nexus.firewall.onboarding.enabled";
+
+  public static final String FIREWALL_PUB_FORMAT_ENABLED = "nexus.firewall.pub.format.enabled";
+
+  public static final String FIREWALL_PUB_FORMAT_ENABLED_NAMED_VALUE =
+      "${" + FIREWALL_PUB_FORMAT_ENABLED + ":true}";
+
+  /**
+   * Feature flag allowing Firewall audit and quarantine mode to be configured on proxy repositories
+   * whose format Sonatype IQ cannot fully analyze.
+   * <p>
+   * The override is deliberately blanket: when enabled it lifts the format restriction for every
+   * format outside {@code FirewallSupportedFormat}, restoring the pre-STL-381 behaviour rather than
+   * allowlisting a named subset. Defaults to {@code false} so no instance gains the affordance
+   * without being opted in explicitly.
+   * <p>
+   * Interim measure for FIRE-956; superseded by the global Firewall capability in FIRE-895.
+   */
+  public static final String FIREWALL_LIMITED_SUPPORT_FORMATS_ENABLED =
+      "nexus.firewall.limited.support.formats.enabled";
+
+  public static final String FIREWALL_LIMITED_SUPPORT_FORMATS_ENABLED_NAMED_VALUE =
+      "${" + FIREWALL_LIMITED_SUPPORT_FORMATS_ENABLED + ":false}";
 
   public static final String CLEANUP_PREVIEW_ENABLED = "nexus.cleanup.preview.enabled";
 
@@ -135,11 +207,13 @@ public class FeatureFlags
 
   public static final String CLEANUP_RETAIN_ALL_FORMATS = "nexus.cleanup.retainAllFormats.enabled";
 
-  public static final String CLEANUP_RETAIN_ALL_FORMATS_NAMED_VALUE = "${nexus.cleanup.retainAllFormats.enabled:false}";
+  public static final String CLEANUP_RETAIN_ALL_FORMATS_NAMED_VALUE = "${nexus.cleanup.retainAllFormats.enabled:true}";
 
   public static final String FORMAT_RETAIN_PATTERN = "nexus.cleanup.{format}Retain";
 
   public static final String DISABLE_NORMALIZE_VERSION_TASK = "nexus.cleanup.disableNormalizeVersionTask";
+
+  public static final String DISABLE_RENORMALIZE_VERSION_TASK = "nexus.cleanup.disableReNormalizeVersionTask";
 
   public static final String DISABLE_CREATING_COMPONENT_INDEXES_TASK = "nexus.component.index.task";
 
@@ -244,6 +318,21 @@ public class FeatureFlags
   public static final String NEXUS_SECURITY_PASSWORD_ITERATIONS_NAMED_VALUE =
       "${nexus.security.password.iterations:}";
 
+  /*
+   * Short-lived cache of successfully verified credentials, keyed by a keyed hash of (stored-hash + submitted
+   * password). Lets repeated identical Basic-Auth requests skip the deliberately-expensive password KDF. Only
+   * successful verifications are cached (failures always pay the full KDF cost, preserving brute-force resistance),
+   * and the stored-hash is part of the key so a password change transparently invalidates prior entries.
+   */
+  public static final String NEXUS_SECURITY_PASSWORD_CACHE_ENABLED_NAMED_VALUE =
+      "${nexus.security.password.cache.enabled:true}";
+
+  public static final String NEXUS_SECURITY_PASSWORD_CACHE_SIZE_NAMED_VALUE =
+      "${nexus.security.password.cache.size:1000}";
+
+  public static final String NEXUS_SECURITY_PASSWORD_CACHE_EXPIRE_SECONDS_NAMED_VALUE =
+      "${nexus.security.password.cache.expireSeconds:2}";
+
   public static final String NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE =
       "${nexus.security.secrets.algorithm:PBKDF2WithHmacSHA1}";
 
@@ -256,15 +345,17 @@ public class FeatureFlags
 
   public static final String CONTAINER_IMAGES_EVAL_ENABLED_NAMED_VALUE = "${nexus.container.images.eval.enabled:true}";
 
-  public static final String CONTAINER_IMAGES_EVAL_API_ENABLED_VALUE =
-      "${nexus.container.images.eval.api.enabled:true}";
-
   public static final String NEXUS_SECURITY_AUTH0_USER_MANAGEMENT_ENABLED =
       "nexus.security.auth0.userManagement.enabled";
 
-  public static final String FIREWALL_CONTAINER_WORK_DIRECTORY_NAMED = "${nexus.firewall.container.workdirectory:-}";
-
   public static final String FIREWALL_CONTAINER_WORK_DIRECTORY_VALUE = "${nexus.firewall.container.workdirectory:}";
+
+  /* Layer download timeout for container image scanning, in minutes. When unset, the scanner default is used. */
+  public static final String FIREWALL_CONTAINER_DOWNLOAD_TIMEOUT_MINUTES =
+      "nexus.firewall.container.download.timeout.minutes";
+
+  public static final String FIREWALL_CONTAINER_DOWNLOAD_TIMEOUT_MINUTES_VALUE =
+      "${nexus.firewall.container.download.timeout.minutes:}";
 
   public static final String EGRESS_METRICS_AGGREGATION_TASK_VISIBLE = "${nexus.egressmetrics.task.visible:false}";
 
@@ -275,6 +366,16 @@ public class FeatureFlags
   public static final String PYPI_METADATA_ENABLED = "nexus.pypi.metadata.enabled";
 
   public static final String PYPI_METADATA_ENABLED_NAMED_VALUE = "${nexus.pypi.metadata.enabled:false}";
+
+  /*
+   * PyPI repair-metadata-content-type task visibility. When true, the task appears in the Tasks UI so
+   * operators can monitor and re-run it. Default: false (hidden; auto-scheduled via migration step).
+   */
+  public static final String PYPI_REPAIR_METADATA_CONTENT_TYPE_TASK_VISIBLE =
+      "nexus.pypi.repair.metadata.content.type.task.visible";
+
+  public static final String PYPI_REPAIR_METADATA_CONTENT_TYPE_TASK_VISIBLE_NAMED_VALUE =
+      "${" + PYPI_REPAIR_METADATA_CONTENT_TYPE_TASK_VISIBLE + ":false}";
 
   public static final String NEXUS_USER_CONFIGURATION_SOURCE_ENABLED = "nexus.user.configuration.source.enabled";
 
@@ -288,21 +389,29 @@ public class FeatureFlags
 
   public static final String REACT_CAPABILITIES_NAMED_VALUE = "${nexus.react.capabilities.enabled:true}";
 
+  /*
+   * Gates the new React onboarding wizard. When enabled, the ExtJS onboarding wizard defers so the React wizard can
+   * take over. Available values: true, false. Default value: true
+   */
+  public static final String REACT_ONBOARDING_ENABLED = "nexus.react.onboarding.enabled";
+
+  public static final String REACT_ONBOARDING_ENABLED_NAMED_VALUE = "${nexus.react.onboarding.enabled:true}";
+
   /* Enable principal permissions cache. Default value: true */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE =
       "${nexus.security.principal.permissions.cache.enabled:true}";
 
-  /* Preview UI for anonymous users. Available values: true, false. Default value: false */
+  /* Preview UI for anonymous users. Available values: true, false. Default value: true */
   public static final String PREVIEW_UI_ANONYMOUS_ENABLED = "nexus.preview.ui.anonymous.enabled";
 
   public static final String PREVIEW_UI_ANONYMOUS_ENABLED_NAMED_VALUE =
-      "${nexus.preview.ui.anonymous.enabled:false}";
+      "${nexus.preview.ui.anonymous.enabled:true}";
 
-  /* Preview UI for logged-in users. Available values: true, false. Default value: false */
+  /* Preview UI for logged-in users. Available values: true, false. Default value: true */
   public static final String PREVIEW_UI_LOGGEDIN_ENABLED = "nexus.preview.ui.loggedin.enabled";
 
   public static final String PREVIEW_UI_LOGGEDIN_ENABLED_NAMED_VALUE =
-      "${nexus.preview.ui.loggedin.enabled:false}";
+      "${nexus.preview.ui.loggedin.enabled:true}";
 
   /* Default to Preview UI for all users. Available values: true, false. Default value: false */
   public static final String PREVIEW_UI_DEFAULT_ENABLED = "nexus.preview.ui.default.enabled";
@@ -339,6 +448,8 @@ public class FeatureFlags
    * Gates Preview UI audit event DB persistence and the audit log REST/UI surface.
    * Intentionally decoupled from the preview UI visibility flags so audit DB writes can be
    * deferred until the persistence path is production-ready.
+   * Defaults to false: audit_events grew without bound since 3.96.0 (NEXUS-53767), so DB
+   * persistence is opt-in until the volume and retention redesign lands (NEXUS-55862, NEXUS-55482).
    * Available values: true, false. Default value: false
    */
   public static final String PREVIEW_UI_AUDIT_ENABLED = "nexus.previewui.audit.enabled";
@@ -369,19 +480,12 @@ public class FeatureFlags
   public static final String PRINCIPAL_PERMISSIONS_CACHE_CONCURRENCY_LEVEL_NAMED_VALUE =
       "${nexus.authorizingrealm.permissionscache.concurrencylevel:16}";
 
-  // Hosted Repository Evaluation feature. Default value: false
+  // Hosted Repository Evaluation feature. Default value: true.
+  // Operators can explicitly set nexus.hosted.repository.evaluation.enabled=false to disable.
   public static final String HOSTED_REPOSITORY_EVALUATION_ENABLED = "nexus.hosted.repository.evaluation.enabled";
 
   public static final String HOSTED_REPOSITORY_EVALUATION_ENABLED_NAMED_VALUE =
-      "${nexus.hosted.repository.evaluation.enabled:false}";
-
-  // Hosted Repository Synchronous Policy Enforcement feature (CLM-38411). Default: false.
-  // Requires HOSTED_REPOSITORY_EVALUATION_ENABLED to also be true.
-  public static final String HOSTED_REPOSITORY_ENFORCEMENT_ENABLED =
-      "nexus.hosted.repository.enforcement.enabled";
-
-  public static final String HOSTED_REPOSITORY_ENFORCEMENT_ENABLED_NAMED_VALUE =
-      "${nexus.hosted.repository.enforcement.enabled:false}";
+      "${nexus.hosted.repository.evaluation.enabled:true}";
 
   public static final String HOSTED_REPOSITORY_WORK_DIRECTORY_VALUE =
       "${nexus.lifecycle.hosted-repository.workdirectory:}";
@@ -409,20 +513,6 @@ public class FeatureFlags
 
   public static final String METRICS_INTERNAL_ENABLED_NAMED_VALUE = "${nexus.metrics.internal.enabled:true}";
 
-  /**
-   * Default is false until NEXUS-49817 development is complete.
-   */
-  public static final String TELEMETRY_MANDATORY_ENABLED = "nexus.telemetry.mandatory.enabled";
-
-  public static final String TELEMETRY_MANDATORY_ENABLED_NAMED_VALUE =
-      "${nexus.telemetry.mandatory.enabled:false}";
-
-  /**
-   * When enabled, activates mandatory telemetry logic for alerting only, without blocking operations (e.g., read-only
-   * mode).
-   */
-  public static final String TELEMETRY_MANDATORY_WARNING_ENABLED = "nexus.telemetry.mandatory.warning.enabled";
-
   /*
    * Authentication rate limiting (brute force protection, CWE-307). Available values: true, false. Default value: true
    */
@@ -430,10 +520,10 @@ public class FeatureFlags
 
   public static final String AUTH_RATE_LIMIT_ENABLED_NAMED_VALUE = "${nexus.auth.ratelimit.enabled:true}";
 
-  /* NuGet Symbol Server support. Available values: true, false. Default value: false */
+  /* NuGet Symbol Server support. Available values: true, false. Default value: true */
   public static final String NUGET_SYMBOL_SERVER_ENABLED = "nexus.nuget.symbol.server.enabled";
 
-  public static final String NUGET_SYMBOL_SERVER_ENABLED_NAMED_VALUE = "${nexus.nuget.symbol.server.enabled:false}";
+  public static final String NUGET_SYMBOL_SERVER_ENABLED_NAMED_VALUE = "${nexus.nuget.symbol.server.enabled:true}";
 
   /* Firewall capability shim for backwards API compatibility. Available values: true, false. Default value: true */
   public static final String FIREWALL_CAPABILITY_SHIM_ENABLED = "nexus.firewall.capability.shim.enabled";
@@ -447,4 +537,116 @@ public class FeatureFlags
    * Default value: true.
    */
   public static final String FIREWALL_REPOSITORY_SERVICE_ENABLED = "nexus.firewall.repository.service.enabled";
+
+  /**
+   * Logical deletion (soft-delete) and recovery support (NEXUS-49147).
+   * When enabled, delete operations mark entities as soft-deleted instead of permanently removing them,
+   * allowing recovery within a configurable retention period.
+   */
+  public static final String SOFT_DELETE_ENABLED = "nexus.softDelete.enabled";
+
+  public static final String SOFT_DELETE_ENABLED_NAMED_VALUE = "${nexus.softDelete.enabled:false}";
+
+  /**
+   * Number of days to retain soft-deleted entities before permanent purge.
+   */
+  public static final String SOFT_DELETE_RETENTION_DAYS = "nexus.softDelete.retentionDays";
+
+  public static final String SOFT_DELETE_RETENTION_DAYS_NAMED_VALUE = "${nexus.softDelete.retentionDays:30}";
+
+  /**
+   * Comma-separated allowlist of repository formats for which soft-delete is active. Enables a phased,
+   * format-by-format rollout: the soft-delete schema columns are added to every format up front (they
+   * are inert/nullable), but a delete only becomes a recoverable soft-delete when {@link #SOFT_DELETE_ENABLED}
+   * is on AND the repository's format is in this list. Fail-closed: empty/unset means <em>no</em> format
+   * is soft-deleted (everything hard-deletes), even when the flag is on. The single-entry wildcard
+   * {@code *} enables all formats. Formats not listed hard-delete exactly as before, so their
+   * format-specific metadata handlers are not required until they are added here.
+   */
+  public static final String SOFT_DELETE_FORMATS = "nexus.softDelete.formats";
+
+  public static final String SOFT_DELETE_FORMATS_NAMED_VALUE = "${nexus.softDelete.formats:}";
+
+  /*
+   * FIRE-105 / NEXUS-52802 — PyPI PCCS throughput perf fixes (template content cache, Guava HTML escaper,
+   * pre-escape relocation + safeLink scheme guard, reflection cache). Gates the optimised PyPI
+   * simple-index rendering path; default true (optimised path on unless explicitly
+   * disabled). Set false to run the legacy path. Available values: true, false.
+   */
+  public static final String NEXUS_PCCS_PERF_PYPI_ENABLED = "nexus.pccs.perf.pypi.enabled";
+
+  public static final String NEXUS_PCCS_PERF_PYPI_ENABLED_NAMED_VALUE = "${nexus.pccs.perf.pypi.enabled:true}";
+
+  /*
+   * NEXUS-52802 — npm PCCS throughput perf fixes (shared ObjectMapper singleton + ThreadLocal,
+   * reflection cache). Gates the optimised npm metadata streaming path; default true (optimised
+   * path on unless explicitly disabled). Set false to run the legacy per-request path. Available
+   * values: true, false.
+   */
+  public static final String NEXUS_PCCS_PERF_NPM_ENABLED = "nexus.pccs.perf.npm.enabled";
+
+  public static final String NEXUS_PCCS_PERF_NPM_ENABLED_NAMED_VALUE = "${nexus.pccs.perf.npm.enabled:true}";
+
+  /*
+   * FIRE-732 / FIRE-773 / FIRE-887 — npm PCCS rendered metadata view. When true and a base URL is configured,
+   * npm proxy metadata responses are served from a pre-rendered cached blob, bypassing both parse
+   * passes on cache hits.
+   */
+  public static final String NEXUS_PROXY_RENDERED_VIEW_NPM_ENABLED = "nexus.proxy.rendered.view.npm.enabled";
+
+  public static final String NEXUS_PROXY_RENDERED_VIEW_NPM_ENABLED_NAMED_VALUE =
+      "${nexus.proxy.rendered.view.npm.enabled:false}";
+
+  /*
+   * FIRE-732 / FIRE-773 — PyPI PCCS rendered metadata view. Same as the npm flag but for PyPI
+   * HTML and JSON simple indexes.
+   */
+  public static final String NEXUS_PROXY_RENDERED_VIEW_PYPI_ENABLED = "nexus.proxy.rendered.view.pypi.enabled";
+
+  public static final String NEXUS_PROXY_RENDERED_VIEW_PYPI_ENABLED_NAMED_VALUE =
+      "${nexus.proxy.rendered.view.pypi.enabled:false}";
+
+  /*
+   * Feature flag for the Group Rendered View optimization for PyPI format.
+   * When enabled, PyPI group repositories can serve cached rendered metadata views
+   * without member dispatch when the cache is fresh.
+   */
+  public static final String GROUP_RENDERED_VIEW_PYPI_ENABLED = "nexus.group.rendered.view.pypi.enabled";
+
+  public static final String GROUP_RENDERED_VIEW_PYPI_ENABLED_NAMED_VALUE =
+      "${nexus.group.rendered.view.pypi.enabled:false}";
+
+  /*
+   * Feature flag for the Group Rendered View optimization for npm format.
+   * When enabled, npm group repositories can serve cached rendered metadata views
+   * without member dispatch when the cache is fresh.
+   */
+  public static final String GROUP_RENDERED_VIEW_NPM_ENABLED = "nexus.group.rendered.view.npm.enabled";
+
+  public static final String GROUP_RENDERED_VIEW_NPM_ENABLED_NAMED_VALUE =
+      "${nexus.group.rendered.view.npm.enabled:false}";
+
+  /* Enables batched S3 DeleteObjects path in the compact task. Default value: false */
+  public static final String S3_COMPACT_BATCH_ENABLED = "nexus.s3.compact.batchEnabled";
+
+  public static final String S3_COMPACT_BATCH_ENABLED_NAMED_VALUE = "${nexus.s3.compact.batchEnabled:false}";
+
+  /*
+   * Development gate for the Support Zip Generation on Cloud epic (NEXUS-48398). When enabled,
+   * exposes the HA support-zip REST endpoints under /service/rest/internal/cloud/supportzip/* on the
+   * cloud edition via a dedicated cloud-only resource. Default value: false so the endpoints
+   * cannot be enabled on main; intended for internal testing environments only until the epic
+   * is ready to ship.
+   */
+  public static final String SUPPORT_ZIP_CLOUD_ENABLED = "nexus.support.zip.cloud.enabled";
+
+  /* Blobs per S3 DeleteObjects call; max 333 (333×3 keys < S3 limit of 1000). Default value: 300 */
+  public static final String S3_COMPACT_DELETE_BATCH_SIZE = "nexus.s3.compact.deleteBatchSize";
+
+  public static final String S3_COMPACT_DELETE_BATCH_SIZE_NAMED_VALUE = "${nexus.s3.compact.deleteBatchSize:300}";
+
+  /* Parallel worker threads per blobstore in the compact batch-delete phase. Default value: 8 */
+  public static final String S3_COMPACT_WORKER_POOL_SIZE = "nexus.s3.compact.workerPoolSize";
+
+  public static final String S3_COMPACT_WORKER_POOL_SIZE_NAMED_VALUE = "${nexus.s3.compact.workerPoolSize:8}";
 }

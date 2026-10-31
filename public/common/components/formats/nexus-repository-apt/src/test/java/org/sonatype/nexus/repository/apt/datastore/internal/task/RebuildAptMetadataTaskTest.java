@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
+import org.sonatype.nexus.common.failure.MultipleFailures.MultipleFailuresException;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
@@ -24,17 +25,16 @@ import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.data.AptKeyValueFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata.AptHostedMetadataFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.proxy.AptProxyFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.proxy.metadata.AptProxyMetadataFacet;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
-import org.sonatype.nexus.common.failure.MultipleFailures.MultipleFailuresException;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.util.ThreadContext;
 import org.junit.After;
@@ -44,9 +44,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.junit.Assert.assertThrows;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
@@ -93,7 +93,7 @@ public class RebuildAptMetadataTaskTest
   private AptSigningFacet signingFacet;
 
   @Mock
-  private ProxyFacet proxyFacet;
+  private AptProxyFacet proxyFacet;
 
   @Mock
   private Repository aptProxyRepository;
@@ -128,7 +128,7 @@ public class RebuildAptMetadataTaskTest
     when(aptProxyRepository.facet(AptKeyValueFacet.class)).thenReturn(proxyKeyValueFacet);
     when(aptProxyRepository.facet(AptProxyMetadataFacet.class)).thenReturn(proxyMetadataFacet);
     when(aptProxyRepository.facet(AptSigningFacet.class)).thenReturn(signingFacet);
-    when(aptProxyRepository.facet(ProxyFacet.class)).thenReturn(proxyFacet);
+    when(aptProxyRepository.facet(AptProxyFacet.class)).thenReturn(proxyFacet);
 
     when(repositoryManager.get("test-apt-proxy")).thenReturn(aptProxyRepository);
   }
@@ -250,7 +250,7 @@ public class RebuildAptMetadataTaskTest
 
     // Verify reset happens even without signing
     verify(proxyKeyValueFacet, times(1)).clearAllTrackedDistributions();
-    verify(proxyFacet, times(1)).invalidateProxyCaches();
+    verify(proxyFacet).invalidateMetadataCache();
 
     // Verify rebuild is skipped (no signing configured)
     verify(proxyMetadataFacet, never()).rebuildMetadata(anyBoolean());
@@ -276,7 +276,7 @@ public class RebuildAptMetadataTaskTest
 
     // Verify rebuild happens
     verify(proxyMetadataFacet, times(1)).rebuildMetadata(false);
-    verify(proxyFacet, never()).invalidateProxyCaches();
+    verify(proxyFacet, never()).invalidateMetadataCache();
   }
 
   @Test
@@ -302,7 +302,7 @@ public class RebuildAptMetadataTaskTest
     verify(proxyMetadataFacet, times(1)).rebuildMetadata(true);
 
     // Verify caches invalidated only during reset
-    verify(proxyFacet, times(1)).invalidateProxyCaches();
+    verify(proxyFacet, times(1)).invalidateMetadataCache();
   }
 
   @Test
@@ -322,7 +322,7 @@ public class RebuildAptMetadataTaskTest
 
     // Verify rebuild still happens (will process nothing, but should not fail)
     verify(proxyMetadataFacet, times(1)).rebuildMetadata(false);
-    verify(proxyFacet, never()).invalidateProxyCaches();
+    verify(proxyFacet, never()).invalidateMetadataCache();
   }
 
   @Test
@@ -347,7 +347,7 @@ public class RebuildAptMetadataTaskTest
     verify(proxyMetadataFacet, times(1)).rebuildMetadata(true);
 
     // Verify caches invalidated only during reset
-    verify(proxyFacet, times(1)).invalidateProxyCaches();
+    verify(proxyFacet, times(1)).invalidateMetadataCache();
   }
 
   @Test
@@ -382,7 +382,7 @@ public class RebuildAptMetadataTaskTest
     // Verify proxy behavior is unchanged - hosted flag is ignored
     verify(proxyKeyValueFacet, never()).removeAllPackageMetadata(); // hosted-only operation
     verify(proxyMetadataFacet, times(1)).rebuildMetadata(false);
-    verify(proxyFacet, never()).invalidateProxyCaches();
+    verify(proxyFacet, never()).invalidateMetadataCache();
   }
 
   @Test
@@ -400,10 +400,10 @@ public class RebuildAptMetadataTaskTest
 
     // Verify reset still happened before the exception
     verify(proxyKeyValueFacet, times(1)).clearAllTrackedDistributions();
-    verify(proxyFacet, times(1)).invalidateProxyCaches();
+    verify(proxyFacet, times(1)).invalidateMetadataCache();
   }
 
-  private TaskConfiguration createTaskConfiguration(boolean fullRebuild) {
+  private TaskConfiguration createTaskConfiguration(final boolean fullRebuild) {
     TaskConfiguration configuration = new TaskConfiguration();
     configuration.setId(UUID.randomUUID().toString());
     configuration.setTypeId(RebuildAptMetadataTaskDescriptor.TYPE_ID);
@@ -412,7 +412,7 @@ public class RebuildAptMetadataTaskTest
     return configuration;
   }
 
-  private TaskConfiguration createProxyTaskConfiguration(boolean resetMetadata) {
+  private TaskConfiguration createProxyTaskConfiguration(final boolean resetMetadata) {
     TaskConfiguration configuration = new TaskConfiguration();
     configuration.setId(UUID.randomUUID().toString());
     configuration.setTypeId(RebuildAptMetadataTaskDescriptor.TYPE_ID);

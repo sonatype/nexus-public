@@ -13,13 +13,10 @@
 
 import {
   validateConnectionPool,
-  validateDataStoreForm,
-  hasFormErrors,
   validateJdbcParameters,
   parseAdvancedString,
   serializeParameters,
   calculateEffectiveConfig,
-  DataStoreFormData,
 } from '../types';
 import { JdbcParameter } from '../JdbcParameterEditor';
 
@@ -51,36 +48,6 @@ describe('validateConnectionPool', () => {
   it('returns error for non-numeric strings', () => {
     expect(validateConnectionPool('abc')).toBe('Must be a valid number');
     expect(validateConnectionPool('')).toBe('Must be a valid number');
-  });
-});
-
-describe('validateDataStoreForm', () => {
-  it('returns empty errors for valid form', () => {
-    const data: DataStoreFormData = {
-      maximumConnectionPool: 100,
-      advanced: '',
-    };
-    expect(validateDataStoreForm(data)).toEqual({});
-  });
-
-  it('returns pool error for invalid pool size', () => {
-    const data: DataStoreFormData = {
-      maximumConnectionPool: 5000,
-      advanced: '',
-    };
-    expect(validateDataStoreForm(data)).toEqual({
-      maximumConnectionPool: 'Must be at most 3000',
-    });
-  });
-});
-
-describe('hasFormErrors', () => {
-  it('returns false for empty errors object', () => {
-    expect(hasFormErrors({})).toBe(false);
-  });
-
-  it('returns true when errors exist', () => {
-    expect(hasFormErrors({ maximumConnectionPool: 'Error' })).toBe(true);
   });
 });
 
@@ -165,17 +132,17 @@ describe('parseAdvancedString', () => {
     expect(parseAdvancedString('  ')).toEqual([]);
   });
 
-  it('parses semicolon-separated parameters', () => {
-    const result = parseAdvancedString('socketTimeout=30000;connectTimeout=5000');
-    
+  it('parses newline-separated parameters', () => {
+    const result = parseAdvancedString('socketTimeout=30000\nconnectTimeout=5000');
+
     expect(result).toHaveLength(2);
     expect(result[0]).toMatchObject({ name: 'socketTimeout', value: '30000', isCustom: true });
     expect(result[1]).toMatchObject({ name: 'connectTimeout', value: '5000', isCustom: true });
   });
 
-  it('parses ampersand-separated parameters', () => {
-    const result = parseAdvancedString('socketTimeout=30000&connectTimeout=5000');
-    
+  it('parses CRLF-separated parameters', () => {
+    const result = parseAdvancedString('socketTimeout=30000\r\nconnectTimeout=5000');
+
     expect(result).toHaveLength(2);
     expect(result[0]).toMatchObject({ name: 'socketTimeout', value: '30000' });
     expect(result[1]).toMatchObject({ name: 'connectTimeout', value: '5000' });
@@ -183,21 +150,21 @@ describe('parseAdvancedString', () => {
 
   it('handles values with equals signs', () => {
     const result = parseAdvancedString('param=value=with=equals');
-    
+
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({ name: 'param', value: 'value=with=equals' });
   });
 
   it('trims whitespace', () => {
-    const result = parseAdvancedString('  socketTimeout = 30000 ; connectTimeout = 5000  ');
-    
+    const result = parseAdvancedString('  socketTimeout = 30000 \n connectTimeout = 5000  ');
+
     expect(result).toHaveLength(2);
     expect(result[0]).toMatchObject({ name: 'socketTimeout', value: '30000' });
   });
 
   it('generates unique IDs for each parameter', () => {
-    const result = parseAdvancedString('a=1;b=2');
-    
+    const result = parseAdvancedString('a=1\nb=2');
+
     expect(result[0].id).not.toBe(result[1].id);
   });
 });
@@ -207,13 +174,13 @@ describe('serializeParameters', () => {
     expect(serializeParameters([])).toBe('');
   });
 
-  it('serializes custom parameters with semicolon separator', () => {
+  it('serializes custom parameters with newline separator', () => {
     const params: JdbcParameter[] = [
       { id: '1', name: 'socketTimeout', value: '30000', isDefault: false, isCustom: true },
       { id: '2', name: 'connectTimeout', value: '5000', isDefault: false, isCustom: true },
     ];
 
-    expect(serializeParameters(params)).toBe('socketTimeout=30000;connectTimeout=5000');
+    expect(serializeParameters(params)).toBe('socketTimeout=30000\nconnectTimeout=5000');
   });
 
   it('excludes default parameters from serialization', () => {

@@ -15,6 +15,8 @@ import React, { createContext, useContext, useRef, useState, useEffect } from 'r
 import { Tooltip as RadixTooltip } from '@radix-ui/themes';
 import { Provider as RadixTooltipProvider } from '@radix-ui/react-tooltip';
 
+import './TooltipContainerContext.scss';
+
 const TooltipContainerContext = createContext(null);
 
 /**
@@ -35,19 +37,7 @@ export function TooltipContainerProvider({ children }) {
       <TooltipContainerContext.Provider value={container}>
         <div
           ref={containerRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: 0,
-            height: 0,
-            overflow: 'visible',
-            pointerEvents: 'none',
-            // Z-index 14999: Above ExtJS animating components (10000) but below masks (20000+)
-            // This ensures header dropdowns, tooltips, and popovers appear above ExtJS grids
-            // while still allowing modals and loading overlays to cover them.
-            zIndex: 14999,
-          }}
+          className="nxrm-tooltip-container"
           aria-hidden
         />
         {children}

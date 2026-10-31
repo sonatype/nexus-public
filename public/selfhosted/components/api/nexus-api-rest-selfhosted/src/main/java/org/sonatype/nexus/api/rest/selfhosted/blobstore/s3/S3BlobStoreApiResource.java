@@ -12,17 +12,11 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.blobstore.s3;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import jakarta.validation.Valid;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Response;
+import java.util.Set;
 
 import org.sonatype.nexus.api.rest.common.blobstore.BlobStoreResourceUtil;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.PreSignedUrlNotAllowedException;
@@ -31,6 +25,7 @@ import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiUpdateValidation;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketSecurity;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiCloudFront;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -41,24 +36,41 @@ import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.validation.ConstraintViolationFactory;
+import org.sonatype.nexus.validation.Validate;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Optional.ofNullable;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.Response.status;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static jakarta.ws.rs.core.Response.Status.PAYMENT_REQUIRED;
-import static jakarta.ws.rs.core.Response.status;
+import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiModelMapper.map;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_PRIVATE_KEY_KEY;
 
 /**
  * REST API endpoints for creating, reading, updating and deleting an S3 blob store.
@@ -67,7 +79,7 @@ import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiMode
  */
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-public class S3BlobStoreApiResource
+public abstract class S3BlobStoreApiResource
     implements Resource, S3BlobStoreApiResourceDoc
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -82,16 +94,20 @@ public class S3BlobStoreApiResource
 
   private final ApplicationVersion applicationVersion;
 
+  private final ConstraintViolationFactory constraintViolationFactory;
+
   public S3BlobStoreApiResource(
       final BlobStoreManager blobStoreManager,
       final S3BlobStoreApiUpdateValidation validation,
       final SecretsFactory secretsFactory,
-      final ApplicationVersion applicationVersion)
+      final ApplicationVersion applicationVersion,
+      final ConstraintViolationFactory constraintViolationFactory)
   {
     this.blobStoreManager = blobStoreManager;
     this.s3BlobStoreApiUpdateValidation = validation;
-    this.secretsFactory = checkNotNull(secretsFactory);
-    this.applicationVersion = checkNotNull(applicationVersion);
+    this.secretsFactory = requireNonNull(secretsFactory);
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
   }
 
   @POST
@@ -99,6 +115,7 @@ public class S3BlobStoreApiResource
   @RequiresAuthentication
   @Path("/s3")
   @RequiresPermissions("nexus:blobstores:create")
+  @Validate
   public Response createBlobStore(@Valid final S3BlobStoreApiModel request) {
     try {
       s3BlobStoreApiUpdateValidation.validateCreateRequest(request);
@@ -111,6 +128,7 @@ public class S3BlobStoreApiResource
       throw new WebApplicationMessageException(PAYMENT_REQUIRED, S3_PRE_SIGNED_URL_PAYMENT_REQUIRED);
     }
     catch (Exception e) {
+      Throwables.throwIfInstanceOf(e, RuntimeException.class);
       throw new WebApplicationMessageException(BAD_REQUEST, e.getMessage());
     }
   }
@@ -120,6 +138,7 @@ public class S3BlobStoreApiResource
   @RequiresAuthentication
   @Path("/s3/{name}")
   @RequiresPermissions("nexus:blobstores:update")
+  @Validate
   public void updateBlobStore(
       @Valid final S3BlobStoreApiModel request,
       @PathParam("name") final String blobStoreName) throws Exception
@@ -136,6 +155,7 @@ public class S3BlobStoreApiResource
       throw new WebApplicationMessageException(PAYMENT_REQUIRED, S3_PRE_SIGNED_URL_PAYMENT_REQUIRED);
     }
     catch (Exception e) {
+      Throwables.throwIfInstanceOf(e, RuntimeException.class);
       throw new WebApplicationMessageException(INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
@@ -153,13 +173,35 @@ public class S3BlobStoreApiResource
           .getBucketSecurity()
           .setSessionToken(decryptSecret(blobStore, S3BlobStore.SESSION_TOKEN_KEY));
     }
+
+    boolean pemPlaceholder = hasCloudFrontPemPlaceholder(request);
+
+    if (pemPlaceholder) {
+      S3BlobStoreApiCloudFront existing = (S3BlobStoreApiCloudFront) request.getGlobalDistribution();
+      request.setGlobalDistribution(new S3BlobStoreApiCloudFront(existing.distributionUrl(), existing.keyId(),
+          decryptSecret(blobStore, CLOUDFRONT_KEY, CLOUDFRONT_PRIVATE_KEY_KEY)));
+    }
   }
 
-  private String decryptSecret(final BlobStore blobStore, final String secretKey) {
-    String secretId = blobStore.getBlobStoreConfiguration()
+  private String decryptSecret(final BlobStore blobStore, final String... pathSegments) {
+    List<String> path = Arrays.asList(pathSegments);
+    String secretKey = Iterables.getLast(path);
+
+    Map<String, ?> attributes = blobStore.getBlobStoreConfiguration()
         .getAttributes()
-        .get(S3BlobStore.TYPE.toLowerCase())
-        .get(secretKey)
+        .get(S3BlobStore.TYPE.toLowerCase());
+
+    for (String segment : path.subList(0, path.size() - 1)) {
+      attributes = Optional.ofNullable(attributes)
+          .map(attr -> attr.get(segment))
+          .map(Map.class::cast)
+          .orElse(null);
+    }
+
+    String secretId = Optional.ofNullable(attributes)
+        .map(attr -> attr.get(secretKey))
+        .orElseThrow(() -> new ConstraintViolationException("No existing secret",
+            Set.of(constraintViolationFactory.createViolation(secretKey, "No existing secret"))))
         .toString();
 
     return new String(secretsFactory.from(secretId).decrypt());
@@ -177,6 +219,15 @@ public class S3BlobStoreApiResource
     return Optional.ofNullable(request.getBucketConfiguration())
         .map(S3BlobStoreApiBucketConfiguration::getBucketSecurity)
         .map(S3BlobStoreApiBucketSecurity::getSessionToken)
+        .map(PasswordPlaceholder::is)
+        .orElse(false);
+  }
+
+  private static boolean hasCloudFrontPemPlaceholder(final S3BlobStoreApiModel request) {
+    return Optional.ofNullable(request.getGlobalDistribution())
+        .filter(S3BlobStoreApiCloudFront.class::isInstance)
+        .map(S3BlobStoreApiCloudFront.class::cast)
+        .map(S3BlobStoreApiCloudFront::privateKey)
         .map(PasswordPlaceholder::is)
         .orElse(false);
   }
@@ -227,6 +278,7 @@ public class S3BlobStoreApiResource
     return configuration;
   }
 
+  @Override
   @DELETE
   @RequiresAuthentication
   @Path("/s3")

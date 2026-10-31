@@ -19,7 +19,7 @@ import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.capabilities;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +33,7 @@ public class LegacyUrlEnabledHelper
 
   @Autowired
   public LegacyUrlEnabledHelper(final CapabilityRegistry capabilities) {
-    this.capabilities = checkNotNull(capabilities);
+    this.capabilities = requireNonNull(capabilities);
   }
 
   public boolean isEnabled() {

@@ -48,7 +48,7 @@ import com.google.common.net.HttpHeaders;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * <p>
@@ -83,7 +83,7 @@ public abstract class MergingGroupHandlerSupport
       final Duration minorTimeout,
       final int threadsPerKey)
   {
-    this.cooperation = checkNotNull(cooperationFactory).configure()
+    this.cooperation = requireNonNull(cooperationFactory).configure()
         .enabled(cooperationEnabled)
         .majorTimeout(majorTimeout)
         .minorTimeout(minorTimeout)
@@ -222,8 +222,17 @@ public abstract class MergingGroupHandlerSupport
       return Optional.empty();
     }
 
-    Content content = ((Content) payload);
+    return memberEtag((Content) payload);
+  }
 
+  /**
+   * Computes the per-member part of the group's hash for one member's response. The default
+   * order - cache token, then last-verified, then ETag, then last-modified - is unchanged from
+   * before this method existed; it is a pure extraction, not a behaviour change. A format's
+   * merging group handler may override this to fold in additional format-specific state that
+   * should also change the group's hash even when it does not change the member's cache token.
+   */
+  protected Optional<String> memberEtag(final Content content) {
     return getCacheToken(content)
         .or(() -> getLastVerified(content))
         .or(() -> getEtag(content))

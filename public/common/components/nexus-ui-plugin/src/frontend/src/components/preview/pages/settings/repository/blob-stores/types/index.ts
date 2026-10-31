@@ -107,6 +107,7 @@ export interface AzureBlobStoreConfig {
   accountName: string;
   containerName: string;
   authentication: AzureAuthConfig;
+  preSignedUrlEnabled?: boolean;
 }
 
 // Google Cloud Blob Store specific types

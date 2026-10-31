@@ -25,12 +25,17 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_DISTRIBUTION_URL_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY_PAIR_ID_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_PRIVATE_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.TRANSFER_ACCELERATION_ENABLED_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 
 /**
@@ -73,6 +78,14 @@ public class S3BlobStoreConfigurationBuilder
 
   private Map<String, String> failover = new LinkedHashMap<>();
 
+  private boolean transferAccelerationEnabled = false;
+
+  private Optional<String> cloudFrontDistributionUrl = Optional.empty();
+
+  private Optional<String> cloudFrontKeyPairId = Optional.empty();
+
+  private Optional<String> cloudFrontPrivateKey = Optional.empty();
+
   private S3BlobStoreConfigurationBuilder(final Supplier<BlobStoreConfiguration> configuration, final String name) {
     super(name, configuration);
     super.type(S3BlobStore.TYPE);
@@ -82,7 +95,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the S3 bucket name.
    */
   public S3BlobStoreConfigurationBuilder bucket(final String bucketName) {
-    this.bucket = checkNotNull(bucketName, "Missing bucket name");
+    this.bucket = requireNonNull(bucketName, "Missing bucket name");
     return this;
   }
 
@@ -90,7 +103,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the S3 region.
    */
   public S3BlobStoreConfigurationBuilder region(final String region) {
-    this.region = checkNotNull(region, "Missing region");
+    this.region = requireNonNull(region, "Missing region");
     return this;
   }
 
@@ -215,6 +228,34 @@ public class S3BlobStoreConfigurationBuilder
   }
 
   /**
+   * Enable transfer acceleration, mutually exclusive with {@link #cloudFrontEnabled}
+   */
+  public S3BlobStoreConfigurationBuilder transferAccelerationEnabled() {
+    transferAccelerationEnabled = true;
+    return this;
+  }
+
+  /**
+   * Enables CloudFront global distribution, mutually exclusive with {@link #transferAccelerationEnabled}.
+   *
+   * @param distributionUrl the cloudfront distribution URL
+   * @param keyId the id of the key in cloudfront
+   * @param privateKey a decrypted PEM private key
+   */
+  public S3BlobStoreConfigurationBuilder cloudFrontEnabled(
+      final String distributionUrl,
+      final String keyId,
+      final String privateKey)
+  {
+    transferAccelerationEnabled = false;
+    cloudFrontDistributionUrl = Optional.of(distributionUrl);
+    cloudFrontKeyPairId = Optional.of(keyId);
+    cloudFrontPrivateKey = Optional.of(privateKey);
+    return this;
+
+  }
+
+  /**
    * Sets the type of blob store.
    */
   @Override
@@ -228,8 +269,8 @@ public class S3BlobStoreConfigurationBuilder
 
     NestedAttributesMap s3 = configuration.attributes(CONFIG_KEY);
 
-    s3.set(BUCKET_KEY, checkNotNull(bucket, "Missing bucket name"));
-    s3.set(REGION_KEY, checkNotNull(region, "Missing region"));
+    s3.set(BUCKET_KEY, requireNonNull(bucket, "Missing bucket name"));
+    s3.set(REGION_KEY, requireNonNull(region, "Missing region"));
 
     prefix.ifPresent(set(s3, BUCKET_PREFIX_KEY));
 
@@ -259,6 +300,21 @@ public class S3BlobStoreConfigurationBuilder
     forcePathStyle.filter(b -> b)
         .map(String::valueOf)
         .ifPresent(set(s3, FORCE_PATH_STYLE_KEY));
+
+    // Global Distribution
+    if (!cloudFrontDistributionUrl.isEmpty()) {
+      NestedAttributesMap cloudFront = s3.child(CLOUDFRONT_KEY);
+      cloudFront.set(CLOUDFRONT_DISTRIBUTION_URL_KEY, cloudFrontDistributionUrl.get());
+      cloudFront.set(CLOUDFRONT_KEY_PAIR_ID_KEY, cloudFrontKeyPairId.get());
+      cloudFront.set(CLOUDFRONT_PRIVATE_KEY_KEY, cloudFrontPrivateKey.get());
+
+      // mutually exclusive with transfer acceleration
+      s3.set(TRANSFER_ACCELERATION_ENABLED_KEY, false);
+    }
+    else {
+      s3.remove("cloudFront");
+      s3.set(TRANSFER_ACCELERATION_ENABLED_KEY, transferAccelerationEnabled);
+    }
 
     return configuration;
   }

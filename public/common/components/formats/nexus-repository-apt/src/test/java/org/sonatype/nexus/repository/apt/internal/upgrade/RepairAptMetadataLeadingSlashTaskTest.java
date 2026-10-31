@@ -176,6 +176,7 @@ class RepairAptMetadataLeadingSlashTaskTest
   private static Continuation<FluentAsset> of(final ContentFacetSupport content, final AssetData... assets) {
     ContinuationArrayList<AssetData> continuation = new ContinuationArrayList<>();
     continuation.addAll(Arrays.asList(assets));
-    return new FluentContinuation<FluentAsset, AssetData>(continuation, asset -> new FluentAssetImpl(content, asset));
+    return new FluentContinuation<FluentAsset, AssetData>(continuation,
+        asset -> new FluentAssetImpl(content, asset));
   }
 }

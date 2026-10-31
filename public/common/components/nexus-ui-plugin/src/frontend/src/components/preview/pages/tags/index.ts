@@ -11,39 +11,22 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-// Main page component
-export { TagsPage } from './TagsPage';
-export { default } from './TagsPage';
+// Public API for the Tags feature (Preview UI). Per frontend/architecture.md,
+// only the page components and their data types are exported here; hooks,
+// state machines, and API clients are internal implementation details and are
+// imported directly by their consumers (and tests).
 
-// Components
-export { TagsList } from './components/TagsList';
-export { TagDetail } from './components/TagDetail';
-export { Pagination } from './components/Pagination';
+// Page components (Layer 3)
+export { TagsPageRadix } from './TagsPageRadix';
+export { default } from './TagsPageRadix';
+export { TagDetailPage } from './TagDetailPage';
 
-// Hooks
-export { useTags } from './hooks/useTags';
-export { useTagDetail } from './hooks/useTagDetail';
-
-// API functions
-export { fetchTags, fetchTagDetail } from './tags.api';
-
-// Types
+// Public data types
 export type {
-  Tag,
   TagDetail as TagDetailType,
+  TagWithCount,
   TagSortField,
   SortDirection,
-  TagsState,
-  TagsActions,
-  TagsListProps,
-  TagsPageProps,
+  TagsFilters,
+  TaggedComponent,
 } from './tags.types';
-
-export type {
-  TagDetailState,
-  TagDetailActions,
-  UseTagDetailResult,
-} from './hooks/useTagDetail';
-
-export type { TagDetailProps } from './components/TagDetail';
-

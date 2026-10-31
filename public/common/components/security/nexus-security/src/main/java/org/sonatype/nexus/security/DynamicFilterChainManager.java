@@ -30,7 +30,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Dynamic {@link FilterChainManager} that reacts to {@link Filter}s and {@link FilterChain}s as they come and go.
@@ -49,7 +49,7 @@ class DynamicFilterChainManager
 
   @Autowired
   public DynamicFilterChainManager(final List<FilterChain> filterChains) {
-    this.filterChains = checkNotNull(filterChains);
+    this.filterChains = requireNonNull(filterChains);
   }
 
   @EventListener

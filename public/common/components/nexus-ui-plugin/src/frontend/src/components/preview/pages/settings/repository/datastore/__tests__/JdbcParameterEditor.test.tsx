@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
@@ -90,15 +90,35 @@ describe('JdbcParameterEditor', () => {
     });
 
     it('shows warning for unknown parameters', () => {
+      // JdbcParameterEditor is render-only for validation — the warning text itself comes
+      // from validateJdbcParameters() upstream (see types.ts), passed in via `validations`.
       const unknownParams: JdbcParameter[] = [
         { id: '1', name: 'unknownParam', value: 'value', isDefault: false, isCustom: true },
       ];
+      const validations: ParameterValidation[] = [
+        { id: '1', warning: 'Unknown JDBC parameter - verify this is correct for your database driver.' },
+      ];
 
-      renderComponent({ parameters: unknownParams });
+      renderComponent({ parameters: unknownParams, validations });
 
       // Multiple matches may exist (help text + row warning), so use getAllByText
-      const warnings = screen.getAllByText(/unknown parameter/i);
+      const warnings = screen.getAllByText(/unknown.*parameter/i);
       expect(warnings.length).toBeGreaterThan(0);
+    });
+
+    it('does not show a redundant description line for unknown parameters', () => {
+      // Previously this row showed three near-identical "unknown parameter" messages —
+      // the description fallback text plus two separately-computed warnings.
+      const unknownParams: JdbcParameter[] = [
+        { id: '1', name: 'unknownParam', value: 'value', isDefault: false, isCustom: true },
+      ];
+      const validations: ParameterValidation[] = [
+        { id: '1', warning: 'Unknown JDBC parameter - verify this is correct for your database driver.' },
+      ];
+
+      renderComponent({ parameters: unknownParams, validations });
+
+      expect(screen.getAllByText(/unknown.*parameter/i)).toHaveLength(1);
     });
   });
 
@@ -289,6 +309,78 @@ describe('JdbcParameterEditor', () => {
       await user.click(screen.getByRole('button', { name: /reset to defaults/i }));
 
       expect(mockOnReset).toHaveBeenCalled();
+    });
+  });
+
+  describe('Pasting a list into the parameter name field', () => {
+    function pasteText(input: HTMLElement, text: string) {
+      fireEvent.paste(input, { clipboardData: { getData: () => text } } as unknown as ClipboardEvent);
+    }
+
+    it('splits a single "name=value" paste into the row\'s name and value', () => {
+      const mockOnChange = jest.fn();
+      const params: JdbcParameter[] = [
+        { id: '1', name: '', value: '', isDefault: false, isCustom: true },
+      ];
+
+      renderComponent({ parameters: params, onChange: mockOnChange });
+
+      pasteText(screen.getByPlaceholderText('Type or select parameter...'), 'connectTimeout=15');
+
+      expect(mockOnChange).toHaveBeenCalledWith([
+        expect.objectContaining({ id: '1', name: 'connectTimeout', value: '15' }),
+      ]);
+    });
+
+    it('expands a multi-line paste into additional rows', () => {
+      const mockOnChange = jest.fn();
+      const params: JdbcParameter[] = [
+        { id: '1', name: '', value: '', isDefault: false, isCustom: true },
+      ];
+
+      renderComponent({ parameters: params, onChange: mockOnChange });
+
+      pasteText(
+        screen.getByPlaceholderText('Type or select parameter...'),
+        'connectTimeout=15\nsocketTimeout=30\nssl=true'
+      );
+
+      expect(mockOnChange).toHaveBeenCalledTimes(1);
+      const result = mockOnChange.mock.calls[0][0];
+      expect(result).toHaveLength(3);
+      expect(result[0]).toEqual(expect.objectContaining({ id: '1', name: 'connectTimeout', value: '15' }));
+      expect(result[1]).toEqual(expect.objectContaining({ name: 'socketTimeout', value: '30', isCustom: true }));
+      expect(result[2]).toEqual(expect.objectContaining({ name: 'ssl', value: 'true', isCustom: true }));
+    });
+
+    it('inserts the new rows immediately after the pasted-into row, not at the end', () => {
+      const mockOnChange = jest.fn();
+      const params: JdbcParameter[] = [
+        { id: 'a', name: 'existingBefore', value: 'x', isDefault: false, isCustom: true },
+        { id: 'b', name: '', value: '', isDefault: false, isCustom: true },
+        { id: 'c', name: 'existingAfter', value: 'y', isDefault: false, isCustom: true },
+      ];
+
+      renderComponent({ parameters: params, onChange: mockOnChange });
+
+      const nameInputs = screen.getAllByPlaceholderText('Type or select parameter...');
+      pasteText(nameInputs[1], 'foo=1\nbar=2');
+
+      const result = mockOnChange.mock.calls[0][0];
+      expect(result.map((p: JdbcParameter) => p.name)).toEqual(['existingBefore', 'foo', 'bar', 'existingAfter']);
+    });
+
+    it('does not intercept a paste with no "=" sign', () => {
+      const mockOnChange = jest.fn();
+      const params: JdbcParameter[] = [
+        { id: '1', name: '', value: '', isDefault: false, isCustom: true },
+      ];
+
+      renderComponent({ parameters: params, onChange: mockOnChange });
+
+      pasteText(screen.getByPlaceholderText('Type or select parameter...'), 'socketTimeout');
+
+      expect(mockOnChange).not.toHaveBeenCalled();
     });
   });
 

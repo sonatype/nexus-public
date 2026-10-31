@@ -17,8 +17,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Support for including existing files as {@link SupportBundle.ContentSource}.
@@ -35,7 +35,7 @@ public class FileContentSourceSupport
    */
   public FileContentSourceSupport(final Type type, final String path, final File file, final Priority priority) {
     super(type, path, priority);
-    this.file = checkNotNull(file);
+    this.file = requireNonNull(file);
   }
 
   public FileContentSourceSupport(final Type type, final String path, final File file) {

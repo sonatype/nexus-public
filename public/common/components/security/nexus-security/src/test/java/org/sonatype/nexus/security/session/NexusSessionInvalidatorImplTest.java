@@ -76,7 +76,7 @@ public class NexusSessionInvalidatorImplTest
     when(cachingSessionDAO.getActiveSessionsCache()).thenReturn(cache);
     when(cache.values()).thenReturn(Arrays.asList(aliceSession, bobSession, aliceSession2));
 
-    int count = underTest.invalidateSessionsForUser("alice", "default");
+    int count = underTest.invalidateSessionsForUser("alice", "default", "password change");
 
     assertThat(count, is(2));
     verify(cachingSessionDAO).delete(aliceSession);
@@ -89,7 +89,7 @@ public class NexusSessionInvalidatorImplTest
     SessionDAO nonCachingDAO = mock(SessionDAO.class);
     when(sessionManager.getSessionDAO()).thenReturn(nonCachingDAO);
 
-    int count = underTest.invalidateSessionsForUser("alice", "default");
+    int count = underTest.invalidateSessionsForUser("alice", "default", "password change");
 
     assertThat(count, is(0));
     verify(nonCachingDAO, never()).delete(any(Session.class));
@@ -100,7 +100,7 @@ public class NexusSessionInvalidatorImplTest
     when(sessionManager.getSessionDAO()).thenReturn(cachingSessionDAO);
     when(cachingSessionDAO.getActiveSessionsCache()).thenReturn(null);
 
-    int count = underTest.invalidateSessionsForUser("alice", "default");
+    int count = underTest.invalidateSessionsForUser("alice", "default", "password change");
 
     assertThat(count, is(0));
     verify(cachingSessionDAO, never()).delete(any(Session.class));
@@ -114,16 +114,17 @@ public class NexusSessionInvalidatorImplTest
     when(cache.values()).thenReturn(Collections.singletonList(aliceSession));
     when(auditRecorder.isEnabled()).thenReturn(true);
 
-    underTest.invalidateSessionsForUser("alice", "default");
+    underTest.invalidateSessionsForUser("alice", "default", "password change");
 
     ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
     verify(auditRecorder).record(captor.capture());
     AuditData data = captor.getValue();
     assertThat(data.getDomain(), is("security.session"));
-    assertThat(data.getType(), is("password-change-invalidation"));
+    assertThat(data.getType(), is("user-session-invalidation"));
     assertThat(data.getAttributes().get("username"), is("alice"));
     assertThat(data.getAttributes().get("sessionType"), is("session"));
     assertThat(data.getAttributes().get("sessionCount"), is("1"));
+    assertThat(data.getAttributes().get("reason"), is("password change"));
   }
 
   @Test
@@ -134,7 +135,7 @@ public class NexusSessionInvalidatorImplTest
     when(cache.values()).thenReturn(Collections.singletonList(bobSession));
     when(auditRecorder.isEnabled()).thenReturn(true);
 
-    underTest.invalidateSessionsForUser("alice", "default");
+    underTest.invalidateSessionsForUser("alice", "default", "password change");
 
     verify(auditRecorder, never()).record(any(AuditData.class));
   }

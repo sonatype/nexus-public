@@ -134,6 +134,7 @@ class FluentAssetImplTest
     lenient().when(contentFacet.stores()).thenReturn(contentFacetStores);
     lenient().when(contentFacet.repository()).thenReturn(mockRepository);
     lenient().when(contentFacet.blobMetadataStorage()).thenReturn(blobMetadataStorage);
+    lenient().when(contentFacet.isGlobalDistributionEnabled()).thenReturn(false);
     lenient().when(asset.blob()).thenReturn(Optional.of(assetBlob));
     lenient().when(asset.path()).thenReturn("/test/path");
     lenient().when(assetBlob.blobRef()).thenReturn(new BlobRef("default", "test"));
@@ -843,27 +844,101 @@ class FluentAssetImplTest
   }
 
   @Test
-  void testDownloadProxyRepositoryWithNullLastModifiedPassesNullToDateTime() throws IOException {
+  void testDownloadProxyRepositoryOmitsLastModifiedWhenUpstreamSentNone() throws IOException {
+    // Upstream sent no Last-Modified (Docker/OCI /v2/<name>/manifests/<digest> is the motivating
+    // shape). Proxy must omit the header rather than synthesize one from local state — a fake
+    // timestamp derived from blob creation time can beat a genuine older upstream Last-Modified via
+    // If-Modified-Since and pin clients to stale content. NEXUS-54469.
     Blob mockBlob = mock(Blob.class);
     BlobMetrics mockMetrics = mock(BlobMetrics.class);
     Repository mockRepository = mock(Repository.class);
 
-    // Set up CONTENT child with no CONTENT_LAST_MODIFIED
     NestedAttributesMap attributes = new NestedAttributesMap();
     attributes.child(Content.CONTENT).set(Content.CONTENT_ETAG, "etag-value");
-    // no CONTENT_LAST_MODIFIED set
     when(asset.attributes()).thenReturn(attributes);
     when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
     when(contentFacet.repository()).thenReturn(mockRepository);
     when(mockBlob.getMetrics()).thenReturn(mockMetrics);
-    // For non-group proxy type, getCreationTime/getSha1Hash won't be called when etag is present
     when(mockRepository.getType()).thenReturn(new ProxyType());
 
     try (Content result = underTest.download()) {
-      // For proxy type with null lastModified and non-Group type, lastModified stays null
-      // and is wrapped in new DateTime(null) which gives epoch-based DateTime
       assertNotNull(result);
-      assertNotNull(result.getAttributes().get(CONTENT_LAST_MODIFIED));
+      assertNull(result.getAttributes().get(CONTENT_LAST_MODIFIED));
+    }
+  }
+
+  @Test
+  void testDownloadProxyRepositoryParsesStringLastModified() throws IOException {
+    // After a restart the attributes are rehydrated as Strings (cacheContentHeaders toString()s the
+    // DateTime on write), so the read path must parse them back rather than double-wrap or fall back.
+    Blob mockBlob = mock(Blob.class);
+    BlobMetrics mockMetrics = mock(BlobMetrics.class);
+    Repository mockRepository = mock(Repository.class);
+    DateTime storedDate = DateTime.parse("2026-08-14T10:15:30.000Z");
+
+    NestedAttributesMap attributes = new NestedAttributesMap();
+    attributes.child(Content.CONTENT).set(Content.CONTENT_LAST_MODIFIED, storedDate.toString());
+    attributes.child(Content.CONTENT).set(Content.CONTENT_ETAG, "etag-value");
+    when(asset.attributes()).thenReturn(attributes);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
+    when(contentFacet.repository()).thenReturn(mockRepository);
+    when(mockBlob.getMetrics()).thenReturn(mockMetrics);
+    when(mockRepository.getType()).thenReturn(new ProxyType());
+
+    try (Content result = underTest.download()) {
+      DateTime resultDate = result.getAttributes().get(CONTENT_LAST_MODIFIED, DateTime.class);
+      assertNotNull(resultDate);
+      assertEquals(storedDate.getMillis(), resultDate.getMillis());
+    }
+  }
+
+  @Test
+  void testDownloadProxyRepositoryOmitsLastModifiedWhenStoredValueUnparseable() throws IOException {
+    // Corrupted attribute or a value in a date format Joda can't parse — same principle as the
+    // null case: don't synthesize a fake Last-Modified. NEXUS-54469.
+    Blob mockBlob = mock(Blob.class);
+    BlobMetrics mockMetrics = mock(BlobMetrics.class);
+    Repository mockRepository = mock(Repository.class);
+
+    NestedAttributesMap attributes = new NestedAttributesMap();
+    attributes.child(Content.CONTENT).set(Content.CONTENT_LAST_MODIFIED, "not-a-date");
+    attributes.child(Content.CONTENT).set(Content.CONTENT_ETAG, "etag-value");
+    when(asset.attributes()).thenReturn(attributes);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
+    when(contentFacet.repository()).thenReturn(mockRepository);
+    when(mockBlob.getMetrics()).thenReturn(mockMetrics);
+    when(mockRepository.getType()).thenReturn(new ProxyType());
+
+    try (Content result = underTest.download()) {
+      assertNotNull(result);
+      assertNull(result.getAttributes().get(CONTENT_LAST_MODIFIED));
+    }
+  }
+
+  @Test
+  void testDownloadHostedRepositoryIgnoresContentLastModifiedAndUsesCreationTime() throws IOException {
+    // Guard against regression: dropping the GroupType check in setupProxyContentAttributes must not
+    // route hosted repos through it. Hosted always takes its own path and reports blob creation time
+    // regardless of whatever CONTENT_LAST_MODIFIED happens to be stored under CONTENT.
+    Blob mockBlob = mock(Blob.class);
+    BlobMetrics mockMetrics = mock(BlobMetrics.class);
+    Repository mockRepository = mock(Repository.class);
+    DateTime creationDate = DateTime.now();
+    DateTime staleContentDate = creationDate.minusDays(7);
+
+    NestedAttributesMap attributes = new NestedAttributesMap();
+    attributes.child(Content.CONTENT).set(Content.CONTENT_LAST_MODIFIED, staleContentDate);
+    when(asset.attributes()).thenReturn(attributes);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
+    when(contentFacet.repository()).thenReturn(mockRepository);
+    when(mockBlob.getMetrics()).thenReturn(mockMetrics);
+    when(mockMetrics.getCreationTime()).thenReturn(creationDate);
+    when(mockMetrics.getSha1Hash()).thenReturn("hosted-sha1");
+    when(mockRepository.getType()).thenReturn(new HostedType());
+
+    try (Content result = underTest.download()) {
+      assertNotNull(result);
+      assertEquals(creationDate, result.getAttributes().get(CONTENT_LAST_MODIFIED));
     }
   }
 
@@ -913,6 +988,42 @@ class FluentAssetImplTest
     try (Content result = underTest.download()) {
       // When CONTENT_ETAG is null, fallback to blob.getMetrics().getSha1Hash()
       assertEquals("metrics-sha1", result.getAttributes().get(CONTENT_ETAG));
+    }
+  }
+
+  @Test
+  void testDownloadPropagatesCdnDisabledFlagToBlob() throws IOException {
+    Blob mockBlob = mock(Blob.class);
+    BlobMetrics mockMetrics = mock(BlobMetrics.class);
+
+    when(asset.attributes()).thenReturn(new NestedAttributesMap());
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
+    when(mockBlob.getMetrics()).thenReturn(mockMetrics);
+    when(mockMetrics.getCreationTime()).thenReturn(DateTime.now());
+    when(mockMetrics.getSha1Hash()).thenReturn("sha1-test");
+    when(contentFacet.isGlobalDistributionEnabled()).thenReturn(false);
+
+    try (Content result = underTest.download()) {
+      result.getRedirectUrl("GET", "name");
+      verify(mockBlob).getRedirectUrl(eq("GET"), eq("name"), eq("text"), eq(false));
+    }
+  }
+
+  @Test
+  void testDownloadPropagatesCdnEnabledFlagToBlob() throws IOException {
+    Blob mockBlob = mock(Blob.class);
+    BlobMetrics mockMetrics = mock(BlobMetrics.class);
+
+    when(asset.attributes()).thenReturn(new NestedAttributesMap());
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
+    when(mockBlob.getMetrics()).thenReturn(mockMetrics);
+    when(mockMetrics.getCreationTime()).thenReturn(DateTime.now());
+    when(mockMetrics.getSha1Hash()).thenReturn("sha1-test");
+    when(contentFacet.isGlobalDistributionEnabled()).thenReturn(true);
+
+    try (Content result = underTest.download()) {
+      result.getRedirectUrl("GET", "name");
+      verify(mockBlob).getRedirectUrl(eq("GET"), eq("name"), eq("text"), eq(true));
     }
   }
 

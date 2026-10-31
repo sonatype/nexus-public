@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.newSetFromMap;
 
 /**
@@ -67,8 +67,8 @@ public class AnonymousFilter
 
   @Autowired
   public AnonymousFilter(final Provider<AnonymousManager> anonymousManager, final Provider<EventManager> eventManager) {
-    this.anonymousManager = checkNotNull(anonymousManager);
-    this.eventManager = checkNotNull(eventManager);
+    this.anonymousManager = requireNonNull(anonymousManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override

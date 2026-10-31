@@ -24,7 +24,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Rapture Settings capability.
@@ -46,8 +46,8 @@ public class SettingsCapability
       final UiSettingsManager rapture,
       final SessionTimeoutManager sessionTimeoutManager)
   {
-    this.rapture = checkNotNull(rapture);
-    this.sessionTimeoutManager = checkNotNull(sessionTimeoutManager);
+    this.rapture = requireNonNull(rapture);
+    this.sessionTimeoutManager = requireNonNull(sessionTimeoutManager);
   }
 
   @Override

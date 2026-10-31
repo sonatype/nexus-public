@@ -51,7 +51,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
@@ -452,7 +452,7 @@ public class SimpleApiRepositoryAdapterTest
 
     @Override
     public NestedAttributesMap attributes(final String key) {
-      checkNotNull(key);
+      requireNonNull(key);
 
       if (attributes == null) {
         attributes = Maps.newHashMap();

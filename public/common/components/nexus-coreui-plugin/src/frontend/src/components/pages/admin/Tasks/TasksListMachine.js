@@ -16,7 +16,7 @@
  */
 import {assign} from 'xstate';
 
-import {ListMachineUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ListMachineUtils, ExtAPIUtils, APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
 
 const {EXT: {TASK: {ACTION, METHODS}}} = APIConstants;
 
@@ -46,6 +46,7 @@ export default ListMachineUtils.buildListMachine({
   },
   services: {
     fetchData: async () => {
+      await ExtJS.waitForPermissions();
       const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ);
       ExtAPIUtils.checkForError(response);
       return ExtAPIUtils.extractResult(response);

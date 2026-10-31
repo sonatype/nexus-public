@@ -102,7 +102,7 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 
 describe('ContentSelectorForm', () => {
   const mockOnCancel = jest.fn();
-  const mockOnComplete = jest.fn();
+  const _mockOnComplete = jest.fn();
 
   const mockSelector: ContentSelector = {
     name: 'test-selector',
@@ -187,6 +187,42 @@ describe('ContentSelectorForm', () => {
         <ContentSelectorForm
           selector={mockSelector}
           isCreate={false}
+          onCancel={mockOnCancel}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Save/i })).toBeInTheDocument();
+      });
+    });
+
+    // NEXUS-54212: the Content Selectors route only requires nexus:selectors:read, so a read-only
+    // user can open a selector detail. Edits require nexus:selectors:update (SelectorComponent),
+    // so the Save button must be hidden when canEdit is false instead of a button that 403s.
+    it('hides Save button in edit mode when canEdit is false', async () => {
+      render(
+        <ContentSelectorForm
+          selector={mockSelector}
+          isCreate={false}
+          canEdit={false}
+          onCancel={mockOnCancel}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('test-selector')).toBeInTheDocument();
+      });
+      expect(screen.queryByRole('button', { name: /Save/i })).not.toBeInTheDocument();
+    });
+
+    it('shows Save button in edit mode when canEdit is true', async () => {
+      render(
+        <ContentSelectorForm
+          selector={mockSelector}
+          isCreate={false}
+          canEdit={true}
           onCancel={mockOnCancel}
         />,
         { wrapper: TestWrapper }
@@ -283,7 +319,7 @@ describe('ContentSelectorForm', () => {
       });
     });
 
-    it('hides delete button when canDelete is false', async () => {
+    it('disables delete button when canDelete is false', async () => {
       render(
         <ContentSelectorForm
           selector={mockSelector}
@@ -298,7 +334,8 @@ describe('ContentSelectorForm', () => {
         expect(screen.getByText('test-selector')).toBeInTheDocument();
       });
 
-      expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
+      // Large delete button is shown but disabled (NEXUS-54212), not hidden.
+      expect(screen.getByRole('button', { name: /Delete/i })).toBeDisabled();
     });
 
     it('suppresses unsaved changes indicator during delete flow', async () => {

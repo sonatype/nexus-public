@@ -19,6 +19,8 @@ import org.sonatype.nexus.rest.Page;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
@@ -32,6 +34,8 @@ public interface AssetsResourceDoc
 {
   @Operation(summary = "List assets")
   @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Assets returned",
+          content = @Content(schema = @Schema(implementation = Page.class))),
       @ApiResponse(responseCode = "403", description = "Insufficient permissions to list assets"),
       @ApiResponse(responseCode = "422", description = "Parameter 'repository' is required")
   })
@@ -44,6 +48,8 @@ public interface AssetsResourceDoc
 
   @Operation(summary = "Get a single asset")
   @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Asset returned",
+          content = @Content(schema = @Schema(implementation = AssetXO.class))),
       @ApiResponse(responseCode = "403", description = "Insufficient permissions to get asset"),
       @ApiResponse(responseCode = "404", description = "Asset not found"),
       @ApiResponse(responseCode = "422", description = "Malformed ID")

@@ -36,7 +36,7 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An implementation of a {@link KeyStoreManager} that stores the trusted certificates and
@@ -83,8 +83,8 @@ public class KeyStoreManagerImpl
       final KeyStoreStorageFactory factory,
       final KeyStoreManagerConfiguration config)
   {
-    this.crypto = checkNotNull(crypto);
-    this.config = checkNotNull(config);
+    this.crypto = requireNonNull(crypto);
+    this.config = requireNonNull(config);
 
     if (!config.isFipsEnabled()) {
       this.privateKeyStore = initializePrivateKeyStore(factory.create(PRIVATE_KEY_STORE_NAME));
@@ -103,8 +103,8 @@ public class KeyStoreManagerImpl
       final KeystoreInstance privateKeyStore,
       final KeystoreInstance trustedKeyStore)
   {
-    this.crypto = checkNotNull(crypto);
-    this.config = checkNotNull(config);
+    this.crypto = requireNonNull(crypto);
+    this.config = requireNonNull(config);
     this.privateKeyStore = privateKeyStore;
     this.trustedKeyStore = trustedKeyStore;
   }
@@ -209,7 +209,7 @@ public class KeyStoreManagerImpl
   }
 
   private void logTrustedCertificateAliases(final KeystoreInstance ks) {
-    checkNotNull(ks);
+    requireNonNull(ks);
 
     if (log.isTraceEnabled()) {
       try {
@@ -313,7 +313,7 @@ public class KeyStoreManagerImpl
     trustedKeyStoreLock.readLock().lock();
     try {
       return trustedKeyStore.getCertificate(
-          checkNotNull(alias, "'alias' cannot be null when looking up a trusted Certificate."), // NON-NLS
+          requireNonNull(alias, "'alias' cannot be null when looking up a trusted Certificate."), // NON-NLS
           config.getTrustedKeyStorePassword());
     }
     finally {

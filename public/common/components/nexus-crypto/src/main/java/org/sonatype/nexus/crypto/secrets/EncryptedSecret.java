@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Java class representing a secret stored in PHC string format
@@ -57,10 +57,10 @@ public class EncryptedSecret
       final String value,
       final Map<String, String> attributes)
   {
-    this.algorithm = checkNotNull(algorithm);
+    this.algorithm = requireNonNull(algorithm);
     this.version = version;
-    this.salt = checkNotNull(salt);
-    this.value = checkNotNull(value);
+    this.salt = requireNonNull(salt);
+    this.value = requireNonNull(value);
     this.attributes = attributes;
   }
 
@@ -129,7 +129,7 @@ public class EncryptedSecret
    * @see <a href="https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md">PHC String format</a>
    */
   public static EncryptedSecret parse(final String phcString) {
-    checkNotNull(phcString);
+    requireNonNull(phcString);
 
     List<String> chunks = Stream.of(phcString.trim().split("\\$"))
         .filter(chunk -> !chunk.isEmpty())

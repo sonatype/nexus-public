@@ -1,0 +1,148 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+package org.sonatype.nexus.api.common.shared.state;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodesTaskDescriptor;
+import org.sonatype.nexus.scheduling.CurrentState;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.TaskInfo;
+import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.TaskState;
+
+import com.google.common.collect.Sets;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class BrowseStateContributorTest
+{
+  @Mock
+  private BrowseNodeConfiguration browseNodeConfiguration;
+
+  @Mock
+  private TaskScheduler taskScheduler;
+
+  private BrowseStateContributor underTest;
+
+  @BeforeEach
+  public void setup() {
+    when(browseNodeConfiguration.getMaxNodes()).thenReturn(10);
+    underTest = new BrowseStateContributor(browseNodeConfiguration, taskScheduler, 60);
+  }
+
+  @Test
+  public void testGetState() {
+    List<TaskInfo> tasks = Arrays
+        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, ALL_REPOSITORIES));
+    when(taskScheduler.listsTasks()).thenReturn(tasks);
+
+    Map<String, Object> state = underTest.getState();
+
+    assertThat(state.size(), is(2));
+    assertThat(state.get("rebuildingRepositories"), is(Collections.singleton(ALL_REPOSITORIES)));
+    assertThat(state.get("browseTreeMaxNodes"), is(10));
+  }
+
+  @Test
+  public void testGetState_multipleTasks() {
+    List<TaskInfo> tasks = Arrays
+        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo1"),
+            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo2"),
+            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo3"));
+    when(taskScheduler.listsTasks()).thenReturn(tasks);
+
+    Map<String, Object> state = underTest.getState();
+
+    assertThat(state.size(), is(2));
+    assertThat(state.get("rebuildingRepositories"), is(Sets.newHashSet("repo1", "repo2", "repo3")));
+    assertThat(state.get("browseTreeMaxNodes"), is(10));
+  }
+
+  @Test
+  public void testGetState_firstTaskAllReposOthersIgnored() {
+    List<TaskInfo> tasks = Arrays
+        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, ALL_REPOSITORIES),
+            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo2"),
+            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo3"));
+    when(taskScheduler.listsTasks()).thenReturn(tasks);
+
+    Map<String, Object> state = underTest.getState();
+
+    assertThat(state.size(), is(2));
+    assertThat(state.get("rebuildingRepositories"), is(Collections.singleton(ALL_REPOSITORIES)));
+    assertThat(state.get("browseTreeMaxNodes"), is(10));
+
+    verifyNoInteractions(tasks.get(1));
+    verifyNoInteractions(tasks.get(2));
+  }
+
+  @Test
+  public void testGetState_mixedTaskTypes() {
+    List<TaskInfo> tasks = Arrays
+        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo1"),
+            createTaskInfo("typeId", TaskState.RUNNING, "repo2"));
+    when(taskScheduler.listsTasks()).thenReturn(tasks);
+
+    Map<String, Object> state = underTest.getState();
+
+    assertThat(state.size(), is(2));
+    assertThat(state.get("rebuildingRepositories"), is(Collections.singleton("repo1")));
+    assertThat(state.get("browseTreeMaxNodes"), is(10));
+  }
+
+  @Test
+  public void constructWithNegativeTtlStillProducesState() {
+    when(taskScheduler.listsTasks()).thenReturn(Collections.emptyList());
+
+    BrowseStateContributor contributor =
+        new BrowseStateContributor(browseNodeConfiguration, taskScheduler, -1);
+
+    Map<String, Object> state = contributor.getState();
+
+    assertThat(state.get("browseTreeMaxNodes"), is(10));
+    assertThat(state.get("rebuildingRepositories"), is(Collections.emptySet()));
+  }
+
+  private TaskInfo createTaskInfo(String typeId, TaskState runState, String repositoryName) {
+    CurrentState currentState = mock(CurrentState.class);
+    when(currentState.getRunState()).thenReturn(runState);
+
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setString("repositoryName", repositoryName);
+
+    TaskInfo taskInfo = mock(TaskInfo.class);
+    when(taskInfo.getTypeId()).thenReturn(typeId);
+    when(taskInfo.getCurrentState()).thenReturn(currentState);
+    when(taskInfo.getConfiguration()).thenReturn(taskConfiguration);
+    return taskInfo;
+  }
+}

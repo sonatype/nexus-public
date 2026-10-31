@@ -21,51 +21,62 @@ import static org.hamcrest.Matchers.is;
 
 class NexusPropertiesTest
 {
-  private static final String ANALYTICS_PROPERTY = "nexus.analytics.enabled";
+  // Deliberately synthetic keys so this suite never leaks into real feature-flag state, even
+  // though the tests exercise setPropertyAndSyncSystem's system-properties write.
+  private static final String KEY_A = "nexus.test.property.a";
 
-  private static final String TRUE = "true";
+  private static final String KEY_B = "nexus.test.property.b";
+
+  private String priorKeyA;
+
+  private String priorKeyB;
 
   @BeforeEach
-  void setUp() {
-    System.clearProperty(ANALYTICS_PROPERTY);
+  void snapshotSystemProperties() {
+    priorKeyA = System.getProperty(KEY_A);
+    priorKeyB = System.getProperty(KEY_B);
+    System.clearProperty(KEY_A);
+    System.clearProperty(KEY_B);
   }
 
   @AfterEach
-  void tearDown() {
-    System.clearProperty(ANALYTICS_PROPERTY);
+  void restoreSystemProperties() {
+    restore(KEY_A, priorKeyA);
+    restore(KEY_B, priorKeyB);
   }
 
   @Test
-  void enforceCommunityEditionAnalytics_SetsPropertyToTrue() {
-    NexusProperties nexusProperties = createNexusProperties();
+  void setPropertyAndSyncSystem_writesToBothMapAndSystemProperties() {
+    NexusProperties nexusProperties = new NexusProperties(new PropertyMap());
 
-    nexusProperties.enforceCommunityEditionAnalytics();
+    nexusProperties.setPropertyAndSyncSystem(KEY_A, "true");
+    nexusProperties.setPropertyAndSyncSystem(KEY_B, "value-b");
 
-    assertThat(nexusProperties.getProperty(ANALYTICS_PROPERTY), is(TRUE));
+    assertThat(nexusProperties.getProperty(KEY_A), is("true"));
+    assertThat(nexusProperties.getProperty(KEY_B), is("value-b"));
+    assertThat(System.getProperty(KEY_A), is("true"));
+    assertThat(System.getProperty(KEY_B), is("value-b"));
   }
 
   @Test
-  void enforceCommunityEditionAnalytics_SetsSystemPropertyToTrue() {
-    NexusProperties nexusProperties = createNexusProperties();
+  void setPropertyAndSyncSystem_overridesExistingValuesInBothStores() {
+    PropertyMap map = new PropertyMap();
+    map.put(KEY_A, "false");
+    System.setProperty(KEY_A, "false");
+    NexusProperties nexusProperties = new NexusProperties(map);
 
-    nexusProperties.enforceCommunityEditionAnalytics();
+    nexusProperties.setPropertyAndSyncSystem(KEY_A, "true");
 
-    assertThat(System.getProperty(ANALYTICS_PROPERTY), is(TRUE));
+    assertThat(nexusProperties.getProperty(KEY_A), is("true"));
+    assertThat(System.getProperty(KEY_A), is("true"));
   }
 
-  @Test
-  void enforceCommunityEditionAnalytics_OverridesExistingFalseValue() {
-    System.setProperty(ANALYTICS_PROPERTY, "false");
-
-    NexusProperties nexusProperties = createNexusProperties();
-
-    nexusProperties.enforceCommunityEditionAnalytics();
-
-    assertThat(nexusProperties.getProperty(ANALYTICS_PROPERTY), is(TRUE));
-    assertThat(System.getProperty(ANALYTICS_PROPERTY), is(TRUE));
-  }
-
-  private NexusProperties createNexusProperties() {
-    return new NexusProperties(new PropertyMap());
+  private static void restore(final String key, final String prior) {
+    if (prior == null) {
+      System.clearProperty(key);
+    }
+    else {
+      System.setProperty(key, prior);
+    }
   }
 }

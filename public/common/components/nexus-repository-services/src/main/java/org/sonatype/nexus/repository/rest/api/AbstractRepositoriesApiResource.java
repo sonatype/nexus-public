@@ -18,25 +18,9 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.Function;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.groups.Default;
-import jakarta.ws.rs.BeanParam;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
-
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.common.QualifierUtil;
+import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -51,14 +35,29 @@ import org.sonatype.nexus.validation.group.Create;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
+import jakarta.ws.rs.BeanParam;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
-import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
@@ -99,12 +98,12 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   @Autowired
   public void setAuthorizingRepositoryManager(final AuthorizingRepositoryManager authorizingRepositoryManager) {
-    this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
+    this.authorizingRepositoryManager = requireNonNull(authorizingRepositoryManager);
   }
 
   @Autowired
   public void setRepositoryManager(final RepositoryManager repositoryManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Autowired
@@ -114,17 +113,17 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   @Autowired
   public void setConvertersByFormat(final List<ApiRepositoryAdapter> convertersByFormatList) {
-    this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(convertersByFormatList));
+    this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(requireNonNull(convertersByFormatList));
   }
 
   @Autowired
   public void setDefaultAdapter(final ApiRepositoryAdapter defaultAdapter) {
-    this.defaultAdapter = checkNotNull(defaultAdapter);
+    this.defaultAdapter = requireNonNull(defaultAdapter);
   }
 
   @Autowired
   public void setRecipesByFormat(final List<Recipe> recipesByFormatList) {
-    this.recipesByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(recipesByFormatList));
+    this.recipesByFormat = QualifierUtil.buildQualifierBeanMap(requireNonNull(recipesByFormatList));
   }
 
   @Autowired
@@ -147,6 +146,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @Validate(groups = {Create.class, Default.class})
   public Response createRepository(@NotNull @Valid final T request) {
     verifyAPIEnabled(request.getFormat());
+    validateRequest(request);
     try {
       Configuration configuration = adapt(request);
       validateRequest(configuration, configuration.getRepositoryName());
@@ -176,6 +176,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
       @NotNull @Valid final T request,
       @PathParam("repositoryName") final String repositoryName)
   {
+    validateRequest(request);
     try {
       Configuration newConfiguration = adapt(request);
       validateRequest(newConfiguration, repositoryName);
@@ -218,11 +219,15 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   /**
    * By default, the API is enabled in High Availability, otherwise it should be overridden by a format.
-   * 
+   *
    * @return {@code true} in case of API is enabled or {@code false} otherwise.
    */
   public boolean isApiEnabled() {
     return true;
+  }
+
+  protected void validateRequest(final T request) {
+    // no default
   }
 
   private void validateRequest(final Configuration newConfig, final String repositoryName) {

@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.SECRETS_FILE;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -193,7 +193,7 @@ public class EncryptionKeySourceImpl
 
   @Override
   public Optional<SecretEncryptionKey> getKey(final String keyId) {
-    checkNotNull(keyId);
+    requireNonNull(keyId);
     if (findKey(keyId).isEmpty()) {
       readFile();
     }
@@ -213,7 +213,7 @@ public class EncryptionKeySourceImpl
 
   @Override
   public void setActiveKey(final String keyId) {
-    checkNotNull(keyId);
+    requireNonNull(keyId);
     Optional<SecretEncryptionKey> inMemory = findKey(keyId);
 
     if (inMemory.isPresent()) {

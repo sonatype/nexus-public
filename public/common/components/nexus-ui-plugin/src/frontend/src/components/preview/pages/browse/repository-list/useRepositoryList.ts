@@ -14,8 +14,9 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { ExtJS } from '../../../../../interface/ExtJS';
 import { APIConstants } from '../../../../../constants/APIConstants';
-import { ExtAPIUtils } from '../../../../../interface/ExtAPIUtils';
+import Permissions from '../../../../../constants/Permissions';
 import { restClient, ENDPOINTS, parseApiError } from '../../../../../interface/api';
+import { invalidateRepositoryTypeCache } from '../useRepositoryType';
 import type {
   Repository,
   RepositoryListState,
@@ -44,7 +45,7 @@ export function isIqServerEnabled(): boolean {
  */
 export function canUpdateHealthCheck(): boolean {
   try {
-    return ExtJS.checkPermission('nexus:healthcheck:update');
+    return ExtJS.checkPermission(Permissions.HEALTHCHECK.UPDATE);
   } catch {
     return false;
   }
@@ -55,7 +56,7 @@ export function canUpdateHealthCheck(): boolean {
  */
 export function canReadFirewallStatus(): boolean {
   try {
-    return ExtJS.checkPermission('nexus:iq-violation-summary:read');
+    return ExtJS.checkPermission(Permissions.IQ_VIOLATION_SUMMARY.READ);
   } catch {
     return false;
   }
@@ -375,6 +376,12 @@ export function useRepositoryList(options: UseRepositoryListOptions = {}) {
    * Refresh data.
    */
   const refresh = useCallback(async () => {
+    // The repository set or an individual repository's type may have changed
+    // since the page loaded, so drop the cached type snapshot the Delete
+    // capability gate reads from. Without this an explicit refresh shows the new
+    // configuration in the list while Delete gating keeps answering from the
+    // stale type until the snapshot's TTL expires.
+    invalidateRepositoryTypeCache();
     await Promise.all([fetchRepositories(), fetchHealthCheck(), fetchFirewallSummary()]);
   }, [fetchRepositories, fetchHealthCheck, fetchFirewallSummary]);
 

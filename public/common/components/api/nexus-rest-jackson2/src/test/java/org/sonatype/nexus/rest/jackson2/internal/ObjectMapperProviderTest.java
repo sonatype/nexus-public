@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -141,6 +142,25 @@ public class ObjectMapperProviderTest
     assertThat(deserialized.created.getYear(), is(2025));
   }
 
+  /**
+   * A model annotated {@code @JsonFilter} cannot be serialised at all unless the filter id resolves — Jackson throws
+   * {@code InvalidDefinitionException} rather than simply skipping the filtering. Several repository REST models carry
+   * {@code @JsonFilter(EditionVisibility.NAME)}, including the shared {@code StorageAttributes} superclass embedded as
+   * the {@code storage} property of every format's model, and the bean supplying that filter ships only in
+   * {@code nexus-api-rest-common-private} — which the OSS assembly bans outright via {@code bannedDependencies}. Since
+   * this is the mapper JAX-RS actually serialises responses with, an unresolvable id has to degrade to "no filtering"
+   * or the OSS distribution cannot serve a repository response at all.
+   */
+  @Test
+  public void testUnresolvableFilterIdDoesNotFailSerialization() throws Exception {
+    FilteredObject value = new FilteredObject();
+    value.name = "visible";
+
+    String json = objectMapper.writeValueAsString(value);
+
+    assertThat(json, containsString("visible"));
+  }
+
   // Test class for complex object serialization
   public static class TestObject
   {
@@ -149,5 +169,15 @@ public class ObjectMapperProviderTest
     public NestedAttributesMap attributes;
 
     public DateTime created;
+  }
+
+  /**
+   * Stands in for the repository REST models: carries a filter id that nothing in this module registers, exactly as
+   * happens in a distribution without the edition-filter bean.
+   */
+  @JsonFilter("AnUnregisteredFilterId")
+  public static class FilteredObject
+  {
+    public String name;
   }
 }

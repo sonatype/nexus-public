@@ -50,6 +50,8 @@ public class BlobStoreAuditor
     registerType(BlobStoreStoppedEvent.class, "stopped");
   }
 
+  private static final String PRE_SIGNED_URL_ENABLED = "preSignedUrlEnabled";
+
   @Subscribe
   @AllowConcurrentEvents
   public void on(final BlobStoreEvent event) {
@@ -66,7 +68,31 @@ public class BlobStoreAuditor
       attributes.put("name", configuration.getName());
       attributes.put("type", configuration.getType());
 
+      Boolean preSignedUrlEnabled = detectPreSignedUrlEnabled(configuration);
+      if (preSignedUrlEnabled != null) {
+        attributes.put(PRE_SIGNED_URL_ENABLED, preSignedUrlEnabled);
+      }
+
       record(data);
     }
+  }
+
+  private static Boolean detectPreSignedUrlEnabled(final BlobStoreConfiguration configuration) {
+    Map<String, Map<String, Object>> outer = configuration.getAttributes();
+    if (outer == null) {
+      return null;
+    }
+    for (Map<String, Object> sub : outer.values()) {
+      if (sub != null && sub.containsKey(PRE_SIGNED_URL_ENABLED)) {
+        Object value = sub.get(PRE_SIGNED_URL_ENABLED);
+        if (value instanceof Boolean bool) {
+          return bool;
+        }
+        if (value != null) {
+          return Boolean.parseBoolean(value.toString());
+        }
+      }
+    }
+    return null;
   }
 }

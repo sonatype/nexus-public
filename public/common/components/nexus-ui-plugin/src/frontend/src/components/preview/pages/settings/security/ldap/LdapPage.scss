@@ -20,7 +20,10 @@
   }
 
   &__loading {
-    flex: 1;
+    // width: 100% + min-height keep this block self-contained so justify="center"
+    // has room to center vertically regardless of the parent's flex axis.
+    width: 100%;
+    min-height: 240px;
     gap: var(--space-3);
     color: var(--gray-11);
   }
@@ -29,20 +32,6 @@
     animation: spin 1s linear infinite;
   }
 
-  &__content {
-    display: flex;
-    gap: var(--space-6);
-  }
-
-  &__main {
-    flex: 1;
-    min-width: 0;
-  }
-
-  &__sidebar {
-    width: 300px;
-    flex-shrink: 0;
-  }
 }
 
 @keyframes spin {
@@ -53,5 +42,4 @@
     transform: rotate(360deg);
   }
 }
-
 

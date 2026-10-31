@@ -24,8 +24,8 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.content.AttributeChangeSet.AttributeChange;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper for applying {@link AttributeOperation}s to repository content.
@@ -72,7 +72,7 @@ public class AttributesHelper
       case OVERLAY:
         Object oldMap = attributes.get(key);
         if (oldMap != null) {
-          Object newMap = overlay(oldMap, checkNotNull(value));
+          Object newMap = overlay(oldMap, requireNonNull(value));
           if (!newMap.equals(oldMap)) {
             attributes.set(key, newMap);
             return true;
@@ -81,14 +81,14 @@ public class AttributesHelper
         }
         // fall through to set as there was no existing value
       case SET:
-        return !value.equals(attributes.set(key, checkNotNull(value)));
+        return !value.equals(attributes.set(key, requireNonNull(value)));
       case REMOVE:
         return attributes.remove(key) != null; // value is ignored
       case APPEND:
-        attributes.compute(key, v -> append(v, checkNotNull(value)));
+        attributes.compute(key, v -> append(v, requireNonNull(value)));
         return true;
       case PREPEND:
-        attributes.compute(key, v -> prepend(v, checkNotNull(value)));
+        attributes.compute(key, v -> prepend(v, requireNonNull(value)));
         return true;
       default:
         throw new IllegalArgumentException("Unknown request");

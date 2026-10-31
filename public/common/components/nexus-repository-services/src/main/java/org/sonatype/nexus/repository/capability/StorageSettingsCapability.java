@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.capability;
 
-import java.time.Duration;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +22,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Long.parseLong;
+import static java.util.Objects.requireNonNull;
 import static java.time.Duration.ofHours;
 import static org.sonatype.nexus.repository.capability.GlobalRepositorySettings.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
@@ -42,7 +40,7 @@ public class StorageSettingsCapability
 
   @Autowired
   public StorageSettingsCapability(final GlobalRepositorySettings globalSettings) {
-    this.globalSettings = checkNotNull(globalSettings);
+    this.globalSettings = requireNonNull(globalSettings);
   }
 
   @Override
@@ -69,7 +67,7 @@ public class StorageSettingsCapability
 
   private void configureDownloadedInterval(final StorageSettingsCapabilityConfiguration config) {
     log.info("Using configured value of {} hours for LastDownloaded interval", config.getLastDownloadedInterval());
-    globalSettings.setLastDownloadedInterval(parseAsHours(config.getLastDownloadedInterval()));
+    globalSettings.setLastDownloadedInterval(ofHours(config.getLastDownloadedInterval()));
   }
 
   private void resetDownloadedInterval() {
@@ -78,7 +76,4 @@ public class StorageSettingsCapability
     globalSettings.setLastDownloadedInterval(DEFAULT_LAST_DOWNLOADED_INTERVAL);
   }
 
-  private Duration parseAsHours(final String hours) {
-    return ofHours(parseLong(hours));
-  }
 }

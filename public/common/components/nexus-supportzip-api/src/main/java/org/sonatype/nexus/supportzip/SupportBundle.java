@@ -17,7 +17,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Defines the content sources of a support ZIP file.
@@ -119,7 +119,7 @@ public class SupportBundle
    * Add a content source.
    */
   public void add(final ContentSource contentSource) {
-    checkNotNull(contentSource);
+    requireNonNull(contentSource);
     sources.add(contentSource);
   }
 

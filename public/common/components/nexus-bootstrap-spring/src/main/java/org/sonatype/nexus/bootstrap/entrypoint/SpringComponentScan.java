@@ -36,7 +36,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Application listener on {@link ContextRefreshedEvent} to perform a component scan of the Nexus packages. it performs
@@ -60,7 +60,7 @@ public class SpringComponentScan
   public SpringComponentScan(
       final ConfigurableApplicationContext applicationContext)
   {
-    this.parentContext = checkNotNull(applicationContext);
+    this.parentContext = requireNonNull(applicationContext);
   }
 
   /**

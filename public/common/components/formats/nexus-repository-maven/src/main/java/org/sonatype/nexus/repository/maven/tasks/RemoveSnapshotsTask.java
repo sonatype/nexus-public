@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsTaskDescriptor.GRACE_PERIOD;
 import static org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsTaskDescriptor.MINIMUM_SNAPSHOT_RETAINED_COUNT;
 import static org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsTaskDescriptor.REMOVE_IF_RELEASED;
@@ -48,7 +48,7 @@ public class RemoveSnapshotsTask
 
   @Autowired
   public RemoveSnapshotsTask(@Qualifier(Maven2Format.NAME) final Format maven2Format) {
-    this.maven2Format = checkNotNull(maven2Format);
+    this.maven2Format = requireNonNull(maven2Format);
   }
 
   @Override

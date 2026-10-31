@@ -13,30 +13,18 @@
 package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.sonatype.nexus.common.QualifierUtil;
-import org.sonatype.nexus.kv.GlobalKeyValueStore;
+import org.sonatype.nexus.kv.upgrade.UpgradeNexusKeyValueStore;
 import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.content.store.AssetBlobStore;
-import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
+import org.sonatype.nexus.testdb.DataSessionConfiguration;
+import org.sonatype.nexus.testdb.DatabaseTest;
+import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -45,203 +33,82 @@ import static org.sonatype.nexus.repository.content.store.internal.migration.Ass
 import static org.sonatype.nexus.repository.content.store.internal.migration.AssetBlobRefMigrationTaskDescriptor.FORMAT_FIELD_ID;
 import static org.sonatype.nexus.repository.content.store.internal.migration.AssetBlobRefMigrationTaskDescriptor.TYPE_ID;
 
-@ExtendWith(MockitoExtension.class)
+/**
+ * Real-database tests for {@link AssetBlobRefMigrationStep_2_109}.
+ * <p>
+ * The step no longer probes the {@code {format}_asset_blob} tables on the UPGRADE thread (that probe was an
+ * unindexable full scan blocking startup). It now schedules the self-guarding background migration task for every
+ * format unconditionally, so these tests assert scheduling behaviour rather than the old per-format legacy-data probe.
+ */
 class AssetBlobRefMigrationStep_2_109Test
 {
-  @Mock
-  private UpgradeTaskScheduler upgradeTaskScheduler;
+  private static final String CONTENT_STORE_NAME = "nexus";
 
-  @Mock
-  private Format mavenFormat;
+  @DataSessionConfiguration(daos = {})
+  TestDataSessionSupplier dataSessionSupplier;
 
-  @Mock
-  private Format npmFormat;
+  private final UpgradeTaskScheduler upgradeTaskScheduler = mock(UpgradeTaskScheduler.class);
 
-  @Mock
-  private Format dockerFormat;
+  private final UpgradeNexusKeyValueStore keyValueStore = mock(UpgradeNexusKeyValueStore.class);
 
-  @Mock
-  private FormatStoreManager mavenFormatStoreManager;
+  private final TaskConfiguration taskConfiguration = mock(TaskConfiguration.class);
 
-  @Mock
-  private FormatStoreManager npmFormatStoreManager;
+  @DatabaseTest
+  void migrate_schedulesTaskUnconditionallyForEveryFormat() throws Exception {
+    when(upgradeTaskScheduler.createTaskConfigurationInstance(TYPE_ID)).thenReturn(taskConfiguration);
+    AssetBlobRefMigrationStep_2_109 underTest = new AssetBlobRefMigrationStep_2_109(
+        upgradeTaskScheduler, List.of(format("maven2"), format("npm")), keyValueStore);
 
-  @Mock
-  private FormatStoreManager dockerFormatStoreManager;
-
-  @Mock
-  private AssetBlobStore<?> mavenAssetBlobStore;
-
-  @Mock
-  private AssetBlobStore<?> npmAssetBlobStore;
-
-  @Mock
-  private AssetBlobStore<?> dockerAssetBlobStore;
-
-  @Mock
-  private GlobalKeyValueStore globalKeyValueStore;
-
-  @Mock
-  private Connection connection;
-
-  @Mock
-  private TaskConfiguration taskConfiguration;
-
-  private AssetBlobRefMigrationStep_2_109 underTest;
-
-  private MockedStatic<QualifierUtil> mockedQualifierUtil;
-
-  @BeforeEach
-  void setUp() {
-    lenient().when(mavenFormat.getValue()).thenReturn("maven2");
-    lenient().when(npmFormat.getValue()).thenReturn("npm");
-    lenient().when(dockerFormat.getValue()).thenReturn("docker");
-
-    lenient().when(upgradeTaskScheduler.createTaskConfigurationInstance(TYPE_ID)).thenReturn(taskConfiguration);
-
-    mockedQualifierUtil = mockStatic(QualifierUtil.class);
-  }
-
-  @AfterEach
-  void tearDown() {
-    if (mockedQualifierUtil != null) {
-      mockedQualifierUtil.close();
+    // The step no longer probes the {format}_asset_blob tables on the UPGRADE thread. It schedules the
+    // (self-guarding, background) migration task for EVERY format regardless of contents; the task itself
+    // no-ops when a format has no legacy blobRefs.
+    try (Connection conn = dataSessionSupplier.openConnection()) {
+      underTest.migrate(conn);
     }
-  }
 
-  @Test
-  void testMigrate_schedulesTasksForFormatsWithLegacyData() throws Exception {
-    setupFormatStoreManagers(mavenFormatStoreManager, npmFormatStoreManager);
-
-    when(mavenFormatStoreManager.assetBlobStore("nexus")).thenReturn(mavenAssetBlobStore);
-    when(npmFormatStoreManager.assetBlobStore("nexus")).thenReturn(npmAssetBlobStore);
-
-    when(mavenAssetBlobStore.notMigratedAssetBlobRefsExists()).thenReturn(true);
-    when(npmAssetBlobStore.notMigratedAssetBlobRefsExists()).thenReturn(false);
-
-    underTest = new AssetBlobRefMigrationStep_2_109(
-        upgradeTaskScheduler,
-        List.of(mavenFormat, npmFormat),
-        List.of(mavenFormatStoreManager, npmFormatStoreManager),
-        globalKeyValueStore);
-
-    underTest.migrate(connection);
-
-    // Verify task scheduled only for maven2 (which has legacy data)
-    verify(upgradeTaskScheduler, times(1)).createTaskConfigurationInstance(TYPE_ID);
+    verify(upgradeTaskScheduler, times(2)).createTaskConfigurationInstance(TYPE_ID);
     verify(taskConfiguration).setString(FORMAT_FIELD_ID, "maven2");
-    verify(taskConfiguration).setString(CONTENT_STORE_FIELD_ID, "nexus");
-    verify(upgradeTaskScheduler, times(1)).schedule(taskConfiguration);
-
-    // Verify old state keys are deleted for both formats
-    verify(globalKeyValueStore).removeKey("assetBlob.blobRef.migration:checked:maven2:nexus");
-    verify(globalKeyValueStore).removeKey("assetBlob.blobRef.migration:checked:npm:nexus");
+    verify(taskConfiguration).setString(FORMAT_FIELD_ID, "npm");
+    verify(taskConfiguration, times(2)).setString(CONTENT_STORE_FIELD_ID, CONTENT_STORE_NAME);
+    verify(upgradeTaskScheduler, times(2)).schedule(taskConfiguration);
+    // old state keys are cleaned up for every format in a single batched call
+    verify(keyValueStore).removeKeys(List.of(
+        "assetBlob.blobRef.migration:checked:maven2:nexus",
+        "assetBlob.blobRef.migration:checked:npm:nexus"));
   }
 
-  @Test
-  void testMigrate_skipsWhenNoLegacyData() throws Exception {
-    setupFormatStoreManagers(mavenFormatStoreManager, npmFormatStoreManager);
+  @DatabaseTest
+  void migrate_schedulesTaskEvenWhenNoAssetBlobTableExists() throws Exception {
+    when(upgradeTaskScheduler.createTaskConfigurationInstance(TYPE_ID)).thenReturn(taskConfiguration);
+    AssetBlobRefMigrationStep_2_109 underTest = new AssetBlobRefMigrationStep_2_109(
+        upgradeTaskScheduler, List.of(format("maven2")), keyValueStore);
 
-    when(mavenFormatStoreManager.assetBlobStore("nexus")).thenReturn(mavenAssetBlobStore);
-    when(npmFormatStoreManager.assetBlobStore("nexus")).thenReturn(npmAssetBlobStore);
-
-    when(mavenAssetBlobStore.notMigratedAssetBlobRefsExists()).thenReturn(false);
-    when(npmAssetBlobStore.notMigratedAssetBlobRefsExists()).thenReturn(false);
-
-    underTest = new AssetBlobRefMigrationStep_2_109(
-        upgradeTaskScheduler,
-        List.of(mavenFormat, npmFormat),
-        List.of(mavenFormatStoreManager, npmFormatStoreManager),
-        globalKeyValueStore);
-
-    underTest.migrate(connection);
-
-    // Verify no tasks scheduled
-    verify(upgradeTaskScheduler, never()).schedule(taskConfiguration);
-
-    // Verify old state keys are still deleted
-    verify(globalKeyValueStore).removeKey("assetBlob.blobRef.migration:checked:maven2:nexus");
-    verify(globalKeyValueStore).removeKey("assetBlob.blobRef.migration:checked:npm:nexus");
-  }
-
-  @Test
-  void testMigrate_handlesMissingFormatStoreManager() throws Exception {
-    // Only provide FormatStoreManager for maven2, not for npm
-    setupFormatStoreManagers(mavenFormatStoreManager);
-
-    when(mavenFormatStoreManager.assetBlobStore("nexus")).thenReturn(mavenAssetBlobStore);
-    when(mavenAssetBlobStore.notMigratedAssetBlobRefsExists()).thenReturn(true);
-
-    underTest = new AssetBlobRefMigrationStep_2_109(
-        upgradeTaskScheduler,
-        List.of(mavenFormat, npmFormat),
-        List.of(mavenFormatStoreManager), // Only maven, not npm
-        globalKeyValueStore);
-
-    // Should not throw exception
-    underTest.migrate(connection);
-
-    // Verify task scheduled only for maven2
-    verify(upgradeTaskScheduler, times(1)).schedule(taskConfiguration);
-    verify(taskConfiguration).setString(FORMAT_FIELD_ID, "maven2");
-    verify(taskConfiguration).setString(CONTENT_STORE_FIELD_ID, "nexus");
-
-    // Verify old state keys are deleted for both formats
-    verify(globalKeyValueStore).removeKey("assetBlob.blobRef.migration:checked:maven2:nexus");
-    verify(globalKeyValueStore).removeKey("assetBlob.blobRef.migration:checked:npm:nexus");
-  }
-
-  @Test
-  void testMigrate_deletesOldStateKeys() throws Exception {
-    setupFormatStoreManagers(mavenFormatStoreManager);
-
-    when(mavenFormatStoreManager.assetBlobStore("nexus")).thenReturn(mavenAssetBlobStore);
-    when(mavenAssetBlobStore.notMigratedAssetBlobRefsExists()).thenReturn(false);
-
-    when(globalKeyValueStore.removeKey("assetBlob.blobRef.migration:checked:maven2:nexus")).thenReturn(true);
-
-    underTest = new AssetBlobRefMigrationStep_2_109(
-        upgradeTaskScheduler,
-        List.of(mavenFormat),
-        List.of(mavenFormatStoreManager),
-        globalKeyValueStore);
-
-    underTest.migrate(connection);
-
-    // Verify old state key deletion was attempted
-    verify(globalKeyValueStore).removeKey("assetBlob.blobRef.migration:checked:maven2:nexus");
-  }
-
-  @Test
-  void testMigrate_noFormats() throws Exception {
-    setupFormatStoreManagers();
-
-    underTest = new AssetBlobRefMigrationStep_2_109(
-        upgradeTaskScheduler,
-        List.of(), // Empty formats list
-        List.of(),
-        globalKeyValueStore);
-
-    underTest.migrate(connection);
-
-    // Verify no tasks scheduled and no keys deleted
-    verify(upgradeTaskScheduler, never()).schedule(taskConfiguration);
-    verify(globalKeyValueStore, never()).removeKey(anyString());
-  }
-
-  private void setupFormatStoreManagers(FormatStoreManager... managers) {
-    Map<String, FormatStoreManager> managerMap = new HashMap<>();
-    for (FormatStoreManager manager : managers) {
-      if (manager == mavenFormatStoreManager) {
-        managerMap.put("maven2", manager);
-      }
-      else if (manager == npmFormatStoreManager) {
-        managerMap.put("npm", manager);
-      }
-      else if (manager == dockerFormatStoreManager) {
-        managerMap.put("docker", manager);
-      }
+    // No maven2_asset_blob table exists, and the step no longer touches it at UPGRADE time, so the
+    // task is still scheduled; the background task tolerates a missing/empty format as a no-op.
+    try (Connection conn = dataSessionSupplier.openConnection()) {
+      underTest.migrate(conn);
     }
-    mockedQualifierUtil.when(() -> QualifierUtil.buildQualifierBeanMap(anyList())).thenReturn(managerMap);
+
+    verify(upgradeTaskScheduler, times(1)).schedule(taskConfiguration);
+    verify(keyValueStore).removeKeys(List.of("assetBlob.blobRef.migration:checked:maven2:nexus"));
+  }
+
+  @DatabaseTest
+  void migrate_noFormats_schedulesNothingAndDeletesNoKeys() throws Exception {
+    AssetBlobRefMigrationStep_2_109 underTest = new AssetBlobRefMigrationStep_2_109(
+        upgradeTaskScheduler, List.of(), keyValueStore);
+
+    try (Connection conn = dataSessionSupplier.openConnection()) {
+      underTest.migrate(conn);
+    }
+
+    verify(upgradeTaskScheduler, never()).schedule(taskConfiguration);
+    verify(keyValueStore).removeKeys(List.of());
+  }
+
+  private static Format format(final String value) {
+    Format format = mock(Format.class);
+    lenient().when(format.getValue()).thenReturn(value);
+    return format;
   }
 }

@@ -45,7 +45,7 @@ public class DescriptionRendererXSSTest
 
     final TemplateHelper templateHelper = new TemplateHelperImpl(
         mock(ApplicationVersionSupport.class),
-        new VelocityEngineProvider(20).getObject());
+        new VelocityEngineProvider(20).getObject(), false);
 
     descriptionRenderer = new DescriptionRendererImpl(templateHelper);
   }

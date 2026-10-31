@@ -15,6 +15,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box } from '@radix-ui/themes';
 import { Layers, Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
+import Permissions from '../../../../../../constants/Permissions';
 
 import { PageHeader, LoadingState } from '../../../../shared';
 import { SettingsButton, SettingsAlert } from '../../../../shared/form';
@@ -106,8 +107,24 @@ export function ContentSelectorsPage() {
     fetchContentSelector,
   } = useContentSelectorsApi();
 
-  const canCreate = ExtJS.checkPermission('nexus:selectors:create');
-  const canDelete = ExtJS.checkPermission('nexus:selectors:delete');
+  // Provider-independent, reactive permission checks (NEXUS-54212). ExtJS.checkPermission on
+  // its own evaluates once at render and would not update if permissions load asynchronously
+  // after mount, leaving the Create button disabled until refresh; ExtJS.usePermission with a
+  // hasUser dependency re-evaluates once the user and their permissions arrive. Matches the
+  // pattern used by TagsPageRadix and the detail pages.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canCreate = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.SELECTORS.CREATE),
+    [hasUser],
+  );
+  const canUpdate = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.SELECTORS.UPDATE),
+    [hasUser],
+  );
+  const canDelete = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.SELECTORS.DELETE),
+    [hasUser],
+  );
 
   // Listen for hash changes (browser back/forward, direct URL navigation)
   useEffect(() => {
@@ -224,10 +241,11 @@ export function ContentSelectorsPage() {
         description={pageConfig.description}
         breadcrumbs={getBreadcrumbs()}
         actions={
-          routeState.viewMode === 'list' && canCreate ? (
+          routeState.viewMode === 'list' ? (
             <SettingsButton
               variant="primary"
               onClick={handleCreate}
+              disabled={!canCreate}
               icon={Plus}
               testId="create-selector-button"
               data-analytics-id="nxrm-content-selector-create"
@@ -254,6 +272,7 @@ export function ContentSelectorsPage() {
             key={refreshKey}
             onSelect={handleSelectSelector}
             onCreate={handleCreate}
+            canCreate={canCreate}
           />
         )}
 
@@ -271,6 +290,7 @@ export function ContentSelectorsPage() {
             selector={selector}
             isCreate={false}
             canDelete={canDelete}
+            canEdit={canUpdate}
             onCancel={handleBack}
             onComplete={handleComplete}
             loading={loading}

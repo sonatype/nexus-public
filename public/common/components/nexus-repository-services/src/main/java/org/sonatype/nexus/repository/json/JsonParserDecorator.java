@@ -33,7 +33,7 @@ import com.fasterxml.jackson.core.async.NonBlockingInputFeeder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.util.RequestPayload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper class to be able to decorate an existing {@link JsonParser} with new functionality and state. This decorator
@@ -47,7 +47,7 @@ public class JsonParserDecorator
   private JsonParser jsonParser;
 
   public JsonParserDecorator(final JsonParser jsonParser) {
-    this.jsonParser = checkNotNull(jsonParser);
+    this.jsonParser = requireNonNull(jsonParser);
   }
 
   @Override

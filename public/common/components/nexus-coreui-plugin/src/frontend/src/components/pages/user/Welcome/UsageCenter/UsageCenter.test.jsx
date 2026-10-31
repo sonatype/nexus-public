@@ -27,18 +27,22 @@ jest.mock('axios', () => ({
   get: jest.fn()
 }));
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
-    isProEdition: jest.fn().mockReturnValue(false),
-    state: jest.fn().mockReturnValue({
-      getValue: jest.fn(),
-      getUser: jest.fn().mockReturnValue({ administrator: true }),
-      getEdition: jest.fn().mockReturnValue('COMMUNITY')
-    }),
-    useState: jest.fn()
-  },
-}));
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const isProEdition = jest.fn().mockReturnValue(false);
+  return {
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+    ExtJS: {
+      isProEdition,
+      state: jest.fn().mockReturnValue({
+        getValue: jest.fn(),
+        getUser: jest.fn().mockReturnValue({ administrator: true }),
+        getEdition: jest.fn().mockReturnValue('COMMUNITY')
+      }),
+      useState: jest.fn()
+    },
+    useIsLicensedEdition: (...args) => isProEdition(...args),
+  };
+});
 
 const selectors = {
   ...TestUtils.selectors,
@@ -156,9 +160,9 @@ describe('Usage Center', () => {
 
       expectCardToRender(card1, card1Header, totalComponents);
 
-      // card 2 of monthly metrics
-      const card2 = selectors.getCard('Peak Requests Per Month'),
-          card2Header = selectors.getCardHeader(card2,'Peak Requests Per Month'),
+      // card 2 of monthly metrics (non-PostgreSQL Pro uses base title)
+      const card2 = selectors.getCard('Requests Per Month'),
+          card2Header = selectors.getCardHeader(card2,'Requests Per Month'),
           totalRequests = selectors.getCardContent(card2, 'Past 12 months');
 
       expectCardToRender(
@@ -167,9 +171,9 @@ describe('Usage Center', () => {
           totalRequests
       );
 
-      // card 3 of peak requests per day
-      const card3 = selectors.getCard('Peak Requests Per Day'),
-        card3Header = selectors.getCardHeader(card3, 'Peak Requests Per Day'),
+      // card 3 of requests per day (non-PostgreSQL Pro uses base title)
+      const card3 = selectors.getCard('Requests Per Day'),
+        card3Header = selectors.getCardHeader(card3, 'Requests Per Day'),
         card3SubTitle = selectors.getCardContent(card3, 'Past 30 days'),
         peakReqPerDay = selectors.getCardContent(card3, '145,302');
 
@@ -182,8 +186,8 @@ describe('Usage Center', () => {
       expect(selectors.getAllCards().length).toBe(3);
 
       expect(selectors.getCard('Total Components')).toBeInTheDocument();
-      expect(selectors.getCard('Peak Requests Per Month')).toBeInTheDocument();
-      expect(selectors.getCard('Peak Requests Per Day')).toBeInTheDocument();
+      expect(selectors.getCard('Requests Per Month')).toBeInTheDocument();
+      expect(selectors.getCard('Requests Per Day')).toBeInTheDocument();
     });
   });
 

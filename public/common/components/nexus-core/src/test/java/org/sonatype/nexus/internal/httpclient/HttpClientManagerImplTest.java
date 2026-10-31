@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.httpclient;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
@@ -241,6 +242,30 @@ class HttpClientManagerImplTest
     String formattedString = OutboundRequestContext.getFormattedString();
     assertThat(formattedString, containsString(OutboundRequestContext.TIMESTAMP_PLACEHOLDER));
     assertThat(formattedString, containsString(OutboundRequestContext.ELAPSED_TIME_PLACEHOLDER));
+  }
+
+  @Test
+  void testSetConfiguration_evictsConnectionPool() throws Exception {
+    underTest.start();
+    TestHttpClientConfiguration config = new TestHttpClientConfiguration();
+
+    underTest.setConfiguration(config);
+
+    verify(connectionManager).closeExpiredConnections();
+    verify(connectionManager).closeIdleConnections(0, TimeUnit.MILLISECONDS);
+  }
+
+  @Test
+  void testOnStoreChanged_RemoteEvent_evictsConnectionPool() {
+    HttpClientConfiguration config = new TestHttpClientConfiguration();
+    when(configStore.load()).thenReturn(config);
+    when(configEvent.isLocal()).thenReturn(false);
+    when(configEvent.getRemoteNodeId()).thenReturn("remote-node-id");
+
+    underTest.onStoreChanged(configEvent);
+
+    verify(connectionManager).closeExpiredConnections();
+    verify(connectionManager).closeIdleConnections(0, TimeUnit.MILLISECONDS);
   }
 
   @Test

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.search.sql.query;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,10 +24,10 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.ws.rs.BadRequestException;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.content.Asset;
@@ -53,13 +52,14 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Named;
-import org.springframework.stereotype.Component;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -68,7 +68,6 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 /**
  * {@link SearchService} implementation that uses a single search table.
  */
-@Named("sql")
 @Component
 public class SqlSearchService
     implements SearchService
@@ -112,16 +111,16 @@ public class SqlSearchService
       final SqlSearchEventHandler sqlSearchEventHandler,
       final AssetPermissionChecker assetPermissionChecker)
   {
-    this.searchStore = checkNotNull(searchStore);
-    this.expressionBuilder = checkNotNull(expressionBuilder);
-    this.requestModifier = checkNotNull(requestModifier);
-    this.queryFactory = checkNotNull(queryFactory);
+    this.searchStore = requireNonNull(searchStore);
+    this.expressionBuilder = requireNonNull(expressionBuilder);
+    this.requestModifier = requireNonNull(requestModifier);
+    this.queryFactory = requireNonNull(queryFactory);
     this.formatStoreManagersByFormat =
-        QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersByFormatList));
-    this.sqlSearchSortUtil = checkNotNull(sqlSearchSortUtil);
-    this.decorators = checkNotNull(decorators);
-    this.sqlSearchEventHandler = checkNotNull(sqlSearchEventHandler);
-    this.assetPermissionChecker = checkNotNull(assetPermissionChecker);
+        QualifierUtil.buildQualifierBeanMap(requireNonNull(formatStoreManagersByFormatList));
+    this.sqlSearchSortUtil = requireNonNull(sqlSearchSortUtil);
+    this.decorators = requireNonNull(decorators);
+    this.sqlSearchEventHandler = requireNonNull(sqlSearchEventHandler);
+    this.assetPermissionChecker = requireNonNull(assetPermissionChecker);
   }
 
   @Override
@@ -184,7 +183,7 @@ public class SqlSearchService
 
       currentBatchIterator = results.iterator();
       currentOffset += results.size();
-      hasMoreResults = results.iterator().hasNext();
+      hasMoreResults = currentBatchIterator.hasNext();
     }
 
     @Override
@@ -236,26 +235,42 @@ public class SqlSearchService
   @Override
   public long count(final SearchRequest searchRequest) {
     try {
-      SqlSearchQueryConditionGroup queryCondition = getSqlSearchQueryCondition(searchRequest);
+      // Apply request modifications (e.g. format-specific filter rewriting) before building the predicate so
+      // that {@link SqlSearchQueryContribution#modifyRequest} hooks can affect the generated SQL.
+      SearchRequest modifiedSearchRequest = getModifiedSearchRequest(searchRequest);
+      SqlSearchQueryConditionGroup queryCondition = getSqlSearchQueryCondition(modifiedSearchRequest);
       return searchStore.count(queryCondition);
     }
-    catch (SqlSearchPermissionException | UnknownRepositoriesException e) {
-      log.error(e.getMessage());
+    catch (SqlSearchPermissionException e) {
+      log.debug("Search skipped due to permission condition: {}", e.getMessage(), e);
+      throw new ForbiddenException("User lacks permission to specified repository", e);
+
     }
-    return 0L;
+    catch (UnknownRepositoriesException e) {
+      log.debug("Search skipped due to unknown-repo condition: {}", e.getMessage(), e);
+      throw new BadRequestException("Unknown repository", e);
+    }
   }
 
   private SqlSearchService.ComponentSearchResultPage searchComponents(final SearchRequest searchRequest) {
     try {
-      SqlSearchQueryConditionGroup queryCondition = getSqlSearchQueryCondition(searchRequest);
+      // Apply request modifications (e.g. format-specific filter rewriting) before building the predicate so
+      // that {@link SqlSearchQueryContribution#modifyRequest} hooks can affect the generated SQL, not just
+      // sort/limit/offset.
       SearchRequest modifiedSearchRequest = getModifiedSearchRequest(searchRequest);
+      SqlSearchQueryConditionGroup queryCondition = getSqlSearchQueryCondition(modifiedSearchRequest);
       log.debug("Query: {}", queryCondition);
       return doSearch(modifiedSearchRequest, queryCondition);
     }
-    catch (SqlSearchPermissionException | UnknownRepositoriesException e) {
-      log.error(e.getMessage());
+    catch (SqlSearchPermissionException e) {
+      log.debug("Search skipped due to permission condition: {}", e.getMessage(), e);
+      throw new ForbiddenException("User lacks permission to specified repository", e);
+
     }
-    return SqlSearchService.ComponentSearchResultPage.empty();
+    catch (UnknownRepositoriesException e) {
+      log.debug("Search skipped due to unknown-repo condition: {}", e.getMessage(), e);
+      throw new BadRequestException("Unknown repository", e);
+    }
   }
 
   @Nullable
@@ -481,7 +496,7 @@ public class SqlSearchService
         final List<ComponentSearchResult> componentSearchResults)
     {
       this.nextOffset = nextOffset;
-      this.componentSearchResults = checkNotNull(componentSearchResults);
+      this.componentSearchResults = requireNonNull(componentSearchResults);
     }
 
     private static SqlSearchService.ComponentSearchResultPage empty() {

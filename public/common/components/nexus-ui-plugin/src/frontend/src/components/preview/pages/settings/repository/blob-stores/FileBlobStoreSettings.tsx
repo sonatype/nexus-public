@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Folder, AlertTriangle } from 'lucide-react';
+import { Folder, } from 'lucide-react';
 import {
   SettingsFormSection,
   SettingsTextInput,
@@ -82,7 +82,7 @@ export default function FileBlobStoreSettings({
           onChange={(value) => onChange('path', value)}
           helpText={STRINGS.PATH.helpText}
           placeholder={STRINGS.PATH.placeholder}
-          error={errors['path'] ?? undefined}
+          error={errors.path ?? undefined}
           required
           disabled={disabled}
           monospace

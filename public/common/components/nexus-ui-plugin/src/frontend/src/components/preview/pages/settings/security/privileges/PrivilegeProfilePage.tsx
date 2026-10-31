@@ -14,7 +14,7 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Flex, Text, Tabs, Badge } from '@radix-ui/themes';
 import { ExtJS } from '../../../../../../interface/ExtJS';
-import { Key, Shield, Users, Info, Pencil, Check } from 'lucide-react';
+import { Key, Shield, Users, Info, ArrowLeft, Pencil, Check } from 'lucide-react';
 
 import {
   PageHeader,
@@ -28,14 +28,29 @@ import {
 } from '../../../../shared';
 import { SettingsFormSection, SettingsButton } from '../../../../shared/form';
 import { usePrivilegeProfile } from './usePrivilegeProfile';
-import { useSecurityEntityModal } from '../SecurityEntityModalContext';
-import { usePrivilegesApi } from './usePrivilegesApi';
 import { getPrivilegeTypeLabel, getActionsForPrivilegeType, PRIVILEGE_TYPES } from './types';
 import { Role, formatRoleSourceDisplay } from '../roles/types';
-import { User, DEFAULT_SOURCE, getSourceLabel } from '../users/types';
+import { User, DEFAULT_SOURCE, getSourceLabel, getFullName } from '../users/types';
 import { apiHubHref } from '../apiHubLinks';
 
 import './PrivilegeProfilePage.scss';
+
+const ROLES_BASE_PATH = 'preview/admin/security/roles';
+const USERS_BASE_PATH = 'preview/admin/security/users';
+
+/**
+ * NEXUS-52167: these used to be styled <button>s calling openEntity() from
+ * SecurityEntityModalContext, whose provider is never mounted — and the hook
+ * falls back to a no-op instead of throwing, so the dead click was invisible.
+ * Real anchors also restore middle-click, Cmd/Ctrl-click and "open in new tab".
+ */
+function roleProfileHash(roleId: string): string {
+  return `#${ROLES_BASE_PATH}/${encodeURIComponent(roleId)}/profile`;
+}
+
+function userProfileHash(userId: string, source: string): string {
+  return `#${USERS_BASE_PATH}/${encodeURIComponent(userId)}/${encodeURIComponent(source)}/profile`;
+}
 
 interface PrivilegeProfilePageProps {
   privilegeId: string;
@@ -44,6 +59,13 @@ interface PrivilegeProfilePageProps {
   canEdit?: boolean;
   /** When true, cross-entity links (roles, users) render as plain text — used in full-screen modal */
   embedMode?: boolean;
+  /**
+   * Active tab, when the parent owns it via the URL. Omit to let the page manage
+   * its own tab state (embedded/standalone use).
+   */
+  activeTab?: string;
+  /** Called with the new tab id when the parent owns tab state. */
+  onTabChange?: (tab: string) => void;
 }
 
 /**
@@ -57,12 +79,24 @@ export function PrivilegeProfilePage({
   onEdit,
   canEdit = false,
   embedMode = false,
+  activeTab: controlledTab,
+  onTabChange,
 }: PrivilegeProfilePageProps) {
-  const [activeTab, setActiveTab] = useState('overview');
+  // Controlled when the parent supplies the tab (URL-driven), uncontrolled
+  // otherwise (embedded/standalone).
+  const [uncontrolledTab, setUncontrolledTab] = useState('overview');
+  const activeTab = controlledTab ?? uncontrolledTab;
+
+  const handleTabChange = (tab: string) => {
+    if (onTabChange) {
+      onTabChange(tab);
+    } else {
+      setUncontrolledTab(tab);
+    }
+  };
 
   const { privilege, rolesUsing, usersWithAccess, loading, error } =
     usePrivilegeProfile(privilegeId);
-  const { openEntity } = useSecurityEntityModal();
 
   const roleColumns: TableColumn<Role>[] = useMemo(
     () => [
@@ -73,25 +107,14 @@ export function PrivilegeProfilePage({
           embedMode ? (
             <Text size="2" weight="medium" as="span">{role.name}</Text>
           ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                openEntity('role', role.id);
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                font: 'inherit',
-                color: 'var(--blue-11)',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
+            <a
+              href={roleProfileHash(role.id)}
+              className="privilege-profile-page__entity-link"
+              onClick={(e) => e.stopPropagation()}
               aria-label={`Open role profile: ${role.name}`}
             >
               <Text size="2" weight="medium" as="span">{role.name}</Text>
-            </button>
+            </a>
           ),
         sortable: true,
       },
@@ -118,7 +141,7 @@ export function PrivilegeProfilePage({
         sortable: false,
       },
     ],
-    [embedMode, openEntity]
+    [embedMode]
   );
 
   const userColumns: TableColumn<User>[] = useMemo(
@@ -130,55 +153,22 @@ export function PrivilegeProfilePage({
           embedMode ? (
             <Text size="2" weight="medium" as="span">{user.userId}</Text>
           ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                openEntity('user', user.userId, user.source || DEFAULT_SOURCE);
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                font: 'inherit',
-                color: 'var(--blue-11)',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
+            <a
+              href={userProfileHash(user.userId, user.source || DEFAULT_SOURCE)}
+              className="privilege-profile-page__entity-link"
+              onClick={(e) => e.stopPropagation()}
               aria-label={`Open user profile: ${user.userId}`}
             >
               <Text size="2" weight="medium" as="span">{user.userId}</Text>
-            </button>
+            </a>
           ),
         sortable: true,
       },
       {
         id: 'name',
         header: 'Name',
-        accessor: (user) =>
-          embedMode ? (
-            <Text size="2" as="span">{user.firstName} {user.lastName}</Text>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                openEntity('user', user.userId, user.source || DEFAULT_SOURCE);
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                font: 'inherit',
-                color: 'var(--blue-11)',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
-              aria-label={`Open user profile: ${user.firstName} ${user.lastName}`}
-            >
-              <Text size="2" as="span">{user.firstName} {user.lastName}</Text>
-            </button>
-          ),
+        // NEXUS-52167: plain text — User ID is the only navigation affordance.
+        accessor: (user) => <Text size="2">{getFullName(user)}</Text>,
         sortable: true,
       },
       {
@@ -201,7 +191,7 @@ export function PrivilegeProfilePage({
         sortable: true,
       },
     ],
-    [embedMode, openEntity]
+    [embedMode]
   );
 
   if (loading && !privilege) return <LoadingState message="Loading privilege profile..." />;
@@ -217,7 +207,6 @@ export function PrivilegeProfilePage({
         title={privilege.name}
         description={`${getPrivilegeTypeLabel(privilege.type)}${privilege.readOnly ? ' (Read Only)' : ''}`}
         breadcrumbs={[
-          { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
           { label: 'Privileges', onClick: onBack },
           { label: privilege.name },
         ]}
@@ -229,12 +218,15 @@ export function PrivilegeProfilePage({
                   Edit Privilege
                 </SettingsButton>
               )}
+              <SettingsButton variant="ghost" onClick={onBack} icon={ArrowLeft}>
+                Back to List
+              </SettingsButton>
             </Flex>
           ) : undefined
         }
       />
 
-      <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+      <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
         <Tabs.List className="privilege-profile-page__tabs-list">
           <Tabs.Trigger value="overview">
             <Flex align="center" gap="1">

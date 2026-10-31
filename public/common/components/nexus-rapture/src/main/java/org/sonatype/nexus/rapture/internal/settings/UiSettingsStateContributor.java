@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -43,7 +43,7 @@ public class UiSettingsStateContributor
 
   @Autowired
   public UiSettingsStateContributor(final UiSettingsManager rapture) {
-    this.rapture = checkNotNull(rapture);
+    this.rapture = requireNonNull(rapture);
   }
 
   @Nullable

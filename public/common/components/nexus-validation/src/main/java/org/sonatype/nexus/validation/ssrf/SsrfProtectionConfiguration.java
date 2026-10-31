@@ -14,7 +14,7 @@ package org.sonatype.nexus.validation.ssrf;
 
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Configuration for SSRF protection settings, including the enable/disable toggle and allow lists.
@@ -25,8 +25,8 @@ public record SsrfProtectionConfiguration(
     Set<String> allowedDomains)
 {
   public SsrfProtectionConfiguration {
-    checkNotNull(allowedIPs);
-    checkNotNull(allowedDomains);
+    requireNonNull(allowedIPs);
+    requireNonNull(allowedDomains);
     allowedIPs = Set.copyOf(allowedIPs);
     allowedDomains = Set.copyOf(allowedDomains);
   }

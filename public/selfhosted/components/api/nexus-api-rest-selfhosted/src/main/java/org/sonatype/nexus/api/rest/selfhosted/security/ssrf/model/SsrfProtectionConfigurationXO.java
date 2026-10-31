@@ -21,7 +21,7 @@ import org.sonatype.nexus.validation.ssrf.SsrfProtectionConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * REST API exchange object for SSRF protection configuration.
@@ -48,7 +48,7 @@ public class SsrfProtectionConfigurationXO
   }
 
   public SsrfProtectionConfigurationXO(final SsrfProtectionConfiguration config) {
-    checkNotNull(config);
+    requireNonNull(config);
     this.enabled = config.enabled();
     this.allowedIPs = config.allowedIPs();
     this.allowedDomains = config.allowedDomains();
@@ -80,7 +80,7 @@ public class SsrfProtectionConfigurationXO
 
   public SsrfProtectionConfiguration toConfiguration() {
     return new SsrfProtectionConfiguration(
-        checkNotNull(enabled, "'enabled' is required"),
+        requireNonNull(enabled, "'enabled' is required"),
         allowedIPs,
         allowedDomains);
   }

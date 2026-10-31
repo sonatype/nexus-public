@@ -23,7 +23,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
@@ -43,7 +43,7 @@ public abstract class ConfigStoreSupport<T extends DataAccess>
   @VisibleForTesting
   @Autowired
   public void setDependencies(final EventManager eventManager) {
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   public void postCommitEvent(final Supplier<?> eventSupplier) {

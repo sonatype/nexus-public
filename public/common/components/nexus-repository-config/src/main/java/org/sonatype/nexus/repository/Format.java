@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Repository format symbol.
@@ -24,7 +24,7 @@ public abstract class Format
   private final String value;
 
   public Format(final String value) {
-    this.value = checkNotNull(value);
+    this.value = requireNonNull(value);
   }
 
   public String getValue() {

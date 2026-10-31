@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.sql.query.syntax;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A term which allows tokenization while matching. This allows {@code foo.bar} to potentially match {@code foo-bar}
@@ -23,7 +23,7 @@ public record LenientTerm(String term)
     implements StringTerm
 {
   public LenientTerm {
-    checkNotNull(term);
+    requireNonNull(term);
   }
 
   @Override

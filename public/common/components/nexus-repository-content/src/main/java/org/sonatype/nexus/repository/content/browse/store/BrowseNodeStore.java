@@ -12,14 +12,17 @@
  */
 package org.sonatype.nexus.repository.content.browse.store;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
+import org.sonatype.nexus.repository.content.store.SoftDeleteSchemaState;
 import org.sonatype.nexus.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class BrowseNodeStore<T extends BrowseNodeDAO>
     extends ContentStoreSupport<T>
 {
+  /**
+   * Optional dependency for {@link #isPostgresql()} dialect detection in the {@code getByDisplayPath} SQL;
+   * falls back to the H2 path when null (unit tests that construct the store without Spring).
+   */
+  private DatabaseCheck databaseCheck;
+
+  private SoftDeleteSchemaState softDeleteSchemaState;
+
   @Autowired
   public BrowseNodeStore(
       final DataSessionSupplier sessionSupplier,
@@ -39,6 +50,25 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
       final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
+  }
+
+  /** See the {@link #databaseCheck} field for what consumers this serves. */
+  @Autowired(required = false)
+  public void setDatabaseCheck(final DatabaseCheck databaseCheck) {
+    this.databaseCheck = databaseCheck;
+  }
+
+  @Autowired(required = false)
+  public void setSoftDeleteSchemaState(final SoftDeleteSchemaState softDeleteSchemaState) {
+    this.softDeleteSchemaState = softDeleteSchemaState;
+  }
+
+  private boolean isPostgresql() {
+    return databaseCheck != null && databaseCheck.isPostgresql();
+  }
+
+  protected boolean softDeleteAvailable() {
+    return softDeleteSchemaState != null && softDeleteSchemaState.isSoftDeleteAvailable();
   }
 
   /**
@@ -59,7 +89,7 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().getByDisplayPath(repositoryId, displayPath, limit, filter, filterParams);
+    return dao().getByDisplayPath(repositoryId, displayPath, limit, filter, filterParams, softDeleteAvailable());
   }
 
   /**
@@ -153,7 +183,15 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    */
   @Transactional
   public Long deleteByAssetIdAndPath(final Integer internalAssetId, final String path) {
-    return dao().deleteByAssetIdAndPath(internalAssetId, path);
+    if (isPostgresql()) {
+      return dao().deleteByAssetIdAndPath(internalAssetId, path);
+    }
+    Long parentId = dao().findParentByAssetIdAndPath(internalAssetId, path);
+    if (parentId == null) {
+      return null;
+    }
+    dao().deleteNodeByAssetIdAndPath(internalAssetId, path);
+    return parentId;
   }
 
   /**
@@ -164,7 +202,15 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    */
   @Transactional
   public Long deleteByAssetId(final Integer internalAssetId) {
-    return dao().deleteByAssetId(internalAssetId);
+    if (isPostgresql()) {
+      return dao().deleteByAssetId(internalAssetId);
+    }
+    Long parentId = dao().findParentByAssetId(internalAssetId);
+    if (parentId == null) {
+      return null;
+    }
+    dao().deleteNodeByAssetId(internalAssetId);
+    return parentId;
   }
 
   /**
@@ -175,7 +221,25 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    */
   @Transactional
   public List<BrowseNode> getNodeParents(final Long internalNodeId) {
-    return dao().getNodeParents(internalNodeId);
+    if (isPostgresql()) {
+      return dao().getNodeParents(internalNodeId);
+    }
+    // H2: walk parents iteratively (no recursive CTE on H2). Bounded by tree depth.
+    List<BrowseNode> parents = new ArrayList<>();
+    BrowseNodeData current = dao().getByNodeId(internalNodeId);
+    if (current == null) {
+      return parents;
+    }
+    long parentId = current.getParentId();
+    while (parentId != 0L) {
+      BrowseNodeData parent = dao().getByNodeId(parentId);
+      if (parent == null) {
+        break;
+      }
+      parents.add(parent);
+      parentId = parent.getParentId();
+    }
+    return parents;
   }
 
   /**
@@ -213,5 +277,29 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   @Transactional
   public List<BrowseNode> getChildByParentNodeId(final Long parentNodeId, final int limit, final int offset) {
     return dao().getChildByParentNodeId(parentNodeId, limit, offset);
+  }
+
+  /**
+   * Returns the node id of the browse node for the given asset, or {@code null} if none exists.
+   *
+   * @param assetId the internal asset id
+   * @return the node id, or {@code null}
+   */
+  @Transactional
+  @Nullable
+  public Long getNodeIdForAsset(final int assetId) {
+    return dao().getNodeIdForAsset(assetId);
+  }
+
+  /**
+   * Deletes the browse node with the given node id and returns its parent id (PostgreSQL only).
+   *
+   * @param nodeId the node id to delete
+   * @return the parent node id, or {@code null}
+   */
+  @Transactional
+  @Nullable
+  public Long deleteByNodeIdReturningParentId(final long nodeId) {
+    return dao().deleteByNodeIdReturningParentId(nodeId);
   }
 }

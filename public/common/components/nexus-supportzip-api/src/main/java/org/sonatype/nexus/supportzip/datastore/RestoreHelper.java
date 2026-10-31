@@ -19,7 +19,7 @@ import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirector
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -40,7 +40,7 @@ public class RestoreHelper
 
   @Autowired
   public RestoreHelper(final ApplicationDirectories applicationDirectories) {
-    this.dbPath = checkNotNull(applicationDirectories).getWorkDirectory(DB_FOLDER_NAME, false).toPath();
+    this.dbPath = requireNonNull(applicationDirectories).getWorkDirectory(DB_FOLDER_NAME, false).toPath();
   }
 
   /**

@@ -49,11 +49,11 @@ public class PEP440VersionNormalizer
    */
   private static final int MAX_DIGIT_PARSE_LENGTH = 18;
 
-  private static final String PRE_RELEASE_KEY = "a";
+  private static final String PRE_RELEASE_KEY = "0a";
 
-  private static final String RELEASE_KEY = "c";
+  private static final String RELEASE_KEY = "0c";
 
-  private static final String POST_RELEASE_KEY = "d";
+  private static final String POST_RELEASE_KEY = "0d";
 
   private static final String DEV_SUB = "a";
 
@@ -69,6 +69,13 @@ public class PEP440VersionNormalizer
 
   private static final Pattern POST_PATTERN =
       Pattern.compile("[._-]?(post|rev|r)[._-]?(\\d*)$", Pattern.CASE_INSENSITIVE);
+
+  /**
+   * PEP 440 implicit post-release form: a bare {@code -N} suffix means {@code .postN}. Without this
+   * the hyphen is rewritten to a dot by {@link #normalizeRelease(String)} and the version collides
+   * with an ordinary release of the same digits, e.g. {@code 1.2.3-1} and {@code 1.2.3.1}.
+   */
+  private static final Pattern POST_IMPLICIT_PATTERN = Pattern.compile("-(\\d+)$");
 
   private static final Pattern RC_PATTERN = Pattern.compile("[._-]?(rc|c|preview|pre)[._-]?(\\d*)$",
       Pattern.CASE_INSENSITIVE);
@@ -98,10 +105,10 @@ public class PEP440VersionNormalizer
     }
 
     // Handle epoch (N!rest)
-    String epoch = "000000000";
+    String epoch = VersionNumberExpander.padPrefixed(0);
     Matcher epochMatcher = EPOCH_PATTERN.matcher(trimmed);
     if (epochMatcher.matches()) {
-      epoch = String.format("%09d", safeParseLong(epochMatcher.group(1)));
+      epoch = VersionNumberExpander.padPrefixed(safeParseLong(epochMatcher.group(1)));
       trimmed = epochMatcher.group(2);
     }
 
@@ -114,7 +121,7 @@ public class PEP440VersionNormalizer
     if (devMatcher.find()) {
       String versionPart = version.substring(0, devMatcher.start());
       String devNum = devMatcher.group(1).isEmpty() ? "0" : devMatcher.group(1);
-      String devSuffix = ".0dev." + String.format("%09d", safeParseLong(devNum));
+      String devSuffix = ".0dev." + VersionNumberExpander.padPrefixed(safeParseLong(devNum));
 
       // Check if remaining versionPart contains a pre-release qualifier (e.g., "1.0a1")
       if (hasPreReleaseQualifier(versionPart)) {
@@ -125,8 +132,9 @@ public class PEP440VersionNormalizer
       }
 
       // Pure dev release (1.0.dev1) — no parent pre-release
-      return VersionNumberExpander.expand(normalizeRelease(versionPart)) + "." + PRE_RELEASE_KEY + "." + DEV_SUB + "."
-          + String.format("%09d", safeParseLong(devNum));
+      return VersionNumberExpander.expandPrefixed(normalizeRelease(versionPart)) + "." + PRE_RELEASE_KEY + "." + DEV_SUB
+          + "."
+          + VersionNumberExpander.padPrefixed(safeParseLong(devNum));
     }
 
     // Check for alpha suffix
@@ -134,8 +142,7 @@ public class PEP440VersionNormalizer
     if (alphaMatcher.find()) {
       String versionPart = version.substring(0, alphaMatcher.start());
       String num = alphaMatcher.group(2).isEmpty() ? "0" : alphaMatcher.group(2);
-      return VersionNumberExpander.expand(normalizeRelease(versionPart)) + "." + PRE_RELEASE_KEY + "." + ALPHA_SUB + "."
-          + String.format("%09d", safeParseLong(num)) + ".z";
+      return preReleaseKey(versionPart, ALPHA_SUB, num, true);
     }
 
     // Check for beta suffix
@@ -143,8 +150,7 @@ public class PEP440VersionNormalizer
     if (betaMatcher.find()) {
       String versionPart = version.substring(0, betaMatcher.start());
       String num = betaMatcher.group(2).isEmpty() ? "0" : betaMatcher.group(2);
-      return VersionNumberExpander.expand(normalizeRelease(versionPart)) + "." + PRE_RELEASE_KEY + "." + BETA_SUB + "."
-          + String.format("%09d", safeParseLong(num)) + ".z";
+      return preReleaseKey(versionPart, BETA_SUB, num, true);
     }
 
     // Check for rc suffix
@@ -152,8 +158,7 @@ public class PEP440VersionNormalizer
     if (rcMatcher.find()) {
       String versionPart = version.substring(0, rcMatcher.start());
       String num = rcMatcher.group(2).isEmpty() ? "0" : rcMatcher.group(2);
-      return VersionNumberExpander.expand(normalizeRelease(versionPart)) + "." + PRE_RELEASE_KEY + "." + RC_SUB + "."
-          + String.format("%09d", safeParseLong(num)) + ".z";
+      return preReleaseKey(versionPart, RC_SUB, num, true);
     }
 
     // Check for post suffix
@@ -161,12 +166,18 @@ public class PEP440VersionNormalizer
     if (postMatcher.find()) {
       String versionPart = version.substring(0, postMatcher.start());
       String num = postMatcher.group(2).isEmpty() ? "0" : postMatcher.group(2);
-      return VersionNumberExpander.expand(normalizeRelease(versionPart)) + "." + POST_RELEASE_KEY + "."
-          + String.format("%09d", safeParseLong(num)) + ".z";
+      return postReleaseKey(versionPart, num, true);
+    }
+
+    // Check for the implicit post suffix (-N), which PEP 440 treats as .postN
+    Matcher postImplicitMatcher = POST_IMPLICIT_PATTERN.matcher(version);
+    if (postImplicitMatcher.find()) {
+      String versionPart = version.substring(0, postImplicitMatcher.start());
+      return postReleaseKey(versionPart, postImplicitMatcher.group(1), true);
     }
 
     // Pure release
-    return VersionNumberExpander.expand(normalizeRelease(version)) + "." + RELEASE_KEY;
+    return VersionNumberExpander.expandPrefixed(normalizeRelease(version)) + "." + RELEASE_KEY;
   }
 
   private boolean hasPreReleaseQualifier(final String version) {
@@ -182,36 +193,52 @@ public class PEP440VersionNormalizer
     if (alphaMatcher.find()) {
       String versionPart = version.substring(0, alphaMatcher.start());
       String num = alphaMatcher.group(2).isEmpty() ? "0" : alphaMatcher.group(2);
-      return VersionNumberExpander.expand(normalizeRelease(versionPart)) + "." + PRE_RELEASE_KEY + "." + ALPHA_SUB + "."
-          + String.format("%09d", safeParseLong(num));
+      return preReleaseKey(versionPart, ALPHA_SUB, num, false);
     }
 
     Matcher betaMatcher = BETA_PATTERN.matcher(version);
     if (betaMatcher.find()) {
       String versionPart = version.substring(0, betaMatcher.start());
       String num = betaMatcher.group(2).isEmpty() ? "0" : betaMatcher.group(2);
-      return VersionNumberExpander.expand(normalizeRelease(versionPart)) + "." + PRE_RELEASE_KEY + "." + BETA_SUB + "."
-          + String.format("%09d", safeParseLong(num));
+      return preReleaseKey(versionPart, BETA_SUB, num, false);
     }
 
     Matcher rcMatcher = RC_PATTERN.matcher(version);
     if (rcMatcher.find()) {
       String versionPart = version.substring(0, rcMatcher.start());
       String num = rcMatcher.group(2).isEmpty() ? "0" : rcMatcher.group(2);
-      return VersionNumberExpander.expand(normalizeRelease(versionPart)) + "." + PRE_RELEASE_KEY + "." + RC_SUB + "."
-          + String.format("%09d", safeParseLong(num));
+      return preReleaseKey(versionPart, RC_SUB, num, false);
     }
 
     Matcher postMatcher = POST_PATTERN.matcher(version);
     if (postMatcher.find()) {
       String versionPart = version.substring(0, postMatcher.start());
       String num = postMatcher.group(2).isEmpty() ? "0" : postMatcher.group(2);
-      return VersionNumberExpander.expand(normalizeRelease(versionPart)) + "." + POST_RELEASE_KEY + "."
-          + String.format("%09d", safeParseLong(num));
+      return postReleaseKey(versionPart, num, false);
     }
 
     // Fallback — shouldn't reach here if hasPreReleaseQualifier was true
-    return VersionNumberExpander.expand(normalizeRelease(version));
+    return VersionNumberExpander.expandPrefixed(normalizeRelease(version));
+  }
+
+  /**
+   * Builds the shared pre-release sort key used by both {@link #normalizeVersionAndQualifier} (which finalizes
+   * the key with a trailing {@code .z} marker once no dev suffix follows) and {@link #normalizePreReleaseBase}
+   * (which omits the marker because a {@code .devN} suffix is still to be appended by the caller).
+   */
+  private String preReleaseKey(final String versionPart, final String sub, final String num, final boolean finalized) {
+    String key = VersionNumberExpander.expandPrefixed(normalizeRelease(versionPart)) + "." + PRE_RELEASE_KEY + "."
+        + sub + "." + VersionNumberExpander.padPrefixed(safeParseLong(num));
+    return finalized ? key + ".z" : key;
+  }
+
+  /**
+   * Builds the shared post-release sort key, mirroring {@link #preReleaseKey} for the post-release tier.
+   */
+  private String postReleaseKey(final String versionPart, final String num, final boolean finalized) {
+    String key = VersionNumberExpander.expandPrefixed(normalizeRelease(versionPart)) + "." + POST_RELEASE_KEY + "."
+        + VersionNumberExpander.padPrefixed(safeParseLong(num));
+    return finalized ? key + ".z" : key;
   }
 
   /**
@@ -221,7 +248,21 @@ public class PEP440VersionNormalizer
     if (release == null || release.isEmpty()) {
       return "0";
     }
-    return release.replaceAll("[_-]", ".");
+    return stripTrailingZeros(release.replaceAll("[_-]", "."));
+  }
+
+  /**
+   * PEP 440 treats trailing zero release segments as insignificant, so {@code 1.2.3.0} and
+   * {@code 1.2.3} are the same version. They must therefore produce the same key, otherwise a
+   * trailing-zero release outranks a post-release of the same version.
+   */
+  private String stripTrailingZeros(final String release) {
+    String[] segments = release.split("\\.");
+    int end = segments.length;
+    while (end > 1 && segments[end - 1].matches("0+")) {
+      end--;
+    }
+    return String.join(".", java.util.Arrays.copyOf(segments, end));
   }
 
   /**

@@ -18,6 +18,7 @@ import { Theme } from '@radix-ui/themes';
 import { ToastProvider } from '../../../shared';
 
 import { UserTokenPage } from '../UserTokenPage';
+import { FEATURE_DISABLED_MESSAGE } from '../useUserToken';
 import { APIConstants } from '../../../../../constants/APIConstants';
 
 // ---------------------------------------------------------------------------
@@ -51,13 +52,14 @@ Object.defineProperty(navigator, 'clipboard', {
 const FUTURE_EPOCH_MS = String(new Date('2027-01-15T10:00:00Z').getTime());
 
 // Real attributes endpoint path (without leading slash, as defined in APIConstants)
-const ATTRIBUTES_PATH = APIConstants.REST.USER_TOKEN_TIMESTAMP; // 'service/rest/internal/current-user/user-token/attributes'
+const ATTRIBUTES_PATH = APIConstants.REST.USER_TOKEN_TIMESTAMP;
 
-function settingsMock(enabled: boolean) {
-  return (url: string) => {
-    if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled } });
-    return Promise.resolve({ data: null });
-  };
+// Admin-only endpoint that the Preview UI page must NOT call. Regression sentinel for
+// NEXUS-54023: the page used to eagerly fire this on load, which broke every non-admin.
+const ADMIN_SETTINGS_URL_FRAGMENT = 'security/user-tokens';
+
+function attributesReject(status: number, data: unknown = '') {
+  return Promise.reject({ isAxiosError: true, response: { status, data } });
 }
 
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -86,8 +88,7 @@ describe('UserTokenPage', () => {
   // BDD-52136-005 — regression guard: must call the real endpoint, never the old one
   it('calls the URL from APIConstants.REST.USER_TOKEN_TIMESTAMP, not a hard-coded path', async () => {
     mockAxios.get.mockImplementation((url: string) => {
-      if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
-      if (url.includes(ATTRIBUTES_PATH)) return Promise.reject({ isAxiosError: true, response: { status: 404, data: '' } });
+      if (url.includes(ATTRIBUTES_PATH)) return attributesReject(404);
       return Promise.resolve({ data: null });
     });
 
@@ -100,6 +101,45 @@ describe('UserTokenPage', () => {
     expect(calls.every((u) => !u.includes('user-token-timestamp'))).toBe(true);
   });
 
+  // NEXUS-54023 — regression: never touch the admin usertoken-settings endpoint from the
+  // per-user page. That endpoint is guarded by nexus:usertoken-settings:read, so eagerly
+  // calling it 403'd every non-admin user and dropped the page into loadError.
+  describe('NEXUS-54023 non-admin regression', () => {
+    it('never calls the admin security/user-tokens endpoint on page load', async () => {
+      mockAxios.get.mockImplementation((url: string) => {
+        if (url.includes(ATTRIBUTES_PATH)) return attributesReject(404);
+        return Promise.resolve({ data: null });
+      });
+
+      renderPage();
+
+      await waitFor(() => expect(screen.getByTestId('no-token-state')).toBeInTheDocument());
+
+      const calls: string[] = mockAxios.get.mock.calls.map((c: unknown[]) => c[0] as string);
+      expect(calls.every((u) => !u.includes(ADMIN_SETTINGS_URL_FRAGMENT))).toBe(true);
+    });
+
+    it('renders normally when the admin endpoint would have returned 403', async () => {
+      // Simulate the non-admin runtime: any call to the admin endpoint would 403.
+      // The test fails loudly (rejection surfaces as loadError) if the page ever calls it.
+      mockAxios.get.mockImplementation((url: string) => {
+        if (url.includes(ADMIN_SETTINGS_URL_FRAGMENT)) {
+          return Promise.reject({
+            isAxiosError: true,
+            response: { status: 403, data: 'Subject does not have permission [nexus:usertoken-settings:read]' },
+          });
+        }
+        if (url.includes(ATTRIBUTES_PATH)) return attributesReject(404);
+        return Promise.resolve({ data: null });
+      });
+
+      renderPage();
+
+      await waitFor(() => expect(screen.getByTestId('no-token-state')).toBeInTheDocument());
+      expect(screen.queryByText(/failed to load/i)).not.toBeInTheDocument();
+    });
+  });
+
   describe('State 0: Loading', () => {
     it('shows spinner while loading', () => {
       mockAxios.get.mockReturnValue(new Promise(() => {}));
@@ -109,9 +149,16 @@ describe('UserTokenPage', () => {
     });
   });
 
+  // State 1: derived from a 400 on the /attributes endpoint with the well-known
+  // "feature is not enabled" body. Two branches for the response shape because
+  // WebApplicationMessageException(Status, String) defaults to text/plain but the
+  // ValidationErrorXO entity commonly serializes to JSON in this codebase.
   describe('State 1: Tokens Disabled', () => {
-    it('shows disabled callout when tokens are off', async () => {
-      mockAxios.get.mockImplementation(settingsMock(false));
+    it('shows disabled callout when attributes returns 400 with plain-text disabled body', async () => {
+      mockAxios.get.mockImplementation((url: string) => {
+        if (url.includes(ATTRIBUTES_PATH)) return attributesReject(400, FEATURE_DISABLED_MESSAGE);
+        return Promise.resolve({ data: null });
+      });
 
       renderPage();
 
@@ -122,20 +169,32 @@ describe('UserTokenPage', () => {
       expect(screen.getByText(/user tokens are not enabled/i)).toBeInTheDocument();
       expect(screen.queryByTestId('generate-token-btn')).not.toBeInTheDocument();
     });
+
+    it('shows disabled callout when attributes returns 400 with JSON disabled body', async () => {
+      mockAxios.get.mockImplementation((url: string) => {
+        if (url.includes(ATTRIBUTES_PATH)) {
+          return attributesReject(400, { id: '*', message: FEATURE_DISABLED_MESSAGE });
+        }
+        return Promise.resolve({ data: null });
+      });
+
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('tokens-disabled-callout')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId('generate-token-btn')).not.toBeInTheDocument();
+    });
   });
 
   // BDD-52136-003
   describe('State 2: No Token Exists', () => {
-    function noTokenMock() {
-      return (url: string) => {
-        if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
-        if (url.includes(ATTRIBUTES_PATH)) return Promise.reject({ isAxiosError: true, response: { status: 404, data: '' } });
-        return Promise.resolve({ data: null });
-      };
-    }
-
     beforeEach(() => {
-      mockAxios.get.mockImplementation(noTokenMock());
+      mockAxios.get.mockImplementation((url: string) => {
+        if (url.includes(ATTRIBUTES_PATH)) return attributesReject(404);
+        return Promise.resolve({ data: null });
+      });
     });
 
     it('renders Generate Token button when no token exists', async () => {
@@ -185,7 +244,6 @@ describe('UserTokenPage', () => {
   describe('State 3a: Token Exists (with expiration)', () => {
     beforeEach(() => {
       mockAxios.get.mockImplementation((url: string) => {
-        if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
         if (url.includes(ATTRIBUTES_PATH)) return Promise.resolve({ data: { expirationTimeTimestamp: FUTURE_EPOCH_MS } });
         if (url.includes('user-token?authToken')) return Promise.resolve({ data: { nameCode: 'uc', passCode: 'pc' } });
         return Promise.resolve({ data: null });
@@ -236,7 +294,6 @@ describe('UserTokenPage', () => {
   describe('State 3b: Token Exists (no expiration)', () => {
     beforeEach(() => {
       mockAxios.get.mockImplementation((url: string) => {
-        if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
         if (url.includes(ATTRIBUTES_PATH)) return Promise.resolve({ data: {} });
         return Promise.resolve({ data: null });
       });
@@ -260,10 +317,7 @@ describe('UserTokenPage', () => {
   describe('State 4: Expired Token', () => {
     beforeEach(() => {
       mockAxios.get.mockImplementation((url: string) => {
-        if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
-        if (url.includes(ATTRIBUTES_PATH)) {
-          return Promise.reject({ isAxiosError: true, response: { status: 410 } });
-        }
+        if (url.includes(ATTRIBUTES_PATH)) return attributesReject(410);
         return Promise.resolve({ data: null });
       });
     });
@@ -294,8 +348,7 @@ describe('UserTokenPage', () => {
   describe('State 5: Token Reveal Modal', () => {
     it('shows countdown in modal and auto-closes after 60s', async () => {
       mockAxios.get.mockImplementation((url: string) => {
-        if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
-        if (url.includes(ATTRIBUTES_PATH)) return Promise.reject({ isAxiosError: true, response: { status: 404, data: '' } });
+        if (url.includes(ATTRIBUTES_PATH)) return attributesReject(404);
         return Promise.resolve({ data: null });
       });
       mockRequestAuthenticationToken.mockResolvedValue('tok');
@@ -319,8 +372,7 @@ describe('UserTokenPage', () => {
 
     it('copy buttons call clipboard.writeText', async () => {
       mockAxios.get.mockImplementation((url: string) => {
-        if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
-        if (url.includes(ATTRIBUTES_PATH)) return Promise.reject({ isAxiosError: true, response: { status: 404, data: '' } });
+        if (url.includes(ATTRIBUTES_PATH)) return attributesReject(404);
         return Promise.resolve({ data: null });
       });
       mockRequestAuthenticationToken.mockResolvedValue('tok');
@@ -342,8 +394,7 @@ describe('UserTokenPage', () => {
   describe('State: API Error', () => {
     it('shows error state and Retry button on 500 response', async () => {
       mockAxios.get.mockImplementation((url: string) => {
-        if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
-        if (url.includes(ATTRIBUTES_PATH)) return Promise.reject({ isAxiosError: true, response: { status: 500, data: 'Internal Server Error' } });
+        if (url.includes(ATTRIBUTES_PATH)) return attributesReject(500, 'Internal Server Error');
         return Promise.resolve({ data: null });
       });
 
@@ -356,7 +407,6 @@ describe('UserTokenPage', () => {
 
     it('shows error state on network error', async () => {
       mockAxios.get.mockImplementation((url: string) => {
-        if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
         if (url.includes(ATTRIBUTES_PATH)) return Promise.reject(new Error('Network Error'));
         return Promise.resolve({ data: null });
       });
@@ -366,12 +416,45 @@ describe('UserTokenPage', () => {
       await waitFor(() => expect(screen.getByTestId('error-state')).toBeInTheDocument());
       expect(screen.queryByTestId('no-token-state')).not.toBeInTheDocument();
     });
+
+    // Brittleness guard: only 400s carrying the well-known "not enabled" body should be
+    // treated as disabled. Any other 400 must fall through to the generic error path so
+    // future validation errors are not silently misclassified.
+    it('treats an unrelated 400 as an error, not as disabled', async () => {
+      mockAxios.get.mockImplementation((url: string) => {
+        if (url.includes(ATTRIBUTES_PATH)) {
+          return attributesReject(400, { id: 'someField', message: 'Some other validation error' });
+        }
+        return Promise.resolve({ data: null });
+      });
+
+      renderPage();
+
+      await waitFor(() => expect(screen.getByTestId('error-state')).toBeInTheDocument());
+      expect(screen.queryByTestId('tokens-disabled-callout')).not.toBeInTheDocument();
+    });
+
+    // Tightening guard: JSON-shape message match is exact-equality, not substring, so a
+    // hypothetical superset message ("...not enabled for this realm") is not silently
+    // misclassified as disabled.
+    it('does not treat a JSON 400 whose message is a superset of the disabled string as disabled', async () => {
+      mockAxios.get.mockImplementation((url: string) => {
+        if (url.includes(ATTRIBUTES_PATH)) {
+          return attributesReject(400, { id: '*', message: `${FEATURE_DISABLED_MESSAGE} for this realm` });
+        }
+        return Promise.resolve({ data: null });
+      });
+
+      renderPage();
+
+      await waitFor(() => expect(screen.getByTestId('error-state')).toBeInTheDocument());
+      expect(screen.queryByTestId('tokens-disabled-callout')).not.toBeInTheDocument();
+    });
   });
 
   describe('Reset Confirmation', () => {
     beforeEach(() => {
       mockAxios.get.mockImplementation((url: string) => {
-        if (url.includes('security/user-tokens')) return Promise.resolve({ data: { enabled: true } });
         if (url.includes(ATTRIBUTES_PATH)) return Promise.resolve({ data: { expirationTimeTimestamp: FUTURE_EPOCH_MS } });
         return Promise.resolve({ data: null });
       });

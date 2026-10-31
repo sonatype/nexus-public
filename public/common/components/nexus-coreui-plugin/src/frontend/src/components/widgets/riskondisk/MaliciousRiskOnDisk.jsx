@@ -60,7 +60,7 @@ export default function MaliciousRiskOnDisk({ toggle, onSizeChanged, className }
   const malwareCount = testOverride || (malwareData?.totalCount ?? 0);
   const user = ExtJS.useUser();
   const userIsLogged = user ?? false;
-  const showMaliciousRiskOnDisk = userIsLogged && (isRiskOnDiskEnabled || malwareCount > 0);
+  const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled;
 
   const isRiskOnDiskNoneAdminOverrideEnabled = ExtJS.state().getValue(MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED);
   const isAdmin = user && user.administrator;
@@ -74,7 +74,7 @@ export default function MaliciousRiskOnDisk({ toggle, onSizeChanged, className }
     return null;
   }
 
-  return <MaliciousRiskOnDiskContent user={user} toggle={toggle} onSizeChanged={onSizeChanged} />;
+  return <MaliciousRiskOnDiskContent toggle={toggle} onSizeChanged={onSizeChanged} />;
 }
 
 function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
@@ -95,7 +95,6 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
   const user = ExtJS.useUser();
 
   const isAdmin = user?.administrator;
-  const isProEdition = ExtJS.isProEdition();
   const isIqServerEnabled = ExtJS.state().getValue(CLM)?.enabled;
   const isMalwareRiskEnabled = ExtJS.state().getValue(MALWARE_RISK_ENABLED);
   const isOnBrowseOrSearch = isPageHashIncluding(['#browse/browse', '#browse/search']);
@@ -131,7 +130,7 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
         <button
             type="button"
             className="nx-collapsible-items__trigger"
-            onClick={onToggleCollapse || undefined}
+            onClick={onToggleCollapse}
             aria-expanded={isExpanded}
         >
           <div className="risk-on-disk-alert-title">

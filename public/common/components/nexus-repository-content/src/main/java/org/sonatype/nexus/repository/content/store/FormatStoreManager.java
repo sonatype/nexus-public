@@ -22,7 +22,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Manages content stores for a particular format. To get the {@link FormatStoreManager} for format "example", inject
@@ -44,12 +44,12 @@ public class FormatStoreManager
   private Map<String, FormatStoreFactory> formatStoreFactories;
 
   protected FormatStoreManager(final String formatClassPrefix) {
-    this.formatClassPrefix = checkNotNull(formatClassPrefix);
+    this.formatClassPrefix = requireNonNull(formatClassPrefix);
   }
 
   @Autowired
   void setFormatStoreFactories(final Map<String, FormatStoreFactory> formatStoreFactories) {
-    this.formatStoreFactories = checkNotNull(formatStoreFactories);
+    this.formatStoreFactories = requireNonNull(formatStoreFactories);
   }
 
   /**

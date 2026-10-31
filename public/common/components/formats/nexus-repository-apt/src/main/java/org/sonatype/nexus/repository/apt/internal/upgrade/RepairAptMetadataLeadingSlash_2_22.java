@@ -23,7 +23,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Start task to repair Apt metadata adding leading slash to Filename
@@ -36,7 +36,7 @@ public class RepairAptMetadataLeadingSlash_2_22
 
   @Autowired
   public RepairAptMetadataLeadingSlash_2_22(final UpgradeTaskScheduler taskScheduler) {
-    this.taskScheduler = checkNotNull(taskScheduler);
+    this.taskScheduler = requireNonNull(taskScheduler);
   }
 
   @Override

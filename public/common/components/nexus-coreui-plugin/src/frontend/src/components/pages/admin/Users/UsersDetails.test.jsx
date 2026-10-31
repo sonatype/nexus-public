@@ -54,9 +54,8 @@ const {
 
 const {EXT: {USER: {ACTION, METHODS}, URL: EXT_URL}} = APIConstants;
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const ExtJS = {
     requestConfirmation: jest.fn(),
     checkPermission: jest.fn(),
     showErrorMessage: jest.fn(),
@@ -66,8 +65,13 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
       getUser: jest.fn(),
     }),
     isProEdition: jest.fn().mockReturnValue(true),
-  },
-}));
+  };
+  return {
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+    ExtJS,
+    useIsLicensedEdition: (...args) => ExtJS.isProEdition(...args),
+  };
+});
 
 const testId = 'UserId';
 const testFirstName = 'User First Name';

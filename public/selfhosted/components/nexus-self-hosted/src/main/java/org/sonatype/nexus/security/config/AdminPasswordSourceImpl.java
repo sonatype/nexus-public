@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.text.Strings2;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,7 +35,7 @@ public class AdminPasswordSourceImpl
   public AdminPasswordSourceImpl(
       final AdminPasswordFileManager adminPasswordFileManager)
   {
-    this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
+    this.adminPasswordFileManager = requireNonNull(adminPasswordFileManager);
   }
 
   public String getPassword(final boolean randomPassword) {

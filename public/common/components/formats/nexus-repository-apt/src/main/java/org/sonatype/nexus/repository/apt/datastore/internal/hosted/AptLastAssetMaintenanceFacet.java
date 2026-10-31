@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.internal.hosted;
 
+import java.io.IOException;
 import java.util.Set;
 
 import org.sonatype.nexus.repository.apt.AptFormat;
@@ -50,6 +51,61 @@ public class AptLastAssetMaintenanceFacet
     contentFacet().components().with(component).assets().forEach(this::removeAssetMetadata);
 
     return super.deleteComponent(component);
+  }
+
+  @Override
+  public void afterComponentSoftDeleted(final Component component) {
+    // Remove the key-value entries, then rebuild the stored Packages index so the soft-deleted package
+    // stops being advertised. Without the rebuild the .deb 404s while Packages still lists it, breaking
+    // apt clients (NEXUS-53523 fixed the restore side for APT but missed this soft-delete drop side).
+    contentFacet().components().with(component).assets().forEach(this::removeAssetMetadata);
+    rebuildMetadataQuietly();
+  }
+
+  @Override
+  public void afterComponentRestored(final Component component) {
+    try {
+      // The Packages index is rebuilt from the key-value store, whose entries were removed on soft-delete.
+      // Re-populate them from the (surviving) asset format attributes BEFORE rebuilding, otherwise the restored
+      // package is physically present but invisible to apt clients (NEXUS-53523).
+      contentFacet().components().with(component).assets().forEach(this::addAssetMetadata);
+      metadata().rebuildMetadata();
+    }
+    catch (IOException e) {
+      log.warn("Failed to rebuild APT metadata after component restore", e);
+    }
+  }
+
+  @Override
+  public void afterAssetSoftDeleted(final Asset asset) {
+    removeAssetMetadata(asset);
+    rebuildMetadataQuietly();
+  }
+
+  @Override
+  public void afterAssetRestored(final Asset asset) {
+    try {
+      // Re-populate the key-value entry from the restored asset before rebuilding the Packages index (NEXUS-53523).
+      addAssetMetadata(asset);
+      metadata().rebuildMetadata();
+    }
+    catch (IOException e) {
+      log.warn("Failed to rebuild APT metadata after asset restore", e);
+    }
+  }
+
+  private void addAssetMetadata(final Asset asset) {
+    FluentAsset fluentAsset = contentFacet().assets().with(asset);
+    metadata().addPackageMetadata(fluentAsset);
+  }
+
+  private void rebuildMetadataQuietly() {
+    try {
+      metadata().rebuildMetadata();
+    }
+    catch (IOException e) {
+      log.warn("Failed to rebuild APT metadata after soft-delete", e);
+    }
   }
 
   private void removeAssetMetadata(final Asset asset) {

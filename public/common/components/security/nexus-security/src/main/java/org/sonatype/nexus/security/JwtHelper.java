@@ -12,34 +12,35 @@
  */
 package org.sonatype.nexus.security;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.common.eventbus.Subscribe;
+import jakarta.inject.Provider;
+import jakarta.servlet.http.Cookie;
+import org.apache.shiro.subject.Subject;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.security.jwt.JwtSecretChanged;
+import org.sonatype.nexus.security.jwt.JwtVerificationException;
+import org.sonatype.nexus.security.jwt.JwtVerifier;
+import org.sonatype.nexus.security.jwt.SecretStore;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import jakarta.servlet.http.Cookie;
 
-import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.security.jwt.JwtSecretChanged;
-import org.sonatype.nexus.security.jwt.JwtVerificationException;
-import org.sonatype.nexus.security.jwt.JwtVerifier;
-import org.sonatype.nexus.security.jwt.SecretStore;
-
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTCreator;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.google.common.eventbus.Subscribe;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Provider;
-import org.apache.shiro.subject.Subject;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.NXSESSIONID_SECURE_COOKIE_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
@@ -68,6 +69,23 @@ public class JwtHelper
 
   public static final String ID_TOKEN = "id_token";
 
+  /**
+   * Upper bound on the length in characters of the signed {@link #JWT_COOKIE_NAME} JWT.
+   *
+   * RFC 6265 only obliges a browser to store 4096 bytes -- not characters -- per cookie, counting
+   * the name, the value and the attributes together, and a cookie over that budget is dropped with
+   * no error reported; for {@code NXSESSIONID} that is a login that silently fails to stick.
+   * Characters can be compared against that byte budget because a signed JWT is base64url by
+   * construction, so every character is a single ASCII byte. The remaining bytes cover
+   * {@code NXSESSIONID=} and the {@code Path}, {@code Max-Age}, {@code HttpOnly} and
+   * {@code Secure} attributes.
+   *
+   * The bound is measured on the signed JWT rather than on the ID token alone, so that it keeps
+   * holding as the other claims grow: a long principal name, a long realm name, or a claim added
+   * later all consume the same budget.
+   */
+  static final int MAX_JWT_LENGTH = 3800;
+
   private final AtomicInteger expirySeconds;
 
   private final String contextPath;
@@ -91,8 +109,8 @@ public class JwtHelper
   {
     checkState(expirySeconds >= 0, "JWT expiration period should be positive");
     this.expirySeconds = new AtomicInteger(expirySeconds);
-    this.contextPath = checkNotNull(contextPath);
-    this.secretStoreProvider = checkNotNull(secretStoreProvider);
+    this.contextPath = requireNonNull(contextPath);
+    this.secretStoreProvider = requireNonNull(secretStoreProvider);
     this.cookieSecure = cookieSecure;
   }
 
@@ -121,13 +139,39 @@ public class JwtHelper
    * @param secureRequest true if the cookie is associated with a Secure request.
    */
   public Cookie createJwtCookie(final Subject subject, final boolean secureRequest) {
-    checkNotNull(subject);
+    return createJwtCookie(subject, secureRequest, null);
+  }
+
+  /**
+   * As {@link #createJwtCookie(Subject, boolean)}, additionally carrying an OIDC ID token as the
+   * {@link #ID_TOKEN} claim.
+   *
+   * The ID token has to travel on the cookie because it is needed on a later request: OIDC
+   * RP-Initiated Logout sends it back to the identity provider as {@code id_token_hint} so the
+   * provider can end its own session without prompting the user. It cannot be held in a Shiro
+   * session attribute, because in JWT mode {@link JwtSecurityFilter} rebuilds a throwaway
+   * {@code SimpleSession} from this cookie on every request and discards it with the response.
+   *
+   * The ID token is dropped rather than embedded when it would take the JWT past
+   * {@link #MAX_JWT_LENGTH}, to keep the cookie within browser and container size limits. Login
+   * still succeeds; only the {@code id_token_hint} on logout is lost.
+   *
+   * @param subject the target subject
+   * @param secureRequest true if the cookie is associated with a Secure request.
+   * @param idToken the raw OIDC ID token to carry, or {@code null} for non-OIDC logins
+   */
+  public Cookie createJwtCookie(
+      final Subject subject,
+      final boolean secureRequest,
+      final String idToken)
+  {
+    requireNonNull(subject);
 
     String username = subject.getPrincipal().toString();
     Optional<String> realm = subject.getPrincipals().getRealmNames().stream().findFirst();
     String userSessionId = UUID.randomUUID().toString();
 
-    String token = createToken(username, realm.orElse(null), userSessionId);
+    String token = createToken(username, realm.orElse(null), userSessionId, idToken);
 
     return createCookie(token, secureRequest);
   }
@@ -135,14 +179,44 @@ public class JwtHelper
   /**
    * Refresh a previously-verified JWT into a new cookie. Callers should obtain {@code decoded}
    * from {@link #verifyJwt(String)}.
+   *
+   * Any {@link #ID_TOKEN} claim is carried forward: this method runs on every authenticated
+   * request via {@code JwtFilter}, so dropping it here would silently lose the ID token after the
+   * first refresh and leave logout unable to send {@code id_token_hint}.
    */
   public Cookie refreshJwtCookie(final DecodedJWT decoded, final boolean secureRequest) {
-    checkNotNull(decoded);
+    requireNonNull(decoded);
     String newJwt = createToken(
-        decoded.getClaim(USER).asString(),
-        decoded.getClaim(REALM).asString(),
-        decoded.getClaim(USER_SESSION_ID).asString());
+        claimAsString(decoded, USER),
+        claimAsString(decoded, REALM),
+        claimAsString(decoded, USER_SESSION_ID),
+        claimAsString(decoded, ID_TOKEN));
     return createCookie(newJwt, secureRequest);
+  }
+
+  /**
+   * Reads the OIDC ID token carried as the {@link #ID_TOKEN} claim on the given JWT.
+   *
+   * Returns empty when the JWT is blank, fails verification, or carries no such claim — the normal
+   * case for non-OIDC logins and for sessions established before the claim was introduced. Callers
+   * are expected to proceed without the ID token rather than treat this as an error.
+   */
+  public Optional<String> readIdToken(final String jwt) {
+    if (Strings2.isEmpty(jwt)) {
+      return Optional.empty();
+    }
+    try {
+      return Optional.ofNullable(claimAsString(verifyJwt(jwt), ID_TOKEN));
+    }
+    catch (JwtVerificationException e) {
+      log.debug("Unable to read the {} claim, JWT verification failed: {}", ID_TOKEN, e.getMessage());
+      return Optional.empty();
+    }
+  }
+
+  private static String claimAsString(final DecodedJWT decoded, final String name) {
+    Claim claim = decoded.getClaim(name);
+    return claim != null && !claim.isNull() ? claim.asString() : null;
   }
 
   /**
@@ -188,7 +262,26 @@ public class JwtHelper
   private String createToken(
       final String user,
       final String realm,
-      final String userSessionId)
+      final String userSessionId,
+      final String idToken)
+  {
+    String jwt = signToken(user, realm, userSessionId, idToken);
+
+    if (idToken != null && jwt.length() > MAX_JWT_LENGTH) {
+      log.warn("The {} cookie for user {} would be {} characters carrying the OIDC {} claim, over the {} character "
+          + "limit; omitting the claim, logout will identify the session by client_id only", JWT_COOKIE_NAME, user,
+          jwt.length(), ID_TOKEN, MAX_JWT_LENGTH);
+      jwt = signToken(user, realm, userSessionId, null);
+    }
+
+    return jwt;
+  }
+
+  private String signToken(
+      final String user,
+      final String realm,
+      final String userSessionId,
+      final String idToken)
   {
     Date issuedAt = new Date();
     Date expiresAt = getExpiresAt(issuedAt);
@@ -201,6 +294,10 @@ public class JwtHelper
 
     if (realm != null) {
       jwtBuilder.withClaim(REALM, realm);
+    }
+
+    if (idToken != null) {
+      jwtBuilder.withClaim(ID_TOKEN, idToken);
     }
 
     return jwtBuilder.sign(verifier.getAlgorithm());

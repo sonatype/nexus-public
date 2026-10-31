@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.view.ContentTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -81,7 +81,7 @@ public class MavenMimeRulesSource
 
   @Autowired
   public MavenMimeRulesSource(final Maven2MavenPathParser mavenPathParser) {
-    this.mavenPathParser = checkNotNull(mavenPathParser);
+    this.mavenPathParser = requireNonNull(mavenPathParser);
   }
 
   @Nullable

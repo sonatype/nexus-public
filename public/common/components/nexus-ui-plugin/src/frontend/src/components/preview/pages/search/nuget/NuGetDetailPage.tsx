@@ -109,6 +109,9 @@ export function NuGetDetailPage({ packageId, onBack }: NuGetDetailPageProps): JS
   }
 
   const latestVersion = detail.versions[0]?.version || '';
+  const chocoSourceUrl = detail.repositories[0]
+    ? `${window.location.origin}/repository/${detail.repositories[0]}/`
+    : '';
 
   return (
     <ScrollArea scrollbars="vertical" style={{ height: '100%' }}>
@@ -246,6 +249,17 @@ export function NuGetDetailPage({ packageId, onBack }: NuGetDetailPageProps): JS
                         </Code>
                       </Card>
                     </Box>
+
+                    {chocoSourceUrl && (
+                    <Box>
+                      <Heading size="3" mb="3">Chocolatey CLI</Heading>
+                      <Card>
+                        <Code size="2" style={{ display: 'block' }}>
+                          {`choco install ${detail.packageId} --version ${selectedVersion || latestVersion} --source="${chocoSourceUrl}"`}
+                        </Code>
+                      </Card>
+                    </Box>
+                    )}
                   </Flex>
                 </Tabs.Content>
               </Box>

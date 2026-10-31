@@ -13,7 +13,6 @@
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
 import { CleanupPolicyDryRun } from '../CleanupPolicyDryRun';
@@ -140,6 +139,80 @@ describe('CleanupPolicyDryRun', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Failed to load repositories')).toBeInTheDocument();
+      });
+    });
+
+    it('restricts dropdown to selectedRepositories when provided and does not fetch all repos', async () => {
+      render(
+        <CleanupPolicyDryRun
+          policyData={mockPolicyDataWithCriteria}
+          selectedRepositories={['repo-a', 'repo-b']}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      // fetchRepositories must not be called when Applied Repositories are provided
+      await Promise.resolve();
+      expect(mockFetchRepositories).not.toHaveBeenCalled();
+    });
+
+    it('fetches all repos when no Applied Repositories and format supports per-repo application', async () => {
+      const goFormatPolicy: CleanupPolicyFormData = {
+        ...mockPolicyDataWithCriteria,
+        format: 'go',
+      };
+
+      render(
+        <CleanupPolicyDryRun policyData={goFormatPolicy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('go');
+      });
+    });
+
+    it('populates dropdown identically for npm and maven2 when no Applied Repositories are set', async () => {
+      const npmPolicy: CleanupPolicyFormData = {
+        ...mockPolicyDataWithCriteria,
+        format: 'npm',
+      };
+
+      render(
+        <CleanupPolicyDryRun policyData={npmPolicy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('npm');
+      });
+
+      jest.clearAllMocks();
+      mockFetchRepositories.mockResolvedValue(mockRepositories);
+
+      const maven2Policy: CleanupPolicyFormData = {
+        ...mockPolicyDataWithCriteria,
+        format: 'maven2',
+      };
+
+      render(
+        <CleanupPolicyDryRun policyData={maven2Policy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('maven2');
+      });
+    });
+
+    it('fetches all repos for maven2 when no Applied Repositories are set', async () => {
+      render(
+        <CleanupPolicyDryRun policyData={mockPolicyDataWithCriteria} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('maven2');
       });
     });
   });

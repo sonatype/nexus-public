@@ -32,8 +32,9 @@ import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Renders browse not supported page for requests to "/" or "/index.html" for
@@ -57,10 +58,10 @@ public class BrowseUnsupportedHandler
 
   @Autowired
   public BrowseUnsupportedHandler(final TemplateHelper templateHelper, final SecurityHandler securityHandler) {
-    this.templateHelper = checkNotNull(templateHelper);
-    checkNotNull(securityHandler);
+    this.templateHelper = requireNonNull(templateHelper);
+    requireNonNull(securityHandler);
     this.template = getClass().getResource(TEMPLATE_RESOURCE);
-    checkNotNull(template);
+    requireNonNull(template);
     this.route = new Route(MATCHER, ImmutableList.of(securityHandler, this));
   }
 
@@ -98,7 +99,7 @@ public class BrowseUnsupportedHandler
 
     @Override
     public boolean matches(final Context context) {
-      checkNotNull(context);
+      requireNonNull(context);
       String action = context.getRequest().getAction();
       String path = context.getRequest().getPath();
       log.debug("Matching: {} {}", action, path);

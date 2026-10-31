@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import org.apache.shiro.authz.permission.WildcardPermission;
 
@@ -89,8 +88,6 @@ public class WildcardPermission2
     return cachedHash;
   }
 
-  private static final Joiner JOINER = Joiner.on(',');
-
   /**
    * Customized string representation to avoid {@code []} syntax from sets.
    */
@@ -101,7 +98,7 @@ public class WildcardPermission2
       if (buff.length() > 0) {
         buff.append(':');
       }
-      JOINER.appendTo(buff, part);
+      buff.append(String.join(",", part));
     }
     return buff.toString();
   }

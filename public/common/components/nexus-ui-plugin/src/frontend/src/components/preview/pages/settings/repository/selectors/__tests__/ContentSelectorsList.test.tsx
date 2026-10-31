@@ -219,6 +219,33 @@ describe('ContentSelectorsList', () => {
     expect(screen.getByText('No Content Selectors')).toBeInTheDocument();
   });
 
+  // NEXUS-54212: the empty-state Create button must respect nexus:selectors:create.
+  it('shows empty-state Create button when canCreate is true', async () => {
+    mockFetchContentSelectors.mockResolvedValue([]);
+
+    render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} canCreate={true} />, {
+      wrapper: TestWrapper,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /Create Selector/i })).toBeInTheDocument();
+  });
+
+  it('hides empty-state Create button when canCreate is false', async () => {
+    mockFetchContentSelectors.mockResolvedValue([]);
+
+    render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} canCreate={false} />, {
+      wrapper: TestWrapper,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: /Create Selector/i })).not.toBeInTheDocument();
+  });
+
   it('shows EmptyState when filter has no matches', async () => {
     render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} />, {
       wrapper: TestWrapper,
@@ -272,6 +299,20 @@ describe('ContentSelectorsList', () => {
     });
     expect(screen.getByText('What is a content selector?')).toBeInTheDocument();
     expect(screen.getByText(/Content selectors provide a means/)).toBeInTheDocument();
+  });
+
+  it('renders help section below the table (NEXUS-54308)', async () => {
+    render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} />, {
+      wrapper: TestWrapper,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('table')).toBeInTheDocument();
+    });
+
+    const table = screen.getByRole('table');
+    const help = screen.getByTestId('help-section');
+    expect(table.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('renders EntityTable correctly', async () => {

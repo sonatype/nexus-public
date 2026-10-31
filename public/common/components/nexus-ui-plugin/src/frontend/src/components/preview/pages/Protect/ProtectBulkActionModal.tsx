@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Button, Dialog, Flex, Text } from '@radix-ui/themes';
 import { restClient, ENDPOINTS } from '../../../../interface/api';
 import {
@@ -22,6 +22,8 @@ import { enableFirewallQuarantine } from '../../shared/security/useFirewallEnabl
 import { useToast } from '../../shared';
 import type { RepoWithProtection } from '../MalwareRisk/useQuickActionsData';
 import { isFirewallSupportedFormat } from '../../../../utils/firewallFormats';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
 
 export type ProtectBulkAction = 'healthcheck' | 'firewall' | 'cleanup';
 
@@ -59,6 +61,31 @@ export default function ProtectBulkActionModal({
   const toast = useToast();
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
+
+  // Hide the Confirm button for users lacking the permission backing the active bulk action
+  // (NEXUS-54212): firewall → repository-admin edit, cleanup → tasks:create, healthcheck →
+  // healthcheck:update. Cancel stays available regardless.
+  const modePermission =
+    action === 'firewall'
+      ? Permissions.REPOSITORY_ADMIN.EDIT
+      : action === 'cleanup'
+        ? Permissions.TASKS.CREATE
+        : Permissions.HEALTHCHECK.UPDATE;
+  // coreui never mounts a <PermissionsProvider>, so context usePermission returns false for
+  // everyone; check permissions through the provider-independent ExtJS.checkPermission (NEXUS-54212).
+  //
+  // Deliberately NOT ExtJS.usePermission here: its value comes from useState(getValue), a lazy
+  // initializer React runs only on first mount, and its dependency array merely re-subscribes the
+  // change listeners — it never recomputes the value. This modal is a single instance reused across
+  // open/close cycles (see ProtectQuickConfig), and modePermission changes with the active action, so
+  // a mount-frozen value would strand a permitted action without a Confirm button (e.g. first mount
+  // has action=null → HEALTHCHECK.UPDATE). useMemo recomputes whenever modePermission changes;
+  // hasUser stays in the deps so it also recomputes once the user and permissions load asynchronously.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canConfirm = useMemo(
+    () => ExtJS.checkPermission(modePermission),
+    [modePermission, hasUser],
+  );
 
   const title =
     action === 'healthcheck'
@@ -130,9 +157,11 @@ export default function ProtectBulkActionModal({
           <Button variant="soft" onClick={() => onOpenChange(false)} disabled={running}>
             Cancel
           </Button>
-          <Button onClick={() => void handleConfirm()} disabled={running || candidates.length === 0}>
-            Confirm
-          </Button>
+          {canConfirm && (
+            <Button onClick={() => void handleConfirm()} disabled={running || candidates.length === 0}>
+              Confirm
+            </Button>
+          )}
         </Flex>
       </Dialog.Content>
     </Dialog.Root>

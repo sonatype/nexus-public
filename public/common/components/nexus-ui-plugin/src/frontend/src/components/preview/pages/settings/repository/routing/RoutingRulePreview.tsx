@@ -183,7 +183,7 @@ export function RoutingRulePreview({ onClose }: RoutingRulePreviewProps) {
       .catch((err) => {
         setError(err.message || 'Failed to load routing rule details');
       });
-  }, [fetchRoutingRule, setError]);
+  }, [fetchRoutingRule]);
 
   const handleCloseModal = useCallback(() => {
     setSelectedRule(null);
@@ -335,7 +335,7 @@ export function RoutingRulePreview({ onClose }: RoutingRulePreviewProps) {
       )}
 
       {/* Initial state / help */}
-      {!previewData && !loading && !error && (
+      {!((previewData || loading ) || error ) && (
         <Box className="routing-rule-preview__help">
           <Flex align="center" gap="2" className="routing-rule-preview__help-header">
             <Info size={16} />
@@ -361,7 +361,7 @@ export function RoutingRulePreview({ onClose }: RoutingRulePreviewProps) {
 
       {/* Modal for rule details */}
       <RoutingRuleMatchModal
-        isOpen={!!selectedRule}
+        isOpen={Boolean(selectedRule)}
         onClose={handleCloseModal}
         rule={selectedRule}
         path={path}

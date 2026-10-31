@@ -12,7 +12,7 @@
  */
 
 import React, { useMemo, useEffect } from 'react';
-import { Box, Flex, Text, Grid } from '@radix-ui/themes';
+import { Box, Flex, Text, } from '@radix-ui/themes';
 import { Trash2, Loader2 } from 'lucide-react';
 import {
   SettingsForm,
@@ -116,7 +116,7 @@ export function PrivilegeForm({
 
   const selectedFormat = formData?.properties?.format;
 
-  const currentPrivilegeType = typeId || formData?.type;
+  const _currentPrivilegeType = typeId || formData?.type;
 
   // Repository options for repository-view and repository-admin privileges
   // These types only accept "*" or a specific repository name (not "*-format")

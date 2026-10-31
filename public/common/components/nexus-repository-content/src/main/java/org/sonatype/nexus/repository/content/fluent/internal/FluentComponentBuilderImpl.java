@@ -17,7 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
+import org.sonatype.nexus.datastore.api.ForeignKeyViolationException;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -27,7 +30,7 @@ import org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryC
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.MEMBERS;
 import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.getRepositoryIds;
@@ -41,9 +44,14 @@ import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryCo
 public class FluentComponentBuilderImpl
     implements FluentComponentBuilder
 {
+  private static final String CONCURRENT_DELETE_MESSAGE =
+      "Upload failed: repository was concurrently deleted. Please retry.";
+
   private final ContentFacetSupport facet;
 
   private final ComponentStore<?> componentStore;
+
+  private final Function<String, String> versionNormalizer;
 
   private final String name;
 
@@ -60,22 +68,24 @@ public class FluentComponentBuilderImpl
   public FluentComponentBuilderImpl(
       final ContentFacetSupport facet,
       final ComponentStore<?> componentStore,
+      final Function<String, String> versionNormalizer,
       final String name)
   {
-    this.facet = checkNotNull(facet);
-    this.componentStore = checkNotNull(componentStore);
-    this.name = checkNotNull(name);
+    this.facet = requireNonNull(facet);
+    this.componentStore = requireNonNull(componentStore);
+    this.versionNormalizer = requireNonNull(versionNormalizer);
+    this.name = requireNonNull(name);
   }
 
   @Override
   public FluentComponentBuilder namespace(final String namespace) {
-    this.namespace = checkNotNull(namespace);
+    this.namespace = requireNonNull(namespace);
     return this;
   }
 
   @Override
   public FluentComponentBuilder kind(final String kind) {
-    this.kind = checkNotNull(kind);
+    this.kind = requireNonNull(kind);
     return this;
   }
 
@@ -87,20 +97,21 @@ public class FluentComponentBuilderImpl
 
   @Override
   public FluentComponentBuilder version(final String version) {
-    this.version = checkNotNull(version);
+    this.version = requireNonNull(version);
+    this.normalizedVersion = versionNormalizer.apply(version);
     return this;
   }
 
   @Override
   public FluentComponentBuilder normalizedVersion(final String normalizedVersion) {
-    this.normalizedVersion = checkNotNull(normalizedVersion);
+    this.normalizedVersion = requireNonNull(normalizedVersion);
     return this;
   }
 
   @Override
   public FluentComponentBuilder attributes(final String key, final Object value) {
-    checkNotNull(key);
-    checkNotNull(value);
+    requireNonNull(key);
+    requireNonNull(value);
     if (attributes == null) {
       attributes = new HashMap<>();
     }
@@ -148,7 +159,18 @@ public class FluentComponentBuilderImpl
       component.attributes().backing().putAll(attributes);
     }
 
-    componentStore.createComponent(component);
+    try {
+      componentStore.createComponent(component);
+    }
+    catch (ForeignKeyViolationException e) {
+      throw new ConcurrentOperationException(CONCURRENT_DELETE_MESSAGE, e);
+    }
+
+    if (component.componentId() == null) {
+      throw new ConcurrentOperationException(CONCURRENT_DELETE_MESSAGE);
+    }
+
+    facet.cleanupComponentTrashIndex(component);
 
     return component;
   }

@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Default {@link DownloadService}.
@@ -62,10 +62,10 @@ public class DownloadServiceImpl
       final ApplicationDirectories applicationDirectories,
       final AuthTicketService authTicketService)
   {
-    this.authTickets = checkNotNull(authTicketService);
+    this.authTickets = requireNonNull(authTicketService);
 
     // resolve where files to be downloaded will be stored
-    this.downloadDir = checkNotNull(applicationDirectories).getWorkDirectory("downloads");
+    this.downloadDir = requireNonNull(applicationDirectories).getWorkDirectory("downloads");
     log.info("Downloads directory: {}", downloadDir);
   }
 

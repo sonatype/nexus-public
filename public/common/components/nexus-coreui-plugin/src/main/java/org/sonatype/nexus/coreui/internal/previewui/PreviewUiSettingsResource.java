@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.coreui.internal.previewui;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.sonatype.nexus.kv.KeyValueStore;
+import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.validation.Validate;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -20,20 +24,16 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-
-import org.sonatype.nexus.kv.KeyValueStore;
-import org.sonatype.nexus.rest.Resource;
-import org.sonatype.nexus.rest.WebApplicationMessageException;
-
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_ANONYMOUS_ENABLED_NAMED_VALUE;
@@ -89,7 +89,7 @@ public class PreviewUiSettingsResource
       @Value(PREVIEW_UI_LEGACY_DISABLED_NAMED_VALUE) final boolean defaultLegacyDisabled,
       @Value(PREVIEW_UI_SWITCH_FEEDBACK_DISABLED_NAMED_VALUE) final boolean defaultSwitchFeedbackDisabled)
   {
-    this.keyValueStore = checkNotNull(keyValueStore);
+    this.keyValueStore = requireNonNull(keyValueStore);
     this.defaultAnonymousEnabled = defaultAnonymousEnabled;
     this.defaultLoggedInEnabled = defaultLoggedInEnabled;
     this.defaultDefaultToPreview = defaultDefaultToPreview;
@@ -113,6 +113,7 @@ public class PreviewUiSettingsResource
   @PUT
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
+  @Validate
   public PreviewUiSettingsXO update(@NotNull @Valid final PreviewUiSettingsXO settings) {
     validateNoUiLockout(settings);
     keyValueStore.setBoolean(KEY_ANONYMOUS_ENABLED, settings.isAnonymousEnabled());

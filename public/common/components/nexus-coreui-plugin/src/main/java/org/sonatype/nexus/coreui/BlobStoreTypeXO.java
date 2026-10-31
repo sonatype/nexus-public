@@ -13,6 +13,9 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.List;
+
+import org.sonatype.nexus.api.extdirect.common.FormFieldXO;
+
 import jakarta.validation.constraints.NotBlank;
 
 /**

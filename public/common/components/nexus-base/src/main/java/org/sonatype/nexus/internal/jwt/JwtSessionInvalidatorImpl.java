@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
@@ -57,15 +57,15 @@ public class JwtSessionInvalidatorImpl
       final JwtHelper jwtHelper,
       final AuditRecorder auditRecorder)
   {
-    this.revocationService = checkNotNull(revocationService);
-    this.jwtHelper = checkNotNull(jwtHelper);
-    this.auditRecorder = checkNotNull(auditRecorder);
+    this.revocationService = requireNonNull(revocationService);
+    this.jwtHelper = requireNonNull(jwtHelper);
+    this.auditRecorder = requireNonNull(auditRecorder);
   }
 
   @Override
-  public int invalidateSessionsForUser(final String username, final String userSource) {
-    log.info("Invalidating JWT sessions for user '{}' (source '{}') due to password change",
-        username, userSource);
+  public int invalidateSessionsForUser(final String username, final String userSource, final String reason) {
+    log.info("Invalidating JWT sessions for user '{}' (source '{}') due to {}",
+        username, userSource, reason);
 
     try {
       OffsetDateTime cutoff = OffsetDateTime.now();
@@ -73,7 +73,7 @@ public class JwtSessionInvalidatorImpl
 
       revocationService.invalidateUser(username, userSource, cutoff, validUntil);
 
-      recordAuditEvent(username);
+      recordAuditEvent(username, reason);
       return 1;
     }
     catch (Exception e) {
@@ -83,11 +83,11 @@ public class JwtSessionInvalidatorImpl
     }
   }
 
-  private void recordAuditEvent(final String username) {
+  private void recordAuditEvent(final String username, final String reason) {
     if (auditRecorder.isEnabled()) {
       AuditData data = new AuditData();
       data.setDomain("security.session");
-      data.setType("password-change-invalidation");
+      data.setType("user-session-invalidation");
       data.setContext(username);
       data.setTimestamp(new Date());
       data.setInitiator(username);
@@ -95,6 +95,7 @@ public class JwtSessionInvalidatorImpl
       data.getAttributes().put("username", username);
       data.getAttributes().put("sessionCount", "1");
       data.getAttributes().put("sessionType", "jwt");
+      data.getAttributes().put("reason", reason);
 
       auditRecorder.record(data);
     }

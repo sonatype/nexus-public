@@ -29,7 +29,7 @@ import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import org.springframework.stereotype.Component;
@@ -48,7 +48,7 @@ public class ConstraintViolationFactory
 
   @Autowired
   public ConstraintViolationFactory(final Provider<Validator> validatorProvider) {
-    this.validatorProvider = checkNotNull(validatorProvider);
+    this.validatorProvider = requireNonNull(validatorProvider);
   }
 
   /**
@@ -59,8 +59,8 @@ public class ConstraintViolationFactory
    * @return created violation
    */
   public ConstraintViolation<?> createViolation(final String path, final String message) {
-    checkNotNull(path);
-    checkNotNull(message);
+    requireNonNull(path);
+    requireNonNull(message);
     return validatorProvider.get().validate(new HelperBean(path, message)).iterator().next();
   }
 

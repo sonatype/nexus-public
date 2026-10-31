@@ -53,7 +53,6 @@ describe('NistStepper', () => {
   it('shows completed phases before the current phase', () => {
     renderWithTheme(<NistStepper currentPhase="ERADICATION" />);
 
-    const nav = screen.getByRole('navigation');
     const alertText = screen.getByText('Alert');
     const triageText = screen.getByText('Triage');
     const containmentText = screen.getByText('Containment');

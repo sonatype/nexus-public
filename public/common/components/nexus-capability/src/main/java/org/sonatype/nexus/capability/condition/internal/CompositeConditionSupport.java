@@ -23,7 +23,7 @@ import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Composite {@link Condition} implementation support.
@@ -42,7 +42,7 @@ public abstract class CompositeConditionSupport
       final Condition... conditions)
   {
     super(eventManager, false);
-    this.conditions = checkNotNull(conditions);
+    this.conditions = requireNonNull(conditions);
     checkArgument(conditions.length > 1, "A composite mush have at least 2 conditions");
   }
 
@@ -51,7 +51,7 @@ public abstract class CompositeConditionSupport
       final Condition condition)
   {
     super(eventManager, false);
-    this.conditions = new Condition[]{checkNotNull(condition)};
+    this.conditions = new Condition[]{requireNonNull(condition)};
   }
 
   @Override

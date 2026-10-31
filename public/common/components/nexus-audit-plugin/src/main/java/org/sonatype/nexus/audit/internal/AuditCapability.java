@@ -32,14 +32,14 @@ import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.capability.Taggable;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.formfields.NumberTextFormField;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.singleton;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 
@@ -66,20 +66,29 @@ public class AuditCapability
 
     @DefaultMessage("Enabled")
     String enabled();
+
+    @DefaultMessage("Retention (days)")
+    String retentionDaysLabel();
+
+    @DefaultMessage("Number of days audit events are retained before pruning. Default 90; minimum 1; maximum %s.")
+    String retentionDaysHelp(int max);
   }
 
   static final Messages messages = I18N.create(Messages.class);
 
   private final AuditRecorder auditRecorder;
 
+  private final AuditRetentionSettings retentionSettings;
+
   @Autowired
-  public AuditCapability(final AuditRecorder auditRecorder) {
-    this.auditRecorder = checkNotNull(auditRecorder);
+  public AuditCapability(final AuditRecorder auditRecorder, final AuditRetentionSettings retentionSettings) {
+    this.auditRecorder = requireNonNull(auditRecorder);
+    this.retentionSettings = requireNonNull(retentionSettings);
   }
 
   @Override
   protected Configuration createConfig(final Map<String, String> properties) {
-    return new Configuration(properties);
+    return new Configuration(properties, retentionSettings.getMaxRetentionDays());
   }
 
   @Override
@@ -101,6 +110,12 @@ public class AuditCapability
     if (auditRecorder instanceof AuditRecorderImpl) {
       ((AuditRecorderImpl) auditRecorder).setEnabled(true);
     }
+    retentionSettings.setRetentionDays(config.getRetentionDays());
+  }
+
+  @Override
+  protected void onUpdate(final Configuration config) {
+    retentionSettings.setRetentionDays(config.getRetentionDays());
   }
 
   @Override
@@ -108,13 +123,43 @@ public class AuditCapability
     if (auditRecorder instanceof AuditRecorderImpl) {
       ((AuditRecorderImpl) auditRecorder).setEnabled(false);
     }
+    // Intentionally does not reset retentionSettings: the cleanup task runs independently of the
+    // capability lifecycle so existing rows continue to be pruned with the last-known retention.
   }
 
   public static class Configuration
       extends CapabilityConfigurationSupport
   {
-    public Configuration(final Map<String, String> properties) {
-      // . . .
+    public static final String RETENTION_DAYS = "retentionDays";
+
+    private final int retentionDays;
+
+    public Configuration(final Map<String, String> properties, final int maxRetentionDays) {
+      requireNonNull(properties);
+      String raw = properties.get(RETENTION_DAYS);
+      int parsed;
+      try {
+        parsed = parseInteger(raw, AuditRetentionSettings.DEFAULT_RETENTION_DAYS);
+      }
+      catch (NumberFormatException e) {
+        throw new IllegalArgumentException(
+            "retentionDays must be an integer between 1 and " + maxRetentionDays + ", got '" + raw + "'",
+            e);
+      }
+      if (parsed < 1 || parsed > maxRetentionDays) {
+        throw new IllegalArgumentException(
+            "retentionDays must be between 1 and " + maxRetentionDays + ", got " + parsed);
+      }
+      this.retentionDays = parsed;
+    }
+
+    public int getRetentionDays() {
+      return retentionDays;
+    }
+
+    @Override
+    public String toString() {
+      return "Configuration{retentionDays=" + retentionDays + '}';
     }
   }
 
@@ -125,7 +170,11 @@ public class AuditCapability
       extends CapabilityDescriptorSupport<Configuration>
       implements Taggable
   {
-    public Descriptor() {
+    private final AuditRetentionSettings retentionSettings;
+
+    @Autowired
+    public Descriptor(final AuditRetentionSettings retentionSettings) {
+      this.retentionSettings = requireNonNull(retentionSettings);
       setExposed(true);
       setHidden(false);
     }
@@ -142,12 +191,21 @@ public class AuditCapability
 
     @Override
     public List<FormField> formFields() {
-      return emptyList();
+      int max = retentionSettings.getMaxRetentionDays();
+      return List.of(
+          new NumberTextFormField(
+              Configuration.RETENTION_DAYS,
+              messages.retentionDaysLabel(),
+              messages.retentionDaysHelp(max),
+              FormField.MANDATORY)
+                  .withInitialValue(AuditRetentionSettings.DEFAULT_RETENTION_DAYS)
+                  .withMinimumValue(1)
+                  .withMaximumValue(max));
     }
 
     @Override
     protected Configuration createConfig(final Map<String, String> properties) {
-      return new Configuration(properties);
+      return new Configuration(properties, retentionSettings.getMaxRetentionDays());
     }
 
     @Override

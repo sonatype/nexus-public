@@ -22,7 +22,7 @@ import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of {@link KeyStoreStorageFactory} for the node identity. Uses local filesystem as backing storage so
@@ -44,7 +44,7 @@ public class FileKeyStoreStorageFactory
 
   @Override
   public KeyStoreStorage create(final String keyStoreName) {
-    checkNotNull(keyStoreName);
+    requireNonNull(keyStoreName);
     return new FileKeyStoreStorage(new File(basedir, keyStoreName));
   }
 }

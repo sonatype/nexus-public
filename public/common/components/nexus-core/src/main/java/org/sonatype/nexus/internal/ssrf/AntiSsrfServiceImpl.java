@@ -55,7 +55,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -103,8 +103,8 @@ public class AntiSsrfServiceImpl
       @Value("${nexus.proxy.privateNetworks.cacheSize:1000}") final int cacheSize,
       @Value("${nexus.proxy.privateNetworks.cacheExpiration:10m}") final Duration cacheExpiration)
   {
-    this.kvStore = checkNotNull(kvStore);
-    this.httpClientManager = checkNotNull(httpClientManager);
+    this.kvStore = requireNonNull(kvStore);
+    this.httpClientManager = requireNonNull(httpClientManager);
     this.propsEnabled = !allowPrivateNetworks;
     this.propsAllowedIPs = toTrimmedSet(allowedIPs);
     this.propsAllowedDomains = toTrimmedSet(allowedDomains);
@@ -188,7 +188,7 @@ public class AntiSsrfServiceImpl
   @Override
   @Guarded(by = STARTED)
   public void updateConfiguration(final SsrfProtectionConfiguration configuration) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     SsrfProtectionConfiguration sanitized = sanitizeConfiguration(configuration);
     persistConfig(sanitized);

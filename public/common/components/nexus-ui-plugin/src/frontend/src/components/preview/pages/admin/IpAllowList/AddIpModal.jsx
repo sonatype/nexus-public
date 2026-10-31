@@ -5,10 +5,10 @@
  * "Sonatype" and "Sonatype Nexus" are trademarks of Sonatype, Inc.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Box, Flex, Button, Dialog, Text, TextField, IconButton } from '@radix-ui/themes';
 import { AlertCircle, X } from 'lucide-react';
-import { isValidIP } from './utils/ipValidation';
+import { isValidIP, stripUriBrackets } from './utils/ipValidation';
 
 
 /**
@@ -26,6 +26,14 @@ export function AddIpModal({ isOpen, onClose, onConfirm, existingIps = [] }) {
       inputRef.current?.focus();
     }
   }, [isOpen]);
+
+  // Bracket-stripped set of already-stored entries. existingIps only changes
+  // when the user adds or removes entries, not on every keystroke, so memoize
+  // to avoid rebuilding on each render/input change.
+  const existingBareSet = useMemo(
+    () => new Set(existingIps.map(item => stripUriBrackets(item.ipAddress))),
+    [existingIps]
+  );
 
   const handleIpInputChange = (e) => {
     const value = e.target.value;
@@ -46,9 +54,7 @@ export function AddIpModal({ isOpen, onClose, onConfirm, existingIps = [] }) {
       return 'Invalid IP address or CIDR notation';
     }
 
-    // Check if already exists in list
-    const existingIpSet = new Set(existingIps.map(item => item.ipAddress));
-    if (existingIpSet.has(trimmed)) {
+    if (existingBareSet.has(stripUriBrackets(trimmed))) {
       return 'This IP address already exists in your allow list';
     }
 
@@ -68,7 +74,12 @@ export function AddIpModal({ isOpen, onClose, onConfirm, existingIps = [] }) {
   const handleSubmit = () => {
     const trimmedIp = ipInput.trim();
 
-    if (!trimmedIp || validationError) return;
+    // Use the live validation check, not the blur-updated validationError state.
+    // The button's disabled flag uses this same live signal via canSubmit, so
+    // handleSubmit stays consistent even if the user changes input without
+    // blurring first, or if a keyboard/programmatic path bypasses the disabled
+    // click gate.
+    if (!trimmedIp || validateIpInput(ipInput)) return;
 
     onConfirm([{
       ipAddress: trimmedIp,

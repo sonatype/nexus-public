@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Layers } from 'lucide-react';
 import {
   SettingsFormSection,

@@ -22,7 +22,7 @@ import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Primary
 @Component
@@ -37,8 +37,8 @@ public class DefaultCapabilityDescriptorProvider
       final List<CapabilityDescriptor> descriptorsList,
       final DatabaseCheck databaseCheck)
   {
-    this.descriptors = QualifierUtil.buildQualifierBeanMap(checkNotNull(descriptorsList));
-    this.databaseCheck = checkNotNull(databaseCheck);
+    this.descriptors = QualifierUtil.buildQualifierBeanMap(requireNonNull(descriptorsList));
+    this.databaseCheck = requireNonNull(databaseCheck);
   }
 
   public List<CapabilityDescriptor> get() {

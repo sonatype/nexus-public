@@ -12,8 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { CleanupPolicyPreview } from '../CleanupPolicyPreview';
@@ -107,6 +106,59 @@ describe('CleanupPolicyPreview', () => {
       render(<CleanupPolicyPreview policyData={mockPolicyData} />, {
         wrapper: TestWrapper,
       });
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('maven2');
+      });
+    });
+
+    it('restricts dropdown to selectedRepositories when provided and does not fetch all repos', async () => {
+      render(
+        <CleanupPolicyPreview
+          policyData={mockPolicyData}
+          selectedRepositories={['repo-a', 'repo-b']}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      await Promise.resolve();
+      expect(mockFetchRepositories).not.toHaveBeenCalled();
+    });
+
+    it('fetches all repos when no Applied Repositories and format supports per-repo application', async () => {
+      const goFormatPolicy: CleanupPolicyFormData = { ...mockPolicyData, format: 'go' };
+
+      render(
+        <CleanupPolicyPreview policyData={goFormatPolicy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('go');
+      });
+    });
+
+    it('populates dropdown identically for npm and maven2 when no Applied Repositories are set', async () => {
+      const npmPolicy: CleanupPolicyFormData = { ...mockPolicyData, format: 'npm' };
+
+      render(
+        <CleanupPolicyPreview policyData={npmPolicy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('npm');
+      });
+
+      jest.clearAllMocks();
+      mockFetchRepositories.mockResolvedValue(mockRepositories);
+
+      const maven2Policy: CleanupPolicyFormData = { ...mockPolicyData, format: 'maven2' };
+
+      render(
+        <CleanupPolicyPreview policyData={maven2Policy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
 
       await waitFor(() => {
         expect(mockFetchRepositories).toHaveBeenCalledWith('maven2');

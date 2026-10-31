@@ -26,7 +26,7 @@ import com.codahale.metrics.annotation.Timed;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.of;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
@@ -44,7 +44,7 @@ public class DefaultBlobStoreUsageChecker
 
   @Autowired
   public DefaultBlobStoreUsageChecker(final RepositoryManager repositoryManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
   }
 
   @Override

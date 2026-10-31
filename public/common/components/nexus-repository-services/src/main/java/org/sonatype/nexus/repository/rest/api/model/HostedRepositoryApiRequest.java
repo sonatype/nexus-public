@@ -12,26 +12,20 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-
 import org.sonatype.nexus.repository.types.HostedType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 
 /**
  * @since 3.20
  */
 @JsonIgnoreProperties({"type"})
-public class HostedRepositoryApiRequest
-    extends AbstractRepositoryApiRequest
+public class HostedRepositoryApiRequest<S extends HostedStorageAttributes>
+    extends AbstractRepositoryApiRequest<S>
 {
-  @NotNull
-  @Valid
-  private final HostedStorageAttributes storage;
-
   @Valid
   private final CleanupPolicyAttributes cleanup;
 
@@ -43,18 +37,13 @@ public class HostedRepositoryApiRequest
       @JsonProperty("name") final String name,
       @JsonProperty("format") final String format,
       @JsonProperty("online") final Boolean online,
-      @JsonProperty("storage") final HostedStorageAttributes storage,
+      @JsonProperty("storage") final S storage,
       @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup,
       @JsonProperty("component") final ComponentAttributes componentAttributes)
   {
-    super(name, format, HostedType.NAME, online);
-    this.storage = storage;
+    super(name, format, HostedType.NAME, online, storage);
     this.cleanup = cleanup;
     this.component = componentAttributes;
-  }
-
-  public HostedStorageAttributes getStorage() {
-    return storage;
   }
 
   public CleanupPolicyAttributes getCleanup() {

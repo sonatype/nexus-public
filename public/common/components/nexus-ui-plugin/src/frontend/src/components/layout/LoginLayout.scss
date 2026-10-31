@@ -45,6 +45,13 @@
   background-color: var(--color-surface, #ffffff);
   border-bottom: 1px solid var(--gray-5, #e2e8f0);
 
+  // Scoped light Radix Theme wrapping the header brand so the edition badge
+  // can be a real Radix Badge; hasBackground is false so it does not paint over
+  // the header surface. No token overrides here (that was the duplication we removed).
+  &__theme {
+    display: inline-flex;
+  }
+
   &__link {
     display: inline-flex;
     align-items: center;

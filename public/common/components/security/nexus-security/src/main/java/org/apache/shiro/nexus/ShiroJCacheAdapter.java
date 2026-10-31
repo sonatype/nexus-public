@@ -25,7 +25,7 @@ import org.apache.shiro.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Shiro {@link javax.cache.Cache} to {@link Cache} adapter.
@@ -42,7 +42,7 @@ public class ShiroJCacheAdapter<K, V>
   private final String name;
 
   public ShiroJCacheAdapter(final javax.cache.Cache<K, V> cache) {
-    this.cache = checkNotNull(cache);
+    this.cache = requireNonNull(cache);
     this.name = cache.getName();
   }
 

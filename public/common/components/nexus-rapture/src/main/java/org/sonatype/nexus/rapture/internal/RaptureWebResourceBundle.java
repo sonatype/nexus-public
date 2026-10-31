@@ -47,7 +47,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import org.springframework.stereotype.Component;
 
@@ -86,9 +86,11 @@ public class RaptureWebResourceBundle
 
   private final String cacheBuster;
 
-  private final boolean analyticsEnabled;
+  private final String webResourcesVersion;
 
   public final static String PROPERTY_WEBRESOURCES_CACHEBUSTER = "nexus.webresources.cachebuster";
+
+  public final static String PROPERTY_WEBRESOURCES_VERSION = "nexus.webresources.version";
 
   @Autowired
   public RaptureWebResourceBundle(
@@ -99,15 +101,19 @@ public class RaptureWebResourceBundle
       final List<UiPluginDescriptor> pluginDescriptors,
       final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors,
       @Nullable @Value("${" + PROPERTY_WEBRESOURCES_CACHEBUSTER + ":#{null}}") final String cacheBuster,
-      @Value("${nexus.analytics.enabled:true}") final boolean analyticsEnabled)
+      @Nullable @Value("${" + PROPERTY_WEBRESOURCES_VERSION + ":#{null}}") final String webResourcesVersion)
   {
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.servletRequestProvider = checkNotNull(servletRequestProvider);
-    this.stateComponentProvider = checkNotNull(stateComponentProvider);
-    this.templateHelper = checkNotNull(templateHelper);
-    this.pluginDescriptors = checkNotNull(pluginDescriptors);
-    this.extJsPluginDescriptors = checkNotNull(extJsPluginDescriptors);
-    this.analyticsEnabled = analyticsEnabled;
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.servletRequestProvider = requireNonNull(servletRequestProvider);
+    this.stateComponentProvider = requireNonNull(stateComponentProvider);
+    this.templateHelper = requireNonNull(templateHelper);
+    this.pluginDescriptors = requireNonNull(pluginDescriptors);
+    this.extJsPluginDescriptors = requireNonNull(extJsPluginDescriptors);
+    this.webResourcesVersion = webResourcesVersion;
+    if (webResourcesVersion != null) {
+      log.info("Setting web resources version value to {} from property {}", webResourcesVersion,
+          PROPERTY_WEBRESOURCES_VERSION);
+    }
     if (cacheBuster == null) {
       this.cacheBuster = applicationVersion.getBuildTimestamp();
     }
@@ -193,7 +199,7 @@ public class RaptureWebResourceBundle
             .set("styles", getStyles())
             .set("scripts", getScripts())
             .set("util", new TemplateUtil())
-            .set("analyticsEnabled", analyticsEnabled));
+            .set("analyticsEnabled", true));
       }
     };
   }
@@ -306,16 +312,17 @@ public class RaptureWebResourceBundle
   /**
    * Generate URL suffix to use on all requests when loading the index.
    */
-  private String generateUrlSuffix() {
+  @VisibleForTesting
+  String generateUrlSuffix() {
     StringBuilder buff = new StringBuilder();
-    String version = applicationVersion.getVersion();
+    String version = (webResourcesVersion != null) ? webResourcesVersion : applicationVersion.getVersion();
     String edition = applicationVersion.getEdition();
     buff.append("_v=").append(version);
     buff.append("&_e=").append(edition);
     buff.append("&_c=").append(this.cacheBuster);
 
-    // if version is a SNAPSHOT, then append additional timestamp to disable cache
-    if (version.endsWith("SNAPSHOT")) {
+    // if the app version is a SNAPSHOT, then append additional timestamp to disable cache
+    if (applicationVersion.getVersion().endsWith("SNAPSHOT")) {
       buff.append("&_dc=").append(System.currentTimeMillis());
     }
 

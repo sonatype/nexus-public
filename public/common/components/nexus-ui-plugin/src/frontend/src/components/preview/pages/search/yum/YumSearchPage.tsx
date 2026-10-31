@@ -72,7 +72,7 @@ export function YumSearchPage({
         architecture: initialArchitecture,
       });
     }
-  }, []); // Only on mount
+  }, [initialArchitecture, initialName, search]); // Only on mount
 
   /**
    * Handle search submission.

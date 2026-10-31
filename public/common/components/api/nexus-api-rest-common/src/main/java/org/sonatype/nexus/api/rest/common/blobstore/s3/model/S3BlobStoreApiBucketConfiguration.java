@@ -14,14 +14,16 @@ package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 
 import java.util.List;
 
-import javax.annotation.Nullable;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+import org.sonatype.nexus.swagger.EditionVisibility;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode;
+import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -30,6 +32,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
  *
  * @since 3.20
  */
+@JsonFilter(EditionVisibility.NAME)
 @JsonInclude(NON_NULL)
 public class S3BlobStoreApiBucketConfiguration
 {
@@ -64,7 +67,8 @@ public class S3BlobStoreApiBucketConfiguration
       accessMode = AccessMode.READ_ONLY)
   private final String activeRegion;
 
-  @Schema(description = "Whether pre assigned URL is enabled or not.", example = "true",
+  @EditionVisibility(community = false, note = "Pro feature")
+  @Schema(description = "Enables redirecting downloads to S3 pre-signed URLs. (Pro feature)", example = "true",
       accessMode = AccessMode.READ_WRITE)
   private final Boolean preSignedUrlEnabled;
 

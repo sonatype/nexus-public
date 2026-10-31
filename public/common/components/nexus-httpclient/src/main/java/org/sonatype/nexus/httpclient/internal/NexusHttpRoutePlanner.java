@@ -25,7 +25,7 @@ import org.apache.http.impl.conn.DefaultRoutePlanner;
 import org.apache.http.impl.conn.DefaultSchemePortResolver;
 import org.apache.http.protocol.HttpContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An {@link HttpRoutePlanner} that uses different proxies / url scheme (http/https) and bypasses proxy for specific
@@ -54,7 +54,7 @@ public class NexusHttpRoutePlanner
       @Nullable final Pattern nonProxyHostsPattern)
   {
     super(DefaultSchemePortResolver.INSTANCE);
-    this.proxies = checkNotNull(proxies);
+    this.proxies = requireNonNull(proxies);
     this.nonProxyHostPattern = nonProxyHostsPattern;
   }
 

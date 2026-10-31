@@ -17,7 +17,7 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 import {mergeDeepRight} from 'ramda';
-import {FormUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -94,11 +94,13 @@ export default FormUtils.buildFormMachine({
         !data.active?.includes(NX_AUTHORIZING_REALM))
   },
   services: {
-    fetchData: async () =>
-      Axios.all([
+    fetchData: async () => {
+      await ExtJS.waitForPermissions();
+      return Axios.all([
         Axios.get(APIConstants.REST.PUBLIC.AVAILABLE_REALMS),
         Axios.get(APIConstants.REST.PUBLIC.ACTIVE_REALMS),
-      ]),
+      ]);
+    },
     saveData: ({ data }) =>
       Axios.put(APIConstants.REST.PUBLIC.ACTIVE_REALMS, data.active),
   },

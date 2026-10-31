@@ -14,7 +14,7 @@ package org.sonatype.nexus.common.time;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
@@ -54,7 +54,7 @@ public final class Time
 
   public Time(final long value, final TimeUnit unit) {
     this.value = value;
-    this.unit = checkNotNull(unit);
+    this.unit = requireNonNull(unit);
   }
 
   @Deprecated
@@ -199,12 +199,12 @@ public final class Time
   }
 
   public void wait(final Object obj) throws InterruptedException {
-    checkNotNull(obj);
+    requireNonNull(obj);
     unit.timedWait(obj, value);
   }
 
   public void join(final Thread thread) throws InterruptedException {
-    checkNotNull(thread);
+    requireNonNull(thread);
     unit.timedJoin(thread, value);
   }
 

@@ -41,7 +41,7 @@ import org.sonatype.nexus.scheduling.TaskInterruptedException;
 import com.google.common.hash.HashCode;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
@@ -78,7 +78,7 @@ public abstract class GenerateChecksumTaskSupport
   {
     // Ensure at least a 4K buffer
     this.bufferSize = Math.max(4096, bufferSize);
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
 
     messageDigest = MessageDigest.getInstance(HashAlgorithm.SHA256.name());
   }

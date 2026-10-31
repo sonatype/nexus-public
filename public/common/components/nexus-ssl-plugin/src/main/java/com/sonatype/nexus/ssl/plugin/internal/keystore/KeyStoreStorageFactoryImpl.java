@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Qualifier(KeyStoreManagerImpl.NAME)
 @Component
@@ -30,7 +30,7 @@ public class KeyStoreStorageFactoryImpl
 
   @Autowired
   public KeyStoreStorageFactoryImpl(final PersistentKeyStoreStorageManager keyStorageManager) {
-    this.keyStorageManager = checkNotNull(keyStorageManager);
+    this.keyStorageManager = requireNonNull(keyStorageManager);
   }
 
   @Override

@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { WizardForm } from '../WizardForm';
 
@@ -193,5 +193,75 @@ describe('WizardForm', () => {
   it('hides step title when hideStepTitle is true', () => {
     renderWizard({ currentStep: 0, hideStepTitle: true });
     expect(screen.queryByRole('heading', { name: 'First Step' })).not.toBeInTheDocument();
+  });
+
+  describe('external dirty tracking (NEXUS-53380)', () => {
+    afterEach(() => {
+      window.dirty = [];
+    });
+
+    it('does not register its own window.dirty entry when externalDirtyTracking is true', () => {
+      window.dirty = [];
+      renderWizard({ currentStep: 2, dirty: true, externalDirtyTracking: true });
+
+      expect(window.dirty).toEqual([]);
+    });
+
+    it('registers its own window.dirty entry when externalDirtyTracking is false and dirty', () => {
+      window.dirty = [];
+      renderWizard({ currentStep: 2, dirty: true });
+
+      expect(window.dirty.length).toBeGreaterThan(0);
+    });
+
+    it('calls onDiscardConfirm (not onCancel) when Leave is clicked in the discard dialog', async () => {
+      const onCancel = jest.fn();
+      const onDiscardConfirm = jest.fn();
+      renderWizard({
+        currentStep: 2,
+        dirty: true,
+        externalDirtyTracking: true,
+        onCancel,
+        onDiscardConfirm,
+      });
+
+      fireEvent.click(screen.getByTestId('form-cancel'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /leave/i }));
+
+      expect(onDiscardConfirm).toHaveBeenCalledTimes(1);
+      expect(onCancel).not.toHaveBeenCalled();
+    });
+
+    it('leaves window.dirty empty after Cancel → Leave when caller clears its own machine entry', async () => {
+      window.dirty = ['repository-form-new'];
+      const onDiscardConfirm = jest.fn(() => {
+        const idx = window.dirty!.indexOf('repository-form-new');
+        if (idx > -1) window.dirty!.splice(idx, 1);
+      });
+
+      renderWizard({
+        currentStep: 2,
+        dirty: true,
+        externalDirtyTracking: true,
+        onDiscardConfirm,
+      });
+
+      fireEvent.click(screen.getByTestId('form-cancel'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /leave/i }));
+
+      // With no leftover entries, the router's onBefore guard would not fire
+      // a second unsaved-changes dialog after navigation begins.
+      expect(window.dirty).toEqual([]);
+    });
   });
 });

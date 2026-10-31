@@ -35,6 +35,8 @@ import {
 
 import { isSchedulerTaskRunningState, type TaskInfo, type ProxyRepo, type RhcScanInfo } from './useMaliciousPackagesData';
 import type { MaliciousFinding } from './types';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
 
 export type DetectSortField = 'name' | 'signatures' | 'priority';
 type SortDir = 'asc' | 'desc';
@@ -76,7 +78,7 @@ export interface DetectTableProps {
 function formatTimestamp(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
+  if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleString(undefined, {
     month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
   });
@@ -123,7 +125,7 @@ function isTaskFreshForScan(task: TaskInfo, rhcCompletedAt: number | null): bool
   if (!task.lastRun) return false;
   if (!rhcCompletedAt) return false;
   const taskRanAt = new Date(task.lastRun).getTime();
-  if (isNaN(taskRanAt)) return false;
+  if (Number.isNaN(taskRanAt)) return false;
   return taskRanAt >= rhcCompletedAt;
 }
 
@@ -306,7 +308,7 @@ export function useDetectRows(
     }
 
     return rows;
-  }, [proxyRepos, hcEnabledRepos, countsByRepo, rhcScans, tasks, activeFindings, identifyFailures]);
+  }, [proxyRepos, countsByRepo, rhcScans, tasks, activeFindings, identifyFailures]);
 }
 
 type RowFingerprint = `${DetectionState}|${ResponseState}|${number}`;
@@ -537,40 +539,55 @@ function ActionCell({
   onEnableRhc,
   onIdentify,
   onNavigateToRemediate,
+  canUpdateHealthCheck,
+  canRunAnalysis,
 }: {
   row: DetectRow;
   onEnableRhc: (repoName: string) => void;
   onIdentify: (repoName: string, signatureCount: number) => void;
   onNavigateToRemediate: (repoName: string) => void;
+  canUpdateHealthCheck: boolean;
+  canRunAnalysis: boolean;
 }): React.ReactElement {
+  // Hide detection-enable actions without healthcheck:update, and deep-scan (analysis)
+  // actions without tasks:create (NEXUS-54212). Fall through to the neutral dash otherwise.
   if (row.detection === 'not-enabled') {
-    return (
+    return canUpdateHealthCheck ? (
       <Button size="1" variant="solid" color="red" onClick={() => onEnableRhc(row.name)} data-testid={`enable-rhc-${row.name}`}>
         Enable Detection
       </Button>
+    ) : (
+      <Text size="2" color="gray">—</Text>
     );
   }
   if (row.detection === 'scanning') {
     return <Text size="1" color="blue">Scanning…</Text>;
   }
   if (row.detection === 'failed') {
-    return (
+    return canUpdateHealthCheck ? (
       <Button size="1" variant="solid" color="red" onClick={() => onEnableRhc(row.name)} data-testid={`retry-rhc-${row.name}`}>
         Retry
       </Button>
+    ) : (
+      <Text size="2" color="gray">—</Text>
     );
   }
   if (row.response === 'not-analyzed' && row.signatureCount > 0) {
-    return (
+    return canRunAnalysis ? (
       <Button size="1" variant="solid" color="red" onClick={() => onIdentify(row.name, row.signatureCount)} data-testid={`identify-${row.name}`}>
         <Play size={12} /> Run One-Time Analysis
       </Button>
+    ) : (
+      <Text size="2" color="gray">—</Text>
     );
   }
   if (row.response === 'analyzing') {
     return <Text size="1" color="blue">Analyzing…</Text>;
   }
   if (row.response === 'failed') {
+    if (!canRunAnalysis) {
+      return <Text size="2" color="gray">—</Text>;
+    }
     if (row.failCount >= 3) {
       return (
         <Tooltip content="Multiple failures detected. Check IQ Server connectivity and task logs before retrying.">
@@ -617,6 +634,20 @@ export function DetectTable({
   const [sortField, setSortField] = useState<DetectSortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [confirmRepo, setConfirmRepo] = useState<string | null>(null);
+
+  // Hide detection-enable actions without healthcheck:update, deep-scan actions without
+  // tasks:create (NEXUS-54212). coreui never mounts a <PermissionsProvider>, so the
+  // context-based usePermission would return false for everyone; use the provider-independent
+  // ExtJS.usePermission (matches FindingsTable, the sibling in this page).
+  const hasUser = ExtJS.useUser() ?? false;
+  const canUpdateHealthCheck = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.HEALTHCHECK.UPDATE),
+    [hasUser],
+  );
+  const canRunAnalysis = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.TASKS.CREATE),
+    [hasUser],
+  );
 
   const rawRows = useDetectRows(proxyRepos, hcEnabledRepos, countsByRepo, rhcScans, tasks, activeFindings, identifyFailures);
 
@@ -759,6 +790,8 @@ export function DetectTable({
                         onEnableRhc={handleEnableRhc}
                         onIdentify={onIdentify}
                         onNavigateToRemediate={onNavigateToRemediate}
+                        canUpdateHealthCheck={canUpdateHealthCheck}
+                        canRunAnalysis={canRunAnalysis}
                       />
                     </Table.Cell>
                   </Table.Row>
@@ -795,9 +828,13 @@ export function DetectTable({
                       <Badge variant="soft" color="gray">{repo.format}</Badge>
                     </Table.Cell>
                     <Table.Cell style={{ textAlign: 'center' }}>
-                      <Button size="1" variant="solid" color="red" onClick={() => handleEnableRhc(repo.name)} data-testid={`enable-rhc-${repo.name}`}>
-                        Enable Detection
-                      </Button>
+                      {canUpdateHealthCheck ? (
+                        <Button size="1" variant="solid" color="red" onClick={() => handleEnableRhc(repo.name)} data-testid={`enable-rhc-${repo.name}`}>
+                          Enable Detection
+                        </Button>
+                      ) : (
+                        <Text size="2" color="gray">—</Text>
+                      )}
                     </Table.Cell>
                   </Table.Row>
                 ))}

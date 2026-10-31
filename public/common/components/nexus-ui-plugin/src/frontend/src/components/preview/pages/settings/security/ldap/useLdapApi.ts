@@ -15,6 +15,10 @@ import { useState, useCallback } from 'react';
 import { restClient, parseApiError, urlBuilder } from '../../../../../../interface/api';
 import { LdapServer, LdapSchemaTemplate, LdapUser, LdapFormData } from './types';
 
+function safeBtoa(str: string): string {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
 /**
  * REST API LDAP server shape (from ReadLdapServerXo.java)
  *
@@ -47,7 +51,7 @@ interface RestLdapServer {
   userEmailAddressAttribute: string;
   userPasswordAttribute?: string;
   ldapGroupsAsRoles: boolean;
-  groupType?: 'static' | 'dynamic';
+  groupType?: 'STATIC' | 'DYNAMIC';  // UPPERCASE from REST (Jackson enum name)
   groupBaseDn?: string;
   groupSubtree: boolean;
   groupObjectClass?: string;
@@ -96,6 +100,17 @@ function uiAuthSchemeToRest(scheme: string): string {
 }
 
 /**
+ * Convert REST groupType enum to UI format.
+ * REST serializes the GroupType enum uppercase (STATIC, DYNAMIC); the UI uses
+ * lowercase 'static'/'dynamic'. Returns undefined for missing or unrecognized
+ * values so the form falls back to its default instead of an invalid state.
+ */
+function restGroupTypeToUi(groupType?: string): 'static' | 'dynamic' | undefined {
+  const normalized = groupType?.toLowerCase();
+  return normalized === 'static' || normalized === 'dynamic' ? normalized : undefined;
+}
+
+/**
  * Convert REST LDAP server to UI-compatible LdapServer shape
  */
 function restToLdapServer(rest: RestLdapServer): LdapServer {
@@ -124,7 +139,7 @@ function restToLdapServer(rest: RestLdapServer): LdapServer {
     userEmailAddressAttribute: rest.userEmailAddressAttribute,
     userPasswordAttribute: rest.userPasswordAttribute,
     ldapGroupsAsRoles: rest.ldapGroupsAsRoles,
-    groupType: rest.groupType,
+    groupType: restGroupTypeToUi(rest.groupType),
     groupBaseDn: rest.groupBaseDn,
     groupSubtree: rest.groupSubtree,
     groupObjectClass: rest.groupObjectClass,
@@ -163,6 +178,7 @@ function ldapFormDataToRestRequest(data: LdapFormData): Record<string, unknown> 
     userEmailAddressAttribute: data.userEmailAddressAttribute,
     userPasswordAttribute: data.userPasswordAttribute || undefined,
     ldapGroupsAsRoles: data.ldapGroupsAsRoles,
+    // groupType stays lowercase; backend enum accepts it via ACCEPT_CASE_INSENSITIVE_ENUMS
     groupType: data.ldapGroupsAsRoles ? data.groupType : undefined,
     groupBaseDn: data.groupBaseDn || undefined,
     groupSubtree: data.groupSubtree || false,
@@ -340,8 +356,11 @@ export function useLdapApi() {
    * unlike the ExtDirect endpoint which only validates connection fields.
    */
   const verifyConnection = useCallback(async (data: LdapFormData, existingServerName?: string): Promise<void> => {
-    setLoading(true);
-    setError(null);
+    // Verify operations deliberately do NOT touch the shared `loading`/`error` state owned by
+    // LdapPage. LdapForm manages its own local `verifying`/`verificationError` state for these,
+    // so touching the shared state here would (a) double-report failures (page banner + inline
+    // alert) and (b) disable the WizardForm's Continue/Save/Back buttons while a verify request
+    // is in flight (the shared `loading` feeds WizardForm's `submitDisabled`). See PG13.
     try {
       const payload = ldapFormDataToRestRequest(data);
       const url = existingServerName
@@ -350,10 +369,7 @@ export function useLdapApi() {
       await restClient.post(url, payload);
     } catch (err: unknown) {
       const apiError = parseApiError(err);
-      setError(apiError.message);
       throw new Error(apiError.message);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -361,8 +377,7 @@ export function useLdapApi() {
    * Verify user mapping configuration using REST API
    */
   const verifyUserMapping = useCallback(async (data: LdapFormData, existingServerName?: string): Promise<LdapUser[]> => {
-    setLoading(true);
-    setError(null);
+    // See verifyConnection: verify does not touch shared loading/error; LdapForm handles it locally.
     try {
       const payload = ldapFormDataToRestRequest(data);
       const url = existingServerName
@@ -377,37 +392,35 @@ export function useLdapApi() {
       }));
     } catch (err: unknown) {
       const apiError = parseApiError(err);
-      setError(apiError.message);
       throw new Error(apiError.message);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   /**
-   * Verify login with test credentials using REST API
+   * Verify login with test credentials using REST API.
+   * Posts LdapVerifyLoginXo: base64-encoded credentials + nested ldapServer config.
+   * In edit mode, pass existingServerName so the backend can merge the stored bind password.
    */
   const verifyLogin = useCallback(async (
     data: LdapFormData,
     username: string,
-    password: string
+    password: string,
+    existingServerName?: string
   ): Promise<void> => {
-    setLoading(true);
-    setError(null);
+    // See verifyConnection: verify does not touch shared loading/error; LdapForm handles it locally.
     try {
       const payload = {
-        ...ldapFormDataToRestRequest(data),
-        // REST API expects plain text credentials (not base64)
-        testUsername: username,
-        testPassword: password,
+        base64Username: safeBtoa(username),
+        base64Password: safeBtoa(password),
+        ldapServer: ldapFormDataToRestRequest(data),
       };
-      await restClient.post(urlBuilder.ldap.verifyLogin(), payload);
+      const url = existingServerName
+        ? `${urlBuilder.ldap.verifyLogin()}?existingServerName=${encodeURIComponent(existingServerName)}`
+        : urlBuilder.ldap.verifyLogin();
+      await restClient.post(url, payload);
     } catch (err: unknown) {
       const apiError = parseApiError(err);
-      setError(apiError.message);
       throw new Error(apiError.message);
-    } finally {
-      setLoading(false);
     }
   }, []);
 

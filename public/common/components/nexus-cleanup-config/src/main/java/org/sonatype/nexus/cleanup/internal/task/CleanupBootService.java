@@ -28,7 +28,7 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import org.springframework.stereotype.Component;
 
@@ -52,7 +52,7 @@ public class CleanupBootService
 
   @Autowired
   public CleanupBootService(final TaskScheduler taskScheduler) {
-    this.taskScheduler = checkNotNull(taskScheduler);
+    this.taskScheduler = requireNonNull(taskScheduler);
   }
 
   @Override

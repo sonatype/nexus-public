@@ -126,8 +126,19 @@
     }
   }
 
+  &__modal-header {
+    margin-bottom: var(--space-4, 16px);
+  }
+
+  &__modal-icon {
+    flex-shrink: 0;
+  }
+
   &__modal-title {
-    margin-bottom: var(--space-3, 12px);
+    // No bottom margin: within the align="center" header flex a bottom margin
+    // shifts the title text off-center relative to the icon. Spacing below the
+    // header is owned by &__modal-header instead.
+    margin: 0;
   }
 
   &__modal-text {
@@ -135,27 +146,32 @@
     margin-bottom: var(--space-3, 12px);
     line-height: 1.5;
 
-    strong {
-      color: var(--color-text-primary, #1a1a1a);
-      font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
-
-      [data-theme='dark'] & {
-        color: var(--gray-12, #edeef0);
-      }
-    }
-
     [data-theme='dark'] & {
       color: var(--gray-11, #9898a1);
+    }
+
+    &:last-child {
+      margin-bottom: 0;
     }
   }
 
   &__modal-actions {
+    // Explicit gap here (not just the Radix Flex `gap` prop) so the buttons
+    // stay separated even if the Radix Themes gap utility class isn't applied.
+    gap: var(--space-4, 16px);
     margin-top: var(--space-4, 16px);
     padding-top: var(--space-4, 16px);
     border-top: 1px solid var(--gray-6, #e4e4e7);
 
     [data-theme='dark'] & {
       border-top-color: var(--gray-6, #3d3d43);
+    }
+
+    // Give the action buttons a shared minimum width so short labels (e.g.
+    // "Cancel") match the confirm button. Content is already centered by the
+    // base .settings-button (inline-flex, justify-content: center).
+    .settings-button {
+      min-width: 104px;
     }
   }
 }
@@ -188,5 +204,3 @@
     transform: translate(-50%, -50%) scale(1);
   }
 }
-
-

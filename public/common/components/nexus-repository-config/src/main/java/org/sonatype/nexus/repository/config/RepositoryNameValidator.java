@@ -36,6 +36,9 @@ public class RepositoryNameValidator
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
     return repositoryManager.exists(value);
   }
 }

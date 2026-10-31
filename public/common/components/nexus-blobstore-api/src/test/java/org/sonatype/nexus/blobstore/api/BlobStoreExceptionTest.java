@@ -52,8 +52,7 @@ public class BlobStoreExceptionTest
 
     assertThat(exception.getBlobId(), is(sameInstance(BLOB_ID)));
     assertThat(exception.getCause(), is(nullValue()));
-    // super.getMessage() is null, which StringJoiner renders as the literal "null"
-    assertThat(exception.getMessage(), is("BlobId: blob-123, null"));
+    assertThat(exception.getMessage(), is("BlobId: blob-123"));
   }
 
   @Test
@@ -83,7 +82,6 @@ public class BlobStoreExceptionTest
 
     assertThat(exception.getBlobId(), is(sameInstance(BLOB_ID)));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    // cause has no message, so the "Cause:" segment is omitted
     assertThat(exception.getMessage(), is("BlobId: blob-123, failed"));
   }
 
@@ -94,9 +92,7 @@ public class BlobStoreExceptionTest
 
     assertThat(exception.getBlobId(), is(sameInstance(BLOB_ID)));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    // super(cause) sets the detail message to cause.toString()
-    assertThat(exception.getMessage(),
-        is("BlobId: blob-123, java.io.IOException: io error, Cause: io error"));
+    assertThat(exception.getMessage(), is("BlobId: blob-123, java.io.IOException: io error"));
   }
 
   @Test
@@ -106,8 +102,16 @@ public class BlobStoreExceptionTest
 
     assertThat(exception.getBlobId(), is(nullValue()));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    assertThat(exception.getMessage(),
-        is("java.lang.IllegalStateException: bad state, Cause: bad state"));
+    assertThat(exception.getMessage(), is("java.lang.IllegalStateException: bad state"));
+  }
+
+  @Test
+  public void testCauseConstructorWithNullCauseAndNullBlobId() {
+    BlobStoreException exception = new BlobStoreException((Throwable) null, (BlobId) null);
+
+    assertThat(exception.getBlobId(), is(nullValue()));
+    assertThat(exception.getCause(), is(nullValue()));
+    assertThat(exception.getMessage(), is(nullValue()));
   }
 
   @Test
@@ -116,9 +120,7 @@ public class BlobStoreExceptionTest
 
     assertThat(exception.getBlobId(), is(nullValue()));
     assertThat(exception.getCause(), is(nullValue()));
-    // no BlobId and no cause: the only segment is the null super message, which StringJoiner
-    // renders as the literal "null"
-    assertThat(exception.getMessage(), is("null"));
+    assertThat(exception.getMessage(), is(nullValue()));
   }
 
   @Test
@@ -128,8 +130,7 @@ public class BlobStoreExceptionTest
 
     assertThat(exception.getBlobId(), is(sameInstance(BLOB_ID)));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    // the null super message renders as the literal "null" between the BlobId and Cause segments
-    assertThat(exception.getMessage(), is("BlobId: blob-123, null, Cause: disk full"));
+    assertThat(exception.getMessage(), is("BlobId: blob-123, Cause: disk full"));
   }
 
   @Test
@@ -139,7 +140,6 @@ public class BlobStoreExceptionTest
 
     assertThat(exception.getBlobId(), is(nullValue()));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    // cause has no message and there is no BlobId, so only the super message remains
     assertThat(exception.getMessage(), is("failed"));
   }
 
@@ -150,8 +150,6 @@ public class BlobStoreExceptionTest
 
     assertThat(exception.getBlobId(), is(sameInstance(BLOB_ID)));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    // super(cause) sets the detail message to cause.toString() (the bare class name, since the
-    // cause has no message); the "Cause:" segment is omitted because getCause().getMessage() is null
     assertThat(exception.getMessage(), is("BlobId: blob-123, java.lang.RuntimeException"));
   }
 

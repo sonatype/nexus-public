@@ -12,15 +12,22 @@
  */
 import React from 'react';
 
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import {NxFormGroup, NxTextInput, NxCheckbox} from '@sonatype/react-shared-components';
 
+import FeatureFlags from '../../../../../constants/FeatureFlags';
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {NUGET} = UIStrings.REPOSITORIES.EDITOR;
+const {NUGET_SYMBOL_SERVER_ENABLED} = FeatureFlags;
 
 export default function NugetSymbolServerConfiguration({parentMachine}) {
+  const symbolServerEnabled = ExtJS.useState(() => ExtJS.state().getValue(NUGET_SYMBOL_SERVER_ENABLED));
+  if (!symbolServerEnabled) {
+    return null;
+  }
+
   const [currentParent, sendParent] = parentMachine;
 
   return (

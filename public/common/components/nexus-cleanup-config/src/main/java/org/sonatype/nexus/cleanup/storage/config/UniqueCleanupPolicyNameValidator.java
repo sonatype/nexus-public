@@ -18,7 +18,7 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -37,11 +37,14 @@ public class UniqueCleanupPolicyNameValidator
 
   @Autowired
   public UniqueCleanupPolicyNameValidator(final CleanupPolicyStorage cleanupPolicyStorage) {
-    this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
+    this.cleanupPolicyStorage = requireNonNull(cleanupPolicyStorage);
   }
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
     return !cleanupPolicyStorage.exists(value);
   }
 }

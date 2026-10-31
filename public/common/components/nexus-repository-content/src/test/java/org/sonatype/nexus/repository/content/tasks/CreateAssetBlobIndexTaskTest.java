@@ -22,6 +22,7 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -103,7 +104,8 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test
   public void testExecute_createsIndexWhenTableExists() throws Exception {
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // Create asset_blob table first
@@ -130,7 +132,8 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test
   public void testExecute_idempotent() throws Exception {
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // Create asset_blob table first
@@ -155,7 +158,7 @@ public class CreateAssetBlobIndexTaskTest
   @Test
   public void testExecute_handlesMultipleFormats() throws Exception {
     underTest = new CreateAssetBlobIndexTask(
-        Arrays.asList(testFormat, mavenFormat), dataSessionSupplier);
+        Arrays.asList(testFormat, mavenFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // Create both tables
@@ -178,7 +181,8 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test
   public void testExecute_whenTableDoesNotExist() throws Exception {
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // Verify table doesn't exist
@@ -199,7 +203,7 @@ public class CreateAssetBlobIndexTaskTest
   @Test
   public void testExecute_continuesOnError() throws Exception {
     underTest = new CreateAssetBlobIndexTask(
-        Arrays.asList(testFormat, mavenFormat), dataSessionSupplier);
+        Arrays.asList(testFormat, mavenFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // Create only maven table (test table doesn't exist, will cause first format to skip)
@@ -219,7 +223,8 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test
   public void testExecute_withH2Database() throws Exception {
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // Create asset_blob table
@@ -239,7 +244,8 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test
   public void testGetMessage() {
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     String message = underTest.getMessage();
 
@@ -251,7 +257,8 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test
   public void testExecute_withIndexAlreadyExists() throws Exception {
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // Create asset_blob table and index manually
@@ -276,7 +283,8 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test
   public void testExecute_withEmptyFormatList() throws Exception {
-    underTest = new CreateAssetBlobIndexTask(Collections.emptyList(), dataSessionSupplier);
+    underTest =
+        new CreateAssetBlobIndexTask(Collections.emptyList(), dataSessionSupplier, new DatabaseMigrationUtility());
 
     // Execute task with no formats
     Object result = underTest.execute();
@@ -287,18 +295,18 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test(expected = NullPointerException.class)
   public void testConstructor_rejectsNullFormats() {
-    new CreateAssetBlobIndexTask(null, dataSessionSupplier);
+    new CreateAssetBlobIndexTask(null, dataSessionSupplier, new DatabaseMigrationUtility());
   }
 
   @Test(expected = NullPointerException.class)
   public void testConstructor_rejectsNullDataSessionSupplier() {
-    new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), null);
+    new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), null, new DatabaseMigrationUtility());
   }
 
   @Test
   public void testExecute_threeFormats_allTablesExist() throws Exception {
     underTest = new CreateAssetBlobIndexTask(
-        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       createAssetBlobTable(conn, ASSET_BLOB_TABLE);
@@ -320,7 +328,7 @@ public class CreateAssetBlobIndexTaskTest
   @Test
   public void testExecute_multipleFormats_someTablesExist_someDoNot() throws Exception {
     underTest = new CreateAssetBlobIndexTask(
-        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // Only create test and npm tables; maven table does not exist
@@ -340,7 +348,7 @@ public class CreateAssetBlobIndexTaskTest
   @Test
   public void testExecute_multipleFormats_someAlreadyIndexed() throws Exception {
     underTest = new CreateAssetBlobIndexTask(
-        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       createAssetBlobTable(conn, ASSET_BLOB_TABLE);
@@ -364,7 +372,8 @@ public class CreateAssetBlobIndexTaskTest
     when(dataSessionSupplier.openConnection(DEFAULT_DATASTORE_NAME))
         .thenThrow(new SQLException("Connection refused"));
 
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     try {
       underTest.execute();
@@ -379,7 +388,7 @@ public class CreateAssetBlobIndexTaskTest
   @Test
   public void testExecute_idempotent_multipleFormats() throws Exception {
     underTest = new CreateAssetBlobIndexTask(
-        Arrays.asList(testFormat, mavenFormat), dataSessionSupplier);
+        Arrays.asList(testFormat, mavenFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       createAssetBlobTable(conn, ASSET_BLOB_TABLE);
@@ -409,7 +418,7 @@ public class CreateAssetBlobIndexTaskTest
   public void testExecute_noTablesExist_returnsZero() throws Exception {
     // All formats have no tables at all
     underTest = new CreateAssetBlobIndexTask(
-        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     Object result = underTest.execute();
 
@@ -418,7 +427,8 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test
   public void testExecute_singleFormat_indexAlreadyExists_returnsZero() throws Exception {
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       createAssetBlobTable(conn, ASSET_BLOB_TABLE);
@@ -433,7 +443,8 @@ public class CreateAssetBlobIndexTaskTest
   @Test
   public void testExecute_indexCreatedOnCorrectColumns() throws Exception {
     // Verifies the index is created on the right columns by inserting data and checking it works
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       createAssetBlobTable(conn, ASSET_BLOB_TABLE);
@@ -454,7 +465,8 @@ public class CreateAssetBlobIndexTaskTest
 
   @Test
   public void testGetMessage_isNotEmpty() {
-    underTest = new CreateAssetBlobIndexTask(Collections.emptyList(), dataSessionSupplier);
+    underTest =
+        new CreateAssetBlobIndexTask(Collections.emptyList(), dataSessionSupplier, new DatabaseMigrationUtility());
 
     String message = underTest.getMessage();
 
@@ -466,7 +478,7 @@ public class CreateAssetBlobIndexTaskTest
   public void testExecute_formatsProcessedInOrder() throws Exception {
     // Verifies all formats are processed even if they appear in different orders
     underTest = new CreateAssetBlobIndexTask(
-        Arrays.asList(npmFormat, testFormat, mavenFormat), dataSessionSupplier);
+        Arrays.asList(npmFormat, testFormat, mavenFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       createAssetBlobTable(conn, NPM_ASSET_BLOB_TABLE);
@@ -492,7 +504,8 @@ public class CreateAssetBlobIndexTaskTest
     when(strictSupplier.openConnection("nexus"))
         .thenAnswer(invocation -> sessionRule.openConnection(DEFAULT_DATASTORE_NAME));
 
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), strictSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), strictSupplier,
+        new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       createAssetBlobTable(conn, ASSET_BLOB_TABLE);
@@ -508,7 +521,7 @@ public class CreateAssetBlobIndexTaskTest
   public void testExecute_mixedTableStates_correctCount() throws Exception {
     // 3 formats: one table missing, one index already exists, one needs creation
     underTest = new CreateAssetBlobIndexTask(
-        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       // test table doesn't exist (should skip)
@@ -529,7 +542,7 @@ public class CreateAssetBlobIndexTaskTest
   @Test
   public void testExecute_singletonFormatList_sameAsSingletonCollections() throws Exception {
     // Verify that List.of() works the same as Collections.singletonList()
-    underTest = new CreateAssetBlobIndexTask(List.of(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(List.of(testFormat), dataSessionSupplier, new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       createAssetBlobTable(conn, ASSET_BLOB_TABLE);
@@ -546,7 +559,8 @@ public class CreateAssetBlobIndexTaskTest
   public void testExecute_closesConnectionProperly() throws Exception {
     // After task execution, the connection should be closed.
     // We verify that the DataSessionSupplier was called and the task completes without resource leak errors.
-    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier,
+        new DatabaseMigrationUtility());
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       createAssetBlobTable(conn, ASSET_BLOB_TABLE);

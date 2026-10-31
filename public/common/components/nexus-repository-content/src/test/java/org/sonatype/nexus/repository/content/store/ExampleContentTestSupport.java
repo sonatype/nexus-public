@@ -55,12 +55,12 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.collection.IsIterableContainingInOrder;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.toList;
@@ -180,7 +180,7 @@ public abstract class ExampleContentTestSupport
     }
   }
 
-  @NotNull
+  @Nonnull
   private ConfigurationData getConfigurationData() {
     ConfigurationData configurationData = new ConfigurationData();
     Map<String, Object> key = Collections.singletonMap("key", "value");
@@ -462,8 +462,8 @@ public abstract class ExampleContentTestSupport
 
     @SafeVarargs
     public FieldMatcher(final T expected, final Function<T, ?>... extractors) {
-      this.expected = checkNotNull(expected);
-      this.extractors = asList(checkNotNull(extractors));
+      this.expected = requireNonNull(expected);
+      this.extractors = asList(requireNonNull(extractors));
     }
 
     @Override

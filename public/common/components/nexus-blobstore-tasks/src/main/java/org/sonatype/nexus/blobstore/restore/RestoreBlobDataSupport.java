@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.restore;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.14
@@ -22,7 +22,7 @@ public class RestoreBlobDataSupport
   private final RestoreBlobData blobData;
 
   public RestoreBlobDataSupport(final RestoreBlobData blobData) {
-    this.blobData = checkNotNull(blobData);
+    this.blobData = requireNonNull(blobData);
   }
 
   public RestoreBlobData getBlobData() {

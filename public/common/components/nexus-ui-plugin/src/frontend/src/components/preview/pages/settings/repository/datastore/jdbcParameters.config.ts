@@ -42,10 +42,14 @@ export interface JdbcParameterDefinition {
 
 /**
  * Known JDBC Parameters Configuration
- * 
- * This configuration defines common JDBC parameters across database types.
- * Parameters are organized by category for better discoverability.
- * 
+ *
+ * Nexus's DataStore only supports PostgreSQL and H2. H2 connection settings use an
+ * entirely different (SET-style, uppercase) syntax than JDBC Properties, so this catalog
+ * is PostgreSQL-only (pgjdbc property names) — see the help panel caption in
+ * JdbcParameterEditor.tsx. It's deliberately curated to the parameters admins most
+ * commonly need, not the full pgjdbc property list; unknown parameters aren't blocked,
+ * just unassisted (no autocomplete/dropdown/validated range).
+ *
  * To add a new parameter:
  * 1. Add it to the appropriate category section
  * 2. Specify the type and validation rules
@@ -76,14 +80,6 @@ export const JDBC_PARAMETERS_CONFIG: JdbcParameterDefinition[] = [
     category: 'connection',
     defaultValue: 'false',
   },
-  {
-    name: 'autoReconnect',
-    description: 'Automatically reconnect if connection is lost',
-    type: 'boolean',
-    allowedValues: ['true', 'false'],
-    category: 'connection',
-    defaultValue: 'false',
-  },
 
   // ===================
   // Timeout Parameters
@@ -93,18 +89,18 @@ export const JDBC_PARAMETERS_CONFIG: JdbcParameterDefinition[] = [
     description: 'Time to wait when establishing a connection',
     type: 'number',
     min: 0,
-    max: 600000,
-    unit: 'ms',
+    max: 600,
+    unit: 'seconds',
     category: 'timeout',
-    defaultValue: '10000',
+    defaultValue: '10',
   },
   {
     name: 'socketTimeout',
     description: 'Time to wait for socket read operations',
     type: 'number',
     min: 0,
-    max: 600000,
-    unit: 'ms',
+    max: 600,
+    unit: 'seconds',
     category: 'timeout',
     defaultValue: '0',
   },
@@ -115,36 +111,6 @@ export const JDBC_PARAMETERS_CONFIG: JdbcParameterDefinition[] = [
     min: 0,
     max: 600,
     unit: 'seconds',
-    category: 'timeout',
-    defaultValue: '0',
-  },
-  {
-    name: 'cancelSignalTimeout',
-    description: 'Time to wait for cancel signal acknowledgment',
-    type: 'number',
-    min: 0,
-    max: 60000,
-    unit: 'ms',
-    category: 'timeout',
-    defaultValue: '10000',
-  },
-  {
-    name: 'queryTimeout',
-    description: 'Default timeout for query execution',
-    type: 'number',
-    min: 0,
-    max: 3600,
-    unit: 'seconds',
-    category: 'timeout',
-    defaultValue: '0',
-  },
-  {
-    name: 'lockTimeout',
-    description: 'Time to wait for locks before timing out',
-    type: 'number',
-    min: 0,
-    max: 3600000,
-    unit: 'ms',
     category: 'timeout',
     defaultValue: '0',
   },
@@ -168,68 +134,10 @@ export const JDBC_PARAMETERS_CONFIG: JdbcParameterDefinition[] = [
     category: 'ssl',
     defaultValue: 'prefer',
   },
-  {
-    name: 'sslcert',
-    description: 'Path to client SSL certificate file',
-    type: 'string',
-    category: 'ssl',
-  },
-  {
-    name: 'sslkey',
-    description: 'Path to client SSL private key file',
-    type: 'string',
-    category: 'ssl',
-  },
-  {
-    name: 'sslrootcert',
-    description: 'Path to root CA certificate file for SSL verification',
-    type: 'string',
-    category: 'ssl',
-  },
-  {
-    name: 'sslpassword',
-    description: 'Password for encrypted SSL private key',
-    type: 'string',
-    category: 'ssl',
-  },
 
   // ===================
   // Performance Parameters
   // ===================
-  {
-    name: 'tcpKeepAlive',
-    description: 'Enable TCP keep-alive probes to detect broken connections',
-    type: 'boolean',
-    allowedValues: ['true', 'false'],
-    category: 'performance',
-    defaultValue: 'false',
-  },
-  {
-    name: 'prepareThreshold',
-    description: 'Number of executions before using server-side prepared statements',
-    type: 'number',
-    min: 0,
-    max: 1000,
-    category: 'performance',
-    defaultValue: '5',
-  },
-  {
-    name: 'defaultRowFetchSize',
-    description: 'Default number of rows to fetch per network round-trip',
-    type: 'number',
-    min: 0,
-    max: 100000,
-    category: 'performance',
-    defaultValue: '0',
-  },
-  {
-    name: 'binaryTransfer',
-    description: 'Use binary format for data transfer when possible',
-    type: 'boolean',
-    allowedValues: ['true', 'false'],
-    category: 'performance',
-    defaultValue: 'true',
-  },
   {
     name: 'reWriteBatchedInserts',
     description: 'Rewrite batched INSERT statements for better performance',
@@ -242,14 +150,6 @@ export const JDBC_PARAMETERS_CONFIG: JdbcParameterDefinition[] = [
   // ===================
   // Other Parameters
   // ===================
-  {
-    name: 'loggerLevel',
-    description: 'JDBC driver logging level',
-    type: 'enum',
-    allowedValues: ['OFF', 'DEBUG', 'TRACE'],
-    category: 'other',
-    defaultValue: 'OFF',
-  },
   {
     name: 'assumeMinServerVersion',
     description: 'Assume minimum server version for feature compatibility',
@@ -322,9 +222,9 @@ export function validateParameterValue(name: string, value: string): string | un
       }
       break;
 
-    case 'number':
+    case 'number': {
       const num = parseFloat(value);
-      if (isNaN(num)) {
+      if (Number.isNaN(num)) {
         return 'Must be a valid number';
       }
       if (def.min !== undefined && num < def.min) {
@@ -334,6 +234,7 @@ export function validateParameterValue(name: string, value: string): string | un
         return `Must be at most ${def.max}${def.unit ? ` ${def.unit}` : ''}`;
       }
       break;
+    }
 
     case 'enum':
       if (def.allowedValues && !def.allowedValues.includes(value)) {

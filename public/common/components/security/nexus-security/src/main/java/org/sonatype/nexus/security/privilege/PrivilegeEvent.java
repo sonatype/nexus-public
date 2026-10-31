@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.privilege;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link Privilege} event.
@@ -24,7 +24,7 @@ public abstract class PrivilegeEvent
   private final Privilege privilege;
 
   public PrivilegeEvent(final Privilege privilege) {
-    this.privilege = checkNotNull(privilege);
+    this.privilege = requireNonNull(privilege);
   }
 
   public Privilege getPrivilege() {

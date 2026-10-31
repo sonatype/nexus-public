@@ -41,7 +41,7 @@ public class DefaultCleanupBrowseServiceFactory
   }
 
   @Override
-  public CleanupComponentBrowse getPreviewService() {
+  public CleanupComponentBrowse getPreviewService(final Format format) {
     return defaultCleanupComponentBrowse;
   }
 }

@@ -45,9 +45,8 @@ jest.mock('../BlobStoreTypes', () => ({
 const S3_STRINGS = UIStrings.S3_BLOBSTORE_CONFIGURATION;
 const MAX_REPLICATION_BUCKETS = 5;
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const ExtJS = {
     requestConfirmation: jest.fn(),
     showErrorMessage: jest.fn(),
     state: jest.fn().mockReturnValue({
@@ -57,8 +56,13 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     checkPermission: jest.fn(key => {
       return BlobStoresFormTestPermissions[key] ?? false;
     }),
-  }
-}));
+  };
+  return {
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+    ExtJS,
+    useIsLicensedEdition: (...args) => ExtJS.isProEdition(...args),
+  };
+});
 
 let BlobStoresFormTestPermissions = {};
 

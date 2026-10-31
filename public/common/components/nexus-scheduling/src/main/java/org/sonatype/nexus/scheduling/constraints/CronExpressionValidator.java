@@ -22,7 +22,7 @@ import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
 import org.springframework.context.annotation.Lazy;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -43,7 +43,7 @@ public class CronExpressionValidator
 
   @Autowired
   public CronExpressionValidator(final TaskScheduler taskScheduler) {
-    checkNotNull(taskScheduler);
+    requireNonNull(taskScheduler);
     this.scheduleFactory = taskScheduler.getScheduleFactory();
   }
 
@@ -54,6 +54,9 @@ public class CronExpressionValidator
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
     try {
       scheduleFactory.cron(new Date(), value);
     }

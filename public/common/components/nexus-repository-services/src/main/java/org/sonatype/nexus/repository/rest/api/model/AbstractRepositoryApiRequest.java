@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-
 import org.sonatype.nexus.repository.config.UniqueRepositoryName;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 import org.sonatype.nexus.validation.group.Create;
@@ -22,12 +19,15 @@ import org.sonatype.nexus.validation.group.Create;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * @since 3.20
  */
-public abstract class AbstractRepositoryApiRequest
+public abstract class AbstractRepositoryApiRequest<S extends StorageAttributes>
     implements RepositoryApiRequest
 {
   @Schema(description = "A unique identifier for this repository", example = "internal",
@@ -50,17 +50,23 @@ public abstract class AbstractRepositoryApiRequest
   @NotNull
   protected Boolean online;
 
+  @NotNull
+  @Valid
+  protected final S storage;
+
   @JsonCreator
   public AbstractRepositoryApiRequest(
       @JsonProperty("name") final String name,
       @JsonProperty("format") final String format,
       @JsonProperty("type") final String type,
-      @JsonProperty("online") final Boolean online)
+      @JsonProperty("online") final Boolean online,
+      @JsonProperty("storage") final S storage)
   {
     this.name = name;
     this.format = format;
     this.type = type;
     this.online = online;
+    this.storage = storage;
   }
 
   @Override
@@ -81,5 +87,9 @@ public abstract class AbstractRepositoryApiRequest
   @Override
   public Boolean getOnline() {
     return online;
+  }
+
+  public S getStorage() {
+    return storage;
   }
 }

@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A builder for blob store configurations.
@@ -43,15 +43,15 @@ public class BlobStoreConfigurationBuilder
       final String name,
       final Supplier<BlobStoreConfiguration> configurationSupplier)
   {
-    this.name = checkNotNull(name);
-    this.configurationSupplier = checkNotNull(configurationSupplier);
+    this.name = requireNonNull(name);
+    this.configurationSupplier = requireNonNull(configurationSupplier);
   }
 
   /**
    * Sets the type of blob store.
    */
   public BlobStoreConfigurationBuilder type(final String type) {
-    this.type = checkNotNull(type);
+    this.type = requireNonNull(type);
     return this;
   }
 

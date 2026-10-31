@@ -12,11 +12,6 @@
  */
 package org.sonatype.nexus.coreui;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Email;
-
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.extdirect.DirectComponent;
@@ -28,12 +23,16 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.mail2.core.EmailException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Email {@link DirectComponent}.
@@ -49,7 +48,7 @@ public class EmailComponent
 
   @Autowired
   public EmailComponent(final EmailManager emailManager) {
-    this.emailManager = checkNotNull(emailManager);
+    this.emailManager = requireNonNull(emailManager);
   }
 
   /**

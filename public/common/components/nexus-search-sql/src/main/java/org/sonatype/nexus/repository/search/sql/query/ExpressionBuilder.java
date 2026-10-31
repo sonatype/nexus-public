@@ -37,8 +37,8 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import org.springframework.stereotype.Component;
@@ -63,10 +63,10 @@ public class ExpressionBuilder
       final List<SqlSearchQueryContribution> handlersList,
       final List<SearchMappings> searchMappingsList)
   {
-    this.permissionBuilder = checkNotNull(permissionBuilder);
-    this.handlers = QualifierUtil.buildQualifierBeanMap(checkNotNull(handlersList));
+    this.permissionBuilder = requireNonNull(permissionBuilder);
+    this.handlers = QualifierUtil.buildQualifierBeanMap(requireNonNull(handlersList));
     this.filterTypeByAttribute = new HashMap<>();
-    QualifierUtil.buildQualifierBeanMap(checkNotNull(searchMappingsList))
+    QualifierUtil.buildQualifierBeanMap(requireNonNull(searchMappingsList))
         .entrySet()
         .stream()
         .flatMap(e -> stream(e.getValue().get().spliterator(), true))

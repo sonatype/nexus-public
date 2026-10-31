@@ -34,6 +34,13 @@ describe('createRouter - onBefore - validate permissions and configuration on ea
     ExtJS.state = jest.fn().mockReturnValue({
       getValue: jest.fn().mockReturnValue(false)
     });
+    // Default: the client already knows whether a user is signed in, so no deferral
+    ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
+    ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
+    ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
 
     router = getTestRouter();
   });
@@ -385,6 +392,12 @@ describe('createRouter - otherwise handler - unrecognized URLs', () => {
     ExtJS.state = jest.fn().mockReturnValue({
       getValue: jest.fn().mockReturnValue(false)
     });
+    ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
+    ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
+    ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
     router = getTestRouter();
   });
 
@@ -453,5 +466,550 @@ describe('createRouter - otherwise handler - unrecognized URLs', () => {
 
     const expectedReturnTo = btoa('#/admin/some/path');
     expect(goSpy).toHaveBeenCalledWith('login', { returnTo: expectedReturnTo });
+  });
+
+  it('redirects to login without returnTo when url is empty for protected path', async () => {
+    global.NX.Security.hasUser.mockReturnValue(false);
+    window.location.hash = '#admin/some/path';
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    jest.spyOn(router.urlService, 'url').mockReturnValue('');
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(goSpy).toHaveBeenCalledWith('login');
+  });
+
+  it('defers to ExtJS for bookmark URLs containing = in hash outside preview routes', async () => {
+    global.NX.Security.hasUser.mockReturnValue(false);
+    window.location.hash = '#browse/search=format%3Dnpm:repository-id:path';
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(goSpy).not.toHaveBeenCalledWith('login', expect.anything());
+    expect(goSpy).not.toHaveBeenCalledWith('missing.route', expect.anything(), expect.anything());
+  });
+});
+
+describe('createRouter - preserve URL hash on browser refresh', () => {
+  let router;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.NX.Permissions.check.mockReturnValue(false);
+    if (!global.NX.Security) {
+      global.NX.Security = { hasUser: jest.fn() };
+    }
+    ExtJS.hasUser = jest.fn().mockReturnValue(true);
+    ExtJS.state = jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
+    ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
+    ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
+    ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    window.location.hash = '';
+  });
+
+  it('honors the URL hash for a registered route on browser refresh, not overriding with initialRoute', async () => {
+    // Uses #/login (not the initialRoute browse.welcome) — if the initial rule fired
+    // it would override to browse.welcome; with the fix the hash wins and router lands on login.
+    ExtJS.hasUser = jest.fn().mockReturnValue(false);
+    window.location.hash = '#/login';
+    router = getTestRouter();
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(router.stateService.current.name).toBe('login');
+  });
+
+  it('does not redirect to initialRoute when URL has an unrecognized settings hash', async () => {
+    // Settings pages such as #admin/repository/repositories are ExtJS routes not
+    // registered in the React router. Without the fix the initial rule fires for
+    // unrecognized URLs and redirects to browse.welcome. With the fix the otherwise
+    // handler runs instead, routing authenticated users to missing.route (404).
+    global.NX.Security.hasUser.mockReturnValue(true);
+    window.location.hash = '#admin/system/capabilities';
+    router = getTestRouter();
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(goSpy).toHaveBeenCalledWith('missing.route', {}, { location: false });
+    expect(goSpy).not.toHaveBeenCalledWith('browse.welcome');
+  });
+
+  it('applies initial route rule when URL has only #/', async () => {
+    // #/ is treated as empty — initial rule should fire, so the otherwise handler (missing.route)
+    // is NOT used; the router falls through to the initial route instead.
+    global.NX.Security.hasUser.mockReturnValue(true);
+    window.location.hash = '#/';
+    router = getTestRouter();
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(goSpy).not.toHaveBeenCalledWith('missing.route', expect.anything(), expect.anything());
+  });
+});
+
+describe('createRouter - onBefore - state with no visibilityRequirements', () => {
+  let router;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.NX.Permissions.check.mockReturnValue(true);
+    ExtJS.hasUser = jest.fn().mockReturnValue(true);
+    ExtJS.state = jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
+    ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
+    ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
+    ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
+    router = getTestRouter();
+  });
+
+  it('allows navigation to a state with no visibilityRequirements', async () => {
+    router.stateRegistry.register({
+      name: 'unrestricted',
+      url: '/unrestricted',
+      component: () => null,
+    });
+    await router.urlService.sync();
+
+    await router.stateService.go('unrestricted');
+
+    expect(router.stateService.current.name).toBe('unrestricted');
+  });
+});
+
+/*
+ * NEXUS-54290: under header/token authentication (rutauth-realm) the server-inlined
+ * NX.app.state carries no user and there is no session cookie, so during bootstrap the client
+ * cannot tell "no user" from "user not known yet". These tests cover both halves of the fix:
+ * waiting for an authoritative answer before redirecting to login, and leaving login again if
+ * the user turns up after the redirect already happened.
+ */
+describe('createRouter - onBefore - unresolved auth state (NEXUS-54290)', () => {
+  let router;
+  let originalGetValue;
+
+  /** Models the real Welcome page, which is gated on anonymousAccessOrHasUser. */
+  const GATED_ROUTE = {
+    name: 'gated',
+    url: '/gated',
+    component: () => null,
+    data: { visibilityRequirements: { anonymousAccessOrHasUser: true } }
+  };
+
+  const GATED_RETURN_TO = btoa('#/gated');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.NX.Permissions.check.mockReturnValue(true);
+    // An earlier suite deletes NX.Security; NavigationUtils needs it for the visibility check.
+    global.NX.Security = { hasUser: jest.fn().mockReturnValue(false) };
+    originalGetValue = global.NX.State.getValue;
+    // No anonymous access, so visibility hinges entirely on there being a user
+    global.NX.State.getValue = jest.fn().mockReturnValue(undefined);
+
+    ExtJS.hasUser = jest.fn(() => global.NX.Security.hasUser());
+    ExtJS.state = jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
+    ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(false);
+    ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
+    ExtJS.onStateChange = jest.fn(() => () => {});
+    // Warm state: permissions already loaded (the cold-load variant is its own suite below).
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
+
+    router = getTestRouter();
+    router.stateRegistry.register(GATED_ROUTE);
+  });
+
+  afterEach(() => {
+    global.NX.State.getValue = originalGetValue;
+  });
+
+  /** Returns the listener createRouter subscribed to 'userchanged', or undefined. */
+  function recoveryListener() {
+    const call = ExtJS.onStateChange.mock.calls.find(([events]) => events.includes('userchanged'));
+    return call?.[1];
+  }
+
+  it('waits for the auth state, then allows the route when a user turns up', async () => {
+    ExtJS.whenAuthStateResolved.mockImplementation(() => {
+      global.NX.Security.hasUser.mockReturnValue(true);
+      return Promise.resolve();
+    });
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    await router.stateService.go('gated').catch(() => {});
+
+    expect(ExtJS.whenAuthStateResolved).toHaveBeenCalled();
+    expect(goSpy).toHaveBeenCalledTimes(1);
+    expect(goSpy).not.toHaveBeenCalledWith('login', expect.anything());
+    expect(router.stateService.current.name).toBe('gated');
+  });
+
+  it('does not redirect to login while the auth state is still in flight', async () => {
+    let resolveAuthState;
+    ExtJS.whenAuthStateResolved.mockReturnValue(new Promise((resolve) => {
+      resolveAuthState = resolve;
+    }));
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    jest.spyOn(router.urlService, 'url').mockReturnValue('/gated');
+    const transition = router.stateService.go('gated').catch(() => {});
+
+    // Let the hook run up to the await; nothing should have been decided yet
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(goSpy).not.toHaveBeenCalledWith('login', expect.anything());
+
+    global.NX.Security.hasUser.mockReturnValue(true);
+    resolveAuthState();
+    await transition;
+
+    expect(goSpy).not.toHaveBeenCalledWith('login', expect.anything());
+    expect(router.stateService.current.name).toBe('gated');
+  });
+
+  it('redirects to login once the auth state resolves with no user', async () => {
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    jest.spyOn(router.urlService, 'url').mockReturnValue('/gated');
+    await router.stateService.go('gated').catch(() => {});
+
+    expect(ExtJS.whenAuthStateResolved).toHaveBeenCalled();
+    expect(goSpy).toHaveBeenCalledWith('login', { returnTo: GATED_RETURN_TO });
+  });
+
+  it('does not wait when the auth state is already resolved', async () => {
+    ExtJS.isAuthStateResolved.mockReturnValue(true);
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    jest.spyOn(router.urlService, 'url').mockReturnValue('/gated');
+    await router.stateService.go('gated').catch(() => {});
+
+    expect(ExtJS.whenAuthStateResolved).not.toHaveBeenCalled();
+    expect(goSpy).toHaveBeenCalledWith('login', { returnTo: GATED_RETURN_TO });
+  });
+
+  it('resumes the original destination when a user arrives after the login redirect', async () => {
+    jest.spyOn(router.urlService, 'url').mockReturnValue('/gated');
+    await router.stateService.go('gated').catch(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(router.stateService.current.name).toBe('login');
+
+    const onUserChanged = recoveryListener();
+    expect(onUserChanged).toBeDefined();
+
+    const urlSpy = jest.spyOn(router.urlService, 'url');
+    global.NX.Security.hasUser.mockReturnValue(true);
+    onUserChanged();
+
+    expect(urlSpy).toHaveBeenCalledWith('#/gated');
+  });
+
+  it('leaves login for the welcome page when a user arrives and there is no returnTo', async () => {
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    await router.stateService.go('login');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(router.stateService.current.name).toBe('login');
+
+    const onUserChanged = recoveryListener();
+    expect(onUserChanged).toBeDefined();
+
+    global.NX.Security.hasUser.mockReturnValue(true);
+    onUserChanged();
+
+    expect(goSpy).toHaveBeenCalledWith('browse.welcome');
+  });
+
+  it('stays on login when the state change brings no user', async () => {
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    await router.stateService.go('login');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const onUserChanged = recoveryListener();
+    expect(onUserChanged).toBeDefined();
+
+    goSpy.mockClear();
+    onUserChanged();
+
+    expect(goSpy).not.toHaveBeenCalled();
+    expect(router.stateService.current.name).toBe('login');
+  });
+
+  it('does not watch for a late user when the auth state is already resolved', async () => {
+    ExtJS.isAuthStateResolved.mockReturnValue(true);
+
+    await router.stateService.go('login');
+
+    expect(ExtJS.onStateChange).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * NEXUS-54428: on a cold deep-link (pasting a component-detail URL into a fresh tab) the user is
+ * authenticated but permissions load asynchronously AFTER the auth state resolves (NEXUS-53199 —
+ * see App.jsx). Evaluating route visibility before permissions land made every permission-gated
+ * preview route bounce to the dashboard on first load, only resolving after a manual reload once
+ * permissions were cached. The guard must wait for permissions before redirecting.
+ */
+describe('createRouter - onBefore - permissions not yet loaded on cold deep-link (NEXUS-54428)', () => {
+  let router;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Authenticated, auth state already resolved — the cold-load case is specifically about
+    // permissions not having landed yet, not about the user being unknown.
+    ExtJS.hasUser = jest.fn().mockReturnValue(true);
+    ExtJS.state = jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
+    ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
+    ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
+    ExtJS.onStateChange = jest.fn(() => () => {});
+
+    // Permissions have not loaded yet: NX.Permissions.check returns false for everything.
+    global.NX.Permissions.check.mockReturnValue(false);
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(false);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
+
+    router = getTestRouter();
+
+    // A permission-gated preview search subtree with a child component route, mirroring the real
+    // previewBrowseRoutes: the parent carries the nexus:search:read gate, the child inherits it.
+    router.stateRegistry.register({ name: 'preview', url: '/preview', component: UIView });
+    router.stateRegistry.register({
+      name: 'preview.browse', url: '/browse', abstract: true, component: UIView,
+    });
+    router.stateRegistry.register({
+      name: 'preview.browse.welcome', url: '/welcome', component: () => null,
+      data: { visibilityRequirements: {} },
+    });
+    router.stateRegistry.register({
+      name: 'preview.browse.search', url: '/search', abstract: true, component: UIView,
+      data: { visibilityRequirements: { permissions: ['nexus:search:read'] } },
+    });
+    router.stateRegistry.register({
+      name: 'preview.browse.search.component', url: '/component/:gaId', component: () => null,
+      params: { gaId: { type: 'string', raw: true } },
+      data: { title: 'Component Details' },
+    });
+  });
+
+  it('waits for permissions then allows a gated preview route instead of redirecting to the dashboard', async () => {
+    // Permissions arrive during the wait: arePermissionsReady flips and the needed check passes.
+    ExtJS.waitForPermissions.mockImplementation(() => {
+      ExtJS.arePermissionsReady.mockReturnValue(true);
+      global.NX.Permissions.check.mockReturnValue(true);
+      return Promise.resolve();
+    });
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
+
+    expect(ExtJS.waitForPermissions).toHaveBeenCalled();
+    expect(goSpy).not.toHaveBeenCalledWith('preview.browse.welcome');
+    expect(router.stateService.current.name).toBe('preview.browse.search.component');
+  });
+
+  it('still redirects to the dashboard when permissions load but the required one is absent', async () => {
+    // Permissions finish loading during the wait, but the user genuinely lacks nexus:search:read.
+    ExtJS.waitForPermissions.mockImplementation(() => {
+      ExtJS.arePermissionsReady.mockReturnValue(true);
+      return Promise.resolve(); // NX.Permissions.check stays false
+    });
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
+
+    expect(ExtJS.waitForPermissions).toHaveBeenCalled();
+    expect(goSpy).toHaveBeenCalledWith('preview.browse.welcome');
+  });
+
+  it('does not wait for permissions when they are already loaded', async () => {
+    // Warm app: permissions are loaded, the user simply lacks the gate — redirect immediately.
+    ExtJS.arePermissionsReady.mockReturnValue(true);
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
+
+    expect(ExtJS.waitForPermissions).not.toHaveBeenCalled();
+    expect(goSpy).toHaveBeenCalledWith('preview.browse.welcome');
+  });
+
+  it('does not wait for permissions for an unauthenticated user (routes to login instead)', async () => {
+    ExtJS.hasUser.mockReturnValue(false);
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    jest.spyOn(router.urlService, 'url').mockReturnValue('/preview/browse/search/component/maven2:g:a');
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
+
+    expect(ExtJS.waitForPermissions).not.toHaveBeenCalled();
+    expect(goSpy).toHaveBeenCalledWith('login', expect.objectContaining({ returnTo: expect.any(String) }));
+  });
+
+  it('bounds the permission wait by calculateTimeout rather than the hardcoded default', async () => {
+    // A deep-linked gated route must not hang for the 30s default when permissions never arrive;
+    // the wait is bounded by the UI's own status interval.
+    ExtJS.calculateTimeout = jest.fn().mockReturnValue(10000);
+
+    await router.stateService.go('preview.browse.search.component', { gaId: 'maven2:g:a' }).catch(() => {});
+
+    expect(ExtJS.calculateTimeout).toHaveBeenCalled();
+    expect(ExtJS.waitForPermissions).toHaveBeenCalledWith(10000);
+  });
+});
+
+describe('createRouter - onBefore - permissions arriving after the redirect (NEXUS-54422)', () => {
+  let router;
+  let originalHash;
+
+  /**
+   * Models the empty-map state observed in the browser: arePermissionsReady() reads
+   * true, so the wait is skipped, yet every check() is false. This is the case no
+   * amount of waiting or timeout tuning can fix, and it is why recovery exists.
+   */
+  const GATED_ROUTE = {
+    name: 'preview.gated',
+    url: '/gated',
+    component: () => null,
+    data: { visibilityRequirements: { permissions: ['nexus:search:read'] } }
+  };
+
+  const SEARCH_HASH = '#/preview/gated?format=maven&nameOrVersion=commons';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    ExtJS.hasUser = jest.fn().mockReturnValue(true);
+    ExtJS.isAuthStateResolved = jest.fn().mockReturnValue(true);
+    ExtJS.whenAuthStateResolved = jest.fn().mockResolvedValue(undefined);
+    ExtJS.onStateChange = jest.fn(() => () => {});
+    ExtJS.state = jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
+
+    // The empty-install state: "ready", but granting nothing.
+    ExtJS.arePermissionsReady = jest.fn().mockReturnValue(true);
+    ExtJS.waitForPermissions = jest.fn().mockResolvedValue(undefined);
+    global.NX.Permissions.check.mockReturnValue(false);
+
+    ExtJS.onPermissionsChange = jest.fn(() => () => {});
+
+    originalHash = window.location.hash;
+    window.location.hash = SEARCH_HASH;
+
+    router = getTestRouter();
+    router.stateRegistry.register({ name: 'preview', url: '/preview', component: UIView });
+    router.stateRegistry.register({ name: 'preview.browse', url: '/browse', component: UIView });
+    router.stateRegistry.register({
+      name: 'preview.browse.welcome',
+      url: '/welcome',
+      component: () => null,
+      data: { visibilityRequirements: {} },
+    });
+    router.stateRegistry.register(GATED_ROUTE);
+  });
+
+  afterEach(() => {
+    window.location.hash = originalHash;
+  });
+
+  /** Returns the listener createRouter subscribed to permission changes. */
+  function permissionsListener() {
+    return ExtJS.onPermissionsChange.mock.calls[0]?.[0];
+  }
+
+  it('subscribes to permission changes when it redirects away', async () => {
+    await router.stateService.go('preview.gated').catch(() => {});
+
+    expect(ExtJS.onPermissionsChange).toHaveBeenCalled();
+    expect(permissionsListener()).toBeDefined();
+  });
+
+  it('restores the original destination once permissions grant it', async () => {
+    await router.stateService.go('preview.gated').catch(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(router.stateService.current.name).toBe('preview.browse.welcome');
+
+    // The real permission set lands.
+    global.NX.Permissions.check.mockReturnValue(true);
+    permissionsListener()();
+
+    // Restored by hash assignment, not stateService.go, so undeclared params survive.
+    expect(window.location.hash).toContain('nameOrVersion=commons');
+    expect(window.location.hash).toContain('format=maven');
+  });
+
+  it('keeps waiting when a permission change still does not grant the route', async () => {
+    await router.stateService.go('preview.gated').catch(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // An empty install fires 'changed' too — it must not consume the subscription.
+    permissionsListener()();
+    expect(router.stateService.current.name).toBe('preview.browse.welcome');
+
+    global.NX.Permissions.check.mockReturnValue(true);
+    permissionsListener()();
+    expect(window.location.hash).toContain('nameOrVersion=commons');
+  });
+
+  it('does not hijack navigation if the user has moved on', async () => {
+    await router.stateService.go('preview.gated').catch(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // User navigates somewhere else before permissions land.
+    await router.stateService.go('browse.welcome').catch(() => {});
+    const hashAfterUserNavigation = window.location.hash;
+
+    global.NX.Permissions.check.mockReturnValue(true);
+    permissionsListener()();
+
+    expect(window.location.hash).toBe(hashAfterUserNavigation);
+  });
+
+  it('stops watching after the recovery timeout', async () => {
+    jest.useFakeTimers();
+    try {
+      const unsubscribe = jest.fn();
+      ExtJS.onPermissionsChange = jest.fn(() => unsubscribe);
+
+      router = getTestRouter();
+      router.stateRegistry.register({ name: 'preview', url: '/preview', component: UIView });
+      router.stateRegistry.register({ name: 'preview.browse', url: '/browse', component: UIView });
+      router.stateRegistry.register({
+        name: 'preview.browse.welcome',
+        url: '/welcome',
+        component: () => null,
+        data: { visibilityRequirements: {} },
+      });
+      router.stateRegistry.register(GATED_ROUTE);
+
+      router.stateService.go('preview.gated').catch(() => {});
+      // The transition resolves across a promise chain; alternate microtask flushes
+      // with zero-length timer advances until the redirect branch has run.
+      for (let i = 0; i < 50; i++) {
+        jest.advanceTimersByTime(0);
+        await Promise.resolve();
+      }
+      expect(ExtJS.onPermissionsChange).toHaveBeenCalled();
+
+      jest.advanceTimersByTime(30000);
+      expect(unsubscribe).toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

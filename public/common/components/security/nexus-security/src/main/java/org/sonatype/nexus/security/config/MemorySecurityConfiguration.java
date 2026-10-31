@@ -42,8 +42,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.apache.shiro.util.CollectionUtils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.security.config.SecuritySourceUtil.isCaseInsensitiveSource;
 
 /**
@@ -77,13 +77,13 @@ public class MemorySecurityConfiguration
 
   @Override
   public CUser getUser(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
     return users.get(id);
   }
 
   private void addUser(final CUser user) {
-    checkNotNull(user);
-    checkNotNull(user.getId());
+    requireNonNull(user);
+    requireNonNull(user.getId());
     checkState(users.putIfAbsent(user.getId(), user) == null, "%s already exists", user.getId());
   }
 
@@ -124,8 +124,8 @@ public class MemorySecurityConfiguration
 
   @Override
   public void updateUser(final CUser user) throws UserNotFoundException {
-    checkNotNull(user);
-    checkNotNull(user.getId());
+    requireNonNull(user);
+    requireNonNull(user.getId());
     if (users.replace(user.getId(), user) == null) {
       throw new UserNotFoundException(user.getId());
     }
@@ -149,7 +149,7 @@ public class MemorySecurityConfiguration
 
   @Override
   public boolean removeUser(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
     if (users.remove(id) != null) {
       removeUserRoleMapping(id, UserManager.DEFAULT_SOURCE);
       return true;
@@ -164,16 +164,16 @@ public class MemorySecurityConfiguration
 
   @Override
   public CUserRoleMapping getUserRoleMapping(final String userId, final String source) {
-    checkNotNull(userId);
-    checkNotNull(source);
+    requireNonNull(userId);
+    requireNonNull(source);
     return userRoleMappings.get(userRoleMappingKey(userId, source));
   }
 
   @Override
   public void addUserRoleMapping(final CUserRoleMapping mapping) {
-    checkNotNull(mapping);
-    checkNotNull(mapping.getUserId());
-    checkNotNull(mapping.getSource());
+    requireNonNull(mapping);
+    requireNonNull(mapping.getUserId());
+    requireNonNull(mapping.getSource());
     checkState(
         userRoleMappings.putIfAbsent(userRoleMappingKey(mapping.getUserId(), mapping.getSource()), mapping) == null,
         "%s/%s already exists", mapping.getUserId(), mapping.getSource());
@@ -195,9 +195,9 @@ public class MemorySecurityConfiguration
 
   @Override
   public void updateUserRoleMapping(final CUserRoleMapping mapping) throws NoSuchRoleMappingException {
-    checkNotNull(mapping);
-    checkNotNull(mapping.getUserId());
-    checkNotNull(mapping.getSource());
+    requireNonNull(mapping);
+    requireNonNull(mapping.getUserId());
+    requireNonNull(mapping.getSource());
     if (userRoleMappings.replace(userRoleMappingKey(mapping.getUserId(), mapping.getSource()), mapping) == null) {
       throw new NoSuchRoleMappingException(mapping.getUserId());
     }
@@ -205,8 +205,8 @@ public class MemorySecurityConfiguration
 
   @Override
   public boolean removeUserRoleMapping(final String userId, final String source) {
-    checkNotNull(userId);
-    checkNotNull(source);
+    requireNonNull(userId);
+    requireNonNull(source);
     return userRoleMappings.remove(userRoleMappingKey(userId, source)) != null;
   }
 
@@ -217,7 +217,7 @@ public class MemorySecurityConfiguration
 
   @Override
   public CPrivilege getPrivilege(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
     return privileges.get(id);
   }
 
@@ -246,8 +246,8 @@ public class MemorySecurityConfiguration
 
   @Override
   public CPrivilege addPrivilege(final CPrivilege privilege) {
-    checkNotNull(privilege);
-    checkNotNull(privilege.getId());
+    requireNonNull(privilege);
+    requireNonNull(privilege.getId());
     checkState(privileges.putIfAbsent(privilege.getId(), privilege) == null, "%s already exists", privilege.getId());
     return privilege;
   }
@@ -268,8 +268,8 @@ public class MemorySecurityConfiguration
 
   @Override
   public void updatePrivilege(final CPrivilege privilege) {
-    checkNotNull(privilege);
-    checkNotNull(privilege.getId());
+    requireNonNull(privilege);
+    requireNonNull(privilege.getId());
     if (privileges.replace(privilege.getId(), privilege) == null) {
       throw new NoSuchPrivilegeException(privilege.getId());
     }
@@ -282,7 +282,7 @@ public class MemorySecurityConfiguration
 
   @Override
   public boolean removePrivilege(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
     return privileges.remove(id) != null;
   }
 
@@ -302,13 +302,13 @@ public class MemorySecurityConfiguration
 
   @Override
   public CRole getRole(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
     return roles.get(id);
   }
 
   @Override
   public List<CRole> getRoles(final java.util.Collection<String> ids) {
-    checkNotNull(ids);
+    requireNonNull(ids);
 
     if (ids.isEmpty()) {
       return ImmutableList.of();
@@ -322,8 +322,8 @@ public class MemorySecurityConfiguration
 
   @Override
   public void addRole(final CRole role) {
-    checkNotNull(role);
-    checkNotNull(role.getId());
+    requireNonNull(role);
+    requireNonNull(role.getId());
     checkState(roles.putIfAbsent(role.getId(), role) == null, "%s already exists", role.getId());
 
     // Maintain reverse index
@@ -349,8 +349,8 @@ public class MemorySecurityConfiguration
 
   @Override
   public void updateRole(final CRole role) {
-    checkNotNull(role);
-    checkNotNull(role.getId());
+    requireNonNull(role);
+    requireNonNull(role.getId());
 
     CRole oldRole = roles.get(role.getId());
     if (oldRole == null) {
@@ -375,7 +375,7 @@ public class MemorySecurityConfiguration
 
   @Override
   public boolean removeRole(final String id) {
-    checkNotNull(id);
+    requireNonNull(id);
     CRole role = roles.remove(id);
     if (role != null) {
       // Clean up reverse index

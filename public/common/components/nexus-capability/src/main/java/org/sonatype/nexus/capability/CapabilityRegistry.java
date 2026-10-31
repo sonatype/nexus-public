@@ -139,6 +139,13 @@ public interface CapabilityRegistry
   void pullAndRefreshReferencesFromDB();
 
   /**
+   * Update cached 'references' from DB for only the given capability {@code type}, so a caller on a hot path
+   * (e.g. authentication resolving its realm capability) can materialize a single peer-created capability
+   * without reading and reconciling the entire capability table.
+   */
+  void pullAndRefreshReferencesOfType(CapabilityType type);
+
+  /**
    * Re-encrypt secrets of a given capability.
    * 
    * @param capabilityReference capability reference

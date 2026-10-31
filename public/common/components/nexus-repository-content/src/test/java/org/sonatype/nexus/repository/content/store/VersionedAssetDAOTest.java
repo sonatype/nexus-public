@@ -174,7 +174,7 @@ class VersionedAssetDAOTest
   }
 
   static int countAssets(final AssetDAO dao, final int repositoryId) {
-    return dao.countAssets(repositoryId, null, null, null);
+    return dao.countAssets(repositoryId, null, null, null, true);
   }
 
   static Continuation<Asset> browseAssets(
@@ -184,7 +184,7 @@ class VersionedAssetDAOTest
       final int limit,
       final String continuationToken)
   {
-    return dao.browseAssets(repositoryId, limit, continuationToken, kind, null, null);
+    return dao.browseAssets(repositoryId, limit, continuationToken, kind, null, null, true);
   }
 
   @Override

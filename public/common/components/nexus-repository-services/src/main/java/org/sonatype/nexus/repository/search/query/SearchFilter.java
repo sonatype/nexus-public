@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a search filter with optional explicit operator.
@@ -50,8 +50,8 @@ public record SearchFilter(String property, String value, @Nullable FilterOperat
    * @param operator the logical operator (AND/OR), or null to use global conjunction flag
    */
   public SearchFilter {
-    checkNotNull(property);
-    checkNotNull(value);
+    requireNonNull(property);
+    requireNonNull(value);
   }
 
   public String getProperty() {

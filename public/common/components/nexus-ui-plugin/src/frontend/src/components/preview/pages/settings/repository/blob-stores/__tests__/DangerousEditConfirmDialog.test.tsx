@@ -11,10 +11,6 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-/**
- * @jest-environment jsdom
- */
-
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

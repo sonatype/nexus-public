@@ -16,9 +16,16 @@ import Axios from 'axios';
 import { useSslCertificatesApi } from '../useSslCertificatesApi';
 import { SslCertificate } from '../types';
 
-// Mock Axios - Sprint 15: All SSL operations now use REST via Axios
+// Axios is mocked at the transport level rather than mocking ExtAPIUtils, so these tests also
+// cover the ExtDirect request body the hook produces.
 jest.mock('axios');
 const mockedAxios = Axios as jest.Mocked<typeof Axios>;
+
+// The trust store is managed over REST; certificate inspection goes over ExtDirect.
+const TRUSTSTORE_URL = 'service/rest/v1/security/ssl/truststore';
+const EXTDIRECT_URL = 'service/extdirect';
+
+const extDirectOk = (data: unknown) => ({ data: { result: { success: true, data } } });
 
 describe('useSslCertificatesApi', () => {
   beforeEach(() => {
@@ -47,7 +54,7 @@ describe('useSslCertificatesApi', () => {
       });
 
       expect(certificates).toEqual(mockCertificates);
-      expect(mockedAxios.get).toHaveBeenCalledWith('/service/rest/v1/security/ssl/truststore');
+      expect(mockedAxios.get).toHaveBeenCalledWith(TRUSTSTORE_URL);
     });
 
     it('handles error when fetching certificates fails', async () => {
@@ -62,14 +69,15 @@ describe('useSslCertificatesApi', () => {
   });
 
   describe('fetchCertificateFromHost', () => {
-    it('fetches certificate from remote host successfully via REST', async () => {
+    it('retrieves a certificate from a remote host over ExtDirect', async () => {
       const mockCertificate: SslCertificate = {
         id: 'cert1',
         subjectCommonName: 'example.com',
         fingerprint: 'AA:BB:CC:DD:EE:FF',
+        inTrustStore: false,
       };
 
-      mockedAxios.get.mockResolvedValue({ data: mockCertificate });
+      mockedAxios.post.mockResolvedValue(extDirectOk(mockCertificate));
 
       const { result } = renderHook(() => useSslCertificatesApi());
 
@@ -79,14 +87,19 @@ describe('useSslCertificatesApi', () => {
       });
 
       expect(certificate).toEqual(mockCertificate);
-      expect(mockedAxios.get).toHaveBeenCalledWith(
-        expect.stringContaining('/service/rest/v1/security/ssl?host=example.com&port=443&protocolHint=https')
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        EXTDIRECT_URL,
+        expect.objectContaining({
+          action: 'ssl_Certificate',
+          method: 'retrieveFromHost',
+          data: ['example.com', 443, 'https'],
+        })
       );
     });
 
-    it('handles error when fetching certificate from host fails', async () => {
-      mockedAxios.get.mockRejectedValue({
-        response: { data: { message: 'Host unreachable' } },
+    it('surfaces an ExtDirect failure message', async () => {
+      mockedAxios.post.mockResolvedValue({
+        data: { result: { success: false, message: 'Host unreachable' } },
       });
 
       const { result } = renderHook(() => useSslCertificatesApi());
@@ -95,8 +108,8 @@ describe('useSslCertificatesApi', () => {
         .rejects.toThrow('Host unreachable');
     });
 
-    it('uses generic error message when no specific message provided', async () => {
-      mockedAxios.get.mockRejectedValue(new Error('Network error'));
+    it('surfaces a transport error', async () => {
+      mockedAxios.post.mockRejectedValue(new Error('Network error'));
 
       const { result } = renderHook(() => useSslCertificatesApi());
 
@@ -106,14 +119,15 @@ describe('useSslCertificatesApi', () => {
   });
 
   describe('getCertificateDetails', () => {
-    it('gets certificate details from PEM content via REST', async () => {
+    it('parses PEM content over ExtDirect', async () => {
       const mockCertificate: SslCertificate = {
         id: 'cert1',
         subjectCommonName: 'example.com',
         fingerprint: 'AA:BB:CC:DD:EE:FF',
+        inTrustStore: false,
       };
 
-      mockedAxios.post.mockResolvedValue({ data: mockCertificate, status: 201 });
+      mockedAxios.post.mockResolvedValue(extDirectOk(mockCertificate));
 
       const { result } = renderHook(() => useSslCertificatesApi());
 
@@ -124,17 +138,53 @@ describe('useSslCertificatesApi', () => {
 
       expect(certificate).toEqual(mockCertificate);
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        '/service/rest/v1/security/ssl/truststore',
-        '-----BEGIN CERTIFICATE-----',
+        EXTDIRECT_URL,
         expect.objectContaining({
-          headers: { 'Content-Type': 'text/plain' },
+          action: 'ssl_Certificate',
+          method: 'details',
+          data: ['-----BEGIN CERTIFICATE-----'],
         })
       );
     });
 
-    it('handles error when parsing certificate fails', async () => {
-      mockedAxios.post.mockRejectedValue({
-        response: { data: { message: 'Invalid certificate format' } },
+    // Regression guard (NEXUS-54265): previewing a PEM used to POST to the trust store, which
+    // imports the certificate. Every PEM-based add then failed with a 409 even though the
+    // certificate had in fact been added. Inspection must stay read-only.
+    it('never posts to the trust store while inspecting a certificate', async () => {
+      mockedAxios.post.mockResolvedValue(extDirectOk({ id: 'cert1' }));
+
+      const { result } = renderHook(() => useSslCertificatesApi());
+
+      await act(async () => {
+        await result.current.getCertificateDetails('-----BEGIN CERTIFICATE-----');
+      });
+
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+      expect(mockedAxios.post).not.toHaveBeenCalledWith(
+        TRUSTSTORE_URL,
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    // The REST ApiCertificate DTO has no inTrustStore field, so duplicate detection in the add
+    // form only works because inspection goes over ExtDirect (CertificateXO).
+    it('returns inTrustStore so duplicates can be detected', async () => {
+      mockedAxios.post.mockResolvedValue(extDirectOk({ id: 'cert1', inTrustStore: true }));
+
+      const { result } = renderHook(() => useSslCertificatesApi());
+
+      let certificate: SslCertificate | undefined;
+      await act(async () => {
+        certificate = await result.current.getCertificateDetails('-----BEGIN CERTIFICATE-----');
+      });
+
+      expect(certificate?.inTrustStore).toBe(true);
+    });
+
+    it('surfaces an ExtDirect failure message', async () => {
+      mockedAxios.post.mockResolvedValue({
+        data: { result: { success: false, message: 'Invalid certificate format' } },
       });
 
       const { result } = renderHook(() => useSslCertificatesApi());
@@ -143,7 +193,7 @@ describe('useSslCertificatesApi', () => {
         .rejects.toThrow('Invalid certificate format');
     });
 
-    it('uses generic error message when no specific message provided', async () => {
+    it('surfaces a transport error', async () => {
       mockedAxios.post.mockRejectedValue(new Error('Parse error'));
 
       const { result } = renderHook(() => useSslCertificatesApi());
@@ -172,7 +222,7 @@ describe('useSslCertificatesApi', () => {
 
       expect(certificate).toEqual(mockCertificate);
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        '/service/rest/v1/security/ssl/truststore',
+        TRUSTSTORE_URL,
         '-----BEGIN CERTIFICATE-----',
         { headers: { 'Content-Type': 'text/plain' } }
       );
@@ -212,7 +262,7 @@ describe('useSslCertificatesApi', () => {
       });
 
       expect(mockedAxios.delete).toHaveBeenCalledWith(
-        '/service/rest/v1/security/ssl/truststore/cert1'
+        `${TRUSTSTORE_URL}/cert1`
       );
     });
 
@@ -234,14 +284,14 @@ describe('useSslCertificatesApi', () => {
   });
 
   describe('loadCertificateDetails', () => {
-    it('loads details from remote host via REST', async () => {
+    it('loads details from a remote host', async () => {
       const mockCertificate: SslCertificate = {
         id: 'cert1',
         subjectCommonName: 'example.com',
         fingerprint: 'AA:BB:CC:DD:EE:FF',
       };
 
-      mockedAxios.get.mockResolvedValue({ data: mockCertificate });
+      mockedAxios.post.mockResolvedValue(extDirectOk(mockCertificate));
 
       const { result } = renderHook(() => useSslCertificatesApi());
 
@@ -251,16 +301,20 @@ describe('useSslCertificatesApi', () => {
       });
 
       expect(certificate).toEqual(mockCertificate);
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        EXTDIRECT_URL,
+        expect.objectContaining({ method: 'retrieveFromHost', data: ['example.com', null, null] })
+      );
     });
 
-    it('loads details from PEM content via REST', async () => {
+    it('loads details from PEM content', async () => {
       const mockCertificate: SslCertificate = {
         id: 'cert1',
         subjectCommonName: 'example.com',
         fingerprint: 'AA:BB:CC:DD:EE:FF',
       };
 
-      mockedAxios.post.mockResolvedValue({ data: mockCertificate, status: 201 });
+      mockedAxios.post.mockResolvedValue(extDirectOk(mockCertificate));
 
       const { result } = renderHook(() => useSslCertificatesApi());
 
@@ -270,6 +324,10 @@ describe('useSslCertificatesApi', () => {
       });
 
       expect(certificate).toEqual(mockCertificate);
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        EXTDIRECT_URL,
+        expect.objectContaining({ method: 'details' })
+      );
     });
 
     it('throws error for invalid source type', async () => {
@@ -309,7 +367,7 @@ describe('useSslCertificatesApi', () => {
       expect(result.current.loading).toBe(true);
 
       await act(async () => {
-        resolvePromise!({ data: mockCertificate, status: 201 });
+        resolvePromise!(extDirectOk(mockCertificate));
       });
 
       await waitFor(() => {

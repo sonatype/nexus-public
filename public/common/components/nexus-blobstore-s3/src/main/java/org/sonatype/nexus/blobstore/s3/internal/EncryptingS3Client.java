@@ -87,7 +87,7 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedUpload;
 import software.amazon.awssdk.transfer.s3.model.UploadRequest;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENCRYPTION_KEY;
@@ -129,7 +129,7 @@ public class EncryptingS3Client
   {
     this.delegate = delegate;
     this.blobStoreConfig = blobStoreConfig;
-    this.credentialsProvider = checkNotNull(presignerCredentialsProvider);
+    this.credentialsProvider = requireNonNull(presignerCredentialsProvider);
     this.presigner = createPresigner(delegate, blobStoreConfig, presignerCredentialsProvider);
 
     encrypter = getEncrypter(blobStoreConfig);
@@ -285,13 +285,23 @@ public class EncryptingS3Client
       final String responseHeaderFileName,
       final String contentType)
   {
+    return generatePresignedUrl(presigner, bucketName, key, preSignedUrlDuration, responseHeaderFileName, contentType);
+  }
+
+  protected static URL generatePresignedUrl(
+      final S3Presigner presigner,
+      final String bucketName,
+      final String key,
+      final Duration preSignedUrlDuration,
+      final String responseHeaderFileName,
+      final String contentType)
+  {
     GetObjectRequest.Builder requestBuilder = GetObjectRequest.builder()
-        .bucket(bucketName) // or getConfiguredBucket() if you prefer
+        .bucket(bucketName)
         .key(key);
 
     if (responseHeaderFileName != null) {
-      requestBuilder.responseContentDisposition(
-          "attachment; filename=\"%s\"".formatted(sanitizeContentDispositionFilename(responseHeaderFileName)));
+      requestBuilder.responseContentDisposition(contentDispositionAttachment(responseHeaderFileName));
     }
     if (contentType != null) {
       requestBuilder.responseContentType(contentType);
@@ -446,6 +456,16 @@ public class EncryptingS3Client
             .join();
       }
     }
+  }
+
+  /**
+   * Builds the {@code Content-Disposition} value for pre-signed URLs.
+   *
+   * @param filename the unsanitized filename
+   * @return an {@code attachment} disposition naming the sanitized filename
+   */
+  public static String contentDispositionAttachment(final String filename) {
+    return "attachment; filename=\"%s\"".formatted(sanitizeContentDispositionFilename(filename));
   }
 
   /**

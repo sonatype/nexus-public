@@ -13,7 +13,10 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Service for handling metrics for Repositories.
@@ -29,6 +32,21 @@ public interface RepositoryMetricsService
    * Retrieve metrics for all repositories.
    */
   List<RepositoryMetricsDTO> list();
+
+  /**
+   * Retrieve metrics for all repositories keyed by repository name.
+   *
+   * Duplicate repository names (which should not occur for a healthy metrics store) are de-duplicated
+   * keep-first rather than throwing an {@link IllegalStateException}, so a single inconsistent row
+   * cannot fail the whole call (NEXUS-53722).
+   */
+  default Map<String, RepositoryMetricsDTO> listByName() {
+    return list().stream()
+        .collect(Collectors.toMap(
+            RepositoryMetricsDTO::getName,
+            Function.identity(),
+            (existing, duplicate) -> existing));
+  }
 
   /**
    * Runs the repo sizes update.

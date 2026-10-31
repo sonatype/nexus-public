@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link Condition} implementation support.
@@ -58,7 +58,7 @@ public abstract class ConditionSupport
   }
 
   protected ConditionSupport(final Provider<EventManager> eventManagerProvider, final boolean satisfied) {
-    this.eventManagerProvider = checkNotNull(eventManagerProvider);
+    this.eventManagerProvider = requireNonNull(eventManagerProvider);
     this.satisfied = satisfied;
     active = false;
   }

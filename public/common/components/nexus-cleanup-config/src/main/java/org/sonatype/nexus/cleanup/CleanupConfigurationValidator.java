@@ -33,8 +33,8 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import org.springframework.context.annotation.Lazy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.CLEANUP_ATTRIBUTES_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.CLEANUP_NAME_KEY;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLICY_FORMAT;
@@ -64,9 +64,9 @@ public class CleanupConfigurationValidator
       @Lazy final RepositoryManager repositoryManager,
       final CleanupPolicyStorage cleanupPolicyStorage)
   {
-    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
+    this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.cleanupPolicyStorage = requireNonNull(cleanupPolicyStorage);
   }
 
   @Nullable

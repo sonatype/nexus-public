@@ -33,8 +33,8 @@ import org.quartz.JobKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING_CANCELED;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING_STARTING;
 
@@ -87,11 +87,11 @@ public class QuartzTaskFuture
       final Schedule startedBy,
       @Nullable final String triggerSource)
   {
-    this.scheduler = checkNotNull(scheduler);
-    this.jobKey = checkNotNull(jobKey);
-    this.taskLogName = checkNotNull(taskLogName);
-    this.scheduledAt = checkNotNull(scheduledAt);
-    this.startedBy = checkNotNull(startedBy);
+    this.scheduler = requireNonNull(scheduler);
+    this.jobKey = requireNonNull(jobKey);
+    this.taskLogName = requireNonNull(taskLogName);
+    this.scheduledAt = requireNonNull(scheduledAt);
+    this.startedBy = requireNonNull(startedBy);
     this.triggerSource = triggerSource;
     this.countDownLatch = new CountDownLatch(1);
     this.runState = RUNNING_STARTING;
@@ -100,7 +100,7 @@ public class QuartzTaskFuture
   // TODO: Sort out public access for non-overrides, may be better off as package-private
 
   public void setJobExecutingThread(final Thread thread) {
-    this.jobExecutingThread = checkNotNull(thread);
+    this.jobExecutingThread = requireNonNull(thread);
   }
 
   public void setResult(final Object result, final Exception exception) {

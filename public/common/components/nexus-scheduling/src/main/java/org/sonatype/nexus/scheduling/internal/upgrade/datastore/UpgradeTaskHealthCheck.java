@@ -32,7 +32,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A health check which fails when queued upgrade tasks have not been run in a timely fashion.
@@ -55,9 +55,9 @@ public class UpgradeTaskHealthCheck
       @Value("${nexus.upgrade.queue.stale.age:1d}") final Duration age,
       @Value("${nexus.upgrade.queue.stale.cache:5m}") final Duration cacheDuration)
   {
-    checkNotNull(store);
-    checkNotNull(age);
-    checkNotNull(cacheDuration);
+    requireNonNull(store);
+    requireNonNull(age);
+    requireNonNull(cacheDuration);
 
     cache = CacheBuilder.newBuilder()
         .expireAfterAccess(cacheDuration)

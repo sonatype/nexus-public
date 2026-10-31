@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.failure.MultipleFailures.MultipleFailuresExcept
 
 import com.google.common.collect.Lists;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Manages a set of {@link Lifecycle} components.
@@ -30,7 +30,7 @@ public class LifecycleManager
   private final CopyOnWriteArrayList<Lifecycle> components = new CopyOnWriteArrayList<>();
 
   public void add(final Lifecycle component) {
-    checkNotNull(component);
+    requireNonNull(component);
     boolean added = components.addIfAbsent(component);
     if (added) {
       log.trace("Added: {}", component);
@@ -38,14 +38,14 @@ public class LifecycleManager
   }
 
   public void add(final Lifecycle... components) {
-    checkNotNull(components);
+    requireNonNull(components);
     for (Lifecycle component : components) {
       add(component);
     }
   }
 
   public void remove(final Lifecycle component) {
-    checkNotNull(component);
+    requireNonNull(component);
     boolean removed = components.remove(component);
     if (removed) {
       log.trace("Removed: {}", component);
@@ -53,7 +53,7 @@ public class LifecycleManager
   }
 
   public void remove(final Lifecycle... components) {
-    checkNotNull(components);
+    requireNonNull(components);
     for (Lifecycle component : components) {
       remove(component);
     }

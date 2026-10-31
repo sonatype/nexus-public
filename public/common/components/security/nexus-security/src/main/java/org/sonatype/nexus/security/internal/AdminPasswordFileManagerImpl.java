@@ -23,7 +23,7 @@ import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -43,7 +43,7 @@ public class AdminPasswordFileManagerImpl
 
   @Autowired
   public AdminPasswordFileManagerImpl(final ApplicationDirectories applicationDirectories) {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.applicationDirectories = requireNonNull(applicationDirectories);
     adminPasswordFile = new File(applicationDirectories.getWorkDirectory(), FILENAME);
   }
 

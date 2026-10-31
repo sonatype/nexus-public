@@ -23,7 +23,7 @@ import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * MyBatis {@link TypeHandler} that treats character arrays as passwords and encrypts them before persisting.
@@ -37,7 +37,7 @@ public class PasswordCharacterArrayTypeHandler
   private final PasswordHelper passwordHelper;
 
   public PasswordCharacterArrayTypeHandler(final PasswordHelper passwordHelper) {
-    this.passwordHelper = checkNotNull(passwordHelper);
+    this.passwordHelper = requireNonNull(passwordHelper);
   }
 
   @Override

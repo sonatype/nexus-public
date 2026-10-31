@@ -10,61 +10,85 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState, useEffect} from 'react';
-import { NxTextLink } from '@sonatype/react-shared-components';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
-import { restClient, urlBuilder } from '@/utils/api';
+import React from 'react';
+import {Link} from '@radix-ui/themes';
+import { ExternalLink } from 'lucide-react';
+import { ExtJS, SystemAlert, useIsPreviewUI } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../constants/UIStrings';
-import SystemNotice from '../../widgets/SystemStatusAlerts/SystemNotice';
 
-import './TelemetryWarningBanner.scss';
-
-const TASKS_PATH = '#admin/system/tasks';
-const TELEMETRY_TASK_TYPE = 'telemetry.upload.retry';
+const CLASSIC_TASKS_PATH = '#admin/system/tasks';
+const PREVIEW_TASKS_PATH = '#preview/admin/system/tasks';
 
 /**
- * REST API Task shape (matches server response)
+ * Renders text with markdown-style bold (**text**) as React elements.
  */
-interface RestTask {
-  id: string;
-  name: string;
-  type: string;
-  enabled: boolean;
-  currentState: string;
+function renderBoldText(text: string): React.ReactNode {
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  return parts.map((part, index) =>
+    index % 2 === 1 ? <strong key={index}>{part}</strong> : part
+  );
 }
 
-interface RestTasksResponse {
-  items: RestTask[];
+interface HelperLink {
+  TEXT: string;
+  HREF: string;
 }
 
 /**
- * Telemetry health state from backend.
- * An empty object (all fields undefined) indicates opt-out mode - banner should be hidden.
+ * Replaces all occurrences of the helper link text within the message with a
+ * clickable external Link. Falls back to plain (bold-rendered) text when no
+ * helper link is configured or the link text is not present in the message.
+ * Note: split() is intentionally used to replace ALL occurrences, not just the first.
+ */
+function messageWithLink(messageText: string, helperLink: HelperLink | undefined): React.ReactNode {
+  if (!helperLink) {
+    return renderBoldText(messageText);
+  }
+
+  const linkText = helperLink.TEXT;
+  if (!messageText.includes(linkText)) {
+    return renderBoldText(messageText);
+  }
+
+  const parts = messageText.split(linkText);
+  return parts.reduce((acc: React.ReactNode[], part, index) => {
+    if (index > 0) {
+      acc.push(
+        <Link
+          key={`link-${index}`}
+          href={helperLink.HREF}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-analytics-id="nxrm-telemetry-message-link"
+        >
+          {linkText}
+          <ExternalLink size={12} aria-hidden="true" />
+        </Link>
+      );
+    }
+    if (part) {
+      acc.push(<React.Fragment key={`text-${index}`}>{renderBoldText(part)}</React.Fragment>);
+    }
+    return acc;
+  }, []);
+}
+
+/**
+ * Telemetry health state from backend. Empty object indicates opt-out mode (banner hidden).
  */
 interface TelemetryHealth {
   showWarning?: boolean;
-  failedReportsThreshold?: number;
+  failedReportDays?: number;
+  remainingGracePeriodDays?: number;
   readOnly?: boolean;
-  introducedWarning?: boolean;
 }
 
 /**
- * TelemetryWarningBanner - Warning banner shown when telemetry submissions
- * have failed beyond the threshold, or read-only banner when in read-only mode.
- * <p>
- * Uses ExtJS state to determine visibility. The state is provided by
- * TelemetryHealthStateContributor on the backend.
- * <p>
- * Mode mutual exclusivity (enforced by backend):
- * - Mandatory mode (telemetryMandatoryEnabled=true): Sets readOnly and showWarning
- * - Warning-only mode (telemetryMandatoryEnabled=false): Sets introducedWarning only
- * - Opt-out mode: Returns empty object (banner hidden)
- * <p>
- * Shows multiple banner types based on state:
- * - Read-only mode banner (highest priority): when readOnly is true
- * - Mandatory warning banner: when showWarning is true (mandatory mode, not read-only)
- * - introducedWarning banner: when introducedWarning is true (warning-only mode)
- * <p>
+ * Displays warning banner when telemetry uploads fail persistently.
+ *
+ * Two mutually exclusive modes (determined by backend):
+ * - Read-only mode: System is locked due to prolonged failures (readOnly=true) - red/error
+ * - Mandatory warning: Grace period active, failures above threshold (showWarning=true) - yellow/warning
  */
 export default function TelemetryWarningBanner(): React.ReactElement | null {
   const user = ExtJS.useUser();
@@ -74,73 +98,55 @@ export default function TelemetryWarningBanner(): React.ReactElement | null {
     () => ExtJS.state()?.getValue?.('nexus.telemetry.health')
   ) as TelemetryHealth | undefined;
 
-  const [telemetryTaskId, setTelemetryTaskId] = useState<string | null>(null);
-
   const isReadOnly = telemetryHealth?.readOnly ?? false;
   const showWarning = telemetryHealth?.showWarning ?? false;
-  const introducedWarning = telemetryHealth?.introducedWarning ?? false;
 
-  useEffect(() => {
-    if (isAdmin && (isReadOnly || showWarning || introducedWarning)) {
-      const fetchTelemetryTasks = async () => {
-        try {
-          const url = urlBuilder.tasks.list();
-          const response = await restClient.get<RestTasksResponse>(url);
-          const telemetryTasks = response.items.filter(
-            (task) => task.type === TELEMETRY_TASK_TYPE
-          );
-          if (telemetryTasks.length === 1) {
-            setTelemetryTaskId(telemetryTasks[0].id);
-          } else {
-            setTelemetryTaskId(null);
-          }
-        } catch (error) {
-          setTelemetryTaskId(null);
-        }
-      };
-      fetchTelemetryTasks();
-    }
-  }, [isAdmin, isReadOnly, showWarning, introducedWarning]);
+  // "Go to Tasks" always opens the Tasks list, in the UI the user is currently in
+  const isPreviewUI = useIsPreviewUI();
 
   if (!isAdmin) return null;
 
-  if (!isReadOnly && !showWarning && !introducedWarning) return null;
+  if (!isReadOnly && !showWarning) return null;
 
-  const getTaskUrl = () => {
-    if (telemetryTaskId) {
-      return `${TASKS_PATH}:${encodeURIComponent(telemetryTaskId)}`;
-    }
-    return TASKS_PATH;
-  };
+  const tasksUrl = isPreviewUI ? PREVIEW_TASKS_PATH : CLASSIC_TASKS_PATH;
 
   // Determine which content to show (read-only takes priority)
   const content = isReadOnly
     ? UIStrings.TELEMETRY.READONLY_BANNER
-    : introducedWarning
-      ? UIStrings.TELEMETRY.INTRODUCED_WARNING_BANNER
-      : UIStrings.TELEMETRY.WARNING_BANNER;
+    : UIStrings.TELEMETRY.WARNING_BANNER;
 
   const title = content.TITLE;
-  const message = content.MESSAGE.replace('{count}', String(telemetryHealth?.failedReportsThreshold ?? 3));
-  const description = content.DESCRIPTION;
-  const viewTasksLabel = content.VIEW_TASKS;
+  const messageText = content.MESSAGE
+    .replace('{failedReportDays}', String(telemetryHealth?.failedReportDays ?? 0))
+    .replace('{remainingGracePeriodDays}', String(telemetryHealth?.remainingGracePeriodDays ?? 0));
+  const generalRecommendation = content.GENERAL_RECOMMENDATION;
+  const retryRecommendation = content.RETRY_RECOMMENDATION;
+  const retryLink = content.RETRY_LINK;
+  const helperLink = content.HELPER_LINK;
 
-  const noticeLevel = isReadOnly ? 'error' : 'warning';
+  // Red for read-only mode, yellow/warning for the grace-period warning
+  const tier = isReadOnly ? 'error' : 'warning';
+
+  const message = (
+    <>
+      {messageWithLink(messageText, helperLink)}{' '}
+      {generalRecommendation}{' '}
+      {retryRecommendation}{' '}
+      <Link
+        data-analytics-id="nxrm-telemetry-view-tasks-link"
+        href={tasksUrl}
+      >
+        {retryLink}
+      </Link>
+    </>
+  );
 
   return (
-    <SystemNotice
+    <SystemAlert
+      tier={tier}
       title={title}
-      noticeLevel={noticeLevel}
-      additionalAlertClassNames="nxrm-telemetry-warning-banner"
-      nonDismissable
-    >
-      {message} {description}{' '}
-      <NxTextLink
-        href={getTaskUrl()}
-        className="nxrm-telemetry-view-tasks-link"
-      >
-        {viewTasksLabel}
-      </NxTextLink>
-    </SystemNotice>
+      message={message}
+      dismissable={!isReadOnly}
+    />
   );
 }

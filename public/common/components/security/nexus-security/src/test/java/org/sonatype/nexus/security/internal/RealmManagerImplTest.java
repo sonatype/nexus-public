@@ -20,6 +20,7 @@ import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.UserPrincipalsExpiredDistributedEvent;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.authz.PermissionCachingAuthorizingRealm;
@@ -225,6 +226,11 @@ class RealmManagerImplTest
     return mock(Cache.class);
   }
 
+  @SuppressWarnings("unchecked")
+  private static Cache<Object, AuthenticationInfo> mockAuthenticationCache() {
+    return mock(Cache.class);
+  }
+
   @Test
   void authorizationConfigurationChangedClearsAuthzAndPermissionCaches() {
     Cache<Object, AuthorizationInfo> withCache = mockAuthorizationCache();
@@ -284,6 +290,30 @@ class RealmManagerImplTest
     // Replicating: both caches cleared.
     EventHelper.asReplicating(() -> manager.onEvent(new AuthorizationChangedDistributedEvent()));
     verify(withCache).clear();
+    verify(permCache).invalidateAll();
+  }
+
+  @Test
+  void distributedPrincipalsExpiredClearsCachesOnlyWhenReplicating() {
+    Cache<Object, AuthorizationInfo> authzCache = mockAuthorizationCache();
+    Cache<Object, AuthenticationInfo> authcCache = mockAuthenticationCache();
+    PrincipalPermissionsCache permCache = mock(PrincipalPermissionsCache.class);
+    StubPermissionCachingRealm realm = new StubPermissionCachingRealm(permCache);
+    realm.setAuthorizationCache(authzCache);
+    realm.setAuthenticationCache(authcCache);
+    // lenient: the non-replicating branch below must NOT call getRealms(); strict stubbing would fail on that path.
+    lenient().when(securityManager.getRealms()).thenReturn(List.of(realm));
+
+    // Not replicating: handler is a no-op.
+    manager.onEvent(new UserPrincipalsExpiredDistributedEvent("testuser", "default"));
+    verify(authzCache, never()).clear();
+    verify(authcCache, never()).clear();
+    verify(permCache, never()).invalidateAll();
+
+    // Replicating: both authc and authz caches cleared (mirrors the local UserPrincipalsExpired handler).
+    EventHelper.asReplicating(() -> manager.onEvent(new UserPrincipalsExpiredDistributedEvent("testuser", "default")));
+    verify(authzCache).clear();
+    verify(authcCache).clear();
     verify(permCache).invalidateAll();
   }
 

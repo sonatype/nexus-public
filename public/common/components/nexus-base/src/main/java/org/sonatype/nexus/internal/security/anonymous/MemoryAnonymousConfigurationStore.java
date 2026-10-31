@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * In-memory {@link AnonymousConfigurationStore}.
@@ -47,7 +47,7 @@ public class MemoryAnonymousConfigurationStore
 
   @Override
   public synchronized void save(final AnonymousConfiguration configuration) {
-    this.model = checkNotNull(configuration);
+    this.model = requireNonNull(configuration);
   }
 
   @Override

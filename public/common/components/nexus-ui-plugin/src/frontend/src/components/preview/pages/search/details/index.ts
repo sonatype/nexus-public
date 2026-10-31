@@ -35,7 +35,6 @@ export { GASecurityTab } from './GASecurityTab';
 // Shared components
 export { Breadcrumbs } from './Breadcrumbs';
 export type { BreadcrumbItem } from './Breadcrumbs';
-export { VersionStatusBadge } from './VersionStatusBadge';
 
 // Hooks
 export { useGADetail } from './useGADetail';

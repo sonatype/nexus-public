@@ -446,6 +446,22 @@ public class SearchEventHandlerTest
   }
 
   @Test
+  public void testFlushPageOfComponentsSwallowsIllegalStateExceptionWhenRepositoryStopped() {
+    when(repositoryManager.get("test-repo")).thenReturn(repository);
+    SearchFacet searchFacet = mock(SearchFacet.class);
+    when(repository.optionalFacet(SearchFacet.class)).thenReturn(Optional.of(searchFacet));
+    // Repository was stopped/deleted concurrently; SearchFacet.index() is @Guarded(by = STARTED) and throws.
+    doThrow(new IllegalStateException("repository stopped")).when(searchFacet).index(anyCollection());
+
+    underTest.requestIndex(FORMAT, COMPONENT_ID, repository);
+
+    // The periodic flush must not propagate the guard failure from a stopped/deleted repository (NEXUS-54229).
+    underTest.flushPageOfComponents(null);
+
+    verify(searchFacet).index(anyCollection());
+  }
+
+  @Test
   public void testPollSearchUpdateRequestWithNoPending() {
     // Should not throw when there's nothing to flush
     underTest.pollSearchUpdateRequest();

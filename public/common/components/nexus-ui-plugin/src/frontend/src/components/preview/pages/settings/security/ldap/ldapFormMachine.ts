@@ -13,6 +13,7 @@
 
 import { assign } from 'xstate';
 import { createFormMachine, type FormContext, type ValidationErrors } from '../../../../../../interface/form';
+import ValidationUtils from '../../../../../../interface/ValidationUtils';
 
 import {
   LdapServer,
@@ -23,21 +24,39 @@ import {
 
 /**
  * Validate LDAP connection fields.
- * Checks name, host, port, search base DN, and auth credentials.
+ * Checks name, host, port, search base DN, auth credentials, and the three
+ * numeric connection-settings fields (connectionTimeout, connectionRetryDelay,
+ * maxIncidentsCount). All three are @NotNull on the backend, so a cleared
+ * (undefined) value is an error — "This field is required" — not a pass.
+ *
+ * @param isCreate When true (the default), a password is required for
+ *   authenticated connections. In edit mode (isCreate=false) the bind password
+ *   is NOT required: the REST API never returns stored passwords, so a blank
+ *   field means "keep the existing password". This mirrors the
+ *   `required={isCreate}` behavior in LdapForm.tsx so the machine's continuous
+ *   validation does not flag a genuinely-optional field as invalid on edit.
+ * @param existingNames Names of other LDAP servers, used to reject a name
+ *   collision in both create and edit mode. The caller is responsible for
+ *   excluding the server's own current name (e.g. when editing) so that
+ *   saving a server without renaming it does not flag itself as a duplicate.
  */
-function validateConnection(data: LdapFormData): ValidationErrors {
+export function validateConnection(data: LdapFormData, isCreate = true, existingNames: string[] = []): ValidationErrors {
   const errors: ValidationErrors = {};
 
   if (!data.name?.trim()) {
     errors.name = 'Name is required';
+  } else if (existingNames.includes(data.name.trim())) {
+    errors.name = 'This name is already in use';
   }
 
-  if (!data.protocol || !['ldap', 'ldaps'].includes(data.protocol)) {
+  if (!(data.protocol && ['ldap', 'ldaps'].includes(data.protocol))) {
     errors.protocol = 'Protocol is required';
   }
 
   if (!data.host?.trim()) {
     errors.host = 'Hostname is required';
+  } else if (!ValidationUtils.isHost(data.host)) {
+    errors.host = 'Not a valid hostname or IP address';
   }
 
   if (!data.port || data.port < 1 || data.port > 65535) {
@@ -53,9 +72,33 @@ function validateConnection(data: LdapFormData): ValidationErrors {
     if (!data.authUsername?.trim()) {
       errors.authUsername = 'Username is required for authenticated connection';
     }
-    if (!data.authPassword) {
+    if (isCreate && !data.authPassword) {
       errors.authPassword = 'Password is required for authenticated connection';
     }
+  }
+
+  // Numeric connection rules; all three fields are @NotNull on the backend
+  // (LdapServerXo / LdapServerConnectionXO). Required check runs first so
+  // that a cleared field shows "This field is required" rather than silently
+  // passing validation. NaN, below-range, and above-range all show the same
+  // range message so users get actionable feedback regardless of how the value
+  // is invalid (NEXUS-54076).
+  if (data.connectionTimeout == null) {
+    errors.connectionTimeout = 'This field is required';
+  } else if (Number.isNaN(data.connectionTimeout) || !Number.isInteger(data.connectionTimeout) || data.connectionTimeout < 1 || data.connectionTimeout > 3600) {
+    errors.connectionTimeout = 'Must be a number between 1 and 3600';
+  }
+
+  if (data.connectionRetryDelay == null) {
+    errors.connectionRetryDelay = 'This field is required';
+  } else if (Number.isNaN(data.connectionRetryDelay) || !Number.isInteger(data.connectionRetryDelay) || data.connectionRetryDelay < 0) {
+    errors.connectionRetryDelay = 'Must be a number 0 or greater';
+  }
+
+  if (data.maxIncidentsCount == null) {
+    errors.maxIncidentsCount = 'This field is required';
+  } else if (Number.isNaN(data.maxIncidentsCount) || !Number.isInteger(data.maxIncidentsCount) || data.maxIncidentsCount < 0) {
+    errors.maxIncidentsCount = 'Must be a number 0 or greater';
   }
 
   return errors;
@@ -66,7 +109,7 @@ function validateConnection(data: LdapFormData): ValidationErrors {
  * Checks user object class, ID/name/email attributes, and group fields
  * when LDAP groups as roles is enabled.
  */
-function validateUserGroup(data: LdapFormData): ValidationErrors {
+export function validateUserGroup(data: LdapFormData): ValidationErrors {
   const errors: ValidationErrors = {};
 
   if (!data.userObjectClass?.trim()) {
@@ -111,12 +154,58 @@ function validateUserGroup(data: LdapFormData): ValidationErrors {
 
 /**
  * Validate all LDAP form fields (connection + user/group mapping).
+ * `isCreate` controls whether the bind password is required (create) or optional (edit).
+ * `existingNames` is used in both modes to reject a name that already belongs to another
+ * server; the caller excludes the server's own current name in edit mode.
  */
-export function validateLdap(data: LdapFormData): ValidationErrors {
+export function validateLdap(data: LdapFormData, isCreate = true, existingNames: string[] = []): ValidationErrors {
   return {
-    ...validateConnection(data),
+    ...validateConnection(data, isCreate, existingNames),
     ...validateUserGroup(data),
   };
+}
+
+/**
+ * Map a loaded LDAP server (edit mode) to the flat form data shape, or fall back to defaults
+ * (create mode). Single source of truth used both for the machine's initial context and its
+ * `load` service result, so the two can never drift apart when a field is added.
+ */
+function serverToFormData(server?: LdapServer | null): LdapFormData {
+  return server
+    ? {
+        id: server.id,
+        name: server.name,
+        protocol: server.protocol,
+        useTrustStore: server.useTrustStore,
+        host: server.host,
+        port: server.port,
+        searchBase: server.searchBase,
+        authScheme: server.authScheme,
+        authRealm: server.authRealm,
+        authUsername: server.authUsername,
+        authPassword: server.authPassword,
+        connectionTimeout: server.connectionTimeout,
+        connectionRetryDelay: server.connectionRetryDelay,
+        maxIncidentsCount: server.maxIncidentsCount,
+        userBaseDn: server.userBaseDn,
+        userSubtree: server.userSubtree,
+        userObjectClass: server.userObjectClass,
+        userLdapFilter: server.userLdapFilter,
+        userIdAttribute: server.userIdAttribute,
+        userRealNameAttribute: server.userRealNameAttribute,
+        userEmailAddressAttribute: server.userEmailAddressAttribute,
+        userPasswordAttribute: server.userPasswordAttribute,
+        ldapGroupsAsRoles: server.ldapGroupsAsRoles,
+        groupType: server.groupType,
+        groupBaseDn: server.groupBaseDn,
+        groupSubtree: server.groupSubtree,
+        groupObjectClass: server.groupObjectClass,
+        groupIdAttribute: server.groupIdAttribute,
+        groupMemberAttribute: server.groupMemberAttribute,
+        groupMemberFormat: server.groupMemberFormat,
+        userMemberOfAttribute: server.userMemberOfAttribute,
+      }
+    : { ...DEFAULT_LDAP_SERVER };
 }
 
 /**
@@ -132,45 +221,23 @@ export function validateLdap(data: LdapFormData): ValidationErrors {
  */
 export function createLdapFormMachine(
   serverId: string | undefined,
-  preloadedServer?: LdapServer | null
+  preloadedServer?: LdapServer | null,
+  existingNamesRef?: { current: string[] }
 ) {
-  // Initialize form data from preloaded server if available, otherwise use defaults
-  // This ensures the form displays correct values immediately before load service completes
-  const initialFormData: LdapFormData = preloadedServer
-    ? {
-        id: preloadedServer.id,
-        name: preloadedServer.name,
-        protocol: preloadedServer.protocol,
-        useTrustStore: preloadedServer.useTrustStore,
-        host: preloadedServer.host,
-        port: preloadedServer.port,
-        searchBase: preloadedServer.searchBase,
-        authScheme: preloadedServer.authScheme,
-        authRealm: preloadedServer.authRealm,
-        authUsername: preloadedServer.authUsername,
-        authPassword: preloadedServer.authPassword,
-        connectionTimeout: preloadedServer.connectionTimeout,
-        connectionRetryDelay: preloadedServer.connectionRetryDelay,
-        maxIncidentsCount: preloadedServer.maxIncidentsCount,
-        userBaseDn: preloadedServer.userBaseDn,
-        userSubtree: preloadedServer.userSubtree,
-        userObjectClass: preloadedServer.userObjectClass,
-        userLdapFilter: preloadedServer.userLdapFilter,
-        userIdAttribute: preloadedServer.userIdAttribute,
-        userRealNameAttribute: preloadedServer.userRealNameAttribute,
-        userEmailAddressAttribute: preloadedServer.userEmailAddressAttribute,
-        userPasswordAttribute: preloadedServer.userPasswordAttribute,
-        ldapGroupsAsRoles: preloadedServer.ldapGroupsAsRoles,
-        groupType: preloadedServer.groupType,
-        groupBaseDn: preloadedServer.groupBaseDn,
-        groupSubtree: preloadedServer.groupSubtree,
-        groupObjectClass: preloadedServer.groupObjectClass,
-        groupIdAttribute: preloadedServer.groupIdAttribute,
-        groupMemberAttribute: preloadedServer.groupMemberAttribute,
-        groupMemberFormat: preloadedServer.groupMemberFormat,
-        userMemberOfAttribute: preloadedServer.userMemberOfAttribute,
-      }
-    : { ...DEFAULT_LDAP_SERVER };
+  // Edit mode (an existing server was preloaded, or is being loaded by ID)
+  // does not require a password to be re-entered on every save; create mode
+  // does. Must match useLdapForm.ts's `!(serverId || server)` exactly - that
+  // hook's isCreate is what LdapForm.tsx and its callers see, so a diverging
+  // formula here (e.g. checking preloadedServer alone, ignoring serverId)
+  // would let this security-relevant gate silently disagree with the rest of
+  // the form for a serverId-without-preloaded-server caller.
+  const isCreate = !(serverId || preloadedServer);
+
+  // Initialize form data from preloaded server if available, otherwise use defaults.
+  // This ensures the form displays correct values immediately before load service completes.
+  // Shared helper (serverToFormData) is the single source of truth used both here and by the
+  // load service, so the two can never drift apart when a field is added.
+  const initialFormData: LdapFormData = serverToFormData(preloadedServer);
 
   return createFormMachine({
     id: `ldap-form-${serverId ?? 'new'}`,
@@ -182,7 +249,7 @@ export function createLdapFormMachine(
     },
     actions: {
       validate: assign((ctx: FormContext<LdapFormData>) => ({
-        validationErrors: validateLdap(ctx.data),
+        validationErrors: validateLdap(ctx.data, isCreate, existingNamesRef?.current ?? []),
       })),
       // Apply a schema template to user/group mapping fields
       applyTemplate: assign((context: any, event: any) => {
@@ -211,6 +278,13 @@ export function createLdapFormMachine(
           },
         };
       }),
+      // Confirm the re-entered password (edit mode) and immediately move to
+      // validation/submission in the same synchronous transition — no
+      // setTimeout needed, since XState's send() processes the transition
+      // (including entry actions like 'validate') before returning.
+      confirmPasswordAndSubmit: assign((context: any, event: any) => ({
+        data: { ...context.data, authPassword: event.value as string },
+      })),
       // Handle protocol change with automatic port update
       changeProtocol: assign((context: any, event: any) => {
         const protocol = event.value as string;
@@ -228,45 +302,9 @@ export function createLdapFormMachine(
     },
     services: {
       load: async () => {
-        // Build initial form data from server or defaults
-        const initialData: LdapFormData = preloadedServer
-          ? {
-              id: preloadedServer.id,
-              name: preloadedServer.name,
-              protocol: preloadedServer.protocol,
-              useTrustStore: preloadedServer.useTrustStore,
-              host: preloadedServer.host,
-              port: preloadedServer.port,
-              searchBase: preloadedServer.searchBase,
-              authScheme: preloadedServer.authScheme,
-              authRealm: preloadedServer.authRealm,
-              authUsername: preloadedServer.authUsername,
-              authPassword: preloadedServer.authPassword,
-              connectionTimeout: preloadedServer.connectionTimeout,
-              connectionRetryDelay: preloadedServer.connectionRetryDelay,
-              maxIncidentsCount: preloadedServer.maxIncidentsCount,
-              userBaseDn: preloadedServer.userBaseDn,
-              userSubtree: preloadedServer.userSubtree,
-              userObjectClass: preloadedServer.userObjectClass,
-              userLdapFilter: preloadedServer.userLdapFilter,
-              userIdAttribute: preloadedServer.userIdAttribute,
-              userRealNameAttribute: preloadedServer.userRealNameAttribute,
-              userEmailAddressAttribute: preloadedServer.userEmailAddressAttribute,
-              userPasswordAttribute: preloadedServer.userPasswordAttribute,
-              ldapGroupsAsRoles: preloadedServer.ldapGroupsAsRoles,
-              groupType: preloadedServer.groupType,
-              groupBaseDn: preloadedServer.groupBaseDn,
-              groupSubtree: preloadedServer.groupSubtree,
-              groupObjectClass: preloadedServer.groupObjectClass,
-              groupIdAttribute: preloadedServer.groupIdAttribute,
-              groupMemberAttribute: preloadedServer.groupMemberAttribute,
-              groupMemberFormat: preloadedServer.groupMemberFormat,
-              userMemberOfAttribute: preloadedServer.userMemberOfAttribute,
-            }
-          : { ...DEFAULT_LDAP_SERVER };
-
+        // Build initial form data from server or defaults (shared helper — see serverToFormData)
         return {
-          data: initialData,
+          data: serverToFormData(preloadedServer),
           server: preloadedServer ?? null,
           templates: [] as LdapSchemaTemplate[],
         };
@@ -281,6 +319,18 @@ export function createLdapFormMachine(
       PROTOCOL_CHANGE: {
         actions: ['changeProtocol', 'validate', 'computePristine'],
       },
+      // Assign the re-entered password, then go straight to validating/submitting
+      // (mirrors the base machine's SUBMIT transition target). Uses the array
+      // form for consistency with every other target-bearing custom event in
+      // this codebase (see privilegeFormMachine.ts's TYPE_CHANGE,
+      // sslFormMachine.ts's SOURCE_CHANGE) - FormMachineConfig['on'] only
+      // permits a bare { actions } object when there is no target.
+      CONFIRM_PASSWORD_AND_SUBMIT: [
+        {
+          target: 'validating',
+          actions: ['confirmPasswordAndSubmit'],
+        },
+      ],
     },
   });
 }

@@ -24,7 +24,7 @@ import org.sonatype.nexus.scheduling.schedule.ScheduleFactoryImpl;
 import org.quartz.CronExpression;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Quartz {@link ScheduleFactory}.
@@ -46,7 +46,7 @@ public class QuartzScheduleFactory
    */
   @Override
   public Cron cron(final Date startAt, final String cronExpression) {
-    checkNotNull(startAt);
+    requireNonNull(startAt);
     checkArgument(!Strings2.isBlank(cronExpression), "Empty Cron expression");
 
     // checking with regular-expression

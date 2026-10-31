@@ -12,8 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, } from '@testing-library/react';
 import BlobStoresForm from '../BlobStoresForm';
 import * as useBlobStoresModule from '../useBlobStores';
 import { useBlobStoreForm } from '../useBlobStoreForm';

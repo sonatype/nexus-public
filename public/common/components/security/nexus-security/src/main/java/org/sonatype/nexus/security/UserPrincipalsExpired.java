@@ -12,10 +12,13 @@
  */
 package org.sonatype.nexus.security;
 
+import org.sonatype.nexus.common.event.EventWithSource;
+
 /**
  * An event fired when a user is removed from the system, so cached principals can be expired.
  */
 public class UserPrincipalsExpired
+    extends EventWithSource
 {
   private final String userId;
 

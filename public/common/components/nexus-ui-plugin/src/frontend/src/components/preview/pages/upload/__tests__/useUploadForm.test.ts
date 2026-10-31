@@ -173,10 +173,14 @@ describe('useUploadForm', () => {
 
     it('validates required asset fields', () => {
       const { result } = renderHook(() => useUploadForm(defaultProps));
-      const mockFile = new File(['content'], 'test.jar', { type: 'application/java-archive' });
+      // No extension in the filename, so auto-fill leaves 'extension' empty.
+      const mockFile = new File(['content'], 'test-no-extension', { type: 'application/octet-stream' });
 
       act(() => {
         result.current.setAssetFile(0, mockFile);
+      });
+
+      act(() => {
         result.current.validate();
       });
 
@@ -378,6 +382,67 @@ describe('useUploadForm', () => {
 
       expect(submitResult.success).toBe(false);
       expect(submitResult.error).toContain('Invalid component');
+    });
+
+    it('unwraps the envelope message when the server returns HTTP 400 (NEXUS-53344)', async () => {
+      // NEXUS-53344: UploadResource maps IllegalOperationException
+      // (e.g. read-only deployment policy, duplicate-asset) to HTTP 400 with
+      // the legacy ExtJS-RPC envelope as the body. Axios rejects on 4xx, so the
+      // hook must extract err.response.data[0].message rather than fall back to
+      // the generic "Request failed with status code 400".
+      const axiosError = Object.assign(new Error('Request failed with status code 400'), {
+        response: {
+          status: 400,
+          data: [{ success: false, message: 'Repository is read only: tf-hosted' }],
+        },
+      });
+      mockPost.mockRejectedValue(axiosError);
+
+      const { result } = renderHook(() => useUploadForm(defaultProps));
+      const mockFile = new File(['content'], 'test.jar', { type: 'application/java-archive' });
+
+      act(() => {
+        result.current.setAssetFile(0, mockFile);
+        result.current.setAssetField(0, 'extension', 'jar');
+        result.current.setComponentField('groupId', 'com.example');
+        result.current.setComponentField('artifactId', 'test');
+        result.current.setComponentField('version', '1.0.0');
+      });
+
+      let submitResult: { success: boolean; error?: string } = { success: false };
+      await act(async () => {
+        submitResult = await result.current.submit();
+      });
+
+      expect(submitResult.success).toBe(false);
+      expect(submitResult.error).toContain('Repository is read only: tf-hosted');
+      expect(submitResult.error).not.toContain('Request failed with status code 400');
+    });
+
+    it('falls back to err.message when a non-2xx response has no envelope body', async () => {
+      // Defensive: if the server (or a proxy) returns 4xx/5xx without the
+      // legacy envelope, we still want a useful catch-block fallback rather
+      // than crashing on the optional chain.
+      mockPost.mockRejectedValue(new Error('Network error'));
+
+      const { result } = renderHook(() => useUploadForm(defaultProps));
+      const mockFile = new File(['content'], 'test.jar', { type: 'application/java-archive' });
+
+      act(() => {
+        result.current.setAssetFile(0, mockFile);
+        result.current.setAssetField(0, 'extension', 'jar');
+        result.current.setComponentField('groupId', 'com.example');
+        result.current.setComponentField('artifactId', 'test');
+        result.current.setComponentField('version', '1.0.0');
+      });
+
+      let submitResult: { success: boolean; error?: string } = { success: false };
+      await act(async () => {
+        submitResult = await result.current.submit();
+      });
+
+      expect(submitResult.success).toBe(false);
+      expect(submitResult.error).toContain('Network error');
     });
 
     it('sets isSubmitting during submission', async () => {
@@ -660,6 +725,52 @@ describe('useUploadForm', () => {
       });
 
       expect(result.current.isDirty).toBe(true);
+    });
+
+    it('returns true after selecting a file with no other field changes', () => {
+      const { result } = renderHook(() => useUploadForm(defaultProps));
+      const mockFile = new File(['content'], 'test.jar', { type: 'application/java-archive' });
+
+      act(() => {
+        result.current.setAssetFile(0, mockFile);
+      });
+
+      expect(result.current.isDirty).toBe(true);
+    });
+
+    it('returns false after reset following a file selection', () => {
+      const { result } = renderHook(() => useUploadForm(defaultProps));
+      const mockFile = new File(['content'], 'test.jar', { type: 'application/java-archive' });
+
+      act(() => {
+        result.current.setAssetFile(0, mockFile);
+      });
+      expect(result.current.isDirty).toBe(true);
+
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(result.current.isDirty).toBe(false);
+    });
+  });
+
+  describe('machine field-change reset contract', () => {
+    // Form reset on a repository/field change relies on the caller REMOUNTING this
+    // hook (UploadFormContainer's loading-gate unmount), not on the machine memo.
+    // This test locks the behavior the app depends on: a freshly mounted form
+    // reflects the fields it was given.
+    const extendedComponentFields: UploadComponentField[] = [
+      ...componentFields,
+      { name: 'newField', type: 'STRING', displayName: 'New Field', group: 'Component coordinates', optional: true },
+    ];
+
+    it('picks up new componentFields on a fresh mount (the remount reset path)', () => {
+      const { result } = renderHook(() =>
+        useUploadForm({ ...defaultProps, componentFields: extendedComponentFields })
+      );
+
+      expect(result.current.formData.componentFields).toHaveProperty('newField');
     });
   });
 });

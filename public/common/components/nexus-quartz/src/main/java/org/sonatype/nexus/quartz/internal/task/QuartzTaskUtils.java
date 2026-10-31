@@ -29,7 +29,7 @@ import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.quartz.TriggerKey.triggerKey;
 
 /**
@@ -87,7 +87,7 @@ public class QuartzTaskUtils
    * Only copies string values from job-data map.
    */
   public static TaskConfiguration configurationOf(final JobDetail jobDetail) {
-    checkNotNull(jobDetail);
+    requireNonNull(jobDetail);
 
     return configurationOf(jobDetail.getJobDataMap());
   }
@@ -98,7 +98,7 @@ public class QuartzTaskUtils
    * Only copies string values from job-data map.
    */
   public static TaskConfiguration configurationOf(final JobDataMap jobDataMap) {
-    checkNotNull(jobDataMap);
+    requireNonNull(jobDataMap);
     TaskConfiguration config = new TaskConfiguration();
     for (Entry<String, Object> entry : jobDataMap.entrySet()) {
       if (entry.getValue() instanceof String) {

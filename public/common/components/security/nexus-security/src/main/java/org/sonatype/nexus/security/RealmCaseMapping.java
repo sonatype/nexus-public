@@ -14,7 +14,7 @@ package org.sonatype.nexus.security;
 
 import java.io.Serializable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class RealmCaseMapping
     implements Serializable
@@ -24,7 +24,7 @@ public class RealmCaseMapping
   private final boolean isCaseSensitive;
 
   public RealmCaseMapping(final String realmName, final boolean isCaseSensitive) {
-    this.realmName = checkNotNull(realmName);
+    this.realmName = requireNonNull(realmName);
     this.isCaseSensitive = isCaseSensitive;
   }
 

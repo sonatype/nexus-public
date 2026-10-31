@@ -23,9 +23,24 @@ const mockedFetchTagDetail = tagsApi.fetchTagDetail as jest.MockedFunction<
   typeof tagsApi.fetchTagDetail
 >;
 
+// The tagDetailMachine also loads the component list and total count directly
+// through restClient during its initial load, so mock that too.
+jest.mock('../../../../../interface/api', () => ({
+  restClient: {
+    get: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
+
+import { restClient } from '../../../../../interface/api';
+
+const mockRestClientGet = restClient.get as jest.MockedFunction<typeof restClient.get>;
+
 describe('useTagDetail', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: component search + total-count lookups resolve with an empty page.
+    mockRestClientGet.mockResolvedValue({ items: [] });
   });
 
   it('should fetch tag detail on mount', async () => {

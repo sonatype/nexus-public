@@ -23,6 +23,7 @@ import type {
 } from '../upload.types';
 
 // REST API endpoints
+// Available in both self-hosted and cloud distributions (see NEXUS-54057).
 const UPLOAD_SPECS_ENDPOINT = '/service/rest/v1/formats/upload-specs';
 
 /**
@@ -72,22 +73,11 @@ export function useUploadDefinition(repositoryName: string): UseUploadDefinition
     setError(null);
 
     try {
-      const fetchUploadDefinitions = async (): Promise<{
-        definitions: UploadDefinitionExtended[];
-        is404: boolean;
-      }> => {
-        try {
-          const definitions = await restClient.get<UploadDefinitionExtended[]>(
-            UPLOAD_SPECS_ENDPOINT
-          );
-          return { definitions: definitions || [], is404: false };
-        } catch (err) {
-          const apiError = parseApiError(err);
-          if (isNotFoundError(apiError)) {
-            return { definitions: [], is404: true };
-          }
-          throw err;
-        }
+      const fetchUploadDefinitions = async (): Promise<UploadDefinitionExtended[]> => {
+        const definitions = await restClient.get<UploadDefinitionExtended[]>(
+          UPLOAD_SPECS_ENDPOINT
+        );
+        return definitions || [];
       };
 
       const fetchRepositories = async (): Promise<RepositorySettings[]> => {
@@ -102,11 +92,10 @@ export function useUploadDefinition(repositoryName: string): UseUploadDefinition
         }
       };
 
-      const [repositories, { definitions: uploadDefinitions, is404: uploadSpecsNotFound }] =
-        await Promise.all([
-          fetchRepositories(),
-          fetchUploadDefinitions(),
-        ]);
+      const [repositories, uploadDefinitions] = await Promise.all([
+        fetchRepositories(),
+        fetchUploadDefinitions(),
+      ]);
 
       // Find the repository by name
       const repoSettings = (repositories || []).find(
@@ -123,22 +112,13 @@ export function useUploadDefinition(repositoryName: string): UseUploadDefinition
       );
 
       if (!definition) {
-        if (uploadSpecsNotFound) {
-          // Endpoint does not exist (e.g. cloud deployment) - fail silently
-          setRepositorySettings(repoSettings);
-          setUploadDefinition(null);
-          setError(null);
-        } else {
-          throw new Error(
-            `No upload definition found for format "${repoSettings.format}"`
-          );
-        }
-        setLoading(false);
-        return;
+        throw new Error(
+          `No upload definition found for format "${repoSettings.format}"`
+        );
       }
 
       // Verify the repository supports UI upload
-      // Note: REST API /v1/formats/upload-specs does not return uiUpload field,
+      // Note: the upload-specs endpoint does not return a uiUpload field,
       // so we assume formats in upload-specs support UI upload unless explicitly false
       if (definition.uiUpload === false) {
         throw new Error(`Repository "${repositoryName}" does not support upload through the web UI`);

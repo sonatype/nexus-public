@@ -36,7 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.crypto.secrets.SecretsService.SECRETS_MIGRATION_VERSION;
 import org.springframework.stereotype.Component;
@@ -75,12 +75,12 @@ public class ReEncryptServiceImpl
       final Cooperation2Factory cooperationFactory,
       @Value("${nexus.secrets.cooperation.enabled:true}") final boolean cooperationEnabled)
   {
-    this.keyAccessValidator = checkNotNull(keyAccessValidator);
-    this.encryptionKeyValidator = checkNotNull(encryptionKeyValidator);
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.eventManager = checkNotNull(eventManager);
-    this.databaseCheck = checkNotNull(databaseCheck);
-    this.cooperation = checkNotNull(cooperationFactory).configure()
+    this.keyAccessValidator = requireNonNull(keyAccessValidator);
+    this.encryptionKeyValidator = requireNonNull(encryptionKeyValidator);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.eventManager = requireNonNull(eventManager);
+    this.databaseCheck = requireNonNull(databaseCheck);
+    this.cooperation = requireNonNull(cooperationFactory).configure()
         .enabled(cooperationEnabled)
         .build("re-encrypt-task");
   }

@@ -22,7 +22,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,7 +35,7 @@ public class CoordinateMigrationStep_2_13
 
   @Autowired
   public CoordinateMigrationStep_2_13(final UpgradeTaskScheduler upgradeTaskScheduler) {
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
+    this.upgradeTaskScheduler = requireNonNull(upgradeTaskScheduler);
   }
 
   @Override

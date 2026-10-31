@@ -35,12 +35,12 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.log.LoggerLevelChangedEvent;
-import org.sonatype.nexus.common.log.LoggerOverridesReloadEvent;
 import org.sonatype.nexus.common.log.LoggersResetEvent;
 import org.sonatype.nexus.common.log.RollingPolicyUploader;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -71,7 +71,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
@@ -87,7 +86,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @ManagedLifecycle(phase = KERNEL)
 public class LogbackLogManager
     extends StateGuardLifecycleSupport
-    implements LogManager, ApplicationContextAware
+    implements LogManager, ApplicationContextAware, EventAware
 {
   private final EventManager eventManager;
 
@@ -104,8 +103,8 @@ public class LogbackLogManager
       final EventManager eventManager,
       final LoggerOverrides overrides)
   {
-    this.eventManager = checkNotNull(eventManager);
-    this.overrides = checkNotNull(overrides);
+    this.eventManager = requireNonNull(eventManager);
+    this.overrides = requireNonNull(overrides);
     this.customizations = new HashMap<>();
   }
 
@@ -115,8 +114,6 @@ public class LogbackLogManager
 
     // watch for LogConfigurationCustomizer components
     registerCustomizations(applicationContext);
-
-    eventManager.register(this);
   }
 
   private void configure() {
@@ -134,7 +131,6 @@ public class LogbackLogManager
   protected void doStop() throws Exception {
     // inform logback to shutdown
     loggerContext().stop();
-    eventManager.unregister(this);
   }
 
   @Override
@@ -458,12 +454,6 @@ public class LogbackLogManager
   }
 
   @Subscribe
-  public void on(final LoggerOverridesReloadEvent event) {
-    log.debug("Received event {}. Reload logger overrides", event);
-    applyOverrides();
-  }
-
-  @Subscribe
   public void on(final LoggerOverridesEvent loggerOverridesEvent) {
     if (loggerOverridesEvent.isLocal()) {
       return;
@@ -522,8 +512,8 @@ public class LogbackLogManager
     log.debug("Registering customizations: {}", customizer);
 
     customizer.customize((name, level) -> {
-      checkNotNull(name);
-      checkNotNull(level);
+      requireNonNull(name);
+      requireNonNull(level);
       customizations.put(name, level);
 
       // only apply customization if there is not an override, and the level is not DEFAULT
@@ -559,9 +549,10 @@ public class LogbackLogManager
     if (factory instanceof LoggerContext) {
       return (LoggerContext) factory;
     }
-    // Pax-Logging registers a custom implementation of ILoggerFactory which hides logback; as a workaround
-    // we set org.ops4j.pax.logging.StaticLogbackContext=true in system.properties and access it statically
-    return (LoggerContext) LoggerFactory.getILoggerFactory();
+    // Nexus runs on Spring Boot with logback-classic as the SLF4J binding, so the factory is always a logback
+    // LoggerContext. Fail with a clear message if that ever stops being true rather than a bare ClassCastException.
+    throw new IllegalStateException(
+        "Expected the SLF4J binding to be logback, but found: " + factory.getClass().getName());
   }
 
   /**

@@ -15,7 +15,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { UIView } from '@uirouter/react';
-import { Permissions, CleanupPoliciesList, CleanupPoliciesForm, CapabilitiesList, CapabilitiesCreate, CapabilitiesEdit } from '@sonatype/nexus-ui-plugin';
+import {
+  Permissions,
+  CleanupPoliciesList,
+  CleanupPoliciesForm,
+  CapabilitiesList,
+  CapabilitiesCreate,
+  CapabilitiesEdit,
+  PRO_AND_COMMUNITY_EDITIONS,
+  PRO_FAMILY_EDITIONS,
+} from '@sonatype/nexus-ui-plugin';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
 import { lazyLoad } from './lazyLoad';
 
@@ -36,6 +45,7 @@ const UsersExt = lazyLoad(() => import('../../components/pages/admin/Users/Users
 const AnonymousSettings = lazyLoad(() => import('../../components/pages/admin/AnonymousSettings/AnonymousSettings'));
 const Realms = lazyLoad(() => import('../../components/pages/admin/Realms/Realms'));
 const UserTokens = lazyLoad(() => import('../../components/pages/admin/UserTokens/UserTokens'));
+const ServiceAccountTokens = lazyLoad(() => import('../../components/pages/admin/ServiceAccountTokens/ServiceAccountTokens'));
 const CrowdSettings = lazyLoad(() => import('../../components/pages/admin/CrowdSettings/CrowdSettings'));
 const SamlConfiguration = lazyLoad(() => import('../../components/pages/admin/SamlConfiguration/SamlConfiguration'));
 const OAuth2Configuration = lazyLoad(() => import('../../components/pages/admin/OAuth2Configuration/OAuth2Configuration'));
@@ -48,7 +58,6 @@ const RecoveryMode = lazyLoad(() => import('../../components/pages/admin/Recover
 const Api = lazyLoad(() => import('../../components/pages/admin/Api/Api'));
 const HTTP = lazyLoad(() => import('../../components/pages/admin/Http/Http'));
 const Licensing = lazyLoad(() => import('../../components/pages/admin/Licensing/Licensing'));
-const Upgrade = lazyLoad(() => import('../../components/pages/admin/Upgrade/Upgrade'));
 
 const PreviewUiSettings = lazyLoad(() => import('@sonatype/nexus-ui-plugin').then(m => ({ default: m.PreviewUiSettings })));
 const NodesExt = lazyLoad(() => import('../../components/pages/admin/Nodes/NodesExt'));
@@ -104,7 +113,6 @@ export const adminRoutes = [
           Permissions.ATLAS.READ,
           Permissions.METRICS.READ,
           Permissions.LICENSING.READ,
-          Permissions.MIGRATION.READ,
         ],
       },
     },
@@ -197,7 +205,7 @@ export const adminRoutes = [
       visibilityRequirements: {
         bundle: 'nexus-pro-datastore-plugin',
         permissions: ['nexus:*'],
-        editions: ['PRO', 'COMMUNITY'],
+        editions: PRO_AND_COMMUNITY_EDITIONS,
       },
       title: ADMIN.REPOSITORY.DATASTORE.TITLE,
     },
@@ -506,7 +514,7 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         permissions: [Permissions.USER_TOKENS_SETTINGS.READ],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
         licenseValid: [
           {
             key: 'usertoken',
@@ -515,6 +523,22 @@ export const adminRoutes = [
         ],
       },
       title: ADMIN.SECURITY.USERTOKEN.TITLE,
+    },
+  },
+
+  {
+    name: ADMIN.SECURITY.SERVICE_ACCOUNT_TOKENS.ROOT,
+    url: '/satokens',
+    component: ServiceAccountTokens,
+    data: {
+      visibilityRequirements: {
+        requiresUser: true,
+        permissions: [Permissions.SERVICE_ACCOUNTS.READ],
+        // Matches the backend gate on ServiceAccountServiceImpl:
+        // @ConditionalOnEdition(pro, proPlus, enterprise, cloud).
+        editions: PRO_FAMILY_EDITIONS,
+      },
+      title: ADMIN.SECURITY.SERVICE_ACCOUNT_TOKENS.TITLE,
     },
   },
 
@@ -545,7 +569,7 @@ export const adminRoutes = [
       visibilityRequirements: {
         bundle: 'nexus-saml-plugin',
         permissions: ['nexus:*'],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
       title: ADMIN.SECURITY.SAML.TITLE,
     },
@@ -559,7 +583,7 @@ export const adminRoutes = [
       visibilityRequirements: {
         bundle: 'nexus-oauth2-plugin',
         permissions: ['nexus:*'],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
         statesEnabled: [
           {
             key: 'oauth2Available',
@@ -592,7 +616,7 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         permissions: [Permissions.ATLAS.CREATE],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
       title: ADMIN.SUPPORT.SUPPORTREQUEST.TITLE,
     },
@@ -852,19 +876,6 @@ export const adminRoutes = [
   },
 
   {
-    name: ADMIN.SYSTEM.UPGRADE.ROOT,
-    url: '/upgrade',
-    component: Upgrade,
-    data: {
-      visibilityRequirements: {
-        permissions: [Permissions.MIGRATION.READ],
-        capability: 'migration',
-      },
-      title: ADMIN.SYSTEM.UPGRADE.TITLE,
-    },
-  },
-
-  {
     name: ADMIN.SYSTEM.PREVIEWUI.ROOT,
     url: '/previewui',
     component: PreviewUiSettings,
@@ -944,7 +955,9 @@ export const adminRoutes = [
     },
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SETTINGS.READ],
+        // requiresUser only — permission enforcement is server-side (nexus:settings:read),
+        // and the page renders a permission-denied banner on 403 (CLM-49697).
+        requiresUser: true,
         statesEnabled: [
           {
             key: 'hostedRepositoryEvaluationEnabled',

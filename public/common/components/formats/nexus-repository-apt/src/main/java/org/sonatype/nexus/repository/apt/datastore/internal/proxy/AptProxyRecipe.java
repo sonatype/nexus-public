@@ -49,8 +49,8 @@ import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 import org.sonatype.nexus.repository.view.matchers.AlwaysMatcher;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -170,9 +170,9 @@ public class AptProxyRecipe
     repository.attach(configure(viewFacet.get()));
     repository.attach(httpClientFacet.get());
     repository.attach(negativeCacheFacet.get());
+    repository.attach(aptContentFacet.get());
     repository.attach(proxyFacet.get());
     repository.attach(proxySnapshotFacet.get());
-    repository.attach(aptContentFacet.get());
     repository.attach(browseFacet.get());
     repository.attach(lastAssetMaintenanceFacet.get());
     repository.attach(purgeUnusedFacet.get());

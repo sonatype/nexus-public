@@ -46,7 +46,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
@@ -80,7 +80,7 @@ public class JmxCustomizer
 
   @Autowired
   public JmxCustomizer(@Qualifier("platform") final MBeanServer server) {
-    this.server = checkNotNull(server);
+    this.server = requireNonNull(server);
     this.objectMapper = new ObjectMapper();
   }
 

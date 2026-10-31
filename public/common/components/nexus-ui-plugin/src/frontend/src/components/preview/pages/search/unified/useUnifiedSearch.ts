@@ -36,6 +36,7 @@ import { buildQueryParams, getPlaceholderForFormat, getApiFormat } from './searc
 import { createSearchMachine } from './searchMachine';
 import { isMockMode } from '../../../config/featureFlags';
 import { getMockSearchResults } from '../../browse/mockData';
+import { compareBySort } from './sortOptions';
 
 // Error name for cancelled Axios requests
 const ABORT_ERROR_NAME = 'CanceledError';
@@ -44,7 +45,6 @@ const ABORT_ERROR_NAME = 'CanceledError';
 const SORT_FIELD_TO_API: Record<string, string> = {
   lastUpdated: 'last_updated',
   name: 'name',
-  version: 'version',
   repository: 'repository',
 };
 
@@ -56,7 +56,7 @@ function addSortParams(
   const apiSort = SORT_FIELD_TO_API[sortField];
   if (apiSort) {
     params.set('sort', apiSort);
-    params.set('direction', sortDirection || 'asc');
+    params.set('direction', sortDirection);
   }
 }
 
@@ -82,6 +82,8 @@ interface RawSearchItem {
 
 interface RawSearchResponse {
   items: RawSearchItem[];
+  /** True server-side match count for the whole query (exact COUNT from the API) */
+  total?: number;
   continuationToken?: string;
 }
 
@@ -160,21 +162,35 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
         abortControllerRef.current = abortController;
 
         const searchQuery = ctx.query.trim();
-        const nameOrVersion = ctx.filters['nameOrVersion']?.trim() || '';
+        const nameOrVersion = ctx.filters.nameOrVersion?.trim() || '';
         // Effective search: combine main query + name filter (matches buildQueryParams logic)
         const effectiveSearch = [searchQuery, nameOrVersion].filter(Boolean).join(' ').trim();
 
         if (isMockMode()) {
           const apiFormat =
             ctx.format !== 'all' ? getApiFormat(ctx.format) : undefined;
-          const repositoryFilter = ctx.filters['repository'] || undefined;
+          const repositoryFilter = ctx.filters.repository || undefined;
           const { items, continuationToken } = getMockSearchResults(
             effectiveSearch,
             apiFormat,
             repositoryFilter,
           );
+          // Mock mode never reaches the REST API, so the sort the server would
+          // have applied has to be applied here instead — otherwise the sort
+          // controls appear inert in mock mode. Real searches are always sorted
+          // server-side and never take this path.
+          const sorted = items
+            .map(transformResult)
+            .sort((a, b) =>
+              compareBySort(
+                a,
+                b,
+                ctx.sortField as SortField,
+                ctx.sortDirection as SortDirection,
+              ),
+            );
           return Promise.resolve({
-            results: items.map(transformResult),
+            results: sorted,
             continuationToken,
           });
         }
@@ -186,6 +202,7 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
         return Axios.get<RawSearchResponse>(url, { signal: abortController.signal })
           .then((response) => ({
             results: response.data.items.map(transformResult),
+            total: response.data.total,
             continuationToken: response.data.continuationToken,
           }))
           .catch((error) => {
@@ -193,7 +210,7 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
             // XState ignores stale invocation results anyway, but this prevents
             // the machine from entering the error state on cancellation.
             if (error instanceof Error && error.name === ABORT_ERROR_NAME) {
-              return { results: [] as SearchResult[], continuationToken: undefined };
+              return { results: [] as SearchResult[], total: undefined, continuationToken: undefined };
             }
             throw error;
           });
@@ -226,11 +243,12 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
         return Axios.get<RawSearchResponse>(url, { signal: abortController.signal })
           .then((response) => ({
             results: response.data.items.map(transformResult),
+            total: response.data.total,
             continuationToken: response.data.continuationToken,
           }))
           .catch((error) => {
             if (error instanceof Error && error.name === ABORT_ERROR_NAME) {
-              return { results: [] as SearchResult[], continuationToken: undefined };
+              return { results: [] as SearchResult[], total: undefined, continuationToken: undefined };
             }
             throw error;
           });
@@ -257,6 +275,7 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
     filters: machineState.context.filters,
     results: machineState.context.results,
     totalCount: machineState.context.totalCount,
+    total: machineState.context.total,
     loading:
       machineState.matches({ lifecycle: 'searching' }) ||
       machineState.matches({ lifecycle: 'loadingMore' }),

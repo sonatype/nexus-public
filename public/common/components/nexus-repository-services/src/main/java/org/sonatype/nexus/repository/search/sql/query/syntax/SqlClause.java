@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An SQL clause which uses the same operand for a collection of predicates, e.g. {@code foo = 'bar' AND bar = 'foo'}
@@ -38,10 +38,10 @@ public class SqlClause
    * private constructor to allow us to optimize in the create method
    */
   private SqlClause(final Operand operand, final List<? extends Expression> expressions) {
-    this.operand = checkNotNull(operand);
+    this.operand = requireNonNull(operand);
     checkArgument(operand == Operand.AND || operand == Operand.OR, "Unexpected operand: " + operand.toString());
     checkArgument(expressions.size() > 1, "Must have at least 2 expressions");
-    this.expressions = ImmutableList.copyOf(checkNotNull(expressions));
+    this.expressions = ImmutableList.copyOf(requireNonNull(expressions));
   }
 
   /**

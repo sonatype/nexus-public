@@ -457,7 +457,7 @@ export function createFormMachine<TData>(config: FormMachineConfig<TData>) {
       // ============================================
       guards: {
         canSave: (context) => {
-          return !context.isPristine && !hasValidationErrors(context.validationErrors);
+          return !(context.isPristine || hasValidationErrors(context.validationErrors));
         },
 
         hasValidationErrors: (context) => {

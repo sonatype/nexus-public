@@ -12,9 +12,9 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Flex, IconButton, Spinner, Switch, Table, Text, Tooltip } from '@radix-ui/themes';
-import { CheckCircle, CircleHelp } from 'lucide-react';
-import { restClient, ENDPOINTS } from '../../../../interface/api';
+import { Flex, Spinner, Switch, Table, Text, Tooltip } from '@radix-ui/themes';
+import { CheckCircle, } from 'lucide-react';
+import { restClient, ENDPOINTS, parseApiError } from '../../../../interface/api';
 import {
   disableFirewall,
   enableFirewallAudit,
@@ -29,6 +29,8 @@ import {
   setMalwareRemediatorEnabledForRepository,
   type MalwareRemediatorMode,
 } from '../../shared/security/malwareRemediatorTask';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
 
 const MALWARE_MODE_LABELS: Record<MalwareRemediatorMode, string> = {
   disabled: 'Off',
@@ -61,6 +63,19 @@ export default function ProtectRepoRow({
   const toast = useToast();
   const [busy, setBusy] = useState(false);
 
+  // Hide firewall protection radios without repository-admin edit, and Auto Remediation
+  // radios without tasks:create (NEXUS-54212). coreui never mounts a <PermissionsProvider>,
+  // so context usePermission returns false for everyone; use ExtJS.usePermission.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canEditFirewall = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.REPOSITORY_ADMIN.EDIT),
+    [hasUser],
+  );
+  const canManageRemediation = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.TASKS.CREATE),
+    [hasUser],
+  );
+
   const supported = isFirewallSupportedFormat(repo.format);
   const hcFormatSupported = isHealthCheckSupportedFormat(repo.format);
   const iqReady = hasIqConnection && hasFirewallLicense;
@@ -79,12 +94,12 @@ export default function ProtectRepoRow({
           level === 'none' ? 'None' : level === 'audit' ? 'Audit' : 'Quarantine';
         toast.success(`Firewall protection set to ${label} for "${repo.name}"`);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : String(e));
+        toast.error(parseApiError(e).message);
       } finally {
         setBusy(false);
       }
     },
-    [iqReady, onRefetch, repo.name, supported, toast]
+    [iqReady, onRefetch, repo.name, supported, toast, onRepoChanged]
   );
 
   const toggleHc = useCallback(
@@ -105,12 +120,12 @@ export default function ProtectRepoRow({
             : `Health Check disabled for "${repo.name}"`
         );
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : String(e));
+        toast.error(parseApiError(e).message);
       } finally {
         setBusy(false);
       }
     },
-    [hcInstanceEnabled, onRefetch, repo.name, toast]
+    [hcInstanceEnabled, onRefetch, repo.name, toast, onRepoChanged]
   );
 
   const currentMalwareMode: MalwareRemediatorMode =
@@ -126,12 +141,12 @@ export default function ProtectRepoRow({
         await onRefetch();
         toast.success(`Auto Remediation set to ${MALWARE_MODE_LABELS[mode]} for "${repo.name}"`);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : String(e));
+        toast.error(parseApiError(e).message);
       } finally {
         setBusy(false);
       }
     },
-    [currentMalwareMode, iqReady, onRefetch, repo.name, supported, toast]
+    [currentMalwareMode, iqReady, onRefetch, repo.name, supported, toast, onRepoChanged]
   );
 
   if (hardened) {
@@ -210,6 +225,12 @@ export default function ProtectRepoRow({
                     —
                   </Text>
                 </Tooltip>
+              ) : !canEditFirewall ? (
+                <Tooltip content="You do not have permission to manage firewall protection">
+                  <Text size="2" color="gray">
+                    —
+                  </Text>
+                </Tooltip>
               ) : busy ? (
                 <Spinner size="1" />
               ) : (
@@ -240,6 +261,12 @@ export default function ProtectRepoRow({
                 </Text>
               ) : !hasIqConnection ? (
                 <Tooltip content="Connect IQ Server to enable Auto Remediation">
+                  <Text size="2" color="gray">
+                    —
+                  </Text>
+                </Tooltip>
+              ) : !canManageRemediation ? (
+                <Tooltip content="You do not have permission to manage Auto Remediation">
                   <Text size="2" color="gray">
                     —
                   </Text>

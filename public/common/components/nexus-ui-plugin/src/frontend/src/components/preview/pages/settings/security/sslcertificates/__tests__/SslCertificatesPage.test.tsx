@@ -12,17 +12,19 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
+import { ExtJS } from '../../../../../../../interface/ExtJS';
 import { SslCertificatesPage } from '../SslCertificatesPage';
 import * as useSslCertificatesApiModule from '../useSslCertificatesApi';
 import { ToastProvider } from '../../../../../shared/Toast';
 
-// Mock ExtJS
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
+// The page imports ExtJS from the interface module directly, so that is what has to be mocked.
+jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     checkPermission: jest.fn().mockReturnValue(true),
+    waitForPermissions: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -83,6 +85,8 @@ describe('SslCertificatesPage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (ExtJS.checkPermission as jest.Mock).mockReturnValue(true);
+    (ExtJS.waitForPermissions as jest.Mock).mockResolvedValue(undefined);
     mockFetchCertificates.mockResolvedValue([
       {
         id: 'cert1',
@@ -159,8 +163,43 @@ describe('SslCertificatesPage', () => {
 
   it('shows Add Certificate button when user has create permission', () => {
     render(<SslCertificatesPage />, { wrapper: TestWrapper });
-    
+
     expect(screen.getByText('Add Certificate')).toBeInTheDocument();
+  });
+
+  // Permissions load asynchronously (NEXUS-53199): checkPermission() answers false until they
+  // arrive, and nothing else re-renders this page, so the button has to be re-evaluated once
+  // waitForPermissions() resolves (NEXUS-54265).
+  it('reveals Add Certificate once permissions finish loading', async () => {
+    let releasePermissions!: () => void;
+    (ExtJS.waitForPermissions as jest.Mock).mockReturnValue(
+      new Promise<void>((resolve) => {
+        releasePermissions = resolve;
+      })
+    );
+    (ExtJS.checkPermission as jest.Mock).mockReturnValue(false);
+
+    render(<SslCertificatesPage />, { wrapper: TestWrapper });
+
+    expect(screen.queryByText('Add Certificate')).not.toBeInTheDocument();
+
+    (ExtJS.checkPermission as jest.Mock).mockReturnValue(true);
+    await act(async () => {
+      releasePermissions();
+    });
+
+    expect(screen.getByText('Add Certificate')).toBeInTheDocument();
+  });
+
+  it('keeps the initial permission answer when permissions never load', async () => {
+    (ExtJS.checkPermission as jest.Mock).mockReturnValue(true);
+    (ExtJS.waitForPermissions as jest.Mock).mockRejectedValue(new Error('Permissions load timed out'));
+
+    render(<SslCertificatesPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('Add Certificate')).toBeInTheDocument();
+    });
   });
 
   it('handles loading state', () => {

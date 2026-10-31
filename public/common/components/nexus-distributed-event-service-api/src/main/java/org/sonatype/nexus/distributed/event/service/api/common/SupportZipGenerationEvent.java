@@ -18,7 +18,7 @@ import org.sonatype.nexus.distributed.event.service.api.EventType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Indicates that 'Support Zip' should be created in some node.
@@ -39,8 +39,8 @@ public class SupportZipGenerationEvent
       @JsonProperty("request") final SupportZipGeneratorRequest request)
   {
     super(EventType.CREATED);
-    this.recipientNodeId = checkNotNull(recipientNodeId);
-    this.request = checkNotNull(request);
+    this.recipientNodeId = requireNonNull(recipientNodeId);
+    this.request = requireNonNull(request);
   }
 
   public String getRecipientNodeId() {

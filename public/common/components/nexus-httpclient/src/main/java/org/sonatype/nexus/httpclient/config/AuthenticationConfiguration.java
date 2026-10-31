@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Authentication configuration.
@@ -57,7 +57,7 @@ public abstract class AuthenticationConfiguration
   private boolean preemptive;
 
   public AuthenticationConfiguration(final String type) {
-    this.type = checkNotNull(type);
+    this.type = requireNonNull(type);
   }
 
   public String getType() {

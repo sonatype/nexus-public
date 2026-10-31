@@ -17,7 +17,6 @@ import { AlertCircle, AlertTriangle, Check } from 'lucide-react';
 
 import {
   CSEL_CONFIG,
-  getAttributeByName,
   getOperatorsForAttribute,
 } from './cselConfig';
 import {
@@ -292,7 +291,7 @@ export function CSELEditor({
     if (!isFocused) return;
     const timer = setTimeout(updateSuggestions, 100);
     return () => clearTimeout(timer);
-  }, [value, isFocused, updateSuggestions]);
+  }, [isFocused, updateSuggestions]);
 
   // Get category color
   const getCategoryColor = (category: string) => {

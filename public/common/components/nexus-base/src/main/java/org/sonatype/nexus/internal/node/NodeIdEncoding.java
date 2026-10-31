@@ -18,7 +18,7 @@ import java.security.cert.CertificateEncodingException;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.ssl.CertificateUtil;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Node ID encoding helpers.
@@ -35,7 +35,7 @@ public class NodeIdEncoding
    * Encode plain Certificate SHA1 into node-id string.
    */
   public static String nodeIdForSha1(final String input) {
-    checkNotNull(input);
+    requireNonNull(input);
     return Strings2.encodeSeparator(input, '-', 8);
   }
 
@@ -43,7 +43,7 @@ public class NodeIdEncoding
    * Decode node-id into plain SHA1 string.
    */
   public static String sha1ForNodeId(final String input) {
-    checkNotNull(input);
+    requireNonNull(input);
     return input.replaceAll("-", "");
   }
 
@@ -51,7 +51,7 @@ public class NodeIdEncoding
    * Return node-id for certificate.
    */
   public static String nodeIdForCertificate(final Certificate cert) throws CertificateEncodingException {
-    checkNotNull(cert);
+    requireNonNull(cert);
     String sha1 = CertificateUtil.calculateSha1(cert);
     return nodeIdForSha1(sha1);
   }
@@ -60,7 +60,7 @@ public class NodeIdEncoding
    * Return node-id for certificate fingerprint.
    */
   public static String nodeIdForFingerprint(final String fingerprint) {
-    checkNotNull(fingerprint);
+    requireNonNull(fingerprint);
     String sha1 = fingerprint.replace(":", "");
     return nodeIdForSha1(sha1);
   }

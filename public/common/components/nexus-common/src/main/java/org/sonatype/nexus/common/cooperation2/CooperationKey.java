@@ -18,8 +18,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 import com.google.common.hash.Hashing;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a key used for {@link Cooperation2}, includes the original human readable string, and a reduced length
@@ -34,8 +33,8 @@ public class CooperationKey
   private final String derivedKey;
 
   private CooperationKey(final String derivedkey, final String humanReadable) {
-    this.humanReadable = checkNotNull(humanReadable);
-    this.derivedKey = checkNotNull(derivedkey);
+    this.humanReadable = requireNonNull(humanReadable);
+    this.derivedKey = requireNonNull(derivedkey);
   }
 
   public String getHashedKey() {
@@ -73,8 +72,8 @@ public class CooperationKey
    */
   public static CooperationKey create(final String scope, final String action, final String... nestedScope) {
     StringJoiner joiner = new StringJoiner(":");
-    joiner.add(checkNotNull(scope, "scope may not be null"));
-    joiner.add(checkNotNull(action, "action may not be null"));
+    joiner.add(requireNonNull(scope, "scope may not be null"));
+    joiner.add(requireNonNull(action, "action may not be null"));
     Arrays.asList(nestedScope).forEach(joiner::add);
 
     String humanReadable = joiner.toString();

@@ -233,6 +233,20 @@ describe('IpAllowList', () => {
         expect(screen.getByTestId('bulk-import-button')).toBeInTheDocument();
       });
     });
+
+    it('renders the row overflow button with neutral gray accent color', async () => {
+      renderPage();
+      await switchToIpAllowListTab();
+      await waitFor(() => {
+        expect(screen.getByText('192.168.1.1')).toBeInTheDocument();
+      });
+
+      const rowActionButtons = screen.getAllByRole('button', { name: 'Row actions' });
+      expect(rowActionButtons).toHaveLength(2);
+      rowActionButtons.forEach((button) => {
+        expect(button).toHaveAttribute('data-accent-color', 'gray');
+      });
+    });
   });
 
   describe('error state', () => {

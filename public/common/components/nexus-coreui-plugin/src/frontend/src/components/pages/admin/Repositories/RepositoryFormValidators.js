@@ -151,3 +151,29 @@ export const validateWritableMember = (data) => {
     return message;
   }
 };
+
+export const validateLayerDownloadTimeout = (data) => {
+  const mode = data.firewall?.mode;
+
+  // Only validate when Firewall mode is AUDIT, QUARANTINE, or PCCS
+  // Return null when Firewall is disabled or not applicable
+  if (!data.dockerProxy || !mode || mode === 'DISABLED') {
+    return null;
+  }
+
+  const {layerDownloadTimeoutMinutes} = data.dockerProxy;
+
+  // Null/empty is valid (will use default)
+  if (layerDownloadTimeoutMinutes === null || layerDownloadTimeoutMinutes === undefined || layerDownloadTimeoutMinutes === '') {
+    return null;
+  }
+
+  // Must be between 1 and 1440 minutes
+  // ValidationUtils.isInRange handles string coercion and NaN validation internally
+  return ValidationUtils.isInRange({
+    value: layerDownloadTimeoutMinutes,
+    min: 1,
+    max: 1440,
+    allowDecimals: false
+  });
+};

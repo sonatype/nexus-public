@@ -11,8 +11,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-export { IqServerPage } from './IqServerPage';
-export { useIqServerApi } from './useIqServerApi';
+export { IqServerOverviewPage } from './IqServerOverviewPage';
+export { IqServerConnectedPage } from './IqServerConnectedPage';
+export { HostedRepoEvaluationSetupPage } from './HostedRepoEvaluationSetupPage';
+export { useIqConnectedApi } from './useIqConnectedApi';
+export { useHostedRepoEvaluation } from './useHostedRepoEvaluation';
+export type {
+  LicensedSolution,
+  IqConfigResponse,
+  IqVerifyResult,
+  DashboardSummary,
+  EvaluationSettingsSummary,
+} from './useIqConnectedApi';
 export * from './types';
-
-

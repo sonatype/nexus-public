@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.apt.rest;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
+import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,7 +24,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AptHostedRepositoryApiRequestToConfigurationConverter
-    extends HostedRepositoryApiRequestToConfigurationConverter<AptHostedRepositoryApiRequest>
+    extends HostedRepositoryApiRequestToConfigurationConverter<HostedStorageAttributes, AptHostedRepositoryApiRequest>
 {
   @Override
   public Configuration convert(final AptHostedRepositoryApiRequest request) {

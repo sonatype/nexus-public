@@ -16,7 +16,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.text.Strings2;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Configuration adapter for {@link BrandingCapability}.
@@ -36,7 +36,7 @@ public class BrandingCapabilityConfiguration
   public static final String FOOTER_HTML = "footerHtml";
 
   public BrandingCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
+    requireNonNull(properties);
     setHeaderEnabled(parseBoolean(properties.get(HEADER_ENABLED), false));
     setHeaderHtml(parseString(properties.get(HEADER_HTML)));
     setFooterEnabled(parseBoolean(properties.get(FOOTER_ENABLED), false));

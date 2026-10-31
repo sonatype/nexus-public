@@ -92,7 +92,7 @@
   }
 
   &__tag-code {
-    font-family: monospace;
+    font-family: var(--font-family-mono);
     font-size: 12px;
     background: var(--nx-color-subsection-background);
     padding: 4px 8px;

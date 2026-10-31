@@ -14,19 +14,15 @@ package org.sonatype.nexus.api.rest.selfhosted.blobstore.s3;
 
 import java.util.Set;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
-
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -35,10 +31,8 @@ import static org.hamcrest.Matchers.is;
 /**
  * Tests for validating S3BlobStoreApiResource endpoint validation.
  */
-@ExtendWith(ValidationExtension.class)
 class S3BlobStoreApiResourceValidationTest
 {
-  @ValidationExecutor
   private final Validator validator =
       new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
 
@@ -47,7 +41,7 @@ class S3BlobStoreApiResourceValidationTest
     S3BlobStoreApiBucket bucket = new S3BlobStoreApiBucket("us-east-1", "my-bucket", "prefix");
     S3BlobStoreApiBucketConfiguration config =
         new S3BlobStoreApiBucketConfiguration(bucket, null, null, null, null, null, null);
-    S3BlobStoreApiModel model = new S3BlobStoreApiModel("_invalidS3Name", null, config);
+    S3BlobStoreApiModel model = new S3BlobStoreApiModel("_invalidS3Name", null, config, null);
 
     Set<ConstraintViolation<S3BlobStoreApiModel>> violations = validator.validate(model);
 
@@ -62,7 +56,7 @@ class S3BlobStoreApiResourceValidationTest
     S3BlobStoreApiBucket bucket = new S3BlobStoreApiBucket("us-east-1", "my-bucket", "prefix");
     S3BlobStoreApiBucketConfiguration config =
         new S3BlobStoreApiBucketConfiguration(bucket, null, null, null, null, null, null);
-    S3BlobStoreApiModel model = new S3BlobStoreApiModel(".invalidS3Name", null, config);
+    S3BlobStoreApiModel model = new S3BlobStoreApiModel(".invalidS3Name", null, config, null);
 
     Set<ConstraintViolation<S3BlobStoreApiModel>> violations = validator.validate(model);
 
@@ -77,7 +71,7 @@ class S3BlobStoreApiResourceValidationTest
     S3BlobStoreApiBucket bucket = new S3BlobStoreApiBucket("us-east-1", "my-bucket", "prefix");
     S3BlobStoreApiBucketConfiguration config =
         new S3BlobStoreApiBucketConfiguration(bucket, null, null, null, null, null, null);
-    S3BlobStoreApiModel model = new S3BlobStoreApiModel("invalid/s3/name", null, config);
+    S3BlobStoreApiModel model = new S3BlobStoreApiModel("invalid/s3/name", null, config, null);
 
     Set<ConstraintViolation<S3BlobStoreApiModel>> violations = validator.validate(model);
 
@@ -92,7 +86,7 @@ class S3BlobStoreApiResourceValidationTest
     S3BlobStoreApiBucket bucket = new S3BlobStoreApiBucket("us-east-1", "my-bucket", "prefix");
     S3BlobStoreApiBucketConfiguration config =
         new S3BlobStoreApiBucketConfiguration(bucket, null, null, null, null, null, null);
-    S3BlobStoreApiModel model = new S3BlobStoreApiModel("valid-s3-name", null, config);
+    S3BlobStoreApiModel model = new S3BlobStoreApiModel("valid-s3-name", null, config, null);
 
     Set<ConstraintViolation<S3BlobStoreApiModel>> violations = validator.validate(model);
 
@@ -104,7 +98,7 @@ class S3BlobStoreApiResourceValidationTest
     S3BlobStoreApiBucket bucket = new S3BlobStoreApiBucket("us-east-1", "my-bucket", "prefix");
     S3BlobStoreApiBucketConfiguration config =
         new S3BlobStoreApiBucketConfiguration(bucket, null, null, null, null, null, null);
-    S3BlobStoreApiModel model = new S3BlobStoreApiModel("valid_s3.name", null, config);
+    S3BlobStoreApiModel model = new S3BlobStoreApiModel("valid_s3.name", null, config, null);
 
     Set<ConstraintViolation<S3BlobStoreApiModel>> violations = validator.validate(model);
 

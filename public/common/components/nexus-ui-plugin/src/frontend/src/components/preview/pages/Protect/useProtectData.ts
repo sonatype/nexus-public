@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useMemo, useState, useEffect } from 'react';
-import { restClient, ENDPOINTS } from '../../../../interface/api';
+import { useMemo } from 'react';
+import { useMachine } from '@xstate/react';
 import { useQuickActionsData, type RepoWithProtection } from '../MalwareRisk/useQuickActionsData';
 import { useHealthCheckSummary, type HealthCheckSummary } from '../Welcome/useHealthCheckSummary';
 import { useIqAudit, type IqAuditCounts } from '../MalwareRisk/useIqAudit';
@@ -23,15 +23,10 @@ import {
 } from '../browse/repository-list/useRepositoryList';
 import { isFirewallSupportedFormat } from '../../../../utils/firewallFormats';
 import { isHealthCheckSupportedFormat } from '../../../../utils/healthCheckFormats';
+import { protectDataMachine, type ProtectIqCapabilities } from './protectDataMachine';
 
-/** Response from GET /service/rest/v1/iq/capabilities (license + connection metadata). */
-export interface ProtectIqCapabilities {
-  connected: boolean;
-  hasFirewall: boolean;
-  hasLifecycle?: boolean;
-  url?: string;
-  deploymentId?: string;
-}
+// Re-export ProtectIqCapabilities so consumers can import it from here.
+export type { ProtectIqCapabilities } from './protectDataMachine';
 
 export interface ProtectFilterCounts {
   formats: Map<string, number>;
@@ -109,52 +104,10 @@ export function useProtectData(): ProtectDataSnapshot {
   /** Browse loads IQ audit when IQ is connected only — not nexus:iq-violation-summary:read (see BrowsePage). */
   const iqAudit = useIqAudit(iqConnected);
 
-  const [hcInstanceEnabled, setHcInstanceEnabled] = useState(true);
-  const [iqCapabilities, setIqCapabilities] = useState<ProtectIqCapabilities | null>(null);
-  const [iqCapabilitiesLoading, setIqCapabilitiesLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setIqCapabilitiesLoading(true);
-    restClient
-      .get<ProtectIqCapabilities>(ENDPOINTS.IQ_CAPABILITIES)
-      .then((cap) => {
-        if (cancelled) return;
-        const valid =
-          cap &&
-          typeof cap === 'object' &&
-          !Array.isArray(cap) &&
-          typeof (cap as ProtectIqCapabilities).hasFirewall === 'boolean';
-        setIqCapabilities(valid ? (cap as ProtectIqCapabilities) : null);
-      })
-      .catch(() => {
-        if (!cancelled) setIqCapabilities(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIqCapabilitiesLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    restClient
-      .get<Array<{ type?: string; typeId?: string; enabled?: boolean }>>(ENDPOINTS.CAPABILITIES)
-      .then((caps) => {
-        if (cancelled || !Array.isArray(caps)) return;
-        const hc = caps.find((c) => (c.type ?? c.typeId) === 'healthcheck');
-        // REST uses `type`; missing capability row → assume HC can be used at repo level (browse does not hide HC on this)
-        setHcInstanceEnabled(hc ? !!hc.enabled : true);
-      })
-      .catch(() => {
-        if (!cancelled) setHcInstanceEnabled(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const [state] = useMachine(protectDataMachine);
+  const iqCapabilities = state.context.iqCapabilities;
+  const hcInstanceEnabled = state.context.hcInstanceEnabled;
+  const iqCapabilitiesLoading = state.matches('capabilities.loading');
 
   const lastAnalyzedByRepo = useMemo(() => {
     const m = new Map<string, number | null>();

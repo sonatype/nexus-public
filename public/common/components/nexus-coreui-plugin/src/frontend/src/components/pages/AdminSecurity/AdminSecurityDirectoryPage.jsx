@@ -104,6 +104,13 @@ export default function AdminSecurityDirectoryPage() {
               routeName={ADMIN.SECURITY.USERTOKEN.ROOT}
           />
 
+          <DirectoryList.DirectoryListItem
+              data-analytics-id="nxrm-admin-security-directory-service-account-tokens-lnk"
+              text={UIStrings.SERVICE_ACCOUNT_TOKENS.MENU.text}
+              description={UIStrings.SERVICE_ACCOUNT_TOKENS.MENU.description}
+              routeName={ADMIN.SECURITY.SERVICE_ACCOUNT_TOKENS.ROOT}
+          />
+
         </DirectoryList>
       </DirectoryPage>);
 }

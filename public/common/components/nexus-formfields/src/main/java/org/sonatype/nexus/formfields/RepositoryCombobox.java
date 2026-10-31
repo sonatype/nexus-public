@@ -19,7 +19,6 @@ import java.util.Map;
 import org.sonatype.nexus.common.i18n.I18N;
 import org.sonatype.nexus.common.i18n.MessageBundle;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -71,7 +70,8 @@ public class RepositoryCombobox
   private static final Messages messages = I18N.create(Messages.class);
 
   public RepositoryCombobox(String id, String label, String helpText, boolean required, String regexValidation) {
-    super(id, label, helpText, required, regexValidation);
+    super(id, label, helpText, required);
+    withRegexValidation(regexValidation);
   }
 
   public RepositoryCombobox(String id, String label, String helpText, boolean required) {
@@ -236,7 +236,7 @@ public class RepositoryCombobox
       storeFilters.put("format", contentClasses.toString());
     }
     if (includingFacets != null) {
-      storeFilters.put("facets", Joiner.on(',').join(includingFacets));
+      storeFilters.put("facets", String.join(",", includingFacets));
     }
     if (regardlessViewPermissions) {
       storeFilters.put("regardlessViewPermissions", "true");

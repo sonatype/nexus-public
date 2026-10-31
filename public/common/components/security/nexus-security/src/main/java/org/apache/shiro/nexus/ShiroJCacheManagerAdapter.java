@@ -29,7 +29,7 @@ import org.apache.shiro.cache.CacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.shiro.session.mgt.eis.CachingSessionDAO.ACTIVE_SESSION_CACHE_NAME;
 
 /**
@@ -50,8 +50,8 @@ public class ShiroJCacheManagerAdapter
       final Provider<CacheHelper> cacheHelperProvider,
       final Provider<Time> defaultTimeToLive)
   {
-    this.cacheHelperProvider = checkNotNull(cacheHelperProvider);
-    this.defaultTimeToLive = checkNotNull(defaultTimeToLive);
+    this.cacheHelperProvider = requireNonNull(cacheHelperProvider);
+    this.defaultTimeToLive = requireNonNull(defaultTimeToLive);
   }
 
   @Override

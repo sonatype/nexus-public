@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.94.1-06</version>
+    <version>3.97.2-02</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-groovy</artifactId>
@@ -37,11 +37,6 @@
       <dependency>
         <groupId>org.apache.groovy</groupId>
         <artifactId>groovy</artifactId>
-        <version>${groovy.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.groovy</groupId>
-        <artifactId>groovy-ant</artifactId>
         <version>${groovy.version}</version>
       </dependency>
       <dependency>

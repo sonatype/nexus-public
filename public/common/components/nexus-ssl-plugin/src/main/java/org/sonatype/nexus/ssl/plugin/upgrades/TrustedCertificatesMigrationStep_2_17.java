@@ -21,7 +21,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -34,7 +34,7 @@ public class TrustedCertificatesMigrationStep_2_17
 
   @Autowired
   public TrustedCertificatesMigrationStep_2_17(final UpgradeTaskScheduler upgradeTaskScheduler) {
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
+    this.upgradeTaskScheduler = requireNonNull(upgradeTaskScheduler);
   }
 
   @Override

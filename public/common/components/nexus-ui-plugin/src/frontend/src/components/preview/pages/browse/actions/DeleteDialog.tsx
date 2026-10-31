@@ -30,14 +30,20 @@ function getTitle(type: DeleteItemType): string {
   }
 }
 
-function getMessage(type: DeleteItemType, name: string): string {
+function getMessage(
+  type: DeleteItemType,
+  name: string,
+  softDelete: boolean,
+  retentionDays?: number,
+): string {
+  const strings = ACTION_STRINGS.deleteDialog;
   switch (type) {
     case 'component':
-      return ACTION_STRINGS.deleteDialog.componentMessage(name);
+      return softDelete ? strings.componentTrashMessage(name, retentionDays) : strings.componentMessage(name);
     case 'asset':
-      return ACTION_STRINGS.deleteDialog.assetMessage(name);
+      return softDelete ? strings.assetTrashMessage(name, retentionDays) : strings.assetMessage(name);
     case 'folder':
-      return ACTION_STRINGS.deleteDialog.folderMessage(name);
+      return softDelete ? strings.folderTrashMessage(name, retentionDays) : strings.folderMessage(name);
     default:
       return `Are you sure you want to delete "${name}"?`;
   }
@@ -55,6 +61,8 @@ export function DeleteDialog({
   item,
   onConfirm,
   isDeleting = false,
+  softDelete = false,
+  retentionDays,
 }: DeleteDialogProps): JSX.Element | null {
   if (!item) {
     return null;
@@ -66,7 +74,7 @@ export function DeleteDialog({
       testId="delete-browse-item-dialog"
       onOpenChange={onOpenChange}
       title={getTitle(item.type)}
-      message={getMessage(item.type, item.name)}
+      message={getMessage(item.type, item.name, softDelete, retentionDays)}
       confirmLabel={isDeleting ? ACTION_STRINGS.deleteDialog.deletingButton : ACTION_STRINGS.deleteDialog.confirmButton}
       cancelLabel={ACTION_STRINGS.deleteDialog.cancelButton}
       variant="danger"

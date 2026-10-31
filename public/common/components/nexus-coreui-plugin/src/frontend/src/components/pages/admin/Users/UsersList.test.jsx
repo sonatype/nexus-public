@@ -191,6 +191,22 @@ describe('UsersList', function() {
     expect(rows()).toHaveLength(ROWS.CROWD.length);
   });
 
+  it('restores source filter when initialSourceFilter prop is provided', async function() {
+    const {sourceFilter, rows, queryLoadingMask} = selectors;
+
+    when(Axios.post).calledWith(URL, USERS_REQUEST).mockResolvedValue({data: TestUtils.makeExtResult(ROWS.CROWD)});
+
+    render(<UsersList initialSourceFilter="Crowd"/>);
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    expect(sourceFilter()).toHaveValue('Crowd');
+    expect(rows()).toHaveLength(ROWS.CROWD.length);
+
+    let expectedRequest = clone(DEFAULT_DATA);
+    expectedRequest.data[0].filter[1] = {property: 'source', value: 'Crowd'};
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(URL, expectedRequest));
+  });
+
   it('disables the create button when not enough permissions', async function() {
     const {createButton} = selectors;
     ExtJS.checkPermission.mockReturnValue(false);

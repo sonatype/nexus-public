@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -45,8 +45,8 @@ class HttpResponseSenderSelector
       final List<HttpResponseSender> responseSendersList,
       final DefaultHttpResponseSender defaultHttpResponseSender)
   {
-    this.responseSenders = QualifierUtil.buildQualifierBeanMap(checkNotNull(responseSendersList));
-    this.defaultHttpResponseSender = checkNotNull(defaultHttpResponseSender);
+    this.responseSenders = QualifierUtil.buildQualifierBeanMap(requireNonNull(responseSendersList));
+    this.defaultHttpResponseSender = requireNonNull(defaultHttpResponseSender);
   }
 
   /**

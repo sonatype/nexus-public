@@ -31,7 +31,7 @@ import {
   MaliciousPackagesPage,
   MalwareRiskPageSuper,
   BrowsePage,
-  RepositoryProfilePage,
+  AuditLogPage,
   TagsPage,
   TagDetailPage,
   UploadPage,
@@ -41,12 +41,12 @@ import {
   GADetailPage,
   CustomSearchPage,
   UnifiedSearchPage,
-  AssetDetailPage,
+  TrashPage as TrashPageRaw,
+  withFeatureGate,
+  PRO_FAMILY_EDITIONS,
 } from '@sonatype/nexus-ui-plugin';
-import {lazyLoad} from './lazyLoad';
 
-// Audit Log Page lives in coreui (not relocated to preview subtree).
-const AuditLogPage = lazyLoad(() => import('../../components/pages/admin/audit/AuditLogPage'));
+const TrashPage = withFeatureGate(TrashPageRaw, 'system.trash', 'Trash');
 
 export const previewBrowseRoutes = [
   // =============================================================================
@@ -128,9 +128,12 @@ export const previewBrowseRoutes = [
     component: ApiPage,
     data: {
       title: 'API',
+      // NEXUS-54048: API requires the same permission as the Default UI (adminRoutes.js
+      // ADMIN.SYSTEM.API.ROOT) and Classic UI — nexus:settings:read. There is no
+      // API-specific privilege in the platform; settings:read is the authoritative gate.
       visibilityRequirements: {
         requiresUser: true,
-        permissions: ['nexus:settings:read'],
+        permissions: [Permissions.SETTINGS.READ],
       },
     },
   },
@@ -205,7 +208,16 @@ export const previewBrowseRoutes = [
     params: {
       format: { type: 'string', value: null, dynamic: true, inherit: true },
     },
-    data: {title: 'Browse'},
+    data: {
+      title: 'Browse',
+      // Mirrors Default UI BROWSE.BROWSE.ROOT (browseRoutes.js): visible to users with
+      // any repository-view or content-selector permission and at least one browseable format.
+      visibilityRequirements: {
+        anonymousAccessOrHasUser: true,
+        permissionPrefixes: ['nexus:repository-view', 'nexus:repository-content-selector'],
+        statesEnabled: [{ key: 'browseableformats', defaultValue: [] }],
+      },
+    },
   },
   {
     name: 'preview.browse.browse.repo',
@@ -224,9 +236,8 @@ export const previewBrowseRoutes = [
     params: {
       repoName: { type: 'string', value: null, dynamic: true },
       path: { value: null, raw: true, dynamic: true },
-      tab: { type: 'string', value: 'summary', dynamic: true },
-      format: { type: 'string', value: null, dynamic: true, inherit: true },
       tab: { type: 'string', value: 'summary', dynamic: true }, // Default tab
+      format: { type: 'string', value: null, dynamic: true, inherit: true },
     },
     data: {title: 'Browse'},
   },
@@ -293,33 +304,6 @@ export const previewBrowseRoutes = [
   },
 
   // =============================================================================
-  // REPOSITORY PROFILE (Browse Context) - IMPLEMENTED ✅
-  // Uses SAME component as Settings profile, but rendered without Settings sidebar
-  // This is a sibling route so it replaces BrowsePage entirely
-  // =============================================================================
-  {
-    name: 'preview.browse.repository-profile',
-    url: '/repository-profile/:repositoryName?tab',
-    component: RepositoryProfilePage,
-    params: {
-      repositoryName: { type: 'string', dynamic: true },
-      tab: { value: null, type: 'string', dynamic: true },
-    },
-    resolve: [
-      {
-        token: 'repositoryName',
-        deps: ['$stateParams'],
-        resolveFn: ($stateParams) => $stateParams.repositoryName,
-      },
-      {
-        token: 'context',
-        resolveFn: () => 'browse', // Tells component to show "Back to Browse"
-      },
-    ],
-    data: { title: 'Repository Profile' },
-  },
-
-  // =============================================================================
   // UPLOAD - IMPLEMENTED ✅
   // =============================================================================
   // Base upload route - abstract container
@@ -328,7 +312,13 @@ export const previewBrowseRoutes = [
     url: '/upload',
     abstract: true,
     component: UIView,
-    data: {title: 'Upload'},
+    data: {
+      title: 'Upload',
+      // Mirrors Default UI BROWSE.UPLOAD.ROOT (browseRoutes.js).
+      visibilityRequirements: {
+        permissions: [Permissions.COMPONENT.CREATE],
+      },
+    },
   },
   // Upload list (repository selection)
   {
@@ -360,7 +350,15 @@ export const previewBrowseRoutes = [
     name: 'preview.browse.tags',
     url: '/tags',
     component: TagsPage,
-    data: {title: 'Tags'},
+    data: {
+      title: 'Tags',
+      // Mirrors Default UI BROWSE.TAGS.ROOT (browseRoutes.js). The isLicensedEdition gate in
+      // LeftNavigationMenuRadix.tsx remains (now redundant with the editions gate, but harmless).
+      visibilityRequirements: {
+        permissions: [Permissions.TAGS.READ],
+        editions: PRO_FAMILY_EDITIONS,
+      },
+    },
   },
   {
     name: 'preview.browse.tagdetail',
@@ -369,7 +367,30 @@ export const previewBrowseRoutes = [
     params: {
       tagName: { type: 'string', value: null, dynamic: true },
     },
-    data: {title: 'Tag Details'},
+    data: {
+      title: 'Tag Details',
+      // Tag detail is a sibling of preview.browse.tags (its UIRouter parent is
+      // preview.browse, which is ungated), so it does not inherit the tags gate via the
+      // guard's ancestor walk. Gate it explicitly so a direct URL to a tag detail
+      // redirects to the dashboard instead of loading and failing with a 403 (NEXUS-54048).
+      visibilityRequirements: {
+        permissions: [Permissions.TAGS.READ],
+        editions: PRO_FAMILY_EDITIONS,
+      },
+    },
+  },
+  {
+    name: 'preview.browse.trash',
+    url: '/trash',
+    component: TrashPage,
+    data: {
+      title: 'Trash',
+      visibilityRequirements: {
+        statesEnabled: [{ key: 'nexus.softDelete.enabled', defaultValue: false }],
+        permissions: [Permissions.ADMIN],
+        editions: PRO_FAMILY_EDITIONS,
+      },
+    },
   },
 
   // =============================================================================
@@ -438,27 +459,15 @@ export const previewBrowseRoutes = [
   // =============================================================================
   {
     name: 'preview.browse.search.unified',
-    url: '?q',
+    url: '?q&format&sort&direction',
     component: UnifiedSearchPage,
     params: {
       q: { value: null, dynamic: true },
+      format: { value: null, dynamic: true },
+      sort: { value: null, dynamic: true },
+      direction: { value: null, dynamic: true },
     },
     data: {title: 'Search Components'},
-  },
-
-  // =============================================================================
-  // ASSET DETAIL
-  // =============================================================================
-  {
-    name: 'preview.browse.search.asset',
-    url: '/asset/:repositoryName/:assetId',
-    component: AssetDetailPage,
-    params: {
-      repositoryName: {type: 'string', raw: true},
-      assetId: {type: 'string', raw: true},
-      componentId: {type: 'string', value: null, raw: true, dynamic: true},
-    },
-    data: {title: 'Asset Details'},
   },
 
   // =============================================================================
@@ -476,11 +485,23 @@ export const previewBrowseRoutes = [
   // =============================================================================
   {
     name: 'preview.browse.search.component',
-    url: '/component/:gaId?version',
+    url: '/component/:gaId?version&repository&group',
     component: GADetailPage,
     params: {
-      gaId: { type: 'string', raw: true },
-      version: { type: 'string', value: null, squash: true },
+      // 'path' (/[^/]*/), not 'string' (/.*/): the default string pattern matches across `/`, so
+      // a deep link to a tab absorbed the segment and gaId became 'npm:dummy:name/overview'.
+      // Leaving `raw` off keeps encoding symmetric — the router encodes on write and decodes on
+      // read, so callers must pass the plain 'format:group:name' and never pre-encode it. A
+      // pre-encoded value cannot round-trip, and because gaId is not `dynamic`, the mismatch
+      // costs a state re-entry that remounts the page and re-fires every request (NEXUS-54201).
+      gaId: { type: 'path' },
+      // dynamic: without it, changing `version` re-enters the state and remounts the page.
+      version: { type: 'string', value: null, squash: true, dynamic: true },
+      // Header facets (NEXUS-54428): persisted so the group/repository context survives
+      // deep-links and back/forward. dynamic so updating them re-runs no resolves and does
+      // not remount GADetailPage — the header's selectors just re-render.
+      repository: { type: 'string', value: null, squash: true, dynamic: true },
+      group: { type: 'string', value: null, squash: true, dynamic: true },
     },
     resolve: [
       { token: 'gaId', deps: ['$stateParams'], resolveFn: ($stateParams) => $stateParams.gaId },

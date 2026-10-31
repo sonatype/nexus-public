@@ -106,7 +106,19 @@ public class MetadataRebuildWorker
       @Nullable final String baseVersion,
       final int bufferSize)
   {
-    metadataUpdater = new DatastoreMetadataUpdater(update, repository);
+    this(repository, update, false, groupId, artifactId, baseVersion, bufferSize);
+  }
+
+  public MetadataRebuildWorker(
+      final Repository repository, // NOSONAR
+      final boolean update,
+      final boolean rebuildChecksums,
+      @Nullable final String groupId,
+      @Nullable final String artifactId,
+      @Nullable final String baseVersion,
+      final int bufferSize)
+  {
+    metadataUpdater = new DatastoreMetadataUpdater(update, repository, rebuildChecksums);
     content = repository.facet(MavenContentFacet.class);
     mavenPathParser = repository.facet(MavenContentFacet.class).getMavenPathParser();
 

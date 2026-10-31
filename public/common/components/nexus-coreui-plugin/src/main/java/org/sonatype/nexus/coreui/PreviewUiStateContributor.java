@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_ANONYMOUS_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_DEFAULT_ENABLED_NAMED_VALUE;
@@ -83,7 +83,7 @@ public class PreviewUiStateContributor
       @Value(PREVIEW_UI_SWITCH_FEEDBACK_DISABLED_NAMED_VALUE) final boolean defaultSwitchFeedbackDisabled,
       @Value(PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE) final boolean auditEnabled)
   {
-    this.keyValueStore = checkNotNull(keyValueStore);
+    this.keyValueStore = requireNonNull(keyValueStore);
     this.defaultAnonymousEnabled = defaultAnonymousEnabled;
     this.defaultLoggedInEnabled = defaultLoggedInEnabled;
     this.defaultDefaultToPreview = defaultDefaultToPreview;

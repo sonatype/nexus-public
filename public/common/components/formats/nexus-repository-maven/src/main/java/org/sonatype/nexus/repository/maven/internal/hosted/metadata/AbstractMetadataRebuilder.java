@@ -41,7 +41,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Collections.emptySet;
 import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
@@ -84,9 +84,9 @@ public abstract class AbstractMetadataRebuilder
       final String artifactId,
       final String baseVersion)
   {
-    checkNotNull(groupId);
-    checkNotNull(artifactId);
-    checkNotNull(baseVersion);
+    requireNonNull(groupId);
+    requireNonNull(artifactId);
+    requireNonNull(baseVersion);
 
     log.debug("Collecting MavenPaths for Maven2 hosted repository metadata: repository={}, g={}, a={}, bV={}",
         repository.getName(), groupId, artifactId, baseVersion);

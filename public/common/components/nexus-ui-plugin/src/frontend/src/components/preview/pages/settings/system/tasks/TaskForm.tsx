@@ -14,8 +14,9 @@
 import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { Box, Flex, Text, Badge } from '@radix-ui/themes';
 import {
-  Trash2, Loader2, Play, ArrowLeft,
+  Trash2, Loader2, Play, 
   Settings as SettingsIcon, Database, HeartPulse, Tag, MoreHorizontal, ListTodo,
+  Wrench, Cloud,
 } from 'lucide-react';
 
 import {
@@ -35,7 +36,6 @@ import { useTasksForm } from './useTasksForm';
 import { getTaskTypeDescription, getTaskTypeCategory } from './taskTypeDescriptions';
 
 import {
-  Task,
   TaskType,
   TaskFormData,
   ScheduleData,
@@ -44,6 +44,8 @@ import {
   NOTIFICATION_CONDITIONS,
   DEFAULT_SCHEDULE_DATA,
 } from './types';
+import { isSingletonTaskType, isManualOnlyTaskType, filterCreatableTaskTypes } from './taskFieldMetadata';
+import { CLOUD_BLOBSTORE_REMOVAL_TYPE_ID } from './tasksFormMachine';
 
 import './TaskForm.scss';
 
@@ -51,6 +53,8 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{size?: number; classNa
   Admin: SettingsIcon,
   Repository: Database,
   Cleanup: Trash2,
+  Repair: Wrench,
+  Cloud: Cloud,
   'Health Check': HeartPulse,
   Tags: Tag,
   Other: MoreHorizontal,
@@ -101,7 +105,7 @@ export function TaskForm({
   loading = false,
   error,
 }: TaskFormProps & { initialTypeId?: string; onTypeChange?: (typeId: string) => void }) {
-  const { createTask, updateTask, deleteTask } = useTasksApi();
+  const { createTask, updateTask, deleteTask, fetchTasks } = useTasksApi();
 
   const {
     form,
@@ -119,6 +123,33 @@ export function TaskForm({
   const formData = form.data as TaskFormData & { startTime?: string };
   const taskTypes = taskTypesFromProps || machineTaskTypes || [];
 
+  // Singleton enforcement (parity with Classic TaskSelectType.filterTasksIfCreated): when a
+  // singleton task type already has an instance, it must not be offered in the create flow. Only
+  // fetch the existing tasks when a singleton type is actually present in the list (so non-singleton
+  // task lists incur no extra request and no state churn).
+  const [existingTypeIds, setExistingTypeIds] = useState<Set<string>>(new Set());
+  const hasSingletonType = useMemo(() => taskTypes.some((t) => isSingletonTaskType(t.id)), [taskTypes]);
+
+  useEffect(() => {
+    if (!isCreate || !hasSingletonType) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const tasks = await fetchTasks();
+        if (!cancelled) setExistingTypeIds(new Set((tasks ?? []).map((t) => t.typeId)));
+      } catch {
+        // Non-fatal: fall back to the unfiltered list rather than blocking creation.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isCreate, hasSingletonType, fetchTasks]);
+
+  // The type list offered by the selector / URL auto-select, with already-created singletons removed.
+  const creatableTaskTypes = useMemo(
+    () => filterCreatableTaskTypes(taskTypes, existingTypeIds),
+    [taskTypes, existingTypeIds]
+  );
+
   // Wizard state
   const [internalStep, setInternalStep] = useState(0);
   const [selectedTaskTypeObj, setSelectedTaskTypeObj] = useState<TaskType | null>(null);
@@ -128,20 +159,31 @@ export function TaskForm({
     return selectedTaskTypeObj || machineSelectedType || taskTypes.find((t) => t.id === formData.typeId);
   }, [selectedTaskTypeObj, machineSelectedType, taskTypes, formData.typeId]);
 
-  // Auto-select from URL
+  // Auto-select from URL — only for types still creatable (a singleton that already exists is not
+  // in creatableTaskTypes, so a deep-link to re-create it leaves the user on the filtered selector).
   useEffect(() => {
-    if (initialTypeId && isCreate && taskTypes.length > 0 && !formData.typeId) {
-      const matchingType = taskTypes.find((t) => t.id === initialTypeId);
+    if (initialTypeId && isCreate && creatableTaskTypes.length > 0 && !formData.typeId) {
+      const matchingType = creatableTaskTypes.find((t) => t.id === initialTypeId);
       if (matchingType) {
         form.send({ type: 'TASK_TYPE_CHANGE', value: initialTypeId } as any);
         setSelectedTaskTypeObj(matchingType);
         setInternalStep(1); // Jump to config if URL provides type
       }
     }
-  }, [initialTypeId, isCreate, taskTypes, formData.typeId, form]);
+  }, [initialTypeId, isCreate, creatableTaskTypes, formData.typeId, form]);
 
-  // Steps: Create = [Select Type, Configure, Schedule], Edit = [Configure, Schedule]
-  const effectiveSteps = isCreate ? WIZARD_STEPS_CREATE : WIZARD_STEPS_EDIT;
+  // Manual-only tasks (e.g. Data Repair Plan) omit the Schedule step entirely — parity with
+  // Classic, which hides the schedule fieldset and pins the schedule to 'manual'. On the edit path
+  // `task.typeId` is known immediately, so fall back to it to avoid a one-render flash of the
+  // Schedule step before the machine resolves selectedTaskType.
+  const isManualOnly = isManualOnlyTaskType(selectedTaskType?.id ?? task?.typeId);
+
+  // Steps: Create = [Select Type, Configure, Schedule], Edit = [Configure, Schedule];
+  // the Schedule step is dropped for manual-only tasks.
+  const effectiveSteps = useMemo(() => {
+    const base = isCreate ? WIZARD_STEPS_CREATE : WIZARD_STEPS_EDIT;
+    return isManualOnly ? base.filter((s) => s.id !== 'schedule') : base;
+  }, [isCreate, isManualOnly]);
 
   const handleWizardStepChange = useCallback((step: number) => {
     if (isCreate && step === 0) {
@@ -194,8 +236,18 @@ export function TaskForm({
     }
   }, [allowedSchedules, formData.schedule, handleScheduleChange]);
 
-  const configStep = isCreate ? 1 : 0;
-  const scheduleStep = isCreate ? 2 : 1;
+  // Manual-only tasks must persist schedule 'manual'. Only correct a non-manual value so this is a
+  // no-op in the normal default-manual case (avoids marking the form dirty on load).
+  useEffect(() => {
+    if (isManualOnly && formData.schedule !== 'manual') {
+      handleScheduleChange({ ...DEFAULT_SCHEDULE_DATA, schedule: 'manual' });
+    }
+  }, [isManualOnly, formData.schedule, handleScheduleChange]);
+
+  // Indices within effectiveSteps; scheduleStep is -1 when the Schedule step is omitted, so the
+  // schedule render guard (internalStep === scheduleStep) never matches.
+  const configStep = useMemo(() => effectiveSteps.findIndex((s) => s.id === 'config'), [effectiveSteps]);
+  const scheduleStep = useMemo(() => effectiveSteps.findIndex((s) => s.id === 'schedule'), [effectiveSteps]);
 
   const canAdvance = useMemo(() => {
     if (isCreate && internalStep === 0) return !!selectedTaskType;
@@ -205,12 +257,22 @@ export function TaskForm({
       // (e.g. repositoryName) has a non-empty value. The required flag comes from
       // the descriptor via TASK_FIELD_UI / restTemplateToTaskType.
       const fields = selectedTaskType?.formFields || [];
-      return fields.every((f) =>
-        !f.required || (formData.properties?.[f.id] ?? '').toString().trim() !== ''
-      );
+      // Cloud-only quirk: the auto-created blob-store cleanup task clears its
+      // blobstoreName picker on load because the underlying blob store is gone.
+      // Block Save if blobstoreName is empty to prevent corrupting the backend state.
+      // The task can still be viewed and Run manually, but saving with an empty
+      // blobstoreName would overwrite the original value in the backend.
+      const isCloudBlobstoreRemoval = formData.typeId === CLOUD_BLOBSTORE_REMOVAL_TYPE_ID;
+      return fields.every((f) => {
+        if (isCloudBlobstoreRemoval && f.id === 'blobstoreName') {
+          const blobstoreValue = (formData.properties?.[f.id] ?? '').toString().trim();
+          return blobstoreValue !== ''; // Block Save if empty
+        }
+        return !f.required || (formData.properties?.[f.id] ?? '').toString().trim() !== '';
+      });
     }
     return true;
-  }, [isCreate, internalStep, selectedTaskType, formData.name, formData.properties, configStep]);
+  }, [isCreate, internalStep, selectedTaskType, formData.name, formData.properties, formData.typeId, configStep]);
 
   if (form.isLoading) {
     return (
@@ -269,7 +331,7 @@ export function TaskForm({
       {isCreate && internalStep === 0 && (
         <Box className="task-form__type-selector">
           <TaskTypeSelector
-            taskTypes={taskTypes}
+            taskTypes={creatableTaskTypes}
             onSelect={handleTypeSelect}
             loading={form.isLoading}
             selectedType={selectedTaskTypeObj}

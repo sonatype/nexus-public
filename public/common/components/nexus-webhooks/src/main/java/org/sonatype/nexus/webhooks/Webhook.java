@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Webhook.
@@ -47,7 +47,7 @@ public abstract class Webhook
 
   @Autowired
   public void setEventManager(final EventManager eventManager) {
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   /**
@@ -105,7 +105,7 @@ public abstract class Webhook
    * Subscribe to webhook.
    */
   public WebhookSubscription subscribe(final WebhookConfiguration configuration) {
-    checkNotNull(configuration);
+    requireNonNull(configuration);
 
     synchronized (subscriptions) {
       SubscriptionImpl subscription = new SubscriptionImpl(configuration);
@@ -127,7 +127,7 @@ public abstract class Webhook
    * @see WebhookSubscription#cancel()
    */
   public void unsubscribe(final WebhookSubscription subscription) {
-    checkNotNull(subscription);
+    requireNonNull(subscription);
 
     synchronized (subscriptions) {
       // noinspection SuspiciousMethodCalls

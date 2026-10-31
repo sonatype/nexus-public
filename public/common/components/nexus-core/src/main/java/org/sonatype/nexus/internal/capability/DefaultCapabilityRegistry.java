@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -72,7 +73,7 @@ import jakarta.inject.Provider;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.UUID.fromString;
 import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE;
@@ -112,6 +113,12 @@ public class DefaultCapabilityRegistry
 
   private final ReentrantLock lock;
 
+  // loadReference(validate) modes: validate form fields on the initial startup load, but skip re-validation when
+  // syncing an already-persisted item into memory (a cross-node refresh / DES replay).
+  private static final boolean VALIDATE_ON_LOAD = true;
+
+  private static final boolean SKIP_VALIDATION = false;
+
   private final SecretsService secretsService;
 
   /**
@@ -133,15 +140,15 @@ public class DefaultCapabilityRegistry
       final SecretsService secretsService,
       final Provider<Validator> validatorProvider)
   {
-    this.capabilityStorage = checkNotNull(capabilityStorage);
-    this.capabilityFactoryRegistry = checkNotNull(capabilityFactoryRegistry);
-    this.capabilityDescriptorRegistry = checkNotNull(capabilityDescriptorRegistry);
-    this.eventManager = checkNotNull(eventManager);
-    this.capabilityEventQueue = checkNotNull(capabilityEventQueue);
-    this.activationConditionHandlerFactory = checkNotNull(activationConditionHandlerFactory);
-    this.validityConditionHandlerFactory = checkNotNull(validityConditionHandlerFactory);
-    this.secretsService = checkNotNull(secretsService);
-    this.validatorProvider = checkNotNull(validatorProvider);
+    this.capabilityStorage = requireNonNull(capabilityStorage);
+    this.capabilityFactoryRegistry = requireNonNull(capabilityFactoryRegistry);
+    this.capabilityDescriptorRegistry = requireNonNull(capabilityDescriptorRegistry);
+    this.eventManager = requireNonNull(eventManager);
+    this.capabilityEventQueue = requireNonNull(capabilityEventQueue);
+    this.activationConditionHandlerFactory = requireNonNull(activationConditionHandlerFactory);
+    this.validityConditionHandlerFactory = requireNonNull(validityConditionHandlerFactory);
+    this.secretsService = requireNonNull(secretsService);
+    this.validatorProvider = requireNonNull(validatorProvider);
 
     references = new ConcurrentHashMap<>();
     lock = new ReentrantLock();
@@ -177,6 +184,25 @@ public class DefaultCapabilityRegistry
     super.doStop();
   }
 
+  /**
+   * Submits a remote capability event for sequential processing, tolerating shutdown: doStop() nulls the
+   * executor before the event-bus unsubscribe completes, so a late event must neither NPE nor fail loudly with a
+   * RejectedExecutionException. See NEXUS-54229.
+   */
+  private void submitRemoteCapabilityEvent(final CapabilityIdentity id) {
+    ExecutorService executor = capabilitySyncExecutor;
+    if (executor == null) {
+      log.debug("Skipping remote capability event {}; sync executor is shutting down", id);
+      return;
+    }
+    try {
+      executor.submit(() -> processRemoteCapabilityEvent(id));
+    }
+    catch (RejectedExecutionException e) {
+      log.debug("Sync executor rejected remote capability event {} during shutdown", id, e);
+    }
+  }
+
   @Override
   public CapabilityReference add(
       final CapabilityType type,
@@ -204,7 +230,7 @@ public class DefaultCapabilityRegistry
       @Nullable final Map<String, String> properties,
       final ValidationMode validationMode)
   {
-    checkNotNull(type);
+    requireNonNull(type);
 
     try {
       lock.lock();
@@ -250,7 +276,7 @@ public class DefaultCapabilityRegistry
       log.debug("Received remote capability creation event for {}", id);
 
       // Submit to executor for sequential processing
-      capabilitySyncExecutor.submit(() -> processRemoteCapabilityEvent(id));
+      submitRemoteCapabilityEvent(id);
     }
   }
 
@@ -280,7 +306,7 @@ public class DefaultCapabilityRegistry
   {
     log.debug("Added capability '{}' of type '{}' with properties '{}'", id, type, item.getProperties());
 
-    DefaultCapabilityReference reference = create(id, type, descriptor);
+    DefaultCapabilityReference reference = newReference(id, type, descriptor);
 
     reference.setNotes(item.getNotes());
     reference.create(attributes, item.getProperties());
@@ -343,7 +369,7 @@ public class DefaultCapabilityRegistry
       log.debug("Received remote capability update event for {}", id);
 
       // Submit to executor for sequential processing
-      capabilitySyncExecutor.submit(() -> processRemoteCapabilityEvent(id));
+      submitRemoteCapabilityEvent(id);
     }
   }
 
@@ -424,7 +450,7 @@ public class DefaultCapabilityRegistry
       log.debug("Received remote capability delete event for {}", id);
 
       // Submit to executor for sequential processing
-      capabilitySyncExecutor.submit(() -> processRemoteCapabilityEvent(id));
+      submitRemoteCapabilityEvent(id);
     }
   }
 
@@ -524,26 +550,7 @@ public class DefaultCapabilityRegistry
         continue;
       }
 
-      reference = create(id, capabilityType(item.getType()), descriptor);
-
-      reference.setNotes(item.getNotes());
-      reference.load(properties, item.getProperties());
-
-      try {
-        // validate after initial load, so properties are filled in for fixing
-        reference.descriptor().validate(id, properties, ValidationMode.LOAD);
-      }
-      catch (ValidationException e) {
-        log.warn("Capability '{}' of type '{}' with properties '{}' is invalid",
-            id, item.getType(), item.getProperties(), e);
-
-        reference.setFailure("Load", e); // flag validation issues in the UI
-      }
-
-      if (item.isEnabled()) {
-        reference.enable();
-        reference.activate();
-      }
+      loadReference(id, capabilityType(item.getType()), descriptor, item, properties, VALIDATE_ON_LOAD);
     }
     eventManager.post(new AfterLoad(this));
   }
@@ -563,62 +570,98 @@ public class DefaultCapabilityRegistry
         doRemove(id);
       }
 
-      // Sync all capabilities from database to memory
+      // Sync every stored capability into memory (add if missing, update if changed).
       for (Map.Entry<CapabilityIdentity, CapabilityStorageItem> entry : refreshedCapabilities.entrySet()) {
-        CapabilityIdentity id = entry.getKey();
-        CapabilityStorageItem item = entry.getValue();
-
-        CapabilityType type = capabilityType(item.getType());
-        CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
-
-        if (descriptor == null) {
-          log.warn("Cannot sync capability {} - unknown type {}", id, item.getType());
-          continue;
-        }
-
-        // Handle version conversion if descriptor version differs from stored version
-        Map<String, String> properties = item.getProperties();
-        if (descriptor.version() != item.getVersion()) {
-          log.debug(
-              "Converting capability \'{}\' properties from version \'{}\' to version \'{}\' during sync",
-              id, item.getVersion(), descriptor.version());
-          try {
-            properties = descriptor.convert(properties, item.getVersion());
-            if (properties == null) {
-              properties = Collections.emptyMap();
-            }
-            // Update storage with converted properties
-            capabilityStorage.update(id, capabilityStorage.newStorageItem(
-                descriptor.version(), item.getType(), item.isEnabled(), item.getNotes(), properties));
-          }
-          catch (Exception e) {
-            log.error(
-                "Failed converting capability \'{}\' properties from version \'{}\' to version \'{}\'. Skipping sync.",
-                id,
-                item.getVersion(), descriptor.version(), e);
-            continue;
-          }
-        }
-
-        Map<String, String> decryptedProps = decryptValuesIfNeeded(descriptor, properties);
-
-        DefaultCapabilityReference existingRef = references.get(id);
-        if (existingRef == null) {
-          DefaultCapabilityReference reference = create(id, type, descriptor);
-          reference.setNotes(item.getNotes());
-          reference.load(decryptedProps, item.getProperties());
-          if (item.isEnabled()) {
-            reference.enable();
-            reference.activate();
-          }
-        }
-        else if (!capabilityAlreadyUpToDate(id, item)) {
-          doUpdate(existingRef, item, decryptedProps);
-        }
+        syncStoredItem(entry.getKey(), entry.getValue());
       }
     }
     finally {
       lock.unlock();
+    }
+  }
+
+  @Override
+  public void pullAndRefreshReferencesOfType(final CapabilityType type) {
+    if (capabilityDescriptorRegistry.get(type) == null) {
+      log.warn("Cannot refresh capabilities of unknown type {}", type);
+      return;
+    }
+    // Quick check under the lock: if a capability of this type is already materialized (a concurrent caller on
+    // the auth hot path won the lock first, or DES already replayed the create), skip the DB read entirely.
+    lock.lock();
+    try {
+      if (references.values().stream().anyMatch(ref -> type.equals(ref.type()))) {
+        return;
+      }
+    }
+    finally {
+      lock.unlock();
+    }
+    // Read only this type's rows OUTSIDE the lock so a burst of auth threads does not serialise behind one
+    // thread's getAllByType() DB round-trip (NEXUS-54229). Re-check under the lock before publishing so at most
+    // one thread syncs even if several read the (small, single-type) result set concurrently.
+    Map<CapabilityIdentity, CapabilityStorageItem> items = capabilityStorage.getAllByType(type.toString());
+    lock.lock();
+    try {
+      if (references.values().stream().anyMatch(ref -> type.equals(ref.type()))) {
+        return;
+      }
+      for (Map.Entry<CapabilityIdentity, CapabilityStorageItem> entry : items.entrySet()) {
+        syncStoredItem(entry.getKey(), entry.getValue());
+      }
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Syncs a single stored capability into memory: materializes it if missing, or updates it in place if the
+   * stored state differs, handling descriptor version conversion. Never throws (a bad item is logged and
+   * skipped). Callers hold {@link #lock}. Shared by {@link #pullAndRefreshReferencesFromDB()} and
+   * {@link #pullAndRefreshReferencesOfType(CapabilityType)}.
+   */
+  private void syncStoredItem(final CapabilityIdentity id, final CapabilityStorageItem item) {
+    CapabilityType type = capabilityType(item.getType());
+    CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
+
+    if (descriptor == null) {
+      log.warn("Cannot sync capability {} - unknown type {}", id, item.getType());
+      return;
+    }
+
+    // Handle version conversion if descriptor version differs from stored version
+    Map<String, String> properties = item.getProperties();
+    if (descriptor.version() != item.getVersion()) {
+      log.debug(
+          "Converting capability '{}' properties from version '{}' to version '{}' during sync",
+          id, item.getVersion(), descriptor.version());
+      try {
+        properties = descriptor.convert(properties, item.getVersion());
+        if (properties == null) {
+          properties = Collections.emptyMap();
+        }
+        // Update storage with converted properties
+        capabilityStorage.update(id, capabilityStorage.newStorageItem(
+            descriptor.version(), item.getType(), item.isEnabled(), item.getNotes(), properties));
+      }
+      catch (Exception e) {
+        log.error(
+            "Failed converting capability '{}' properties from version '{}' to version '{}'. Skipping sync.",
+            id,
+            item.getVersion(), descriptor.version(), e);
+        return;
+      }
+    }
+
+    Map<String, String> decryptedProps = decryptValuesIfNeeded(descriptor, properties);
+
+    DefaultCapabilityReference existingRef = references.get(id);
+    if (existingRef == null) {
+      loadReference(id, type, descriptor, item, decryptedProps, SKIP_VALIDATION);
+    }
+    else if (!capabilityAlreadyUpToDate(id, item)) {
+      doUpdate(existingRef, item, decryptedProps);
     }
   }
 
@@ -655,7 +698,15 @@ public class DefaultCapabilityRegistry
     }
   }
 
-  private DefaultCapabilityReference create(
+  /**
+   * Constructs a {@link DefaultCapabilityReference} and publishes it into {@link #references} <em>before</em> it
+   * is loaded/activated. Publishing first is deliberate: {@code reference.create()} / {@code load()} /
+   * {@code activate()} fire {@code CapabilityEvent}s whose handlers (e.g. {@code CapabilityOfTypeExistsCondition},
+   * {@code CapabilityHasNoDuplicatesCondition}) enumerate {@link #getAll()}, so the new reference must already be
+   * findable or those conditions evaluate against a set that is missing it. All mutation paths hold {@link #lock};
+   * a lock-free reader may briefly observe the not-yet-activated reference (the long-standing behavior).
+   */
+  private DefaultCapabilityReference newReference(
       final CapabilityIdentity id,
       final CapabilityType type,
       final CapabilityDescriptor descriptor)
@@ -670,6 +721,49 @@ public class DefaultCapabilityRegistry
     final DefaultCapabilityReference reference = createReference(id, type, descriptor, capability);
 
     references.put(id, reference);
+
+    return reference;
+  }
+
+  /**
+   * Constructs, publishes, loads and (if enabled) activates a capability reference from a stored item -- the
+   * DB-driven sync paths (initial startup load and cross-node replication). Consolidates the previously
+   * duplicated setNotes/load/enable/activate blocks.
+   *
+   * @param validate when {@code true} (initial startup load) validate the loaded properties and record any
+   *          {@link ValidationException} as a load failure so it surfaces in the UI; the cross-node sync paths
+   *          replicate an already-validated peer configuration and pass {@code false}.
+   */
+  private DefaultCapabilityReference loadReference(
+      final CapabilityIdentity id,
+      final CapabilityType type,
+      final CapabilityDescriptor descriptor,
+      final CapabilityStorageItem item,
+      final Map<String, String> properties,
+      final boolean validate)
+  {
+    final DefaultCapabilityReference reference = newReference(id, type, descriptor);
+
+    reference.setNotes(item.getNotes());
+    reference.load(properties, item.getProperties());
+
+    if (validate) {
+      try {
+        // validate after initial load, so properties are filled in for fixing
+        reference.descriptor().validate(id, properties, ValidationMode.LOAD);
+      }
+      catch (ValidationException e) {
+        log.warn("Capability '{}' of type '{}' with properties '{}' is invalid",
+            id, item.getType(), item.getProperties(), e);
+
+        reference.setFailure("Load", e); // flag validation issues in the UI
+      }
+    }
+
+    if (item.isEnabled()) {
+      reference.enable();
+      reference.activate();
+    }
 
     return reference;
   }
@@ -752,13 +846,7 @@ public class DefaultCapabilityRegistry
       // Use load() instead of doAdd() to fire onLoad()/CapabilityEvent.Loaded
       // This is a DB sync from another node, not a user-initiated creation
       log.info("Syncing new capability {} from pending queue", id);
-      DefaultCapabilityReference reference = create(id, type, descriptor);
-      reference.setNotes(item.getNotes());
-      reference.load(decryptedProps, item.getProperties());
-      if (item.isEnabled()) {
-        reference.enable();
-        reference.activate();
-      }
+      loadReference(id, type, descriptor, item, decryptedProps, SKIP_VALIDATION);
     }
     else {
       // Update existing capability

@@ -32,7 +32,7 @@ import org.apache.ibatis.type.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Abstract {@link TypeHandler} that supports serializing Java objects to the database.
@@ -65,7 +65,7 @@ public abstract class AbstractSerializableTypeHandler<T>
   }
 
   protected AbstractSerializableTypeHandler(final LoadingFunction classLoading) {
-    this.classLoading = checkNotNull(classLoading); // custom class loading
+    this.classLoading = requireNonNull(classLoading); // custom class loading
   }
 
   /**

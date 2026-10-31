@@ -47,10 +47,8 @@ const ROUTE_BASE = 'preview.admin.system.capabilities';
 export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
   const {
     loading,
-    error,
     setError,
     fetchCapabilities,
-    fetchCapability,
     fetchCapabilityTypes,
     createCapability,
     updateCapability,
@@ -94,7 +92,10 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
         router.stateService.go(`${ROUTE_BASE}.list`);
       });
     }
-    if (viewMode === 'create' && params.typeId && !selectedType) {
+    // Only auto-load the type on a genuine deep-link entry (wizard still at step 0).
+    // Guarding on createStep prevents re-entering the create flow after handleBack
+    // clears selectedType while the route change is still settling (NEXUS-53839).
+    if (viewMode === 'create' && params.typeId && !selectedType && createStep === 0) {
       fetchCapabilityTypes().then((types) => {
         const type = types.find((t) => t.id === params.typeId);
         if (type) {
@@ -111,7 +112,7 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
     if (viewMode === 'selectType') {
       setCreateStep(0);
     }
-  }, [viewMode, params.capabilityId, params.typeId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [viewMode, params.capabilityId, params.typeId, fetchCapabilities, fetchCapabilityTypes, router.stateService.go, selectedCapability, selectedType, createStep]);
 
   const handleSelectCapability = useCallback((capability: Capability) => {
     setSelectedType(null);
@@ -137,6 +138,13 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
     setSelectedCapability(null);
     setSelectedType(null);
     setError(null);
+    // Clear the stale submit ref/readiness from the create wizard. We intentionally
+    // do NOT reset createStep here: while the route change to .list settles, the
+    // deep-link effect must still see createStep === 1 so it does not re-fetch the
+    // type and bounce back into the create flow (NEXUS-53839). createStep is reset
+    // on the next genuine create entry (handleStartCreate / selectType view).
+    setFormReady(false);
+    formSubmitRef.current = null;
     router.stateService.go(`${ROUTE_BASE}.list`);
   }, [setError, router]);
 
@@ -193,7 +201,7 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
       toast.error(message);
       throw err;
     }
-  }, [viewMode, selectedCapability, createCapability, updateCapability, handleBack]);
+  }, [viewMode, selectedCapability, createCapability, updateCapability, handleBack, toast.error, toast.success]);
 
   const handleDelete = useCallback(async () => {
     if (!selectedCapability) return;
@@ -207,7 +215,7 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
       const message = err instanceof Error ? err.message : 'Failed to delete capability';
       toast.error(message);
     }
-  }, [selectedCapability, deleteCapability, handleBack]);
+  }, [selectedCapability, deleteCapability, handleBack, toast.error, toast.success]);
 
   const handleEnable = useCallback(async () => {
     if (!selectedCapability) return;
@@ -221,7 +229,7 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
       const message = err instanceof Error ? err.message : 'Failed to enable capability';
       toast.error(message);
     }
-  }, [selectedCapability, enableCapability]);
+  }, [selectedCapability, enableCapability, toast.error, toast.success]);
 
   const handleDisable = useCallback(async () => {
     if (!selectedCapability) return;
@@ -236,7 +244,7 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
       const message = err instanceof Error ? err.message : 'Failed to disable capability';
       toast.error(message);
     }
-  }, [selectedCapability, disableCapability]);
+  }, [selectedCapability, disableCapability, toast.error, toast.success]);
 
   // Navigation helper for Settings breadcrumb
   const navigateToSettings = () => {

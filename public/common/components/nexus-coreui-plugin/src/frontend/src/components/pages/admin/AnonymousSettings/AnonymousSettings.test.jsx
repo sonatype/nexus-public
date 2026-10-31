@@ -53,6 +53,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
       setDirtyStatus: jest.requireActual('@sonatype/nexus-ui-plugin').ExtJS.setDirtyStatus,
       checkPermission: jest.fn().mockReturnValue(true),
       useUser: jest.fn(() => ({ name: 'test-user' })),
+      waitForPermissions: jest.fn().mockResolvedValue(undefined),
     }
   }
 });

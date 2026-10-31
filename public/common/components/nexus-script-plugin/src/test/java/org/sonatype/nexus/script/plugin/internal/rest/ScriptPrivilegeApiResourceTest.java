@@ -21,6 +21,7 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.script.Script;
 import org.sonatype.nexus.script.ScriptManager;
 import org.sonatype.nexus.script.plugin.internal.security.ScriptPrivilegeDescriptor;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.privilege.ApplicationPrivilegeDescriptor;
@@ -32,6 +33,7 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
+import org.apache.shiro.authz.Permission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,10 +44,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.script.plugin.internal.rest.ApiPrivilegeScript.SCRIPT_KEY;
@@ -61,6 +65,9 @@ class ScriptPrivilegeApiResourceTest
   private SecuritySystem securitySystem;
 
   @Mock
+  private SecurityHelper securityHelper;
+
+  @Mock
   private AuthorizationManager authorizationManager;
 
   @Mock
@@ -71,6 +78,7 @@ class ScriptPrivilegeApiResourceTest
   @BeforeEach
   void setup() throws Exception {
     lenient().when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
+    lenient().when(securityHelper.allPermitted(any(Permission.class))).thenReturn(true);
     when(scriptManager.get(any())).thenReturn(mock(Script.class));
     lenient().when(scriptManager.get("invalid")).thenReturn(null);
 
@@ -78,7 +86,7 @@ class ScriptPrivilegeApiResourceTest
     privilegeDescriptors.add(new ApplicationPrivilegeDescriptor(false));
     privilegeDescriptors.add(new WildcardPrivilegeDescriptor());
     privilegeDescriptors.add(new ScriptPrivilegeDescriptor(scriptManager, false));
-    underTest = new ScriptPrivilegeApiResource(securitySystem, privilegeDescriptors);
+    underTest = new ScriptPrivilegeApiResource(securitySystem, securityHelper, privilegeDescriptors);
   }
 
   @Test
@@ -118,6 +126,28 @@ class ScriptPrivilegeApiResourceTest
     assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
     assertThat(e.getResponse().getEntity().toString(),
         is("ValidationErrorXO{id='*', message='\"Invalid script 'invalid' supplied.\"'}"));
+  }
+
+  @Test
+  void testUpdatePrivilege_crossType_rejected() {
+    Privilege priv = createPrivilege("wildcard", "priv", "privdesc", false);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
+
+    ApiPrivilegeScriptRequest apiPrivilege = new ApiPrivilegeScriptRequest("priv", "newdescription", "scriptName",
+        List.of(PrivilegeAction.RUN));
+
+    try {
+      underTest.updatePrivilege("priv", apiPrivilege);
+      fail("cross-type update should have been rejected with 409");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(409));
+      assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
+      assertThat(e.getResponse().getEntity().toString(),
+          is("ValidationErrorXO{id='*', message='\"Privilege 'priv' is of type 'wildcard'"
+              + " and cannot be updated via the 'script' endpoint.\"'}"));
+    }
+    verify(authorizationManager, never()).updatePrivilegeByName(any());
   }
 
   @Test

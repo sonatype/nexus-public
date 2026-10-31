@@ -59,6 +59,10 @@ export function StorageFacet({
     onNestedChange('storage', { strictContentTypeValidation: checked });
   };
 
+  const handleGlobalDistributionChange = (checked: boolean) => {
+    onNestedChange('storage', { globalDistribution: checked });
+  };
+
   const blobStoreOptions = blobStores.map((store) => ({
     value: store.name,
     label: store.name,
@@ -90,6 +94,16 @@ export function StorageFacet({
         onChange={handleContentValidationChange}
         description={UIStrings.STORAGE.STRICT_CONTENT_VALIDATION.description}
       />
+
+      {formData.storage?.globalDistribution !== undefined && (
+        <SettingsCheckbox
+          name="global-distribution"
+          label={UIStrings.STORAGE.GLOBAL_DISTRIBUTION.label}
+          checked={formData.storage?.globalDistribution}
+          onChange={handleGlobalDistributionChange}
+          description={UIStrings.STORAGE.GLOBAL_DISTRIBUTION.description}
+        />
+      )}
     </SettingsFormSection>
   );
 }

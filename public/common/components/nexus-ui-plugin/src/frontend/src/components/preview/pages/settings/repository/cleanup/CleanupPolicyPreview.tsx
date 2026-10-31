@@ -17,7 +17,11 @@ import { Search, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 
 import { SettingsSelect, SettingsButton, SettingsAlert } from '../../../../shared/form';
 import { useCleanupPoliciesApi } from './useCleanupPoliciesApi';
-import { CleanupPolicyFormData, RepositoryOption, PreviewComponent } from './types';
+import {
+  CleanupPolicyFormData,
+  RepositoryOption,
+  PreviewComponent,
+} from './types';
 
 import './CleanupPolicyPreview.scss';
 
@@ -49,17 +53,23 @@ export function CleanupPolicyPreview({ policyData, selectedRepositories = [] }: 
   const { fetchRepositories, previewCleanupPolicy } = useCleanupPoliciesApi();
 
   // Serialize selected repos for stable dependency comparison
-  const selectedReposKey = selectedRepositories.join(',');
+  const _selectedReposKey = selectedRepositories.join(',');
 
-  // Load repositories — use selected repos from form if available, otherwise fetch all for format
+  // Load repositories — restrict the dropdown to the Applied Repositories selected
+  // in the dual-list selector above. For formats that don't support attaching the
+  // policy to specific repositories, fall back to fetching all repos for the format.
   useEffect(() => {
+    if (!policyData.format) return;
+
     if (selectedRepositories.length > 0) {
       setRepositories(selectedRepositories.map((name) => ({ id: name, name })));
       setSelectedRepository('');
       setPreviewResults([]);
       setTotalCount(0);
+      setRepoError(null);
       setIsLoadingRepos(false);
-    } else if (policyData.format) {
+    } else {
+      let cancelled = false;
       setIsLoadingRepos(true);
       setRepoError(null);
       setSelectedRepository('');
@@ -67,20 +77,22 @@ export function CleanupPolicyPreview({ policyData, selectedRepositories = [] }: 
       setTotalCount(0);
 
       fetchRepositories(policyData.format)
-        .then(setRepositories)
-        .catch((err) => setRepoError(err.message))
-        .finally(() => setIsLoadingRepos(false));
+        .then((repos) => { if (!cancelled) setRepositories(repos); })
+        .catch((err) => { if (!cancelled) setRepoError(err.message); })
+        .finally(() => { if (!cancelled) setIsLoadingRepos(false); });
+
+      return () => { cancelled = true; };
     }
-  }, [policyData.format, selectedReposKey, fetchRepositories]);
+  }, [policyData.format, fetchRepositories, _selectedReposKey]);
 
   // Check if preview is available
   const isPreviewAvailable = useMemo(() => {
     return (
-      !!selectedRepository &&
-      (!!policyData.criteriaLastBlobUpdated ||
-        !!policyData.criteriaLastDownloaded ||
-        !!policyData.criteriaReleaseType ||
-        !!policyData.criteriaAssetRegex)
+      Boolean(selectedRepository) &&
+      (Boolean(policyData.criteriaLastBlobUpdated) ||
+        Boolean(policyData.criteriaLastDownloaded) ||
+        Boolean(policyData.criteriaReleaseType) ||
+        Boolean(policyData.criteriaAssetRegex))
     );
   }, [
     selectedRepository,
@@ -140,8 +152,8 @@ export function CleanupPolicyPreview({ policyData, selectedRepositories = [] }: 
       result = result.filter(
         (item) =>
           item.name.toLowerCase().includes(lowerFilter) ||
-          (item.group && item.group.toLowerCase().includes(lowerFilter)) ||
-          (item.version && item.version.toLowerCase().includes(lowerFilter))
+          (item.group?.toLowerCase().includes(lowerFilter)) ||
+          (item.version?.toLowerCase().includes(lowerFilter))
       );
     }
 

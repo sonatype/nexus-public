@@ -14,7 +14,7 @@ package org.sonatype.nexus.blobstore;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Stores blobs in a two-deep directory tree.
@@ -33,7 +33,7 @@ public class VolumeChapterLocationStrategy
 
   @Override
   public String location(final BlobId blobId) {
-    checkNotNull(blobId);
+    requireNonNull(blobId);
 
     return String.format("vol-%02d/chap-%02d/%s",
         tier(blobId, TIER_1_MODULO),

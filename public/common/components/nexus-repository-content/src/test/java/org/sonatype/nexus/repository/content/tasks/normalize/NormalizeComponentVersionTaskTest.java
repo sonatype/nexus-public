@@ -12,47 +12,57 @@
  */
 package org.sonatype.nexus.repository.content.tasks.normalize;
 
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
-import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.kv.ValueType;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.util.ThreadContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTask.KEY_FORMAT;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class NormalizeComponentVersionTaskTest
 {
   @Mock
@@ -73,13 +83,22 @@ public class NormalizeComponentVersionTaskTest
   @Mock
   private ComponentStore<?> componentStore;
 
+  @Mock
+  SecurityManager securityManager;
+
   private NormalizeComponentVersionTask underTest;
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    underTest = new NormalizeComponentVersionTask(
-        List.of(priorityService), versionNormalizerService, globalKeyValueStore, eventManager, false);
-    when(formatStoreManager.componentStore(anyString())).thenReturn(componentStore);
+    ThreadContext.bind(securityManager);
+    underTest = new NormalizeComponentVersionTask(priorityService, versionNormalizerService, globalKeyValueStore,
+        eventManager, false, 5);
+    lenient().when(formatStoreManager.componentStore(anyString())).thenReturn(componentStore);
+  }
+
+  @AfterEach
+  public void teardown() {
+    ThreadContext.unbindSecurityManager();
   }
 
   @Test
@@ -96,35 +115,22 @@ public class NormalizeComponentVersionTaskTest
   @Test
   public void testConstructionWithDisabledFlag() {
     NormalizeComponentVersionTask disabled = new NormalizeComponentVersionTask(
-        List.of(priorityService), versionNormalizerService, globalKeyValueStore, eventManager, true);
+        priorityService, versionNormalizerService, globalKeyValueStore, eventManager, true, 5);
     assertThat(disabled, is(notNullValue()));
   }
 
   @Test
-  public void testConstructionUsesLastPriorityService() {
-    NormalizationPriorityService first = mock(NormalizationPriorityService.class);
-    NormalizationPriorityService second = mock(NormalizationPriorityService.class);
-
-    Map<Format, FormatStoreManager> secondFormats = new LinkedHashMap<>();
-    when(second.getPrioritizedFormats()).thenReturn(secondFormats);
-
-    NormalizeComponentVersionTask task = new NormalizeComponentVersionTask(
-        List.of(first, second), versionNormalizerService, globalKeyValueStore, eventManager, false);
-    assertThat(task, is(notNullValue()));
-  }
-
-  @Test(expected = TaskInterruptedException.class)
   public void testExecuteThrowsWhenDisabled() throws Exception {
     NormalizeComponentVersionTask disabled = new NormalizeComponentVersionTask(
-        List.of(priorityService), versionNormalizerService, globalKeyValueStore, eventManager, true);
-    disabled.execute();
+        priorityService, versionNormalizerService, globalKeyValueStore, eventManager, true, 5);
+    assertThrows(TaskInterruptedException.class, disabled::call);
   }
 
   @Test
   public void testExecuteWithNoFormats() throws Exception {
-    when(priorityService.getPrioritizedFormats()).thenReturn(Collections.emptyMap());
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of());
 
-    underTest.execute();
+    underTest.call();
 
     verify(priorityService).getPrioritizedFormats();
     verifyNoInteractions(formatStoreManager, componentStore);
@@ -132,44 +138,33 @@ public class NormalizeComponentVersionTaskTest
 
   @Test
   public void testExecuteSkipsAlreadyNormalizedFormat() throws Exception {
-    Format mavenFormat = createFormat("maven2");
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(mavenFormat, formatStoreManager);
-    when(priorityService.getPrioritizedFormats()).thenReturn(formats);
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of("maven2", formatStoreManager));
 
-    NexusKeyValue kv = new NexusKeyValue();
-    kv.setKey("maven2.normalized.version.available");
-    kv.setType(org.sonatype.nexus.kv.ValueType.BOOLEAN);
-    kv.setValue(true);
-    when(globalKeyValueStore.getKey("maven2.normalized.version.available")).thenReturn(Optional.of(kv));
+    mockNormalizationFlag("maven2", true);
 
-    underTest.execute();
+    mockHasNoUnnormaliedVersions();
+
+    underTest.call();
 
     verify(globalKeyValueStore).getKey("maven2.normalized.version.available");
-    // componentStore is always called in processFormat, but browse should not happen
-    verify(componentStore, never()).browseUnnormalized(anyInt(), any());
+    // browse should only be called as part of determining whether the format has any components missing normalization
+    verify(componentStore).browseUnnormalized(1, null);
     verify(eventManager, never()).post(any());
   }
 
   @Test
   public void testExecuteNormalizesFormatWhenNotPreviouslyNormalized() throws Exception {
-    Format npmFormat = createFormat("npm");
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(npmFormat, formatStoreManager);
-    when(priorityService.getPrioritizedFormats()).thenReturn(formats);
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of("npm", formatStoreManager));
 
     // No previous normalization state
     when(globalKeyValueStore.getKey("npm.normalized.version.available")).thenReturn(Optional.empty());
 
     // Component store returns empty page (no unnormalized components)
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> emptyPage = mock(Continuation.class);
-    when(emptyPage.isEmpty()).thenReturn(true);
-    when(emptyPage.nextContinuationToken()).thenReturn(null);
-    when(componentStore.browseUnnormalized(anyInt(), isNull())).thenReturn(emptyPage);
+    Continuation<ComponentData> emptyPage = mockEmptyPage();
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(emptyPage);
     when(componentStore.countUnnormalized()).thenReturn(0);
 
-    underTest.execute();
+    underTest.call();
 
     // Verify setNormalizationState is called twice: first false, then true
     ArgumentCaptor<NexusKeyValue> kvCaptor = ArgumentCaptor.forClass(NexusKeyValue.class);
@@ -190,10 +185,7 @@ public class NormalizeComponentVersionTaskTest
 
   @Test
   public void testExecuteNormalizesComponentsInSinglePage() throws Exception {
-    Format dockerFormat = createFormat("docker");
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(dockerFormat, formatStoreManager);
-    when(priorityService.getPrioritizedFormats()).thenReturn(formats);
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of("docker", formatStoreManager));
 
     when(globalKeyValueStore.getKey("docker.normalized.version.available")).thenReturn(Optional.empty());
 
@@ -201,50 +193,32 @@ public class NormalizeComponentVersionTaskTest
     ComponentData component2 = createComponentData(2, "2.0.0");
 
     // First page with components, nextContinuationToken returns a token
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> firstPage = mock(Continuation.class);
-    when(firstPage.isEmpty()).thenReturn(false);
+    Continuation<ComponentData> firstPage = mockPage(component1, component2);
     when(firstPage.nextContinuationToken()).thenReturn("2");
-    when(firstPage.size()).thenReturn(2);
-    when(firstPage.iterator()).thenReturn(List.of(component1, component2).iterator());
-    // Enable forEach
-    when(firstPage.spliterator()).thenReturn(List.of(component1, component2).spliterator());
-    org.mockito.Mockito.doAnswer(invocation -> {
-      java.util.function.Consumer<ComponentData> action = invocation.getArgument(0);
-      action.accept(component1);
-      action.accept(component2);
-      return null;
-    }).when(firstPage).forEach(any());
 
     // Second page empty
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> emptyPage = mock(Continuation.class);
-    when(emptyPage.isEmpty()).thenReturn(true);
-    when(emptyPage.nextContinuationToken()).thenReturn(null);
+    Continuation<ComponentData> emptyPage = mockEmptyPage();
 
-    when(componentStore.browseUnnormalized(anyInt(), isNull())).thenReturn(firstPage);
-    when(componentStore.browseUnnormalized(anyInt(), eq("2"))).thenReturn(emptyPage);
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(firstPage);
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, "2")).thenReturn(emptyPage);
     when(componentStore.countUnnormalized()).thenReturn(2);
 
-    when(versionNormalizerService.getNormalizedVersionByFormat(eq("1.0.0"), any(Format.class)))
+    when(versionNormalizerService.getNormalizedVersionByFormat("1.0.0", "docker"))
         .thenReturn("000000001.000000000.000000000");
-    when(versionNormalizerService.getNormalizedVersionByFormat(eq("2.0.0"), any(Format.class)))
+    when(versionNormalizerService.getNormalizedVersionByFormat("2.0.0", "docker"))
         .thenReturn("000000002.000000000.000000000");
 
-    underTest.execute();
+    underTest.call();
 
     // Verify components were normalized
-    verify(versionNormalizerService).getNormalizedVersionByFormat("1.0.0", dockerFormat);
-    verify(versionNormalizerService).getNormalizedVersionByFormat("2.0.0", dockerFormat);
+    verify(versionNormalizerService).getNormalizedVersionByFormat("1.0.0", "docker");
+    verify(versionNormalizerService).getNormalizedVersionByFormat("2.0.0", "docker");
     verify(componentStore, times(2)).updateComponentNormalizedVersion(any(ComponentData.class));
   }
 
   @Test
   public void testExecuteNormalizesMultiplePages() throws Exception {
-    Format rawFormat = createFormat("raw");
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(rawFormat, formatStoreManager);
-    when(priorityService.getPrioritizedFormats()).thenReturn(formats);
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of("raw", formatStoreManager));
 
     when(globalKeyValueStore.getKey("raw.normalized.version.available")).thenReturn(Optional.empty());
 
@@ -252,47 +226,28 @@ public class NormalizeComponentVersionTaskTest
     ComponentData component2 = createComponentData(2, "2.0");
 
     // First page with one component
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> firstPage = mock(Continuation.class);
-    when(firstPage.isEmpty()).thenReturn(false);
+    Continuation<ComponentData> firstPage = mockPage(component1);
     when(firstPage.nextContinuationToken()).thenReturn("1");
-    when(firstPage.size()).thenReturn(1);
-    org.mockito.Mockito.doAnswer(invocation -> {
-      java.util.function.Consumer<ComponentData> action = invocation.getArgument(0);
-      action.accept(component1);
-      return null;
-    }).when(firstPage).forEach(any());
 
     // Second page with one component
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> secondPage = mock(Continuation.class);
-    when(secondPage.isEmpty()).thenReturn(false);
+    Continuation<ComponentData> secondPage = mockPage(component2);
     when(secondPage.nextContinuationToken()).thenReturn("2");
-    when(secondPage.size()).thenReturn(1);
-    org.mockito.Mockito.doAnswer(invocation -> {
-      java.util.function.Consumer<ComponentData> action = invocation.getArgument(0);
-      action.accept(component2);
-      return null;
-    }).when(secondPage).forEach(any());
 
     // Third page empty
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> emptyPage = mock(Continuation.class);
-    when(emptyPage.isEmpty()).thenReturn(true);
-    when(emptyPage.nextContinuationToken()).thenReturn(null);
+    Continuation<ComponentData> emptyPage = mockEmptyPage();
 
-    when(componentStore.browseUnnormalized(anyInt(), isNull())).thenReturn(firstPage);
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(firstPage);
     when(componentStore.browseUnnormalized(anyInt(), eq("1"))).thenReturn(secondPage);
     when(componentStore.browseUnnormalized(anyInt(), eq("2"))).thenReturn(emptyPage);
     when(componentStore.countUnnormalized()).thenReturn(2);
 
-    when(versionNormalizerService.getNormalizedVersionByFormat(anyString(), any(Format.class)))
+    when(versionNormalizerService.getNormalizedVersionByFormat(anyString(), anyString()))
         .thenReturn("normalized");
 
-    underTest.execute();
+    underTest.call();
 
     // Verify both components were processed across two pages
-    verify(componentStore).browseUnnormalized(anyInt(), isNull());
+    verify(componentStore).browseUnnormalized(Continuations.BROWSE_LIMIT, null);
     verify(componentStore).browseUnnormalized(anyInt(), eq("1"));
     verify(componentStore).browseUnnormalized(anyInt(), eq("2"));
     verify(componentStore, times(2)).updateComponentNormalizedVersion(any(ComponentData.class));
@@ -300,50 +255,39 @@ public class NormalizeComponentVersionTaskTest
 
   @Test
   public void testExecuteProcessesMultipleFormats() throws Exception {
-    Format mavenFormat = createFormat("maven2");
-    Format npmFormat = createFormat("npm");
-
     FormatStoreManager mavenManager = mock(FormatStoreManager.class);
     FormatStoreManager npmManager = mock(FormatStoreManager.class);
 
-    @SuppressWarnings("unchecked")
     ComponentStore<?> mavenStore = mock(ComponentStore.class);
-    @SuppressWarnings("unchecked")
     ComponentStore<?> npmStore = mock(ComponentStore.class);
 
     when(mavenManager.componentStore(anyString())).thenReturn(mavenStore);
     when(npmManager.componentStore(anyString())).thenReturn(npmStore);
 
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(mavenFormat, mavenManager);
-    formats.put(npmFormat, npmManager);
+    Map<String, FormatStoreManager> formats = new LinkedHashMap<>();
+    formats.put("maven2", mavenManager);
+    formats.put("npm", npmManager);
     when(priorityService.getPrioritizedFormats()).thenReturn(formats);
 
-    // Maven is already normalized
-    NexusKeyValue mavenKv = new NexusKeyValue();
-    mavenKv.setKey("maven2.normalized.version.available");
-    mavenKv.setType(org.sonatype.nexus.kv.ValueType.BOOLEAN);
-    mavenKv.setValue(true);
-    when(globalKeyValueStore.getKey("maven2.normalized.version.available")).thenReturn(Optional.of(mavenKv));
+    mockNormalizationFlag("maven2", true);
 
     // npm is not normalized
     when(globalKeyValueStore.getKey("npm.normalized.version.available")).thenReturn(Optional.empty());
 
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> emptyPage = mock(Continuation.class);
-    when(emptyPage.isEmpty()).thenReturn(true);
-    when(emptyPage.nextContinuationToken()).thenReturn(null);
-    when(npmStore.browseUnnormalized(anyInt(), isNull())).thenReturn(emptyPage);
+    Continuation<ComponentData> emptyPage = mockEmptyPage();
+    when(npmStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(emptyPage);
     when(npmStore.countUnnormalized()).thenReturn(0);
 
-    underTest.execute();
+    mockHasNoUnnormaliedVersions(mavenStore);
 
-    // Maven was skipped (already normalized) - componentStore() is still called but no browse
-    verify(mavenStore, never()).browseUnnormalized(anyInt(), any());
+    underTest.call();
+
+    // Maven was skipped (already normalized) - browse once for pre-check
+    verify(mavenStore).browseUnnormalized(anyInt(), any());
 
     // npm was processed
     verify(npmManager).componentStore(anyString());
-    verify(npmStore).browseUnnormalized(anyInt(), isNull());
+    verify(npmStore, times(1)).browseUnnormalized(anyInt(), isNull());
 
     // Event only posted for npm
     ArgumentCaptor<FormatVersionNormalizedEvent> eventCaptor =
@@ -354,75 +298,34 @@ public class NormalizeComponentVersionTaskTest
 
   @Test
   public void testExecuteWithFormatNormalizationStateFalse() throws Exception {
-    Format pypiFormat = createFormat("pypi");
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(pypiFormat, formatStoreManager);
-    when(priorityService.getPrioritizedFormats()).thenReturn(formats);
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of("pypi", formatStoreManager));
 
     // Previous normalization was set to false (incomplete)
-    NexusKeyValue kv = new NexusKeyValue();
-    kv.setKey("pypi.normalized.version.available");
-    kv.setType(org.sonatype.nexus.kv.ValueType.BOOLEAN);
-    kv.setValue(false);
-    when(globalKeyValueStore.getKey("pypi.normalized.version.available")).thenReturn(Optional.of(kv));
+    mockNormalizationFlag("pypi", false);
 
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> emptyPage = mock(Continuation.class);
-    when(emptyPage.isEmpty()).thenReturn(true);
-    when(emptyPage.nextContinuationToken()).thenReturn(null);
-    when(componentStore.browseUnnormalized(anyInt(), isNull())).thenReturn(emptyPage);
+    Continuation<ComponentData> emptyPage = mockEmptyPage();
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(emptyPage);
     when(componentStore.countUnnormalized()).thenReturn(0);
 
-    underTest.execute();
+    underTest.call();
 
     // Since the state is false, it should re-normalize
-    verify(componentStore).browseUnnormalized(anyInt(), isNull());
-    verify(eventManager).post(any(FormatVersionNormalizedEvent.class));
-  }
-
-  @Test
-  public void testExecuteFirstPageHasNullContinuationToken() throws Exception {
-    Format nugetFormat = createFormat("nuget");
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(nugetFormat, formatStoreManager);
-    when(priorityService.getPrioritizedFormats()).thenReturn(formats);
-
-    when(globalKeyValueStore.getKey("nuget.normalized.version.available")).thenReturn(Optional.empty());
-
-    // First page has components but nextContinuationToken returns null
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> firstPage = mock(Continuation.class);
-    when(firstPage.isEmpty()).thenReturn(false);
-    when(firstPage.nextContinuationToken()).thenReturn(null);
-
-    when(componentStore.browseUnnormalized(anyInt(), isNull())).thenReturn(firstPage);
-    when(componentStore.countUnnormalized()).thenReturn(5);
-
-    underTest.execute();
-
-    // While loop condition: !page.isEmpty() && page.nextContinuationToken() != null
-    // With null token, the while loop body does not execute
-    verify(componentStore, never()).updateComponentNormalizedVersion(any());
+    verify(componentStore).browseUnnormalized(Continuations.BROWSE_LIMIT, null);
     verify(eventManager).post(any(FormatVersionNormalizedEvent.class));
   }
 
   @Test
   public void testExecuteFirstPageIsEmpty() throws Exception {
-    Format goFormat = createFormat("go");
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(goFormat, formatStoreManager);
-    when(priorityService.getPrioritizedFormats()).thenReturn(formats);
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of("go", formatStoreManager));
 
     when(globalKeyValueStore.getKey("go.normalized.version.available")).thenReturn(Optional.empty());
 
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> emptyPage = mock(Continuation.class);
-    when(emptyPage.isEmpty()).thenReturn(true);
+    Continuation<ComponentData> emptyPage = mockEmptyPage();
 
-    when(componentStore.browseUnnormalized(anyInt(), isNull())).thenReturn(emptyPage);
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(emptyPage);
     when(componentStore.countUnnormalized()).thenReturn(0);
 
-    underTest.execute();
+    underTest.call();
 
     // Empty first page should short-circuit the while loop
     verify(componentStore, never()).updateComponentNormalizedVersion(any());
@@ -432,38 +335,16 @@ public class NormalizeComponentVersionTaskTest
   }
 
   @Test
-  public void testConstructorSelectsLastPriorityServiceFromList() throws Exception {
-    NormalizationPriorityService first = mock(NormalizationPriorityService.class);
-    NormalizationPriorityService second = mock(NormalizationPriorityService.class);
-
-    when(second.getPrioritizedFormats()).thenReturn(Collections.emptyMap());
-
-    NormalizeComponentVersionTask task = new NormalizeComponentVersionTask(
-        List.of(first, second), versionNormalizerService, globalKeyValueStore, eventManager, false);
-
-    task.execute();
-
-    // Only the last (second) priority service should be used
-    verify(second).getPrioritizedFormats();
-    verifyNoInteractions(first);
-  }
-
-  @Test
   public void testNormalizationSetsCorrectKeyFormat() throws Exception {
-    Format conanFormat = createFormat("conan");
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(conanFormat, formatStoreManager);
-    when(priorityService.getPrioritizedFormats()).thenReturn(formats);
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of("conan", formatStoreManager));
 
     when(globalKeyValueStore.getKey("conan.normalized.version.available")).thenReturn(Optional.empty());
 
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> emptyPage = mock(Continuation.class);
-    when(emptyPage.isEmpty()).thenReturn(true);
-    when(componentStore.browseUnnormalized(anyInt(), isNull())).thenReturn(emptyPage);
+    Continuation<ComponentData> emptyPage = mockEmptyPage();
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(emptyPage);
     when(componentStore.countUnnormalized()).thenReturn(0);
 
-    underTest.execute();
+    underTest.call();
 
     // Verify the key was checked with the correct format
     verify(globalKeyValueStore).getKey("conan.normalized.version.available");
@@ -478,39 +359,25 @@ public class NormalizeComponentVersionTaskTest
 
   @Test
   public void testNormalizedVersionIsSetOnComponent() throws Exception {
-    Format helmFormat = createFormat("helm");
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(helmFormat, formatStoreManager);
-    when(priorityService.getPrioritizedFormats()).thenReturn(formats);
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of("helm", formatStoreManager));
 
     when(globalKeyValueStore.getKey("helm.normalized.version.available")).thenReturn(Optional.empty());
 
     ComponentData component = createComponentData(1, "3.2.1");
 
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> firstPage = mock(Continuation.class);
-    when(firstPage.isEmpty()).thenReturn(false);
+    Continuation<ComponentData> firstPage = mockPage(component);
     when(firstPage.nextContinuationToken()).thenReturn("1");
-    when(firstPage.size()).thenReturn(1);
-    org.mockito.Mockito.doAnswer(invocation -> {
-      java.util.function.Consumer<ComponentData> action = invocation.getArgument(0);
-      action.accept(component);
-      return null;
-    }).when(firstPage).forEach(any());
 
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> emptyPage = mock(Continuation.class);
-    when(emptyPage.isEmpty()).thenReturn(true);
-    when(emptyPage.nextContinuationToken()).thenReturn(null);
+    Continuation<ComponentData> emptyPage = mockEmptyPage();
 
-    when(componentStore.browseUnnormalized(anyInt(), isNull())).thenReturn(firstPage);
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(firstPage);
     when(componentStore.browseUnnormalized(anyInt(), eq("1"))).thenReturn(emptyPage);
     when(componentStore.countUnnormalized()).thenReturn(1);
 
-    when(versionNormalizerService.getNormalizedVersionByFormat("3.2.1", helmFormat))
+    when(versionNormalizerService.getNormalizedVersionByFormat("3.2.1", "helm"))
         .thenReturn("000000003.000000002.000000001");
 
-    underTest.execute();
+    underTest.call();
 
     // Verify the normalized version was set on the component
     assertThat(component.normalizedVersion(), is("000000003.000000002.000000001"));
@@ -519,50 +386,40 @@ public class NormalizeComponentVersionTaskTest
 
   @Test
   public void testExecuteReturnsNull() throws Exception {
-    when(priorityService.getPrioritizedFormats()).thenReturn(Collections.emptyMap());
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of());
 
-    Object result = underTest.execute();
+    Object result = underTest.call();
 
     assertThat(result, is((Object) null));
   }
 
   @Test
   public void testAllFormatsAlreadyNormalized() throws Exception {
-    Format maven = createFormat("maven2");
-    Format npm = createFormat("npm");
-
     FormatStoreManager mavenManager = mock(FormatStoreManager.class);
     FormatStoreManager npmManager = mock(FormatStoreManager.class);
 
-    @SuppressWarnings("unchecked")
     ComponentStore<?> mavenStore = mock(ComponentStore.class);
-    @SuppressWarnings("unchecked")
     ComponentStore<?> npmStore = mock(ComponentStore.class);
     when(mavenManager.componentStore(anyString())).thenReturn(mavenStore);
     when(npmManager.componentStore(anyString())).thenReturn(npmStore);
 
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(maven, mavenManager);
-    formats.put(npm, npmManager);
+    Map<String, FormatStoreManager> formats = new LinkedHashMap<>();
+    formats.put("maven2", mavenManager);
+    formats.put("npm", npmManager);
     when(priorityService.getPrioritizedFormats()).thenReturn(formats);
 
-    NexusKeyValue mavenKv = new NexusKeyValue();
-    mavenKv.setKey("maven2.normalized.version.available");
-    mavenKv.setType(org.sonatype.nexus.kv.ValueType.BOOLEAN);
-    mavenKv.setValue(true);
-    when(globalKeyValueStore.getKey("maven2.normalized.version.available")).thenReturn(Optional.of(mavenKv));
+    mockNormalizationFlag("maven2", true);
+    mockNormalizationFlag("npm", true);
 
-    NexusKeyValue npmKv = new NexusKeyValue();
-    npmKv.setKey("npm.normalized.version.available");
-    npmKv.setType(org.sonatype.nexus.kv.ValueType.BOOLEAN);
-    npmKv.setValue(true);
-    when(globalKeyValueStore.getKey("npm.normalized.version.available")).thenReturn(Optional.of(npmKv));
+    mockHasNoUnnormaliedVersions(mavenStore);
+    mockHasNoUnnormaliedVersions(npmStore);
 
-    underTest.execute();
+    underTest.call();
 
     // componentStore() is called in processFormat, but no browse should happen for normalized formats
-    verify(mavenStore, never()).browseUnnormalized(anyInt(), any());
-    verify(npmStore, never()).browseUnnormalized(anyInt(), any());
+    verify(mavenStore).browseUnnormalized(1, null);
+    verify(npmStore).browseUnnormalized(1, null);
+    verifyNoMoreInteractions(mavenStore, npmStore);
     // No events should have been posted
     verifyNoInteractions(eventManager);
     // No normalization state set calls (only getKey calls)
@@ -571,45 +428,35 @@ public class NormalizeComponentVersionTaskTest
 
   @Test
   public void testMixedNormalizedAndUnnormalizedFormats() throws Exception {
-    Format normalizedFormat = createFormat("maven2");
-    Format unnormalizedFormat = createFormat("docker");
-
     FormatStoreManager normalizedManager = mock(FormatStoreManager.class);
     FormatStoreManager unnormalizedManager = mock(FormatStoreManager.class);
 
-    @SuppressWarnings("unchecked")
-    ComponentStore<?> normalizedStore = mock(ComponentStore.class);
-    @SuppressWarnings("unchecked")
-    ComponentStore<?> unnormalizedStore = mock(ComponentStore.class);
+    ComponentStore<?> normalizedStore = mock();
+    ComponentStore<?> unnormalizedStore = mock();
     when(normalizedManager.componentStore(anyString())).thenReturn(normalizedStore);
     when(unnormalizedManager.componentStore(anyString())).thenReturn(unnormalizedStore);
 
-    Map<Format, FormatStoreManager> formats = new LinkedHashMap<>();
-    formats.put(normalizedFormat, normalizedManager);
-    formats.put(unnormalizedFormat, unnormalizedManager);
+    Map<String, FormatStoreManager> formats = new LinkedHashMap<>();
+    formats.put("maven2", normalizedManager);
+    formats.put("docker", unnormalizedManager);
     when(priorityService.getPrioritizedFormats()).thenReturn(formats);
 
-    // maven2 is already normalized
-    NexusKeyValue mavenKv = new NexusKeyValue();
-    mavenKv.setKey("maven2.normalized.version.available");
-    mavenKv.setType(org.sonatype.nexus.kv.ValueType.BOOLEAN);
-    mavenKv.setValue(true);
-    when(globalKeyValueStore.getKey("maven2.normalized.version.available")).thenReturn(Optional.of(mavenKv));
+    mockNormalizationFlag("maven2", true);
 
     // docker is not normalized
     when(globalKeyValueStore.getKey("docker.normalized.version.available")).thenReturn(Optional.empty());
 
-    @SuppressWarnings("unchecked")
-    Continuation<ComponentData> emptyPage = mock(Continuation.class);
-    when(emptyPage.isEmpty()).thenReturn(true);
-    when(emptyPage.nextContinuationToken()).thenReturn(null);
-    when(unnormalizedStore.browseUnnormalized(anyInt(), isNull())).thenReturn(emptyPage);
+    Continuation<ComponentData> emptyPage = mockEmptyPage();
+    when(unnormalizedStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(emptyPage);
     when(unnormalizedStore.countUnnormalized()).thenReturn(0);
 
-    underTest.execute();
+    mockHasNoUnnormaliedVersions(normalizedStore);
+
+    underTest.call();
 
     // maven2 was skipped - componentStore() is called but no browse
-    verify(normalizedStore, never()).browseUnnormalized(anyInt(), any());
+    verify(normalizedStore).browseUnnormalized(1, null);
+    verifyNoMoreInteractions(normalizedStore);
 
     // docker was processed
     verify(unnormalizedManager).componentStore(anyString());
@@ -618,13 +465,89 @@ public class NormalizeComponentVersionTaskTest
     verify(eventManager, times(1)).post(any(FormatVersionNormalizedEvent.class));
   }
 
-  private Format createFormat(final String value) {
-    return new Format(value)
-    {
-    };
+  /*
+   * Verify that normalization when component(s) exist in an unnormalized state even if the KV flag was set
+   */
+  @Test
+  void testComponentMissingNormalizedVersionTriggersNormalization() throws Exception {
+    when(priorityService.getPrioritizedFormats()).thenReturn(Map.of("docker", formatStoreManager));
+
+    mockNormalizationFlag("docker", true);
+    mockHasUnnormaliedVersions();
+
+    ComponentData component1 = createComponentData(1, "1.0.0");
+    ComponentData component2 = createComponentData(2, "2.0.0");
+
+    // First page with components, nextContinuationToken returns a token
+    Continuation<ComponentData> firstPage = mockPage(component1, component2);
+    when(firstPage.nextContinuationToken()).thenReturn("next");
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, null)).thenReturn(firstPage);
+
+    Continuation<ComponentData> empty = mockEmptyPage();
+    when(componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, "next")).thenReturn(empty);
+
+    when(componentStore.countUnnormalized()).thenReturn(2);
+
+    when(versionNormalizerService.getNormalizedVersionByFormat("1.0.0", "docker"))
+        .thenReturn("000000001.000000000.000000000");
+    when(versionNormalizerService.getNormalizedVersionByFormat("2.0.0", "docker"))
+        .thenReturn("000000002.000000000.000000000");
+
+    underTest.call();
+
+    // Verify components were normalized
+    verify(versionNormalizerService).getNormalizedVersionByFormat("1.0.0", "docker");
+    verify(versionNormalizerService).getNormalizedVersionByFormat("2.0.0", "docker");
+    verify(componentStore, times(2)).updateComponentNormalizedVersion(any(ComponentData.class));
   }
 
-  private ComponentData createComponentData(final int id, final String version) {
+  private void mockNormalizationFlag(final String formatName, final boolean normalized) {
+    NexusKeyValue kv = new NexusKeyValue();
+    kv.setKey(KEY_FORMAT.formatted(formatName));
+    kv.setType(ValueType.BOOLEAN);
+    kv.setValue(normalized);
+    when(globalKeyValueStore.getKey(KEY_FORMAT.formatted(formatName))).thenReturn(Optional.of(kv));
+  }
+
+  private void mockHasNoUnnormaliedVersions() {
+    mockHasNoUnnormaliedVersions(componentStore);
+  }
+
+  private void mockHasUnnormaliedVersions() {
+    Continuation<ComponentData> continuation = mock();
+    when(continuation.isEmpty()).thenReturn(false);
+    when(componentStore.browseUnnormalized(1, null)).thenReturn(continuation);
+  }
+
+  private static void mockHasNoUnnormaliedVersions(final ComponentStore<?> componentStore) {
+    Continuation<ComponentData> continuation = mock();
+    when(continuation.isEmpty()).thenReturn(true);
+    when(componentStore.browseUnnormalized(1, null)).thenReturn(continuation);
+  }
+
+  private static Continuation<ComponentData> mockPage(final ComponentData... components) {
+    Continuation<ComponentData> page = mock();
+    when(page.isEmpty()).thenReturn(components.length == 0);
+    when(page.size()).thenReturn(components.length);
+
+    // Enable forEach
+    doAnswer(invocation -> {
+      Consumer<ComponentData> action = invocation.getArgument(0);
+      Stream.of(components).forEach(action::accept);
+      return null;
+    }).when(page).forEach(any());
+
+    return page;
+  }
+
+  private static Continuation<ComponentData> mockEmptyPage() {
+    Continuation<ComponentData> emptyPage = mock();
+    when(emptyPage.isEmpty()).thenReturn(true);
+
+    return emptyPage;
+  }
+
+  private static ComponentData createComponentData(final int id, final String version) {
     ComponentData data = new ComponentData();
     data.setComponentId(id);
     data.setNamespace("test-namespace");

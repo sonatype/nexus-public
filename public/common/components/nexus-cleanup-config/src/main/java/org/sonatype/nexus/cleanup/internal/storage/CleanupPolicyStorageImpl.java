@@ -25,7 +25,7 @@ import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.collect.ImmutableList;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -45,7 +45,7 @@ public class CleanupPolicyStorageImpl
   @Autowired
   public CleanupPolicyStorageImpl(final DataSessionSupplier sessionSupplier, final EventManager eventManager) {
     super(sessionSupplier);
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override

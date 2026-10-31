@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.webhooks;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 // NOTE: this is probably better named as WebhookScope
 
@@ -26,7 +26,7 @@ public abstract class WebhookType
   private final String value;
 
   protected WebhookType(final String value) {
-    this.value = checkNotNull(value);
+    this.value = requireNonNull(value);
   }
 
   public String getValue() {

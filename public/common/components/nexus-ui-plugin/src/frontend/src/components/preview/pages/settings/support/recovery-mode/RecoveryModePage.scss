@@ -1,0 +1,83 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.recovery-mode-page {
+  padding: var(--space-5);
+
+  &__header {
+    margin-bottom: var(--space-5);
+  }
+
+  &__actions {
+    flex-shrink: 0;
+  }
+
+  // Hover-capable wrapper around the disabled Disable button so its tooltip
+  // (shown only while reconciliation tasks are running) can trigger.
+  &__disable-wrap {
+    display: inline-flex;
+  }
+
+  // Status badge — rounded rectangle (4px) with prototype padding, not a pill.
+  &__status-badge {
+    border-radius: 4px;
+    padding: 4px 8px;
+  }
+
+  &__description {
+    // Allow the description to wrap on narrow viewports (avoids horizontal
+    // overflow); on wider screens it naturally fits on one line, matching the
+    // prototype. Keep the "Learn more" link from breaking mid-phrase.
+    a.recovery-mode-page__learn-more {
+      white-space: nowrap;
+    }
+  }
+
+  // Match the prototype's blue doc link. The link sets data-accent-color="blue"
+  // (so --accent-a11 resolves to blue here); apply it explicitly with enough
+  // specificity to beat Radix's .rt-Link reset and the inherited text color.
+  a.recovery-mode-page__learn-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    // Use the blue scale directly (not --accent-*, which follows the shell's
+    // green theme accent) so the link is blue like the prototype in every shell.
+    // !important is required to beat a high-specificity coreui global rule that
+    // forces `color: inherit` on all content-area anchors.
+    color: var(--blue-a11) !important;
+
+    &:hover,
+    &:focus {
+      color: var(--blue-a11) !important;
+    }
+  }
+
+  &__loading {
+    padding: var(--space-8) 0;
+    color: var(--color-text-secondary);
+  }
+
+  &__spinner {
+    animation: recovery-mode-spin 1s linear infinite;
+  }
+
+  &__warning,
+  &__error {
+    padding: var(--space-2) 0;
+  }
+}
+
+@keyframes recovery-mode-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

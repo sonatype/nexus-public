@@ -22,6 +22,7 @@ import jakarta.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.ErrorMessageUtil;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.privilege.ApplicationPrivilegeDescriptor;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
+import org.apache.shiro.authz.Permission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +52,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.privilege.rest.ApiPrivilegeApplication.DOMAIN_KEY;
@@ -66,6 +69,9 @@ class PrivilegeApiResourceTest
   private SecuritySystem securitySystem;
 
   @Mock
+  private SecurityHelper securityHelper;
+
+  @Mock
   private AuthorizationManager authorizationManager;
 
   private PrivilegeApiResource underTest;
@@ -73,12 +79,13 @@ class PrivilegeApiResourceTest
   @BeforeEach
   void setup() throws Exception {
     lenient().when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
+    lenient().when(securityHelper.allPermitted(any(Permission.class))).thenReturn(true);
 
     List<PrivilegeDescriptor> privilegeDescriptors = new ArrayList<>();
     privilegeDescriptors.add(new ApplicationPrivilegeDescriptor(false));
     privilegeDescriptors.add(new WildcardPrivilegeDescriptor());
 
-    underTest = new PrivilegeApiResource(securitySystem, privilegeDescriptors);
+    underTest = new PrivilegeApiResource(securitySystem, securityHelper, privilegeDescriptors);
   }
 
   @Test
@@ -278,6 +285,22 @@ class PrivilegeApiResourceTest
   }
 
   @Test
+  void testCreatePrivilege_wildcard_blankPattern_rejected() {
+    ApiPrivilegeWildcardRequest apiPrivilege = new ApiPrivilegeWildcardRequest("name", "description", "");
+
+    try {
+      underTest.createPrivilege(apiPrivilege);
+      fail("create should have failed due to blank pattern");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
+      assertThat(e.getResponse().getEntity().toString(),
+          is(ErrorMessageUtil.getFormattedMessage("\"Wildcard privilege pattern must not be blank.\"")));
+    }
+  }
+
+  @Test
   void testUpdatePrivilege_application() {
     Privilege priv = createPrivilege("application", "priv", "privdesc", false, DOMAIN_KEY, "testDomain", ACTIONS_KEY,
         "*");
@@ -352,6 +375,42 @@ class PrivilegeApiResourceTest
   }
 
   @Test
+  void testUpdatePrivilege_crossType_rejected() {
+    Privilege priv =
+        createPrivilege("application", "custom-search", "desc", false, DOMAIN_KEY, "search", ACTIONS_KEY, "read");
+    when(authorizationManager.getPrivilegeByName("custom-search")).thenReturn(priv);
+
+    ApiPrivilegeWildcardRequest apiPrivilege = new ApiPrivilegeWildcardRequest("custom-search", "desc", "nexus:*:*");
+
+    try {
+      underTest.updatePrivilege("custom-search", apiPrivilege);
+      fail("cross-type update should have been rejected with 409");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(409));
+      assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
+      assertThat(e.getResponse().getEntity().toString(),
+          is(ErrorMessageUtil.getFormattedMessage(
+              "\"Privilege 'custom-search' is of type 'application' and cannot be updated via the 'wildcard' endpoint.\"")));
+    }
+    verify(authorizationManager, never()).updatePrivilegeByName(any());
+  }
+
+  @Test
+  void testUpdatePrivilege_wildcardOnWildcard_succeeds() {
+    Privilege priv = createPrivilege("wildcard", "my-wildcard", "desc", false, PATTERN_KEY, "old:pattern");
+    when(authorizationManager.getPrivilegeByName("my-wildcard")).thenReturn(priv);
+
+    ApiPrivilegeWildcardRequest apiPrivilege = new ApiPrivilegeWildcardRequest("my-wildcard", "desc", "new:pattern");
+
+    underTest.updatePrivilege("my-wildcard", apiPrivilege);
+
+    ArgumentCaptor<Privilege> argument = ArgumentCaptor.forClass(Privilege.class);
+    verify(authorizationManager).updatePrivilegeByName(argument.capture());
+    assertPrivilege(argument.getValue(), "my-wildcard", "desc", PATTERN_KEY, "new:pattern");
+  }
+
+  @Test
   void testUpdatePrivilege_nameConflict() {
     ApiPrivilegeWildcardRequest apiPrivilege =
         new ApiPrivilegeWildcardRequest("privnotmatching", "privdesc", "new_pattern");
@@ -367,6 +426,77 @@ class PrivilegeApiResourceTest
           is(ErrorMessageUtil.getFormattedMessage("\"The privilege name 'privnotmatching'"
               + " does not match the name used in the path 'priv'.\"")));
     }
+  }
+
+  @Test
+  void testUpdatePrivilege_wildcard_forbiddenWhenCallerLacksTheNewPattern() {
+    when(authorizationManager.getPrivilegeByName("priv"))
+        .thenReturn(createPrivilege("wildcard", "priv", "privdesc", false, PATTERN_KEY, "nexus:metrics:read"));
+    when(securityHelper.allPermitted(any(Permission.class))).thenReturn(false);
+
+    ApiPrivilegeWildcardRequest apiPrivilege = new ApiPrivilegeWildcardRequest("priv", "privdesc", "nexus:*");
+
+    try {
+      underTest.updatePrivilege("priv", apiPrivilege);
+      fail("update should have been forbidden because caller cannot grant the new pattern");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(403));
+      assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
+      assertThat(e.getResponse().getEntity().toString(),
+          is(ErrorMessageUtil.getFormattedMessage(
+              "\"The current user is not permitted to grant the effective permission of privilege 'priv'.\"")));
+    }
+    verify(authorizationManager, never()).updatePrivilegeByName(any(Privilege.class));
+  }
+
+  @Test
+  void testCreatePrivilege_wildcard_forbiddenWhenCallerLacksThePattern() {
+    when(securityHelper.allPermitted(any(Permission.class))).thenReturn(false);
+
+    ApiPrivilegeWildcardRequest apiPrivilege = new ApiPrivilegeWildcardRequest("priv", "privdesc", "nexus:*");
+
+    try {
+      underTest.createPrivilege(apiPrivilege);
+      fail("create should have been forbidden because caller cannot grant the new pattern");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(403));
+      assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
+    }
+    verify(authorizationManager, never()).addPrivilege(any(Privilege.class));
+  }
+
+  @Test
+  void testUpdatePrivilege_wildcard_allowedWhenCallerAlreadyHoldsTheNewPattern() {
+    Privilege priv = createPrivilege("wildcard", "priv", "privdesc", false, PATTERN_KEY, "nexus:metrics:read");
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
+    when(securityHelper.allPermitted(any(Permission.class))).thenReturn(true);
+
+    ApiPrivilegeWildcardRequest apiPrivilege = new ApiPrivilegeWildcardRequest("priv", "privdesc", "nexus:health:read");
+
+    underTest.updatePrivilege("priv", apiPrivilege);
+
+    ArgumentCaptor<Privilege> argument = ArgumentCaptor.forClass(Privilege.class);
+    verify(authorizationManager).updatePrivilegeByName(argument.capture());
+    assertPrivilege(argument.getValue(), "priv", "privdesc", PATTERN_KEY, "nexus:health:read");
+  }
+
+  @Test
+  void testCreatePrivilege_application_forbiddenWhenCallerLacksTheNewPermission() {
+    when(securityHelper.allPermitted(any(Permission.class))).thenReturn(false);
+
+    ApiPrivilegeApplicationRequest apiPrivilege = new ApiPrivilegeApplicationRequest("name", "description", "*",
+        Collections.singleton(PrivilegeAction.ALL));
+
+    try {
+      underTest.createPrivilege(apiPrivilege);
+      fail("create should have been forbidden because caller cannot grant the new permission");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(403));
+    }
+    verify(authorizationManager, never()).addPrivilege(any(Privilege.class));
   }
 
   private static void assertPrivilege(

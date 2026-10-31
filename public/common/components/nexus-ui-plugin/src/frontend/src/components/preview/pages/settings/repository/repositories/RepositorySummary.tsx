@@ -13,10 +13,13 @@
 
 import React from 'react';
 import { Box, Flex, Text, Badge, Tooltip } from '@radix-ui/themes';
-import { ExternalLink, Globe, HardDrive, FolderSync } from 'lucide-react';
+import { ExternalLink, HardDrive } from 'lucide-react';
 import { StatusBadge, FormatBadge } from '../../../../shared';
 import { TypeBadge } from './TypeBadge';
 import { Repository, RepositoryFormData } from './types';
+import { BlobStoreStorageCard } from './BlobStoreStorageCard';
+import { RepositoryMetricsCard } from './RepositoryMetricsCard';
+import { RepositoryTypeIcon } from './repositoryTypeIcon';
 
 import './RepositoryForm.scss';
 
@@ -79,7 +82,7 @@ export function RepositorySummary({ repository, formData, onNavigateToTab, isClo
             label="Remote Storage"
             value={
               <Flex align="center" gap="2">
-                <Globe size={14} className="repository-summary__icon" />
+                <RepositoryTypeIcon type="proxy" size={14} className="repository-summary__icon" />
                 <Text size="2" className="repository-summary__url">{remoteUrl}</Text>
               </Flex>
             }
@@ -103,11 +106,11 @@ export function RepositorySummary({ repository, formData, onNavigateToTab, isClo
 
         {/* Group-specific: Members */}
         {repository.type === 'group' && (
-          <SummaryItem 
-            label="Group Members" 
+          <SummaryItem
+            label="Group Members"
             value={
               <Flex align="center" gap="2">
-                <FolderSync size={14} className="repository-summary__icon" />
+                <RepositoryTypeIcon type="group" size={14} className="repository-summary__icon" />
                 <Text size="2">{memberCount} member repositories</Text>
               </Flex>
             }
@@ -117,8 +120,8 @@ export function RepositorySummary({ repository, formData, onNavigateToTab, isClo
 
         {/* Cleanup Policies */}
         {formData.cleanup?.policyNames && formData.cleanup.policyNames.length > 0 && (
-          <SummaryItem 
-            label="Cleanup Policies" 
+          <SummaryItem
+            label="Cleanup Policies"
             value={
               <Flex gap="1" wrap="wrap">
                 {formData.cleanup.policyNames.map(policy => (
@@ -130,6 +133,14 @@ export function RepositorySummary({ repository, formData, onNavigateToTab, isClo
           />
         )}
       </Box>
+
+      {/* Blob Store Storage Card - hidden in Cloud distribution */}
+      {!isCloud && blobStoreName && blobStoreName !== '-' && (
+        <BlobStoreStorageCard blobStoreName={blobStoreName} />
+      )}
+
+      {/* Repository Metrics Card */}
+      <RepositoryMetricsCard repositoryName={repository.name} />
     </Box>
   );
 }

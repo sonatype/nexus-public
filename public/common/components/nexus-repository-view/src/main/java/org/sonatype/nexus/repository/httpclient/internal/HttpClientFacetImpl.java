@@ -46,6 +46,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.http.Header;
+import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.RedirectStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -56,9 +57,9 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
@@ -112,13 +113,13 @@ public class HttpClientFacetImpl
       final List<TargetAuthenticationStrategy> authenticationStrategiesList,
       @Nullable final OutboundRequestMetricRecorder outboundRequestRecorder)
   {
-    this.httpClientManager = checkNotNull(httpClientManager);
-    this.autoBlockConfiguration = QualifierUtil.buildQualifierBeanMap(checkNotNull(autoBlockConfigurationList));
-    this.redirectStrategy = QualifierUtil.buildQualifierBeanMap(checkNotNull(redirectStrategyList));
-    this.normalizationStrategies = QualifierUtil.buildQualifierBeanMap(checkNotNull(normalizationStrategiesList));
+    this.httpClientManager = requireNonNull(httpClientManager);
+    this.autoBlockConfiguration = QualifierUtil.buildQualifierBeanMap(requireNonNull(autoBlockConfigurationList));
+    this.redirectStrategy = QualifierUtil.buildQualifierBeanMap(requireNonNull(redirectStrategyList));
+    this.normalizationStrategies = QualifierUtil.buildQualifierBeanMap(requireNonNull(normalizationStrategiesList));
     this.contentCompressionStrategies =
-        QualifierUtil.buildQualifierBeanMap(checkNotNull(contentCompressionStrategiesList));
-    this.authenticationStrategies = QualifierUtil.buildQualifierBeanMap(checkNotNull(authenticationStrategiesList));
+        QualifierUtil.buildQualifierBeanMap(requireNonNull(contentCompressionStrategiesList));
+    this.authenticationStrategies = QualifierUtil.buildQualifierBeanMap(requireNonNull(authenticationStrategiesList));
     this.outboundRequestRecorder = outboundRequestRecorder;
   }
 
@@ -134,8 +135,8 @@ public class HttpClientFacetImpl
   {
     this(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategy,
         contentCompressionStrategies, authenticationStrategies, (OutboundRequestMetricRecorder) null);
-    this.config = checkNotNull(config);
-    checkNotNull(this.autoBlockConfiguration.get(DEFAULT));
+    this.config = requireNonNull(config);
+    requireNonNull(this.autoBlockConfiguration.get(DEFAULT));
   }
 
   /**
@@ -181,7 +182,7 @@ public class HttpClientFacetImpl
   @Override
   @Guarded(by = STARTED)
   public HttpClient getHttpClient() {
-    return checkNotNull(httpClient);
+    return requireNonNull(httpClient);
   }
 
   @Nullable
@@ -238,6 +239,12 @@ public class HttpClientFacetImpl
   @Guarded(by = STARTED)
   public void setStatus(final RemoteConnectionStatus status) {
     httpClient.setRemoteConnectionStatus(status);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void recordConnectionFailure(final IOException failure, final HttpHost target) {
+    httpClient.recordConnectionFailure(failure, target);
   }
 
   @Subscribe

@@ -12,7 +12,8 @@
  */
 
 .repository-form {
-  max-width: 800px;
+  // 880px gives the sticky action bar enough horizontal budget to fit Rebuild + Disable + Delete on the left, the reserved-but-hidden "Unsaved changes" slot, plus Cancel + Save on the right — all on one row, in both pristine and dirty states. 800px overflowed once the indicator slot was reserved.
+  max-width: 880px;
 
 
   // ==========================================================================

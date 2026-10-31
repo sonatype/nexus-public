@@ -144,4 +144,46 @@ public class RoutingRuleCacheTest
     underTest.getRoutingRule(repository);
     verify(configuration, times(2)).getRoutingRuleId();
   }
+
+  // Fix: a no-arg / null-id RoutingRuleInvalidatedEvent (e.g. Jackson-deserialized) must not throw on
+  // UUID.fromString(null), and must not invalidate the rule cache (there is no id to invalidate).
+  @Test
+  public void testHandle_nullRoutingRuleId_doesNotThrowOrInvalidate() {
+    EntityId ruleId = new EntityUUID(UUID.randomUUID());
+    RoutingRule rule = mock(RoutingRule.class);
+    when(configuration.getRoutingRuleId()).thenReturn(ruleId);
+    when(routingRuleStore.getById(ruleId.getValue())).thenReturn(rule);
+
+    // warm up cache
+    underTest.getRoutingRule(repository);
+    verify(routingRuleStore, times(1)).getById(ruleId.getValue());
+
+    // a null-id event must be handled gracefully (no NPE) and must not invalidate the cache
+    underTest.handle(new RoutingRuleInvalidatedEvent());
+
+    underTest.getRoutingRule(repository);
+    verify(routingRuleStore, times(1)).getById(ruleId.getValue());
+  }
+
+  // Fix: a malformed (non-null) routing rule id -- e.g. a corrupted distributed-event row -- must be skipped
+  // rather than throwing IllegalArgumentException out of this shared event-bus handler.
+  @Test
+  public void testHandle_malformedRoutingRuleId_doesNotThrowOrInvalidate() {
+    EntityId ruleId = new EntityUUID(UUID.randomUUID());
+    RoutingRule rule = mock(RoutingRule.class);
+    when(configuration.getRoutingRuleId()).thenReturn(ruleId);
+    when(routingRuleStore.getById(ruleId.getValue())).thenReturn(rule);
+
+    // warm up cache
+    underTest.getRoutingRule(repository);
+    verify(routingRuleStore, times(1)).getById(ruleId.getValue());
+
+    EntityId malformed = mock(EntityId.class);
+    when(malformed.getValue()).thenReturn("not-a-uuid");
+    underTest.handle(new RoutingRuleInvalidatedEvent(malformed));
+
+    // the malformed id is skipped: no throw, and the cache is not invalidated
+    underTest.getRoutingRule(repository);
+    verify(routingRuleStore, times(1)).getById(ruleId.getValue());
+  }
 }

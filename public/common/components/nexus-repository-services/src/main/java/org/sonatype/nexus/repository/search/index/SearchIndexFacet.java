@@ -28,4 +28,13 @@ public interface SearchIndexFacet
    * Rebuilds the index of the {@link Repository} this facet is attached to.
    */
   void rebuildIndex();
+
+  /**
+   * Deletes all search index entries for the {@link Repository} this facet is attached to.
+   * Unlike the facet lifecycle {@code delete()}, this can be called independently
+   * without triggering a state transition (e.g., during soft-delete).
+   */
+  default void deleteIndex() {
+    // no-op by default
+  }
 }

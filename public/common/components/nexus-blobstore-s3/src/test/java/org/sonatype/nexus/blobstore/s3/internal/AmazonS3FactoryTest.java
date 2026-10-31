@@ -15,7 +15,6 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.crypto.secrets.Secret;
@@ -30,9 +29,12 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
 import software.amazon.awssdk.core.checksums.ResponseChecksumValidation;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.metrics.publishers.cloudwatch.CloudWatchMetricPublisher;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
@@ -103,6 +105,7 @@ public class AmazonS3FactoryTest
     when(s3ClientBuilder.region(any(Region.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.requestChecksumCalculation(any(RequestChecksumCalculation.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.responseChecksumValidation(any(ResponseChecksumValidation.class))).thenReturn(s3ClientBuilder);
+    when(s3ClientBuilder.overrideConfiguration(any(ClientOverrideConfiguration.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.build()).thenReturn(client);
 
     when(client.serviceClientConfiguration()).thenReturn(s3Serviceconfiguration);
@@ -135,8 +138,55 @@ public class AmazonS3FactoryTest
   public void endpointIsSetWhenProvidedInConfigWithDefaultRegion() {
     config.getAttributes().get("s3").put("endpoint", "http://localhost/");
 
-    amazonS3Factory.create(config);
-    verify(s3ClientBuilder).endpointOverride(URI.create("http://localhost/"));
+    try (MockedStatic<DefaultAwsRegionProviderChain> regionProviderMock =
+        mockStatic(DefaultAwsRegionProviderChain.class)) {
+      DefaultAwsRegionProviderChain.Builder mockBuilder = mock(DefaultAwsRegionProviderChain.Builder.class);
+      DefaultAwsRegionProviderChain mockChain = mock(DefaultAwsRegionProviderChain.class);
+      when(mockBuilder.build()).thenReturn(mockChain);
+      when(mockChain.getRegion()).thenThrow(SdkClientException.create("no region configured"));
+      regionProviderMock.when(DefaultAwsRegionProviderChain::builder).thenReturn(mockBuilder);
+
+      amazonS3Factory.create(config);
+      verify(s3ClientBuilder).endpointOverride(URI.create("http://localhost/"));
+      verify(s3ClientBuilder).region(Region.US_EAST_1);
+    }
+  }
+
+  @Test
+  public void endpointIsSetWhenProvidedInConfigWithDefaultRegionFromProviderChain() {
+    config.getAttributes().get("s3").put("endpoint", "http://localhost/");
+
+    try (MockedStatic<DefaultAwsRegionProviderChain> regionProviderMock =
+        mockStatic(DefaultAwsRegionProviderChain.class)) {
+      DefaultAwsRegionProviderChain.Builder mockBuilder = mock(DefaultAwsRegionProviderChain.Builder.class);
+      DefaultAwsRegionProviderChain mockChain = mock(DefaultAwsRegionProviderChain.class);
+      when(mockBuilder.build()).thenReturn(mockChain);
+      when(mockChain.getRegion()).thenReturn(Region.EU_WEST_1);
+      regionProviderMock.when(DefaultAwsRegionProviderChain::builder).thenReturn(mockBuilder);
+
+      amazonS3Factory.create(config);
+      verify(s3ClientBuilder).endpointOverride(URI.create("http://localhost/"));
+      verify(s3ClientBuilder).region(Region.EU_WEST_1);
+    }
+  }
+
+  @Test
+  public void endpointIsSetWhenProvidedInConfigWithExplicitDefaultRegion() {
+    config.getAttributes().get("s3").put("endpoint", "http://localhost/");
+    config.getAttributes().get("s3").put("region", "DEFAULT");
+
+    try (MockedStatic<DefaultAwsRegionProviderChain> regionProviderMock =
+        mockStatic(DefaultAwsRegionProviderChain.class)) {
+      DefaultAwsRegionProviderChain.Builder mockBuilder = mock(DefaultAwsRegionProviderChain.Builder.class);
+      DefaultAwsRegionProviderChain mockChain = mock(DefaultAwsRegionProviderChain.class);
+      when(mockBuilder.build()).thenReturn(mockChain);
+      when(mockChain.getRegion()).thenThrow(SdkClientException.create("no region configured"));
+      regionProviderMock.when(DefaultAwsRegionProviderChain::builder).thenReturn(mockBuilder);
+
+      amazonS3Factory.create(config);
+      verify(s3ClientBuilder).endpointOverride(URI.create("http://localhost/"));
+      verify(s3ClientBuilder).region(Region.US_EAST_1);
+    }
   }
 
   @Test
@@ -155,7 +205,7 @@ public class AmazonS3FactoryTest
     amazonS3Factory.create(config);
 
     verify(cloudWatchMetricsPublisherBuilder).namespace(givenNamespace);
-    verify(s3ClientBuilder).overrideConfiguration(any(Consumer.class));
+    verify(s3ClientBuilder).overrideConfiguration(any(ClientOverrideConfiguration.class));
   }
 
   @Test

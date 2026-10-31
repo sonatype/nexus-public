@@ -16,33 +16,33 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.validation.Validator;
-
-import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.common.Description;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.security.realm.SecurityRealm;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
-import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.realm.Realm;
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,10 +55,6 @@ import static org.mockito.Mockito.when;
 @WithUser
 class RealmSettingsComponentTest
 {
-  @ValidationExecutor
-  private final Validator validator =
-      new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
-
   @Mock
   private RealmManager realmManager;
 
@@ -147,6 +143,11 @@ class RealmSettingsComponentTest
     RealmSettingsXO settingsXO = new RealmSettingsXO();
     settingsXO.setRealms(List.of("NexusAuthenticatingRealm", "LdapRealm"));
 
+    // Mock available realms
+    SecurityRealm authRealm = new SecurityRealm("NexusAuthenticatingRealm", "Nexus Authenticating Realm");
+    SecurityRealm ldapRealm = new SecurityRealm("LdapRealm", "LDAP Realm");
+    when(realmManager.getAvailableRealms()).thenReturn(List.of(authRealm, ldapRealm));
+
     List<String> updatedRealms = List.of("NexusAuthenticatingRealm", "LdapRealm");
     when(realmManager.getConfiguredRealmIds()).thenReturn(updatedRealms);
 
@@ -164,6 +165,7 @@ class RealmSettingsComponentTest
     RealmSettingsXO settingsXO = new RealmSettingsXO();
     settingsXO.setRealms(List.of());
 
+    when(realmManager.getAvailableRealms()).thenReturn(List.of());
     when(realmManager.getConfiguredRealmIds()).thenReturn(List.of());
 
     RealmSettingsXO result = underTest.update(settingsXO);
@@ -171,6 +173,35 @@ class RealmSettingsComponentTest
     verify(realmManager).setConfiguredRealmIds(List.of());
     assertThat(result, is(notNullValue()));
     assertThat(result.getRealms(), hasSize(0));
+  }
+
+  @Test
+  void testUpdate_rejectsUnknownRealmId() {
+    RealmSettingsXO settingsXO = new RealmSettingsXO();
+    settingsXO.setRealms(List.of("NexusAuthenticatingRealm", "java.util.Timer"));
+
+    // Mock available realms - only NexusAuthenticatingRealm exists
+    SecurityRealm authRealm = new SecurityRealm("NexusAuthenticatingRealm", "Nexus Authenticating Realm");
+    when(realmManager.getAvailableRealms()).thenReturn(List.of(authRealm));
+
+    assertThrows(ValidationErrorsException.class, () -> underTest.update(settingsXO));
+
+    // Verify that setConfiguredRealmIds was never called with invalid data
+    verify(realmManager, never()).setConfiguredRealmIds(any());
+  }
+
+  @Test
+  void testUpdate_rejectsAllUnknownRealmIds() {
+    RealmSettingsXO settingsXO = new RealmSettingsXO();
+    settingsXO.setRealms(List.of("java.util.Timer", "com.example.MaliciousRealm"));
+
+    // No available realms match
+    when(realmManager.getAvailableRealms()).thenReturn(List.of());
+
+    assertThrows(ValidationErrorsException.class, () -> underTest.update(settingsXO));
+
+    // Verify that setConfiguredRealmIds was never called
+    verify(realmManager, never()).setConfiguredRealmIds(any());
   }
 
   @Test

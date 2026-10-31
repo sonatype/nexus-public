@@ -29,7 +29,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -53,8 +53,8 @@ public class BrowseNodeMigrationStep_2_3
       final TaskScheduler taskScheduler,
       final UpgradeTaskScheduler upgradeTaskScheduler)
   {
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.upgradeTaskScheduler = requireNonNull(upgradeTaskScheduler);
   }
 
   @Override

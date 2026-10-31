@@ -22,7 +22,7 @@ import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link BlobAttributes} backed by {@link PropertiesFile}
@@ -37,7 +37,7 @@ public class FileBlobAttributes
   }
 
   public FileBlobAttributes(final Path path, final Map<String, String> headers, final BlobMetrics metrics) {
-    super(new PropertiesFile(path.toFile()), checkNotNull(headers), checkNotNull(metrics));
+    super(new PropertiesFile(path.toFile()), requireNonNull(headers), requireNonNull(metrics));
   }
 
   /**

@@ -39,9 +39,9 @@ public class GemStyleVersionNormalizer
    */
   private static final int MAX_VERSION_LENGTH = 256;
 
-  private static final String PRE_RELEASE_KEY = "a";
+  private static final String PRE_RELEASE_KEY = "0a";
 
-  private static final String RELEASE_KEY = "c";
+  private static final String RELEASE_KEY = "0c";
 
   @Override
   public String getNormalizedVersion(final String version) {
@@ -55,24 +55,35 @@ public class GemStyleVersionNormalizer
 
     String trimmed = version.trim();
     String[] segments = trimmed.split("\\.");
-    StringBuilder versionPart = new StringBuilder();
-    StringBuilder qualifierPart = new StringBuilder();
-    boolean foundPreRelease = false;
 
-    for (int i = 0; i < segments.length; i++) {
-      if (!foundPreRelease && isNumeric(segments[i])) {
-        if (versionPart.length() > 0) {
-          versionPart.append(".");
-        }
-        versionPart.append(normalizeSegment(segments[i]));
+    // RubyGems splits a version into its leading numeric run and the remainder, then drops trailing
+    // zero segments from the numeric run before comparing. 1.0.beta3 therefore canonicalizes to
+    // 1.beta3, and its release part must encode identically to a bare 1 — otherwise the extra 0
+    // segment makes the pre-release outrank the release it precedes.
+    int releaseEnd = 0;
+    while (releaseEnd < segments.length && isNumeric(segments[releaseEnd])) {
+      releaseEnd++;
+    }
+    int strippedEnd = releaseEnd;
+    while (strippedEnd > 0 && isZero(segments[strippedEnd - 1])) {
+      strippedEnd--;
+    }
+    boolean foundPreRelease = releaseEnd < segments.length;
+
+    StringBuilder versionPart = new StringBuilder();
+    for (int i = 0; i < strippedEnd; i++) {
+      if (versionPart.length() > 0) {
+        versionPart.append(".");
       }
-      else {
-        foundPreRelease = true;
-        if (qualifierPart.length() > 0) {
-          qualifierPart.append(".");
-        }
-        qualifierPart.append(segments[i].toLowerCase());
+      versionPart.append(normalizeSegment(segments[i]));
+    }
+
+    StringBuilder qualifierPart = new StringBuilder();
+    for (int i = releaseEnd; i < segments.length; i++) {
+      if (qualifierPart.length() > 0) {
+        qualifierPart.append(".");
       }
+      qualifierPart.append(segments[i].toLowerCase());
     }
 
     String normalizedVersion = versionPart.toString();
@@ -109,6 +120,21 @@ public class GemStyleVersionNormalizer
     else {
       return "0" + segment.toLowerCase();
     }
+  }
+
+  /**
+   * A numeric segment whose value is zero, e.g. {@code 0} or {@code 000}.
+   */
+  private boolean isZero(final String str) {
+    if (!isNumeric(str)) {
+      return false;
+    }
+    for (char c : str.toCharArray()) {
+      if (c != '0') {
+        return false;
+      }
+    }
+    return true;
   }
 
   private boolean isNumeric(final String str) {

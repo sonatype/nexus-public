@@ -31,7 +31,7 @@ export function NavItemBox(props: NavItemBoxProps) {
   const routeIsVisible = useRouteVisibility(routeForVisibility);
 
   // For external links (href), always render. For routes, check visibility.
-  if (!routeIsVisible && !href) return null;
+  if (!(routeIsVisible || href)) return null;
 
   return (
     <Box>

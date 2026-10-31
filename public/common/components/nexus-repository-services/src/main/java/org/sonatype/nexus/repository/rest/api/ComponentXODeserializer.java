@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Custom {@link JsonDeserializer} for the {@link ComponentXO} to handle the decorator approach
@@ -42,9 +42,9 @@ public class ComponentXODeserializer
       final ObjectMapper objectMapper,
       final Set<ComponentXODeserializerExtension> componentXODeserializerExtensions)
   {
-    this.componentXOFactory = checkNotNull(componentXOFactory);
-    this.objectMapper = checkNotNull(objectMapper);
-    this.componentXODeserializerExtensions = checkNotNull(componentXODeserializerExtensions);
+    this.componentXOFactory = requireNonNull(componentXOFactory);
+    this.objectMapper = requireNonNull(objectMapper);
+    this.componentXODeserializerExtensions = requireNonNull(componentXODeserializerExtensions);
   }
 
   @Override

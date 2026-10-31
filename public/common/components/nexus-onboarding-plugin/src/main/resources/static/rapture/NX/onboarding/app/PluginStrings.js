@@ -36,8 +36,8 @@ Ext.define('NX.onboarding.app.PluginStrings', {
 
   bundles: {
     'NX.onboarding.view.OnboardingStartScreen': {
-      Title: 'Welcome to Sonatype Nexus Repository Manager',
-      Description: '<p>This wizard will guide you through setup tasks to get started.</p>',
+      Title: 'Let\'s Get You Set Up',
+      Description: '<p>This wizard will guide you through a few quick steps to get your Nexus Repository ready for use.</p>',
     },
     'NX.onboarding.view.OnboardingCompleteScreen': {
       Title: 'Setup Complete',

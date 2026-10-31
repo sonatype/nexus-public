@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.repository.config.internal;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
 
@@ -29,9 +31,8 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.supportzip.PasswordSanitizing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.collect.Maps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@link Configuration} data.
@@ -55,7 +56,13 @@ public class ConfigurationData
 
   private EntityId routingRuleId;
 
-  private Map<String, Map<String, Object>> attributes;
+  private volatile Map<String, Map<String, Object>> attributes;
+
+  @Nullable
+  private OffsetDateTime deletedOn;
+
+  @Nullable
+  private String deletedBy;
 
   @Override
   public EntityId getId() {
@@ -100,7 +107,7 @@ public class ConfigurationData
 
   @Override
   public void setRecipeName(final String recipeName) {
-    this.recipeName = checkNotNull(recipeName);
+    this.recipeName = requireNonNull(recipeName);
   }
 
   /**
@@ -137,18 +144,46 @@ public class ConfigurationData
 
   @Override
   public void setAttributes(@Nullable final Map<String, Map<String, Object>> attributes) {
-    this.attributes = attributes;
+    if (attributes != null && !(attributes instanceof ConcurrentHashMap)) {
+      this.attributes = new ConcurrentHashMap<>(attributes);
+    }
+    else {
+      this.attributes = attributes;
+    }
   }
 
   @Override
-  public NestedAttributesMap attributes(final String key) {
-    checkNotNull(key);
+  public synchronized NestedAttributesMap attributes(final String key) {
+    requireNonNull(key);
 
     if (attributes == null) {
-      attributes = Maps.newHashMap();
+      attributes = new ConcurrentHashMap<>();
     }
 
-    return new NestedAttributesMap(key, attributes.computeIfAbsent(key, k -> Maps.newHashMap()));
+    return new NestedAttributesMap(key, attributes.computeIfAbsent(key, k -> new ConcurrentHashMap<>()));
+  }
+
+  @Nullable
+  public OffsetDateTime getDeletedOn() {
+    return deletedOn;
+  }
+
+  public void setDeletedOn(@Nullable final OffsetDateTime deletedOn) {
+    this.deletedOn = deletedOn;
+  }
+
+  @Nullable
+  public String getDeletedBy() {
+    return deletedBy;
+  }
+
+  public void setDeletedBy(@Nullable final String deletedBy) {
+    this.deletedBy = deletedBy;
+  }
+
+  @JsonIgnore
+  public boolean isDeleted() {
+    return deletedOn != null;
   }
 
   @Override

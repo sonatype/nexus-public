@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.view.Context;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -47,12 +48,13 @@ public class AptProxyFacetTest
     private EncodingHelper testEncodingHelper;
 
     public void initializeForTest() {
-      // Call the protected method from ProxyFacetSupport to initialize escapeHelper
-      configureUrlEscapeRules(null);
+      // Initialize EscapeHelper which is needed for URL encoding
+      ReflectionTestUtils.setField(this, "escapeHelper", new EscapeHelper((String) null));
     }
 
     public void initializeWithEncodingHelper(EncodingHelper encodingHelper) {
-      configureUrlEscapeRules(null);
+      // Initialize EscapeHelper which is needed for URL encoding
+      ReflectionTestUtils.setField(this, "escapeHelper", new EscapeHelper((String) null));
       this.testEncodingHelper = encodingHelper;
     }
 

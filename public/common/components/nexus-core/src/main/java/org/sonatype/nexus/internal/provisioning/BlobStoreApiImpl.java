@@ -20,7 +20,7 @@ import org.sonatype.nexus.BlobStoreApi;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,14 +34,14 @@ public class BlobStoreApiImpl
 
   @Autowired
   public BlobStoreApiImpl(final BlobStoreManager blobStoreManager) {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.blobStoreManager = requireNonNull(blobStoreManager);
   }
 
   @Override
   public BlobStoreConfiguration createFileBlobStore(final String name, final String path) {
     Map<String, Map<String, Object>> attributes = new HashMap<>();
     Map<String, Object> fileAttributes = new HashMap<>();
-    fileAttributes.put("path", checkNotNull(path));
+    fileAttributes.put("path", requireNonNull(path));
     attributes.put("file", fileAttributes);
     BlobStoreConfiguration blobStoreConfiguration = blobStoreManager.newConfiguration();
     blobStoreConfiguration.setName(name);

@@ -39,7 +39,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.context.annotation.Lazy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateFingerprint;
 import org.springframework.stereotype.Component;
 
@@ -57,7 +57,7 @@ public class TrustStoreComponent
 
   @Autowired
   public TrustStoreComponent(@Lazy final TrustStore trustStore) {
-    this.trustStore = checkNotNull(trustStore);
+    this.trustStore = requireNonNull(trustStore);
   }
 
   /**

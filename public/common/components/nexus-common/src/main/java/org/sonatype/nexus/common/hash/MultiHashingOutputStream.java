@@ -23,8 +23,7 @@ import java.util.Map.Entry;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.HashingOutputStream;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An {@link OutputStream} that maintains multiple hashes.
@@ -38,8 +37,8 @@ public class MultiHashingOutputStream
   private final Map<HashAlgorithm, Hasher> hashers = new LinkedHashMap<>();
 
   public MultiHashingOutputStream(final Iterable<HashAlgorithm> algorithms, final OutputStream out) {
-    super(checkNotNull(out));
-    checkNotNull(algorithms);
+    super(requireNonNull(out));
+    requireNonNull(algorithms);
     for (HashAlgorithm algorithm : algorithms) {
       hashers.put(algorithm, algorithm.function().newHasher());
     }

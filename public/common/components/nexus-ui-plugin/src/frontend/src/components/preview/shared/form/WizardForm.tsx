@@ -48,6 +48,20 @@ export interface WizardFormProps {
   className?: string;
   /** Disable dirty tracking (for create-only wizards) */
   noDirtyTracking?: boolean;
+  /**
+   * Opt out of the wizard's own dirty registration when the embedded form
+   * already tracks dirty state via a form machine (`useForm`). Prevents the
+   * wizard from adding a second `window.dirty` entry that would trigger a
+   * duplicate unsaved-changes dialog. Pair with `onDiscardConfirm`.
+   */
+  externalDirtyTracking?: boolean;
+  /**
+   * Called after the user confirms "Leave" in the discard dialog. Callers
+   * using `externalDirtyTracking` must clear their form machine's dirty entry
+   * here (via `clearDirtyState(machineId)`) and then navigate. Replaces the
+   * default `onCancel()` invocation.
+   */
+  onDiscardConfirm?: () => void;
   /** Override submit handler for specific step (e.g. to run nested form validation before advancing) */
   onStepSubmitOverride?: (step: number) => (() => void) | undefined;
   /** Hide the Next/Complete button (for auto-advance scenarios) */
@@ -56,6 +70,10 @@ export interface WizardFormProps {
   hideStepTitle?: boolean;
   /** Analytics ID for the submit button */
   submitAnalyticsId?: string;
+  /** Analytics ID for the cancel button */
+  cancelAnalyticsId?: string;
+  /** Analytics ID for the back (previous step) button */
+  backAnalyticsId?: string;
 }
 
 function StepIndicator({
@@ -154,10 +172,14 @@ export function WizardForm({
   children,
   className = '',
   noDirtyTracking = false,
+  externalDirtyTracking = false,
+  onDiscardConfirm,
   onStepSubmitOverride,
   hideSubmitButton = false,
   hideStepTitle = false,
   submitAnalyticsId,
+  cancelAnalyticsId,
+  backAnalyticsId,
 }: WizardFormProps) {
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === steps.length - 1;
@@ -208,10 +230,13 @@ export function WizardForm({
       submitDisabled={!canAdvance || loading}
       confirmDiscard={dirty}
       noDirtyTracking={noDirtyTracking || !dirty}
+      externalDirtyTracking={externalDirtyTracking}
+      onDiscardConfirm={onDiscardConfirm}
       showActions
       error={error}
       testId={testId || 'wizard-form'}
       submitAnalyticsId={submitAnalyticsId}
+      cancelAnalyticsId={cancelAnalyticsId}
       className={`wizard-form ${className}`.trim()}
       cancelOnLeft={true}
       actionButtons={
@@ -223,6 +248,7 @@ export function WizardForm({
             onClick={handleBack}
             disabled={loading}
             data-testid="wizard-back"
+            data-analytics-id={backAnalyticsId}
           >
             <ArrowLeft size={14} />
             Back

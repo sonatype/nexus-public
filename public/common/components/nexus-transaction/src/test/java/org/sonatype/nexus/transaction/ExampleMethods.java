@@ -16,7 +16,7 @@ import java.io.IOException;
 
 import com.google.common.base.Suppliers;
 import org.springframework.beans.factory.annotation.Autowired;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -43,7 +43,7 @@ public class ExampleMethods
 
   @Autowired
   public ExampleMethods(final ExampleNestedStore nestedStore) {
-    this.nestedStore = checkNotNull(nestedStore);
+    this.nestedStore = requireNonNull(nestedStore);
   }
 
   public String nonTransactional() {

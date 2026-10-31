@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 class H2FulltextSearchConditionBuilderTest
 {
@@ -224,6 +225,130 @@ class H2FulltextSearchConditionBuilderTest
     assertThat(result.getSqlFilter(), is("(LOWER(cs.keywords) LIKE LOWER(#{filterParams.cs_keywords0}))"));
     // All asterisks should be converted to % for SQL LIKE
     assertThat(result.getParameters().get("cs_keywords0"), is("%org%apache%maven%%"));
+  }
+
+  /*
+   * NEXUS-54104 - a clause whose children all resolve to empty must produce an empty filter,
+   * not "()" which renders as invalid SQL "WHERE (())"
+   */
+  @Test
+  void testClauseWithAllEmptyChildrenProducesEmptyFilter() {
+    Expression expression = SqlClause.create(Operand.OR,
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("")),
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("  ")));
+
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is(""));
+    assertThat(result.getParameters().isEmpty(), is(true));
+  }
+
+  /*
+   * NEXUS-54104 - the same guard must hold for an AND clause whose children all resolve to empty
+   */
+  @Test
+  void testAndClauseWithAllEmptyChildrenProducesEmptyFilter() {
+    Expression expression = SqlClause.create(Operand.AND,
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("")),
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("  ")));
+
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is(""));
+    assertThat(result.getParameters().isEmpty(), is(true));
+  }
+
+  /*
+   * NEXUS-54104 - blank wildcard terms (the real shape produced by a crafted q="" "" "" query)
+   * must also collapse to an empty filter rather than "()"
+   */
+  @Test
+  void testClauseWithAllEmptyWildcardChildrenProducesEmptyFilter() {
+    Expression expression = SqlClause.create(Operand.OR,
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new WildcardTerm("")),
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new WildcardTerm("   ")));
+
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is(""));
+    assertThat(result.getParameters().isEmpty(), is(true));
+  }
+
+  /*
+   * NEXUS-54104 - a clause mixing empty and non-empty children must keep the non-empty child
+   * without emitting a dangling operator or an empty bracket pair
+   */
+  @Test
+  void testMixedClauseDropsEmptyChildWithoutDanglingOperator() {
+    Expression expression = SqlClause.create(Operand.OR,
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new WildcardTerm("lodash")),
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("")));
+
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter().isEmpty(), is(false));
+    assertThat(result.getSqlFilter(), not(containsString("()")));
+    assertThat(result.getSqlFilter(), not(containsString(" OR ")));
+    // the surviving child must actually render, not just leave a non-empty (but wrong) filter
+    assertThat(result.getSqlFilter(), containsString("LIKE"));
+    assertThat(result.getParameters().get("cs_keywords0"), is("%lodash%"));
+  }
+
+  /*
+   * NEXUS-54104 - the guard must hold for clauses with more than two children: three all-empty
+   * children still collapse to an empty filter (guards against off-by-one bracket/operator logic)
+   */
+  @Test
+  void testClauseWithThreeAllEmptyChildrenProducesEmptyFilter() {
+    Expression expression = SqlClause.create(Operand.OR,
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("")),
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("  ")),
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new WildcardTerm("   ")));
+
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is(""));
+    assertThat(result.getParameters().isEmpty(), is(true));
+  }
+
+  /*
+   * NEXUS-54104 - a clause with three children where only one is non-empty must render exactly that
+   * child, with no "()" and no dangling operator from the two dropped children
+   */
+  @Test
+  void testClauseWithThreeChildrenDropsTwoEmptyKeepsOne() {
+    Expression expression = SqlClause.create(Operand.OR,
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("")),
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new WildcardTerm("lodash")),
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("   ")));
+
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), not(containsString("()")));
+    assertThat(result.getSqlFilter(), not(containsString(" OR ")));
+    assertThat(result.getSqlFilter(), containsString("LIKE"));
+    assertThat(result.getParameters().get("cs_keywords0"), is("%lodash%"));
+  }
+
+  /*
+   * NEXUS-54104 - a nested clause whose inner clause fully collapses must not leave a stray "()"
+   * or dangling operator in the outer clause; only the surviving sibling predicate renders
+   */
+  @Test
+  void testNestedClauseWithCollapsingInnerClauseKeepsOnlySurvivingSibling() {
+    Expression innerAllEmpty = SqlClause.create(Operand.OR,
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new ExactTerm("")),
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new WildcardTerm("  ")));
+    Expression expression = SqlClause.create(Operand.AND,
+        new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new WildcardTerm("lodash")),
+        innerAllEmpty);
+
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), not(containsString("()")));
+    assertThat(result.getSqlFilter(), not(containsString(" AND ")));
+    assertThat(result.getSqlFilter(), containsString("LIKE"));
+    assertThat(result.getParameters().get("cs_keywords0"), is("%lodash%"));
   }
 
   @Test

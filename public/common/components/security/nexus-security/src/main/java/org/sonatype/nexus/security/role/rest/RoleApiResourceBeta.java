@@ -18,6 +18,7 @@ import jakarta.ws.rs.Path;
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;
+import org.sonatype.nexus.security.role.RoleAssignabilityChecker;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.stereotype.Component;
@@ -36,7 +37,10 @@ public class RoleApiResourceBeta
   static final String RESOURCE_URI = SecurityApiConstants.BETA_RESOURCE_URI + "roles";
 
   @Autowired
-  public RoleApiResourceBeta(final SecuritySystem securitySystem) {
-    super(securitySystem);
+  public RoleApiResourceBeta(
+      final SecuritySystem securitySystem,
+      final RoleAssignabilityChecker roleAssignabilityChecker)
+  {
+    super(securitySystem, roleAssignabilityChecker);
   }
 }

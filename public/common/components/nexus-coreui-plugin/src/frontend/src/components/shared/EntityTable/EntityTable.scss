@@ -92,6 +92,10 @@
     }
   }
 
+  &__arrow-header {
+    width: 40px;
+  }
+
   &__arrow {
     color: var(--color-text-tertiary);
     transition: color var(--transition-fast), transform var(--transition-fast);

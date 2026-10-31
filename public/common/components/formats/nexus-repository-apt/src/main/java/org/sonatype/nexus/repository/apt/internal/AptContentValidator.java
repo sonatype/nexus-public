@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Apt-specific {@link ContentValidator} that "hints" default content validator for apt package metadata and format
@@ -53,7 +53,7 @@ public class AptContentValidator
 
   @Autowired
   public AptContentValidator(final DefaultContentValidator defaultContentValidator) {
-    this.defaultContentValidator = checkNotNull(defaultContentValidator);
+    this.defaultContentValidator = requireNonNull(defaultContentValidator);
   }
 
   @Nonnull

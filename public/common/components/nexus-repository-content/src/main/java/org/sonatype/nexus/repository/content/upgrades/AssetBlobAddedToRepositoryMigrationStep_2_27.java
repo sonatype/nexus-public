@@ -101,7 +101,7 @@ public class AssetBlobAddedToRepositoryMigrationStep_2_27
   {
     String indexName = "idx_" + format + "_asset_blob_added_to_repository";
 
-    if (!indexExists(connection, indexName)) {
+    if (!indexExists(connection, tableName, indexName)) {
       runStatement(connection, String.format(
           "CREATE INDEX IF NOT EXISTS %s ON %s (added_to_repository)",
           indexName, tableName));
@@ -115,7 +115,7 @@ public class AssetBlobAddedToRepositoryMigrationStep_2_27
   {
     String indexName = "idx_" + format + "_asset_blob_created";
 
-    if (!indexExists(connection, indexName)) {
+    if (!indexExists(connection, tableName, indexName)) {
       runStatement(connection, String.format(
           "CREATE INDEX IF NOT EXISTS %s ON %s (blob_created)",
           indexName, tableName));

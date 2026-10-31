@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.log;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A delegating {@link Logger} that logs using a {@link Marker} by default.
@@ -30,8 +30,8 @@ public class MarkedLogger
   private final Marker marker;
 
   public MarkedLogger(final Logger delegate, final Marker marker) {
-    this.delegate = checkNotNull(delegate);
-    this.marker = checkNotNull(marker);
+    this.delegate = requireNonNull(delegate);
+    this.marker = requireNonNull(marker);
   }
 
   @Override

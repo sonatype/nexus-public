@@ -14,20 +14,21 @@ package org.sonatype.nexus.repository.raw.rest;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.rest.api.ContentDispositionHelper;
-
-import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
+import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
+import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
 
 /**
  * @since 3.25
  */
 @Component
 public class RawHostedRepositoryApiRequestToConfigurationConverter
-    extends HostedRepositoryApiRequestToConfigurationConverter<RawHostedRepositoryApiRequest>
+    extends HostedRepositoryApiRequestToConfigurationConverter<HostedStorageAttributes, RawHostedRepositoryApiRequest>
 {
   private RepositoryManager repositoryManager;
 

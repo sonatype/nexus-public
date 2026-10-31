@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.rest.api;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.ws.rs.Path;
 
+import org.sonatype.nexus.repository.manager.RepositoryDeletionService;
 import org.sonatype.nexus.rest.APIConstants;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -43,7 +44,10 @@ public class RepositoriesApiResourceBeta
   public static final String RESOURCE_URI = BETA_API_PREFIX + "/repositories";
 
   @Autowired
-  public RepositoriesApiResourceBeta(final AuthorizingRepositoryManager authorizingRepositoryManager) {
-    super(authorizingRepositoryManager);
+  public RepositoriesApiResourceBeta(
+      final AuthorizingRepositoryManager authorizingRepositoryManager,
+      final RepositoryDeletionService repositoryDeletionService)
+  {
+    super(authorizingRepositoryManager, repositoryDeletionService);
   }
 }

@@ -21,7 +21,7 @@ import {
   NxFieldset
 } from '@sonatype/react-shared-components';
 
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, isHostedRepoEvaluationSupportedFormat} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -39,6 +39,7 @@ export default function EvaluationConfiguration({parentMachine}) {
 
   const featureFlagValue = window.NX?.State?.getValue('hostedRepositoryEvaluationEnabled');
   const isFeatureEnabled = featureFlagValue === true;
+  const isConfigurable = isHostedRepoEvaluationSupportedFormat(parentState.context.data?.format);
 
   const evaluation = parentState.context.data.attributes?.evaluation;
   const mode = evaluation?.mode ?? EVALUATION_MODE.INHERIT;
@@ -61,13 +62,13 @@ export default function EvaluationConfiguration({parentMachine}) {
   const STRINGS = UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.monitoringSettings;
 
   useEffect(() => {
-    if (!isFeatureEnabled) {
+    if (!isFeatureEnabled || !isConfigurable) {
       return;
     }
 
     const fetchSettings = async () => {
       try {
-        const response = await Axios.get('/service/rest/v1/evaluation/settings');
+        const response = await Axios.get('service/rest/v1/evaluation/settings');
         if (response?.data) {
           const stage = response.data.policyEvaluationStage;
           const normalizedStage = stage ? stage.toLowerCase().replace(/_/g, '-') : 'build';
@@ -93,10 +94,10 @@ export default function EvaluationConfiguration({parentMachine}) {
     };
 
     fetchSettings();
-  }, [isFeatureEnabled]);
+  }, [isFeatureEnabled, isConfigurable]);
 
-  // If feature is explicitly disabled, don't render the component
-  if (!isFeatureEnabled) {
+  // If feature is explicitly disabled, or the format can't be monitored, don't render the component
+  if (!isFeatureEnabled || !isConfigurable) {
     return null;
   }
 

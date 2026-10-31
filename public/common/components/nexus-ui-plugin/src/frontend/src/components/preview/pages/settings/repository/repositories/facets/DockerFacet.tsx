@@ -117,7 +117,7 @@ export function DockerFacet({
         subdomain: null,
       });
     }
-  }, [isCloud]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only respond to isCloud changes, not every formData keystroke
+  }, [isCloud, formData.docker?.pathEnabled, onNestedChange]); 
 
   const handleRoutingModeChange = createRoutingModeChangeHandler(onNestedChange);
 

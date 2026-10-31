@@ -16,8 +16,6 @@ import java.util.Arrays;
 
 import org.sonatype.nexus.security.config.memory.MemoryCPrivilege;
 
-import com.google.common.base.Joiner;
-
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -64,7 +62,7 @@ public class CPrivilegeBuilder
   }
 
   public CPrivilegeBuilder property(final String name, final Iterable<String> values) {
-    return property(name, Joiner.on(',').join(values));
+    return property(name, String.join(",", values));
   }
 
   public CPrivilegeBuilder property(final String name, final String... values) {

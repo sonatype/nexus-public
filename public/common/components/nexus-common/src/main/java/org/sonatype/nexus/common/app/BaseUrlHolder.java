@@ -18,8 +18,8 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper to hold the calculated base URL of the current request.
@@ -44,8 +44,8 @@ public final class BaseUrlHolder
    * The value will be normalized to never end with "/".
    */
   public static void set(final String url, final String newRelativePath) {
-    checkNotNull(url);
-    checkNotNull(newRelativePath);
+    requireNonNull(url);
+    requireNonNull(newRelativePath);
 
     String strippedUrl = stripSlash(url);
     String strippedRelativePath = stripSlash(newRelativePath);

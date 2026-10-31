@@ -130,25 +130,12 @@ describe('CertificateViewDialog', () => {
   });
 
   describe('error state', () => {
-    it('shows error message and Retry button on API failure', async () => {
+    it('shows error message and only a Close button on API failure', async () => {
       mockedAxios.get.mockRejectedValue({ message: 'Network Error' });
       renderDialog();
       await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
-      expect(screen.getByText('Retry')).toBeInTheDocument();
-    });
-
-    it('retries the API call when Retry is clicked', async () => {
-      mockedAxios.get
-        .mockRejectedValueOnce({ message: 'Network Error' })
-        .mockImplementation((url: string) => {
-          if (url.includes('/ssl/truststore')) return Promise.resolve({ data: [] });
-          return Promise.resolve({ data: MOCK_CERT });
-        });
-
-      renderDialog();
-      await waitFor(() => expect(screen.getByText('Retry')).toBeInTheDocument());
-      fireEvent.click(screen.getByText('Retry'));
-      await waitFor(() => expect(screen.getByText('repo1.maven.org')).toBeInTheDocument());
+      expect(screen.queryByText('Retry')).not.toBeInTheDocument();
+      expect(screen.getByText('Close')).toBeInTheDocument();
     });
 
     it('uses server error message when available', async () => {
@@ -224,4 +211,107 @@ describe('CertificateViewDialog', () => {
       expect(onClose).toHaveBeenCalled();
     });
   });
+
+  // NEXUS-54266: the backend compares the hint with `"https".equalsIgnoreCase(hint)`,
+  // so URL.protocol ("https:") never matched and retrieval skipped the proxy-aware
+  // HTTPS client, returning null wherever a direct socket is not permitted.
+  describe('protocolHint normalization', () => {
+    beforeEach(() => {
+      mockedAxios.get.mockImplementation((url: string) => {
+        if (url.includes('/ssl/truststore')) {
+          return Promise.resolve({ data: [] });
+        }
+        return Promise.resolve({ data: MOCK_CERT });
+      });
+    });
+
+    const certCallUrl = () => {
+      const call = mockedAxios.get.mock.calls.find(
+        ([url]) => typeof url === 'string' && url.includes('/security/ssl?')
+      );
+      return call?.[0] as string | undefined;
+    };
+
+    it('sends the bare scheme without a trailing colon', async () => {
+      renderDialog();
+      await waitFor(() => expect(certCallUrl()).toBeDefined());
+
+      const params = new URLSearchParams(certCallUrl()!.split('?')[1]);
+      expect(params.get('protocolHint')).toBe('https');
+    });
+
+    it('never sends the raw URL.protocol value', async () => {
+      renderDialog();
+      await waitFor(() => expect(certCallUrl()).toBeDefined());
+
+      expect(certCallUrl()).not.toContain('protocolHint=https%3A');
+      expect(certCallUrl()).not.toContain('protocolHint=https:');
+    });
+
+    it('passes host and explicit non-default port through', async () => {
+      renderDialog({ remoteUrl: 'https://idp.example.com:8443/token' });
+      await waitFor(() => expect(certCallUrl()).toBeDefined());
+
+      const params = new URLSearchParams(certCallUrl()!.split('?')[1]);
+      expect(params.get('host')).toBe('idp.example.com');
+      expect(params.get('port')).toBe('8443');
+      expect(params.get('protocolHint')).toBe('https');
+    });
+  });
+
+
+  // NEXUS-54266: the scheme guard used a case-sensitive startsWith('https://'),
+  // while callers enable the trigger via ValidationUtils.isSecureUrl (regex is /i).
+  // Mixed-case schemes therefore enabled the button but dead-ended in this dialog.
+  describe('case-insensitive scheme handling', () => {
+    const HTTPS_ONLY_ERROR = 'Certificate inspection is only available for HTTPS URLs.';
+
+    beforeEach(() => {
+      mockedAxios.get.mockImplementation((url: string) => {
+        if (url.includes('/ssl/truststore')) {
+          return Promise.resolve({ data: [] });
+        }
+        return Promise.resolve({ data: MOCK_CERT });
+      });
+    });
+
+    const certCall = () =>
+      mockedAxios.get.mock.calls.find(([url]) => typeof url === 'string' && url.includes('/security/ssl?'));
+
+    it.each([
+      'HTTPS://repo1.maven.org/maven2/',
+      'HttPs://repo1.maven.org/maven2/',
+      'Https://repo1.maven.org/maven2/',
+    ])('retrieves the certificate for %s', async (remoteUrl) => {
+      renderDialog({ remoteUrl });
+
+      await waitFor(() => expect(certCall()).toBeDefined());
+      const params = new URLSearchParams((certCall()![0] as string).split('?')[1]);
+      expect(params.get('host')).toBe('repo1.maven.org');
+      expect(params.get('protocolHint')).toBe('https');
+      expect(screen.queryByText(HTTPS_ONLY_ERROR)).not.toBeInTheDocument();
+    });
+
+    it.each(['HTTP://repo1.maven.org/', 'LDAPS://dir.example.com/'])(
+      'still refuses the non-HTTPS scheme %s without an API call',
+      async (remoteUrl) => {
+        renderDialog({ remoteUrl });
+
+        await waitFor(() =>
+          expect(screen.getByText(HTTPS_ONLY_ERROR)).toBeInTheDocument()
+        );
+        expect(mockedAxios.get).not.toHaveBeenCalled();
+      }
+    );
+
+    it('shows the guard error for an unparseable URL instead of throwing', async () => {
+      renderDialog({ remoteUrl: 'not a url at all' });
+
+      await waitFor(() =>
+        expect(screen.getByText(HTTPS_ONLY_ERROR)).toBeInTheDocument()
+      );
+      expect(mockedAxios.get).not.toHaveBeenCalled();
+    });
+  });
+
 });

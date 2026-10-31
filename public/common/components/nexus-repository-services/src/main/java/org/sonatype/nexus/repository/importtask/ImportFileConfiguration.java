@@ -17,7 +17,7 @@ import java.util.Objects;
 
 import org.sonatype.nexus.repository.Repository;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Hold the information needed for importing an individual file
@@ -55,9 +55,9 @@ public class ImportFileConfiguration
       final String assetName,
       final boolean hardLinkingEnabled)
   {
-    this.repository = checkNotNull(repository);
-    this.file = checkNotNull(file);
-    this.assetName = checkNotNull(assetName);
+    this.repository = requireNonNull(repository);
+    this.file = requireNonNull(file);
+    this.assetName = requireNonNull(assetName);
     this.hardLinkingEnabled = hardLinkingEnabled;
   }
 

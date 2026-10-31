@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
+import { render, screen, fireEvent, act, } from '@testing-library/react';
 import BlobStoresPage from '../BlobStoresPage';
 import * as useBlobStoresModule from '../useBlobStores';
 
@@ -707,7 +707,7 @@ describe('soft quota validation', () => {
     fireEvent.click(checkbox);
 
     // Force save attempt via the handler (not the disabled button path)
-    const form = screen.getByTestId('settings-form');
+    const _form = screen.getByTestId('settings-form');
     // Simulate clicking the save button while dirty but with invalid quota
     const submitBtn = screen.getByTestId('form-submit');
     await act(async () => { fireEvent.click(submitBtn); });
@@ -920,5 +920,23 @@ describe('save when API omits name and type fields', () => {
 
     expect(save).toHaveBeenCalledTimes(1);
     expect(save).toHaveBeenCalledWith(expect.objectContaining({ name: 'my-store', type: 'file' }));
+  });
+});
+
+describe('help section placement in list view (NEXUS-54308)', () => {
+  it('renders help section below the entity table', () => {
+    setListHash();
+    mockUseBlobStoresList.mockReturnValue({
+      blobStores: [{ name: 'my-store', type: 'file' }],
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    render(<BlobStoresPage />);
+
+    const table = screen.getByTestId('entity-table');
+    const help = screen.getByTestId('help-section');
+    expect(table.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

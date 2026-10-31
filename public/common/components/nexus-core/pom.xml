@@ -20,18 +20,13 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.94.1-06</version>
+    <version>3.97.2-02</version>
   </parent>
 
   <artifactId>nexus-core</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencies>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.common.components</groupId>
-      <artifactId>jetty-server</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>

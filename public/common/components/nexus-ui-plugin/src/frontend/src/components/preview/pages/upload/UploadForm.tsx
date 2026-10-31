@@ -16,7 +16,7 @@ import { Badge, Box, Flex, Text } from '@radix-ui/themes';
 import { CheckCircle2, Clock } from 'lucide-react';
 import { SettingsForm, SettingsFormSection } from '../../shared/form';
 import { useUploadForm } from './hooks/useUploadForm';
-import { useToast } from '../../shared';
+import { useToast, useUnsavedChangesWarning, clearDirtyState } from '../../shared';
 import { RepositorySelector } from './RepositorySelector';
 import { FileUploadZone } from './FileUploadZone';
 import { UploadFieldRenderer } from './UploadFieldRenderer';
@@ -28,6 +28,7 @@ import type {
   UploadDefinitionExtended,
 } from './upload.types';
 
+const UPLOAD_FORM_DIRTY_ID = 'upload-form';
 const MAVEN_FORMAT = 'maven2';
 const MAVEN_COMPONENT_COORDS_GROUP = 'Component coordinates';
 const MAVEN_GENERATE_POM_FIELD_NAME = 'generate-pom';
@@ -67,6 +68,7 @@ export function UploadForm({
     validationErrors,
     isSubmitting,
     isValid,
+    isDirty,
     setAssetFile,
     setAssetField,
     addAsset,
@@ -82,6 +84,10 @@ export function UploadForm({
     regexMap,
     disabledFields: localDisabledFields,
   });
+  // Register the form's dirty state with the global unsaved-changes guard so the
+  // router's onBefore hook prompts before navigating away with pending edits.
+  // SettingsForm keeps noDirtyTracking, so this is the single registration path.
+  useUnsavedChangesWarning(isDirty, UPLOAD_FORM_DIRTY_ID);
   const hasPom = useMemo(
     () => formData.assets.some((a) => a.file?.name.toLowerCase().endsWith('.pom')),
     [formData.assets],
@@ -97,7 +103,7 @@ export function UploadForm({
         disabled.add(f.name),
       );
     }
-    if (!formData.componentFields[MAVEN_GENERATE_POM_FIELD_NAME] && !hasPom) {
+    if (!(formData.componentFields[MAVEN_GENERATE_POM_FIELD_NAME] || hasPom)) {
       disabled.add(MAVEN_PACKAGING_FIELD_NAME);
     }
     setLocalDisabledFields(disabled);
@@ -110,6 +116,10 @@ export function UploadForm({
         `Component uploaded to ${repositoryName}`,
         result.componentName ? `Component: ${result.componentName}` : undefined,
       );
+      // A successful upload leaves formData intact (isDirty stays true), so clear
+      // the guard registration synchronously before navigating; the router reads
+      // window.dirty during onBack()'s transition and must not prompt.
+      clearDirtyState(UPLOAD_FORM_DIRTY_ID);
       onBack();
     } else if (!result.success && result.error) {
       setSubmitError(result.error);

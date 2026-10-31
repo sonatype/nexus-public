@@ -80,7 +80,7 @@ public class Maven2ComponentBaseVersionMigrationStep_2_29
   }
 
   private void addIndexIfNotExists(final Connection connection) throws SQLException {
-    if (!indexExists(connection, INDEX_NAME)) {
+    if (!indexExists(connection, TABLE_NAME, INDEX_NAME)) {
       runStatement(connection, String.format(
           "CREATE INDEX IF NOT EXISTS %s ON %s (%s)",
           INDEX_NAME, TABLE_NAME, COLUMN_NAME));

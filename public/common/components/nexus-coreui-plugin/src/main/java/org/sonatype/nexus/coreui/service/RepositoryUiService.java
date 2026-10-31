@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -62,6 +63,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager;
 import org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker;
 import org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder;
+import org.sonatype.nexus.repository.rest.api.RepositoryMetricsDTO;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
 import org.sonatype.nexus.repository.search.index.RebuildIndexTask;
 import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor;
@@ -88,7 +90,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.coreui.internal.RepositoryCleanupAttributesUtil.initializeCleanupAttributes;
 
 @Component
@@ -96,6 +98,10 @@ public class RepositoryUiService
     implements StateContributor
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
+
+  private static final String PROXY_REMOTE_URL_CHANGED =
+      "Remote URL has changed. " +
+          "Authentication credentials have been reset and must be re-entered.";
 
   private final RepositoryCacheInvalidationService repositoryCacheInvalidationService;
 
@@ -139,23 +145,30 @@ public class RepositoryUiService
       final FailedRepositoryTracker failedRepositoryTracker,
       final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder)
   {
-    this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryCacheInvalidationService = requireNonNull(repositoryCacheInvalidationService);
+    this.repositoryManager = requireNonNull(repositoryManager);
     this.repositoryMetricsService = Optional.ofNullable(repositoryMetricsService);
-    this.configurationStore = checkNotNull(configurationStore);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.recipes = new HashMap<>(QualifierUtil.buildQualifierBeanMap(checkNotNull(recipesList)));
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.typeLookup = checkNotNull(typeLookup);
-    this.formats = checkNotNull(formats);
-    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
-    this.failedRepositoryTracker = checkNotNull(failedRepositoryTracker);
-    this.httpAuthenticationSecretEncoder = checkNotNull(httpAuthenticationSecretEncoder);
+    this.configurationStore = requireNonNull(configurationStore);
+    this.securityHelper = requireNonNull(securityHelper);
+    this.recipes = new HashMap<>(QualifierUtil.buildQualifierBeanMap(requireNonNull(recipesList)));
+    this.taskScheduler = requireNonNull(taskScheduler);
+    this.typeLookup = requireNonNull(typeLookup);
+    this.formats = requireNonNull(formats);
+    this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
+    this.failedRepositoryTracker = requireNonNull(failedRepositoryTracker);
+    this.httpAuthenticationSecretEncoder = requireNonNull(httpAuthenticationSecretEncoder);
   }
 
   public List<RepositoryXO> read() {
+    // Fetch all repository size metrics in a single bulk query, then look them up per repository.
+    // Previously this called RepositoryMetricsService.get(name) once per repository (an N+1 query),
+    // which made the classic UI repository list slow with large numbers of repositories (NEXUS-53722).
+    Map<String, RepositoryMetricsDTO> metricsByName = repositoryMetricsService
+        .map(RepositoryMetricsService::listByName)
+        .orElseGet(Collections::emptyMap);
+
     return StreamSupport.stream(browse().spliterator(), false)
-        .map(this::asRepository)
+        .map(configuration -> asRepository(configuration, metricsByName.get(configuration.getRepositoryName())))
         .collect(Collectors.toList());
   }
 
@@ -269,8 +282,12 @@ public class RepositoryUiService
   @RequiresAuthentication
   @Validate(groups = {Create.class, Default.class})
   public RepositoryXO create(final @NotNull @Valid RepositoryXO repositoryXO) throws Exception {
-    securityHelper.ensurePermitted(new RepositoryAdminPermission(repositoryXO.getFormat(), repositoryXO.getName(),
-        Collections.singletonList(BreadActions.ADD)));
+    Recipe recipe = recipes.get(repositoryXO.getRecipe());
+    if (recipe == null) {
+      throw new BadRequestException("Recipe not found: " + repositoryXO.getRecipe());
+    }
+    securityHelper.ensurePermitted(new RepositoryAdminPermission(recipe.getFormat().getValue(),
+        repositoryXO.getName(), Collections.singletonList(BreadActions.ADD)));
 
     initializeCleanupAttributes(repositoryXO);
 
@@ -403,8 +420,7 @@ public class RepositoryUiService
           .map(httpclient -> httpclient.get("authentication"))
           .map(Map.class::cast);
 
-      storedAuth
-          .map(auth -> auth.get(secretKey))
+      storedAuth.map(auth -> auth.get(secretKey))
           .ifPresentOrElse(
               storedValue -> authentication.put(secretKey, storedValue),
               () -> {
@@ -472,28 +488,21 @@ public class RepositoryUiService
     return xo;
   }
 
-  private Repository safelyGetRepository(final String name, final String action) {
-    final Repository repository = repositoryManager.get(name);
-    if (repository == null) {
-      throw new BadRequestException("User is not authorized to " + action + " " + name +
-          " or repository does not exist.");
-    }
-    try {
-      securityHelper.ensurePermitted(adminPermission(repository, action));
-    }
-    catch (AuthorizationException e) {
-      throw new BadRequestException("User is not authorized to " + action + " " + name +
-          " or repository does not exist.");
-    }
-    return repository;
+  private RepositoryXO asRepository(final Configuration input) {
+    // Single-repository path (e.g. updateFailedRepository). read() uses the bulk-metrics overload
+    // below to avoid an N+1 query across all repositories (NEXUS-53722).
+    RepositoryMetricsDTO metrics = repositoryMetricsService
+        .flatMap(service -> service.get(input.getRepositoryName()))
+        .orElse(null);
+    return asRepository(input, metrics);
   }
 
-  private RepositoryXO asRepository(final Configuration input) {
+  private RepositoryXO asRepository(final Configuration input, @Nullable final RepositoryMetricsDTO metrics) {
     RepositoryXO xo = new RepositoryXO();
     xo.setName(input.getRepositoryName());
     xo.setType(getType(input));
     xo.setFormat(getFormat(input));
-    xo.setSize(getSize(input));
+    xo.setSize(metrics != null ? metrics.getSize() : null);
     xo.setOnline(input.isOnline());
     xo.setRecipe(input.getRecipeName());
     xo.setStatus(buildStatus(input));
@@ -658,6 +667,14 @@ public class RepositoryUiService
     statusXO.setOnline(configuration.isOnline());
 
     Recipe recipe = recipes.get(configuration.getRecipeName());
+
+    // Guard against missing recipe
+    if (recipe == null) {
+      log.debug("Recipe not found for repository {}, skipping status enrichment",
+          configuration.getRepositoryName());
+      return statusXO;
+    }
+
     // TODO - should we try to aggregate status from group members?
     if (recipe.getType() instanceof ProxyType) {
       try {
@@ -688,6 +705,11 @@ public class RepositoryUiService
         configuration -> recipes.get(configuration.getRecipeName()).getFormat().getValue();
 
     List<Configuration> configurations = configurationStore.list();
+
+    // Filter out configurations whose recipe is not registered (NEXUS-53342)
+    configurations = configurations.stream()
+        .filter(configuration -> recipes.containsKey(configuration.getRecipeName()))
+        .collect(Collectors.toList());
     if (parameters != null) {
       String format = parameters.getFilter("format");
       if (format != null && format.indexOf(",") > -1) {
@@ -729,6 +751,22 @@ public class RepositoryUiService
     return configurations;
   }
 
+  private Repository safelyGetRepository(final String name, final String action) {
+    final Repository repository = repositoryManager.get(name);
+    if (repository == null) {
+      throw new BadRequestException("User is not authorized to " + action + " " + name +
+          " or repository does not exist.");
+    }
+    try {
+      securityHelper.ensurePermitted(adminPermission(repository, action));
+    }
+    catch (AuthorizationException e) {
+      throw new BadRequestException("User is not authorized to " + action + " " + name +
+          " or repository does not exist.");
+    }
+    return repository;
+  }
+
   private Function<Repository, Boolean> repositoryHasAnyFacet(final List<Class<Facet>> facetTypes) {
     return repository -> {
       for (Class<Facet> facetType : facetTypes) {
@@ -744,6 +782,24 @@ public class RepositoryUiService
     };
   }
 
+  /**
+   * Matches a plain Java binary class name (dotted identifiers only). Anything with a scheme,
+   * slash, colon, or other URI shape — e.g. {@code jar:file:/proc/self/fd/..} — is rejected so it
+   * can never reach {@link org.sonatype.nexus.common.app.GlobalComponentLookupHelper#type} and the
+   * underlying {@code ClassLoader.loadClass}. NEXUS-54946.
+   */
+  private static final Pattern SAFE_FACET_CLASS_NAME =
+      Pattern.compile("^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$");
+
+  private boolean isSafeFacetClassName(final String candidate) {
+    // Null guard is defensive: the upstream isNotBlank filter already excludes null/blank.
+    if (candidate == null || !SAFE_FACET_CLASS_NAME.matcher(candidate).matches()) {
+      log.warn("Rejecting facet type reference that is not a Java binary class name: {}", candidate);
+      return false;
+    }
+    return true;
+  }
+
   private List<Class<Facet>> toFacetList(final String facets) {
     if (facets == null) {
       return Collections.emptyList();
@@ -751,7 +807,9 @@ public class RepositoryUiService
     return Arrays.asList(facets.split(","))
         .stream()
         .filter(StringUtils::isNotBlank)
+        .filter(this::isSafeFacetClassName)
         .map(typeLookup::type)
+        .filter(Objects::nonNull)
         .map(clazz -> (Class<Facet>) clazz)
         .collect(Collectors.toList());
   }
@@ -768,18 +826,12 @@ public class RepositoryUiService
 
   private String getFormat(final Configuration configuration) {
     Recipe recipe = recipes.get(configuration.getRecipeName());
-    return recipe.getFormat().getValue();
+    return recipe != null ? recipe.getFormat().getValue() : null;
   }
 
   private String getType(final Configuration configuration) {
     Recipe recipe = recipes.get(configuration.getRecipeName());
-    return recipe.getType().getValue();
-  }
-
-  private Long getSize(final Configuration configuration) {
-    return repositoryMetricsService
-        .flatMap(s -> s.get(configuration.getRepositoryName()).map(repoMetrics -> repoMetrics.totalSize))
-        .orElse(null);
+    return recipe != null ? recipe.getType().getValue() : null;
   }
 
   /**
@@ -834,10 +886,6 @@ public class RepositoryUiService
   public void addRecipe(final String format, final Recipe recipe) {
     recipes.put(format, recipe);
   }
-
-  private static final String PROXY_REMOTE_URL_CHANGED =
-      "Remote URL has changed. " +
-          "Authentication credentials have been reset and must be re-entered.";
 
   private void validateRemoteUrlChange(
       final Repository repository,

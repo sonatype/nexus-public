@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.io.Cooperation.IOCheck;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -84,8 +84,8 @@ public abstract class ScopedCooperationFactorySupport
      * @param id unique identifier for this cooperation point
      */
     public ScopedCooperation(final String id, final Config config) {
-      this.scope = checkNotNull(id) + ':';
-      this.config = checkNotNull(config);
+      this.scope = requireNonNull(id) + ':';
+      this.config = requireNonNull(config);
     }
 
     @Override

@@ -107,13 +107,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.migration.Controller',
-      active: function () {
-        return NX.State.getValue('migration', {})['enabled'] &&
-            NX.app.Application.bundleActive('nexus-legacy-2-to-3-migration-plugin');
-      }
-    },
-    {
       id: 'NX.coreui.controller.Outreach',
       active: function () {
         return NX.app.Application.bundleActive('nexus-outreach-plugin');
@@ -323,12 +316,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
               return NX.app.Application.bundleActive('nexus-repository-terraform');
           }
       },
-    {
-      id: 'NX.coreui.controller.SearchTerraformbackend',
-      active: function() {
-        return NX.app.Application.bundleActive('nexus-repository-terraform');
-      }
-    },
     {
       id: 'NX.coreui.controller.SearchSwift',
       active: function() {

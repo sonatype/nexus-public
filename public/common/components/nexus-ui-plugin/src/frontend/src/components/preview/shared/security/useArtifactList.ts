@@ -53,7 +53,7 @@ export function useArtifactList(
 
   const fetchPage = useCallback(
     async (token: string | null = null) => {
-      if (!repositoryName || !reportType) return;
+      if (!(repositoryName && reportType)) return;
 
       setLoading(true);
       setError(null);
@@ -112,13 +112,13 @@ export function useArtifactList(
     if (repositoryName && reportType) {
       fetchPage(null);
     }
-  }, [repositoryName, reportType]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [repositoryName, reportType, fetchPage]); 
 
   return {
     items,
     loading,
     error,
-    hasMore: !!continuationToken,
+    hasMore: Boolean(continuationToken),
     loadMore,
     refresh,
     endpointAvailable: endpointAvailable ?? null,

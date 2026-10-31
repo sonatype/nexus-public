@@ -40,7 +40,7 @@ function sanitizeTestId(id) {
 }
 
 export function SettingsTransferList({
-  name: _name,
+  name,
   label,
   availableItems = [],
   selectedItems = [],
@@ -56,7 +56,20 @@ export function SettingsTransferList({
   testId,
   /** Called when user clicks/selects an item (single click) - used for sidecar inspection */
   onItemSelect,
+  /** Marks the selector as required for assistive technology (and shows a "*"). */
+  required = false,
+  /** Error message; when set, the group is marked invalid and the message is announced. */
+  error = '',
+  /** Optional copy shown in the Selected column when nothing is selected, for fields where an empty
+   *  selection means "all" (e.g. the Data Repair Plan blob-store sentinel). When set, the empty
+   *  Selected column reads this instead of "No items selected" and the count shows "All", so an
+   *  empty selection does not look like "nothing will be processed". Defaults to the normal empty
+   *  state. Does not affect the serialized value. */
+  selectedEmptyText = '',
 }) {
+  // Stable ids so the label and error message can be associated with the group.
+  const labelId = `${name}-transfer-label`;
+  const errorId = `${name}-transfer-error`;
   const [availableSearch, setAvailableSearch] = useState('');
   const [selectedSearch, setSelectedSearch] = useState('');
   const [availableSelection, setAvailableSelection] = useState([]);
@@ -184,17 +197,24 @@ export function SettingsTransferList({
       data-testid={testId || undefined}
     >
       {label && (
-        <Text as="label" size="2" weight="medium" className="settings-transfer-list__label">
+        <Text as="label" size="2" weight="medium" className="settings-transfer-list__label" id={labelId}>
           {label}
+          {required && <span className="settings-transfer-list__required" aria-hidden="true"> *</span>}
         </Text>
       )}
-      
-      <Flex className="settings-transfer-list__container">
+
+      <Flex
+        className="settings-transfer-list__container"
+        role="group"
+        aria-labelledby={label ? labelId : undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+      >
         {/* Available List */}
         <Box className="settings-transfer-list__panel">
           <Flex justify="between" align="center" className="settings-transfer-list__header">
             <Text size="1" weight="medium">{availableLabel}</Text>
-            <Text size="1" className="settings-transfer-list__count">
+            <Text size="1" className="settings-transfer-list__count" aria-live="polite">
               {filteredAvailable.length} {filteredAvailable.length === 1 ? 'item' : 'items'}
             </Text>
           </Flex>
@@ -216,6 +236,7 @@ export function SettingsTransferList({
             className="settings-transfer-list__items"
             role="listbox"
             aria-label={availableLabel}
+            aria-multiselectable="true"
             data-testid={testId ? `${testId}-available-list` : undefined}
           >
             {filteredAvailable.map((item) => {
@@ -230,7 +251,10 @@ export function SettingsTransferList({
                   onClick={(e) => handleAvailableClick(item, e)}
                   onDoubleClick={() => handleDoubleClick(item, false)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleDoubleClick(item, false);
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleDoubleClick(item, false);
+                    }
                   }}
                   className={`settings-transfer-list__item ${isHighlighted ? 'settings-transfer-list__item--selected' : ''}`}
                   data-testid={testId ? `${testId}-available-item-${sanitizeTestId(id)}` : undefined}
@@ -303,8 +327,10 @@ export function SettingsTransferList({
         <Box className="settings-transfer-list__panel">
           <Flex justify="between" align="center" className="settings-transfer-list__header">
             <Text size="1" weight="medium">{selectedLabel}</Text>
-            <Text size="1" className="settings-transfer-list__count">
-              {selectedItems.length} {selectedItems.length === 1 ? 'item' : 'items'}
+            <Text size="1" className="settings-transfer-list__count" aria-live="polite">
+              {selectedItems.length === 0 && selectedEmptyText
+                ? 'All items'
+                : `${selectedItems.length} ${selectedItems.length === 1 ? 'item' : 'items'}`}
             </Text>
           </Flex>
           <Box className="settings-transfer-list__search">
@@ -325,6 +351,7 @@ export function SettingsTransferList({
             className="settings-transfer-list__items"
             role="listbox"
             aria-label={selectedLabel}
+            aria-multiselectable="true"
             data-testid={testId ? `${testId}-selected-list` : undefined}
           >
             {filteredSelected.map((item) => {
@@ -339,7 +366,10 @@ export function SettingsTransferList({
                   onClick={(e) => handleSelectedClick(item, e)}
                   onDoubleClick={() => handleDoubleClick(item, true)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleDoubleClick(item, true);
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleDoubleClick(item, true);
+                    }
                   }}
                   className={`settings-transfer-list__item ${isHighlighted ? 'settings-transfer-list__item--selected' : ''}`}
                   data-testid={testId ? `${testId}-selected-item-${sanitizeTestId(id)}` : undefined}
@@ -350,7 +380,9 @@ export function SettingsTransferList({
             })}
             {filteredSelected.length === 0 && (
               <Box className="settings-transfer-list__empty">
-                <Text size="1" color="gray">{selectedSearch ? 'No matches' : 'No items selected'}</Text>
+                <Text size="1" color="gray">
+                  {selectedSearch ? 'No matches' : (selectedEmptyText || 'No items selected')}
+                </Text>
               </Box>
             )}
           </div>
@@ -360,6 +392,12 @@ export function SettingsTransferList({
       {helpText && (
         <Text as="p" size="1" className="settings-transfer-list__help">
           {helpText}
+        </Text>
+      )}
+
+      {error && (
+        <Text as="p" size="1" role="alert" id={errorId} className="settings-transfer-list__error">
+          {error}
         </Text>
       )}
     </Box>
@@ -395,6 +433,12 @@ SettingsTransferList.propTypes = {
   testId: PropTypes.string,
   /** Called when user clicks an item (single click, no modifier). Args: (item, isSelected). Use for sidecar inspection. */
   onItemSelect: PropTypes.func,
+  /** Marks the selector as required for assistive technology (and shows a "*"). */
+  required: PropTypes.bool,
+  /** Error message; when set, the group is marked invalid and the message is announced. */
+  error: PropTypes.string,
+  /** Copy shown in the Selected column when empty, for "empty = all" sentinel fields. */
+  selectedEmptyText: PropTypes.string,
 };
 
 export default SettingsTransferList;

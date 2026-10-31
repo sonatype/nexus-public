@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.94.1-06</version>
+  <version>3.97.2-02</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,17 +62,17 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.94.1-06</nexus.version>
+    <nexus.version>3.97.2-02</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
-    <spring-boot.version>3.5.15</spring-boot.version>
-    <spring.version>6.2.19</spring.version>
+    <spring-boot.version>4.1.0</spring-boot.version>
+    <spring.version>7.0.9</spring.version>
 
     <!-- Default empty argLine for JaCoCo agent, will be populated by jacoco:prepare-agent -->
     <argLine/>
 
     <!-- Define the node version used by the frontend-maven-plugin -->
-    <node.version>v22.19.0</node.version>
+    <node.version>v26.12.1</node.version>
     <!-- NOTE: We use corepack (bundled with Node 16.9+) to manage yarn instead of downloading it.
          This avoids CVE-2025-9308 in yarn 1.x by using Yarn 4.9.1 specified in package.json's
          "packageManager" field. Corepack reads this field and uses the correct yarn version.
@@ -134,10 +134,118 @@
     <docker.containerNamePattern>%n-%t-%i</docker.containerNamePattern>
 
     <!-- max heap memory for surefire-plugin -->
-    <surefire.maxHeap>-Xmx300M</surefire.maxHeap>
-    <mockito.version>5.21.0</mockito.version>
+    <surefire.maxHeap>-Xmx768M</surefire.maxHeap>
+    <mockito.version>5.23.0</mockito.version>
     <aspectjtools.version>1.9.25.1</aspectjtools.version>
+
+    <!--
+    Force httpcore5 above what OpenSAML transitively drags in and above the Spring Boot BOM pin
+    (5.4.2), both of which carry two Security-High CVEs. 5.4.3 patches both:
+      - CVE-2026-54399 (CVSS 8.7) HTTP/1.1 message parser uncontrolled resource consumption
+      - CVE-2026-54428 (CVSS 7.5) HTTP/2 HPACK decoder DoS before SETTINGS ACK
+    See NEXUS-53738. Remove this pin once Spring Boot BOM ships 5.4.3+.
+    -->
+    <httpcore5.version>5.4.3</httpcore5.version>
+
+    <!--
+    Force the log4j family above the 2.19.0 that PortEx (com.github.katjahahn:portex)
+    transitively drags in, which carries a Security-Medium CVE:
+      - CVE-2026-49844 (CVSS 6.3) improper encoding of non-finite floating-point
+        values during MapMessage JSON serialization (CWE-116)
+    2.25.5 is the first release with no policy violations for this component.
+    See NEXUS-53922. Remove this pin once the transitive dependencies ship 2.25.5+.
+    -->
+    <log4j.version>2.25.5</log4j.version>
+
+    <!--
+    Force jboss-logging above the 3.4.3.Final that the Spring Boot BOM pins, which lacks
+    the getMessageLogger(MethodHandles.Lookup, Class, String) method introduced in 3.5.0.
+    RESTEasy 7.x (also on the classpath) was compiled against 3.5+ and calls this method
+    during static initialisation of LogMessages, crashing the Jetty thread before it can
+    bind to the HTTP port. RESTEasy 7.0.5.Final manages 3.6.3.Final upstream, but 3.6.1.Final
+    satisfies it: the two releases expose an identical org.jboss.logging API surface, and every
+    jboss-logging member referenced by resteasy-core 7.0.5.Final resolves against 3.6.1.Final.
+    Remove this pin once the Spring Boot BOM ships jboss-logging 3.5.0+.
+    -->
+    <jboss.logging.version>3.6.1.Final</jboss.logging.version>
+
+    <!--
+    Force reactor-core above the 3.8.6 that the Spring Boot 4.1.0 BOM pins, which carries
+    two Security-High CVEs:
+      - CVE-2026-47857 (CVSS 8.2)
+      - CVE-2026-47863 (CVSS 7.5) unbounded buffering in FluxBufferTimeout under backpressure
+    See NEXUS-54911. Remove this pin once the Spring Boot BOM ships 3.8.7+.
+
+    This pin wins over the reactor-bom import in public/common/buildsupport/other/pom.xml, so
+    it is what actually decides reactor-core for the whole build. It currently matches the
+    3.8.7 that reactor-bom 2025.0.7 ships. Any future reactor-bom bump must raise this pin to
+    the reactor-core version that new release train ships; otherwise reactor-core is silently
+    held back here while reactor-netty moves forward.
+    -->
+    <reactor-core.version>3.8.7</reactor-core.version>
+
+    <!--
+    Pin zstd-jni above the version pulled transitively by jetty-compression-zstandard.
+    Jetty 12.1.12 pulls zstd-jni:1.5.7-11, which has security vulnerabilities.
+    1.5.7-14 is the patched version.
+    Remove this pin once Jetty ships a patched version.
+    -->
+    <zstd-jni.version>1.5.7-14</zstd-jni.version>
+
+    <!--
+    Shared AWS SDK v2 version, consumed by the public and private common buildsupport BOMs.
+    Defined here so the two BOMs stay in lockstep from a single source.
+    The SDK ships a repackaged copy of jackson-core as software.amazon.awssdk:third-party-jackson-core,
+    so com.fasterxml.jackson.core dependency management does not reach it - it only moves when the SDK
+    version moves. The shaded parser is vulnerable to CVE-2026-68498 (CWE-770, denial of service via
+    unbounded JSON property-name buffering) through 2.55.3; 2.55.4 is the confirmed remediation
+    (NEXUS-55381). Updates to AWS or Azure SDKs should also examine their expected netty dependencies
+    and potentially adjust the netty BOM import.
+    -->
+    <aws-java-sdk.version>2.55.4</aws-java-sdk.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- NEXUS-53738: pin httpcore5 to a patched version (see property above). -->
+      <dependency>
+        <groupId>org.apache.httpcomponents.core5</groupId>
+        <artifactId>httpcore5</artifactId>
+        <version>${httpcore5.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents.core5</groupId>
+        <artifactId>httpcore5-h2</artifactId>
+        <version>${httpcore5.version}</version>
+      </dependency>
+      <!-- NEXUS-53922: pin the whole log4j family to a patched version (see property above). -->
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-bom</artifactId>
+        <version>${log4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Pin jboss-logging above 3.4.3.Final (Spring Boot BOM default) — see property above. -->
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>${jboss.logging.version}</version>
+      </dependency>
+      <!-- NEXUS-54911: pin reactor-core to a patched version (see property above). -->
+      <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-core</artifactId>
+        <version>${reactor-core.version}</version>
+      </dependency>
+      <!-- pin zstd-jni to a patched version (see property above). -->
+      <dependency>
+        <groupId>com.github.luben</groupId>
+        <artifactId>zstd-jni</artifactId>
+        <version>${zstd-jni.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <modules>
     <module>public</module>
@@ -192,7 +300,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.94.1-06</version>
+          <version>3.97.2-02</version>
           <executions>
             <execution>
               <goals>
@@ -388,9 +496,6 @@
 
                   <!-- Exclude developers local scripts folder-->
                   <exclude>myscripts/**</exclude>
-
-                  <!-- Exclude jetty modifications -->
-                  <exclude>public/common/components/thirdparty/jetty-modifications/**</exclude>
                 </excludes>
               </licenseSet>
 
@@ -611,7 +716,7 @@
           <!-- see private/developer-documentation/getting-started/formatting.md -->
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.8.0</version>
 
           <configuration>
             <ratchetFrom>origin/main</ratchetFrom>
@@ -823,10 +928,31 @@
                     <exclude>log4j:*</exclude>
 
                     <!--
-                    CVE-2021-44228
+                    Ban log4j-core outright. Compensating control for NEXUS-54820:
+                    Sonatype advisory sonatype-2026-006746 (CVSS 9.2, RCE via
+                    FilteredObjectInputStream allowlist bypass) flags every version
+                    of log4j-api, but the vulnerable class lives in log4j-core.
+                    Keeping log4j-core off the classpath is what makes the finding
+                    non-exploitable for us; enforcing that here prevents a future
+                    transitive dep from silently invalidating the waiver's premise.
+                    Original range-based exclusion (CVE-2021-44228, Log4Shell) is
+                    subsumed by banning the coordinate entirely.
                     -->
-                    <exclude>org.apache.logging.log4j:log4j-core:(,2.15.0)</exclude>
+                    <exclude>org.apache.logging.log4j:log4j-core</exclude>
                     <exclude>ch.qos.logback:logback-classic:(,1.2.9)</exclude>
+
+                    <!--
+                    Ban reactor-core below 3.8.7. Versions up to 3.8.6 carry two
+                    Security-High CVEs (CVE-2026-47857, CVE-2026-47863), and the
+                    reactor-core.version property above is what decides the version
+                    for the whole build. This makes that floor a build failure rather
+                    than a convention, so lowering the property or a transitive
+                    downgrade cannot quietly put a vulnerable reactor-core back on the
+                    classpath. The rule enforces the minimum only; it does not verify
+                    that the pin still matches whatever reactor-core the imported
+                    reactor-bom ships.
+                    -->
+                    <exclude>io.projectreactor:reactor-core:(,3.8.7)</exclude>
 
                     <!--
                     Ban old bouncycastle.

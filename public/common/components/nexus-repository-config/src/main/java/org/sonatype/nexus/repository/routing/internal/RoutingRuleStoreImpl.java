@@ -36,7 +36,7 @@ import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.UUID.fromString;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -67,7 +67,7 @@ public class RoutingRuleStoreImpl
   @Autowired
   public RoutingRuleStoreImpl(final DataSessionSupplier sessionSupplier, final EventManager eventManager) {
     super(sessionSupplier);
-    this.eventManager = checkNotNull(eventManager);
+    this.eventManager = requireNonNull(eventManager);
   }
 
   @Override

@@ -22,7 +22,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.20
@@ -36,7 +36,7 @@ public class UiUtil
 
   @Autowired
   public UiUtil(final ApplicationContext context) {
-    this.context = checkNotNull(context);
+    this.context = requireNonNull(context);
   }
 
   /**

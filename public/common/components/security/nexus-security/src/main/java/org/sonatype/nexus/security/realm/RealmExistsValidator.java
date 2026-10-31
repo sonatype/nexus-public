@@ -20,7 +20,7 @@ import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -39,11 +39,14 @@ public class RealmExistsValidator
 
   @Autowired
   public RealmExistsValidator(final RealmSecurityManager realmSecurityManager) {
-    this.realmSecurityManager = checkNotNull(realmSecurityManager);
+    this.realmSecurityManager = requireNonNull(realmSecurityManager);
   }
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
     log.trace("Validating realm exists: {}", value);
     for (Realm realm : realmSecurityManager.getRealms()) {
       if (value.equals(realm.getName())) {

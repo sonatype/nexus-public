@@ -19,8 +19,8 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An immutable {@link NestedAttributesMap}.
@@ -44,7 +44,7 @@ public class ImmutableNestedAttributesMap
   @Override
   @SuppressWarnings("unchecked")
   public NestedAttributesMap child(final String name) {
-    checkNotNull(name);
+    requireNonNull(name);
 
     Object child = backing.get(name);
     if (child == null) {

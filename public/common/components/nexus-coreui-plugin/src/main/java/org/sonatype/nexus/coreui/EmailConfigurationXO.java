@@ -12,17 +12,19 @@
  */
 package org.sonatype.nexus.coreui;
 
+import org.sonatype.nexus.validation.constraint.Hostname;
+import org.sonatype.nexus.validation.constraint.PortNumber;
+import org.sonatype.nexus.validation.constraint.SsrfSafeHost;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import org.sonatype.nexus.validation.constraint.Hostname;
-import org.sonatype.nexus.validation.constraint.PortNumber;
 
 public class EmailConfigurationXO
 {
   private boolean enabled;
 
+  @SsrfSafeHost
   @Hostname
   @NotBlank
   private String host;
@@ -52,18 +54,18 @@ public class EmailConfigurationXO
   private boolean nexusTrustStoreEnabled;
 
   public EmailConfigurationXO(
-      boolean enabled,
-      String host,
-      int port,
-      String username,
-      String password,
-      String fromAddress,
-      String subjectPrefix,
-      boolean startTlsEnabled,
-      boolean startTlsRequired,
-      boolean sslOnConnectEnabled,
-      boolean sslCheckServerIdentityEnabled,
-      boolean nexusTrustStoreEnabled)
+      final boolean enabled,
+      final String host,
+      final int port,
+      final String username,
+      final String password,
+      final String fromAddress,
+      final String subjectPrefix,
+      final boolean startTlsEnabled,
+      final boolean startTlsRequired,
+      final boolean sslOnConnectEnabled,
+      final boolean sslCheckServerIdentityEnabled,
+      final boolean nexusTrustStoreEnabled)
   {
     this.enabled = enabled;
     this.host = host;

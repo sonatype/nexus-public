@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycleManager.isShuttingDown;
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTP;
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS;
@@ -82,8 +82,8 @@ public class SharedHttpClientConnectionManager
     setDefaultMaxPerRoute(Math.min(connectionPoolSize, connectionPoolMaxSize));
     log.debug("Connection pool size: {}", connectionPoolSize);
 
-    this.connectionPoolIdleTime = checkNotNull(connectionPoolIdleTime);
-    this.connectionPoolEvictingDelayTime = checkNotNull(connectionPoolEvictingDelayTime);
+    this.connectionPoolIdleTime = requireNonNull(connectionPoolIdleTime);
+    this.connectionPoolEvictingDelayTime = requireNonNull(connectionPoolEvictingDelayTime);
     setValidateAfterInactivity(connectionPoolValidateAfterInactivityTime.toMillisI());
     log.debug("Connection pool idle-time: {}, evicting delay: {}, validate after inactivity: {}",
         connectionPoolIdleTime, connectionPoolEvictingDelayTime, connectionPoolValidateAfterInactivityTime);

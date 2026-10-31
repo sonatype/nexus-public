@@ -29,7 +29,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -53,7 +53,7 @@ public class ManagedLifecycleResource
 
   @Autowired
   public ManagedLifecycleResource(final ManagedLifecycleManager lifecycleManager) {
-    this.lifecycleManager = checkNotNull(lifecycleManager);
+    this.lifecycleManager = requireNonNull(lifecycleManager);
   }
 
   @GET

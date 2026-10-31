@@ -35,7 +35,6 @@ import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 import org.sonatype.nexus.selector.SelectorManager;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.Permission;
@@ -45,7 +44,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED_VALUE;
 
 /**
@@ -116,7 +115,7 @@ public class RepositoryContentSelectorPrivilegeDescriptor
       @Value(REACT_PRIVILEGES_NAMED_VALUE) final boolean isReactPrivileges)
   {
     super(TYPE, repositoryManager, formats);
-    this.selectorManager = checkNotNull(selectorManager);
+    this.selectorManager = requireNonNull(selectorManager);
     this.formFields = ImmutableList.of(
         new SelectorComboFormField(
             P_CONTENT_SELECTOR,
@@ -144,7 +143,7 @@ public class RepositoryContentSelectorPrivilegeDescriptor
 
   @Override
   public Permission createPermission(final CPrivilege privilege) {
-    checkNotNull(privilege);
+    requireNonNull(privilege);
     String contentSelector = readProperty(privilege, P_CONTENT_SELECTOR, ALL);
     String name = readProperty(privilege, P_REPOSITORY, ALL);
     List<String> actions = readListProperty(privilege, P_ACTIONS, ALL);
@@ -172,7 +171,7 @@ public class RepositoryContentSelectorPrivilegeDescriptor
       final String name,
       final String... actions)
   {
-    return String.format("nx-%s-%s-%s-%s-%s", TYPE, contentSelector, format, name, Joiner.on(',').join(actions));
+    return String.format("nx-%s-%s-%s-%s-%s", TYPE, contentSelector, format, name, String.join(",", actions));
   }
 
   public static CPrivilege privilege(

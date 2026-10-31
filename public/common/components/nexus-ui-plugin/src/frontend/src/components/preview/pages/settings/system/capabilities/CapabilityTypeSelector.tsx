@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Badge, Flex, Text, ScrollArea } from '@radix-ui/themes';
+import { Box, Badge, Flex, Text, } from '@radix-ui/themes';
 import {
   Search, ChevronRight, Loader2, AlertCircle, Puzzle,
   FileSearch, Globe, Users, Cloud, UserCheck, HeartPulse, Clock,
@@ -147,7 +147,6 @@ export function CapabilityTypeSelector({ onSelect, selectedTypeId }: CapabilityT
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="capability-type-selector__search-input"
-            autoFocus
             autoComplete="off"
           />
         </Box>
@@ -193,6 +192,7 @@ export function CapabilityTypeSelector({ onSelect, selectedTypeId }: CapabilityT
                         <Text
                           size="1"
                           className="capability-type-selector__about"
+                          // biome-ignore lint/security/noDangerouslySetInnerHtml: intentional HTML rendering with sanitization
                           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(type.about) }}
                         />
                       )}

@@ -17,7 +17,7 @@ import java.util.List;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AttributeChangeSet.AttributeChange;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Event sent whenever an {@link Asset}'s attributes change.
@@ -34,7 +34,7 @@ public class AssetAttributesEvent
       final List<AttributeChange> changes)
   {
     super(asset);
-    this.changes = checkNotNull(changes);
+    this.changes = requireNonNull(changes);
   }
 
   public List<AttributeChange> getChanges() {

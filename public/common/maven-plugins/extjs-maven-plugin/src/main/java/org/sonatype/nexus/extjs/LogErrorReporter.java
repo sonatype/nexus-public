@@ -16,7 +16,7 @@ import org.apache.maven.plugin.logging.Log;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Mojo {@link Log} adapting {@link ErrorReporter}.
@@ -29,7 +29,7 @@ public class LogErrorReporter
   private final Log log;
 
   public LogErrorReporter(final Log log) {
-    this.log = checkNotNull(log);
+    this.log = requireNonNull(log);
   }
 
   private String format(

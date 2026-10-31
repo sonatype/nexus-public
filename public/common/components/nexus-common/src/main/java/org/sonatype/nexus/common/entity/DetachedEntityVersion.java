@@ -15,8 +15,7 @@ package org.sonatype.nexus.common.entity;
 import java.io.Serializable;
 
 import javax.annotation.Nonnull;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Detached {@link EntityVersion}.
@@ -31,7 +30,7 @@ public class DetachedEntityVersion
   private final String value;
 
   public DetachedEntityVersion(final String value) {
-    this.value = checkNotNull(value);
+    this.value = requireNonNull(value);
   }
 
   @Override

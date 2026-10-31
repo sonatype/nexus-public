@@ -11,14 +11,59 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {Box, Card, Flex, Text, Heading} from '@radix-ui/themes';
+import {Box, Card, Flex, Grid, Heading, Text} from '@radix-ui/themes';
+import {Info} from 'lucide-react';
 import {LoadingState, ErrorState} from '../../shared';
+import UIStrings from '../../../../constants/UIStrings';
+import HumanReadableUtils from '../../../../interface/HumanReadableUtils';
 
-function formatBytes(bytes) {
-  if (bytes == null || bytes <= 0 || !Number.isFinite(bytes)) return '0.00 Bytes';
-  const units = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
+const {
+  WELCOME: {
+    USAGE: {
+      MENU,
+      CARDS: {CLOUD_TILE_LABELS},
+    },
+  },
+} = UIStrings;
+
+function formatBytes(value) {
+  // Guard non-positive/non-numeric inputs uniformly so a negative current-month
+  // value renders "N/A" instead of falling through to bytesToString, which
+  // returns "Unavailable" for negatives (HumanReadableUtils.js:34) — two
+  // different strings for effectively the same "no usable data" condition.
+  if (typeof value !== 'number' || value <= 0) return 'N/A';
+  return HumanReadableUtils.bytesToString(value);
+}
+
+function CloudUsageTile({title, current, average, peak, tooltip}) {
+  return (
+    <Card style={{padding: 'var(--space-4)'}}>
+      <Flex direction="column" gap="4">
+        <Flex align="center" gap="2">
+          <Heading size="4" weight="medium">{title}</Heading>
+          <Box title={tooltip} style={{cursor: 'help'}}>
+            <Info size={16} style={{color: 'var(--gray-9)'}} />
+          </Box>
+        </Flex>
+        <Flex direction="column" gap="3">
+          <Flex direction="column" gap="1">
+            <Text size="5" weight="bold">{current}</Text>
+            <Text size="2" color="gray">{CLOUD_TILE_LABELS.CURRENT_MONTH}</Text>
+          </Flex>
+          <Box style={{height: '1px', background: 'var(--gray-5)'}} />
+          <Flex direction="column" gap="1">
+            <Text size="5" weight="bold">{average}</Text>
+            <Text size="2" color="gray">{CLOUD_TILE_LABELS.MONTHLY_AVERAGE}</Text>
+          </Flex>
+          <Box style={{height: '1px', background: 'var(--gray-5)'}} />
+          <Flex direction="column" gap="1">
+            <Text size="5" weight="bold">{peak}</Text>
+            <Text size="2" color="gray">{CLOUD_TILE_LABELS.PEAK(title)}</Text>
+          </Flex>
+        </Flex>
+      </Flex>
+    </Card>
+  );
 }
 
 export function CloudUsageCenterPanel({monthlyMetrics}) {
@@ -32,85 +77,58 @@ export function CloudUsageCenterPanel({monthlyMetrics}) {
   const egressHistory = monthlyMetrics.history?.egress ?? [];
   const storageHistory = monthlyMetrics.history?.storage ?? [];
 
-  const egressValues = egressHistory.map((p) => p.value).filter((v) => v > 0);
-  const storageValues = storageHistory.map((p) => p.value).filter((v) => v > 0);
+  // useMonthlyMetrics returns history oldest-first, so the current month is the
+  // last entry. Read current from that position on the raw ordered history, then
+  // filter zeros only when aggregating prior months. Filtering before slicing
+  // would let a zero in an earlier month shift what "current" points to.
+  // Zeros are treated as "no data" for averaging to avoid API-gap noise.
+  const currentEgress = egressHistory[egressHistory.length - 1]?.value ?? 0;
+  const priorEgress = egressHistory.slice(0, -1).map((p) => p.value).filter((v) => v > 0);
+  const avgEgress =
+    priorEgress.length > 0 ? priorEgress.reduce((a, b) => a + b, 0) / priorEgress.length : 0;
+  const peakEgress = priorEgress.length > 0 ? Math.max(...priorEgress) : 0;
 
-  const currentEgress = egressValues[0] ?? 0;
-  const avgEgress = egressValues.length > 1
-    ? egressValues.slice(1).reduce((a, b) => a + b, 0) / (egressValues.length - 1)
-    : 0;
-  const peakEgress = egressValues.length > 1
-    ? egressValues.slice(1).reduce((max, v) => (v > max ? v : max), 0)
-    : 0;
-
-  const currentStorage = storageValues[0] ?? 0;
-  const avgStorage = storageValues.length > 1
-    ? storageValues.slice(1).reduce((a, b) => a + b, 0) / (storageValues.length - 1)
-    : 0;
-  const peakStorage = storageValues.reduce((max, v) => (v > max ? v : max), 0);
+  const currentStorage = storageHistory[storageHistory.length - 1]?.value ?? 0;
+  const priorStorage = storageHistory.slice(0, -1).map((p) => p.value).filter((v) => v > 0);
+  const avgStorage =
+    priorStorage.length > 0 ? priorStorage.reduce((a, b) => a + b, 0) / priorStorage.length : 0;
+  // Peak Storage includes the current month (NEXUS-46933); Peak Egress does not.
+  const allStorage = storageHistory.map((p) => p.value).filter((v) => v > 0);
+  const peakStorage = allStorage.length > 0 ? Math.max(...allStorage) : 0;
 
   return (
-    <Flex direction="column" gap="5">
-      <Box>
-        <Heading as="h2" size="5" mb="1">Usage Center</Heading>
+    <Card size="3" style={{padding: 'var(--space-5)'}}>
+      <Flex direction="column" gap="1" mb="4">
+        <Heading size="5">{MENU.TITLE}</Heading>
+        <Text size="2" color="gray">{MENU.SUB_TEXT}</Text>
+        <Text size="2" weight="medium" mt="3">{MENU.SUB_TITLE}</Text>
+      </Flex>
+
+      <Grid columns={{initial: '1', md: '2'}} gap="4" style={{width: '100%'}}>
+        <CloudUsageTile
+          title={CLOUD_TILE_LABELS.EGRESS}
+          current={formatBytes(currentEgress)}
+          average={formatBytes(avgEgress)}
+          peak={formatBytes(peakEgress)}
+          tooltip={CLOUD_TILE_LABELS.EGRESS_TOOLTIP}
+        />
+        <CloudUsageTile
+          title={CLOUD_TILE_LABELS.STORAGE}
+          current={formatBytes(currentStorage)}
+          average={formatBytes(avgStorage)}
+          peak={formatBytes(peakStorage)}
+          tooltip={CLOUD_TILE_LABELS.STORAGE_TOOLTIP}
+        />
+      </Grid>
+
+      <Box mt="4">
+        <Heading size="4" mb="1">{CLOUD_TILE_LABELS.HISTORICAL_USAGE_TITLE}</Heading>
         <Text size="2" color="gray">
-          Monitor this instance&#39;s usage to ensure your deployment is appropriate for your needs.
+          {CLOUD_TILE_LABELS.HISTORICAL_USAGE_TEXT}{' '}
+          <a href="#preview/admin/system/usage">{CLOUD_TILE_LABELS.HISTORICAL_USAGE_LINK}</a>
         </Text>
       </Box>
-
-      <Box>
-        <Heading as="h3" size="4" mb="3">Usage Metrics Overview</Heading>
-        <Flex gap="4" wrap="wrap">
-          <Card style={{flex: '1 1 280px'}}>
-            <Box p="4">
-              <Text size="3" weight="bold" mb="3" as="div">Egress</Text>
-              <Flex direction="column" gap="2">
-                <Flex justify="between">
-                  <Text size="2" color="gray">Current Month</Text>
-                  <Text size="2" weight="medium">{formatBytes(currentEgress)}</Text>
-                </Flex>
-                <Flex justify="between">
-                  <Text size="2" color="gray">Monthly Average</Text>
-                  <Text size="2" weight="medium">{formatBytes(avgEgress)}</Text>
-                </Flex>
-                <Flex justify="between">
-                  <Text size="2" color="gray">Peak Egress</Text>
-                  <Text size="2" weight="medium">{formatBytes(peakEgress)}</Text>
-                </Flex>
-              </Flex>
-            </Box>
-          </Card>
-
-          <Card style={{flex: '1 1 280px'}}>
-            <Box p="4">
-              <Text size="3" weight="bold" mb="3" as="div">Storage</Text>
-              <Flex direction="column" gap="2">
-                <Flex justify="between">
-                  <Text size="2" color="gray">Current Month</Text>
-                  <Text size="2" weight="medium">{formatBytes(currentStorage)}</Text>
-                </Flex>
-                <Flex justify="between">
-                  <Text size="2" color="gray">Monthly Average</Text>
-                  <Text size="2" weight="medium">{formatBytes(avgStorage)}</Text>
-                </Flex>
-                <Flex justify="between">
-                  <Text size="2" color="gray">Peak Storage</Text>
-                  <Text size="2" weight="medium">{formatBytes(peakStorage)}</Text>
-                </Flex>
-              </Flex>
-            </Box>
-          </Card>
-        </Flex>
-      </Box>
-
-      <Box>
-        <Heading as="h3" size="4" mb="1">Historical Usage</Heading>
-        <Text size="2" color="gray">
-          Monitor how your repository&apos;s usage has changed month by month.{' '}
-          <a href="#preview/admin/system/usage">See historical usage data.</a>
-        </Text>
-      </Box>
-    </Flex>
+    </Card>
   );
 }
 

@@ -21,10 +21,11 @@ import { SupportRequestPage } from '../SupportRequestPage';
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     checkPermission: jest.fn(),
-    isProEdition: jest.fn(),
+    isLicensedEdition: jest.fn(),
     state: jest.fn(() => ({
       getValue: jest.fn(),
     })),
+    useState: jest.fn((getValue) => getValue()),
   },
 }));
 
@@ -38,13 +39,13 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 describe('SupportRequestPage', () => {
   let windowOpenSpy: jest.SpyInstance;
   const mockCheckPermission = ExtJS.checkPermission as jest.Mock;
-  const mockIsProEdition = ExtJS.isProEdition as jest.Mock;
+  const mockIsLicensedEdition = ExtJS.isLicensedEdition as jest.Mock;
 
   beforeEach(() => {
     windowOpenSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
     // Default: Pro Edition with permission
     mockCheckPermission.mockReturnValue(true);
-    mockIsProEdition.mockReturnValue(true);
+    mockIsLicensedEdition.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -124,7 +125,7 @@ describe('SupportRequestPage', () => {
 
   describe('OSS Edition', () => {
     beforeEach(() => {
-      mockIsProEdition.mockReturnValue(false);
+      mockIsLicensedEdition.mockReturnValue(false);
     });
 
     it('shows Pro Edition warning', () => {
@@ -150,7 +151,7 @@ describe('SupportRequestPage', () => {
   describe('Pro Edition without permission', () => {
     beforeEach(() => {
       mockCheckPermission.mockReturnValue(false);
-      mockIsProEdition.mockReturnValue(true);
+      mockIsLicensedEdition.mockReturnValue(true);
     });
 
     it('shows permission warning', () => {
@@ -176,7 +177,7 @@ describe('SupportRequestPage', () => {
   describe('Breadcrumb navigation', () => {
     beforeEach(() => {
       mockCheckPermission.mockReturnValue(true);
-      mockIsProEdition.mockReturnValue(true);
+      mockIsLicensedEdition.mockReturnValue(true);
     });
 
     it('renders breadcrumbs with Settings link', () => {

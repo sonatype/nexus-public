@@ -38,7 +38,6 @@ import { useSecurityEntityModal } from '../SecurityEntityModalContext';
 import { useUserTree } from './useUserTree';
 import { useUserEffectivePrivileges, type EffectivePrivilege } from './useUserEffectivePrivileges';
 import { useUsersApi } from './useUsersApi';
-import { useRolesApi } from '../roles/useRolesApi';
 import {
   User,
   DEFAULT_SOURCE,
@@ -62,11 +61,11 @@ interface UserProfilePageProps {
 const ROLES_BASE = 'preview/admin/security/roles';
 const PRIVILEGES_BASE = 'preview/admin/security/privileges';
 
-function roleProfileUrl(roleId: string): string {
+function _roleProfileUrl(roleId: string): string {
   return `#${ROLES_BASE}/${encodeURIComponent(roleId)}/profile`;
 }
 
-function privilegeProfileUrl(privilegeId: string): string {
+function _privilegeProfileUrl(privilegeId: string): string {
   return `#${PRIVILEGES_BASE}/${encodeURIComponent(privilegeId)}/profile`;
 }
 
@@ -92,7 +91,7 @@ export function UserProfilePage({
   const {
     tree,
     loading: treeLoading,
-    error: treeError,
+    error: _treeError,
     toggleExpand,
     expandAll,
     collapseAll,
@@ -194,7 +193,7 @@ export function UserProfilePage({
         header: 'Name',
         accessor: (p) => (
           <Flex align="center" gap="2">
-            <Key size={14} color="var(--amber-9)" />
+            <Key size={14} color="var(--amber-9)" aria-hidden="true" />
             {embedMode ? (
               <Text size="2" weight="medium" as="span">{p.name}</Text>
             ) : (
@@ -313,6 +312,7 @@ export function UserProfilePage({
     <Box className="user-profile-page" data-testid="user-profile-page">
       <PageHeader
         title={user.userId}
+        headingAs={embedMode ? 'h2' : 'h1'}
         breadcrumbs={[
           { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
           { label: 'Users', onClick: onBack },
@@ -355,25 +355,25 @@ export function UserProfilePage({
         <Tabs.List className="user-profile-page__tabs-list">
           <Tabs.Trigger value="overview">
             <Flex align="center" gap="1">
-              <Info size={14} />
+              <Info size={14} aria-hidden="true" />
               <Text size="2">Overview</Text>
             </Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="roles">
             <Flex align="center" gap="1">
-              <Shield size={14} />
+              <Shield size={14} aria-hidden="true" />
               <Text size="2">Roles</Text>
             </Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="privileges">
             <Flex align="center" gap="1">
-              <Key size={14} />
+              <Key size={14} aria-hidden="true" />
               <Text size="2">Privileges</Text>
             </Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="tree">
             <Flex align="center" gap="1">
-              <Shield size={14} />
+              <Shield size={14} aria-hidden="true" />
               <Text size="2">Security Tree</Text>
             </Flex>
           </Tabs.Trigger>

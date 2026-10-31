@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 
 import com.google.common.hash.HashCode;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import org.springframework.stereotype.Component;
@@ -47,7 +47,7 @@ public class HardLinkHelper
 
   @Autowired
   public HardLinkHelper(final MimeSupport mimeSupport) {
-    this.mimeSupport = checkNotNull(mimeSupport);
+    this.mimeSupport = requireNonNull(mimeSupport);
   }
 
   /**
@@ -58,9 +58,9 @@ public class HardLinkHelper
       final File content,
       final HashCode hashCodeSha1) throws IOException
   {
-    checkNotNull(repository);
-    checkNotNull(content);
-    checkNotNull(hashCodeSha1);
+    requireNonNull(repository);
+    requireNonNull(content);
+    requireNonNull(hashCodeSha1);
 
     Map<String, String> headers = new HashMap<>();
     String path = content.getPath();
@@ -84,10 +84,10 @@ public class HardLinkHelper
       final HashCode hashCodeSha1,
       final String contentType) throws IOException
   {
-    checkNotNull(repository);
-    checkNotNull(content);
-    checkNotNull(hashCodeSha1);
-    checkNotNull(contentType);
+    requireNonNull(repository);
+    requireNonNull(content);
+    requireNonNull(hashCodeSha1);
+    requireNonNull(contentType);
 
     Map<String, String> headers = new HashMap<>();
     String path = content.getPath();

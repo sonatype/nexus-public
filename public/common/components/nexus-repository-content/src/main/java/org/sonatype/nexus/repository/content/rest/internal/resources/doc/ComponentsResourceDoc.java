@@ -22,6 +22,8 @@ import org.sonatype.nexus.rest.Page;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
@@ -39,6 +41,8 @@ public interface ComponentsResourceDoc
    */
   @Operation(summary = "List components")
   @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Components returned",
+          content = @Content(schema = @Schema(implementation = Page.class))),
       @ApiResponse(responseCode = "403", description = "Insufficient permissions to list components"),
       @ApiResponse(responseCode = "422", description = "Parameter 'repository' is required")
   })
@@ -54,6 +58,8 @@ public interface ComponentsResourceDoc
    */
   @Operation(summary = "Get a single component")
   @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Component returned",
+          content = @Content(schema = @Schema(implementation = ComponentXO.class))),
       @ApiResponse(responseCode = "403", description = "Insufficient permissions to get component"),
       @ApiResponse(responseCode = "404", description = "Component not found"),
       @ApiResponse(responseCode = "422", description = "Malformed ID")

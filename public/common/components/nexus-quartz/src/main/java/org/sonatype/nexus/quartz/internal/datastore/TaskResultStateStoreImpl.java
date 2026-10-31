@@ -37,7 +37,7 @@ import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.springframework.context.annotation.Lazy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.quartz.TriggerKey.triggerKey;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobData;
 import org.springframework.stereotype.Component;
@@ -52,7 +52,7 @@ public class TaskResultStateStoreImpl
   @Autowired
   public TaskResultStateStoreImpl(final DataSessionSupplier sessionSupplier, @Lazy final Scheduler scheduler) {
     super(sessionSupplier);
-    this.scheduler = checkNotNull(scheduler);
+    this.scheduler = requireNonNull(scheduler);
   }
 
   @Override

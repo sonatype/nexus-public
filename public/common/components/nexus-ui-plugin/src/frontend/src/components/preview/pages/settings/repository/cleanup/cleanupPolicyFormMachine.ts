@@ -21,7 +21,6 @@ import {
   EMPTY_CLEANUP_POLICY,
   NOTES_MAX_LENGTH,
   isValidCriteriaNumber,
-  isRetainSupportedFormat,
   isReleaseType,
   getDefaultSortBy,
 } from './types';
@@ -49,7 +48,7 @@ export interface CleanupPolicyMachineContext {
 /**
  * Get available criteria for the currently selected format.
  */
-function getAvailableCriteria(
+function _getAvailableCriteria(
   format: string,
   formatCriteria: FormatCriteria[]
 ): string[] {
@@ -66,7 +65,7 @@ function getAvailableCriteria(
 export function validateCleanupPolicy(
   data: CleanupPolicyFormData,
   criteriaEnabled: CleanupPolicyMachineContext['criteriaEnabled'],
-  formatCriteria: FormatCriteria[]
+  _formatCriteria: FormatCriteria[]
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
@@ -159,10 +158,10 @@ export function createCleanupPolicyFormMachine(
 ) {
   const initialCriteriaEnabled = preloadedPolicy
     ? {
-        lastBlobUpdated: !!preloadedPolicy.criteriaLastBlobUpdated,
-        lastDownloaded: !!preloadedPolicy.criteriaLastDownloaded,
-        assetRegex: !!preloadedPolicy.criteriaAssetRegex,
-        retain: !!preloadedPolicy.retain || !!preloadedPolicy.sortBy,
+        lastBlobUpdated: Boolean(preloadedPolicy.criteriaLastBlobUpdated),
+        lastDownloaded: Boolean(preloadedPolicy.criteriaLastDownloaded),
+        assetRegex: Boolean(preloadedPolicy.criteriaAssetRegex),
+        retain: Boolean(preloadedPolicy.retain) || Boolean(preloadedPolicy.sortBy),
       }
     : {
         lastBlobUpdated: false,
@@ -248,11 +247,11 @@ export function createCleanupPolicyFormMachine(
 
         // For docker: disable retain when no other criteria remain selected
         if (!enabled && criteria !== 'retain' && newData.format === 'docker') {
-          const hasOtherCriteria = !!(
+          const hasOtherCriteria = Boolean((
             newData.criteriaLastBlobUpdated ||
             newData.criteriaLastDownloaded ||
             newData.criteriaAssetRegex
-          );
+          ));
           if (!hasOtherCriteria && newCriteriaEnabled.retain) {
             newCriteriaEnabled.retain = false;
             newData.retain = null;

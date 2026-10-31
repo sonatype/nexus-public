@@ -27,9 +27,35 @@ public interface ApplicationVersion
   String getVersion();
 
   /**
-   * Returns the edition.
+   * Returns the edition short name (e.g. {@code "PRO"}, {@code "COMMUNITY"}, {@code "CORE"}).
+   *
+   * This is the value reported in the REST API, an HTTP response header and the outbound user agent, so it remains the
+   * source of truth for the edition string. It is a poor basis for behaviour decisions, though: the short name is
+   * ambiguous (self-hosted Pro and Cloud both report {@code "PRO"}) and comparing it against string literals silently
+   * excludes editions added later. Decide behaviour with a capability question such as {@link #isAnyProEdition()} or
+   * {@link #isCommunityEdition()} instead.
    */
   String getEdition();
+
+  /**
+   * Whether the running edition is a Pro-family tier (Pro, Pro+ or Enterprise). Cloud reports the Pro short name and is
+   * therefore included. Prefer this over comparing {@link #getEdition()} against {@code "PRO"}.
+   */
+  default boolean isAnyProEdition() {
+    return NexusEditionType.fromShortName(getEdition())
+        .filter(NexusEditionType::isProFamily)
+        .isPresent();
+  }
+
+  /**
+   * Whether the running edition is Community. Prefer this over comparing {@link #getEdition()} against
+   * {@code "COMMUNITY"}.
+   */
+  default boolean isCommunityEdition() {
+    return NexusEditionType.fromShortName(getEdition())
+        .filter(type -> type == NexusEditionType.COMMUNITY)
+        .isPresent();
+  }
 
   /**
    * Returns the edition and version suitable for branded display.

@@ -11,11 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type {
-  GAResult,
-  GASearchRequest,
-  GASearchResponse,
   GASearchState,
 } from '../core';
 import { searchMavenGA } from '../core/searchApi';

@@ -85,7 +85,7 @@ export function MetricHealthPage({ className }: MetricHealthPageProps) {
         const firstCheck = healthChecks[0];
         setSelectedCheck(unhealthyCheck?.name || firstCheck?.name || null);
       }
-    } catch (err) {
+    } catch (_err) {
       // Error is already set by the hook
     } finally {
       setLoadingInitial(false);
@@ -111,7 +111,7 @@ export function MetricHealthPage({ className }: MetricHealthPageProps) {
       const unhealthyCheck = healthChecks.find((c) => !c.result.healthy);
       const firstCheck = healthChecks[0];
       setSelectedCheck(unhealthyCheck?.name || firstCheck?.name || null);
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the hook
     }
   }, [fetchNodeMetricHealth]);
@@ -142,12 +142,12 @@ export function MetricHealthPage({ className }: MetricHealthPageProps) {
         setChecks(healthChecks);
       }
       toast.success('Health checks refreshed');
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the hook
     } finally {
       setRefreshing(false);
     }
-  }, [fetchMetricHealth, fetchClusterNodes, fetchNodeMetricHealth, isClusteredMode, selectedNode]);
+  }, [fetchMetricHealth, fetchClusterNodes, fetchNodeMetricHealth, isClusteredMode, selectedNode, toast.success]);
 
   // Handle download
   const handleDownload = useCallback(() => {
@@ -155,7 +155,7 @@ export function MetricHealthPage({ className }: MetricHealthPageProps) {
     const filename = selectedNode ? `metric-health-${selectedNode}.json` : 'metric-health.json';
     downloadMetricHealth(checks, filename);
     toast.success('Health check data downloaded');
-  }, [checks, downloadMetricHealth, selectedNode]);
+  }, [checks, downloadMetricHealth, selectedNode, toast.success]);
 
   // Get selected check
   const selectedCheckData = useMemo(() => {

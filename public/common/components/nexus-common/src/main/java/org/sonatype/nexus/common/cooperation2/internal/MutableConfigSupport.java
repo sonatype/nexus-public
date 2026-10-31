@@ -16,8 +16,7 @@ import java.time.Duration;
 
 import org.sonatype.nexus.common.cooperation2.Config;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory.Builder;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 3.41
@@ -30,13 +29,13 @@ public abstract class MutableConfigSupport
 
   @Override
   public Builder majorTimeout(final Duration majorTimeout) {
-    this.majorTimeoutSeconds = (int) checkNotNull(majorTimeout).getSeconds();
+    this.majorTimeoutSeconds = (int) requireNonNull(majorTimeout).getSeconds();
     return this;
   }
 
   @Override
   public Builder minorTimeout(final Duration minorTimeout) {
-    this.minorTimeoutSeconds = (int) checkNotNull(minorTimeout).getSeconds();
+    this.minorTimeoutSeconds = (int) requireNonNull(minorTimeout).getSeconds();
     return this;
   }
 

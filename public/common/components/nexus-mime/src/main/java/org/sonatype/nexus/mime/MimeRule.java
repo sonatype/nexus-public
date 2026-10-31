@@ -20,7 +20,7 @@ import javax.annotation.Nonnull;
 import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Nexus MIME type rule.
@@ -44,7 +44,7 @@ public class MimeRule
       final boolean override,
       final List<String> mimetypes)
   {
-    checkNotNull(mimetypes, "mimetypes");
+    requireNonNull(mimetypes, "mimetypes");
     checkArgument(!mimetypes.isEmpty(), "mimetypes");
     this.override = override;
     this.mimetypes = ImmutableList.copyOf(mimetypes);

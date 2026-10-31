@@ -138,7 +138,7 @@ class MavenHostedRepositoryApiRequestToConfigurationConverterTest
 
   private MavenHostedRepositoryApiRequest createRequest(String contentDisposition) {
     MavenAttributes maven = new MavenAttributes("RELEASE", "STRICT", contentDisposition);
-    HostedStorageAttributes storage = new HostedStorageAttributes("default", true, "ALLOW_ONCE");
+    HostedStorageAttributes storage = new HostedStorageAttributes("default", true, false, "ALLOW_ONCE");
 
     return new MavenHostedRepositoryApiRequest(
         "maven-hosted",

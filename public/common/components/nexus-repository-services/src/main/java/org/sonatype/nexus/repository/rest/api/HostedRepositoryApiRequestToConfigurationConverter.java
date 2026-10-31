@@ -14,34 +14,30 @@ package org.sonatype.nexus.repository.rest.api;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
+import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
 import com.google.common.collect.Sets;
+import org.springframework.stereotype.Component;
 
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
+import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRIETARY_COMPONENTS;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_POLICY;
 import static org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.CLEANUP_ATTRIBUTES_KEY;
 import static org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.CLEANUP_NAME_KEY;
-import org.springframework.stereotype.Component;
 
 /**
  * @since 3.20
  */
 @Component
-public class HostedRepositoryApiRequestToConfigurationConverter<T extends HostedRepositoryApiRequest>
-    extends AbstractRepositoryApiRequestToConfigurationConverter<T>
+public class HostedRepositoryApiRequestToConfigurationConverter<S extends HostedStorageAttributes, T extends HostedRepositoryApiRequest<S>>
+    extends AbstractRepositoryApiRequestToConfigurationConverter<S, T>
 {
   @Override
   public Configuration convert(final T request) {
     Configuration configuration = super.convert(request);
-
-    configuration.attributes(STORAGE).set(BLOB_STORE_NAME, request.getStorage().getBlobStoreName());
-    configuration.attributes(STORAGE)
-        .set(STRICT_CONTENT_TYPE_VALIDATION, request.getStorage().getStrictContentTypeValidation());
-    configuration.attributes(STORAGE).set(WRITE_POLICY, request.getStorage().getWritePolicy());
 
     if (request.getComponent() != null) {
       configuration.attributes(COMPONENT)
@@ -55,5 +51,14 @@ public class HostedRepositoryApiRequestToConfigurationConverter<T extends Hosted
           .set(CLEANUP_NAME_KEY, Sets.newHashSet(request.getCleanup().getPolicyNames()));
     }
     return configuration;
+  }
+
+  @Override
+  protected void convertStorage(final T request, final Configuration configuration) {
+    super.convertStorage(request, configuration);
+    StorageAttributes storage = request.getStorage();
+    if (nonNull(storage)) {
+      configuration.attributes(STORAGE).set(WRITE_POLICY, request.getStorage().getWritePolicy());
+    }
   }
 }

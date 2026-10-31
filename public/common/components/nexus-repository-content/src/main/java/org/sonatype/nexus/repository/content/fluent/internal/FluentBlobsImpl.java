@@ -49,7 +49,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
@@ -77,8 +77,8 @@ public class FluentBlobsImpl
   private final Provider<BlobStore> blobStore;
 
   public FluentBlobsImpl(final ContentFacetSupport facet, final Provider<BlobStore> blobStore) {
-    this.facet = checkNotNull(facet);
-    this.blobStore = checkNotNull(blobStore);
+    this.facet = requireNonNull(facet);
+    this.blobStore = requireNonNull(blobStore);
   }
 
   @Override

@@ -23,14 +23,13 @@ import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
-import org.sonatype.nexus.repository.upload.UploadRepositoryContext;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -59,9 +58,9 @@ public class UploadService
       final UploadManager uploadManager,
       final RepositoryCacheInvalidationService repositoryCacheInvalidationService)
   {
-    this.uploadManager = checkNotNull(uploadManager);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
+    this.uploadManager = requireNonNull(uploadManager);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.repositoryCacheInvalidationService = requireNonNull(repositoryCacheInvalidationService);
   }
 
   /**
@@ -82,24 +81,12 @@ public class UploadService
    * @throws IOException
    */
   public String upload(final String repositoryName, final HttpServletRequest request) throws IOException {
-    checkNotNull(repositoryName);
-    checkNotNull(request);
+    requireNonNull(repositoryName);
+    requireNonNull(request);
 
-    Repository repository = checkNotNull(repositoryManager.get(repositoryName), "Specified repository is missing");
+    Repository repository = requireNonNull(repositoryManager.get(repositoryName), "Specified repository is missing");
 
-    // CLM-39871: bind the repository on this thread so any
-    // ComponentUploadExtension.validate(...) impl that runs inside
-    // uploadManager.handle(...) can reach it. Cleared in finally.
-    log.debug("UploadService.upload entered for repo={} format={}",
-        repositoryName, repository.getFormat().getValue());
-    UploadResponse uploadResponse;
-    try {
-      UploadRepositoryContext.set(repository);
-      uploadResponse = uploadManager.handle(repository, request);
-    }
-    finally {
-      UploadRepositoryContext.clear();
-    }
+    UploadResponse uploadResponse = uploadManager.handle(repository, request);
 
     if (NPM_FORMAT.equals(repository.getFormat().getValue())) {
       repositoryManager.findContainingGroups(repositoryName)

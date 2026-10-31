@@ -26,7 +26,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A condition that is satisfied when a capability of a specified type exists.
@@ -52,9 +52,9 @@ public class CapabilityOfTypeExistsCondition
       final CapabilityType type)
   {
     super(eventManager);
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.type = checkNotNull(type);
-    final CapabilityDescriptor descriptor = checkNotNull(descriptorRegistry).get(type);
+    this.capabilityRegistry = requireNonNull(capabilityRegistry);
+    this.type = requireNonNull(type);
+    final CapabilityDescriptor descriptor = requireNonNull(descriptorRegistry).get(type);
     typeName = descriptor == null ? type.toString() : descriptor.name();
     bindLock = new ReentrantReadWriteLock();
   }

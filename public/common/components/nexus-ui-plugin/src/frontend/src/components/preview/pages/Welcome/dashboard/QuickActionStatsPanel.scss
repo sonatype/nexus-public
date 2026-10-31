@@ -102,6 +102,17 @@
     color: var(--red-9);
     flex-shrink: 0;
   }
+
+  &__icon--warning {
+    color: var(--orange-9);
+    flex-shrink: 0;
+  }
+
+  &__error {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
 }
 
 /* System Health progress bar */

@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.scheduling.Cancelable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.ARTIFACTID_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.BASEVERSION_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.CASCADE_REBUILD;
@@ -55,8 +55,8 @@ public class RebuildMaven2MetadataTask
       @Qualifier(HostedType.NAME) final Type hostedType,
       @Qualifier(Maven2Format.NAME) final Format maven2Format)
   {
-    this.hostedType = checkNotNull(hostedType);
-    this.maven2Format = checkNotNull(maven2Format);
+    this.hostedType = requireNonNull(hostedType);
+    this.maven2Format = requireNonNull(maven2Format);
   }
 
   @Override

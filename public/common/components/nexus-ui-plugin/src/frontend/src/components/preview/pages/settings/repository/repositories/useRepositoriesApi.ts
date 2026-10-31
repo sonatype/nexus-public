@@ -13,6 +13,9 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { restClient, parseApiError, ENDPOINTS } from '../../../../../../interface/api';
+import type { FieldError } from '../../../../../../interface/api';
+import { ExtJS } from '../../../../../../interface/ExtJS';
+import FeatureFlags from '../../../../../../constants/FeatureFlags';
 import {
   Repository,
   RepositoryFormData,
@@ -24,6 +27,22 @@ import {
   HealthCheckStatus,
 } from './types';
 
+/**
+ * Error subclass that preserves field-level validation details from API responses,
+ * allowing callers to display errors inline on the relevant form fields.
+ */
+export class ApiRequestError extends Error {
+  fieldErrors?: FieldError[];
+
+  constructor(message: string, fieldErrors?: FieldError[]) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.fieldErrors = fieldErrors;
+  }
+}
+
+const { NUGET_SYMBOL_SERVER_ENABLED } = FeatureFlags;
+
 // =============================================================================
 // API Endpoints - REST only, NO ExtDirect
 // =============================================================================
@@ -34,7 +53,7 @@ const REPOSITORIES_LIST_URL = '/service/rest/internal/ui/repositories';
 const RECIPES_URL = '/service/rest/internal/ui/repositories/recipes';
 const BLOB_STORES_URL = '/service/rest/v1/blobstores';
 const ROUTING_RULES_URL = '/service/rest/v1/routing-rules';
-const CLEANUP_POLICIES_URL = '/service/rest/v1/cleanup-policies';
+const CLEANUP_POLICIES_URL = '/service/rest/internal/cleanup-policies';
 
 /**
  * Maps format names to REST API endpoint paths.
@@ -46,6 +65,40 @@ function getApiFormatPath(format: string): string {
     'maven2': 'maven',
   };
   return formatMapping[format] || format;
+}
+
+/**
+ * Strip a KEYLESS cosign enforcement out of an outbound request body.
+ *
+ * The server rejects `cosign.enforcement = KEYLESS` unconditionally on every OCI recipe
+ * (`OciCosignConfigurationConverters#rejectKeylessUntilVerifierShips`, HTTP 400) because the
+ * shipped verifier is a no-op stub. A repository saved before that rejection landed still reads
+ * back as KEYLESS, so any write that echoes the value it just read — a form save, or the
+ * Online/Offline toggle, which PUTs the whole GET response back — would fail for exactly those
+ * repositories. Downgrading to NONE is what keeps them editable; OciFacet's legacy-keyless notice
+ * tells the operator this will happen before they save.
+ *
+ * Every write path must funnel through here so the invariant "KEYLESS never goes on the wire"
+ * holds in one place rather than being re-derived per caller. Revert alongside the server-side
+ * rejection when NEXUS-53140 ships the real sigstore-java verifier.
+ */
+export function sanitizeCosignForWrite<T extends Record<string, unknown>>(body: T): T {
+  const cosign = body.cosign as
+    | { enforcement?: string; identityRegex?: string | null; issuerRegex?: string | null }
+    | undefined;
+  if (cosign?.enforcement !== 'KEYLESS') {
+    return body;
+  }
+  return {
+    ...body,
+    cosign: {
+      ...cosign,
+      enforcement: 'NONE',
+      // Regexes only carry meaning under KEYLESS, and the server drops them on NONE.
+      identityRegex: null,
+      issuerRegex: null,
+    },
+  };
 }
 
 /**
@@ -86,42 +139,61 @@ export function useRepositoriesApi() {
   }, []);
 
   /**
-   * Fetch a single repository by name
-   * Uses REST API: GET /service/rest/v1/repositories/{name}
+   * Fetch a single repository by name for the edit form.
+   *
+   * Uses the internal UI endpoint GET /service/rest/internal/ui/repositories/repository/{name}
+   * as the authoritative config source. That endpoint resolves the repository via
+   * `getRepositoryWithAdmin`, which gates on the repository-admin READ permission — the
+   * SAME permission the list endpoint (/details) and Classic's edit form use.
+   *
+   * Previously the detail fetch started with the public v1 GET /v1/repositories/{name}, which
+   * gates on repository-VIEW read/browse (userCanReadOrBrowse) — a different permission family.
+   * A user granted repository-admin read but not repository-view read/browse could see the
+   * repository list yet hit a 403 when opening a repository, bouncing back to the list
+   * (RepositoriesPage bounces to BASE_PATH on fetch error). Reading detail through the
+   * admin-gated internal endpoint keeps list and detail on one permission, matching Classic
+   * (NEXUS-54019).
    */
   const fetchRepository = useCallback(async (name: string): Promise<Repository | null> => {
     try {
-      const basic = await restClient.get<Repository>(`${REPOSITORIES_REST_URL}/${encodeURIComponent(name)}`);
-      if (!basic) return null;
+      const detail = await restClient.get<Repository>(
+        `${REPOSITORIES_LIST_URL}/repository/${encodeURIComponent(name)}`
+      );
+      if (!detail) return null;
 
-      const apiFormat = getApiFormatPath(basic.format);
-      const detailUrl = `${REPOSITORIES_REST_URL}/${encodeURIComponent(apiFormat)}/${encodeURIComponent(basic.type)}/${encodeURIComponent(name)}`;
+      // The admin config payload (AbstractApiRepository) lacks the UI-only `status` and `size`
+      // fields the list surfaces. Enrich best-effort from the public v1 basic endpoint, which
+      // gates on repository-view read/browse — so this may 403 for an admin-read-only user.
+      // Non-fatal: on failure we keep the admin config alone (detail wins on merge either way).
+      let repo: Repository = detail;
       try {
-        const detail = await restClient.get<Repository>(detailUrl);
-        const repo = { ...basic, ...detail } || basic;
-
-        // Fetch signing passphrase from internal endpoint for apt/yum repos
-        if (repo.format === 'apt' || repo.format === 'yum') {
-          try {
-            const signing = await restClient.get<{ passphrase: string | null }>(
-              `${REPOSITORIES_LIST_URL}/repository/${encodeURIComponent(name)}/signing-passphrase`
-            );
-            if (signing?.passphrase != null) {
-              if (repo.format === 'apt') {
-                repo.aptSigning = { ...repo.aptSigning, passphrase: signing.passphrase };
-              } else {
-                repo.yumSigning = { ...repo.yumSigning, passphrase: signing.passphrase };
-              }
-            }
-          } catch {
-            // Non-critical — passphrase field will just be empty
-          }
+        const basic = await restClient.get<Repository>(`${REPOSITORIES_REST_URL}/${encodeURIComponent(name)}`);
+        if (basic) {
+          repo = { ...basic, ...detail };
         }
-
-        return repo;
       } catch {
-        return basic;
+        // repository-view read/browse not granted — proceed with the admin config only.
       }
+
+      // Fetch signing passphrase from internal endpoint for apt/yum repos
+      if (repo.format === 'apt' || repo.format === 'yum') {
+        try {
+          const signing = await restClient.get<{ passphrase: string | null }>(
+            `${REPOSITORIES_LIST_URL}/repository/${encodeURIComponent(name)}/signing-passphrase`
+          );
+          if (signing?.passphrase != null) {
+            if (repo.format === 'apt') {
+              repo.aptSigning = { ...repo.aptSigning, passphrase: signing.passphrase };
+            } else {
+              repo.yumSigning = { ...repo.yumSigning, passphrase: signing.passphrase };
+            }
+          }
+        } catch {
+          // Non-critical — passphrase field will just be empty
+        }
+      }
+
+      return repo;
     } catch (err: unknown) {
       const apiError = parseApiError(err);
       if (apiError.status === 404) {
@@ -147,7 +219,7 @@ export function useRepositoriesApi() {
     } catch (err: unknown) {
       const apiError = parseApiError(err);
       setError(apiError.message);
-      throw new Error(apiError.message);
+      throw new ApiRequestError(apiError.message, apiError.fieldErrors);
     } finally {
       setLoading(false);
     }
@@ -168,7 +240,7 @@ export function useRepositoriesApi() {
     } catch (err: unknown) {
       const apiError = parseApiError(err);
       setError(apiError.message);
-      throw new Error(apiError.message);
+      throw new ApiRequestError(apiError.message, apiError.fieldErrors);
     } finally {
       setLoading(false);
     }
@@ -257,7 +329,10 @@ export function useRepositoriesApi() {
         if (!fullConfig) {
           throw new Error('Could not fetch repository configuration for update');
         }
-        await restClient.put(url, { ...fullConfig, online });
+        // Sanitised because this echoes the GET response straight back: a legacy KEYLESS
+        // cosign policy would otherwise round-trip to a server that rejects it, making the
+        // Online/Offline toggle fail with a 400 on those repositories.
+        await restClient.put(url, sanitizeCosignForWrite({ ...fullConfig, online }));
       } catch (err: unknown) {
         const apiError = parseApiError(err);
         setError(apiError.message);
@@ -353,17 +428,20 @@ export function useRepositoriesApi() {
   }, []);
 
   /**
-   * Fetch cleanup policies for a format
-   * Uses REST API: GET /service/rest/v1/cleanup-policies
+   * Fetch cleanup policies for a format.
+   * Uses GET /service/rest/internal/cleanup-policies. The v1 endpoint at
+   * /service/rest/v1/cleanup-policies is Pro/Cloud-only and 404s in CE.
    */
   const fetchCleanupPolicies = useCallback(async (format?: string): Promise<CleanupPolicy[]> => {
     try {
       const data = await restClient.get<CleanupPolicy[]>(CLEANUP_POLICIES_URL);
       const policies = Array.isArray(data) ? data : [];
       
-      // Filter by format client-side if format is specified
+      // Filter by format client-side if format is specified; include the
+      // "all formats" sentinel '*' which the REST API uses to represent
+      // policies stored with format = 'ALL_FORMATS'.
       if (format) {
-        return policies.filter((p) => p.format === format);
+        return policies.filter((p) => p.format === format || p.format === '*');
       }
       return policies;
     } catch (err: unknown) {
@@ -391,6 +469,21 @@ export function useRepositoriesApi() {
     } catch (err) {
       console.error('Failed to fetch health check status:', err);
       return {};
+    }
+  }, []);
+
+  /**
+   * Check whether the system-level Health Check capability is enabled.
+   * Uses REST API: GET /service/rest/v1/capabilities
+   * Returns true if the capability exists and is enabled, false if disabled, absent, or on error.
+   */
+  const fetchHealthCheckCapabilityEnabled = useCallback(async (): Promise<boolean> => {
+    try {
+      const data = await restClient.get<Array<{ type: string; enabled: boolean }>>(ENDPOINTS.CAPABILITIES);
+      const cap = Array.isArray(data) ? data.find((c) => c.type === 'healthcheck') : undefined;
+      return cap?.enabled ?? false;
+    } catch {
+      return false;
     }
   }, []);
 
@@ -441,6 +534,7 @@ export function useRepositoriesApi() {
     fetchCleanupPolicies,
     // Health check
     fetchHealthCheckStatus,
+    fetchHealthCheckCapabilityEnabled,
     enableHealthCheck,
     disableHealthCheck,
   };
@@ -470,6 +564,8 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     config.storage = {
       blobStoreName: data.storage.blobStoreName || 'default',
       strictContentTypeValidation: data.storage.strictContentTypeValidation ?? true,
+      // Omitted for editions whose API strips the field
+      globalDistribution: data.storage.globalDistribution,
       writePolicy: data.storage.writePolicy,
     };
   }
@@ -562,6 +658,54 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     };
   }
 
+  // OCI: `oci` is required on every recipe (hosted, proxy and group) and both
+  // `v1Enabled` and `forceBasicAuth` are @NotNull server-side, so the block is
+  // emitted unconditionally with defaults rather than gated on the user having
+  // opened the section. Omitting it produced
+  // `request.oci: must not be null` (HTTP 400) and no repository was created.
+  //
+  // forceBasicAuth defaults to true to match the REST model default (the cloud
+  // converter also rejects `false` outright). Cloud-specific clearing of the
+  // connector fields happens in OciFacet, which knows `isCloud`; this builder is
+  // edition-agnostic and simply forwards whatever the form holds.
+  if (data.format === 'oci') {
+    config.oci = {
+      v1Enabled: data.oci?.v1Enabled ?? false,
+      forceBasicAuth: data.oci?.forceBasicAuth ?? true,
+      httpPort: data.oci?.httpPort || null,
+      httpsPort: data.oci?.httpsPort || null,
+      subdomain: data.oci?.subdomain || null,
+      pathEnabled: data.oci?.pathEnabled ?? true,
+    };
+
+    if (data.type === 'proxy') {
+      // `useTrustStoreForIndexAccess` is intentionally not emitted: it is a
+      // UI-only affordance with no field on the REST model OciProxyAttributes.
+      config.ociProxy = {
+        indexType: data.ociProxy?.indexType ?? 'REGISTRY',
+        indexUrl: data.ociProxy?.indexUrl || null,
+        cacheForeignLayers: data.ociProxy?.cacheForeignLayers ?? false,
+        foreignLayerUrlWhitelist: data.ociProxy?.foreignLayerUrlWhitelist || [],
+      };
+    }
+
+    // Cosign is a top-level sibling of `oci` (OciCosignConfiguration), not nested under it.
+    //
+    // Emitting it only when an enforcement is set just keeps the payload minimal; it does NOT
+    // preserve anything server-side. The converter builds a brand-new Configuration and
+    // `applyCosignAttributes(configuration, null)` writes enforcement = NONE and removes both
+    // regexes, so omitting the block and sending NONE are indistinguishable to the server.
+    //
+    // KEYLESS is downgraded to NONE rather than emitted — see sanitizeCosignForWrite.
+    if (data.cosign?.enforcement) {
+      config.cosign = {
+        enforcement: data.cosign.enforcement,
+        identityRegex: data.cosign.identityRegex || null,
+        issuerRegex: data.cosign.issuerRegex || null,
+      };
+    }
+  }
+
   if (data.format === 'apt' || data.apt) {
     config.apt = {
       distribution: data.apt?.distribution || '',
@@ -616,6 +760,19 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     }
   }
 
+  // Terraform hosted repositories require GPG signing: TerraformHostedRepositoryApiRequest
+  // marks `terraformSigning` @NotNull and TerraformSigningAttributes marks `keypair`
+  // @NotBlank. Always emit the block for hosted so a missing key is reported as a
+  // keypair violation rather than a bare "must not be null" on the whole object;
+  // the form also validates this client-side before submit. Proxy and group Terraform
+  // repositories have no signing configuration and must not send the attribute.
+  if (data.format === 'terraform' && data.type === 'hosted') {
+    config.terraformSigning = {
+      keypair: data.terraformSigning?.keypair?.trim() || '',
+      passphrase: data.terraformSigning?.passphrase?.trim() || null,
+    };
+  }
+
   if (data.raw) {
     config.raw = {
       contentDisposition: data.raw.contentDisposition ?? 'ATTACHMENT',
@@ -628,9 +785,48 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
   // The `NpmConfig` type was removed accordingly — see types.ts.
 
   if (data.format === 'nuget' && data.type === 'proxy') {
+    // Symbol-server attributes are only emitted when the feature flag is enabled, matching
+    // the Classic UI behavior (see NugetProxy.js which gates `container.insert` for the two
+    // symbol fields on the same NX.State check). Without this gate the Preview UI would
+    // silently persist `allowAnonymousSymbolAccess: true` on every nuget-proxy create,
+    // even when the backend routes wired by the flag aren't registered — diverging from
+    // Classic UI and producing inert config that survives across flag toggles.
+    const symbolServerFlagEnabled = (() => {
+      try {
+        return Boolean(ExtJS.state()?.getValue?.(NUGET_SYMBOL_SERVER_ENABLED));
+      } catch {
+        return false;
+      }
+    })();
+
     config.nugetProxy = {
       queryCacheItemMaxAge: data.nugetProxy?.queryCacheItemMaxAge ?? 3600,
       nugetVersion: data.nugetProxy?.nugetVersion ?? 'V3',
+      ...(symbolServerFlagEnabled
+        ? {
+            // Symbol Server URL is optional per NugetAttributes.symbolServerUrl (@Nullable).
+            // Send verbatim when the user has typed something; omit when empty so the backend
+            // stores null rather than an empty string that later reads as "configured".
+            ...(data.nugetProxy?.symbolServerUrl
+              ? { symbolServerUrl: data.nugetProxy.symbolServerUrl }
+              : {}),
+            // Default to true when the user hasn't toggled, matching Classic UI's checkbox
+            // `value: true` seed and the backend NugetAttributes.allowAnonymousSymbolAccess
+            // default.
+            allowAnonymousSymbolAccess: data.nugetProxy?.allowAnonymousSymbolAccess ?? true,
+          }
+        : {}),
+    };
+  }
+
+  // NEXUS-48685: HuggingFace proxy XET toggle. Emit only when the form
+  // actually carries an `xet` block; when the toggle is untouched (or the
+  // feature flag hides the section) the payload must NOT include `xet`,
+  // so the backend converter's null-branch preserves whatever defaults
+  // the recipe resolves at route-wiring time.
+  if (data.format === 'huggingface' && data.type === 'proxy' && data.xet) {
+    config.xet = {
+      enabled: data.xet.enabled,
     };
   }
 
@@ -651,7 +847,8 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     };
   }
 
-  return config;
+  // Single choke point for the KEYLESS downgrade, shared with setRepositoryOnline.
+  return sanitizeCosignForWrite(config);
 }
 
 export default useRepositoriesApi;

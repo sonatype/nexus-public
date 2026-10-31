@@ -17,27 +17,22 @@ import org.sonatype.nexus.repository.rest.api.AbstractRepositoryApiRequestToConf
 import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.GROUP_WRITE_MEMBER;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
 import org.springframework.stereotype.Component;
+
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.GROUP_WRITE_MEMBER;
 
 /**
  * @since 3.20
  */
 @Component
 public class GroupRepositoryApiRequestToConfigurationConverter<T extends GroupRepositoryApiRequest>
-    extends AbstractRepositoryApiRequestToConfigurationConverter<T>
+    extends AbstractRepositoryApiRequestToConfigurationConverter<StorageAttributes, T>
 {
+  @Override
   public Configuration convert(final T request) {
     Configuration configuration = super.convert(request);
-
-    configuration.attributes(STORAGE).set(BLOB_STORE_NAME, request.getStorage().getBlobStoreName());
-    configuration.attributes(STORAGE)
-        .set(STRICT_CONTENT_TYPE_VALIDATION, request.getStorage().getStrictContentTypeValidation());
-    maybeAddDataStoreName(configuration);
 
     configuration.attributes("group").set("memberNames", request.getGroup().getMemberNames());
 

@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 
 /**
@@ -54,11 +54,11 @@ public class SecurityFilter
       final WebSecurityManager webSecurityManager,
       final FilterChainResolver filterChainResolver)
   {
-    checkNotNull(webSecurityManager);
+    requireNonNull(webSecurityManager);
     log.trace("Security manager: {}", webSecurityManager);
     setSecurityManager(webSecurityManager);
 
-    checkNotNull(filterChainResolver);
+    requireNonNull(filterChainResolver);
     log.trace("Filter chain resolver: {}", filterChainResolver);
     setFilterChainResolver(filterChainResolver);
   }

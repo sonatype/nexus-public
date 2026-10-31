@@ -22,5 +22,9 @@ public interface CleanupBrowseServiceFactory
    */
   CleanupComponentBrowse get(Format format);
 
-  CleanupComponentBrowse getPreviewService();
+  /**
+   * @param format to preview
+   * @return the browse service to use for the cleanup preview
+   */
+  CleanupComponentBrowse getPreviewService(Format format);
 }

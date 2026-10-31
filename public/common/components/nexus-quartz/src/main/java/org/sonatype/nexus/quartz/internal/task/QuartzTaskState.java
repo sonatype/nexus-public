@@ -21,7 +21,7 @@ import org.sonatype.nexus.scheduling.Task;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * State of Quartz executed {@link Task}.
@@ -41,8 +41,8 @@ public class QuartzTaskState
       final Schedule schedule,
       @Nullable final Date nextExecutionTime)
   {
-    this.taskConfiguration = checkNotNull(config);
-    this.schedule = checkNotNull(schedule);
+    this.taskConfiguration = requireNonNull(config);
+    this.schedule = requireNonNull(schedule);
     this.nextExecutionTime = nextExecutionTime;
   }
 

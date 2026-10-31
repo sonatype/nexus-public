@@ -17,8 +17,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import com.google.common.base.Throwables;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Lock helpers.
@@ -36,7 +35,7 @@ public class Locks
    * Uses {@link Lock#tryLock} with timeout of 60 seconds to avoid potential deadlocks.
    */
   public static Lock lock(final Lock lock) {
-    checkNotNull(lock);
+    requireNonNull(lock);
     try {
       if (!lock.tryLock(60, TimeUnit.SECONDS)) {
         throw new RuntimeException("Failed to obtain lock after 60 seconds");
@@ -52,7 +51,7 @@ public class Locks
    * Returns locked read-lock.
    */
   public static Lock read(final ReadWriteLock readWriteLock) {
-    checkNotNull(readWriteLock);
+    requireNonNull(readWriteLock);
     return lock(readWriteLock.readLock());
   }
 
@@ -60,7 +59,7 @@ public class Locks
    * Returns locked write-lock.
    */
   public static Lock write(final ReadWriteLock readWriteLock) {
-    checkNotNull(readWriteLock);
+    requireNonNull(readWriteLock);
     return lock(readWriteLock.writeLock());
   }
 

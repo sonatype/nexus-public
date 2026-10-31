@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static jakarta.ws.rs.core.Response.status;
@@ -59,7 +59,7 @@ public class JwtSecretApiResourceV1
 
   @Autowired
   public JwtSecretApiResourceV1(final SecretStore secretStore) {
-    this.secretStore = checkNotNull(secretStore);
+    this.secretStore = requireNonNull(secretStore);
   }
 
   @PUT

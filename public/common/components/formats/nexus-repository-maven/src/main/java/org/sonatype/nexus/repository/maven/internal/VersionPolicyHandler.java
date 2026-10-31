@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.view.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -49,7 +49,7 @@ public class VersionPolicyHandler
 
   @Autowired
   public VersionPolicyHandler(final VersionPolicyValidator versionPolicyValidator) {
-    this.versionPolicyValidator = checkNotNull(versionPolicyValidator);
+    this.versionPolicyValidator = requireNonNull(versionPolicyValidator);
   }
 
   @Nonnull

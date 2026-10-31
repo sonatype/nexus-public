@@ -52,7 +52,7 @@ export function usePrivilegeForm({
   updatePrivilege,
 }: UsePrivilegeFormOptions): UsePrivilegeFormReturn {
   const toast = useToast();
-  const isCreate = !privilegeId && !privilege;
+  const isCreate = !(privilegeId || privilege);
 
   // Create the form machine - memoized based on privilegeId and privilege
   const machine = useMemo(

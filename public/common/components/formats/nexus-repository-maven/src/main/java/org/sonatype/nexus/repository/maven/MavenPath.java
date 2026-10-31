@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Maven repository path. Every item in repository may have hashes, stored on paths with proper suffixes, and artifact
@@ -115,14 +115,14 @@ public class MavenPath
         final SignatureType signatureType)
     {
       this.snapshot = snapshot;
-      this.groupId = checkNotNull(groupId);
-      this.artifactId = checkNotNull(artifactId);
-      this.version = checkNotNull(version);
+      this.groupId = requireNonNull(groupId);
+      this.artifactId = requireNonNull(artifactId);
+      this.version = requireNonNull(version);
       this.timestamp = snapshot ? timestamp : null;
       this.buildNumber = snapshot ? buildNumber : null;
-      this.baseVersion = checkNotNull(baseVersion);
+      this.baseVersion = requireNonNull(baseVersion);
       this.classifier = classifier;
-      this.extension = checkNotNull(extension);
+      this.extension = requireNonNull(extension);
       this.signatureType = signatureType;
     }
 
@@ -185,7 +185,7 @@ public class MavenPath
   private final Coordinates coordinates;
 
   public MavenPath(final String path, final Coordinates coordinates) {
-    checkNotNull(path);
+    requireNonNull(path);
     final String normalizedPath = normalizePath(path);
     checkArgument(!normalizedPath.startsWith("/"), "Path must not start with '/'");
     this.path = normalizedPath;
@@ -347,7 +347,7 @@ public class MavenPath
    */
   @Nonnull
   private MavenPath hash(final String hashExtension) {
-    checkNotNull(hashExtension);
+    requireNonNull(hashExtension);
     checkArgument(hashType == null, "This path is already a hash: %s", this);
     Coordinates hashCoordinates = null;
     if (coordinates != null) {
@@ -373,7 +373,7 @@ public class MavenPath
    */
   @Nonnull
   public MavenPath signature(final SignatureType signatureType) {
-    checkNotNull(signatureType);
+    requireNonNull(signatureType);
     checkArgument(hashType == null, "This path is already a hash: %s", this);
     checkArgument(coordinates != null, "Only artifact paths may have signatures: %s", this);
     checkArgument(coordinates.getSignatureType() == null, "This path is already a signature: %s", this);
@@ -399,7 +399,7 @@ public class MavenPath
    */
   @Nonnull
   public MavenPath locate(final String extension, @Nullable final String classifier) {
-    checkNotNull(extension);
+    requireNonNull(extension);
     checkArgument(coordinates != null, "Only artifact paths may locate: %s", this);
 
     final MavenPath origin = main();

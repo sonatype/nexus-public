@@ -14,7 +14,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { Permissions } from '@sonatype/nexus-ui-plugin';
+import {
+  Permissions,
+  TrashPage as TrashPageRaw,
+  withFeatureGate,
+  PRO_FAMILY_EDITIONS,
+} from '@sonatype/nexus-ui-plugin';
 import { UIView } from '@uirouter/react';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
 import { lazyLoad } from './lazyLoad';
@@ -49,13 +54,14 @@ const SearchRExt = lazyLoad(() => import('../../components/pages/browse/Search/S
 const SearchRawExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchRawExt'));
 const SearchRubygemsExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchRubygemsExt'));
 const SearchTerraformExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchTerraformExt'));
-const SearchTerraformStateBackendExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchTerraformStateBackendExt'));
 const SearchSwiftExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchSwiftExt'));
 const SearchYumExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchYumExt'));
 const Tags = lazyLoad(() => import('../../components/pages/browse/Tags/Tags'));
 const UploadList = lazyLoad(() => import('../../components/pages/browse/Upload/UploadList'));
 const UploadDetails = lazyLoad(() => import('../../components/pages/browse/Upload/UploadDetails'));
 const TestForm = lazyLoad(() => import('../../components/pages/TestForm'));
+
+const TrashPage = withFeatureGate(TrashPageRaw, 'system.trash', 'Trash');
 
 const { MALWARE_RISK_ENABLED } = FeatureFlags;
 
@@ -571,25 +577,6 @@ export const browseRoutes = [
     },
   },
   {
-    name: BROWSE.SEARCH.TERRAFORM_STATE_BACKEND,
-    url: '/terraformbackend/:keyword',
-    component: SearchTerraformStateBackendExt,
-    data: {
-      visibilityRequirements: {
-        permissions: ['nexus:search:read'],
-        browseableFormat: 'terraformbackend',
-      },
-      title: BROWSE.SEARCH.TITLE,
-    },
-    params: {
-      keyword: {
-        value: null,
-        raw: true,
-        dynamic: true,
-      },
-    },
-  },
-  {
     name: BROWSE.SEARCH.YUM,
     url: '/yum/:keyword',
     component: SearchYumExt,
@@ -662,7 +649,7 @@ export const browseRoutes = [
     data: {
       visibilityRequirements: {
         permissions: [Permissions.TAGS.READ],
-        editions: ['PRO'],
+        editions: PRO_FAMILY_EDITIONS,
       },
       title: BROWSE.TAGS.TITLE,
     },
@@ -671,6 +658,19 @@ export const browseRoutes = [
         value: null,
         raw: true,
         dynamic: true,
+      },
+    },
+  },
+  {
+    name: BROWSE.TRASH.ROOT,
+    url: '/trash',
+    component: TrashPage,
+    data: {
+      title: BROWSE.TRASH.TITLE,
+      visibilityRequirements: {
+        statesEnabled: [{ key: 'nexus.softDelete.enabled', defaultValue: false }],
+        permissions: [Permissions.ADMIN],
+        editions: PRO_FAMILY_EDITIONS,
       },
     },
   },

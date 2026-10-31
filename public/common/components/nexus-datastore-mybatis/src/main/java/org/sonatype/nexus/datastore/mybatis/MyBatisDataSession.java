@@ -21,7 +21,7 @@ import org.sonatype.nexus.transaction.TransactionSupport;
 
 import org.apache.ibatis.session.SqlSession;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static com.google.common.collect.Lists.newArrayList;
 
 /**
@@ -38,7 +38,7 @@ public final class MyBatisDataSession
   private Actions actions = new Actions();
 
   public MyBatisDataSession(final SqlSession session) {
-    this.session = checkNotNull(session);
+    this.session = requireNonNull(session);
   }
 
   @Override

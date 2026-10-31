@@ -17,7 +17,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.UnauthenticatedException;
 import org.apache.shiro.subject.Subject;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Ext.Direct error response.
@@ -32,7 +32,7 @@ public class ErrorResponse
   private boolean authenticationRequired;
 
   public ErrorResponse(final Throwable cause) {
-    this(checkNotNull(cause).getMessage() == null ? cause.getClass().getName() : cause.getMessage());
+    this(requireNonNull(cause).getMessage() == null ? cause.getClass().getName() : cause.getMessage());
     authenticationRequired = cause instanceof UnauthenticatedException;
     if (authenticationRequired) {
       Subject subject = SecurityUtils.getSubject();
@@ -44,7 +44,7 @@ public class ErrorResponse
 
   public ErrorResponse(final String message) {
     super(false, Lists.newArrayList());
-    this.message = checkNotNull(message);
+    this.message = requireNonNull(message);
   }
 
   public String getMessage() {

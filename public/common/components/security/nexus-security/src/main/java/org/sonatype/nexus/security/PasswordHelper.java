@@ -21,7 +21,7 @@ import org.sonatype.nexus.crypto.maven.MavenCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -40,8 +40,8 @@ public class PasswordHelper
 
   @Autowired
   public PasswordHelper(final MavenCipher mavenCipher, final PhraseService phraseService) {
-    this.mavenCipher = checkNotNull(mavenCipher);
-    this.phraseService = checkNotNull(phraseService);
+    this.mavenCipher = requireNonNull(mavenCipher);
+    this.phraseService = requireNonNull(phraseService);
   }
 
   @Nullable

@@ -88,7 +88,7 @@
     background: var(--color-background, #fff);
     color: var(--color-text-primary, #1a1a1a);
     font-size: 14px;
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-family: var(--font-family-mono);
 
     &::placeholder {
       color: var(--gray-9, #8d8d8f);
@@ -393,7 +393,7 @@
       padding: 2px 6px;
       background: var(--gray-4, #ebebef);
       border-radius: var(--radius-1, 4px);
-      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+      font-family: var(--font-family-mono);
       font-size: 12px;
 
       [data-theme='dark'] & {

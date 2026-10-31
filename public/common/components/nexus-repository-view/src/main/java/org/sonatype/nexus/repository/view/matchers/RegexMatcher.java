@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.view.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Regular expression string matcher.
@@ -40,22 +40,22 @@ public class RegexMatcher
   private final Pattern pattern;
 
   public RegexMatcher(final Pattern pattern) {
-    this.pattern = checkNotNull(pattern);
+    this.pattern = requireNonNull(pattern);
   }
 
   public RegexMatcher(final String regex, final int flags) {
-    checkNotNull(regex);
+    requireNonNull(regex);
     this.pattern = Pattern.compile(regex, flags);
   }
 
   public RegexMatcher(final String regex) {
-    checkNotNull(regex);
+    requireNonNull(regex);
     this.pattern = Pattern.compile(regex);
   }
 
   @Override
   public boolean matches(final Context context) {
-    checkNotNull(context);
+    requireNonNull(context);
 
     String path = context.getRequest().getPath();
     log.debug("Matching: {}~={}", path, pattern);

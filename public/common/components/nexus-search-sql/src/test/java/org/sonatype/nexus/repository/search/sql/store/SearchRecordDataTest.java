@@ -13,8 +13,13 @@
 package org.sonatype.nexus.repository.search.sql.store;
 
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.repository.search.sql.SearchAssetRecord;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,8 +27,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 class SearchRecordDataTest
 {
@@ -203,9 +214,10 @@ class SearchRecordDataTest
     underTest.addTokens(phrase.toString(), result, false);
 
     assertThat(result.size(), greaterThan(0));
-    String tokenizedString = result.get(result.size() - 1);
-    int byteLength = tokenizedString.getBytes(StandardCharsets.UTF_8).length;
-    assertThat(byteLength, lessThanOrEqualTo(2046));
+    for (String entry : result) {
+      int byteLength = entry.getBytes(StandardCharsets.UTF_8).length;
+      assertThat("Entry exceeds byte limit: " + byteLength, byteLength, lessThanOrEqualTo(2046));
+    }
   }
 
   @Test
@@ -268,6 +280,529 @@ class SearchRecordDataTest
     // only needs to lowercase the path because the escaping will be done by the Object mapper for JSON type
     // (ListHandlerType)
     assertThat(h2RecordData.getPaths(), containsInAnyOrder("path", "test\\bar", "te'st"));
+  }
+
+  // ── Uploaders ────────────────────────────────────────────────────────────
+
+  @Test
+  void testAddUploader() {
+    underTest.addUploader("admin");
+    assertThat(underTest.getUploaders(), containsInAnyOrder("'admin'"));
+  }
+
+  @Test
+  void testAddUploader_emptyCases() {
+    underTest.addUploader(null);
+    underTest.addUploader("");
+    underTest.addUploader("   ");
+    assertThat(underTest.getUploaders(), empty());
+  }
+
+  @Test
+  void testAddUploaderIp() {
+    underTest.addUploaderIp("192.168.1.1");
+    assertThat(underTest.getUploaderIps(), containsInAnyOrder("'192.168.1.1'"));
+  }
+
+  @Test
+  void testAddUploaderIp_emptyCases() {
+    underTest.addUploaderIp(null);
+    underTest.addUploaderIp("");
+    underTest.addUploaderIp("   ");
+    assertThat(underTest.getUploaderIps(), empty());
+  }
+
+  // ── Hash fields ──────────────────────────────────────────────────────────
+
+  @Test
+  void testAddMd5() {
+    underTest.addMd5("abc123");
+    assertThat(underTest.getMd5(), containsInAnyOrder("abc123"));
+  }
+
+  @Test
+  void testAddMd5_emptyCases() {
+    underTest.addMd5(null);
+    underTest.addMd5("");
+    underTest.addMd5("   ");
+    assertThat(underTest.getMd5(), empty());
+  }
+
+  @Test
+  void testAddSha1() {
+    underTest.addSha1("sha1value");
+    assertThat(underTest.getSha1(), containsInAnyOrder("sha1value"));
+  }
+
+  @Test
+  void testAddSha1_emptyCases() {
+    underTest.addSha1(null);
+    underTest.addSha1("");
+    underTest.addSha1("   ");
+    assertThat(underTest.getSha1(), empty());
+  }
+
+  @Test
+  void testAddSha256() {
+    underTest.addSha256("sha256value");
+    assertThat(underTest.getSha256(), containsInAnyOrder("sha256value"));
+  }
+
+  @Test
+  void testAddSha256_emptyCases() {
+    underTest.addSha256(null);
+    underTest.addSha256("");
+    assertThat(underTest.getSha256(), empty());
+  }
+
+  @Test
+  void testAddSha512() {
+    underTest.addSha512("sha512value");
+    assertThat(underTest.getSha512(), containsInAnyOrder("sha512value"));
+  }
+
+  @Test
+  void testAddSha512_emptyCases() {
+    underTest.addSha512(null);
+    underTest.addSha512("");
+    assertThat(underTest.getSha512(), empty());
+  }
+
+  // ── Tags ─────────────────────────────────────────────────────────────────
+
+  @Test
+  void testSetTags() {
+    underTest.setTags(List.of("release", "stable"));
+    assertThat(underTest.getTags(), containsInAnyOrder("release", "stable"));
+  }
+
+  @Test
+  void testSetTags_empty() {
+    underTest.setTags(List.of());
+    assertThat(underTest.getTags(), empty());
+  }
+
+  // ── Setters / getters ────────────────────────────────────────────────────
+
+  @Test
+  void testRepositoryIdSetterGetter() {
+    underTest.setRepositoryId(42);
+    assertThat(underTest.getRepositoryId(), is(42));
+  }
+
+  @Test
+  void testComponentIdSetterGetter() {
+    underTest.setComponentId(99);
+    assertThat(underTest.getComponentId(), is(99));
+  }
+
+  @Test
+  void testFormatSetterGetter() {
+    underTest.setFormat("maven2");
+    assertThat(underTest.getFormat(), is("maven2"));
+  }
+
+  @Test
+  void testNamespaceSetterGetter() {
+    underTest.setNamespace("com.example");
+    assertThat(underTest.getNamespace(), is("com.example"));
+  }
+
+  @Test
+  void testComponentNameSetterGetter() {
+    underTest.setComponentName("my-component");
+    assertThat(underTest.getComponentName(), is("my-component"));
+  }
+
+  @Test
+  void testAliasComponentName() {
+    underTest.addAliasComponentName("alias1");
+    assertThat(underTest.getAliasComponentNames(), containsInAnyOrder("'alias1'"));
+  }
+
+  @Test
+  void testAliasComponentName_emptyCases() {
+    underTest.addAliasComponentName(null);
+    underTest.addAliasComponentName("");
+    underTest.addAliasComponentName("   ");
+    assertThat(underTest.getAliasComponentNames(), empty());
+  }
+
+  @Test
+  void testComponentKindSetterGetter() {
+    underTest.setComponentKind("binary");
+    assertThat(underTest.getComponentKind(), is("binary"));
+  }
+
+  @Test
+  void testVersionSetterGetter() {
+    underTest.setVersion("1.0.0");
+    assertThat(underTest.getVersion(), is("1.0.0"));
+  }
+
+  @Test
+  void testNormalisedVersionSetterGetter() {
+    underTest.setNormalisedVersion("000001.000000.000000");
+    assertThat(underTest.getNormalisedVersion(), is("000001.000000.000000"));
+  }
+
+  @Test
+  void testLastModifiedSetterGetter() {
+    OffsetDateTime now = OffsetDateTime.now();
+    underTest.setLastModified(now);
+    assertThat(underTest.getLastModified(), is(now));
+  }
+
+  @Test
+  void testRepositoryNameSetterGetter() {
+    underTest.setRepositoryName("maven-releases");
+    assertThat(underTest.getRepositoryName(), is("maven-releases"));
+  }
+
+  @Test
+  void testPrereleaseSetterGetter() {
+    underTest.setPrerelease(true);
+    assertThat(underTest.isPrerelease(), is(true));
+    underTest.setPrerelease(false);
+    assertThat(underTest.isPrerelease(), is(false));
+  }
+
+  @Test
+  void testEntityVersionSetterGetter() {
+    underTest.setEntityVersion(7);
+    assertThat(underTest.getEntityVersion(), is(7));
+  }
+
+  @Test
+  void testAttributesSetterGetter() {
+    NestedAttributesMap attrs = new NestedAttributesMap("attributes", new HashMap<>());
+    attrs.set("key", "value");
+    underTest.setAttributes(attrs);
+    assertThat(underTest.attributes(), notNullValue());
+    assertThat(underTest.attributes().get("key"), is("value"));
+  }
+
+  // ── newAssetRecord / addSearchAssetRecord ─────────────────────────────────
+
+  @Test
+  void testNewAssetRecord() {
+    underTest.setRepositoryId(1);
+    underTest.setComponentId(2);
+    underTest.setFormat("maven2");
+    SearchAssetRecord assetRecord = underTest.newAssetRecord();
+    assertThat(assetRecord, notNullValue());
+    assertThat(underTest.getSearchAssetRecords(), hasSize(1));
+  }
+
+  @Test
+  void testAddSearchAssetRecord_nonNull() {
+    // Directly calls addSearchAssetRecord (non-null path) — distinct from testNewAssetRecord
+    SearchRecordData other = new SearchRecordData(1, 2, "maven2");
+    SearchAssetRecord record = other.newAssetRecord();
+    underTest.addSearchAssetRecord(record);
+    assertThat(underTest.getSearchAssetRecords(), hasSize(1));
+    assertThat(underTest.getSearchAssetRecords().iterator().next(), is(record));
+  }
+
+  @Test
+  void testAddSearchAssetRecord_null_ignored() {
+    underTest.addSearchAssetRecord(null);
+    assertThat(underTest.getSearchAssetRecords(), empty());
+  }
+
+  // ── Constructors ─────────────────────────────────────────────────────────
+
+  @Test
+  void testConstructorWithRepositoryIdAndFormat() {
+    SearchRecordData data = new SearchRecordData(10, "npm");
+    assertThat(data.getRepositoryId(), is(10));
+    assertThat(data.getFormat(), is("npm"));
+    // componentId is not set by this constructor
+    assertThat(data.getComponentId(), nullValue());
+  }
+
+  @Test
+  void testConstructorWithRepositoryIdComponentIdAndFormat() {
+    SearchRecordData data = new SearchRecordData(10, 20, "npm");
+    assertThat(data.getRepositoryId(), is(10));
+    assertThat(data.getComponentId(), is(20));
+    assertThat(data.getFormat(), is("npm"));
+  }
+
+  // ── Path byte limit ───────────────────────────────────────────────────────
+
+  @Test
+  void testAddPath_byteLimitExceeded_pathNotAdded() {
+    String largePath = "/" + "a".repeat(SearchRecordData.MAX_TSVECTOR_BYTES - 10);
+    underTest.addPath(largePath);
+    int countAfterFirst = underTest.getPaths().size();
+
+    underTest.addPath("/another/path");
+    assertThat(underTest.getPaths().size(), is(countAfterFirst));
+  }
+
+  // ── equals / hashCode / toString ─────────────────────────────────────────
+
+  @Test
+  void testEquals_sameObject() {
+    assertThat(underTest, equalTo(underTest));
+  }
+
+  @Test
+  void testEquals_twoIdenticallyConstructedObjects() {
+    // NestedAttributesMap uses reference equality, so share the same instance to get
+    // a meaningful test of all other fields being equal.
+    SearchRecordData a = new SearchRecordData(1, 2, "maven2");
+    SearchRecordData b = new SearchRecordData(1, 2, "maven2");
+    b.setAttributes(a.attributes());
+    assertThat(a, equalTo(b));
+  }
+
+  @Test
+  void testEquals_differentRepositoryId() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setRepositoryId(1);
+    other.setRepositoryId(2);
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentComponentId() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setComponentId(1);
+    other.setComponentId(2);
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentFormat() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setFormat("maven2");
+    other.setFormat("npm");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentNamespace() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setNamespace("com.example");
+    other.setNamespace("org.other");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentNamespaceNames() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addNamespaceNames("com.example");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentComponentName() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setComponentName("my-component");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentAliasComponentNames() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addAliasComponentName("alias");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentComponentKind() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setComponentKind("binary");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentVersion() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setVersion("1.0.0");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentVersionNames() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addVersionNames("1.0.0");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentNormalisedVersion() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setNormalisedVersion("000001.000000.000000");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentLastModified() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setLastModified(OffsetDateTime.now());
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentRepositoryName() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setRepositoryName("maven-releases");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentPrerelease() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setPrerelease(true);
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentUploaders() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addUploader("admin");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentUploaderIps() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addUploaderIp("127.0.0.1");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentPaths() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addPath("/org/example");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentKeywords() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addKeyword("test");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentMd5() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addMd5("abc123");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentSha1() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addSha1("sha1val");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentSha256() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addSha256("sha256val");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentSha512() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addSha512("sha512val");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentEntityVersion() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setEntityVersion(5);
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentTags() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.setTags(List.of("release"));
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentFormatFieldValues1() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addFormatFieldValue1("value1", true);
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentFormatFieldValues2() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addFormatFieldValue2("value2");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentFormatFieldValues3() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addFormatFieldValue3("value3");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentFormatFieldValues4() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addFormatFieldValue4("value4", true);
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentFormatFieldValues5() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addFormatFieldValue5("value5");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentFormatFieldValues6() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addFormatFieldValue6("value6", true);
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_differentFormatFieldValues7() {
+    SearchRecordData other = new SearchRecordData();
+    underTest.addFormatFieldValue7("value7");
+    assertThat(underTest, not(equalTo(other)));
+  }
+
+  @Test
+  void testEquals_nullAndOtherType() {
+    assertThat(underTest, not(equalTo(null)));
+    assertThat(underTest, not(equalTo("not a SearchRecordData")));
+  }
+
+  @Test
+  void testHashCode_stableAcrossCallsOnSameObject() {
+    assertThat(underTest.hashCode(), is(underTest.hashCode()));
+  }
+
+  @Test
+  void testHashCode_changesWhenFieldChanges() {
+    int before = underTest.hashCode();
+    underTest.setRepositoryId(1);
+    assertThat(underTest.hashCode(), is(not(before)));
+  }
+
+  @Test
+  void testToString_notNull() {
+    underTest.setRepositoryId(1);
+    underTest.setComponentId(2);
+    underTest.setFormat("maven2");
+    assertThat(underTest.toString(), notNullValue());
   }
 
   private void assertTokens(final String token, final String... entries) {

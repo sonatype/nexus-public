@@ -29,7 +29,8 @@ Ext.define('NX.coreui.view.repository.recipe.SwiftProxy', {
         'NX.coreui.view.repository.facet.BearerHttpClientFacet',
         'NX.coreui.view.repository.facet.NegativeCacheFacet',
         'NX.coreui.view.repository.facet.CleanupPolicyFacet',
-        'NX.coreui.view.repository.facet.SwiftProxyFacet'
+        'NX.coreui.view.repository.facet.SwiftProxyFacet',
+        'NX.coreui.view.repository.facet.FirewallFacet'
     ],
 
     /**
@@ -37,16 +38,24 @@ Ext.define('NX.coreui.view.repository.recipe.SwiftProxy', {
      */
     initComponent: function() {
         var me = this;
+        var swiftFirewallEnabled = NX.State.getValue('swiftFirewallEnabled');
 
         me.items = [
-            {xtype: 'nx-coreui-repository-swift-proxy-facet'},
+            {xtype: 'nx-coreui-repository-swift-proxy-facet'}
+        ];
+
+        if (swiftFirewallEnabled) {
+            me.items.push({xtype: 'nx-coreui-repository-firewall-facet'});
+        }
+
+        me.items = me.items.concat([
             {xtype: 'nx-coreui-repository-proxy-facet'},
             {xtype: 'nx-coreui-repository-storage-facet'},
             {xtype: 'nx-coreui-repository-routing-rule-facet'},
             {xtype: 'nx-coreui-repository-negativecache-facet'},
             {xtype: 'nx-coreui-repository-cleanup-policy-facet'},
             {xtype: 'nx-coreui-repository-httpclient-facet-with-bearer-token'}
-        ];
+        ]);
 
         me.callParent();
         me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_SwiftFacet_Remote_HelpText'));

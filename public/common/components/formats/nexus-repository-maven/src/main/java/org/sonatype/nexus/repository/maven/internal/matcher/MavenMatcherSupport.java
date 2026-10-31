@@ -18,11 +18,11 @@ import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Matcher;
 
-import com.google.common.base.Predicate;
+import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Matcher support for Maven use cases.
@@ -47,7 +47,7 @@ public class MavenMatcherSupport
           break;
         }
       }
-      return predicate.apply(mainPath);
+      return predicate.test(mainPath);
     };
   }
 
@@ -56,14 +56,14 @@ public class MavenMatcherSupport
   private final Predicate<String> predicate;
 
   public MavenMatcherSupport(final MavenPathParser mavenPathParser, final Predicate<String> predicate) {
-    this.mavenPathParser = checkNotNull(mavenPathParser);
-    this.predicate = checkNotNull(predicate);
+    this.mavenPathParser = requireNonNull(mavenPathParser);
+    this.predicate = requireNonNull(predicate);
   }
 
   @Override
   public boolean matches(final Context context) {
     final String path = context.getRequest().getPath();
-    if (predicate.apply(path)) {
+    if (predicate.test(path)) {
       final MavenPath mavenPath = mavenPathParser.parsePath(path);
       context.getAttributes().set(MavenPath.class, mavenPath);
       return true;

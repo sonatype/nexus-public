@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { HttpClientFacet, createAuthTypeChangeHandler, parseEcrUrl } from '../HttpClientFacet';
@@ -427,6 +427,82 @@ describe('HttpClientFacet', () => {
 
       expect(onNestedChange).toHaveBeenCalledWith('httpClient', {
         authentication: { type: 'ntlm', username: '', password: '' },
+      });
+    });
+  });
+
+  describe('showPreemptiveAuth prop', () => {
+    const formDataWithUsernameAuth: RepositoryFormData = {
+      ...defaultFormData,
+      format: 'pypi',
+      proxy: {
+        remoteUrl: 'https://pypi.org/',
+        contentMaxAge: 1440,
+        metadataMaxAge: 1440,
+      },
+      httpClient: {
+        blocked: false,
+        autoBlock: true,
+        connection: null,
+        authentication: {
+          type: 'username',
+          username: 'testuser',
+          password: 'testpass',
+        },
+      },
+    };
+
+    it('hides the preemptive auth checkbox when showPreemptiveAuth is not set', () => {
+      renderFacet({ formData: formDataWithUsernameAuth });
+      expect(screen.queryByLabelText(/use pre-emptive authentication/i)).not.toBeInTheDocument();
+    });
+
+    it('shows the preemptive auth checkbox when showPreemptiveAuth=true with username auth', () => {
+      renderFacet({ formData: formDataWithUsernameAuth, showPreemptiveAuth: true });
+      expect(screen.getByLabelText(/use pre-emptive authentication/i)).toBeInTheDocument();
+    });
+
+    it('disables the checkbox when the remote URL uses HTTP (not HTTPS)', () => {
+      renderFacet({
+        formData: {
+          ...formDataWithUsernameAuth,
+          proxy: { remoteUrl: 'http://pypi.org/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+        },
+        showPreemptiveAuth: true,
+      });
+      expect(screen.getByLabelText(/use pre-emptive authentication/i)).toBeDisabled();
+    });
+
+    it('enables the checkbox when the remote URL uses HTTPS', () => {
+      renderFacet({ formData: formDataWithUsernameAuth, showPreemptiveAuth: true });
+      expect(screen.getByLabelText(/use pre-emptive authentication/i)).toBeEnabled();
+    });
+
+    it('calls onNestedChange with preemptive=true when the checkbox is clicked', () => {
+      const mockOnNestedChange = jest.fn();
+      renderFacet({
+        formData: {
+          ...formDataWithUsernameAuth,
+          httpClient: {
+            blocked: false,
+            autoBlock: true,
+            connection: null,
+            authentication: {
+              type: 'username',
+              username: 'testuser',
+              password: 'testpass',
+              preemptive: false,
+            },
+          },
+        },
+        onNestedChange: mockOnNestedChange,
+        showPreemptiveAuth: true,
+      });
+
+      fireEvent.click(screen.getByLabelText(/use pre-emptive authentication/i));
+
+      expect(mockOnNestedChange).toHaveBeenCalledWith('httpClient', {
+        authentication: expect.objectContaining({ preemptive: true }),
       });
     });
   });

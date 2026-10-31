@@ -50,7 +50,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @Configuration
 public class CommonConfiguration
@@ -84,7 +84,7 @@ public class CommonConfiguration
         .addModule(new ParameterNamesModule())
         .addModules(modules)
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-        .filterProvider(new SimpleFilterProvider(QualifierUtil.buildQualifierBeanMap(checkNotNull(filters)))
+        .filterProvider(new SimpleFilterProvider(QualifierUtil.buildQualifierBeanMap(requireNonNull(filters)))
             .setFailOnUnknownId(false))
         .build();
   }

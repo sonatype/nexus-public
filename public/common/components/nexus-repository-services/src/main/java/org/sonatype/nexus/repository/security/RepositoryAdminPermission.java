@@ -20,7 +20,7 @@ import org.sonatype.nexus.security.authz.WildcardPermission2;
 
 import com.google.common.collect.ImmutableList;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Repository administration permission.
@@ -41,9 +41,9 @@ public class RepositoryAdminPermission
   private final List<String> actions;
 
   public RepositoryAdminPermission(final String format, final String name, final List<String> actions) {
-    this.format = checkNotNull(format);
-    this.name = checkNotNull(name);
-    this.actions = checkNotNull(actions);
+    this.format = requireNonNull(format);
+    this.name = requireNonNull(name);
+    this.actions = requireNonNull(actions);
 
     setParts(ImmutableList.of(SYSTEM, DOMAIN, format, name), actions);
   }

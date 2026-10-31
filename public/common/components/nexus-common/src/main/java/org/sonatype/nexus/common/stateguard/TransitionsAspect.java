@@ -22,8 +22,8 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 @Aspect
 public class TransitionsAspect
@@ -35,7 +35,7 @@ public class TransitionsAspect
       final ProceedingJoinPoint joinPoint,
       final Transitions config) throws Throwable
   {
-    checkNotNull(joinPoint);
+    requireNonNull(joinPoint);
 
     Object target = joinPoint.getTarget(); // Get the *target* object, not the proxy
     Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();

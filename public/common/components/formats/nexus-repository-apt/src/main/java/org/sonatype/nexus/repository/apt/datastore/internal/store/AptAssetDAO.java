@@ -38,5 +38,6 @@ public interface AptAssetDAO
       @Param("repositoryId") int repositoryId,
       @Param("limit") int limit,
       @Param("continuationToken") @Nullable String continuationToken,
-      @Param("pathPattern") String pathPattern);
+      @Param("pathPattern") String pathPattern,
+      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
 }

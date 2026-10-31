@@ -18,7 +18,7 @@ import java.util.Map.Entry;
 
 import org.apache.http.client.utils.URIBuilder;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.view.Router.LOCAL_ATTRIBUTE_PREFIX;
 
 /**
@@ -38,8 +38,8 @@ public final class ViewUtils
    * @throws IllegalArgumentException if the url or its parameters are syntactically invalid.
    */
   public static String buildUrlWithParameters(final String url, final Parameters parameters) {
-    checkNotNull(url);
-    checkNotNull(parameters);
+    requireNonNull(url);
+    requireNonNull(parameters);
     try {
       URIBuilder builder = new URIBuilder(url);
       for (Entry<String, String> parameter : parameters.entries()) {
