@@ -13,8 +13,10 @@
 package org.sonatype.nexus.coreui.service;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -65,8 +67,10 @@ import org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker;
 import org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsDTO;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
+import org.sonatype.nexus.repository.rest.api.cdn.CdnDefaultsService;
 import org.sonatype.nexus.repository.search.index.RebuildIndexTask;
 import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor;
+import org.sonatype.nexus.repository.security.GroupMemberAuthorizationChecker;
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
@@ -81,7 +85,6 @@ import org.sonatype.nexus.validation.group.Create;
 import org.sonatype.nexus.validation.group.Update;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.AuthorizationException;
@@ -127,6 +130,23 @@ public class RepositoryUiService
 
   private final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder;
 
+  /**
+   * CDN default applier for the classic-UI (ExtDirect) create path. Optional — the
+   * bean is only registered on Enterprise editions. When the bean is absent the create path
+   * preserves whatever value the RepositoryXO provided (typically nothing on non-Enterprise,
+   * since the classic form only renders the checkbox when {@code ExtJS.isEnterpriseEdition()}
+   * returns true).
+   */
+  @Nullable
+  private CdnDefaultsService cdnDefaultsService;
+
+  @Autowired(required = false)
+  public void setCdnDefaultsService(@Nullable final CdnDefaultsService cdnDefaultsService) {
+    this.cdnDefaultsService = cdnDefaultsService;
+  }
+
+  private final GroupMemberAuthorizationChecker groupMemberAuthorizationChecker;
+
   public static final String INVALID_BLOBSTORENAME_EXCEPTION_MESSAGE =
       "Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.";
 
@@ -143,7 +163,8 @@ public class RepositoryUiService
       final List<Format> formats,
       final RepositoryPermissionChecker repositoryPermissionChecker,
       final FailedRepositoryTracker failedRepositoryTracker,
-      final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder)
+      final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder,
+      final GroupMemberAuthorizationChecker groupMemberAuthorizationChecker)
   {
     this.repositoryCacheInvalidationService = requireNonNull(repositoryCacheInvalidationService);
     this.repositoryManager = requireNonNull(repositoryManager);
@@ -157,6 +178,7 @@ public class RepositoryUiService
     this.repositoryPermissionChecker = requireNonNull(repositoryPermissionChecker);
     this.failedRepositoryTracker = requireNonNull(failedRepositoryTracker);
     this.httpAuthenticationSecretEncoder = requireNonNull(httpAuthenticationSecretEncoder);
+    this.groupMemberAuthorizationChecker = requireNonNull(groupMemberAuthorizationChecker);
   }
 
   public List<RepositoryXO> read() {
@@ -289,6 +311,9 @@ public class RepositoryUiService
     securityHelper.ensurePermitted(new RepositoryAdminPermission(recipe.getFormat().getValue(),
         repositoryXO.getName(), Collections.singletonList(BreadActions.ADD)));
 
+    // Authorize any newly added group members before persisting them (NEXUS-53747, CWE-862)
+    rejectUnauthorizedGroupMembers(repositoryXO);
+
     initializeCleanupAttributes(repositoryXO);
 
     Configuration config = repositoryManager.newConfiguration();
@@ -303,6 +328,13 @@ public class RepositoryUiService
         .ifPresent(config::setRoutingRuleId);
 
     config.setAttributes(repositoryXO.getAttributes());
+
+    // NEXUS-54396: apply Global Distribution capability default when the client omitted
+    // storage.globalDistribution. Mirrors AbstractRepositoriesApiResource.applyGlobalDistributionDefault
+    // so both the classic-UI ExtDirect path and the REST path land on the same value.
+    if (cdnDefaultsService != null) {
+      cdnDefaultsService.applyDefaultIfAbsent(config);
+    }
 
     return asRepository(repositoryManager.create(config));
   }
@@ -322,6 +354,9 @@ public class RepositoryUiService
     // Validate remoteUrl change for delegated admins (NEXUS-51839)
     validateRemoteUrlChange(repository, repositoryXO.getAttributes());
 
+    // Authorize any newly added group members before persisting them (NEXUS-53747, CWE-862)
+    rejectUnauthorizedGroupMembers(repositoryXO);
+
     // Replace stored password and bearerTokenId if placeholders are used
     Optional.of(repositoryXO)
         .map(RepositoryXO::getAttributes)
@@ -333,6 +368,9 @@ public class RepositoryUiService
           restoreSecretIfPlaceholder(repository, authentication, "bearerTokenId");
         });
 
+    // Restore the stored signing passphrase when the masked placeholder is posted back (CWE-522).
+    restoreSigningPassphrases(repository, repositoryXO.getAttributes());
+
     initializeCleanupAttributes(repositoryXO);
 
     Configuration updatedConfiguration = repository.getConfiguration().copy();
@@ -341,6 +379,30 @@ public class RepositoryUiService
     updatedConfiguration.setAttributes(repositoryXO.getAttributes());
 
     return asRepository(repositoryManager.update(updatedConfiguration));
+  }
+
+  /**
+   * Rejects the write when the caller is adding group members it cannot read or browse. Shared with the REST API so
+   * every write path enforces the same authorization (NEXUS-53747, CWE-862). Members already stored on the group are
+   * grandfathered; non-group repositories carry no member names and pass through.
+   */
+  private void rejectUnauthorizedGroupMembers(final RepositoryXO repositoryXO) {
+    List<String> unauthorizedMembers = groupMemberAuthorizationChecker
+        .findUnauthorizedNewMembers(repositoryXO.getName(), groupMemberNames(repositoryXO.getAttributes()));
+    if (!unauthorizedMembers.isEmpty()) {
+      // Deliberately generic: naming the specific members would let an unprivileged caller probe which repositories
+      // exist and which they cannot read (information oracle, NEXUS-53747).
+      throw new BadRequestException("Not authorized to add one or more of the requested member repositories.");
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Collection<String> groupMemberNames(final Map<String, Map<String, Object>> attributes) {
+    if (attributes == null || attributes.get("group") == null) {
+      return Collections.emptyList();
+    }
+    Object memberNames = attributes.get("group").get("memberNames");
+    return memberNames instanceof Collection ? (Collection<String>) memberNames : Collections.emptyList();
   }
 
   /**
@@ -365,6 +427,10 @@ public class RepositoryUiService
     }
     securityHelper.ensurePermitted(new RepositoryAdminPermission(
         recipe.getFormat().getValue(), name, Collections.singletonList(BreadActions.EDIT)));
+
+    // Authorize any newly added group members before persisting them (NEXUS-53747, CWE-862). update() short-circuits
+    // to this method for failed repositories before its own check runs, so the failed-repository path must enforce it.
+    rejectUnauthorizedGroupMembers(repositoryXO);
 
     initializeCleanupAttributes(repositoryXO);
 
@@ -398,6 +464,12 @@ public class RepositoryUiService
 
   private static final String BEARER_TOKEN_ID = "bearerTokenId";
 
+  // GPG signing configuration sections that carry a write-only passphrase (CWE-522).
+  private static final List<String> SIGNING_ATTRIBUTE_KEYS =
+      List.of("aptSigning", "yumSigning", "terraformSigning", "alpineSigning");
+
+  private static final String PASSPHRASE_KEY = "passphrase";
+
   /**
    * Restores a secret value from the stored repository configuration if the provided value is a placeholder.
    *
@@ -430,6 +502,33 @@ public class RepositoryUiService
                       .ifPresent(oldValue -> authentication.put(secretKey, oldValue));
                 }
               });
+    }
+  }
+
+  /**
+   * Restores each stored signing passphrase when the incoming attributes carry the masked placeholder,
+   * so masking the value in {@link #filterAttributes} does not clobber the stored secret on save.
+   */
+  @SuppressWarnings("unchecked")
+  private static void restoreSigningPassphrases(
+      final Repository repository,
+      final Map<String, Map<String, Object>> incomingAttributes)
+  {
+    if (incomingAttributes == null) {
+      return;
+    }
+    Map<String, Map<String, Object>> storedAttributes = repository.getConfiguration().getAttributes();
+    for (String signingKey : SIGNING_ATTRIBUTE_KEYS) {
+      Map<String, Object> incomingSigning = incomingAttributes.get(signingKey);
+      if (incomingSigning == null || !PasswordPlaceholder.is((String) incomingSigning.get(PASSPHRASE_KEY))) {
+        continue;
+      }
+      Optional.ofNullable(storedAttributes)
+          .map(attr -> attr.get(signingKey))
+          .map(stored -> stored.get(PASSPHRASE_KEY))
+          .ifPresentOrElse(
+              storedValue -> incomingSigning.put(PASSPHRASE_KEY, storedValue),
+              () -> incomingSigning.remove(PASSPHRASE_KEY));
     }
   }
 
@@ -549,6 +648,12 @@ public class RepositoryUiService
           replaceSecretWithPlaceholder(ecrAuth, "sessionToken");
           maskAccessKeyIdInPlace(ecrAuth);
         });
+
+    // Mask write-only GPG signing passphrases; read() only requires repository-admin READ (CWE-522).
+    SIGNING_ATTRIBUTE_KEYS.forEach(signingKey -> Optional.ofNullable(attributes)
+        .map(attr -> attr.get(signingKey))
+        .map(Map.class::cast)
+        .ifPresent(signing -> replaceSecretWithPlaceholder(signing, PASSPHRASE_KEY)));
 
     // Normalize contentDisposition null to INLINE for repositories without content disposition
     normalizeContentDisposition(attributes, "maven");
@@ -713,7 +818,7 @@ public class RepositoryUiService
     if (parameters != null) {
       String format = parameters.getFilter("format");
       if (format != null && format.indexOf(",") > -1) {
-        Set<String> formats = Sets.newHashSet(format.split(","));
+        Set<String> formats = new HashSet<>(Arrays.asList(format.split(",")));
 
         configurations = configurations.stream()
             .filter(configuration -> formats.contains(configToFormat.apply(configuration)))

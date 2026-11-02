@@ -219,4 +219,50 @@ public class UserTokenAuditorTest
     assertThat(attributes, hasKey("adminRealm"));
     assertThat(attributes.get("adminRealm"), is("NexusAuthorizingRealm"));
   }
+
+  @Test
+  public void testFormatTokensResetEvent_adminReset_extractsAttributes() {
+    UserTokenFormatTokensResetEvent event = new UserTokenFormatTokensResetEvent(
+        "targetUser",
+        "NexusAuthenticatingRealm",
+        Map.of("DockerToken", 1),
+        "adminUser",
+        "NexusAuthorizingRealm");
+
+    underTest.on(event);
+
+    ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
+    verify(auditRecorder).record(captor.capture());
+
+    AuditData auditData = captor.getValue();
+    assertThat(auditData.getDomain(), is("userToken"));
+    assertThat(auditData.getType(), is("formatTokensReset"));
+
+    Map<String, Object> attributes = auditData.getAttributes();
+    assertThat(attributes.get("username"), is("targetUser"));
+    assertThat(attributes.get("targetRealm"), is("NexusAuthenticatingRealm"));
+    assertThat(attributes.get("deleted"), is(Map.of("DockerToken", 1)));
+    assertThat(attributes.get("adminUserId"), is("adminUser"));
+    assertThat(attributes.get("adminRealm"), is("NexusAuthorizingRealm"));
+  }
+
+  @Test
+  public void testFormatTokensResetEvent_selfServiceReset_hasNoAdminAttributes() {
+    UserTokenFormatTokensResetEvent event = new UserTokenFormatTokensResetEvent(
+        "someUser",
+        "NexusAuthenticatingRealm",
+        Map.of("NpmToken", 2),
+        null,
+        null);
+
+    underTest.on(event);
+
+    ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
+    verify(auditRecorder).record(captor.capture());
+
+    Map<String, Object> attributes = captor.getValue().getAttributes();
+    assertThat(attributes.get("deleted"), is(Map.of("NpmToken", 2)));
+    assertThat(attributes, not(hasKey("adminUserId")));
+    assertThat(attributes, not(hasKey("adminRealm")));
+  }
 }

@@ -23,8 +23,12 @@
 // see content below it. Applies to all Radix Select.Content and DropdownMenu.Content.
 
 [data-radix-popper-content-wrapper] {
-  // Z-index 14999: Above ExtJS animating components (10000), below masks (20000+)
-  // Matches cloud Globalheader.scss to avoid CSS load-order conflicts
+  // Z-index 14999: Above ExtJS animating components (10000), below masks (20000+).
+  // The shared GlobalHeader.scss (NEXUS-54869) also targets this selector, at 15000 —
+  // one above its own dialog content (14999) so Select/Tooltip/DropdownMenu opened from
+  // inside a header dialog aren't stacked equal to the dialog itself. Both distributions
+  // load that one stylesheet now, so there's no cross-plugin load-order concern to
+  // coordinate here anymore; this value only needs to clear ExtJS/masks on its own.
   z-index: 14999 !important;
 }
 

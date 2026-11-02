@@ -22,13 +22,12 @@ import org.springframework.stereotype.Component;
  * the analytics pipeline.
  *
  * <p>
- * This is <b>not</b> a privacy control. Telemetry events may legitimately emit the plaintext
- * identifier alongside its digest — the digest exists so the downstream warehouse can join
- * analytics events emitted by different systems (NXRM
- * {@code HOSTED_REPOSITORY_CONFIGURATION.repository_name} against IQ
+ * Telemetry must carry only the digest, never the plaintext identifier alongside it. The digest is
+ * deterministic so the downstream warehouse can join analytics events emitted by different systems
+ * (NXRM {@code HOSTED_REPOSITORY_CONFIGURATION.repository_name} against IQ
  * {@code APPLICATION_EVALUATION_COMPONENT_COUNTS.repository_name}) on a value that both sides can
- * compute deterministically. Whether plaintext is also emitted is a per-event decision governed by
- * the event's schema, not by this class.
+ * compute. The digest is unsalted, so it hides identifiers from casual inspection but does not
+ * resist dictionary attacks on short, guessable values.
  *
  * <p>
  * Uses BouncyCastle's {@link SHA1Digest} rather than

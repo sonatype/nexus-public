@@ -101,10 +101,10 @@ public class RawContentFacetImpl
     return assets().path(path)
         .find()
         .map(asset -> {
-          // Route client-protocol deletes through the soft-delete decision. When the repository is
-          // eligible (soft-delete enabled + hosted + format allow-listed) the asset is soft-deleted and
+          // Route client-protocol deletes through the trash decision. When the repository is
+          // eligible (trash enabled + hosted + format allow-listed) the asset is trashed and
           // recoverable from Trash; otherwise fall back to the original hard delete unchanged.
-          if (contentDeletionService.softDeleteAssetIfEligible(repository(), asset)) {
+          if (contentDeletionService.trashAssetIfEligible(repository(), asset)) {
             return true;
           }
           return repository().facet(ContentMaintenanceFacet.class).deleteAsset(asset).contains(path);

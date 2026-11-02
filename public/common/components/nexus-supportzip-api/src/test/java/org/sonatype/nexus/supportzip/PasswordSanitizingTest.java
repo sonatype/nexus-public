@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertNotNull;
@@ -95,6 +96,12 @@ public class PasswordSanitizingTest
     Map<String, Object> data = new HashMap<>();
     data.put("bad", new ThrowingBean());
     assertNull(passwordSanitizing.transform(data));
+  }
+
+  @Test
+  public void sensitiveFieldNamesToleratesNullQuery() {
+    // Guava ImmutableList.contains(null) returned false; the JDK wrapper must too (List.of would throw).
+    assertThat(PasswordSanitizing.SENSITIVE_FIELD_NAMES.contains(null), equalTo(false));
   }
 
   // Bean whose getter throws during serialization; Jackson wraps it in a JsonMappingException

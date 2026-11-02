@@ -42,8 +42,7 @@ Ext.define('NX.coreui.view.repository.facet.AlpineSigningFacet', {
             name: 'attributes.alpineSigning.keypair',
             fieldLabel: NX.I18n.get('Repository_Facet_AlpineSigningFacet_Keypair_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_AlpineSigningFacet_Keypair_HelpText'),
-            allowBlank: false,
-            grow: true
+            allowBlank: false
           },
           {
             xtype:'nx-password',

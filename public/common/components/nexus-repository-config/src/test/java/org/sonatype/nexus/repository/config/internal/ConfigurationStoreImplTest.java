@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationDAO;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 
-import com.google.common.collect.ImmutableList;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -93,24 +92,38 @@ class ConfigurationStoreImplTest
     }
 
     @DatabaseTest
-    void countByBlobStoreExcludesSoftDeletedRepositories() {
+    void countByBlobStoreExcludesTrashedRepositories() {
       underTest
           .create(configurationData("repo-a", "maven2-hosted", Map.of("storage", Map.of("blobStoreName", "bs-a"))));
       underTest.create(configurationData("repo-b", "npm-hosted", Map.of("storage", Map.of("blobStoreName", "bs-a"))));
       assertThat(underTest.countByBlobStore("bs-a"), Is.is(2));
 
-      // A soft-deleted repository is being torn down and must no longer count as using its blob store.
-      underTest.softDelete("repo-a", "admin");
+      // A trashed repository is being torn down and must no longer count as using its blob store.
+      underTest.trash("repo-a", "admin");
       assertThat(underTest.countByBlobStore("bs-a"), Is.is(1));
 
-      // Undoing the soft-delete restores it to the in-use count.
-      underTest.undoSoftDelete("repo-a");
+      // Undoing the trash restores it to the in-use count.
+      underTest.undoTrash("repo-a");
       assertThat(underTest.countByBlobStore("bs-a"), Is.is(2));
+    }
+
+    @DatabaseTest
+    void countByBlobStoreIncludingTrashedCountsTrashedRepositories() {
+      underTest
+          .create(configurationData("repo-a", "maven2-hosted", Map.of("storage", Map.of("blobStoreName", "bs-a"))));
+      underTest.create(configurationData("repo-b", "npm-hosted", Map.of("storage", Map.of("blobStoreName", "bs-a"))));
+      assertThat(underTest.countByBlobStoreIncludingTrashed("bs-a"), Is.is(2));
+
+      // NEXUS-55233: a trashed repository must remain in the delete-guard count so its blob store cannot be
+      // deleted while it is restorable, even though the live-only countByBlobStore drops it.
+      underTest.trash("repo-a", "admin");
+      assertThat(underTest.countByBlobStore("bs-a"), Is.is(1));
+      assertThat(underTest.countByBlobStoreIncludingTrashed("bs-a"), Is.is(2));
     }
   }
 
   @Nested
-  class SoftDeleteFallbackTests
+  class TrashFallbackTests
   {
     private ConfigurationStoreImpl underTest;
 
@@ -128,7 +141,7 @@ class ConfigurationStoreImplTest
               .when(spy)
               .doExists("myrepo");
       // Fail-closed no longer returns false; it runs an unfiltered existence check (NEXUS-51733).
-      doReturn(true).when(spy).doExistsIgnoringSoftDelete("myrepo");
+      doReturn(true).when(spy).doExistsIgnoringTrash("myrepo");
 
       boolean result = spy.exists("myrepo");
 
@@ -147,16 +160,16 @@ class ConfigurationStoreImplTest
     }
 
     @Test
-    void readByRecipeFallsBackToRecipeScopedIgnoringSoftDeleteWhenDeletedOnColumnMissing() {
+    void readByRecipeFallsBackToRecipeScopedIgnoringTrashWhenDeletedOnColumnMissing() {
       ConfigurationStoreImpl spy = Mockito.spy(underTest);
-      List<Configuration> recipeConfigs = ImmutableList.of(new ConfigurationData());
+      List<Configuration> recipeConfigs = List.of(new ConfigurationData());
 
       doThrow(new RuntimeException(
           new SQLException("ERROR: column \"deleted_on\" does not exist")))
               .when(spy)
               .doReadByRecipe("maven2-hosted");
-      // Keeps the recipe predicate (no blind listAll) via the ignoring-soft-delete variant (NEXUS-51733).
-      doReturn(recipeConfigs).when(spy).doReadByRecipeIgnoringSoftDelete("maven2-hosted");
+      // Keeps the recipe predicate (no blind listAll) via the ignoring-trash variant (NEXUS-51733).
+      doReturn(recipeConfigs).when(spy).doReadByRecipeIgnoringTrash("maven2-hosted");
 
       java.util.Collection<Configuration> result = spy.readByRecipe("maven2-hosted");
 
@@ -164,16 +177,16 @@ class ConfigurationStoreImplTest
     }
 
     @Test
-    void readByNamesFallsBackToNameScopedIgnoringSoftDeleteWhenDeletedOnColumnMissing() {
+    void readByNamesFallsBackToNameScopedIgnoringTrashWhenDeletedOnColumnMissing() {
       ConfigurationStoreImpl spy = Mockito.spy(underTest);
-      List<Configuration> nameConfigs = ImmutableList.of(new ConfigurationData());
+      List<Configuration> nameConfigs = List.of(new ConfigurationData());
 
       doThrow(new RuntimeException(
           new SQLException("ERROR: column \"deleted_on\" does not exist")))
               .when(spy)
               .doReadByNames(java.util.Set.of("repo1"));
-      // Keeps the name predicate (no blind listAll) via the ignoring-soft-delete variant (NEXUS-51733).
-      doReturn(nameConfigs).when(spy).doReadByNamesIgnoringSoftDelete(java.util.Set.of("repo1"));
+      // Keeps the name predicate (no blind listAll) via the ignoring-trash variant (NEXUS-51733).
+      doReturn(nameConfigs).when(spy).doReadByNamesIgnoringTrash(java.util.Set.of("repo1"));
 
       java.util.Collection<Configuration> result = spy.readByNames(java.util.Set.of("repo1"));
 
@@ -183,7 +196,7 @@ class ConfigurationStoreImplTest
     @Test
     void listFallsBackWhenDeletedOnColumnMissing() {
       ConfigurationStoreImpl spy = Mockito.spy(underTest);
-      List<Configuration> expectedConfigs = ImmutableList.of(new ConfigurationData());
+      List<Configuration> expectedConfigs = List.of(new ConfigurationData());
 
       doThrow(new RuntimeException(
           new SQLException("ERROR: column \"deleted_on\" does not exist")))
@@ -211,7 +224,7 @@ class ConfigurationStoreImplTest
     @Test
     void listUsesActiveWhenColumnExists() {
       ConfigurationStoreImpl spy = Mockito.spy(underTest);
-      List<Configuration> activeConfigs = ImmutableList.of(new ConfigurationData());
+      List<Configuration> activeConfigs = List.of(new ConfigurationData());
 
       doReturn(activeConfigs).when(spy).listActive();
 
@@ -224,7 +237,7 @@ class ConfigurationStoreImplTest
     @Test
     void listHandlesNestedPSQLException() {
       ConfigurationStoreImpl spy = Mockito.spy(underTest);
-      List<Configuration> fallbackConfigs = ImmutableList.of(new ConfigurationData());
+      List<Configuration> fallbackConfigs = List.of(new ConfigurationData());
 
       RuntimeException nested = new RuntimeException("outer",
           new RuntimeException("middle",
@@ -239,34 +252,34 @@ class ConfigurationStoreImplTest
     }
 
     @Test
-    void countByBlobStoreFallsBackToIgnoringSoftDeleteWhenDeletedOnColumnMissing() {
+    void countByBlobStoreFallsBackToIgnoringTrashWhenDeletedOnColumnMissing() {
       ConfigurationStoreImpl spy = Mockito.spy(underTest);
 
       doThrow(new RuntimeException(
           new SQLException("ERROR: column \"deleted_on\" does not exist")))
               .when(spy)
               .doCountByBlobStore("bs-a");
-      doReturn(3).when(spy).doCountByBlobStoreIgnoringSoftDelete("bs-a");
+      doReturn(3).when(spy).doCountByBlobStoreIgnoringTrash("bs-a");
 
       assertThat(spy.countByBlobStore("bs-a"), is(3));
     }
 
     @Test
-    void createFallsBackToRefreshIgnoringSoftDeleteWhenDeletedOnColumnMissing() {
+    void createFallsBackToRefreshIgnoringTrashWhenDeletedOnColumnMissing() {
       ConfigurationStoreImpl spy = Mockito.spy(underTest);
       ConfigurationData config = new ConfigurationData();
       doNothing().when(spy).persistCreate(config);
-      // The read-back's soft-delete-filtered read hits the not-yet-migrated column during a rolling upgrade.
+      // The read-back's trash-filtered read hits the not-yet-migrated column during a rolling upgrade.
       doThrow(new RuntimeException(new SQLException("ERROR: column \"deleted_on\" does not exist")))
           .when(spy)
           .doRefreshPersistedAttributes(config);
-      doNothing().when(spy).doRefreshPersistedAttributesIgnoringSoftDelete(config);
+      doNothing().when(spy).doRefreshPersistedAttributesIgnoringTrash(config);
 
       spy.create(config);
 
-      // The write is not rolled back and the read-back retries without the soft-delete filter (NEXUS-51733).
+      // The write is not rolled back and the read-back retries without the trash filter (NEXUS-51733).
       Mockito.verify(spy).persistCreate(config);
-      Mockito.verify(spy).doRefreshPersistedAttributesIgnoringSoftDelete(config);
+      Mockito.verify(spy).doRefreshPersistedAttributesIgnoringTrash(config);
     }
 
     @Test
@@ -278,7 +291,7 @@ class ConfigurationStoreImplTest
 
       assertThrows(RuntimeException.class, () -> spy.create(config));
 
-      Mockito.verify(spy, Mockito.never()).doRefreshPersistedAttributesIgnoringSoftDelete(config);
+      Mockito.verify(spy, Mockito.never()).doRefreshPersistedAttributesIgnoringTrash(config);
     }
 
     @Test
@@ -291,23 +304,23 @@ class ConfigurationStoreImplTest
       spy.create(config);
 
       Mockito.verify(spy).doRefreshPersistedAttributes(config);
-      Mockito.verify(spy, Mockito.never()).doRefreshPersistedAttributesIgnoringSoftDelete(config);
+      Mockito.verify(spy, Mockito.never()).doRefreshPersistedAttributesIgnoringTrash(config);
     }
 
     @Test
-    void updateFallsBackToRefreshIgnoringSoftDeleteWhenDeletedOnColumnMissing() {
+    void updateFallsBackToRefreshIgnoringTrashWhenDeletedOnColumnMissing() {
       ConfigurationStoreImpl spy = Mockito.spy(underTest);
       ConfigurationData config = new ConfigurationData();
       doNothing().when(spy).persistUpdate(config);
       doThrow(new RuntimeException(new SQLException("ERROR: column \"deleted_on\" does not exist")))
           .when(spy)
           .doRefreshPersistedAttributes(config);
-      doNothing().when(spy).doRefreshPersistedAttributesIgnoringSoftDelete(config);
+      doNothing().when(spy).doRefreshPersistedAttributesIgnoringTrash(config);
 
       spy.update(config);
 
       Mockito.verify(spy).persistUpdate(config);
-      Mockito.verify(spy).doRefreshPersistedAttributesIgnoringSoftDelete(config);
+      Mockito.verify(spy).doRefreshPersistedAttributesIgnoringTrash(config);
     }
 
     @Test
@@ -319,7 +332,7 @@ class ConfigurationStoreImplTest
 
       assertThrows(RuntimeException.class, () -> spy.update(config));
 
-      Mockito.verify(spy, Mockito.never()).doRefreshPersistedAttributesIgnoringSoftDelete(config);
+      Mockito.verify(spy, Mockito.never()).doRefreshPersistedAttributesIgnoringTrash(config);
     }
   }
 

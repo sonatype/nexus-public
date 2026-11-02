@@ -21,6 +21,8 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Ensure that the value matches a repository name
  *
@@ -31,8 +33,12 @@ import org.springframework.stereotype.Component;
 public class RepositoryNameValidator
     extends ConstraintValidatorSupport<RepositoryName, String>
 {
+  private final RepositoryManager repositoryManager;
+
   @Autowired
-  private RepositoryManager repositoryManager;
+  public RepositoryNameValidator(final RepositoryManager repositoryManager) {
+    this.repositoryManager = requireNonNull(repositoryManager);
+  }
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {

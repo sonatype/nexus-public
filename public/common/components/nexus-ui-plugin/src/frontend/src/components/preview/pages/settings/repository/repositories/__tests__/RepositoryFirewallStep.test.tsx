@@ -185,4 +185,60 @@ describe('RepositoryFirewallStep', () => {
     );
     expect(await screen.findByText('Firewall will be enabled in PCCS mode')).toBeInTheDocument();
   });
+
+  it('shows XET disabled warning when xetEnabled is true', () => {
+    renderWithTheme(
+      <RepositoryFirewallStep
+        mode="deferred"
+        value="none"
+        onChoice={jest.fn()}
+        hasFirewallLicense={true}
+        xetEnabled={true}
+      />
+    );
+    expect(
+      screen.getByText(/Firewall is disabled while XET is enabled/i),
+    ).toBeInTheDocument();
+  });
+
+  it('disables Audit and Quarantine buttons when xetEnabled is true', () => {
+    renderWithTheme(
+      <RepositoryFirewallStep
+        mode="deferred"
+        value="none"
+        onChoice={jest.fn()}
+        hasFirewallLicense={true}
+        xetEnabled={true}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Audit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Quarantine' })).toBeDisabled();
+  });
+
+  it('does not disable Skip button when xetEnabled is true', () => {
+    renderWithTheme(
+      <RepositoryFirewallStep
+        mode="deferred"
+        value="none"
+        onChoice={jest.fn()}
+        hasFirewallLicense={true}
+        xetEnabled={true}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Skip' })).not.toBeDisabled();
+  });
+
+  it('auto-sets choice to none via onChoice when xetEnabled is true in deferred mode', () => {
+    const onChoice = jest.fn();
+    renderWithTheme(
+      <RepositoryFirewallStep
+        mode="deferred"
+        value="quarantine"
+        onChoice={onChoice}
+        hasFirewallLicense={true}
+        xetEnabled={true}
+      />
+    );
+    expect(onChoice).toHaveBeenCalledWith('none');
+  });
 });

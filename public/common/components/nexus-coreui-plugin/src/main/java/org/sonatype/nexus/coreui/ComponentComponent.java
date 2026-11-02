@@ -156,7 +156,7 @@ public class ComponentComponent
   public Set<String> deleteComponent(@NotEmpty final String componentModelString) {
     ComponentXO componentXO = readComponent(componentModelString);
     Repository repository = repositoryManager.get(componentXO.getRepositoryName());
-    // Soft-delete-vs-hard-delete and the content DELETE authorization are owned by
+    // Trash-vs-hard-delete and the content DELETE authorization are owned by
     // ContentDeletionService, which ComponentHelper delegates to (NEXUS-49147).
     return componentHelper.deleteComponent(repository, componentXO);
   }
@@ -178,7 +178,7 @@ public class ComponentComponent
   @Validate
   public Set<String> deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName);
-    // Soft-delete-vs-hard-delete and the content DELETE authorization are owned by
+    // Trash-vs-hard-delete and the content DELETE authorization are owned by
     // ContentDeletionService, which ComponentHelper delegates to (NEXUS-49147).
     // GSON used by DirectJNgine can exclude some of the Guava collection types
     return new HashSet<>(componentHelper.deleteAsset(repository, new DetachedEntityId(assetId)));

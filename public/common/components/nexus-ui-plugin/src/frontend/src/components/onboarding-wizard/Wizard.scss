@@ -80,6 +80,11 @@
 .onboarding-wizard__body {
     flex: 1 1 auto;
     overflow-y: auto;
+    // Flex column so a step using flex: 1 1 auto (EulaStep) fills the body.
+    // min-height: 0 lets an overflowing step scroll its own region, not the body.
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .onboarding-wizard__footer {

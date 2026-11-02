@@ -49,8 +49,6 @@ import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import software.amazon.awssdk.regions.Region;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 
@@ -58,6 +56,8 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_PRIVATE_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.REGION_KEY;
@@ -161,7 +161,7 @@ public class S3BlobStoreDescriptor
 
   @Override
   public List<String> getSensitiveConfigurationFields() {
-    return List.of(SECRET_ACCESS_KEY_KEY, SESSION_TOKEN_KEY);
+    return List.of(SECRET_ACCESS_KEY_KEY, SESSION_TOKEN_KEY, CLOUDFRONT_KEY + "." + CLOUDFRONT_PRIVATE_KEY_KEY);
   }
 
   private Map<String, List<SelectOption>> initializeSelectOptions() {
@@ -178,7 +178,7 @@ public class S3BlobStoreDescriptor
         .concat(Stream.of(new SelectOption(AmazonS3Factory.DEFAULT, DEFAULT_LABEL)), Region.regions()
             .stream()
             .map(region -> new SelectOption(region.id(), region.id())))
-        .collect(ImmutableList.toImmutableList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   protected boolean isCustomS3RegionCapabilityEnabled() {
@@ -202,10 +202,10 @@ public class S3BlobStoreDescriptor
   }
 
   private List<SelectOption> getEncryptionTypes() {
-    return new Builder<SelectOption>().add(new SelectOption(NoEncrypter.ID, NoEncrypter.NAME))
-        .add(new SelectOption(S3ManagedEncrypter.ID, S3ManagedEncrypter.NAME))
-        .add(new SelectOption(KMSEncrypter.ID, KMSEncrypter.NAME))
-        .build();
+    return List.of(
+        new SelectOption(NoEncrypter.ID, NoEncrypter.NAME),
+        new SelectOption(S3ManagedEncrypter.ID, S3ManagedEncrypter.NAME),
+        new SelectOption(KMSEncrypter.ID, KMSEncrypter.NAME));
   }
 
   private String trimAndCollapseSlashes(final String prefix) {

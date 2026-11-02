@@ -192,7 +192,7 @@ export function EditUserView({
         title="Reset User Token"
         message={`Are you sure you want to reset the token for "${
           currentUser ? getFullName(currentUser) || currentUser.userId : ''
-        }"? This will invalidate their current token.`}
+        }"? This will invalidate all of their tokens, including their user token and format tokens (npm, Docker, Terraform, etc.).`}
         confirmLabel="Reset"
         cancelLabel="Cancel"
         variant="danger"

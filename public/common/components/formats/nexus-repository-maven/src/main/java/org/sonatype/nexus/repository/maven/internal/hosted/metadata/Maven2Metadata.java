@@ -19,11 +19,11 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 
 /**
  * Maven 2 metadata VO.
@@ -127,7 +127,7 @@ public class Maven2Metadata
     {
       this.latest = latest;
       this.release = release;
-      this.versions = ImmutableList.copyOf(versions);
+      this.versions = toImmutableList(versions);
     }
 
     public String getLatest() {
@@ -253,7 +253,7 @@ public class Maven2Metadata
     {
       this.snapshotTimestamp = snapshotTimestamp;
       this.snapshotBuildNumber = snapshotBuildNumber;
-      this.snapshots = snapshots != null ? ImmutableList.copyOf(snapshots) : Collections.emptyList();
+      this.snapshots = snapshots != null ? toImmutableList(snapshots) : Collections.emptyList();
     }
 
     @Nullable
@@ -319,7 +319,7 @@ public class Maven2Metadata
     this.artifactId = artifactId;
     this.version = version;
     if (plugins != null) {
-      this.plugins = ImmutableList.copyOf(plugins);
+      this.plugins = toImmutableList(plugins);
     }
     else {
       this.plugins = null;

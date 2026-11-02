@@ -697,14 +697,14 @@ describe('LeftNavigationMenu Trash entry gate', () => {
 
   /**
    * Configure the three gate conditions for Trash entry visibility:
-   * - nexus.softDelete.enabled flag
+   * - nexus.trash.enabled flag
    * - PRO edition
    * - administrator flag on user
    */
-  function givenTrashGates({ softDeleteEnabled, edition, administrator }) {
+  function givenTrashGates({ trashEnabled, edition, administrator }) {
     givenStateValues({
       ...getDefaultStateValues(),
-      'nexus.softDelete.enabled': softDeleteEnabled,
+      'nexus.trash.enabled': trashEnabled,
     });
     if (edition === 'PRO') {
       givenProEdition();
@@ -738,7 +738,7 @@ describe('LeftNavigationMenu Trash entry gate', () => {
   it.skip('renders Trash when all three gates pass (flag=true, PRO, admin)', async () => {
     // Set up all three gate conditions directly
     State.getValue.mockImplementation((key, defaultValue) => {
-      if (key === 'nexus.softDelete.enabled') return true;
+      if (key === 'nexus.trash.enabled') return true;
       if (key === 'nexus.react.welcome') return true;
       return defaultValue;
     });
@@ -755,8 +755,8 @@ describe('LeftNavigationMenu Trash entry gate', () => {
     });
   });
 
-  it('hides Trash when soft-delete flag is off', () => {
-    givenTrashGates({ softDeleteEnabled: false, edition: 'PRO', administrator: true });
+  it('hides Trash when trash flag is off', () => {
+    givenTrashGates({ trashEnabled: false, edition: 'PRO', administrator: true });
 
     const { container } = renderComponent();
     const trashElement = container.querySelector('[data-analytics-id="nxrm-global-navbar-trash"]');
@@ -764,7 +764,7 @@ describe('LeftNavigationMenu Trash entry gate', () => {
   });
 
   it('hides Trash on OSS edition', () => {
-    givenTrashGates({ softDeleteEnabled: true, edition: 'OSS', administrator: true });
+    givenTrashGates({ trashEnabled: true, edition: 'OSS', administrator: true });
 
     const { container } = renderComponent();
     const trashElement = container.querySelector('[data-analytics-id="nxrm-global-navbar-trash"]');
@@ -772,7 +772,7 @@ describe('LeftNavigationMenu Trash entry gate', () => {
   });
 
   it('hides Trash for non-admin users', () => {
-    givenTrashGates({ softDeleteEnabled: true, edition: 'PRO', administrator: false });
+    givenTrashGates({ trashEnabled: true, edition: 'PRO', administrator: false });
 
     const { container } = renderComponent();
     const trashElement = container.querySelector('[data-analytics-id="nxrm-global-navbar-trash"]');

@@ -18,7 +18,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -43,7 +42,7 @@ public class UpgradeEventTest
 
   @Test
   public void testUpgradeCompletedEvent_Deserialization() throws JsonProcessingException {
-    List<String> nodeIds = ImmutableList.of("node_1", "node_2");
+    List<String> nodeIds = List.of("node_1", "node_2");
     UpgradeCompletedEvent upgradeStartedEvent = new UpgradeCompletedEvent("admin", "1.0", nodeIds, "1.1", "1.2", "1.3");
     String event = OBJECT_MAPPER.writeValueAsString(upgradeStartedEvent);
     UpgradeCompletedEvent result = OBJECT_MAPPER.readValue(event, UpgradeCompletedEvent.class);

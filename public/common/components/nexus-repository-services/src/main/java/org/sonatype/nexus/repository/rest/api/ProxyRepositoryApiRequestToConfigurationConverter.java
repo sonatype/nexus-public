@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
+import java.util.HashSet;
+
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -30,7 +32,6 @@ import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -153,7 +154,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
     CleanupPolicyAttributes cleanup = request.getCleanup();
     if (nonNull(cleanup)) {
       NestedAttributesMap cleanupConfiguration = configuration.attributes("cleanup");
-      cleanupConfiguration.set("policyName", Sets.newHashSet(cleanup.getPolicyNames()));
+      cleanupConfiguration.set("policyName", new HashSet<>(cleanup.getPolicyNames()));
     }
   }
 

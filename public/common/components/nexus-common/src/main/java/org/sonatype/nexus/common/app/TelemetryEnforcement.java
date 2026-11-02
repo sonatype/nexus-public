@@ -16,7 +16,7 @@ package org.sonatype.nexus.common.app;
  * Whether this instance is obliged to send telemetry.
  * <p>
  * The answer comes from the license, so the only implementation lives in a commercial module. Public
- * modules consume this interface with {@code @Autowired(required = false)} and <b>must treat an
+ * modules consume this interface as a {@code @Nullable} parameter and <b>must treat an
  * absent bean as {@code true}</b>: the bean is missing on every edition and distribution that cannot
  * hold the opt-out entitlement — Community and Core among them — and those instances are all obliged
  * to send telemetry. Reading absence as "not required" would silently exempt the largest population

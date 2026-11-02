@@ -43,6 +43,7 @@ public class UserTokenAuditor
     registerType(UserTokenAdminReadEvent.class, "adminRead");
     registerType(UserTokenAdminListedEvent.class, "adminListed");
     registerType(UserTokenAdminDeletedEvent.class, "adminDeleted");
+    registerType(UserTokenFormatTokensResetEvent.class, "formatTokensReset");
   }
 
   @Subscribe
@@ -97,6 +98,17 @@ public class UserTokenAuditor
         attributes.put("targetRealm", adminEvent.getTargetRealm());
         attributes.put("adminUserId", adminEvent.getAdminUserId());
         attributes.put("adminRealm", adminEvent.getAdminRealm());
+      }
+      else if (event instanceof UserTokenFormatTokensResetEvent) {
+        UserTokenFormatTokensResetEvent resetEvent = (UserTokenFormatTokensResetEvent) event;
+        Map<String, Object> attributes = data.getAttributes();
+        attributes.put("username", resetEvent.getUsername());
+        attributes.put("targetRealm", resetEvent.getTargetRealm());
+        attributes.put("deleted", resetEvent.getDeletedByDomain());
+        if (resetEvent.getAdminUserId() != null) {
+          attributes.put("adminUserId", resetEvent.getAdminUserId());
+          attributes.put("adminRealm", resetEvent.getAdminRealm());
+        }
       }
       else if (event instanceof UserTokenDeletedEvent) {
         UserTokenDeletedEvent deletedEvent = (UserTokenDeletedEvent) event;

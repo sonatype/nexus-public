@@ -26,6 +26,7 @@
 
 import { restClient, parseApiError, ENDPOINTS, urlBuilder, encodeRepositoryItemId } from '../../../../interface/api';
 import ExtAPIUtils from '../../../../interface/ExtAPIUtils';
+import ExtJS from '../../../../interface/ExtJS';
 import { isMockMode } from '../../config/featureFlags';
 import { getMockAsset, getMockComponent } from './mockData';
 import type {
@@ -232,7 +233,9 @@ function extDirectToAssetXO(ext: ExtDirectAssetXO, repositoryName: string): Asse
   // but path segments may contain spaces, unicode, or special chars
   const path = ext.name;
   const pathSegments = path.replace(/^\//, '').split('/').map(encodeURIComponent);
-  const downloadUrl = `/repository/${encodeURIComponent(repositoryName)}/${pathSegments.join('/')}`;
+  // Context-path aware (urlOf prefixes the deployed context path): the ExtDirect AssetXO carries
+  // no downloadUrl (NEXUS-55899)
+  const downloadUrl = ExtJS.urlOf(`/repository/${encodeURIComponent(repositoryName)}/${pathSegments.join('/')}`);
 
   // Convert timestamp to ISO string.
   // ExtDirect returns timestamps as either:

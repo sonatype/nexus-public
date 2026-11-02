@@ -65,7 +65,7 @@ public class DiskBackedDuplicateDetectionStrategy
   }
 
   @Override
-  public boolean apply(final Record record) {
+  public boolean test(final Record record) {
     String gavce = gavceForRecord(record);
 
     if (map.containsKey(gavce)) {

@@ -16,15 +16,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.sonatype.nexus.onboarding.OnboardingConfiguration;
 import org.sonatype.nexus.onboarding.OnboardingManager;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 
 import static java.util.Objects.requireNonNull;
-import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ONBOARDING_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ONBOARDING_ENABLED_NAMED_VALUE;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -37,21 +34,17 @@ public class OnboardingStateContributor
 
   private final AdminPasswordFileManager adminPasswordFileManager;
 
-  private final boolean isReactOnboardingEnabled;
-
   private boolean needsOnboarding = true;
 
   @Autowired
   public OnboardingStateContributor(
       final OnboardingConfiguration onboardingConfiguration,
       final OnboardingManager onboardingManager,
-      final AdminPasswordFileManager adminPasswordFileManager,
-      @Value(REACT_ONBOARDING_ENABLED_NAMED_VALUE) final boolean isReactOnboardingEnabled)
+      final AdminPasswordFileManager adminPasswordFileManager)
   {
     this.onboardingConfiguration = requireNonNull(onboardingConfiguration);
     this.onboardingManager = requireNonNull(onboardingManager);
     this.adminPasswordFileManager = requireNonNull(adminPasswordFileManager);
-    this.isReactOnboardingEnabled = isReactOnboardingEnabled;
   }
 
   @Override
@@ -60,9 +53,6 @@ public class OnboardingStateContributor
     needsOnboarding = needsOnboarding && onboardingConfiguration.isEnabled() && onboardingManager.needsOnboarding();
 
     Map<String, Object> properties = new HashMap<>();
-
-    // Always publish the React onboarding flag so both ExtJS and React can read it via NX.State.
-    properties.put(REACT_ONBOARDING_ENABLED, isReactOnboardingEnabled);
 
     if (needsOnboarding) {
       properties.put("onboarding.required", true);

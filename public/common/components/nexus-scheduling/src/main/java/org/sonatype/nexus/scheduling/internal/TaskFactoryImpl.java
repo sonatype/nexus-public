@@ -15,6 +15,7 @@ package org.sonatype.nexus.scheduling.internal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -29,7 +30,6 @@ import org.sonatype.nexus.scheduling.TaskFactory;
 import org.sonatype.nexus.scheduling.TaskInfo;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
@@ -66,7 +66,7 @@ public class TaskFactoryImpl
   /**
    * Map of descriptor-id to descriptor instance.
    */
-  private final Map<String, TaskDefinition> taskDefinitions = Maps.newConcurrentMap();
+  private final Map<String, TaskDefinition> taskDefinitions = new ConcurrentHashMap<>();
 
   /**
    * Flag to indicate if taskDefinitions has been fully initialized.

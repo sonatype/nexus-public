@@ -91,6 +91,7 @@ const initialState: RepositoryListState = {
   healthCheck: {},
   firewallStatus: {},
   firewallLoaded: false,
+  firewallSummaryReady: false,
   healthCheckError: undefined,
   firewallStatusError: undefined,
 };
@@ -258,7 +259,7 @@ export function useRepositoryList(options: UseRepositoryListOptions = {}) {
    */
   const fetchFirewallSummary = useCallback(async () => {
     if (!isIqServerEnabled() || !canReadFirewallStatus()) {
-      setState(prev => ({ ...prev, firewallLoaded: true }));
+      setState(prev => ({ ...prev, firewallLoaded: true, firewallSummaryReady: false }));
       return;
     }
 
@@ -277,6 +278,7 @@ export function useRepositoryList(options: UseRepositoryListOptions = {}) {
         ...prev,
         firewallStatus: firewallStatusMap,
         firewallLoaded: true,
+        firewallSummaryReady: true,
         firewallStatusError: undefined,
       }));
     } catch (err) {
@@ -284,6 +286,7 @@ export function useRepositoryList(options: UseRepositoryListOptions = {}) {
       setState(prev => ({
         ...prev,
         firewallLoaded: true,
+        firewallSummaryReady: false,
         firewallStatusError: apiError.message,
       }));
     }
@@ -293,7 +296,7 @@ export function useRepositoryList(options: UseRepositoryListOptions = {}) {
    * Load all data on mount.
    * Fetches repos + health check + firewall summary (all fast, in parallel).
    * Firewall summary uses the lightweight /status/summary endpoint (no IQ Server calls).
-   * Full violation counts are fetched on-demand when the user clicks a cell to open the modal.
+   * Per-repository violation counts are fetched separately by useFirewallCounts for the enabled rows on the current page.
    */
   useEffect(() => {
     Promise.all([
@@ -408,6 +411,11 @@ export function useRepositoryList(options: UseRepositoryListOptions = {}) {
     () => isIqServerEnabled(),
     []
   );
+  // The column only displays data the caller may read; without it every row would be a guess.
+  const showFirewallColumn = useMemo(
+    () => isIqServerEnabled() && canReadFirewallStatus(),
+    []
+  );
 
   return {
     // State
@@ -422,6 +430,7 @@ export function useRepositoryList(options: UseRepositoryListOptions = {}) {
     // Computed
     showHealthCheckColumn,
     showIqPolicyViolationsColumn,
+    showFirewallColumn,
   };
 }
 

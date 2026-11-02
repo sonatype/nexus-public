@@ -22,7 +22,7 @@ export interface ConfirmDialogProps {
   message: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: 'danger' | 'warning';
+  variant?: 'danger' | 'warning' | 'success' | 'confirm';
   onConfirm: () => void;
   loading?: boolean;
   children?: React.ReactNode;
@@ -70,7 +70,7 @@ export function ConfirmDialog({
     }
   };
 
-  const confirmColor = variant === 'danger' ? 'red' : 'orange';
+  const confirmColor = variant === 'danger' ? 'red' : variant === 'success' ? 'green' : variant === 'warning' ? 'orange' : 'blue';
 
   return (
     <AlertDialog.Root open={open} onOpenChange={loading ? undefined : onOpenChange}>

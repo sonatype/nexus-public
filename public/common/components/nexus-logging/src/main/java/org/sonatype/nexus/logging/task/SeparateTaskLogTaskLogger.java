@@ -25,6 +25,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.sonatype.nexus.logging.LogDiscriminators;
 
 import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
@@ -54,8 +55,10 @@ public class SeparateTaskLogTaskLogger
     this.taskLogInfo = requireNonNull(taskLogInfo);
 
     // Set per-thread logback property via MDC (see logback.xml)
-    taskLogIdentifier = format("%s-%s", taskLogInfo.getTypeId(),
-        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS")));
+    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+    taskLogIdentifier = format("%s-%s",
+        LogDiscriminators.safe(taskLogInfo.getTypeId(), LogDiscriminators.MAX_LENGTH - timestamp.length() - 1),
+        timestamp);
     MDC.put(LOGBACK_TASK_DISCRIMINATOR_ID, taskLogIdentifier);
   }
 

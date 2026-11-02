@@ -16,47 +16,51 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Predicates;
-import com.google.common.base.Strings;
-
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
-import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.common.QualifierUtil;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.rest.Resource;
 
+import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.coreui.internal.blobstore.BlobStoreInternalResource.RESOURCE_PATH;
-import org.springframework.stereotype.Component;
 
 /**
  * @since 3.30
  */
+@Produces(APPLICATION_JSON)
+@Consumes(APPLICATION_JSON)
 @Component
 @Path(RESOURCE_PATH)
 public class BlobStoreInternalResource
     implements Resource
 {
-  protected final Logger log = LoggerFactory.getLogger(getClass());
+  private static final Logger log = LoggerFactory.getLogger(BlobStoreInternalResource.class);
 
   static final String RESOURCE_PATH = "/internal/ui/blobstores";
 
@@ -83,8 +87,6 @@ public class BlobStoreInternalResource
   private final List<BlobStoreQuotaTypesUIResponse> blobStoreQuotaTypes;
 
   private final RepositoryManager repositoryManager;
-
-  private static final Logger logger = LoggerFactory.getLogger(BlobStoreInternalResource.class);
 
   @Autowired
   public BlobStoreInternalResource(
@@ -126,7 +128,8 @@ public class BlobStoreInternalResource
           BlobStoreMetrics metrics = Optional.ofNullable(blobStoreManager.get(configuration.getName()))
               .map(BlobStoreInternalResource::getBlobStoreMetrics)
               .orElse(null);
-          return new BlobStoreUIResponse(typeId, configuration, metrics, path);
+          GlobalDistributionStatus globalDistributionStatus = detectGlobalDistributionStatus(configuration);
+          return new BlobStoreUIResponse(typeId, configuration, metrics, path, globalDistributionStatus);
         })
         .filter(Objects::nonNull)
         .toList();
@@ -163,7 +166,7 @@ public class BlobStoreInternalResource
     else if (typeId.equals(GOOGLE_TYPE)) {
       return getGooglePath(configuration);
     }
-    logger.warn("blob store type {} unknown, defaulting to N/A for path", typeId);
+    log.warn("blob store type {} unknown, defaulting to N/A for path", typeId);
     return "N/A";
   }
 
@@ -173,7 +176,7 @@ public class BlobStoreInternalResource
       return Strings.isNullOrEmpty(path) ? "N/A" : path;
     }
     catch (NullPointerException | ClassCastException e) {
-      logger.warn("Error getting file path from configuration, using N/A", e);
+      log.warn("Error getting file path from configuration, using N/A", e);
       return "N/A";
     }
   }
@@ -197,7 +200,7 @@ public class BlobStoreInternalResource
       return bucket + "/" + cleanPrefix;
     }
     catch (NullPointerException | ClassCastException e) {
-      logger.warn("Error getting S3 bucket path from configuration, using N/A", e);
+      log.warn("Error getting S3 bucket path from configuration, using N/A", e);
       return "N/A";
     }
   }
@@ -208,9 +211,35 @@ public class BlobStoreInternalResource
       return Strings.isNullOrEmpty(containerName) ? "N/A" : containerName;
     }
     catch (NullPointerException | ClassCastException e) {
-      logger.warn("Error getting Azure container path from configuration, using N/A", e);
+      log.warn("Error getting Azure container path from configuration, using N/A", e);
       return "N/A";
     }
+  }
+
+  private static GlobalDistributionStatus detectGlobalDistributionStatus(final BlobStoreConfiguration configuration) {
+    String type = configuration.getType();
+
+    // Only S3 blob stores support global distribution
+    if (!"S3".equalsIgnoreCase(type)) {
+      return GlobalDistributionStatus.UNSUPPORTED;
+    }
+
+    NestedAttributesMap s3Attributes = configuration.attributes("s3");
+
+    if (s3Attributes.contains("cloudFront")) {
+      NestedAttributesMap cloudFront = s3Attributes.child("cloudFront");
+      String distributionUrl = cloudFront.get("distributionUrl", String.class);
+      if (distributionUrl != null && !distributionUrl.isBlank()) {
+        return GlobalDistributionStatus.CONFIGURED;
+      }
+    }
+
+    Boolean transferAccelerationEnabled = s3Attributes.get("transferAccelerationEnabled", Boolean.class);
+    if (Boolean.TRUE.equals(transferAccelerationEnabled)) {
+      return GlobalDistributionStatus.CONFIGURED;
+    }
+
+    return GlobalDistributionStatus.NOT_CONFIGURED;
   }
 
   private static String getGooglePath(BlobStoreConfiguration configuration) {
@@ -228,7 +257,7 @@ public class BlobStoreInternalResource
       return Strings.isNullOrEmpty(prefix) ? bucketName : bucketName + "/" + prefix;
     }
     catch (NullPointerException | ClassCastException e) {
-      logger.warn("Error getting Google bucket path from configuration, using N/A", e);
+      log.warn("Error getting Google bucket path from configuration, using N/A", e);
       return "N/A";
     }
   }

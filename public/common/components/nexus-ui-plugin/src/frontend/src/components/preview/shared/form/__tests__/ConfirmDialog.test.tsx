@@ -117,6 +117,14 @@ describe('ConfirmDialog', () => {
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   });
 
+  it('renders confirm variant (blue button) without error', () => {
+    renderWithTheme(
+      <ConfirmDialog {...defaultProps} variant="confirm" confirmLabel="Proceed" />,
+    );
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(screen.getByText('Proceed')).toBeInTheDocument();
+  });
+
   describe('button layout and variant (M-4, N-7)', () => {
     it('cancel button uses variant="surface" not variant="soft" (M-4)', () => {
       renderWithTheme(<ConfirmDialog {...defaultProps} />);

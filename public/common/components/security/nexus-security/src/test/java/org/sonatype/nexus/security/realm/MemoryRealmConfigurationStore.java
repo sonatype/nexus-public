@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.security.realm;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
-
-import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +79,7 @@ public class MemoryRealmConfigurationStore
       try {
         MemoryRealmConfiguration copy = (MemoryRealmConfiguration) clone();
         if (realmNames != null) {
-          copy.realmNames = Lists.newArrayList(realmNames);
+          copy.realmNames = new ArrayList<>(realmNames);
         }
         return copy;
       }

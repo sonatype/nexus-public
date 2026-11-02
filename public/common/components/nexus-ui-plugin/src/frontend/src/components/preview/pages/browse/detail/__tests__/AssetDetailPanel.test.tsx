@@ -283,7 +283,7 @@ describe('AssetDetailPanel', () => {
       await userEvent.click(downloadButtons[0]);
 
       expect(mockWindowOpen).toHaveBeenCalledWith(
-        '/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar',
+        'http://localhost/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar',
         '_blank'
       );
     });

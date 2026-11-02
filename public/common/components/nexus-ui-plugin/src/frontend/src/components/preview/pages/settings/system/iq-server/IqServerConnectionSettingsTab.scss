@@ -1,0 +1,52 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.iq-connection-settings-tab {
+  max-width: 720px;
+
+  &__fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  &__verify {
+    &--ok {
+      color: var(--green-11, #166534);
+    }
+    &--fail {
+      color: var(--red-11, #991b1b);
+    }
+  }
+
+  &__cert-warning {
+    color: var(--orange-11, #9a3412);
+  }
+
+  &__advanced {
+    border-left: 2px solid var(--gray-a4, #e5e7eb);
+  }
+
+  &__trust-store {
+    padding: 8px 0;
+  }
+}
+
+.iq-tab-spinner {
+  animation: iq-tab-spin 1s linear infinite;
+}
+
+@keyframes iq-tab-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

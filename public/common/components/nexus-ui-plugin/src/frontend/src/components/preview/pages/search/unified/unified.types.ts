@@ -43,6 +43,7 @@ export type SearchFormat =
   | 'npm'
   | 'nuget'
   | 'oci'
+  | 'openvsx'
   | 'p2'
   | 'pub'
   | 'pypi'

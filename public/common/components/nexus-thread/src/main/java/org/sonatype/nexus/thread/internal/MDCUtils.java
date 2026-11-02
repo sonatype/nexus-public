@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.thread.internal;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.security.UserIdMdcHelper;
-
-import com.google.common.collect.Maps;
 import org.slf4j.MDC;
 
 /**
@@ -40,7 +39,7 @@ public class MDCUtils
       result = MDC.getCopyOfContextMap();
     }
     if (result == null) {
-      result = Maps.newHashMap();
+      result = new HashMap<>();
     }
     result.remove(CONTEXT_NON_INHERITABLE_KEY);
     return result;

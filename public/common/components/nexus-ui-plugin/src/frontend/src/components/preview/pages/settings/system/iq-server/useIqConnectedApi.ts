@@ -107,7 +107,7 @@ export function useIqConnectedApi() {
       }
       return {
         activityTimeFrame: data.activityTimeFrame ?? 30,
-        artifactLatestVersions: data.artifactLatestVersions ?? 1,
+        artifactLatestVersions: data.artifactLatestVersions ?? 5,
         policyEvaluationStage: data.policyEvaluationStage ?? 'RELEASE',
         monitoredRepoCount: data.monitoredRepoCount ?? 0,
         totalRepoCount: data.totalRepoCount ?? 0,

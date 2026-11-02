@@ -14,10 +14,13 @@ package org.sonatype.nexus.jmx.reflect;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.annotation.Nullable;
 import javax.management.Descriptor;
@@ -26,9 +29,6 @@ import javax.management.ImmutableDescriptor;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +68,7 @@ public class DescriptorHelper
     requireNonNull(annotations);
     log.trace("Building descriptor for annotations: {}", Arrays.asList(annotations));
 
-    Map<String, Object> fields = Maps.newTreeMap();
+    Map<String, Object> fields = new TreeMap<>();
 
     // TODO: consider caching which annotations actually have keys, perhaps even which methods
     // TODO: ... to avoid rescanning the list over and over?
@@ -167,8 +167,8 @@ public class DescriptorHelper
    */
   @VisibleForTesting
   static List<Annotation> findAllAnnotations(final Annotation... annotations) {
-    Set<Annotation> visited = Sets.newHashSet();
-    List<Annotation> found = Lists.newArrayList();
+    Set<Annotation> visited = new HashSet<>();
+    List<Annotation> found = new ArrayList<>();
     visitAnnotations(visited, found, annotations);
     return found;
   }

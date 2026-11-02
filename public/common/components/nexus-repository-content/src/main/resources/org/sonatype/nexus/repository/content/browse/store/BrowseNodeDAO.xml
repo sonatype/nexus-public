@@ -83,9 +83,9 @@
         ${format}_browse_node B
     <if test="isConanFormat">
       LEFT JOIN ${format}_component C ON B.component_id = C.component_id
-        <if test="softDeleteAvailable">AND C.deleted_on IS NULL</if>
+        <if test="trashAvailable">AND C.deleted_on IS NULL</if>
       LEFT JOIN ${format}_asset A ON B.asset_id = A.asset_id
-        <if test="softDeleteAvailable">AND A.deleted_on IS NULL</if>
+        <if test="trashAvailable">AND A.deleted_on IS NULL</if>
     </if>
     WHERE 0 = <foreach collection="displayPath" index="i" item="name">
               B${i}.parent_id AND B${i}.repository_id = #{repositoryId} AND B${i}.display_name = #{name} AND B${i}.node_id =

@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.upload.internal;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +55,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import com.google.common.collect.Lists;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -168,7 +169,7 @@ public class UploadManagerImplTest
     uploadedForm.putFile("asset1", field);
     when(blobStoreAwareMultipartHelper.parse(isNotNull(), isNotNull())).thenReturn(uploadedForm);
 
-    List<String> assetPaths = Lists.newArrayList("/asset/path/1", "/asset/path/2");
+    List<String> assetPaths = new ArrayList<>(Arrays.asList("/asset/path/1", "/asset/path/2"));
     UploadResponse uploadResponse = mock(UploadResponse.class);
     when(uploadResponse.getAssetPaths()).thenReturn(assetPaths);
     when(handlerA.handle(isNotNull(), isNotNull())).thenReturn(uploadResponse);

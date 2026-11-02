@@ -196,6 +196,7 @@ export function createSearchMachine() {
   return createMachine<SearchMachineContext, SearchMachineEvent>(
     {
       id: 'search',
+      predictableActionArguments: true,
       type: 'parallel',
       context: {
         format: 'all',

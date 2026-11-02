@@ -24,7 +24,7 @@ import { SettingsAlert, WizardForm } from '../../../../shared/form';
 import { clearDirtyState } from '../../../../shared/hooks/useUnsavedChangesWarning';
 
 import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
-import { ConfirmDialog } from '../../../../shared/ConfirmDialog';
+import { ConfirmDialog } from '../../../../shared/form/ConfirmDialog';
 import { RepositoriesList } from './RepositoriesList';
 import { RepositoryTypeSelector } from './RepositoryTypeSelector';
 import { RepositoryForm } from './RepositoryForm';
@@ -37,9 +37,13 @@ import {
   enableFirewallQuarantine,
 } from '../../../../shared/security/useFirewallEnable';
 import { useRepositoriesApi } from './useRepositoriesApi';
-import { Repository, Recipe, RepositoryFormData, RepositoryType } from './types';
+import { Repository, Recipe, RepositoryFormData, RepositoryType, onlineToggleVariant } from './types';
+import UIStrings from '../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 import './RepositoriesPage.scss';
+
+const PAGE_STRINGS = UIStrings.REPOSITORIES_PAGE;
+const ACTION_DIALOGS = UIStrings.REPOSITORY_ACTION_DIALOGS;
 
 function hasFirewallLicense(): boolean {
   try {
@@ -150,20 +154,20 @@ export function RepositoriesPage() {
 
   const isLicensedEdition = useIsLicensedEdition();
 
-  // Soft-delete is enabled (flag + PRO/cloud). Deleting a hosted repository under this mode moves it
+  // Trash is enabled (flag + PRO/cloud). Deleting a hosted repository under this mode moves it
   // to Trash (recoverable) rather than permanently removing it, so the delete modal + toast reflect that.
-  const softDeleteFeatureEnabled =
-    (ExtJS.state()?.getValue?.('nexus.softDelete.enabled', false) ?? false) &&
+  const trashFeatureEnabled =
+    (ExtJS.state()?.getValue?.('nexus.trash.enabled', false) ?? false) &&
     isLicensedEdition;
-  const softDeleteRetentionDays = ExtJS.state()?.getValue?.('softDeleteRetentionDays');
-  // Server-side soft-delete is gated by enabled + hosted + a per-format allowlist ("*" = all). Mirror all
+  const trashRetentionDays = ExtJS.state()?.getValue?.('trashRetentionDays');
+  // Server-side trash is gated by enabled + hosted + a per-format allowlist ("*" = all). Mirror all
   // three here so the delete modal/toast only promise Trash when the repository would actually be recoverable.
-  const softDeleteFormats = (ExtJS.state()?.getValue?.('softDeleteFormats') as string[] | undefined) ?? [];
-  const isRepoSoftDeleteActive = (repo?: { type?: string; format?: string } | null): boolean =>
-    softDeleteFeatureEnabled
+  const trashFormats = (ExtJS.state()?.getValue?.('trashFormats') as string[] | undefined) ?? [];
+  const isRepoTrashActive = (repo?: { type?: string; format?: string } | null): boolean =>
+    trashFeatureEnabled
     && repo?.type === 'hosted'
-    && (softDeleteFormats.includes('*')
-      || (!!repo?.format && softDeleteFormats.includes(repo.format.toLowerCase())));
+    && (trashFormats.includes('*')
+      || (!!repo?.format && trashFormats.includes(repo.format.toLowerCase())));
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -252,9 +256,9 @@ export function RepositoriesPage() {
   // progress indicator promised steps that never arrive.
   const wizardSteps = useMemo(() => {
     const steps = [
-      { id: 'format', label: 'Select Format' },
-      { id: 'type', label: 'Select Type' },
-      { id: 'config', label: 'Configure' },
+      { id: 'format', label: PAGE_STRINGS.WIZARD_STEPS.selectFormat },
+      { id: 'type', label: PAGE_STRINGS.WIZARD_STEPS.selectType },
+      { id: 'config', label: PAGE_STRINGS.WIZARD_STEPS.configure },
     ];
 
     // Before a type is chosen (steps 0-1) no type is known yet; fall back to the
@@ -264,9 +268,9 @@ export function RepositoriesPage() {
 
     if (type === 'proxy') {
       if (isFirewallSupportedFormat(format)) {
-        steps.push({ id: 'firewall', label: 'Enable Firewall' });
+        steps.push({ id: 'firewall', label: PAGE_STRINGS.WIZARD_STEPS.enableFirewall });
       }
-      steps.push({ id: 'rhc', label: 'Enable RHC' });
+      steps.push({ id: 'rhc', label: PAGE_STRINGS.WIZARD_STEPS.enableRhc });
     }
 
     return steps;
@@ -370,8 +374,8 @@ export function RepositoriesPage() {
           try {
             await enableHealthCheck(repoName);
           } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to enable Health Check';
-            toast.warning(`Health Check could not be enabled for "${repoName}": ${errorMessage}`);
+            const errorMessage = err instanceof Error ? err.message : PAGE_STRINGS.TOASTS.healthCheckEnableFailed;
+            toast.warning(PAGE_STRINGS.TOASTS.healthCheckCouldNotEnable(repoName, errorMessage));
           }
         } else {
           // The backend may auto-enable HC for new proxy repos; explicitly disable to enforce
@@ -382,10 +386,10 @@ export function RepositoriesPage() {
             console.warn(`Could not disable auto-enabled Health Check for "${repoName}":`, err);
           }
         }
-        toast.success(`Repository "${repoName}" created successfully`);
+        toast.success(PAGE_STRINGS.TOASTS.createSuccess(repoName));
         finishCreate();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to create repository');
+        toast.error(err instanceof Error ? err.message : PAGE_STRINGS.TOASTS.createFailed);
         throw err;
       }
     } else if (repoFormSubmitRef.current) {
@@ -447,10 +451,10 @@ export function RepositoriesPage() {
       // so the form remains editable if creation fails)
       try {
         await createRepository(data);
-        toast.success(`Repository "${data.name}" created successfully`);
+        toast.success(PAGE_STRINGS.TOASTS.createSuccess(data.name));
         finishCreate();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to create repository');
+        toast.error(err instanceof Error ? err.message : PAGE_STRINGS.TOASTS.createFailed);
       }
       return { skipNavigate: true };
     },
@@ -464,12 +468,12 @@ export function RepositoriesPage() {
   const handleDeleteConfirm = useCallback(async () => {
     if (!repository) return;
     setIsDeleting(true);
-    const movedToTrash = isRepoSoftDeleteActive(repository);
+    const movedToTrash = isRepoTrashActive(repository);
     try {
       await deleteRepository(repository.name);
       toast.success(movedToTrash
-        ? `Repository "${repository.name}" moved to Trash`
-        : `Repository "${repository.name}" deleted successfully`);
+        ? PAGE_STRINGS.TOASTS.movedToTrash(repository.name)
+        : PAGE_STRINGS.TOASTS.deleteSuccess(repository.name));
       setRefreshKey(k => k + 1);
       setDeleteModalOpen(false);
       handleBack();
@@ -480,7 +484,7 @@ export function RepositoriesPage() {
     } finally {
       setIsDeleting(false);
     }
-  }, [repository, deleteRepository, toast, handleBack, setError, softDeleteFeatureEnabled]);
+  }, [repository, deleteRepository, toast, handleBack, setError, trashFeatureEnabled]);
 
   // Action handlers: stage pending action → ConfirmDialog → handleConfirmAction; refetch after toggle keeps pristineData in sync.
   const handleRebuildIndex = useCallback(() => {
@@ -515,10 +519,10 @@ export function RepositoriesPage() {
     try {
       if (pendingAction.kind === 'rebuild-index') {
         await rebuildIndex(repoName);
-        toast.success(`Repository index rebuild started for "${repoName}"`);
+        toast.success(PAGE_STRINGS.TOASTS.rebuildStarted(repoName));
       } else if (pendingAction.kind === 'invalidate-cache') {
         await invalidateCache(repoName);
-        toast.success(`Repository caches invalidated for "${repoName}"`);
+        toast.success(PAGE_STRINGS.TOASTS.cacheInvalidated(repoName));
       } else {
         await setRepositoryOnline(
           repoName,
@@ -528,8 +532,8 @@ export function RepositoriesPage() {
         );
         toast.success(
           pendingAction.nextOnline
-            ? `Repository "${repoName}" is now online`
-            : `Repository "${repoName}" is now offline`
+            ? PAGE_STRINGS.TOASTS.nowOnline(repoName)
+            : PAGE_STRINGS.TOASTS.nowOffline(repoName)
         );
         // Refetch so pristineData.online (and the Online checkbox) reflect the
         // saved state. Failure to refetch here would leave the toggle button
@@ -541,8 +545,8 @@ export function RepositoriesPage() {
       }
       setPendingAction(null);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      toast.error('Action failed', message);
+      const message = err instanceof Error ? err.message : PAGE_STRINGS.TOASTS.unknownError;
+      toast.error(PAGE_STRINGS.TOASTS.actionFailed, message);
     } finally {
       setIsExecutingAction(false);
     }
@@ -553,60 +557,58 @@ export function RepositoriesPage() {
   // run.
   const actionDialogProps = useMemo(() => {
     if (!pendingAction || !repository) {
-      return { title: '', message: '', confirmLabel: 'Confirm', variant: 'warning' as const };
+      return { title: '', message: '', confirmLabel: ACTION_DIALOGS.defaultConfirmLabel, variant: 'warning' as const };
     }
     const name = repository.name;
     if (pendingAction.kind === 'rebuild-index') {
       return {
-        title: 'Rebuild Repository Index',
-        message: `Rebuild the search index for repository "${name}"? This may take some time depending on repository size.`,
-        confirmLabel: 'Rebuild Index',
+        title: ACTION_DIALOGS.REBUILD_INDEX.title,
+        message: ACTION_DIALOGS.REBUILD_INDEX.message(name),
+        confirmLabel: ACTION_DIALOGS.REBUILD_INDEX.confirmLabel,
         variant: 'warning' as const,
       };
     }
     if (pendingAction.kind === 'invalidate-cache') {
       return {
-        title: 'Invalidate Repository Cache',
-        message: `Invalidate cached metadata and content for repository "${name}"? Subsequent requests will refetch from the upstream source.`,
-        confirmLabel: 'Invalidate Cache',
+        title: ACTION_DIALOGS.INVALIDATE_CACHE.title,
+        message: ACTION_DIALOGS.INVALIDATE_CACHE.message(name),
+        confirmLabel: ACTION_DIALOGS.INVALIDATE_CACHE.confirmLabel,
         variant: 'warning' as const,
       };
     }
     // toggle-online
-    const isGoingOffline = !pendingAction.nextOnline;
+    const dialog = pendingAction.nextOnline ? ACTION_DIALOGS.BRING_ONLINE : ACTION_DIALOGS.TAKE_OFFLINE;
     return {
-      title: isGoingOffline ? 'Disable System Status' : 'Enable System Status',
-      message: isGoingOffline
-        ? `Take repository "${name}" offline? Clients will no longer be able to read from or write to this repository until it is brought back online.`
-        : `Bring repository "${name}" online? Clients will be able to access it again.`,
-      confirmLabel: isGoingOffline ? 'Take Offline' : 'Bring Online',
-      variant: 'warning' as const,
+      title: dialog.title,
+      message: dialog.message(name),
+      confirmLabel: dialog.confirmLabel,
+      variant: onlineToggleVariant(pendingAction.nextOnline),
     };
   }, [pendingAction, repository]);
 
   const getHeaderProps = () => {
     switch (routeState.viewMode) {
-      case 'list': return { icon: Database, title: 'Repositories', description: 'Manage hosted, proxy, and group repositories', actions: canCreate ? <Button variant="solid" onClick={handleCreate}><Plus size={16} /> Create Repository</Button> : undefined };
-      case 'select-type': return { icon: Database, title: 'Create Repository', description: 'Configure your new repository settings' };
-      case 'create': return { icon: selectedRecipe ? <FormatIcon format={selectedRecipe.format} type={selectedRecipe.type} size={24} /> : Database, title: `Create ${(selectedRecipe?.format || '').replace(/2$/, '')} (${selectedRecipe?.type || ''}) Repository`, description: 'Configure settings' };
-      case 'edit': return { icon: repository ? <FormatIcon format={repository.format} type={repository.type} size={24} /> : Database, title: repository ? `Edit ${repository.name}` : 'Details', description: repository ? `${repository.format} • ${repository.type} • ${repository.status?.online ? 'Online' : 'Offline'}` : 'Loading...' };
-      default: return { icon: Database, title: 'Repositories', description: 'Manage repositories' };
+      case 'list': return { icon: Database, title: PAGE_STRINGS.HEADER.listTitle, description: PAGE_STRINGS.HEADER.listDescription, actions: canCreate ? <Button variant="solid" onClick={handleCreate}><Plus size={16} /> {PAGE_STRINGS.HEADER.createRepository}</Button> : undefined };
+      case 'select-type': return { icon: Database, title: PAGE_STRINGS.HEADER.selectTypeTitle, description: PAGE_STRINGS.HEADER.selectTypeDescription };
+      case 'create': return { icon: selectedRecipe ? <FormatIcon format={selectedRecipe.format} type={selectedRecipe.type} size={24} /> : Database, title: PAGE_STRINGS.HEADER.createTitle((selectedRecipe?.format || '').replace(/2$/, ''), selectedRecipe?.type || ''), description: PAGE_STRINGS.HEADER.createDescription };
+      case 'edit': return { icon: repository ? <FormatIcon format={repository.format} type={repository.type} size={24} /> : Database, title: repository ? PAGE_STRINGS.HEADER.editTitle(repository.name) : PAGE_STRINGS.HEADER.editFallbackTitle, description: repository ? PAGE_STRINGS.HEADER.editDescription(repository.format, repository.type, !!(repository.status?.online ?? repository.online)) : PAGE_STRINGS.HEADER.loading };
+      default: return { icon: Database, title: PAGE_STRINGS.HEADER.listTitle, description: PAGE_STRINGS.HEADER.manageRepositories };
     }
   };
 
   const getBreadcrumbs = () => {
     const base = [
-      { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-      { label: 'Repositories', onClick: handleBack },
+      { label: PAGE_STRINGS.BREADCRUMBS.settings, onClick: () => navigateTo('#preview/admin/settings') },
+      { label: PAGE_STRINGS.BREADCRUMBS.repositories, onClick: handleBack },
     ];
     switch (routeState.viewMode) {
       case 'list': return [
-        { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-        { label: 'Repositories' }
+        { label: PAGE_STRINGS.BREADCRUMBS.settings, onClick: () => navigateTo('#preview/admin/settings') },
+        { label: PAGE_STRINGS.BREADCRUMBS.repositories }
       ];
-      case 'select-type': return [...base, { label: 'Create' }];
-      case 'create': return [...base, { label: 'Create' }];
-      case 'edit': return [...base, { label: repository?.name || 'Loading...' }];
+      case 'select-type': return [...base, { label: PAGE_STRINGS.BREADCRUMBS.create }];
+      case 'create': return [...base, { label: PAGE_STRINGS.BREADCRUMBS.create }];
+      case 'edit': return [...base, { label: repository?.name || PAGE_STRINGS.BREADCRUMBS.loading }];
       default: return base;
     }
   };
@@ -634,7 +636,7 @@ export function RepositoriesPage() {
           >
             <Flex align="center" gap="1" as="span">
               <ArrowLeft size={14} aria-hidden />
-              <span>Hosted Repository Evaluation</span>
+              <span>{PAGE_STRINGS.evalBackLink}</span>
             </Flex>
           </Link>
         </Box>
@@ -664,7 +666,7 @@ export function RepositoriesPage() {
               setRhcChoice(null);
               handleBack();
             }}
-            completeLabel="Create Repository"
+            completeLabel={PAGE_STRINGS.completeLabel}
             onStepSubmitOverride={(step) =>
               step === 2
                 ? () => {
@@ -711,6 +713,7 @@ export function RepositoriesPage() {
                 onChoice={setFirewallChoice}
                 hasFirewallLicense={hasFirewallLicense()}
                 format={selectedRecipe?.format}
+                xetEnabled={savedFormDataRef.current?.xet?.enabled ?? false}
               />
             )}
             {isProxyRecipe && postCreateStep === 'rhc' && (
@@ -747,8 +750,8 @@ export function RepositoriesPage() {
         entityName={repository?.name || ''}
         entityType="repository"
         loading={isDeleting}
-        softDelete={isRepoSoftDeleteActive(repository)}
-        retentionDays={typeof softDeleteRetentionDays === 'number' ? softDeleteRetentionDays : undefined}
+        trash={isRepoTrashActive(repository)}
+        retentionDays={typeof trashRetentionDays === 'number' ? trashRetentionDays : undefined}
       />
       <ConfirmDialog
         open={pendingAction !== null}

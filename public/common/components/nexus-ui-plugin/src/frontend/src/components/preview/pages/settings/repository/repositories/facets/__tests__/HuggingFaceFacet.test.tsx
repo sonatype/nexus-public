@@ -112,6 +112,38 @@ describe('HuggingFaceFacet', () => {
     expect(screen.getByRole('checkbox', { name: /Enable XET/i })).not.toBeChecked();
   });
 
+  it('always shows the XET disables Firewall warning when the feature flag is on', () => {
+    mockGetValue.mockImplementation((key: string) =>
+      key === 'nexus.format.huggingface.xet.enabled' ? true : undefined
+    );
+
+    render(
+      <Theme>
+        <HuggingFaceFacet formData={baseFormData} onNestedChange={jest.fn()} />
+      </Theme>
+    );
+
+    expect(
+      screen.getByText(/Enabling XET disables Firewall for this repository/i),
+    ).toBeInTheDocument();
+  });
+
+  it('does not show the XET warning when the feature flag is off', () => {
+    mockGetValue.mockImplementation((key: string) =>
+      key === 'nexus.format.huggingface.xet.enabled' ? false : undefined
+    );
+
+    render(
+      <Theme>
+        <HuggingFaceFacet formData={baseFormData} onNestedChange={jest.fn()} />
+      </Theme>
+    );
+
+    expect(
+      screen.queryByText(/Enabling XET disables Firewall for this repository/i),
+    ).not.toBeInTheDocument();
+  });
+
   it('calls onNestedChange with updated enabled when toggled', () => {
     mockGetValue.mockImplementation((key: string) =>
       key === 'nexus.format.huggingface.xet.enabled' ? true : undefined

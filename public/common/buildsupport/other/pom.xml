@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.97.2-02</version>
+    <version>3.98.0-07</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -47,7 +47,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>33.4.8-jre</version>
+        <version>33.7.2-jre</version>
         <exclusions>
           <exclusion>
             <groupId>org.checkerframework</groupId>
@@ -131,13 +131,14 @@
         <version>1.21</version>
       </dependency>
 
-      <!-- NEXUS-46395: Jakarta Validation 3.0.x for Jakarta EE 10 / RESTEasy 7. The 2.0.x
+      <!-- NEXUS-46395: Jakarta Validation 3.x for Jakarta EE 10+ / RESTEasy 7. The 2.0.x
            series is the Jakarta EE 8 line and is incompatible with RESTEasy 7's
-           ResteasyViolationException. -->
+           ResteasyViolationException.
+           NEXUS-55858: 3.1.x is required by Hibernate Validator 9 (see below). -->
       <dependency>
         <groupId>jakarta.validation</groupId>
         <artifactId>jakarta.validation-api</artifactId>
-        <version>3.0.2</version>
+        <version>3.1.1</version>
       </dependency>
 
       <!-- NEXUS-46395: org.glassfish:jakarta.el:3.0.4 is misnamed — despite its
@@ -155,11 +156,15 @@
       </dependency>
 
       <!-- NEXUS-46395: Hibernate Validator 8.x is the Jakarta Validation 3.0 implementation
-           (Hibernate Validator 6.x targets Jakarta Validation 2.0). -->
+           (Hibernate Validator 6.x targets Jakarta Validation 2.0).
+           NEXUS-55858: 9.0.2.Final (Jakarta Validation 3.1) is the first release without
+           CVE-2026-93879; every 8.x release is affected.
+           NEXUS-55805: bumped to 9.1.5.Final to clear the Security-High policy violation
+           flagged on 9.0.2.Final. -->
       <dependency>
         <groupId>org.hibernate.validator</groupId>
         <artifactId>hibernate-validator</artifactId>
-        <version>8.0.2.Final</version>
+        <version>9.1.5.Final</version>
       </dependency>
 
       <dependency>
@@ -401,6 +406,31 @@
         <version>1.82.0</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <!-- NEXUS-55858: io.opentelemetry artifacts arrive only transitively, and the pom of the
+           library that brings them hardcodes 1.62.0 (flagged by IQ, sonatype-2026-009330). Import the BOM so the API,
+           context and SDK artifacts move together and do not skew. -->
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-bom</artifactId>
+        <version>1.67.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- NEXUS-55858: asm arrives only transitively (third-party libraries pin 9.8, flagged
+           by IQ with CVE-2026-110257 and others). 9.11.1 is the first clean release;
+           9.11 is still flagged by CVE-2026-112046. -->
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm</artifactId>
+        <version>9.11.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm-tree</artifactId>
+        <version>9.11.1</version>
       </dependency>
 
     </dependencies>

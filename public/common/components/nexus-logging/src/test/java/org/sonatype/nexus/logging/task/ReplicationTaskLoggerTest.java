@@ -15,9 +15,9 @@ package org.sonatype.nexus.logging.task;
 import javax.annotation.Nullable;
 
 import java.util.Optional;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ public class ReplicationTaskLoggerTest
 
   private final String testPath = "test/log/replication";
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     super.setUp();
     this.taskLogInfo = createTaskLogInfoMock();
@@ -103,12 +103,26 @@ public class ReplicationTaskLoggerTest
     verify(mockLogger).info(eq(m), eq(s), eq(arg));
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     underTest.finish();
   }
 
+  @Test
+  public void longRepositoryNameProducesValidDiscriminator() {
+    String longName = "r".repeat(70);
+    new ReplicationTaskLogger(mockLogger, createTaskLogInfoMock(longName));
+
+    String discriminator = MDC.get(REPLICATION_DISCRIMINATOR_ID);
+    assertThat(discriminator.length() <= 64, is(true));
+    assertThat(discriminator.startsWith("rrrr"), is(true));
+  }
+
   private TaskLogInfo createTaskLogInfoMock() {
+    return createTaskLogInfoMock("repositoryName");
+  }
+
+  private TaskLogInfo createTaskLogInfoMock(final String repositoryName) {
     return new TaskLogInfo()
     {
       @Override
@@ -139,7 +153,7 @@ public class ReplicationTaskLoggerTest
       @Nullable
       @Override
       public String getString(final String key) {
-        return "repositoryName";
+        return repositoryName;
       }
 
       @Override

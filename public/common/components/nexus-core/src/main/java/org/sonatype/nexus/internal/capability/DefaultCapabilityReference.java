@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.capability;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -32,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.requireNonNull;
-import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Collections.unmodifiableMap;
 
 /**
@@ -468,7 +468,7 @@ public class DefaultCapabilityReference
     public void create(final Map<String, String> properties, final Map<String, String> encryptedProperties) {
       try {
         log.debug("Creating capability {} ({})", capability, id);
-        capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
+        capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(new HashMap<>(properties));
         DefaultCapabilityReference.this.encryptedProperties =
             encryptedProperties == null ? EMPTY_MAP : unmodifiableMap(encryptedProperties);
         eventQueue.post(new CapabilityEvent.Created(DefaultCapabilityReference.this));
@@ -489,7 +489,7 @@ public class DefaultCapabilityReference
     public void load(final Map<String, String> properties, final Map<String, String> encryptedProperties) {
       try {
         log.debug("Loading capability {} ({})", capability, id);
-        capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
+        capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(new HashMap<>(properties));
         DefaultCapabilityReference.this.encryptedProperties =
             encryptedProperties == null ? EMPTY_MAP : unmodifiableMap(encryptedProperties);
         eventQueue.post(new CapabilityEvent.Created(DefaultCapabilityReference.this));
@@ -550,7 +550,7 @@ public class DefaultCapabilityReference
         eventQueue.post(
             new CapabilityEvent.BeforeUpdate(
                 DefaultCapabilityReference.this, properties, previousProperties));
-        capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
+        capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(new HashMap<>(properties));
         DefaultCapabilityReference.this.encryptedProperties =
             encryptedProperties == null ? EMPTY_MAP : unmodifiableMap(encryptedProperties);
         capability.onUpdate();

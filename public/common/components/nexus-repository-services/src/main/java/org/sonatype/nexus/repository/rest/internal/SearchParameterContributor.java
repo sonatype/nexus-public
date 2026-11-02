@@ -21,8 +21,6 @@ import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappingsService;
 import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
 import org.sonatype.nexus.swagger.ParameterContributor;
-
-import com.google.common.collect.ImmutableList;
 // NEXUS-46395: migrated from Swagger 1.x parameters to OpenAPI 3.x.
 // QueryParameter still exists in OpenAPI 3 (different package); the schema/type is now
 // modeled via Parameter.schema(new StringSchema()) instead of Parameter.type("string").
@@ -41,9 +39,9 @@ import org.springframework.stereotype.Component;
 public class SearchParameterContributor
     extends ParameterContributor<QueryParameter>
 {
-  private static final List<HttpMethod> HTTP_METHODS = ImmutableList.of(GET);
+  private static final List<HttpMethod> HTTP_METHODS = List.of(GET);
 
-  private static final List<String> PATHS = ImmutableList.of(
+  private static final List<String> PATHS = List.of(
       SearchResource.RESOURCE_URI,
       SearchResource.RESOURCE_URI + SearchResource.SEARCH_ASSET_URI,
       SearchResource.RESOURCE_URI + SearchResource.SEARCH_AND_DOWNLOAD_URI);

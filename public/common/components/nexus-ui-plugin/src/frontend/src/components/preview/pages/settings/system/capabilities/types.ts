@@ -64,6 +64,12 @@ export interface CapabilityType {
   name: string;
   about?: string;
   formFields?: FormField[];
+  /**
+   * When true, managing (creating/updating/enabling) a capability of this type additionally requires the
+   * nexus:settings:update permission because it activates or configures a security realm
+   * (CVE-2026-14645 / NEXUS-54726).
+   */
+  requiresSettingsUpdate?: boolean;
 }
 
 /**

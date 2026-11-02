@@ -14,11 +14,11 @@
 import { UIView, UIRouterReact, servicesPlugin } from '@uirouter/react';
 import {
   Permissions,
-  PREVIEW_FEATURE_FLAGS,
-  SETTINGS_SECTIONS,
+  UpgradePage,
   PRO_AND_COMMUNITY_EDITIONS,
   PRO_FAMILY_EDITIONS,
 } from '@sonatype/nexus-ui-plugin';
+
 import { previewAdminRoutes } from '../previewAdminRoutes';
 import { previewBrowseRoutes } from '../previewBrowseRoutes';
 
@@ -62,6 +62,7 @@ describe('previewAdminRoutes', () => {
       'preview.admin.repository.routingrules',
       'preview.admin.repository.datastore',
       'preview.admin.repository.proprietary',
+      'preview.admin.repository.globaldistribution',
       'preview.admin.security.anonymous',
       'preview.admin.security.realms',
       'preview.admin.security.saml',
@@ -95,6 +96,22 @@ describe('previewAdminRoutes', () => {
       const route = previewAdminRoutes.find((r) => r.name === routeName);
       expect(route).toBeDefined();
       expect(route.data.visibilityRequirements.requiresPermission).toBe(Permissions.ADMIN);
+    });
+  });
+
+  it('shows global-distribution on every edition behind any of settings, repository-admin or blobstore read', () => {
+    const route = previewAdminRoutes.find(
+      (r) => r.name === 'preview.admin.repository.globaldistribution',
+    );
+
+    expect(route).toBeDefined();
+    expect(route.url).toBe('/global-distribution');
+    expect(route.data.visibilityRequirements).toEqual({
+      requiresAnyPermission: [
+        Permissions.SETTINGS.READ,
+        Permissions.REPOSITORY_ADMIN.READ,
+        Permissions.BLOB_STORES.READ,
+      ],
     });
   });
 
@@ -263,38 +280,10 @@ describe('previewAdminRoutes', () => {
       expect(route.data.visibilityRequirements.requiresPermission).toBe(Permissions.SETTINGS.READ);
       expect(route.data.visibilityRequirements.capability).toBeUndefined();
     });
-  });
 
-  it('gates all route components whose SETTINGS_SECTIONS featureKey resolves to false', () => {
-    const allCards = SETTINGS_SECTIONS.flatMap((section) => section.cards);
-    const ungatedCards = allCards.filter(
-      (card) => card.featureKey && PREVIEW_FEATURE_FLAGS[card.featureKey] === false,
-    );
-
-    expect(ungatedCards.length).toBeGreaterThan(0);
-
-    ungatedCards.forEach((card) => {
-      // Build route name prefix from the card path — strip hyphens because
-      // internal route names use concatenated segments (e.g. 'cleanuppolicies')
-      // while URL slugs use hyphens (e.g. '/cleanup-policies').
-      // Also try singular form for paths ending in 's' (e.g. user-tokens → usertoken).
-      const normalized = card.path.replace(/\//g, '.').replace(/-/g, '');
-      const routeNamePrefix = `preview.admin.${normalized}`;
-      let leafRoutes = previewAdminRoutes.filter(
-        (route) => route.name.startsWith(routeNamePrefix) && route.component && !route.abstract,
-      );
-
-      if (leafRoutes.length === 0 && normalized.endsWith('s')) {
-        const singular = `preview.admin.${normalized.slice(0, -1)}`;
-        leafRoutes = previewAdminRoutes.filter(
-          (route) => route.name.startsWith(singular) && route.component && !route.abstract,
-        );
-      }
-
-      expect(leafRoutes.length).toBeGreaterThan(0);
-      leafRoutes.forEach((route) => {
-        expect(route.component.displayName).toMatch(/^FeatureGate\(/);
-      });
+    it('renders the real Upgrade page component, not a FeatureGate placeholder', () => {
+      const route = previewAdminRoutes.find((r) => r.name === 'preview.admin.system.upgrade');
+      expect(route.component).toBe(UpgradePage);
     });
   });
 

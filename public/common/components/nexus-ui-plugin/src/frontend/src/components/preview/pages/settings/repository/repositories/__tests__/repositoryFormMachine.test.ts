@@ -20,6 +20,7 @@ import {
   REPOSITORY_TYPES,
 } from '../repositoryFormMachine';
 import { ExtJS } from '../../../../../../../interface/ExtJS';
+import RepositoriesStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 // Mock the API interface at the path the source uses
 jest.mock('../../../../../../../interface/api', () => ({
@@ -533,6 +534,68 @@ describe('repositoryFormMachine', () => {
       });
     });
 
+    // Swift proxies may only proxy the GitHub root URL. Mirrors the matrix covered
+    // server-side by SwiftGitHubRemoteUrlValidatorTest, so this client check agrees
+    // with the backend, the Classic UI, and the older React admin form.
+    describe('swift proxy remoteUrl restriction', () => {
+      const SWIFT_ERROR = RepositoriesStrings.SWIFT.REMOTE_URL_VALIDATION_ERROR;
+
+      const submitSwiftRemoteUrl = async (remoteUrl: string) => {
+        const machine = createRepositoryFormMachine({ format: 'swift', repositoryType: 'proxy' });
+        const service = await startAndLoad(machine);
+
+        service.send({ type: 'UPDATE', name: 'name', value: 'swift-proxy' } as any);
+        service.send({ type: 'UPDATE', name: 'storage.blobStoreName', value: 'default' } as any);
+        service.send({ type: 'UPDATE', name: 'proxy.remoteUrl', value: remoteUrl } as any);
+        service.send({ type: 'SUBMIT' } as any);
+
+        const error = service.getSnapshot().context.validationErrors['proxy.remoteUrl'];
+        service.stop();
+        return error;
+      };
+
+      it.each(['https://github.com/', 'https://github.com'])(
+        'accepts canonical form %s',
+        async (remoteUrl) => {
+          expect(await submitSwiftRemoteUrl(remoteUrl)).toBeFalsy();
+        }
+      );
+
+      it.each([
+        'https://GitHub.com',
+        'HTTPS://github.com/',
+        'https://github.com:443/',
+        'https://github.com/apple',
+        'https://github.com/apple/swift-nio',
+        'http://github.com/',
+        'https://raw.githubusercontent.com/',
+        'https://api.github.com/',
+        'https://github.com.evil.example/',
+        'https://user:pw@github.com/',
+        'https://github.com/ ',
+        'https://gitlab.com/foo/bar',
+        'git@github.com:apple/swift-nio.git',
+        'ftp://github.com/',
+        '//github.com/',
+        'github.com',
+      ])('rejects %s with the Swift-specific message', async (remoteUrl) => {
+        expect(await submitSwiftRemoteUrl(remoteUrl)).toBe(SWIFT_ERROR);
+      });
+
+      it('a non-swift proxy still accepts a non-GitHub host', async () => {
+        const machine = createRepositoryFormMachine({ format: 'maven2', repositoryType: 'proxy' });
+        const service = await startAndLoad(machine);
+
+        service.send({ type: 'UPDATE', name: 'name', value: 'maven-proxy' } as any);
+        service.send({ type: 'UPDATE', name: 'storage.blobStoreName', value: 'default' } as any);
+        service.send({ type: 'UPDATE', name: 'proxy.remoteUrl', value: 'https://repo1.maven.org/maven2/' } as any);
+        service.send({ type: 'SUBMIT' } as any);
+
+        expect(service.getSnapshot().context.validationErrors['proxy.remoteUrl']).toBeFalsy();
+        service.stop();
+      });
+    });
+
     it('validates group type requires members', async () => {
       const machine = createRepositoryFormMachine({ format: 'maven2', repositoryType: 'group' });
       const service = await startAndLoad(machine);
@@ -619,8 +682,53 @@ describe('repositoryFormMachine', () => {
       const state = service.getSnapshot();
       expect(state.matches('editing')).toBe(true);
       expect(state.context.validationErrors['alpineSigning.keypair']).toBe(
-        'RSA signing key is required for Alpine group repositories'
+        'This field is required'
       );
+
+      service.stop();
+    });
+
+    it('validates alpine proxy type requires alpineSigning keypair', async () => {
+      const machine = createRepositoryFormMachine({ format: 'alpine', repositoryType: 'proxy' });
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'alpine-proxy' } as any);
+      service.send({ type: 'UPDATE', name: 'storage.blobStoreName', value: 'default' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'proxy.remoteUrl',
+        value: 'https://dl-cdn.alpinelinux.org/alpine/',
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.matches('editing')).toBe(true);
+      expect(state.context.validationErrors['alpineSigning.keypair']).toBe(
+        'This field is required'
+      );
+
+      service.stop();
+    });
+
+    it('accepts alpine proxy with keypair provided', async () => {
+      const machine = createRepositoryFormMachine({ format: 'alpine', repositoryType: 'proxy' });
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'alpine-proxy' } as any);
+      service.send({ type: 'UPDATE', name: 'storage.blobStoreName', value: 'default' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'proxy.remoteUrl',
+        value: 'https://dl-cdn.alpinelinux.org/alpine/',
+      } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'alpineSigning.keypair',
+        value: '-----BEGIN RSA PRIVATE KEY-----\ntest\n-----END RSA PRIVATE KEY-----',
+      } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors['alpineSigning.keypair']).toBeFalsy();
 
       service.stop();
     });
@@ -713,13 +821,35 @@ describe('repositoryFormMachine', () => {
       service.stop();
     });
 
-    it('does not require alpineSigning keypair for alpine hosted', async () => {
+    // Hosted is @Valid-only server-side; required here purely for Classic parity.
+    it('requires alpineSigning keypair for alpine hosted, matching Classic UI', async () => {
       const machine = createRepositoryFormMachine({ format: 'alpine', repositoryType: 'hosted' });
       const service = await startAndLoad(machine);
 
       service.send({ type: 'UPDATE', name: 'name', value: 'alpine-hosted' } as any);
       service.send({ type: 'UPDATE', name: 'storage.blobStoreName', value: 'default' } as any);
       service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.matches('editing')).toBe(true);
+      expect(state.context.validationErrors['alpineSigning.keypair']).toBe(
+        'This field is required'
+      );
+
+      service.stop();
+    });
+
+    it('accepts alpine hosted with keypair provided', async () => {
+      const machine = createRepositoryFormMachine({ format: 'alpine', repositoryType: 'hosted' });
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'alpine-hosted' } as any);
+      service.send({ type: 'UPDATE', name: 'storage.blobStoreName', value: 'default' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'alpineSigning.keypair',
+        value: '-----BEGIN RSA PRIVATE KEY-----\ntest\n-----END RSA PRIVATE KEY-----',
+      } as any);
 
       const state = service.getSnapshot();
       expect(state.context.validationErrors['alpineSigning.keypair']).toBeFalsy();
@@ -1282,6 +1412,49 @@ describe('repositoryFormMachine', () => {
         service.stop();
       });
 
+      it('accepts the stored-secret placeholder as a configured password and bearer token', async () => {
+        const placeholder = '#~NXRM~PLACEHOLDER~PASSWORD~#';
+        const machine = createRepositoryFormMachine({ format: 'maven2', repositoryType: 'proxy' });
+        const service = await startAndLoad(machine);
+
+        service.send({ type: 'UPDATE', name: 'name', value: baseProxyData.name } as any);
+        service.send({ type: 'UPDATE', name: 'storage.blobStoreName', value: 'default' } as any);
+        service.send({ type: 'UPDATE', name: 'proxy', value: baseProxyData.proxy } as any);
+        service.send({ type: 'UPDATE', name: 'httpClient', value: {
+          ...baseProxyData.httpClient,
+          authentication: { type: 'username', username: 'u', password: placeholder },
+        } } as any);
+        service.send({ type: 'SUBMIT' } as any);
+        expect(service.getSnapshot().context.validationErrors['httpClient.authentication.password']).toBeFalsy();
+
+        service.send({ type: 'UPDATE', name: 'httpClient', value: {
+          ...baseProxyData.httpClient,
+          authentication: { type: 'bearer', bearerToken: placeholder },
+        } } as any);
+        service.send({ type: 'SUBMIT' } as any);
+        expect(service.getSnapshot().context.validationErrors['httpClient.authentication.bearerToken']).toBeFalsy();
+
+        service.stop();
+      });
+
+      it('still requires a password when the field was cleared (e.g. after a remote URL change)', async () => {
+        const machine = createRepositoryFormMachine({ format: 'maven2', repositoryType: 'proxy' });
+        const service = await startAndLoad(machine);
+
+        service.send({ type: 'UPDATE', name: 'name', value: baseProxyData.name } as any);
+        service.send({ type: 'UPDATE', name: 'storage.blobStoreName', value: 'default' } as any);
+        service.send({ type: 'UPDATE', name: 'proxy', value: baseProxyData.proxy } as any);
+        service.send({ type: 'UPDATE', name: 'httpClient', value: {
+          ...baseProxyData.httpClient,
+          authentication: { type: 'username', username: 'u', password: '' },
+        } } as any);
+        service.send({ type: 'SUBMIT' } as any);
+
+        expect(service.getSnapshot().context.validationErrors['httpClient.authentication.password']).toBeTruthy();
+
+        service.stop();
+      });
+
       it('does not produce auth errors when authentication is null', async () => {
         const machine = createRepositoryFormMachine({ format: 'maven2', repositoryType: 'proxy' });
         const service = await startAndLoad(machine);
@@ -1366,6 +1539,56 @@ describe('repositoryFormMachine', () => {
       const data = service.getSnapshot().context.data;
       expect(data.oci?.forceBasicAuth).toBe(true);
       expect(data.ociProxy).toBeUndefined();
+
+      service.stop();
+    });
+
+    // NEXUS-55104 (review follow-up): CargoHostedRepositoryApiRequestToConfigurationConverter
+    // defaults requireAuthentication to true when the field is null/omitted (preserving hosted's
+    // legacy hardcoded posture), while the proxy/group converters default to false. Seeding an
+    // explicit `false` here for every cargo type — including hosted — silently overrides that
+    // true default: an administrator who creates a cargo-hosted repo via Nexus One UI without
+    // touching the checkbox gets requireAuthentication:false persisted, whereas the same action
+    // through Classic UI or a raw REST call (which omits `cargo` entirely) gets true. Pinned so a
+    // fresh cargo-hosted create seeds true, matching the backend's own default for that type.
+    it('seeds requireAuthentication true for a fresh cargo-hosted create (matches backend default)', async () => {
+      const machine = createRepositoryFormMachine({ format: 'cargo', repositoryType: 'hosted' });
+      const service = await startAndLoad(machine);
+
+      const data = service.getSnapshot().context.data;
+      expect(data.cargo).toEqual({ requireAuthentication: true });
+
+      service.stop();
+    });
+
+    it('seeds requireAuthentication false for a fresh cargo-proxy create (matches backend default)', async () => {
+      const machine = createRepositoryFormMachine({ format: 'cargo', repositoryType: 'proxy' });
+      const service = await startAndLoad(machine);
+
+      const data = service.getSnapshot().context.data;
+      expect(data.cargo).toEqual({ requireAuthentication: false });
+
+      service.stop();
+    });
+
+    it('seeds requireAuthentication false for a fresh cargo-group create (matches backend default)', async () => {
+      const machine = createRepositoryFormMachine({ format: 'cargo', repositoryType: 'group' });
+      const service = await startAndLoad(machine);
+
+      const data = service.getSnapshot().context.data;
+      expect(data.cargo).toEqual({ requireAuthentication: false });
+
+      service.stop();
+    });
+
+    it('seeds requireAuthentication true on TYPE_CHANGE to cargo-hosted, matching a fresh create', async () => {
+      const machine = createRepositoryFormMachine({ format: 'cargo', repositoryType: 'proxy' });
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TYPE_CHANGE', value: 'hosted' } as any);
+
+      const data = service.getSnapshot().context.data;
+      expect(data.cargo).toEqual({ requireAuthentication: true });
 
       service.stop();
     });
@@ -2093,10 +2316,30 @@ describe('repositoryFormMachine', () => {
       global.NX.State.getValue.mockReset();
     });
 
-    function withEnterprise(hasEnterprise: boolean) {
-      global.NX.State.getValue.mockImplementation((key: string, defaultValue: unknown) =>
-        key === 'hasEnterprise' ? hasEnterprise : defaultValue,
-      );
+    function withEnterprise(isEnterprise: boolean) {
+      global.NX.State.getValue.mockImplementation((key: string, defaultValue: unknown) => {
+        if (key === 'editionId') {
+          return isEnterprise ? 'nexus-enterprise-edition' : 'nexus-professional-edition';
+        }
+        return defaultValue;
+      });
+    }
+
+    /**
+     * Stub NX.State.getValue so that:
+     *   - editionId === 'nexus-enterprise-edition' when {@code enterprise} is true
+     *   - cdnDefaultForNewRepositories reflects {@code cdnDefault}
+     */
+    function withEnterpriseAndCdnDefault(enterprise: boolean, cdnDefault: boolean) {
+      global.NX.State.getValue.mockImplementation((key: string, defaultValue: unknown) => {
+        if (key === 'editionId') {
+          return enterprise ? 'nexus-enterprise-edition' : 'nexus-professional-edition';
+        }
+        if (key === 'cdnDefaultForNewRepositories') {
+          return cdnDefault;
+        }
+        return defaultValue;
+      });
     }
 
     function buildRepositoryWithoutGlobalDistribution() {
@@ -2113,9 +2356,9 @@ describe('repositoryFormMachine', () => {
     }
 
     it.each(['hosted', 'proxy', 'group'] as const)(
-      'seeds globalDistribution=false in create mode for a %s repository',
+      'seeds globalDistribution from the cdnDefaultForNewRepositories state key in create mode for a %s repository',
       async (repositoryType) => {
-        withEnterprise(true);
+        withEnterpriseAndCdnDefault(true, false);
         const machine = createRepositoryFormMachine({ format: 'maven2', repositoryType });
         const service = await startAndLoad(machine);
 
@@ -2124,6 +2367,16 @@ describe('repositoryFormMachine', () => {
         service.stop();
       },
     );
+
+    it('seeds globalDistribution=true in create mode when the CDN default is true', async () => {
+      withEnterpriseAndCdnDefault(true, true);
+      const machine = createRepositoryFormMachine({ format: 'maven2', repositoryType: 'hosted' });
+      const service = await startAndLoad(machine);
+
+      expect(service.getSnapshot().context.data.storage?.globalDistribution).toBe(true);
+
+      service.stop();
+    });
 
     it('leaves globalDistribution undefined in create mode when the edition is not entitled', async () => {
       withEnterprise(false);
@@ -2163,8 +2416,8 @@ describe('repositoryFormMachine', () => {
      * attribute, so the API omits the field; without a default the checkbox would never render on
      * an existing repository.
      */
-    it('defaults globalDistribution to false in edit mode when the API omits the field', async () => {
-      withEnterprise(true);
+    it('defaults globalDistribution to the CDN default state key in edit mode when the API omits the field', async () => {
+      withEnterpriseAndCdnDefault(true, true);
       const machine = createRepositoryFormMachine({
         repositoryName: 'maven-hosted',
         preloadedRepository: buildRepositoryWithoutGlobalDistribution(),
@@ -2172,7 +2425,7 @@ describe('repositoryFormMachine', () => {
       });
       const service = await startAndLoad(machine);
 
-      expect(service.getSnapshot().context.data.storage?.globalDistribution).toBe(false);
+      expect(service.getSnapshot().context.data.storage?.globalDistribution).toBe(true);
 
       service.stop();
     });
@@ -2247,6 +2500,80 @@ describe('repositoryFormMachine', () => {
       const service = await startAndLoad(machine);
 
       expect(restClient.get).toHaveBeenCalledWith('/service/rest/internal/cleanup-policies');
+
+      service.stop();
+    });
+  });
+
+  describe('SYNC_SAVED_ONLINE', () => {
+    const ONLINE_REPOSITORY = {
+      name: 'maven-hosted',
+      type: 'hosted' as const,
+      format: 'maven2',
+      url: 'http://localhost:8081/repository/maven-hosted',
+      online: true,
+      status: { online: true },
+      recipe: 'maven2-hosted',
+      storage: {
+        blobStoreName: 'default',
+        strictContentTypeValidation: true,
+        writePolicy: 'ALLOW',
+      },
+    };
+
+    async function loadOnlineHosted() {
+      const machine = createRepositoryFormMachine({
+        repositoryName: 'maven-hosted',
+        preloadedRepository: ONLINE_REPOSITORY as any,
+        format: 'maven2',
+      });
+      return startAndLoad(machine);
+    }
+
+    it('shouldSyncDataAndPristineOnlineToFalseWhenToolbarTakesRepoOffline', async () => {
+      const service = await loadOnlineHosted();
+
+      service.send({ type: 'SYNC_SAVED_ONLINE', online: false } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.data.online).toBe(false);
+      expect(state.context.pristineData?.online).toBe(false);
+
+      service.stop();
+    });
+
+    it('shouldLeaveFormPristineAfterSyncingSavedOnlineValue', async () => {
+      const service = await loadOnlineHosted();
+
+      service.send({ type: 'SYNC_SAVED_ONLINE', online: false } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.isPristine).toBe(true);
+
+      service.stop();
+    });
+
+    it('shouldSyncLoadedRepositoryOnlineSoLaterSaveSendsSyncedValue', async () => {
+      const service = await loadOnlineHosted();
+
+      service.send({ type: 'SYNC_SAVED_ONLINE', online: false } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.repository?.online).toBe(false);
+
+      service.stop();
+    });
+
+    it('shouldBringSavedOnlineBackToTrueWhenToolbarBringsRepoOnline', async () => {
+      const service = await loadOnlineHosted();
+
+      service.send({ type: 'SYNC_SAVED_ONLINE', online: false } as any);
+      service.send({ type: 'SYNC_SAVED_ONLINE', online: true } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.data.online).toBe(true);
+      expect(state.context.pristineData?.online).toBe(true);
+      expect(state.context.isPristine).toBe(true);
 
       service.stop();
     });

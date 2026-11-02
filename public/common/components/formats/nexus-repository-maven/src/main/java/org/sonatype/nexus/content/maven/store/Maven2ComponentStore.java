@@ -53,7 +53,7 @@ public class Maven2ComponentStore
 
   @Transactional
   public Set<GAV> findGavsWithSnaphots(final int repositoryId, final int minimumRetained) {
-    return dao().findGavsWithSnaphots(repositoryId, minimumRetained, softDeleteAvailable());
+    return dao().findGavsWithSnaphots(repositoryId, minimumRetained, trashAvailable());
   }
 
   @Transactional
@@ -64,17 +64,32 @@ public class Maven2ComponentStore
       final String baseVersion,
       final String releaseVersion)
   {
-    return dao().findComponentsForGav(repositoryId, name, group, baseVersion, releaseVersion, softDeleteAvailable());
+    return dao().findComponentsForGav(repositoryId, name, group, baseVersion, releaseVersion, trashAvailable());
   }
 
   @Transactional
   public Set<String> getBaseVersions(final int repositoryId, final String namespace, final String name) {
-    return dao().getBaseVersions(repositoryId, namespace, name, softDeleteAvailable());
+    return dao().getBaseVersions(repositoryId, namespace, name, trashAvailable());
+  }
+
+  @Transactional
+  public boolean existsInNamespace(final int repositoryId, final String namespace) {
+    return dao().existsInNamespace(repositoryId, namespace, trashAvailable());
+  }
+
+  @Transactional
+  public boolean existsInGabv(
+      final int repositoryId,
+      final String namespace,
+      final String name,
+      final String baseVersion)
+  {
+    return dao().existsInGabv(repositoryId, namespace, name, baseVersion, trashAvailable());
   }
 
   @Transactional
   public int[] selectSnapshotsAfterRelease(final int repositoryId, final int gracePeriod) {
-    return dao().selectSnapshotsAfterRelease(gracePeriod, repositoryId, softDeleteAvailable());
+    return dao().selectSnapshotsAfterRelease(gracePeriod, repositoryId, trashAvailable());
   }
 
   /**
@@ -86,6 +101,6 @@ public class Maven2ComponentStore
       final LocalDate olderThan,
       final long limit)
   {
-    return dao().selectUnusedSnapshots(repositoryId, olderThan, limit, softDeleteAvailable());
+    return dao().selectUnusedSnapshots(repositoryId, olderThan, limit, trashAvailable());
   }
 }

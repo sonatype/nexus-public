@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
-import com.google.common.collect.ImmutableList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +62,7 @@ public class BrowseUnsupportedHandler
     requireNonNull(securityHandler);
     this.template = getClass().getResource(TEMPLATE_RESOURCE);
     requireNonNull(template);
-    this.route = new Route(MATCHER, ImmutableList.of(securityHandler, this));
+    this.route = new Route(MATCHER, List.of(securityHandler, this));
   }
 
   @Nonnull

@@ -17,8 +17,6 @@ import java.util.Map;
 
 import org.sonatype.nexus.security.config.CPrivilege;
 
-import com.google.common.collect.Maps;
-
 /**
  * An implementation of {@link CPrivilege} suitable for an in-memory backing store.
  *
@@ -47,7 +45,7 @@ public class MemoryCPrivilege
       MemoryCPrivilege copy = (MemoryCPrivilege) super.clone();
 
       if (this.properties != null) {
-        copy.properties = Maps.newHashMap(this.properties);
+        copy.properties = new HashMap<>(this.properties);
       }
 
       return copy;
@@ -75,7 +73,7 @@ public class MemoryCPrivilege
   @Override
   public Map<String, String> getProperties() {
     if (this.properties == null) {
-      this.properties = Maps.newHashMap();
+      this.properties = new HashMap<>();
     }
     return this.properties;
   }

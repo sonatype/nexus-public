@@ -14,6 +14,7 @@ import React from 'react';
 
 import SystemInformationSection from "./SystemInformationSection";
 import NestedSystemInformationSection from "./NestedSystemInformationSection";
+import {translateNexusStatusEdition} from "./systemInformationEdition";
 
 /**
  * @since 3.24
@@ -23,7 +24,7 @@ export default function SystemInformationBody({systemInformation}) {
   return <>
     <SystemInformationSection
         sectionName="nexus-status"
-        information={systemInformation['nexus-status']}
+        information={translateNexusStatusEdition(systemInformation['nexus-status'])}
     />
     <SystemInformationSection
         sectionName="nexus-node"

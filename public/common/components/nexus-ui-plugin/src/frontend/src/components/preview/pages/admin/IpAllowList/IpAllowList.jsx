@@ -45,7 +45,14 @@ const formatDate = (isoString) => {
 // Will be updated from API settings
 const DEFAULT_MAX_ENTRIES = 256;
 
-// Delay before firing a server-side search request after the user stops typing
+// Delay before firing a server-side search request after the user stops typing.
+//
+// 300 ms rather than `APIConstants.DEBOUNCE_DELAY`: this is a short admin list where the filtered
+// result is expected to appear promptly.
+//
+// The timer also resets pagination before searching, so it is entangled with state transitions the
+// shared `useDebounced` hook does not express; it stays hand-rolled on purpose. See
+// private/developer-documentation/frontend/debouncing.md.
 const SEARCH_DEBOUNCE_MS = 300;
 
 export default function IpAllowList() {

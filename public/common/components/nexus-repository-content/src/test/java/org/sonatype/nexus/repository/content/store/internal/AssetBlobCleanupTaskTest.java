@@ -474,7 +474,7 @@ public class AssetBlobCleanupTaskTest
   void testBatchDeleteFollowsUpWithHardDeleteWhenPhysicalBlobIsAlreadyMissing() throws Exception {
     setBatchDeleteIgnoreFinalField(null);
 
-    // When soft-delete finds the .properties file missing, a stray .bytes file may still
+    // When trash finds the .properties file missing, a stray .bytes file may still
     // exist on disk. deleteBlobContent must follow up with deleteHard(blobId) to converge.
     BlobRef missingContentBlobRef = mock(BlobRef.class);
     BlobId missingContentBlobId = mock(BlobId.class);
@@ -499,7 +499,7 @@ public class AssetBlobCleanupTaskTest
 
     task.execute();
 
-    // deleteHard runs exactly once — for the ref whose soft-delete returned false.
+    // deleteHard runs exactly once — for the ref whose trash returned false.
     verify(blobStore, times(1)).deleteHard(any());
     verify(blobStore).deleteHard(missingContentBlobId);
   }

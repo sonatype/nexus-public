@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.provisioning;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.internal.httpclient.TestHttpClientConfiguration;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
@@ -38,6 +37,7 @@ import org.sonatype.nexus.internal.app.BaseUrlCapabilityDescriptor;
 import org.sonatype.nexus.internal.capability.DefaultCapabilityReference;
 
 import java.util.Collection;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -103,7 +103,7 @@ public class CoreApiImplTest
   public void setUp() {
     securityUtils = mockStatic(SecurityUtils.class);
     securityUtils.when(SecurityUtils::getSubject).thenReturn(subject);
-    Collection existingCapabilities = ImmutableList.of(reference);
+    Collection existingCapabilities = List.of(reference);
 
     when(capabilityRegistry.getAll()).thenReturn(existingCapabilities);
     api = new CoreApiImpl(capabilityRegistry, httpClientManager, secretsService);
@@ -116,7 +116,7 @@ public class CoreApiImplTest
 
   @Test
   public void canSetBaseUrlWithoutAnExistingCapability() {
-    Collection existingCapabilities = ImmutableList.of(reference);
+    Collection existingCapabilities = List.of(reference);
 
     when(capabilityRegistry.getAll()).thenReturn(existingCapabilities);
     when(reference.context()).thenReturn(context);
@@ -131,7 +131,7 @@ public class CoreApiImplTest
 
   @Test
   public void canSetBaseUrlWithAnExistingCapability() {
-    Collection existingCapabilities = ImmutableList.of(reference);
+    Collection existingCapabilities = List.of(reference);
 
     when(capabilityRegistry.getAll()).thenReturn(existingCapabilities);
     when(reference.context()).thenReturn(context);
@@ -148,7 +148,7 @@ public class CoreApiImplTest
 
   @Test
   public void canDeleteAnExistingBaseUrlCapability() {
-    Collection existingCapabilities = ImmutableList.of(reference);
+    Collection existingCapabilities = List.of(reference);
 
     when(capabilityRegistry.getAll()).thenReturn(existingCapabilities);
     when(reference.context()).thenReturn(context);
@@ -163,7 +163,7 @@ public class CoreApiImplTest
 
   @Test
   public void canDeleteWhenBaseUrlCapabilityIsNotConfigured() {
-    Collection existingCapabilities = ImmutableList.of();
+    Collection existingCapabilities = List.of();
 
     when(capabilityRegistry.getAll()).thenReturn(existingCapabilities);
 

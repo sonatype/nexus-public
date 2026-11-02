@@ -73,7 +73,7 @@ describe('ApiLayout', () => {
           onToggleLeft={jest.fn()}
         />
       );
-      expect(screen.getByRole('button', { name: 'Collapse endpoint list' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Hide endpoint list' })).toBeInTheDocument();
     });
   });
 
@@ -111,7 +111,7 @@ describe('ApiLayout', () => {
           onToggleLeft={jest.fn()}
         />
       );
-      expect(screen.getByRole('button', { name: 'Expand endpoint list' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Show endpoint list' })).toBeInTheDocument();
     });
   });
 
@@ -126,7 +126,7 @@ describe('ApiLayout', () => {
           onToggleLeft={onToggle}
         />
       );
-      await userEvent.click(screen.getByRole('button', { name: 'Collapse endpoint list' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Hide endpoint list' }));
       expect(onToggle).toHaveBeenCalledTimes(1);
     });
 
@@ -140,7 +140,7 @@ describe('ApiLayout', () => {
           onToggleLeft={onToggle}
         />
       );
-      await userEvent.click(screen.getByRole('button', { name: 'Expand endpoint list' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Show endpoint list' }));
       expect(onToggle).toHaveBeenCalledTimes(1);
     });
   });

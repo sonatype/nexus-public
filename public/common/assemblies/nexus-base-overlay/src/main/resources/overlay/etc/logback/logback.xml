@@ -7,10 +7,8 @@
     <resetJUL>true</resetJUL>
   </contextListener>
 
-  <jmxConfigurator/>
-
   <!-- NEXUS-54602: mask sensitive Set-Cookie tokens (e.g. KEYCLOAK_IDENTITY) at log-write time -->
-  <conversionRule conversionWord="maskedmsg" converterClass="org.sonatype.nexus.logging.MaskingMessageConverter"/>
+  <conversionRule conversionWord="maskedmsg" class="org.sonatype.nexus.logging.MaskingMessageConverter"/>
 
   <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
     <filter class="org.sonatype.nexus.logging.NexusLogFilter" />
@@ -119,27 +117,6 @@
 
   <logger name="auditlog" additivity="false">
     <appender-ref ref="auditlogfile"/>
-  </logger>
-
-  <appender name="blobstore-reconciliation-log-file" class="ch.qos.logback.classic.sift.SiftingAppender">
-    <discriminator>
-      <key>blobstore-reconciliation-path</key>
-      <defaultValue>unknown</defaultValue>
-    </discriminator>
-    <sift>
-      <appender name="FILE-${blobstore}" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-          <Pattern>%d{"yyyy-MM-dd HH:mm:ss"},%msg%n</Pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-          <fileNamePattern>${blobstore-reconciliation-path}/%d</fileNamePattern>
-          <maxHistory>90</maxHistory>
-        </rollingPolicy>
-      </appender>
-    </sift>
-  </appender>
-  <logger name="blobstore-reconciliation-log" additivity="false">
-    <appender-ref ref="blobstore-reconciliation-log-file"/>
   </logger>
 
   <appender name="metrics" class="org.sonatype.nexus.common.log.InstrumentedAppender"/>

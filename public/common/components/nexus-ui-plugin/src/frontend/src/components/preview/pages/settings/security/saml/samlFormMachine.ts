@@ -134,6 +134,7 @@ export function createSamlFormMachine(): StateMachine<SamlFormContext, any, Form
   const machine = createMachine<SamlFormContext, SamlEvent>(
     {
       id: 'saml-form',
+      predictableActionArguments: true,
       initial: 'loading',
       context: getDefaultContext(),
       states: {

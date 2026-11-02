@@ -27,7 +27,8 @@ Ext.define('NX.coreui.view.repository.recipe.CargoHosted', {
   requires: [
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.StorageFacetHosted',
-    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet',
+    'NX.coreui.view.repository.facet.CargoRequireAuthenticationFacet'
   ],
 
   /**
@@ -37,11 +38,19 @@ Ext.define('NX.coreui.view.repository.recipe.CargoHosted', {
     var me = this;
 
     me.items = [
+      {xtype: 'nx-coreui-repository-cargo-require-authentication-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-storage-hosted-facet'},
       {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
     ];
 
     me.callParent();
+    // Default the checkbox to checked for new hosted repos only: the server-side hosted default is true
+    // (auth-required), matching legacy behaviour. Skip if a record is already loaded (edit mode) so the
+    // bound value from the API is not overwritten. Proxy/group reuse the same facet with value:false,
+    // so the override lives here rather than in the shared facet.
+    if (!me.getRecord()) {
+      me.down('#authrequired').setValue(true);
+    }
   }
 });

@@ -310,14 +310,14 @@ describe('TrashTable', () => {
     expect(screen.queryByTestId('purge-button-child-a1')).not.toBeInTheDocument();
   });
 
-  it('shows an empty-state row when an expanded component has no soft-deleted assets', async () => {
+  it('shows an empty-state row when an expanded component has no trashed assets', async () => {
     mockFetchChildren.mockResolvedValue([]);
 
     render(<TrashTable items={ITEMS} {...defaultProps} />, { wrapper: Wrapper });
 
     fireEvent.click(screen.getByTestId('expand-toggle-c1'));
 
-    expect(await screen.findByText(/No soft-deleted assets/i)).toBeInTheDocument();
+    expect(await screen.findByText(/No assets in the Trash/i)).toBeInTheDocument();
   });
 
   it('shows an error-state row when the child fetch fails', async () => {

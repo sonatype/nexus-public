@@ -733,6 +733,7 @@ class AssetsResourceTest
     asset.setAssetId(assetId);
     asset.setPath(path);
     asset.setCreated(OffsetDateTime.now());
+    asset.setLastUpdated(OffsetDateTime.now());
     AssetBlobData assetBlob = new AssetBlobData();
     assetBlob.setAssetBlobId(assetId);
     assetBlob.setBlobCreated(BLOB_CREATED);
@@ -755,6 +756,7 @@ class AssetsResourceTest
     asset.setAssetId(AN_ASSET_ID);
     asset.setPath(ASSET_PATH);
     asset.setCreated(OffsetDateTime.now());
+    asset.setLastUpdated(OffsetDateTime.now());
     AssetBlobData assetBlob = new AssetBlobData();
     assetBlob.setAssetBlobId(1);
     assetBlob.setBlobCreated(BLOB_CREATED);

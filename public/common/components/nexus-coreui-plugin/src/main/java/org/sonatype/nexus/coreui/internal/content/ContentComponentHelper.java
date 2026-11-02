@@ -61,6 +61,7 @@ import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.AuthorizationException;
@@ -152,7 +153,7 @@ public class ContentComponentHelper
           // accessed content through group permissions, not the member repo.
           String permittingRepository = entry.getValue();
           // Keep the actual repository name for the HostedType check which needs
-          // to strip CONTENT_LAST_MODIFIED for proxied repos but keep it for hosted repos.
+          // to strip CONTENT_LAST_MODIFIED for hosted repos but keep it for proxy repos.
           // Cast to FluentAsset to access repository() method.
           FluentAsset fluentAsset = (FluentAsset) entry.getKey();
           String sourceRepository = fluentAsset.repository().getName();
@@ -342,7 +343,8 @@ public class ContentComponentHelper
   }
 
   @SuppressWarnings({"unchecked"})
-  private ComponentXO toComponentXO(
+  @VisibleForTesting
+  ComponentXO toComponentXO(
       final String repositoryName,
       final String format,
       final Component component)
@@ -368,20 +370,27 @@ public class ContentComponentHelper
       }
     }
 
-    // Filter format-specific attributes using AssetXODescriptor if available
+    // Format-specific attributes, mirroring toAssetXO: unfiltered for the UI unless the descriptor opts in
+    // (NEXUS-55062). transformAttributeValue is applied here too so the component panel renders values the same way
+    // the asset panel does.
     AssetXODescriptor descriptor = assetDescriptors.get(format);
     if (descriptor != null && formatAttributes instanceof Map) {
       Map<String, Object> originalFormatAttrs = (Map<String, Object>) formatAttributes;
-      Map<String, Object> filteredFormatAttrs = new HashMap<>();
+      boolean filtering = descriptor.filterUiAttributes();
+      Set<String> exposedKeys = filtering ? descriptor.listExposedAttributeKeys() : Set.of();
+      Map<String, Object> uiFormatAttrs = new HashMap<>();
 
-      Set<String> exposedKeys = descriptor.listExposedAttributeKeys();
       for (Map.Entry<String, Object> entry : originalFormatAttrs.entrySet()) {
-        if (exposedKeys.contains(entry.getKey()) || "component_kind".equals(entry.getKey())) {
-          filteredFormatAttrs.put(entry.getKey(), entry.getValue());
+        String key = entry.getKey();
+        boolean isKind = "component_kind".equals(key);
+        if (!filtering || exposedKeys.contains(key) || isKind) {
+          // component_kind is injected above rather than owned by the descriptor, so it is never transformed
+          uiFormatAttrs.put(key,
+              isKind ? entry.getValue() : descriptor.transformAttributeValue(key, entry.getValue()));
         }
       }
 
-      attributes.put(format, filteredFormatAttrs);
+      attributes.put(format, uiFormatAttrs);
     }
 
     componentXO.setAttributes(attributes);
@@ -433,6 +442,8 @@ public class ContentComponentHelper
       assetXO.setBlobRef(blob.blobRef().toString());
       assetXO.setSize(blob.blobSize());
       assetXO.setContentType(blob.contentType());
+      // blobUpdated reflects when the binary last changed. AssetBlob is immutable and a new one is
+      // created only when the content changes, so blobCreated is the stable source.
       assetXO.setBlobUpdated(blobCreated);
       attributes.put("checksum", blob.checksums());
       if (uploaderVisible) {
@@ -449,23 +460,27 @@ public class ContentComponentHelper
       contentMap.remove(CONTENT_LAST_MODIFIED);
     }
 
-    // Filter format-specific attributes using AssetXODescriptor if available
+    // Format-specific attributes. The UI shows every stored attribute unless the descriptor opts into filtering via
+    // filterUiAttributes(); the REST API filters independently through AssetXOBuilder/AssetXO, so the allow-list
+    // returned by listExposedAttributeKeys() still governs the REST payload (NEXUS-55062).
     AssetXODescriptor descriptor = assetDescriptors.get(format);
     if (descriptor != null && formatAttributes instanceof Map) {
       Map<String, Object> originalFormatAttrs = (Map<String, Object>) formatAttributes;
-      Map<String, Object> filteredFormatAttrs = new HashMap<>();
+      boolean filtering = descriptor.filterUiAttributes();
+      Set<String> exposedKeys = filtering ? descriptor.listExposedAttributeKeys() : Set.of();
+      Map<String, Object> uiFormatAttrs = new HashMap<>();
 
-      Set<String> exposedKeys = descriptor.listExposedAttributeKeys();
       for (Map.Entry<String, Object> entry : originalFormatAttrs.entrySet()) {
-        if (exposedKeys.contains(entry.getKey()) || "asset_kind".equals(entry.getKey())) {
-          Object value = exposedKeys.contains(entry.getKey())
-              ? descriptor.transformAttributeValue(entry.getKey(), entry.getValue())
-              : entry.getValue();
-          filteredFormatAttrs.put(entry.getKey(), value);
+        String key = entry.getKey();
+        boolean isKind = "asset_kind".equals(key);
+        if (!filtering || exposedKeys.contains(key) || isKind) {
+          // asset_kind is injected above rather than owned by the descriptor, so it is never transformed
+          uiFormatAttrs.put(key,
+              isKind ? entry.getValue() : descriptor.transformAttributeValue(key, entry.getValue()));
         }
       }
 
-      attributes.put(format, filteredFormatAttrs);
+      attributes.put(format, uiFormatAttrs);
     }
 
     assetXO.setAttributes(attributes);

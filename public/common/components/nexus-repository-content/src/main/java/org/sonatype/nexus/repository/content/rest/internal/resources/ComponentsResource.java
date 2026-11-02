@@ -177,9 +177,9 @@ public class ComponentsResource
     RepositoryItemIDXO repositoryItemIdXO = fromString(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIdXO.getRepositoryId());
 
-    // The soft-delete-vs-hard-delete decision and the content DELETE authorization are owned by
+    // The trash-vs-hard-delete decision and the content DELETE authorization are owned by
     // ContentDeletionService (NEXUS-49147). getComponent resolves (and read-authorizes) the component;
-    // soft-delete identifier/not-found errors map to 404, preserving this endpoint's contract.
+    // trash identifier/not-found errors map to 404, preserving this endpoint's contract.
     ofNullable(repository)
         .map(r -> getComponent(repositoryItemIdXO, r))
         .ifPresent(c -> {

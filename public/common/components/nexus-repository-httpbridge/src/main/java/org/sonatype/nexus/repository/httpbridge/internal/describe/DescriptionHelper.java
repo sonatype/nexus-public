@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal.describe;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -24,7 +25,6 @@ import org.sonatype.nexus.repository.view.Status;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -98,7 +98,7 @@ public class DescriptionHelper
   }
 
   private Map<String, Object> toMap(final Iterable<Entry<String, Object>> entries) {
-    Map<String, Object> table = Maps.newHashMap();
+    Map<String, Object> table = new HashMap<>();
     for (Entry<String, Object> entry : entries) {
       table.put(entry.getKey(), convert(entry.getValue()));
     }
@@ -106,7 +106,7 @@ public class DescriptionHelper
   }
 
   private Map<String, Object> toMap(final StringMultimap headers) {
-    Map<String, Object> table = Maps.newHashMap();
+    Map<String, Object> table = new HashMap<>();
     final Iterable<Entry<String, String>> entries = headers.entries();
     for (Entry<String, String> e : entries) {
       table.put(e.getKey(), e.getValue());

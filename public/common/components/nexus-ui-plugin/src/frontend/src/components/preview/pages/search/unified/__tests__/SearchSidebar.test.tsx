@@ -431,6 +431,49 @@ describe('SearchSidebar', () => {
       expect(screen.getByLabelText('Group')).toBeInTheDocument();
       expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Version')).not.toBeInTheDocument();
+      // NEXUS-55107: OS, Architecture, Labels, Author advanced filters
+      expect(screen.getByLabelText('Layer ID')).toBeInTheDocument();
+      expect(screen.getByLabelText('Content Digest')).toBeInTheDocument();
+      expect(screen.getByLabelText('OS')).toBeInTheDocument();
+      expect(screen.getByLabelText('Architecture')).toBeInTheDocument();
+      expect(screen.getByLabelText('Labels')).toBeInTheDocument();
+      expect(screen.getByLabelText('Author')).toBeInTheDocument();
+    });
+
+    it('renders generics plus Conan advanced filters (NEXUS-55107)', () => {
+      renderWithTheme(
+        <SearchSidebar {...defaultProps} selectedFormat="conan" filters={{}} />,
+      );
+      // Existing conan filters
+      expect(screen.getByLabelText('Base Version')).toBeInTheDocument();
+      expect(screen.getByLabelText('Channel')).toBeInTheDocument();
+      expect(screen.getByLabelText('Recipe Revision')).toBeInTheDocument();
+      expect(screen.getByLabelText('Package ID')).toBeInTheDocument();
+      expect(screen.getByLabelText('Package Revision')).toBeInTheDocument();
+      // NEXUS-55107 additions
+      expect(screen.getByLabelText('Base Version Strict')).toBeInTheDocument();
+      expect(screen.getByLabelText('Latest Revision')).toBeInTheDocument();
+      expect(screen.getByLabelText('Arch')).toBeInTheDocument();
+      // 'OS' collides with Docker OS filter across formats — assert Conan sees it too
+      expect(screen.getByLabelText('OS')).toBeInTheDocument();
+      expect(screen.getByLabelText('Compiler')).toBeInTheDocument();
+      expect(screen.getByLabelText('Compiler Version')).toBeInTheDocument();
+      expect(screen.getByLabelText('Compiler Runtime')).toBeInTheDocument();
+    });
+
+    it('renders generics plus Provider / Namespace / Module Name for Terraform (NEXUS-55107)', () => {
+      renderWithTheme(
+        <SearchSidebar {...defaultProps} selectedFormat="terraform" filters={{}} />,
+      );
+      // Terraform has no aliasLabels — generic labels stay
+      expect(screen.getByLabelText('Group')).toBeInTheDocument();
+      expect(screen.getByLabelText('Name')).toBeInTheDocument();
+      expect(screen.getByLabelText('Version')).toBeInTheDocument();
+      // Existing terraform filters
+      expect(screen.getByLabelText('Provider')).toBeInTheDocument();
+      expect(screen.getByLabelText('Namespace')).toBeInTheDocument();
+      // NEXUS-55107: asset-level terraform.name filter, disambiguated as "Module Name"
+      expect(screen.getByLabelText('Module Name')).toBeInTheDocument();
     });
 
     it('relabels to Filename for Raw, keeps Group and Version as generic', () => {

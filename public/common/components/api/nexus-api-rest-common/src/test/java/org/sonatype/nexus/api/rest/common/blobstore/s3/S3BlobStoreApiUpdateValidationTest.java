@@ -18,29 +18,30 @@ import java.util.stream.Collectors;
 
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiCloudFront;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiFailoverBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.BLOB_STORE_NAME_UPDATE_ERROR_MESSAGE;
@@ -51,7 +52,7 @@ import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiCons
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class S3BlobStoreApiUpdateValidationTest
 {
   private static final String BLOB_STORE_NAME = "super_blobstore";
@@ -61,9 +62,6 @@ public class S3BlobStoreApiUpdateValidationTest
   private static final String S3_BLOBSTORE_TYPE = "S3";
 
   private static final String FILE_BLOB_STORE_TYPE = "File";
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   @Mock
   private BlobStore blobStore;
@@ -79,10 +77,9 @@ public class S3BlobStoreApiUpdateValidationTest
     when(blobStoreManager.exists(BLOB_STORE_NAME)).thenReturn(false);
     mockBlobStoreType(S3_BLOBSTORE_TYPE);
 
-    expectedException.expect(ValidationErrorsException.class);
-    expectedException.expectMessage(is(format(NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT, BLOB_STORE_NAME)));
-
-    underTest.validateUpdateRequest(anS3BlobStoreApiModel(BLOB_STORE_NAME), BLOB_STORE_NAME);
+    ValidationErrorsException e = assertThrows(ValidationErrorsException.class,
+        () -> underTest.validateUpdateRequest(anS3BlobStoreApiModel(BLOB_STORE_NAME), BLOB_STORE_NAME));
+    assertThat(e.getMessage(), is(format(NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT, BLOB_STORE_NAME)));
   }
 
   @Test
@@ -90,10 +87,9 @@ public class S3BlobStoreApiUpdateValidationTest
     when(blobStoreManager.exists(BLOB_STORE_NAME)).thenReturn(true);
     mockBlobStoreType(S3_BLOBSTORE_TYPE);
 
-    expectedException.expect(ValidationErrorsException.class);
-    expectedException.expectMessage(is(BLOB_STORE_NAME_UPDATE_ERROR_MESSAGE));
-
-    underTest.validateUpdateRequest(anS3BlobStoreApiModel(ANOTHER_BLOB_STORE_NAME), BLOB_STORE_NAME);
+    ValidationErrorsException e = assertThrows(ValidationErrorsException.class,
+        () -> underTest.validateUpdateRequest(anS3BlobStoreApiModel(ANOTHER_BLOB_STORE_NAME), BLOB_STORE_NAME));
+    assertThat(e.getMessage(), is(BLOB_STORE_NAME_UPDATE_ERROR_MESSAGE));
   }
 
   @Test
@@ -101,10 +97,9 @@ public class S3BlobStoreApiUpdateValidationTest
     when(blobStoreManager.exists(BLOB_STORE_NAME)).thenReturn(true);
     mockBlobStoreType(FILE_BLOB_STORE_TYPE);
 
-    expectedException.expect(ValidationErrorsException.class);
-    expectedException.expectMessage(is(format(BLOB_STORE_TYPE_MISMATCH_ERROR_FORMAT, BLOB_STORE_NAME)));
-
-    underTest.validateUpdateRequest(anS3BlobStoreApiModel(BLOB_STORE_NAME), BLOB_STORE_NAME);
+    ValidationErrorsException e = assertThrows(ValidationErrorsException.class,
+        () -> underTest.validateUpdateRequest(anS3BlobStoreApiModel(BLOB_STORE_NAME), BLOB_STORE_NAME));
+    assertThat(e.getMessage(), is(format(BLOB_STORE_TYPE_MISMATCH_ERROR_FORMAT, BLOB_STORE_NAME)));
   }
 
   @Test
@@ -137,16 +132,13 @@ public class S3BlobStoreApiUpdateValidationTest
 
   @Test
   public void shouldThrowExceptionWhenBlobStoreNameIsEmptyOnCreate() {
-    expectedException.expect(ValidationErrorsException.class);
-    expectedException.expectMessage("Blob store name cannot be empty");
-
-    underTest.validateCreateRequest(anS3BlobStoreApiModel(""));
+    ValidationErrorsException e =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateCreateRequest(anS3BlobStoreApiModel("")));
+    assertThat(e.getMessage(), is("Blob store name cannot be empty"));
   }
 
   @Test
   public void testValidateCreateRequest_failoverBuckets() {
-    when(blobStoreManager.exists(BLOB_STORE_NAME)).thenReturn(false);
-
     S3BlobStoreApiBucketConfiguration bucketConfig = new S3BlobStoreApiBucketConfiguration(
         anS3BlobStoreApiBucket("us-east-1", "use-bucket"), null, null, null,
         s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null, null);
@@ -186,11 +178,167 @@ public class S3BlobStoreApiUpdateValidationTest
         DUPLICATE_REGIONS_ERROR_MESSAGE, FAILOVER_DEFAULT_ERROR_MESSAGE, MATCHES_PRIMARY_ERROR_MESSAGE));
   }
 
+  @Test
+  public void testValidateCreateRequest_withCloudFront_nullPrivateKey_shouldFail() {
+    S3BlobStoreApiCloudFront cloudFront =
+        new S3BlobStoreApiCloudFront("https://example.cloudfront.net", "key-id", null);
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, null, cloudFront);
+
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateCreateRequest(model));
+
+    List<String> messages = exception.getValidationErrors()
+        .stream()
+        .map(ValidationErrorXO::getMessage)
+        .collect(Collectors.toList());
+
+    assertThat(messages, contains("Missing PEM key"));
+  }
+
+  @Test
+  public void testValidateCreateRequest_withCloudFront_emptyPrivateKey_shouldFail() {
+    S3BlobStoreApiCloudFront cloudFront =
+        new S3BlobStoreApiCloudFront("https://example.cloudfront.net", "key-id", "");
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, null, cloudFront);
+
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateCreateRequest(model));
+
+    List<String> messages = exception.getValidationErrors()
+        .stream()
+        .map(ValidationErrorXO::getMessage)
+        .collect(Collectors.toList());
+
+    assertThat(messages, contains("Missing PEM key"));
+  }
+
+  @Test
+  public void testValidateCreateRequest_withCloudFront_whitespacePrivateKey_shouldFail() {
+    S3BlobStoreApiCloudFront cloudFront =
+        new S3BlobStoreApiCloudFront("https://example.cloudfront.net", "key-id", "   ");
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, null, cloudFront);
+
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateCreateRequest(model));
+
+    List<String> messages = exception.getValidationErrors()
+        .stream()
+        .map(ValidationErrorXO::getMessage)
+        .collect(Collectors.toList());
+
+    assertThat(messages, contains("Missing PEM key"));
+  }
+
+  @Test
+  public void testValidateCreateRequest_withCloudFront_passwordPlaceholder_shouldFail() {
+    S3BlobStoreApiCloudFront cloudFront =
+        new S3BlobStoreApiCloudFront("https://example.cloudfront.net", "key-id", PasswordPlaceholder.get());
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, null, cloudFront);
+
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateCreateRequest(model));
+
+    List<String> messages = exception.getValidationErrors()
+        .stream()
+        .map(ValidationErrorXO::getMessage)
+        .collect(Collectors.toList());
+
+    assertThat(messages, contains("Invalid PEM key"));
+  }
+
+  @Test
+  public void testValidateUpdateRequest_withCloudFront_nullPrivateKey_shouldFail() {
+    when(blobStoreManager.exists(BLOB_STORE_NAME)).thenReturn(true);
+    mockBlobStoreType(S3_BLOBSTORE_TYPE);
+
+    S3BlobStoreApiCloudFront cloudFront =
+        new S3BlobStoreApiCloudFront("https://example.cloudfront.net", "key-id", null);
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, null, cloudFront);
+
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateUpdateRequest(model, BLOB_STORE_NAME));
+
+    List<String> messages = exception.getValidationErrors()
+        .stream()
+        .map(ValidationErrorXO::getMessage)
+        .collect(Collectors.toList());
+
+    assertThat(messages, contains("Missing PEM key"));
+  }
+
+  @Test
+  public void testValidateUpdateRequest_withCloudFront_emptyPrivateKey_shouldFail() {
+    when(blobStoreManager.exists(BLOB_STORE_NAME)).thenReturn(true);
+    mockBlobStoreType(S3_BLOBSTORE_TYPE);
+
+    S3BlobStoreApiCloudFront cloudFront =
+        new S3BlobStoreApiCloudFront("https://example.cloudfront.net", "key-id", "");
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, null, cloudFront);
+
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateUpdateRequest(model, BLOB_STORE_NAME));
+
+    List<String> messages = exception.getValidationErrors()
+        .stream()
+        .map(ValidationErrorXO::getMessage)
+        .collect(Collectors.toList());
+
+    assertThat(messages, contains("Missing PEM key"));
+  }
+
+  @Test
+  public void testValidateUpdateRequest_withCloudFront_whitespacePrivateKey_shouldFail() {
+    when(blobStoreManager.exists(BLOB_STORE_NAME)).thenReturn(true);
+    mockBlobStoreType(S3_BLOBSTORE_TYPE);
+
+    S3BlobStoreApiCloudFront cloudFront =
+        new S3BlobStoreApiCloudFront("https://example.cloudfront.net", "key-id", "   ");
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, null, cloudFront);
+
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateUpdateRequest(model, BLOB_STORE_NAME));
+
+    List<String> messages = exception.getValidationErrors()
+        .stream()
+        .map(ValidationErrorXO::getMessage)
+        .collect(Collectors.toList());
+
+    assertThat(messages, contains("Missing PEM key"));
+  }
+
+  @Test
+  public void testValidateUpdateRequest_withCloudFront_passwordPlaceholder_shouldFail() {
+    when(blobStoreManager.exists(BLOB_STORE_NAME)).thenReturn(true);
+    mockBlobStoreType(S3_BLOBSTORE_TYPE);
+
+    S3BlobStoreApiCloudFront cloudFront =
+        new S3BlobStoreApiCloudFront("https://example.cloudfront.net", "key-id", PasswordPlaceholder.get());
+    S3BlobStoreApiModel model =
+        new S3BlobStoreApiModel(BLOB_STORE_NAME, null, null, cloudFront);
+
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateUpdateRequest(model, BLOB_STORE_NAME));
+
+    List<String> messages = exception.getValidationErrors()
+        .stream()
+        .map(ValidationErrorXO::getMessage)
+        .collect(Collectors.toList());
+
+    assertThat(messages, contains("Invalid PEM key"));
+  }
+
   private BlobStoreConfiguration mockBlobStoreType(final String type) {
     final BlobStoreConfiguration blobStoreConfiguration = new MockBlobStoreConfiguration();
     blobStoreConfiguration.setType(type);
-    when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
-    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    lenient().when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
+    lenient().when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
 
     return blobStoreConfiguration;
   }

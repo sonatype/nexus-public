@@ -18,6 +18,7 @@ const { rspack } = require('@rspack/core');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
+const ForbidStubbedModulesPlugin = require('../nexus-ui-plugin/stubs/rspack.forbid-stubbed-modules');
 
 const swcOptions = JSON.parse(fs.readFileSync(path.resolve(__dirname, '.swcrc')), 'utf-8');
 
@@ -126,7 +127,8 @@ module.exports = {
         from: path.resolve(__dirname, '../../../../node_modules/@sonatype/react-shared-components/assets/'),
         to: path.resolve(__dirname, 'target/classes/assets')
       }]
-    })
+    }),
+    new ForbidStubbedModulesPlugin()
   ],
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx'],

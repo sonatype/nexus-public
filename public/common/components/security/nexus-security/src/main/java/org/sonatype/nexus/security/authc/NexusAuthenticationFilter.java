@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.authc;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,6 @@ import jakarta.servlet.annotation.WebFilter;
 
 import org.sonatype.nexus.common.app.WebFilterPriority;
 
-import com.google.common.collect.Lists;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter;
@@ -46,7 +46,7 @@ public class NexusAuthenticationFilter
 {
   public static final String NAME = "nx-authc";
 
-  private List<AuthenticationTokenFactory> factories = Lists.newArrayList();
+  private List<AuthenticationTokenFactory> factories = new ArrayList<>();
 
   @Autowired
   public void install(@Nullable final List<AuthenticationTokenFactory> factories) {

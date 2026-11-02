@@ -212,6 +212,7 @@ public class CapabilityDTO
     dto.setId(capabilityDescriptor.type().toString());
     dto.setName(capabilityDescriptor.name());
     dto.setAbout(capabilityDescriptor.about());
+    dto.setRequiresSettingsUpdate(capabilityDescriptor.requiresSettingsUpdatePermission());
     if (capabilityDescriptor.formFields() != null) {
       dto.setFormFields(
           capabilityDescriptor.formFields()

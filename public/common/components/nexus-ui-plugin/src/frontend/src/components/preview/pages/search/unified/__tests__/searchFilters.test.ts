@@ -37,12 +37,13 @@ import {
 const ALL_FORMATS = [
   'all', 'alpine','ansiblegalaxy', 'apt', 'cargo', 'cocoapods', 'composer', 'conan', 'conda',
   'docker', 'gitlfs', 'go', 'helm', 'huggingface', 'maven', 'npm',
-  'nuget', 'oci', 'p2', 'pub', 'pypi', 'r', 'raw', 'rubygems', 'swift', 'terraform', 'yum'
+  'nuget', 'oci', 'openvsx', 'p2', 'pub', 'pypi', 'r', 'raw', 'rubygems', 'swift', 'terraform', 'yum'
 ] as const;
 
 // Expected API format mappings
 const API_FORMAT_MAPPINGS: Record<string, string> = {
   all: '',
+  openvsx: 'openvsx',
   alpine: 'alpine',
   ansiblegalaxy: 'ansiblegalaxy',
   apt: 'apt',
@@ -98,6 +99,7 @@ const PLACEHOLDER_PATTERNS: Record<string, RegExp> = {
   raw: /path|file/i,
   rubygems: /gem/i,
   swift: /package/i,
+  openvsx: /extension/i,
   terraform: /module/i,
   yum: /package/i,
 };
@@ -129,8 +131,9 @@ const EXPECTED_FILTERS: Record<string, string[]> = {
   // Formats with alias-only rows deleted + distinct fields kept
   // Composer: vendor/package/version alias group/name/version (deleted); description/keywords kept
   composer: ['repository', 'group', 'name', 'version', 'description', 'keywords'],
-  // Docker: imageName/imageTag alias name/version (deleted); layerId/contentDigest kept
-  docker: ['repository', 'group', 'name', 'version', 'layerId', 'contentDigest'],
+  // Docker: imageName/imageTag alias name/version (deleted); layerId/contentDigest/
+  // os/architecture/labels/author kept (os/architecture/labels/author added in NEXUS-55107)
+  docker: ['repository', 'group', 'name', 'version', 'layerId', 'contentDigest', 'os', 'architecture', 'labels', 'author'],
   // Maven: groupId/artifactId alias group/name (deleted); baseVersion/classifier/extension kept
   maven: ['repository', 'group', 'name', 'version', 'baseVersion', 'classifier', 'extension'],
   // npm: scope aliases group (deleted); author/description/keywords/license kept
@@ -139,14 +142,26 @@ const EXPECTED_FILTERS: Record<string, string[]> = {
   oci: ['repository', 'group', 'name', 'version', 'contentDigest'],
 
   // Formats with generics + distinct fields (no alias deletions needed)
-  conan: ['repository', 'group', 'name', 'version', 'baseVersion', 'channel', 'revision', 'packageId', 'packageRevision'],
+  // Conan: baseVersionStrict/revisionLatest/settings.* fields added in NEXUS-55107.
+  // settings.* filter ids are bare (arch/os/compiler/…) to match the file's
+  // established pattern of format-scoped bare ids; the api param keeps the full
+  // 'conan.settings.…' path.
+  conan: [
+    'repository', 'group', 'name', 'version',
+    'baseVersion', 'baseVersionStrict', 'channel', 'revision', 'revisionLatest',
+    'packageId', 'packageRevision',
+    'arch', 'os', 'compiler', 'compilerVersion', 'compilerRuntime',
+  ],
   gitlfs: ['repository', 'group', 'name', 'version', 'sha256'],
   nuget: ['repository', 'group', 'name', 'version', 'nugetId', 'tags', 'title', 'authors', 'description', 'summary'],
   p2: ['repository', 'group', 'name', 'version', 'pluginName'],
   pypi: ['repository', 'group', 'name', 'version', 'classifiers', 'description', 'keywords', 'summary'],
   rubygems: ['repository', 'group', 'name', 'version', 'description', 'platform', 'summary'],
   swift: ['repository', 'group', 'name', 'version', 'scope'],
-  terraform: ['repository', 'group', 'name', 'version', 'provider', 'namespace'],
+  // Open VSX: publisher aliases group via the component namespace (deleted); targetPlatform kept
+  openvsx: ['repository', 'group', 'name', 'version', 'targetPlatform'],
+  // Terraform: terraformName (asset-level terraform.name) added in NEXUS-55107
+  terraform: ['repository', 'group', 'name', 'version', 'provider', 'namespace', 'terraformName'],
   yum: ['repository', 'group', 'name', 'version', 'yumName', 'architecture'],
 };
 
@@ -168,15 +183,26 @@ const FORMAT_SPECIFIC_API_PARAMS: Record<string, Record<string, string>> = {
   },
   conan: {
     baseVersion: 'conan.baseVersion',
+    baseVersionStrict: 'conan.baseVersion.strict',
     channel: 'conan.channel',
     revision: 'conan.revision',
+    revisionLatest: 'conan.revision.latest',
     packageId: 'conan.packageId',
     packageRevision: 'conan.packageRevision',
+    arch: 'conan.settings.arch',
+    os: 'conan.settings.os',
+    compiler: 'conan.settings.compiler',
+    compilerVersion: 'conan.settings.compiler.version',
+    compilerRuntime: 'conan.settings.compiler.runtime',
   },
   // Docker: imageName/imageTag alias rows deleted; only distinct fields remain
   docker: {
     layerId: 'docker.layerId',
     contentDigest: 'docker.contentDigest',
+    os: 'docker.os',
+    architecture: 'docker.architecture',
+    labels: 'docker.labels',
+    author: 'docker.author',
   },
   gitlfs: {
     sha256: 'sha256',
@@ -223,9 +249,14 @@ const FORMAT_SPECIFIC_API_PARAMS: Record<string, Record<string, string>> = {
   swift: {
     scope: 'swift.scope',
   },
+  // Open VSX: publisher alias row deleted (it is the component namespace); targetPlatform is distinct
+  openvsx: {
+    targetPlatform: 'openvsx.targetPlatform',
+  },
   terraform: {
     provider: 'terraform.provider',
     namespace: 'terraform.namespace',
+    terraformName: 'terraform.name',
   },
   yum: {
     yumName: 'yum.name',
@@ -238,9 +269,9 @@ const FORMAT_SPECIFIC_API_PARAMS: Record<string, Record<string, string>> = {
 // =============================================================================
 
 describe('searchFilters', () => {
-  describe('FORMATS - All 27 Formats', () => {
-    it('defines exactly 27 formats', () => {
-      expect(Object.keys(FORMATS).length).toBe(27);
+  describe('FORMATS - All 28 Formats', () => {
+    it('defines exactly 28 formats', () => {
+      expect(Object.keys(FORMATS).length).toBe(28);
     });
 
     ALL_FORMATS.forEach(format => {
@@ -279,9 +310,9 @@ describe('searchFilters', () => {
   // TESTS: Format Filters
   // =============================================================================
 
-  describe('FORMAT_FILTERS - All 27 Formats', () => {
-    it('defines filters for exactly 27 formats', () => {
-      expect(Object.keys(FORMAT_FILTERS).length).toBe(27);
+  describe('FORMAT_FILTERS - All 28 Formats', () => {
+    it('defines filters for exactly 28 formats', () => {
+      expect(Object.keys(FORMAT_FILTERS).length).toBe(28);
     });
 
     ALL_FORMATS.forEach(format => {
@@ -388,8 +419,8 @@ describe('searchFilters', () => {
       });
     });
 
-    it('aliasLabels populated only for the six alias formats', () => {
-      const aliasFormats = ['maven', 'npm', 'docker', 'oci', 'composer', 'raw'] as const;
+    it('aliasLabels populated only for the seven alias formats', () => {
+      const aliasFormats = ['maven', 'npm', 'docker', 'oci', 'composer', 'raw', 'openvsx'] as const;
       aliasFormats.forEach(format => {
         expect(FORMAT_FILTERS[format].aliasLabels).toBeDefined();
       });
@@ -459,6 +490,11 @@ describe('searchFilters', () => {
       expect(labels).toEqual({ name: 'Filename' });
     });
 
+    it('returns Publisher alias for openvsx (targetPlatform stays a distinct row)', () => {
+      const labels = getAliasLabelsForFormat('openvsx');
+      expect(labels).toEqual({ group: 'Publisher' });
+    });
+
     it('returns undefined for formats without aliases (all, alpine, nuget, pypi)', () => {
       expect(getAliasLabelsForFormat('all')).toBeUndefined();
       expect(getAliasLabelsForFormat('alpine')).toBeUndefined();
@@ -510,6 +546,10 @@ describe('searchFilters', () => {
       expect(getAliasPlaceholdersForFormat('maven')).toBeUndefined();
     });
 
+    it('supplies publisher-flavored placeholder for openvsx', () => {
+      expect(getAliasPlaceholdersForFormat('openvsx')).toEqual({ group: 'e.g., redhat' });
+    });
+
     it('returns undefined for formats without label aliases', () => {
       expect(getAliasPlaceholdersForFormat('all')).toBeUndefined();
       expect(getAliasPlaceholdersForFormat('alpine')).toBeUndefined();
@@ -526,7 +566,7 @@ describe('searchFilters', () => {
     it('returns array of all formats', () => {
       const options = getFormatOptions();
       expect(Array.isArray(options)).toBe(true);
-      expect(options.length).toBe(27);
+      expect(options.length).toBe(28);
     });
 
     it('includes all expected formats', () => {
@@ -720,6 +760,10 @@ describe('searchFilters', () => {
           version: 'latest',
           layerId: 'sha256:abc123',
           contentDigest: 'sha256:def456',
+          os: 'linux',
+          architecture: 'amd64',
+          labels: 'maintainer=team',
+          author: 'team@example.com',
         });
 
         expect(params.get('q')).toBe('nginx');
@@ -732,6 +776,11 @@ describe('searchFilters', () => {
         expect(params.has('docker.imageTag')).toBe(false);
         expect(params.get('docker.layerId')).toBe('sha256:abc123');
         expect(params.get('docker.contentDigest')).toBe('sha256:def456');
+        // NEXUS-55107 additions
+        expect(params.get('docker.os')).toBe('linux');
+        expect(params.get('docker.architecture')).toBe('amd64');
+        expect(params.get('docker.labels')).toBe('maintainer=team');
+        expect(params.get('docker.author')).toBe('team@example.com');
       });
 
       it('builds correct params for pypi', () => {
@@ -786,10 +835,17 @@ describe('searchFilters', () => {
       it('builds correct params for conan with all filters', () => {
         const params = buildQueryParams('conan', 'boost', {
           baseVersion: '1.80.0',
+          baseVersionStrict: '1.80.0',
           channel: 'stable',
           revision: 'abc123',
+          revisionLatest: 'latest-abc',
           packageId: 'def456',
           packageRevision: 'ghi789',
+          arch: 'x86_64',
+          os: 'Linux',
+          compiler: 'gcc',
+          compilerVersion: '11',
+          compilerRuntime: 'MD',
         });
 
         expect(params.get('format')).toBe('conan');
@@ -798,6 +854,14 @@ describe('searchFilters', () => {
         expect(params.get('conan.revision')).toBe('abc123');
         expect(params.get('conan.packageId')).toBe('def456');
         expect(params.get('conan.packageRevision')).toBe('ghi789');
+        // NEXUS-55107 additions (HA-only backend fields, exposed unconditionally)
+        expect(params.get('conan.baseVersion.strict')).toBe('1.80.0');
+        expect(params.get('conan.revision.latest')).toBe('latest-abc');
+        expect(params.get('conan.settings.arch')).toBe('x86_64');
+        expect(params.get('conan.settings.os')).toBe('Linux');
+        expect(params.get('conan.settings.compiler')).toBe('gcc');
+        expect(params.get('conan.settings.compiler.version')).toBe('11');
+        expect(params.get('conan.settings.compiler.runtime')).toBe('MD');
       });
 
       it('builds correct params for rubygems', () => {
@@ -855,11 +919,14 @@ describe('searchFilters', () => {
         const params = buildQueryParams('terraform', 'aws', {
           provider: 'hashicorp',
           namespace: 'aws',
+          terraformName: 'vpc',
         });
 
         expect(params.get('format')).toBe('terraform');
         expect(params.get('terraform.provider')).toBe('hashicorp');
         expect(params.get('terraform.namespace')).toBe('aws');
+        // NEXUS-55107: asset-level terraform.name (distinct from generic name)
+        expect(params.get('terraform.name')).toBe('vpc');
       });
     });
 

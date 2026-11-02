@@ -20,7 +20,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyExtractor;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 
 import static java.util.Objects.requireNonNull;
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
@@ -44,7 +43,7 @@ public class BearerToken
   public String extract(final HttpServletRequest request) {
     final String headerValue = request.getHeader(AUTHORIZATION);
     if (headerValue != null && headerValue.startsWith("Bearer ")) {
-      List<String> parts = Lists.newArrayList(Splitter.on(' ').split(headerValue));
+      List<String> parts = Splitter.on(' ').splitToList(headerValue);
       if (parts.size() == 2 && "Bearer".equals(parts.get(0)) && matchesFormat(parts)) {
         return parts.get(1).replaceAll(format + ".", "");
       }

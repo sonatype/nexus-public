@@ -269,7 +269,7 @@ export function UserDetail({
               <Flex align="center" justify="between" className="user-detail__action-row">
                 <Box>
                   <Text size="2" weight="medium">Reset User Token</Text>
-                  <Text as="p" size="1" color="gray">Invalidate current token and force regeneration</Text>
+                  <Text as="p" size="1" color="gray">Invalidate all of their tokens and force a new user token</Text>
                 </Box>
                 <SettingsButton
                   variant="secondary"
@@ -291,7 +291,7 @@ export function UserDetail({
         testId="reset-user-token-dialog"
         onOpenChange={setResetTokenDialogOpen}
         title="Reset User Token"
-        message={`Are you sure you want to reset the token for "${user ? getFullName(user) : ''}"? This will invalidate their current token.`}
+        message={`Are you sure you want to reset the token for "${user ? getFullName(user) : ''}"? This will invalidate all of their tokens, including their user token and format tokens (npm, Docker, Terraform, etc.).`}
         confirmLabel="Reset"
         cancelLabel="Cancel"
         variant="danger"

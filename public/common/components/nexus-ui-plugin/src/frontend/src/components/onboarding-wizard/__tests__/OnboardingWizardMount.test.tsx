@@ -86,8 +86,8 @@ describe('OnboardingWizardMount', () => {
   });
 
   describe('rendering conditions', () => {
-    it('renders null when feature flag is off', () => {
-      (ExtJS.useState as jest.Mock).mockReturnValue(false);
+    it('renders null when onboarding.required is false', () => {
+      (ExtJS.useState as jest.Mock).mockReturnValue(false); // onboardingRequired
       (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
 
       const { container } = render(<OnboardingWizardMount />);
@@ -98,24 +98,8 @@ describe('OnboardingWizardMount', () => {
       expect(consoleWarnSpy).not.toHaveBeenCalled();
     });
 
-    it('renders null when feature flag is on but onboarding.required is false', () => {
-      (ExtJS.useState as jest.Mock)
-        .mockReturnValueOnce(true) // featureEnabled
-        .mockReturnValueOnce(false); // onboardingRequired
-      (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
-
-      const { container } = render(<OnboardingWizardMount />);
-
-      expect(container.firstChild).toBeNull();
-      expect(screen.queryByTestId('wizard-stub')).not.toBeInTheDocument();
-      expect(consoleErrorSpy).not.toHaveBeenCalled();
-      expect(consoleWarnSpy).not.toHaveBeenCalled();
-    });
-
-    it('renders null when feature flag and onboarding.required are on but user is not admin', () => {
-      (ExtJS.useState as jest.Mock)
-        .mockReturnValueOnce(true) // featureEnabled
-        .mockReturnValueOnce(true); // onboardingRequired
+    it('renders null when onboarding.required is true but user is not admin', () => {
+      (ExtJS.useState as jest.Mock).mockReturnValue(true); // onboardingRequired
       (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: false });
 
       const { container } = render(<OnboardingWizardMount />);
@@ -127,9 +111,7 @@ describe('OnboardingWizardMount', () => {
     });
 
     it('renders null when useUser returns undefined', () => {
-      (ExtJS.useState as jest.Mock)
-        .mockReturnValueOnce(true) // featureEnabled
-        .mockReturnValueOnce(true); // onboardingRequired
+      (ExtJS.useState as jest.Mock).mockReturnValue(true); // onboardingRequired
       (ExtJS.useUser as jest.Mock).mockReturnValue(undefined);
 
       const { container } = render(<OnboardingWizardMount />);
@@ -140,10 +122,8 @@ describe('OnboardingWizardMount', () => {
       expect(consoleWarnSpy).not.toHaveBeenCalled();
     });
 
-    it('renders Wizard when feature flag, onboarding.required, and admin are all true', () => {
-      (ExtJS.useState as jest.Mock)
-        .mockReturnValueOnce(true) // featureEnabled
-        .mockReturnValueOnce(true); // onboardingRequired
+    it('renders Wizard when onboarding.required and admin are both true', () => {
+      (ExtJS.useState as jest.Mock).mockReturnValue(true); // onboardingRequired
       (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
 
       render(<OnboardingWizardMount />);
@@ -154,9 +134,7 @@ describe('OnboardingWizardMount', () => {
     });
 
     it('renders null when useUser returns object without administrator field', () => {
-      (ExtJS.useState as jest.Mock)
-        .mockReturnValueOnce(true) // featureEnabled
-        .mockReturnValueOnce(true); // onboardingRequired
+      (ExtJS.useState as jest.Mock).mockReturnValue(true); // onboardingRequired
       (ExtJS.useUser as jest.Mock).mockReturnValue({ id: 'someUser' });
 
       const { container } = render(<OnboardingWizardMount />);
@@ -170,9 +148,7 @@ describe('OnboardingWizardMount', () => {
 
   describe('WizardProvider props', () => {
     beforeEach(() => {
-      (ExtJS.useState as jest.Mock)
-        .mockReturnValueOnce(true) // featureEnabled
-        .mockReturnValueOnce(true); // onboardingRequired
+      (ExtJS.useState as jest.Mock).mockReturnValue(true); // onboardingRequired
       (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
     });
 
@@ -222,11 +198,96 @@ describe('OnboardingWizardMount', () => {
     });
   });
 
+  describe('fetchSteps test-hub override', () => {
+    const MOCK_STEPS_STORAGE_KEY = 'SONATYPE_TEST_ONBOARDING_STEPS';
+
+    beforeEach(() => {
+      localStorage.clear();
+      (ExtJS.useState as jest.Mock).mockReturnValue(true); // onboardingRequired
+      (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    it('returns mock steps from localStorage without calling the endpoint', async () => {
+      localStorage.setItem(MOCK_STEPS_STORAGE_KEY, JSON.stringify(['Foo', 'Bar']));
+
+      render(<OnboardingWizardMount />);
+
+      const result = await capturedWizardProviderProps.fetchSteps!();
+
+      expect(result).toEqual([{ type: 'Foo' }, { type: 'Bar' }]);
+      expect(restClient.get).not.toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the endpoint when the stored override is an empty array', async () => {
+      localStorage.setItem(MOCK_STEPS_STORAGE_KEY, JSON.stringify([]));
+      const mockSteps = [{ type: 'Real' }];
+      (restClient.get as jest.Mock).mockResolvedValueOnce(mockSteps);
+
+      render(<OnboardingWizardMount />);
+
+      const result = await capturedWizardProviderProps.fetchSteps!();
+
+      expect(result).toEqual(mockSteps);
+      expect(restClient.get).toHaveBeenCalledWith(
+        '/service/rest/internal/ui/onboarding'
+      );
+    });
+
+    it('falls back to the endpoint when the stored override is malformed JSON', async () => {
+      localStorage.setItem(MOCK_STEPS_STORAGE_KEY, '{not valid json');
+      const mockSteps = [{ type: 'Real' }];
+      (restClient.get as jest.Mock).mockResolvedValueOnce(mockSteps);
+
+      render(<OnboardingWizardMount />);
+
+      const result = await capturedWizardProviderProps.fetchSteps!();
+
+      expect(result).toEqual(mockSteps);
+      expect(restClient.get).toHaveBeenCalledWith(
+        '/service/rest/internal/ui/onboarding'
+      );
+    });
+  });
+
+  describe('onboarding.required state resolver', () => {
+    it('reads onboarding.required from ExtJS state with a false default', () => {
+      const mockGetValue = jest.fn().mockReturnValue(true);
+      (ExtJS.state as jest.Mock).mockReturnValue({ getValue: mockGetValue });
+      // Invoke the resolver passed to useState so the default-read path runs.
+      (ExtJS.useState as jest.Mock).mockImplementation((resolver: () => unknown) =>
+        resolver()
+      );
+      (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
+
+      render(<OnboardingWizardMount />);
+
+      expect(mockGetValue).toHaveBeenCalledWith('onboarding.required', false);
+      expect(screen.getByTestId('wizard-stub')).toBeInTheDocument();
+    });
+
+    it('resolves to false when ExtJS.state() is undefined', () => {
+      (ExtJS.state as jest.Mock).mockReturnValue(undefined);
+      (ExtJS.useState as jest.Mock).mockImplementation((resolver: () => unknown) =>
+        resolver()
+      );
+      (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
+
+      const { container } = render(<OnboardingWizardMount />);
+
+      // Undefined state -> resolver yields false -> component renders null.
+      expect(container.firstChild).toBeNull();
+    });
+  });
+
   describe('verify service', () => {
     beforeEach(() => {
-      (ExtJS.useState as jest.Mock)
-        .mockReturnValueOnce(true) // featureEnabled
-        .mockReturnValueOnce(true); // onboardingRequired
+      (ExtJS.useState as jest.Mock).mockReturnValue(true); // onboardingRequired
       (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
     });
 
@@ -271,9 +332,7 @@ describe('OnboardingWizardMount', () => {
   describe('dismiss toast on close', () => {
     beforeEach(() => {
       sessionStorage.clear();
-      (ExtJS.useState as jest.Mock)
-        .mockReturnValueOnce(true) // featureEnabled
-        .mockReturnValueOnce(true); // onboardingRequired
+      (ExtJS.useState as jest.Mock).mockReturnValue(true); // onboardingRequired
       (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
       (ExtJS.state as jest.Mock).mockReturnValue({
         getValue: jest.fn(),

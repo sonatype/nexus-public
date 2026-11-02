@@ -26,7 +26,6 @@ import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.formfields.TextAreaFormField;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -93,7 +92,7 @@ public class MyBatisDataStoreDescriptor
 
   private static final Messages messages = I18N.create(Messages.class);
 
-  private final List<FormField<?>> formFields = ImmutableList.of(
+  private final List<FormField<?>> formFields = List.of(
       new StringTextFormField(JDBC_URL, messages.jdbcUrlLabel(), null, true),
       new StringTextFormField(USERNAME, messages.usernameLabel(), null, false),
       new PasswordFormField(PASSWORD, messages.passwordLabel(), null, false),

@@ -511,7 +511,7 @@ describe('IqPolicyViolationsCell', () => {
     renderWithTheme(
       <IqPolicyViolationsCell
         repository={testRepo}
-        firewallStatus={mockFirewallStatusData[0]}
+        firewallStatus={{ ...mockFirewallStatusData[0], message: 'Quarantine enabled' }}
       />
     );
 
@@ -567,6 +567,7 @@ describe('IqPolicyViolationsCell', () => {
         repository={testRepo}
         firewallStatus={{
           ...mockFirewallStatusData[0],
+          message: 'Quarantine enabled',
           criticalComponentCount: 0,
           severeComponentCount: 0,
           moderateComponentCount: 0,

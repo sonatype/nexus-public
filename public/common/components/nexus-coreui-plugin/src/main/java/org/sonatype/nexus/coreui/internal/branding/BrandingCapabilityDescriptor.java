@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.coreui.internal.branding;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +28,6 @@ import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.TextAreaFormField;
 
-import com.google.common.collect.Lists;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -84,7 +85,7 @@ public class BrandingCapabilityDescriptor
   private final List<FormField> formFields;
 
   public BrandingCapabilityDescriptor() {
-    formFields = Lists.<FormField>newArrayList(
+    formFields = new ArrayList<>(Arrays.asList(
         new CheckboxFormField(
             BrandingCapabilityConfiguration.HEADER_ENABLED,
             messages.headerEnabledLabel(),
@@ -104,7 +105,7 @@ public class BrandingCapabilityDescriptor
             BrandingCapabilityConfiguration.FOOTER_HTML,
             messages.footerHtmlLabel(),
             messages.footerHtmlHelp(),
-            FormField.OPTIONAL));
+            FormField.OPTIONAL)));
   }
 
   @Override

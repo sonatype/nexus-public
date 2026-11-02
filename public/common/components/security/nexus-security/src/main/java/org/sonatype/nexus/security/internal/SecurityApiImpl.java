@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security.internal;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,7 +31,6 @@ import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
 
-import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,8 +108,8 @@ public class SecurityApiImpl
     role.setSource(DEFAULT_SOURCE);
     role.setName(requireNonNull(name));
     role.setDescription(description);
-    role.setPrivileges(Sets.newHashSet(requireNonNull(privileges)));
-    role.setRoles(Sets.newHashSet(requireNonNull(roles)));
+    role.setPrivileges(new HashSet<>(requireNonNull(privileges)));
+    role.setRoles(new HashSet<>(requireNonNull(roles)));
 
     return securitySystem.getAuthorizationManager(DEFAULT_SOURCE).addRole(role);
   }

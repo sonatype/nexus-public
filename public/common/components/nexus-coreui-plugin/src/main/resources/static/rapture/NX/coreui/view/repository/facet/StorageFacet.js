@@ -104,6 +104,59 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
           });
     }
 
+    if (NX.State.isEnterpriseEdition()) {
+      me.items[0].items.push(
+          {
+            xtype: 'checkbox',
+            name: 'attributes.storage.globalDistribution',
+            itemId: 'globalDistribution',
+            fieldLabel: NX.I18n.get('Repository_Facet_StorageFacet_GlobalDistribution_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_StorageFacet_GlobalDistribution_HelpText'),
+            value: false,
+            hidden: true,
+            listeners: {
+              afterrender: function (checkbox) {
+                var facet = checkbox.up('nx-coreui-repository-storage-facet'),
+                    combo = facet.down('#blobStoreName'),
+                    sync = function () {
+                      facet.syncGlobalDistribution(checkbox, combo);
+                    };
+
+                checkbox.mon(combo, 'change', sync);
+                checkbox.mon(combo.getStore(), 'load', sync);
+                sync();
+              }
+            }
+          });
+    }
+
     me.callParent();
+  },
+
+  /**
+   * Shows the global distribution checkbox only while the selected blob store has CloudFront or S3
+   * Transfer Acceleration configured, clearing it otherwise. On a create form, seeds it from the
+   * capability default each time a different blob store is selected.
+   *
+   * @private
+   * @param {Ext.form.field.Checkbox} checkbox global distribution checkbox
+   * @param {Ext.form.field.ComboBox} combo blob store selector
+   */
+  syncGlobalDistribution: function(checkbox, combo) {
+    var blobStoreName = combo.getValue(),
+        record = combo.getStore().findRecord('name', blobStoreName),
+        enabled = Boolean(record && record.get('globalDistributionEnabled')),
+        cdnDefault;
+
+    if (!enabled) {
+      checkbox.setValue(false);
+    }
+    else if (checkbox.cdnDefaultBlobStore !== blobStoreName && checkbox.up('nx-coreui-repository-add')) {
+      checkbox.cdnDefaultBlobStore = blobStoreName;
+      cdnDefault = Boolean(NX.State.getValue('cdnDefaultForNewRepositories', false));
+      checkbox.originalValue = cdnDefault;
+      checkbox.setValue(cdnDefault);
+    }
+    checkbox.setVisible(enabled);
   }
 });

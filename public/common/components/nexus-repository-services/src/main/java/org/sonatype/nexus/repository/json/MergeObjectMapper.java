@@ -37,7 +37,6 @@ import static com.fasterxml.jackson.core.JsonToken.END_ARRAY;
 import static com.fasterxml.jackson.core.JsonToken.END_OBJECT;
 import static com.fasterxml.jackson.core.JsonToken.VALUE_NULL;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_TRAILING_TOKENS;
-import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.nonNull;
 
@@ -139,7 +138,7 @@ public class MergeObjectMapper
         final List<InputStreamSupplier> inputStreams,
         @Nullable final Charset charset) throws IOException
     {
-      NestedAttributesMap result = new NestedAttributesMap("mergeMap", newHashMap());
+      NestedAttributesMap result = new NestedAttributesMap("mergeMap", new HashMap<>());
 
       for (InputStreamSupplier inputStreamSupplier : inputStreams) {
         try (InputStream inputStream = inputStreamSupplier.get()) {

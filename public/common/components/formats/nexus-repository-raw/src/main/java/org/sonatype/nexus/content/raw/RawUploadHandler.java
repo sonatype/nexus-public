@@ -15,6 +15,7 @@ package org.sonatype.nexus.content.raw;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,7 +35,6 @@ import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPayload;
 
-import com.google.common.collect.Lists;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -64,7 +64,7 @@ public class RawUploadHandler
   {
     RawContentFacet facet = repository.facet(RawContentFacet.class);
 
-    List<Content> responseContents = Lists.newArrayList();
+    List<Content> responseContents = new ArrayList<>();
     for (Entry<String, PartPayload> entry : pathToPayload.entrySet()) {
       String path = entry.getKey();
 

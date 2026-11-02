@@ -39,9 +39,9 @@ public interface BrowseNodeDAO
   String FILTER_PARAMS = "filterParams";
 
   /**
-   * See {@code ComponentDAO#SOFT_DELETE_AVAILABLE}.
+   * See {@code ComponentDAO#TRASH_AVAILABLE}.
    */
-  String SOFT_DELETE_AVAILABLE = "softDeleteAvailable";
+  String TRASH_AVAILABLE = "trashAvailable";
 
   /**
    * Retrieves the browse nodes directly under the given hierarchical display path.
@@ -59,7 +59,7 @@ public interface BrowseNodeDAO
       @Param("limit") int limit,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Does a browse node already exist for this component?

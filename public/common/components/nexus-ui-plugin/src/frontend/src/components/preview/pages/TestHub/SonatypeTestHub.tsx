@@ -370,7 +370,6 @@ function triggerOnboardingWizard() {
     console.warn('[TestHub] Could not access ExtJS state to trigger onboarding wizard');
     return;
   }
-  stateController.setValue('nexus.react.onboarding.enabled', true);
   stateController.setValue('onboarding.required', true);
   if (stateStore?.fireEvent) {
     stateStore.fireEvent('datachanged', stateStore);

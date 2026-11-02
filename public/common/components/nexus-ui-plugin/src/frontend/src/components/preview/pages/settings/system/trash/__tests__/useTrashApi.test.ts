@@ -14,7 +14,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import {
   mapToDeletedItem,
-  SoftDeletedEntityXO,
+  TrashedEntityXO,
   useDeletedItems,
   useDeletedItemsFacets,
   usePurgeItems,
@@ -38,7 +38,7 @@ const mockGet = restClient.get as jest.MockedFunction<typeof restClient.get>;
 const mockPost = restClient.post as jest.MockedFunction<typeof restClient.post>;
 
 describe('mapToDeletedItem', () => {
-  function makeXo(overrides: Partial<SoftDeletedEntityXO> = {}): SoftDeletedEntityXO {
+  function makeXo(overrides: Partial<TrashedEntityXO> = {}): TrashedEntityXO {
     return {
       entityType: 'component',
       identifier: 'id-1',
@@ -267,7 +267,7 @@ describe('useDeletedItemsFacets', () => {
   it('hits /facets endpoint', async () => {
     renderHook(() => useDeletedItemsFacets(0));
     await waitFor(() => expect(mockGet).toHaveBeenCalled());
-    expect(mockGet.mock.calls[0][0]).toMatch(/\/soft-delete\/facets/);
+    expect(mockGet.mock.calls[0][0]).toMatch(/\/trash\/facets/);
   });
 
   it('refetches when refetchKey changes', async () => {

@@ -74,15 +74,15 @@ export function TextFilter({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
-      
+
       // Update UI state immediately
       onChange(id, newValue);
-      
+
       // Cancel any pending debounced search
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
-      
+
       // Schedule debounced search
       if (onSearch) {
         debounceRef.current = setTimeout(() => {
@@ -98,9 +98,9 @@ export function TextFilter({
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
-    
+
     onChange(id, '');
-    
+
     // Trigger immediate search on clear
     if (onSearch) {
       // Use setTimeout(0) to ensure state update is applied first
@@ -163,5 +163,3 @@ export function TextFilter({
 }
 
 export default TextFilter;
-
-

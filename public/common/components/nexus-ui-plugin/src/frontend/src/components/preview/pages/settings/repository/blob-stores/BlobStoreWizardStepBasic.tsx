@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import { Flex } from '@radix-ui/themes';
 import {
   SettingsFormSection,
   SettingsTextInput,
@@ -21,6 +22,8 @@ import {
   SettingsAlert,
 } from '../../../../shared/form';
 import { useIsClustered, useIsLicensedEdition } from '../../../../shared/hooks';
+import { EditionPill } from '../../../../shared/Badges/EditionPill';
+import { LicenseRequiredCallout } from './LicenseRequiredCallout';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { useS3DropdownValues, useGroupableBlobStores } from './useBlobStores';
 import { shouldShowHaPathWarning, HA_PATH_WARNING } from './haPathWarning';
@@ -134,15 +137,18 @@ export function BlobStoreWizardStepBasic({
               placeholder="nexus/"
               helpText="Optional path prefix within the bucket"
             />
-            {isLicensedEdition && (
+            <Flex direction="column" gap="2">
+              {!isLicensedEdition && <LicenseRequiredCallout feature="presignedUrl" />}
               <SettingsCheckbox
                 name="s3-presigned"
                 label="Pre-Signed URL"
                 description="Redirect downloads to S3 for better performance"
                 checked={config.preSignedUrlEnabled}
                 onChange={(v) => onChange('bucketConfiguration.preSignedUrlEnabled', v)}
+                disabled={!isLicensedEdition}
+                badge={isLicensedEdition ? undefined : <EditionPill tier="pro" />}
               />
-            )}
+            </Flex>
           </>
         )}
 

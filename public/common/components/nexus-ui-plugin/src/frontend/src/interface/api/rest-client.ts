@@ -139,6 +139,8 @@ export const ENDPOINTS = {
   MALICIOUS_RISK_ACKNOWLEDGE: `${API_V1}/malicious-risk/acknowledge`,
   MALICIOUS_RISK_DELETE_FINDING: `${API_V1}/malicious-risk/delete-finding`,
   MALICIOUS_RISK_REMEDIATE: `${API_V1}/malicious-risk/remediate`,
+  FIREWALL_SECURITY_IQ_STATUS_REFRESH: `${API_INTERNAL}/firewall/security/iq-status/refresh`,
+  FIREWALL_QUARANTINE_SUMMARY: `${API_INTERNAL_UI}/firewall/quarantine/summary`,
 } as const;
 
 /**

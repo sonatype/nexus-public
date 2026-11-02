@@ -28,7 +28,6 @@ import org.sonatype.nexus.security.config.CPrivilegeBuilder;
 import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeWildcard;
 import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeWildcardRequest;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
 import static java.util.Objects.requireNonNull;
@@ -69,7 +68,7 @@ public class WildcardPrivilegeDescriptor
 
   public WildcardPrivilegeDescriptor() {
     super(TYPE);
-    this.formFields = ImmutableList.of(
+    this.formFields = List.of(
         new StringTextFormField(
             P_PATTERN,
             messages.pattern(),

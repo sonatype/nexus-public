@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.i18n.I18N;
 import org.sonatype.nexus.common.i18n.MessageBundle;
@@ -95,10 +94,13 @@ public class GlobalWebhookCapability
 
   private static final Messages messages = I18N.create(Messages.class);
 
-  @Autowired
-  private WebhookService webhookService;
+  private final WebhookService webhookService;
 
   private final List<WebhookSubscription> subscriptions = new ArrayList<>();
+
+  public GlobalWebhookCapability(final WebhookService webhookService) {
+    this.webhookService = webhookService;
+  }
 
   @Override
   protected Configuration createConfig(final Map<String, String> properties) throws Exception {

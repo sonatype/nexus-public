@@ -538,4 +538,44 @@ describe('useRepositoryForm', () => {
       mockFormReturn.data = originalData;
     });
   });
+
+  describe('saved online sync', () => {
+    const EXISTING_REPO_NAME = 'existing-repo';
+
+    it('shouldSyncSavedOnlineToMachineWhenRepositoryPropGoesOffline', () => {
+      renderHook(() =>
+        useRepositoryForm({
+          ...DEFAULT_OPTIONS,
+          repositoryName: EXISTING_REPO_NAME,
+          repository: { online: false } as any,
+        })
+      );
+
+      expect(mockSend).toHaveBeenCalledWith({ type: 'SYNC_SAVED_ONLINE', online: false });
+    });
+
+    it('shouldNotSyncSavedOnlineWhenRepositoryOnlineMatchesPristine', () => {
+      renderHook(() =>
+        useRepositoryForm({
+          ...DEFAULT_OPTIONS,
+          repositoryName: EXISTING_REPO_NAME,
+          repository: { online: true } as any,
+        })
+      );
+
+      expect(mockSend).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'SYNC_SAVED_ONLINE' })
+      );
+    });
+
+    it('shouldNotSyncSavedOnlineInCreateMode', () => {
+      renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, repository: { online: false } as any })
+      );
+
+      expect(mockSend).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'SYNC_SAVED_ONLINE' })
+      );
+    });
+  });
 });

@@ -25,7 +25,8 @@ public class UserTokenEvent
     ADMIN_READ("Admin Read"),
     ADMIN_DELETED("Admin Deleted"),
     ADMIN_LISTED("Admin Listed"),
-    ADMIN_FAILED("Admin Operation Failed");
+    ADMIN_FAILED("Admin Operation Failed"),
+    FORMAT_TOKENS_RESET("Format Tokens Reset");
 
     private final String type;
 

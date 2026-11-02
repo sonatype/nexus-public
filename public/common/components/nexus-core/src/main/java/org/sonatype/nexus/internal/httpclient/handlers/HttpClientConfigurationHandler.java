@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.httpclient.handlers;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.sonatype.nexus.common.time.Time;
@@ -30,7 +31,6 @@ import org.sonatype.nexus.kv.KeyValueStore;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.common.collect.ImmutableList;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
@@ -48,7 +48,7 @@ public abstract class HttpClientConfigurationHandler<T>
   protected HttpClientConfigurationHandler(final SecretsFactory secretsFactory, final KeyValueStore keyValueStore) {
     constructingMapper.get()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(ImmutableList.of(Secret.class)))
+        .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(List.of(Secret.class)))
         // register custom serializers and deserializers
         // - goodies Time is our internal Time representation
         // - AuthenticationConfiguration needs a tiny bit of logic for resolving the proper impl and encryption

@@ -45,6 +45,9 @@ import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.text.Strings2.MASK;
+import static org.sonatype.nexus.node.datastore.NodeHeartbeatManager.BUILD_REVISION_ATTRIBUTE;
+import static org.sonatype.nexus.node.datastore.NodeHeartbeatManager.NEXUS_STATUS_KEY;
+import static org.sonatype.nexus.node.datastore.NodeHeartbeatManager.VERSION_ATTRIBUTE;
 import org.springframework.stereotype.Component;
 
 /**
@@ -106,7 +109,7 @@ public class SystemInformationGeneratorImpl
     sections.put("system-runtime", reportRuntime());
     sections.put("system-network", reportNetwork());
     sections.put("system-filestores", reportFileStores());
-    sections.put("nexus-status", reportNexusStatus());
+    sections.put(NEXUS_STATUS_KEY, reportNexusStatus());
     sections.put("nexus-node", reportNexusNode());
     sections.put("nexus-properties", reportObfuscatedProperties(nexusProperties.get()));
     sections.put("nexus-configuration", reportNexusConfiguration());
@@ -166,9 +169,9 @@ public class SystemInformationGeneratorImpl
 
   private Map<String, Object> reportNexusStatus() {
     Map<String, Object> data = new HashMap<>();
-    data.put("version", applicationVersion.getVersion());
+    data.put(VERSION_ATTRIBUTE, applicationVersion.getVersion());
     data.put("edition", applicationVersion.getEdition());
-    data.put("buildRevision", applicationVersion.getBuildRevision());
+    data.put(BUILD_REVISION_ATTRIBUTE, applicationVersion.getBuildRevision());
     data.put("buildTimestamp", applicationVersion.getBuildTimestamp());
     return data;
   }

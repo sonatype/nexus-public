@@ -29,7 +29,17 @@ jest.mock('./useLeftNavigationMenu', () => ({
 // useContextAwareRouteName is used by the local Classic UI SearchNavItem leaf.
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   useContextAwareRouteName: (name: string) => name,
-  NavItemBox: ({ name, text }: { name: string; text: string }) => <div data-testid={`nav-item-${name}`}>{text}</div>,
+  NavItemBox: ({ name, text, badge }: { name: string; text: string; badge?: number | null }) => (
+    <div data-testid={`nav-item-${name}`}>
+      {text}
+      {badge != null && <span data-testid={`nav-badge-${name}`}>{badge}</span>}
+    </div>
+  ),
+  // The Security section itself (label, links, filtering, group naming) is covered by SecurityNavSection.test.tsx
+  // in nexus-ui-plugin; here we verify only how the menu wires it.
+  SecurityNavSection: ({ isCollapsed, badgeCount }: { isCollapsed?: boolean; badgeCount?: number | null }) => (
+    <div data-testid="security-nav-section" data-collapsed={String(!!isCollapsed)} data-badge={String(badgeCount)} />
+  ),
   PreviewUIContext: {
     Provider: ({ children }: { children: React.ReactNode }) => children,
   },
@@ -71,6 +81,7 @@ jest.mock('@radix-ui/themes', () => ({
   Flex: ({ children, ...props }: { children?: React.ReactNode }) => <div {...props}>{children}</div>,
   ScrollArea: ({ children, ...props }: { children?: React.ReactNode }) => <div {...props}>{children}</div>,
   Separator: (props: Record<string, unknown>) => <hr {...props} />,
+  Text: ({ children, ...props }: { children?: React.ReactNode }) => <span {...props}>{children}</span>,
 }));
 
 jest.mock('lucide-react', () => {
@@ -111,6 +122,8 @@ const menuResult = (overrides: Partial<UseLeftNavigationMenuResult> = {}): UseLe
   adminInitialRouteName: 'admin.system.api',
   isSettingsVisible: true,
   isLicensedEdition: true,
+  isSecuritySectionVisible: false,
+  securityBadgeCount: null,
   ...overrides,
 });
 
@@ -227,5 +240,78 @@ describe('LeftNavigationMenuRadix', () => {
     render(<LeftNavigationMenuRadix />);
 
     expect(screen.getByTestId('nav-item-preview.browse.trash')).toBeInTheDocument();
+  });
+});
+
+describe('LeftNavigationMenuRadix Security section', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseSearchCollapsibleNav.mockReturnValue(collapsibleResult());
+  });
+
+  it('does not render the Security section when it is not visible', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isPreviewUI: true, isSecuritySectionVisible: false }));
+    render(<LeftNavigationMenuRadix />);
+    expect(screen.queryByTestId('security-nav-section')).not.toBeInTheDocument();
+  });
+
+  it('renders the Security section when visible, and no single Security link', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isPreviewUI: true, isSecuritySectionVisible: true }));
+    render(<LeftNavigationMenuRadix />);
+    expect(screen.getByTestId('security-nav-section')).toHaveAttribute('data-collapsed', 'false');
+    expect(screen.queryByTestId('nav-item-preview.security')).not.toBeInTheDocument();
+  });
+
+  it('places the Security section after Malware Risk and before API', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isPreviewUI: true, isSecuritySectionVisible: true }));
+    render(<LeftNavigationMenuRadix />);
+    const before = screen.getByTestId('nav-item-preview.browse.malwarerisk');
+    const section = screen.getByTestId('security-nav-section');
+    const api = screen.getByTestId('nav-item-preview.browse.api');
+    expect(before.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(section.compareDocumentPosition(api) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('adds no separator of its own around the section; the menu is unchanged when it is hidden', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isPreviewUI: true, isSecuritySectionVisible: false }));
+    const hidden = render(<LeftNavigationMenuRadix />);
+    const separatorsWhenHidden = hidden.container.querySelectorAll('hr').length;
+    const itemsWhenHidden = hidden.container.querySelectorAll('[data-testid^="nav-item-"]').length;
+    hidden.unmount();
+
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isPreviewUI: true, isSecuritySectionVisible: true }));
+    const shown = render(<LeftNavigationMenuRadix />);
+    expect(shown.container.querySelectorAll('hr').length).toBe(separatorsWhenHidden);
+    expect(shown.container.querySelectorAll('[data-testid^="nav-item-"]').length).toBe(itemsWhenHidden);
+  });
+
+  it('tells the Security section when the menu is collapsed', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(
+      menuResult({ isPreviewUI: true, isSecuritySectionVisible: true, isCollapsed: true })
+    );
+    render(<LeftNavigationMenuRadix />);
+    expect(screen.getByTestId('security-nav-section')).toHaveAttribute('data-collapsed', 'true');
+  });
+
+  it('leaves the Malware Risk item unchanged when the Security section is shown', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(menuResult({ isPreviewUI: true, isSecuritySectionVisible: true }));
+    render(<LeftNavigationMenuRadix />);
+    expect(screen.getByTestId('nav-item-preview.browse.malwarerisk')).toBeInTheDocument();
+  });
+
+  it('passes the quarantine count to the Security section as its badge count', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(
+      menuResult({ isPreviewUI: true, isSecuritySectionVisible: true, securityBadgeCount: 6 })
+    );
+    render(<LeftNavigationMenuRadix />);
+    expect(screen.getByTestId('security-nav-section')).toHaveAttribute('data-badge', '6');
+  });
+
+  it('passes a null badge count through', () => {
+    mockUseLeftNavigationMenu.mockReturnValue(
+      menuResult({ isPreviewUI: true, isSecuritySectionVisible: true, securityBadgeCount: null })
+    );
+    render(<LeftNavigationMenuRadix />);
+    expect(screen.getByTestId('security-nav-section')).toHaveAttribute('data-badge', 'null');
   });
 });

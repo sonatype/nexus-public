@@ -12,6 +12,7 @@
  */
 package com.sonatype.nexus.ssl.plugin.validator;
 
+import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
@@ -28,6 +29,6 @@ public class PemPrivateKeyValidator
     if (value == null) {
       return true;
     }
-    return "#~NXRM~PLACEHOLDER~PASSWORD~#".equals(value) || CertificateUtil.isPEMFormattedPrivateKey(value);
+    return PasswordPlaceholder.get().equals(value) || CertificateUtil.isPEMFormattedPrivateKey(value);
   }
 }

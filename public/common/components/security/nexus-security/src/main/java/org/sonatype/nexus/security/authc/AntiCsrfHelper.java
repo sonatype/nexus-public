@@ -44,6 +44,9 @@ public class AntiCsrfHelper
 
   public static final String ANTI_CSRF_TOKEN_NAME = "NX-ANTI-CSRF-TOKEN";
 
+  /** Prefix under which repository content is served. */
+  private static final String REPOSITORY_PATH_PREFIX = "/repository";
+
   private final boolean enabled;
 
   private final boolean secFetchHeaderEnabled;
@@ -67,7 +70,7 @@ public class AntiCsrfHelper
       return true;
     }
     boolean safeHttpMethod = isSafeHttpMethod(httpRequest);
-    if (!safeHttpMethod && isCrossSiteRequest(httpRequest)) {
+    if (!safeHttpMethod && !isRepositoryPath(httpRequest) && isCrossSiteRequest(httpRequest)) {
       log.debug("Blocking cross-site request header Sec-Fetch-Site:{}",
           httpRequest.getHeader(HttpHeaders.SEC_FETCH_SITE));
       return false;
@@ -76,6 +79,53 @@ public class AntiCsrfHelper
     return safeHttpMethod
         || !isSessionAuthentication() // non-session auth
         || isAntiCsrfTokenValid(httpRequest, Optional.ofNullable(httpRequest.getHeader(ANTI_CSRF_TOKEN_NAME)));
+  }
+
+  /**
+   * Repository content endpoints, which are a machine-facing API rather than the session-backed UI.
+   *
+   * <p>
+   * These are exempt from the {@code Sec-Fetch-Site} check because that check cannot distinguish a
+   * legitimate non-browser client from a forged browser request, and it blocks the legitimate case: VS
+   * Code and its derivatives render the extension gallery in a Chromium view whose origin is
+   * {@code vscode-file://vscode-app}, so every gallery call carries
+   * {@code Sec-Fetch-Site: cross-site} and was rejected before the credential logic was reached.
+   *
+   * <p>
+   * <strong>The anti-CSRF token check is what protects these endpoints, and this exemption does not
+   * weaken it.</strong> {@link #isAccessAllowed} falls through to
+   * {@code !isSessionAuthentication() || isAntiCsrfTokenValid(...)}, so a session-authenticated
+   * cross-site POST is still rejected on the token whether or not the header check ran. Removing that
+   * fall-through would leave repository endpoints with no CSRF protection at all.
+   *
+   * <p>
+   * An earlier version of this comment claimed the session cookie is issued {@code SameSite=Lax} and
+   * therefore would not be attached to a cross-site POST. That is not true of this codebase:
+   * {@code JwtHelper.createCookie} sets only {@code Max-Age}, {@code Path}, {@code HttpOnly} and
+   * {@code Secure}, and no {@code SameSite} attribute is configured anywhere. Browsers default an
+   * unspecified cookie to {@code Lax} in current versions, but that is a browser default rather than
+   * something asserted here, and it must not be relied on as the reason this exemption is safe.
+   *
+   * <p>
+   * Token- and basic-authenticated repository calls are unaffected either way; they do not rely on a
+   * session, so CSRF does not apply to them.
+   *
+   * <p>
+   * Scoped to the path prefix rather than to a repository format on purpose: this filter runs in the
+   * servlet chain, before the repository is looked up, so no format is known here. A URL segment names
+   * a repository, not a format, and repository names are user-chosen — keying a security decision on
+   * one would be keying it on a naming convention.
+   */
+  private static boolean isRepositoryPath(final HttpServletRequest request) {
+    String uri = request.getRequestURI();
+    if (uri == null) {
+      return false;
+    }
+    String contextPath = request.getContextPath();
+    if (contextPath != null && !contextPath.isEmpty() && uri.startsWith(contextPath)) {
+      uri = uri.substring(contextPath.length());
+    }
+    return uri.equals(REPOSITORY_PATH_PREFIX) || uri.startsWith(REPOSITORY_PATH_PREFIX + "/");
   }
 
   @VisibleForTesting
@@ -95,9 +145,26 @@ public class AntiCsrfHelper
     };
   }
 
+  /**
+   * Methods that cannot mutate state, and so cannot be a cross-site request forgery vector.
+   *
+   * <p>
+   * {@code OPTIONS} is included because a CORS preflight carries no credentials and no body, and the
+   * browser discards its response body — there is nothing for an attacker to forge or to read back.
+   * Treating it as unsafe breaks every browser-based client on a cross-site origin: the preflight is
+   * rejected with a 401 before any downstream handler runs, and because a failed preflight stops the
+   * browser from sending the real request at all, the failure reaches the user only as an unexplained
+   * CORS error with no server-side trace of the request that was never sent.
+   *
+   * <p>
+   * Observed with VS Code and its derivatives, whose renderer origin is {@code vscode-file://vscode-app}
+   * and which therefore send {@code Sec-Fetch-Site: cross-site} on every extension gallery call.
+   */
   private static boolean isSafeHttpMethod(final HttpServletRequest request) {
     String method = request.getMethod();
-    return HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method);
+    return HttpMethod.GET.equals(method)
+        || HttpMethod.HEAD.equals(method)
+        || HttpMethod.OPTIONS.equals(method);
   }
 
   private static boolean isSessionAuthentication() {

@@ -21,6 +21,7 @@ export { CleanupFacet } from './CleanupFacet';
 export { RoutingRuleFacet } from './RoutingRuleFacet';
 export { AlpineFacet } from './AlpineFacet';
 export { AptFacet } from './AptFacet';
+export { CargoFacet } from './CargoFacet';
 export { DockerFacet } from './DockerFacet';
 export { MavenFacet } from './MavenFacet';
 export { NugetFacet } from './NugetFacet';

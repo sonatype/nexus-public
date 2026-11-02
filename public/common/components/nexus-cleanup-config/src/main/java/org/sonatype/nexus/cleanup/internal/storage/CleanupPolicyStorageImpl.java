@@ -23,9 +23,8 @@ import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.common.collect.ImmutableList;
-
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -56,13 +55,13 @@ public class CleanupPolicyStorageImpl
   @Transactional
   @Override
   public List<CleanupPolicy> getAll() {
-    return ImmutableList.copyOf(dao().browse());
+    return toImmutableList(dao().browse());
   }
 
   @Transactional
   @Override
   public List<CleanupPolicy> getAllByFormat(final String format) {
-    return ImmutableList.copyOf(dao().browseByFormat(format));
+    return toImmutableList(dao().browseByFormat(format));
   }
 
   @Transactional

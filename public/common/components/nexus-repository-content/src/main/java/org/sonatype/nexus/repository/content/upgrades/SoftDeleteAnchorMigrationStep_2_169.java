@@ -24,12 +24,12 @@ import org.springframework.stereotype.Component;
 /**
  * No-op anchor migration whose only purpose is to bump the recorded schema version to
  * {@value #VERSION}. Stores consult {@code DatabaseCheck.isAtLeast(VERSION)} to gate every
- * read query that references the soft-delete columns ({@code deleted_on}, {@code deleted_by})
+ * read query that references the trash columns ({@code deleted_on}, {@code deleted_by})
  * on the dynamic-format tables ({@code {format}_component}, {@code {format}_asset}).
  *
  * <p>
  * <strong>Why an anchor migration?</strong> The column work for the dynamic-format tables is
- * performed by the repeatable soft-delete steps ({@code ComponentSoftDeleteRepeatableMigrationStep},
+ * performed by the repeatable trash steps ({@code ComponentSoftDeleteRepeatableMigrationStep},
  * {@code AssetSoftDeleteRepeatableMigrationStep}). This anchor sits after them so the read-query
  * gating in {@code ComponentStore} / {@code AssetStore} / {@code BrowseNodeStore} has a single
  * concrete version to test against via {@code DatabaseCheck.isAtLeast}.
@@ -65,7 +65,7 @@ public class SoftDeleteAnchorMigrationStep_2_169
     implements DatabaseMigrationStep
 {
   /**
-   * Version anchor for the dynamic-format soft-delete column work. Consumers reference this via
+   * Version anchor for the dynamic-format trash column work. Consumers reference this via
    * {@code DatabaseCheck.isAtLeast(SoftDeleteAnchorMigrationStep_2_169.VERSION)}.
    */
   public static final String VERSION = "2.169";

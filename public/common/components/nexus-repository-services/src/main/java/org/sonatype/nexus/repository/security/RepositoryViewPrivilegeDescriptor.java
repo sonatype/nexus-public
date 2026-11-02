@@ -30,7 +30,6 @@ import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
-import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.Permission;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -104,7 +103,7 @@ public class RepositoryViewPrivilegeDescriptor
       @Value(REACT_PRIVILEGES_NAMED_VALUE) final boolean isReactPrivileges)
   {
     super(TYPE, repositoryManager, formats);
-    this.formFields = ImmutableList.of(
+    this.formFields = List.of(
         new StringTextFormField(
             P_FORMAT,
             messages.format(),

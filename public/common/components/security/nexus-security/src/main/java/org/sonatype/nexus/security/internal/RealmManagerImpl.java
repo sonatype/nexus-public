@@ -37,7 +37,6 @@ import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.realm.SecurityRealm;
 
-import com.google.common.collect.Lists;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -236,7 +235,7 @@ public class RealmManagerImpl
    * Resolve configured realm components.
    */
   private List<Realm> resolveRealms() {
-    List<Realm> result = Lists.newArrayList();
+    List<Realm> result = new ArrayList<>();
     RealmConfiguration model = getConfigurationInternal();
 
     List<String> configuredRealmIds = new ArrayList<>(model.getRealmNames());

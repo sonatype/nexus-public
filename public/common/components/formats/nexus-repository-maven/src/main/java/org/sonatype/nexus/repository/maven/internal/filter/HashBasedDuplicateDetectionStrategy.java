@@ -33,7 +33,7 @@ public class HashBasedDuplicateDetectionStrategy
   private Set<String> gavces = new HashSet<>();
 
   @Override
-  public boolean apply(final Record record) {
+  public boolean test(final Record record) {
     return gavces.add(md5().hashString(gavceForRecord(record), UTF_8).toString());
   }
 }

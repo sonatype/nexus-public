@@ -502,6 +502,48 @@ describe('ProxyFacet', () => {
     });
   });
 
+  describe('Swift auto-block status codes', () => {
+    it('renders the auto-block status codes field when format is swift', () => {
+      renderFacet({ format: 'swift' });
+      expect(screen.getByText('Auto-block HTTP Status Codes')).toBeInTheDocument();
+    });
+
+    it('does not render the auto-block status codes field for non-swift formats', () => {
+      renderFacet({ format: 'maven2' });
+      expect(screen.queryByText('Auto-block HTTP Status Codes')).not.toBeInTheDocument();
+    });
+
+    it('preserves invalid tokens (as NaN) so validation can flag them', () => {
+      const mockOnNestedChange = jest.fn();
+      renderFacet({ format: 'swift', onNestedChange: mockOnNestedChange });
+
+      const input = screen.getByLabelText(/Auto-block HTTP Status Codes/i);
+      fireEvent.change(input, { target: { value: '500, 502, abc, 429' } });
+
+      expect(mockOnNestedChange).toHaveBeenCalledWith('httpClient', {
+        autoBlockStatusCodes: [500, 502, NaN, 429],
+      });
+    });
+
+    it('renders the error message when errors.httpClient.autoBlockStatusCodes is set (nested shape)', () => {
+      renderFacet({
+        format: 'swift',
+        errors: { httpClient: { autoBlockStatusCodes: 'Some error message' } },
+      });
+
+      expect(screen.getByText('Some error message')).toBeInTheDocument();
+    });
+
+    it('renders the error message when errors["httpClient.autoBlockStatusCodes"] is set (flat shape)', () => {
+      renderFacet({
+        format: 'swift',
+        errors: { 'httpClient.autoBlockStatusCodes': 'Some error message' },
+      });
+
+      expect(screen.getByText('Some error message')).toBeInTheDocument();
+    });
+  });
+
   // NEXUS-54771: validateRepository in repositoryFormMachine emits FLAT dot-notation
   // keys ('proxy.remoteUrl'), but this facet used to read only the nested shape
   // (errors?.proxy?.remoteUrl) — so no validation message ever rendered for these

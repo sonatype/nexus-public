@@ -41,7 +41,6 @@ export function SettingsTextInput({
   helpText = '',
   error = '',
   errorAction = null,
-  alwaysShowHelpText = false,
   required = false,
   disabled = false,
   readOnly = false,
@@ -76,7 +75,7 @@ export function SettingsTextInput({
           {required && <span className="settings-text-input__required" aria-hidden="true">*</span>}
         </label>
       )}
-      {helpText && (!error || alwaysShowHelpText) && (
+      {helpText && (
         <Text as="p" size="1" id={helpId} className="settings-text-input__help">
           {helpText}
         </Text>
@@ -133,12 +132,10 @@ SettingsTextInput.propTypes = {
   placeholder: PropTypes.string,
   /** Help text displayed between label and input */
   helpText: PropTypes.string,
-  /** Error message displayed below input (replaces help text when present) */
+  /** Error message displayed below input */
   error: PropTypes.string,
   /** Optional action node rendered inline after the error message (e.g. a "Suggest" link) */
   errorAction: PropTypes.node,
-  /** Keep helpText visible even when an error is shown */
-  alwaysShowHelpText: PropTypes.bool,
   /** Mark field as required */
   required: PropTypes.bool,
   /** Disable input */

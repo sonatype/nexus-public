@@ -53,7 +53,6 @@ import org.sonatype.nexus.selector.SelectorManager;
 
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
-import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -200,7 +199,7 @@ public class BrowseNodeQueryServiceImpl
   {
     List<BrowseNode> nodes = repository.optionalFacet(BrowseFacet.class)
         .map(facet -> facet.getByDisplayPath(displayPath, maxNodes, contentFilter, filterParams))
-        .orElse(ImmutableList.of());
+        .orElse(List.of());
 
     if (hasJexl) {
       // PRIVILEGE HIERARCHY: If user has full browse permission, skip content selector filtering

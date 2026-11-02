@@ -12,20 +12,30 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 
-const mockGo = jest.fn();
-jest.mock('@uirouter/react', () => ({
-  useRouter: () => ({ stateService: { go: mockGo } }),
-}));
-
 const mockGet = jest.fn().mockResolvedValue(null);
+const mockPut = jest.fn().mockResolvedValue(undefined);
 jest.mock('../../../../../interface/api', () => ({
-  restClient: { get: (...args: any[]) => mockGet(...args) },
+  restClient: {
+    get: (...args: any[]) => mockGet(...args),
+    put: (...args: any[]) => mockPut(...args),
+  },
+  parseApiError: (err: any) => ({ message: err instanceof Error ? err.message : String(err) }),
   ENDPOINTS: {
     FIREWALL_STATUS_REPO: (name: string) => `/api/v1/firewall/status/${name}`,
+  },
+}));
+
+const mockCheckPermission = jest.fn().mockReturnValue(true);
+jest.mock('../../../../../interface/ExtJS', () => ({
+  ExtJS: {
+    usePermission: (getValue: () => boolean) => getValue(),
+    checkPermission: (...args: any[]) => mockCheckPermission(...args),
+    state: () => ({ getValue: () => ({ enabled: true }) }),
+    useState: (getValue: () => unknown) => getValue(),
   },
 }));
 
@@ -42,8 +52,12 @@ const repo = {
   format: 'maven2',
 };
 
+const QUARANTINE_MESSAGE = 'Quarantine enabled';
+const AUDIT_MESSAGE = 'Audit enabled';
+
 const protectedStatus: SecurityStatusData = {
   repositoryName: 'maven-central',
+  message: QUARANTINE_MESSAGE,
   affectedComponentCount: 0,
   criticalComponentCount: 0,
   severeComponentCount: 0,
@@ -65,12 +79,14 @@ const quarantineStatus: SecurityStatusData = {
 
 const auditStatus: SecurityStatusData = {
   ...issuesStatus,
-  message: 'audit mode enabled',
+  message: AUDIT_MESSAGE,
 };
 
 describe('FirewallCell', () => {
   beforeEach(() => {
-    mockGo.mockClear();
+    mockGet.mockClear().mockResolvedValue(null);
+    mockPut.mockClear().mockResolvedValue(undefined);
+    mockCheckPermission.mockClear().mockReturnValue(true);
   });
 
   it('shows Loading state when firewallStatus is not yet available', () => {
@@ -127,7 +143,7 @@ describe('FirewallCell', () => {
   it('shows quarantined count badge alongside Quarantine badge', () => {
     renderWithTheme(<FirewallCell repository={repo} firewallStatus={quarantineStatus} />);
     expect(screen.getByText('Quarantine')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByLabelText('3 quarantined')).toBeInTheDocument();
   });
 
   it('does not show count badge when quarantinedComponentCount is 0', () => {
@@ -148,7 +164,7 @@ describe('FirewallCell', () => {
   });
 
   it('does not show critical count badge when criticalComponentCount is 0', () => {
-    const auditNoIssues: SecurityStatusData = { ...protectedStatus, message: 'audit mode enabled' };
+    const auditNoIssues: SecurityStatusData = { ...protectedStatus, message: AUDIT_MESSAGE };
     renderWithTheme(<FirewallCell repository={repo} firewallStatus={auditNoIssues} />);
     expect(screen.getByText('Audited')).toBeInTheDocument();
     expect(screen.queryByText('0')).not.toBeInTheDocument();
@@ -198,22 +214,152 @@ describe('FirewallCell', () => {
     });
   });
 
-  it('navigates to Settings > Firewall when Configure Firewall is clicked', async () => {
-    // Pass no firewallStatus to trigger unprotected state
+  it('shouldEnableFirewallViaPickerWhenModeChosen', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/service/rest/v1/repositories/maven-central') {
+        return Promise.resolve({ format: 'maven2', type: 'proxy' });
+      }
+      // setFirewallMode reads the repo from the internal UI endpoint (FIRE-1149) before the PUT.
+      if (url === '/service/rest/internal/ui/repositories/repository/maven-central') {
+        return Promise.resolve({
+          name: 'maven-central',
+          format: 'maven2',
+          type: 'proxy',
+          firewall: { mode: 'DISABLED' },
+        });
+      }
+      if (url.includes('/maven/proxy/maven-central')) {
+        return Promise.resolve({ name: 'maven-central', firewall: { mode: 'DISABLED' } });
+      }
+      return Promise.resolve([]);
+    });
+
+    renderWithTheme(<FirewallCell repository={repo} firewallLoaded hasFirewallLicense />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Firewall: Unprotected.*Click for details/i }));
+    fireEvent.click(await screen.findByText('Enable Firewall Protection'));
+
+    fireEvent.click(await screen.findByRole('radio', { name: /Quarantine/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enable' }));
+
+    await waitFor(() =>
+      expect(mockPut).toHaveBeenCalledWith(
+        '/service/rest/v1/repositories/maven/proxy/maven-central',
+        expect.objectContaining({ firewall: { mode: 'QUARANTINE' } }),
+      ),
+    );
+  });
+
+  it('shouldHideEnableButtonWhenUserLacksEditPermission', async () => {
+    mockCheckPermission.mockReturnValue(false);
     renderWithTheme(<FirewallCell repository={repo} firewallLoaded hasFirewallLicense />);
 
     const trigger = screen.getByRole('button', { name: /Firewall: Unprotected.*Click for details/i });
     fireEvent.click(trigger);
 
-    const modalTitle = await screen.findByText(/Firewall Report – maven-central/);
-    expect(modalTitle).toBeInTheDocument();
+    await screen.findByText(/Firewall Report – maven-central/);
+    expect(screen.queryByText('Enable Firewall Protection')).not.toBeInTheDocument();
+  });
 
-    const configureButton = await screen.findByText('Enable Firewall Protection');
-    fireEvent.click(configureButton);
-
-    expect(mockGo).toHaveBeenCalledWith(
-      'preview.admin.repository.repositories.detail',
-      { repositoryName: 'maven-central', tab: 'firewall' },
+  it('shouldRenderInlineChicletsFromCountsProp', () => {
+    renderWithTheme(
+      <FirewallCell
+        repository={repo}
+        firewallLoaded
+        firewallStatus={protectedStatus}
+        firewallCounts={{ ...protectedStatus, criticalComponentCount: 4 }}
+      />,
     );
+    expect(screen.getByText('4')).toBeInTheDocument();
+  });
+
+  it('shouldRenderSevereModerateAndQuarantinedChicletsFromCountsProp', () => {
+    renderWithTheme(
+      <FirewallCell
+        repository={repo}
+        firewallLoaded
+        firewallStatus={protectedStatus}
+        firewallCounts={{
+          ...protectedStatus,
+          severeComponentCount: 6,
+          moderateComponentCount: 3,
+          quarantinedComponentCount: 2,
+        }}
+      />,
+    );
+    expect(screen.getByText('6')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByLabelText('2 quarantined')).toBeInTheDocument();
+  });
+
+  it('shouldKeepSummaryModeLabelWhenOverlayingCountsProp', () => {
+    renderWithTheme(
+      <FirewallCell
+        repository={repo}
+        firewallLoaded
+        firewallStatus={protectedStatus}
+        firewallCounts={{ ...protectedStatus, message: AUDIT_MESSAGE, criticalComponentCount: 5 }}
+      />,
+    );
+    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getByText('Quarantine')).toBeInTheDocument();
+    expect(screen.queryByText('Audited')).not.toBeInTheDocument();
+  });
+
+  it('shouldNeverFetchFromTheCell', () => {
+    renderWithTheme(<FirewallCell repository={repo} firewallLoaded firewallStatus={protectedStatus} />);
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it('shouldShowInactiveNotUnprotectedForOfflineEnabledRepo', () => {
+    const offline: SecurityStatusData = { ...protectedStatus, message: "Repository 'maven-central' is offline" };
+    renderWithTheme(<FirewallCell repository={repo} firewallLoaded firewallStatus={offline} />);
+    expect(screen.getByText('Inactive')).toBeInTheDocument();
+    expect(screen.queryByText('Unprotected')).not.toBeInTheDocument();
+  });
+
+  it('shouldNotShowUnprotectedWhenSummaryNotReady', () => {
+    renderWithTheme(<FirewallCell repository={repo} firewallLoaded firewallSummaryReady={false} />);
+    expect(screen.queryByText('Unprotected')).not.toBeInTheDocument();
+    expect(screen.getByText('Unavailable')).toBeInTheDocument();
+  });
+
+  it('shouldNotOfferEnableWhenSummaryNotReady', async () => {
+    renderWithTheme(
+      <FirewallCell repository={repo} firewallLoaded firewallSummaryReady={false} hasFirewallLicense />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Firewall: Unavailable/i }));
+    await screen.findByText(/Firewall Report – maven-central/);
+    expect(screen.queryByText('Enable Firewall Protection')).not.toBeInTheDocument();
+  });
+
+  it('shouldShowUnavailableInsteadOfNoIssuesWhenEnabledRepoHasNoCountsAndNoneAreLoading', async () => {
+    renderWithTheme(<FirewallCell repository={repo} firewallLoaded firewallStatus={protectedStatus} />);
+    fireEvent.click(screen.getByRole('button', { name: /Firewall:.*Click for details/i }));
+    await screen.findByText(/Firewall Report – maven-central/);
+    expect(screen.getByText(/Violation counts could not be loaded/)).toBeInTheDocument();
+    expect(screen.queryByText('No issues found')).not.toBeInTheDocument();
+  });
+
+  it('shouldShowLoadingNotUnavailableWhileCountsAreLoading', async () => {
+    renderWithTheme(
+      <FirewallCell repository={repo} firewallLoaded firewallStatus={protectedStatus} firewallCountsLoading />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Firewall:.*Click for details/i }));
+    expect(await screen.findByText(/Loading firewall report/)).toBeInTheDocument();
+    expect(screen.queryByText(/Violation counts could not be loaded/)).not.toBeInTheDocument();
+  });
+
+  it('shouldShowNoIssuesOnlyWhenCountsLoadedAndZero', async () => {
+    renderWithTheme(
+      <FirewallCell
+        repository={repo}
+        firewallLoaded
+        firewallStatus={protectedStatus}
+        firewallCounts={protectedStatus}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Firewall:.*Click for details/i }));
+    expect(await screen.findByText('No issues found')).toBeInTheDocument();
   });
 });

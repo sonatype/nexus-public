@@ -62,7 +62,7 @@ class AuditCapabilityWiringTest
   @Test
   void legacyConfigWithoutRetentionDaysFallsBackToDefault() {
     AuditRetentionSettings settings = new AuditRetentionSettings(DEFAULT_MAX);
-    settings.setRetentionDays(30);
+    settings.setRetentionDays(90);
     TestableAuditCapability capability = new TestableAuditCapability(auditRecorder, settings);
     AuditCapability.Configuration cfg = new AuditCapability.Configuration(Map.of(), DEFAULT_MAX);
 

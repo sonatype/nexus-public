@@ -91,6 +91,27 @@ const mockExtAPI = ExtAPIUtils as unknown as {
   checkForErrorAndExtract: jest.Mock;
 };
 
+
+/**
+ * Installs the NX.util.Url shape the server bootstrap really produces (bootstrap.vm): `relativePath`
+ * is '.', so `urlOf` returns a context-relative `./path`. The page itself is served from the context
+ * path, so relative URLs are resolved against `contextPath` (NEXUS-55899).
+ */
+const installNxUrl = (contextPath: string) => {
+  const relativePath = '.';
+  window.history.pushState({}, '', contextPath);
+  (window as any).NX = {
+    ...(window as any).NX,
+    app: { relativePath },
+    util: {
+      Url: {
+        relativePath,
+        urlOf: (path: string) => `${relativePath}${path.startsWith('/') ? '' : '/'}${path}`,
+      },
+    },
+  };
+};
+
 describe('browse.api', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -220,6 +241,48 @@ describe('browse.api', () => {
     });
   });
 
+  describe('fetchAsset context path (NEXUS-55899)', () => {
+    const originalNX = (window as any).NX;
+    const extAsset = (repositoryName: string, name: string) => ({
+      id: 'asset-ctx',
+      name,
+      format: 'raw',
+      repositoryName,
+      attributes: {},
+    });
+
+    afterEach(() => {
+      (window as any).NX = originalNX;
+    });
+
+    // BDD-001, BDD-002, AT-001
+    it('builds a context-relative downloadUrl', async () => {
+      installNxUrl('/nexus/');
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(extAsset('raw-hosted', '/docs/readme.txt'));
+
+      const result = await fetchAsset('asset-ctx', 'raw-hosted');
+
+      expect(result.downloadUrl).toBe('./repository/raw-hosted/docs/readme.txt');
+      expect(new URL(result.downloadUrl, window.location.href).toString()).toBe(
+        'http://localhost/nexus/repository/raw-hosted/docs/readme.txt'
+      );
+    });
+
+    // BDD-004, AT-003
+    it('keeps special characters encoded under a context path', async () => {
+      installNxUrl('/nexus/');
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(
+        extAsset('my repo', '/path with spaces/file+name.tgz')
+      );
+
+      const result = await fetchAsset('asset-ctx', 'my repo');
+
+      expect(result.downloadUrl).toBe(
+        './repository/my%20repo/path%20with%20spaces/file%2Bname.tgz'
+      );
+    });
+  });
+
   describe('fetchAsset', () => {
     it('calls ExtDirect coreui_Component.readAsset with raw assetId and repository', async () => {
       mockExtAPI.checkForErrorAndExtract.mockReturnValue({
@@ -246,7 +309,7 @@ describe('browse.api', () => {
         format: 'maven2',
         name: '/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar',
         path: '/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar',
-        downloadUrl: '/repository/maven-central/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar',
+        downloadUrl: 'http://localhost/repository/maven-central/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar',
         contentType: 'application/java-archive',
         size: 587402,
         // checksum lifted from attributes.checksum to top level for the Checksums section
@@ -266,7 +329,7 @@ describe('browse.api', () => {
       const result = await fetchAsset('asset-special', 'my repo');
 
       // Repository name and path segments should be URL-encoded
-      expect(result.downloadUrl).toBe('/repository/my%20repo/path%20with%20spaces/file%2Bname.tgz');
+      expect(result.downloadUrl).toBe('http://localhost/repository/my%20repo/path%20with%20spaces/file%2Bname.tgz');
     });
 
     it('preserves the full attributes bag including firewall facet (NEXUS-52920)', async () => {

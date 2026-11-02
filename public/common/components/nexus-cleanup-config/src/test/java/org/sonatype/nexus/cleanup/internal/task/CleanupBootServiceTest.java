@@ -21,7 +21,6 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.schedule.Cron;
 import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -99,7 +98,7 @@ public class CleanupBootServiceTest
 
   @Test
   public void doNotCreateTaskIfAlreadyExists() throws Exception {
-    when(taskScheduler.listsTasks()).thenReturn(ImmutableList.of(taskInfo));
+    when(taskScheduler.listsTasks()).thenReturn(List.of(taskInfo));
 
     underTest.doStart();
 
@@ -117,7 +116,7 @@ public class CleanupBootServiceTest
     TaskInfo matchA = mockTask(CleanupBootService.TASK_NAME, CleanupBootService.CRON);
     TaskInfo matchB = mockTask(CleanupBootService.TASK_NAME, CleanupBootService.CRON);
 
-    List<TaskInfo> tasks = ImmutableList.of(nameMismatch, cronMismatch, scheduleMismatch, matchA, matchB);
+    List<TaskInfo> tasks = List.of(nameMismatch, cronMismatch, scheduleMismatch, matchA, matchB);
 
     when(taskScheduler.listsTasks()).thenReturn(tasks);
 

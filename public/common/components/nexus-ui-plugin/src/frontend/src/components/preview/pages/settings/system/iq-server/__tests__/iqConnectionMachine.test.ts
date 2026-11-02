@@ -11,163 +11,83 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { interpret } from 'xstate';
-import { waitFor } from 'xstate/lib/waitFor';
 import Axios from 'axios';
-import { createIqConnectionMachine, fetchCapabilities } from '../iqConnectionMachine';
-import { DEFAULT_IQ_CONFIGURATION, DEFAULT_IQ_CAPABILITIES } from '../types';
+import { verifyConnection } from '../iqConnectionMachine';
+import { DEFAULT_IQ_CONFIGURATION } from '../types';
 
 jest.mock('axios');
+
+const mockGetValue = jest.fn();
 jest.mock('../../../../../../../interface/ExtJS', () => ({
-  ExtJS: { state: () => ({ getValue: () => false }) },
+  ExtJS: { state: () => ({ getValue: (...args: any[]) => mockGetValue(...args) }) },
 }));
+
 const mockedAxios = Axios as jest.Mocked<typeof Axios>;
 const SETTINGS = { ...DEFAULT_IQ_CONFIGURATION, enabled: true, url: 'https://iq', authenticationType: 'USER', username: 'u', password: 'p' };
 
-describe('fetchCapabilities', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('silently falls back to defaults when the request fails', async () => {
-    mockedAxios.get.mockRejectedValueOnce(new Error('403 Forbidden'));
-
-    const capabilities = await fetchCapabilities();
-
-    expect(capabilities).toEqual(DEFAULT_IQ_CAPABILITIES);
-  });
-});
-
-describe('iqConnectionMachine', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('AUTO_TEST success → connected', async () => {
-    mockedAxios.post
-      .mockResolvedValueOnce({ data: { reason: 'Connected v1.2.3' } }) // verify
-      .mockResolvedValueOnce({ data: { hasFirewall: true } });         // capabilities-with-config
-    const service = interpret(createIqConnectionMachine()).start();
-    service.send({ type: 'AUTO_TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('connected'));
-    expect(service.getSnapshot().context.capabilities.hasFirewall).toBe(true);
-    service.stop();
+describe('verifyConnection', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetValue.mockReturnValue(false); // default to self-hosted
   });
 
-  it('TEST success → connected', async () => {
-    mockedAxios.post.mockResolvedValueOnce({ data: { reason: 'ok' } }).mockResolvedValueOnce({ data: {} });
-    const service = interpret(createIqConnectionMachine()).start();
-    service.send({ type: 'TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('connected'));
-    service.stop();
+  it('reports success and surfaces the reason from the response', async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: { reason: 'Connected v1.2.3' } });
+
+    const result = await verifyConnection(SETTINGS);
+
+    expect(result).toEqual({ success: true, reason: 'Connected v1.2.3' });
   });
 
-  it('verify failure → failed with message', async () => {
+  it('posts to the self-hosted verify endpoint when not on cloud', async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: {} });
+
+    await verifyConnection(SETTINGS);
+
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      'service/rest/internal/ui/iq/verify-connection',
+      SETTINGS,
+    );
+  });
+
+  it('posts to the cloud verify endpoint when running on cloud', async () => {
+    mockGetValue.mockReturnValue(true);
+    mockedAxios.post.mockResolvedValueOnce({ data: {} });
+
+    await verifyConnection(SETTINGS);
+
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      'service/rest/v1/iq/test-new-connection',
+      SETTINGS,
+    );
+  });
+
+  it('returns failure with the string body when the request rejects', async () => {
     mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Authentication failed' } });
-    const service = interpret(createIqConnectionMachine()).start();
-    service.send({ type: 'TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('failed'));
-    expect(service.getSnapshot().context.message).toMatch(/Authentication failed/);
-    service.stop();
+
+    const result = await verifyConnection(SETTINGS);
+
+    expect(result).toEqual({ success: false, reason: 'Authentication failed' });
   });
 
-  it('verify failure with a ValidationErrorXO body → failed with just the message text, not the raw object', async () => {
+  it('extracts just the message text from a ValidationErrorXO body, not the raw object', async () => {
     mockedAxios.post.mockRejectedValueOnce({
       response: { data: { id: '*', message: 'Error code 401: Invalid credentials. Please try again.' } },
     });
-    const service = interpret(createIqConnectionMachine()).start();
-    service.send({ type: 'TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('failed'));
-    expect(service.getSnapshot().context.message).toBe('Connection failed: Error code 401: Invalid credentials. Please try again.');
-    expect(service.getSnapshot().context.verificationResult?.reason).toBe('Error code 401: Invalid credentials. Please try again.');
-    service.stop();
+
+    const result = await verifyConnection(SETTINGS);
+
+    expect(result).toEqual({
+      success: false,
+      reason: 'Error code 401: Invalid credentials. Please try again.',
+    });
   });
 
-  it('RESET_CONNECTION returns to idle', async () => {
-    mockedAxios.post.mockResolvedValueOnce({ data: { reason: 'ok' } }).mockResolvedValueOnce({ data: {} });
-    const service = interpret(createIqConnectionMachine()).start();
-    service.send({ type: 'TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('connected'));
-    service.send({ type: 'RESET_CONNECTION' });
-    expect(service.getSnapshot().matches('idle')).toBe(true);
-    service.stop();
-  });
+  it('falls back to the error message when there is no response body', async () => {
+    mockedAxios.post.mockRejectedValueOnce(new Error('Network error'));
 
-  it('SAVED from connected → idle with "Saved..." message', async () => {
-    mockedAxios.post
-      .mockResolvedValueOnce({ data: { reason: 'ok' } })
-      .mockResolvedValueOnce({ data: {} });
-    const service = interpret(createIqConnectionMachine()).start();
-    service.send({ type: 'TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('connected'));
-    service.send({ type: 'SAVED' });
-    expect(service.getSnapshot().matches('idle')).toBe(true);
-    expect(service.getSnapshot().context.message).toBe('Saved. Click "Test Connection" to verify.');
-    service.stop();
-  });
+    const result = await verifyConnection(SETTINGS);
 
-  it('re-TEST from connected uses the latest response', async () => {
-    mockedAxios.post
-      .mockResolvedValueOnce({ data: { reason: 'first v1.0.0' } })
-      .mockResolvedValueOnce({ data: {} });
-    const service = interpret(createIqConnectionMachine()).start();
-    service.send({ type: 'TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('connected'));
-
-    mockedAxios.post
-      .mockResolvedValueOnce({ data: { reason: 'second v2.0.0' } })
-      .mockResolvedValueOnce({ data: {} });
-    service.send({ type: 'TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('connected'));
-    // Message shows v2.0.0, proving second test's response was used
-    expect(service.getSnapshot().context.message).toMatch(/v2\.0\.0/);
-    service.stop();
-  });
-
-  it('AUTO_TEST from failed → connected (retry works)', async () => {
-    // First: fail
-    mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Network error' } });
-    const service = interpret(createIqConnectionMachine()).start();
-    service.send({ type: 'AUTO_TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('failed'));
-
-    // Retry: succeed
-    mockedAxios.post
-      .mockResolvedValueOnce({ data: { reason: 'ok' } })
-      .mockResolvedValueOnce({ data: {} });
-    service.send({ type: 'AUTO_TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('connected'));
-    service.stop();
-  });
-
-  it('SET_CAPABILITIES updates context without axios call', async () => {
-    const service = interpret(createIqConnectionMachine()).start();
-    const postCallCount = mockedAxios.post.mock.calls.length;
-    const getCallCount = mockedAxios.get.mock.calls.length;
-    service.send({ type: 'SET_CAPABILITIES', capabilities: { hasFirewall: true, hasLifecycle: false } });
-    expect(service.getSnapshot().context.capabilities.hasFirewall).toBe(true);
-    expect(service.getSnapshot().context.capabilities.hasLifecycle).toBe(false);
-    expect(mockedAxios.post.mock.calls.length).toBe(postCallCount);
-    expect(mockedAxios.get.mock.calls.length).toBe(getCallCount);
-    service.stop();
-  });
-
-  it('SAVED from idle → idle with "Saved..." message (regression: first-time save without test)', () => {
-    const service = interpret(createIqConnectionMachine()).start();
-    expect(service.getSnapshot().matches('idle')).toBe(true);
-    service.send({ type: 'SAVED' });
-    expect(service.getSnapshot().matches('idle')).toBe(true);
-    expect(service.getSnapshot().context.message).toBe('Saved. Click "Test Connection" to verify.');
-    service.stop();
-  });
-
-  it('SAVED from failed → idle with "Saved..." message and clears verificationResult', async () => {
-    mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Connection refused' } });
-    const service = interpret(createIqConnectionMachine()).start();
-    service.send({ type: 'TEST', settings: SETTINGS });
-    await waitFor(service, (s) => s.matches('failed'));
-    expect(service.getSnapshot().context.verificationResult).not.toBeNull();
-    expect(service.getSnapshot().context.message).toMatch(/Connection refused/);
-    service.send({ type: 'SAVED' });
-    expect(service.getSnapshot().matches('idle')).toBe(true);
-    expect(service.getSnapshot().context.message).toBe('Saved. Click "Test Connection" to verify.');
-    expect(service.getSnapshot().context.verificationResult).toBeNull();
-    service.stop();
+    expect(result).toEqual({ success: false, reason: 'Network error' });
   });
 });

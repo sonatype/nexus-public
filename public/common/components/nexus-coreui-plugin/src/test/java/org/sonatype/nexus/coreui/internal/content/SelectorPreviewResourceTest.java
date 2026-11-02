@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.coreui.internal.content;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.sonatype.nexus.coreui.AssetXO;
 import org.sonatype.nexus.coreui.ComponentHelper;
@@ -28,7 +31,6 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
-import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -83,7 +85,8 @@ class SelectorPreviewResourceTest
     // stub overrides in individual tests don't re-invoke this lambda with a null argument during
     // Mockito's `when()` recording, and unused stubbing doesn't fail strict tests.
     Mockito.lenient()
-        .doAnswer(inv -> Lists.newArrayList(inv.<Iterable<Repository>>getArgument(0)))
+        .doAnswer(inv -> StreamSupport.stream(inv.<Iterable<Repository>>getArgument(0).spliterator(), false)
+            .collect(Collectors.toCollection(ArrayList::new)))
         .when(repositoryPermissionChecker)
         .userCanBrowseRepositories(ArgumentMatchers.<Iterable<Repository>>any());
   }

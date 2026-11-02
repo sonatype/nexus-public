@@ -32,6 +32,7 @@ import org.sonatype.nexus.crypto.secrets.ActiveKeyChangeEvent;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretData;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
@@ -278,6 +279,18 @@ public class SecretsServiceImplTest
     underTestSha1.remove(secret);
 
     verifyNoInteractions(secretsStore);
+  }
+
+  @Test
+  public void testHasSecretIdFormat() {
+    assertTrue(SecretsService.hasSecretIdFormat("_1"));
+    assertTrue(SecretsService.hasSecretIdFormat("_123"));
+    assertFalse(SecretsService.hasSecretIdFormat(null));
+    assertFalse(SecretsService.hasSecretIdFormat(""));
+    assertFalse(SecretsService.hasSecretIdFormat("_"));
+    assertFalse(SecretsService.hasSecretIdFormat("_abc"));
+    assertFalse(SecretsService.hasSecretIdFormat("1_"));
+    assertFalse(SecretsService.hasSecretIdFormat("{legacy}"));
   }
 
   @Test

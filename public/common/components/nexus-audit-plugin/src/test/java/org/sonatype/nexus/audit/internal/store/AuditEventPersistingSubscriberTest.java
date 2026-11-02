@@ -140,6 +140,35 @@ public class AuditEventPersistingSubscriberTest
     assertEventFiltered(createRepositoryAuditData("stopped"));
   }
 
+  @Test
+  void testAssetEventFiltering() {
+    assertEventPersisted(createContentAuditData("repository.asset", "created"));
+    assertEventPersisted(createContentAuditData("repository.asset", "deleted"));
+    assertEventPersisted(createContentAuditData("repository.asset", "purged"));
+    assertEventPersisted(createContentAuditData("repository.asset", "restored"));
+    assertEventPersisted(createContentAuditData("repository.asset", "updated-uploaded"));
+
+    assertEventFiltered(createContentAuditData("repository.asset", "updated"));
+    assertEventFiltered(createContentAuditData("repository.asset", "updated-downloaded"));
+    assertEventFiltered(createContentAuditData("repository.asset", "updated-attribute"));
+    assertEventFiltered(createContentAuditData("repository.asset", "updated-kind"));
+    // AssetPreDeleteEvent has no registerType(...) in AssetAuditor and duplicates the "deleted" row
+    assertEventFiltered(createContentAuditData("repository.asset", "assetpredeleteevent"));
+  }
+
+  @Test
+  void testComponentEventFiltering() {
+    assertEventPersisted(createContentAuditData("repository.component", "created"));
+    assertEventPersisted(createContentAuditData("repository.component", "deleted"));
+    assertEventPersisted(createContentAuditData("repository.component", "purged"));
+    assertEventPersisted(createContentAuditData("repository.component", "restored"));
+
+    assertEventFiltered(createContentAuditData("repository.component", "updated"));
+    assertEventFiltered(createContentAuditData("repository.component", "updated-attribute"));
+    assertEventFiltered(createContentAuditData("repository.component", "updated-kind"));
+    assertEventFiltered(createContentAuditData("repository.component", "componentpredeleteevent"));
+  }
+
   // ===== Task lifecycle event filtering tests =====
 
   @Test
@@ -253,6 +282,18 @@ public class AuditEventPersistingSubscriberTest
     auditData.setNodeId("node-1");
     auditData.setTimestamp(new Date());
     auditData.setAttributes(Map.of());
+    return auditData;
+  }
+
+  private static AuditData createContentAuditData(final String domain, final String type) {
+    AuditData auditData = new AuditData();
+    auditData.setDomain(domain);
+    auditData.setType(type);
+    auditData.setContext("/com/example/foo/1.0/foo-1.0.jar");
+    auditData.setInitiator("admin");
+    auditData.setNodeId("node-1");
+    auditData.setTimestamp(new Date());
+    auditData.setAttributes(Map.of("repository.name", "maven-releases"));
     return auditData;
   }
 

@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.content.event.component.ComponentEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentsPurgedAuditEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentRestoredEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentUpdatedEvent;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -46,6 +47,7 @@ public class ComponentAuditor
   public ComponentAuditor() {
     registerType(ComponentCreatedEvent.class, CREATED_TYPE);
     registerType(ComponentDeletedEvent.class, DELETED_TYPE);
+    registerType(ComponentRestoredEvent.class, RESTORED_TYPE);
     registerType(ComponentPurgedEvent.class, PURGE_TYPE);
     registerType(ComponentsPurgedAuditEvent.class, PURGE_TYPE);
     registerType(ComponentUpdatedEvent.class, UPDATED_TYPE);

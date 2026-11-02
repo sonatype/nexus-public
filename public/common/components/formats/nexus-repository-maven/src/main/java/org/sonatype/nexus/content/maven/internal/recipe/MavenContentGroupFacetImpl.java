@@ -77,7 +77,6 @@ import org.sonatype.nexus.thread.io.StreamCopier;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.hash.HashCode;
@@ -452,7 +451,7 @@ public class MavenContentGroupFacetImpl
     checkMergeHandled(mavenPath);
     // we do not cache subordinates/hashes, they are created as side-effect of cache
     checkArgument(!mavenPath.isSubordinate(), "Only main content handled, not hash or signature: %s", mavenPath);
-    LinkedHashMap<Repository, Content> contents = Maps.newLinkedHashMap();
+    LinkedHashMap<Repository, Content> contents = new LinkedHashMap<>();
     for (Map.Entry<Repository, Response> entry : responses.entrySet()) {
       if (entry.getValue().getStatus().getCode() == HttpStatus.OK) {
         Response response = entry.getValue();

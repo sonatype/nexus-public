@@ -92,6 +92,7 @@ export function createRolesPageMachine(options: RolesPageMachineOptions) {
   return createMachine<RolesPageContext, RolesPageEvent>(
     {
       id: 'rolesPage',
+      predictableActionArguments: true,
       initial: initialTopStateFor(initialRouteState),
       context: {
         routeState: initialRouteState,

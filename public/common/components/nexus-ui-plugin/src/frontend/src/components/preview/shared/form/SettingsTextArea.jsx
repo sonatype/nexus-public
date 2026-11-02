@@ -68,7 +68,7 @@ export function SettingsTextArea({
           {required && <span className="settings-textarea__required">*</span>}
         </label>
       )}
-      {helpText && !error && (
+      {helpText && (
         <Text as="p" size="1" id={helpId} className="settings-textarea__help">
           {helpText}
         </Text>

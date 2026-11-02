@@ -13,6 +13,7 @@
 package org.sonatype.nexus.content.raw;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -22,8 +23,6 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
-
-import com.google.common.collect.ImmutableList;
 
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -42,7 +41,7 @@ public interface RawContentFacet
   /**
    * Assets stored prior to version 3.68 may only have MD5 and SHA1 hashes stored.
    */
-  public final Iterable<HashAlgorithm> HASHING = ImmutableList.of(MD5, SHA1, SHA256, SHA512);
+  public final Iterable<HashAlgorithm> HASHING = List.of(MD5, SHA1, SHA256, SHA512);
 
   Optional<Content> get(String path) throws IOException;
 

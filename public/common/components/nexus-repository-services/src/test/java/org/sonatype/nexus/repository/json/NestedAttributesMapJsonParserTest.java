@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.json;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
@@ -22,7 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
@@ -38,7 +38,7 @@ public class NestedAttributesMapJsonParserTest
   @Mock
   private JsonParser jsonParser;
 
-  private NestedAttributesMap nestedAttributesMap = new NestedAttributesMap("testMap", newHashMap());
+  private NestedAttributesMap nestedAttributesMap = new NestedAttributesMap("testMap", new HashMap<>());
 
   private NestedAttributesMapJsonParser underTest;
 

@@ -364,7 +364,7 @@ export function UserTokenPage() {
         open={showResetConfirm}
         onOpenChange={setShowResetConfirm}
         title="Reset User Token"
-        message="This will permanently delete your current token. Any build tools using the existing token will stop working immediately. You can generate a new token after resetting."
+        message="Resetting your user token invalidates all of your tokens, including your user token and format tokens (npm, Docker, Terraform, etc.). Nexus Repository will create a new user token when you next access it."
         confirmLabel="Reset Token"
         variant="danger"
         onConfirm={handleResetConfirm}

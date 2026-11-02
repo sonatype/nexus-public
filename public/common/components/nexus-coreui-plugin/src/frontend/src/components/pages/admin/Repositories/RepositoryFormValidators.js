@@ -22,6 +22,7 @@ export const genericValidators = {
     proxy: {
       remoteUrl:
         ValidationUtils.validateNotBlank(data.proxy.remoteUrl) ||
+        validateSwiftRemoteUrl(data) ||
         ValidationUtils.validateIsUrl(data.proxy.remoteUrl),
       contentMaxAge: validateTimeToLive(data.proxy.contentMaxAge),
       metadataMaxAge: validateTimeToLive(data.proxy.metadataMaxAge)
@@ -39,7 +40,8 @@ export const genericValidators = {
       connection: {
         retries: validateHttpConnectionRetries(data),
         timeout: validateHttpConnectionTimeout(data)
-      }
+      },
+      autoBlockStatusCodes: validateAutoBlockStatusCodes(data)
     }
   }),
   group: (data) => ({
@@ -87,6 +89,63 @@ const validateHttpConnectionTimeout = (data) =>
     max: 3600,
     allowDecimals: false
   });
+
+/**
+ * Swift proxy repositories may only proxy the GitHub root URL.
+ *
+ * The Swift format's fetch path is hardcoded to github.com, so any other remote produces a
+ * repository that cannot serve packages. This restriction is interim and will be revisited
+ * if non-GitHub hosts become supported.
+ *
+ * Accepts exactly 'https://github.com/' or 'https://github.com' -- compared character for
+ * character, so every case variation is rejected. Lowercase-only is deliberate: Swift's internal
+ * provider lookup matches the host case-sensitively, and the download and version-listing paths
+ * recover from an unrecognised host differently (only the former applies the '.swift'
+ * repository-name mapping). A mixed-case remote therefore fails intermittently for packages such
+ * as URITemplate.swift. Restricting to lowercase makes that path unreachable with no backend change.
+ *
+ * Deliberately an exact string comparison, not URL parsing and not a prefix match -- a prefix
+ * match would admit 'https://github.com.evil.example/'.
+ *
+ * Runs before ValidationUtils.validateIsUrl, whose underlying check is case-insensitive: the
+ * generic validator would accept mixed case, so this rule is applied in addition to it and must
+ * be evaluated first so the Swift-specific message is the one surfaced.
+ *
+ * Not exported -- module-private intentionally, since it is only consumed by
+ * validateSwiftRemoteUrl below.
+ */
+const SWIFT_ALLOWED_REMOTE_URLS = ['https://github.com/', 'https://github.com'];
+
+const validateSwiftRemoteUrl = (data) => {
+  if (data.format !== 'swift' || data.type !== 'proxy') {
+    return null;
+  }
+
+  // Whitespace is rejected rather than trimmed, per the platform's existing TRIM_ERROR
+  // convention for URL fields; an untrimmed value simply fails the exact comparison below.
+  return SWIFT_ALLOWED_REMOTE_URLS.includes(data.proxy?.remoteUrl)
+    ? null
+    : UIStrings.REPOSITORIES.EDITOR.SWIFT_REMOTE_URL_VALIDATION_ERROR;
+};
+
+const validateAutoBlockStatusCodes = (data) => {
+  if (data.format !== 'swift') {
+    return null;
+  }
+
+  const codes = data.httpClient?.autoBlockStatusCodes;
+  if (!Array.isArray(codes) || codes.length === 0) {
+    return null;
+  }
+
+  const allValid = codes.every((code) => Number.isInteger(code) && code >= 100 && code <= 599);
+  if (!allValid) {
+    return UIStrings.REPOSITORIES.EDITOR.AUTO_BLOCK_STATUS_CODES_VALIDATION_ERROR;
+  }
+
+  const hasDuplicates = new Set(codes).size !== codes.length;
+  return hasDuplicates ? UIStrings.REPOSITORIES.EDITOR.AUTO_BLOCK_STATUS_CODES_DUPLICATE_ERROR : null;
+};
 
 export const validateDockerConnectorPort = (data, attrName) => {
   const {httpPort, httpsPort} = data.docker;

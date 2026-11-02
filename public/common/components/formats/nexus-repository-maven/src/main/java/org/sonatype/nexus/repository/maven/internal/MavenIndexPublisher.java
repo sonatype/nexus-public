@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
@@ -34,7 +35,6 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.payloads.PathPayload;
 
-import com.google.common.base.Predicate;
 import com.google.common.io.Closer;
 import org.apache.maven.index.reader.ChunkReader;
 import org.apache.maven.index.reader.IndexReader;
@@ -116,7 +116,7 @@ public abstract class MavenIndexPublisher
     ResourceHandler resourceHandler = closer.register(getResourceHandler(repository));
     IndexReader indexReader = closer.register(new IndexReader(null, resourceHandler));
     ChunkReader chunkReader = closer.register(indexReader.iterator().next());
-    return filter(transform(chunkReader, RECORD_EXPANDER::apply), new RecordTypeFilter(Type.ARTIFACT_ADD));
+    return filter(transform(chunkReader, RECORD_EXPANDER::apply), new RecordTypeFilter(Type.ARTIFACT_ADD)::test);
   }
 
   /**
@@ -185,7 +185,7 @@ public abstract class MavenIndexPublisher
       indexWriter.writeChunk(
           transform(
               decorate(
-                  filter(concat(getGroupRecords(repositories, closer)), duplicateDetectionStrategy),
+                  filter(concat(getGroupRecords(repositories, closer)), duplicateDetectionStrategy::test),
                   target.getName()),
               RECORD_COMPACTOR::apply).iterator());
     }
@@ -343,7 +343,7 @@ public abstract class MavenIndexPublisher
     }
 
     @Override
-    public boolean apply(final Record input) {
+    public boolean test(final Record input) {
       return allowedTypes.contains(input.getType());
     }
   }

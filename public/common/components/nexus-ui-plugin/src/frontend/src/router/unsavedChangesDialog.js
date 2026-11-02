@@ -45,7 +45,14 @@ export function setDialogSetter(fn) {
 // between test cases under slow CI timing. Test setup calls this between
 // cases to guarantee a clean slate.
 export function resetDialogState() {
-  setVisible(false);
-  resolveFn = undefined;
+  // Clear the setter reference BEFORE calling it to prevent stale-setter races:
+  // under load, calling the old setter (which triggers React state updates on an
+  // unmounting component) can interleave with the next test's beforeEach, causing
+  // the hide operation to race against the new test's setup.
+  const oldSetVisible = setVisible;
   setVisible = () => {};
+  resolveFn = undefined;
+  // Now safely call the old setter; any React updates from this will be orphaned
+  // and cannot affect the next test's freshly-registered setter.
+  oldSetVisible(false);
 }

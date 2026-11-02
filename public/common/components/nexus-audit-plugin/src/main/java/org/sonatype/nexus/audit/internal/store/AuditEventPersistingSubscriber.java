@@ -32,6 +32,8 @@ import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.audit.AuditorSupport.CREATED_TYPE;
 import static org.sonatype.nexus.audit.AuditorSupport.DELETED_TYPE;
+import static org.sonatype.nexus.audit.AuditorSupport.PURGE_TYPE;
+import static org.sonatype.nexus.audit.AuditorSupport.RESTORED_TYPE;
 import static org.sonatype.nexus.audit.AuditorSupport.UPDATED_TYPE;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_AUDIT_ENABLED;
 
@@ -53,7 +55,11 @@ public class AuditEventPersistingSubscriber
       // Repository events that are either user initiated or may be of relevance
       "repository", Set.of(CREATED_TYPE, UPDATED_TYPE, DELETED_TYPE, "autoBlockStatus", "cacheInvalidated"),
       // Blobstore Create-Update-Delete
-      "blobstore", Set.of(CREATED_TYPE, UPDATED_TYPE, DELETED_TYPE));
+      "blobstore", Set.of(CREATED_TYPE, UPDATED_TYPE, DELETED_TYPE),
+      // Content lifecycle only. Downloads, attribute/kind changes and proxy metadata refreshes fire per request
+      // and would flood the audit table; attribute changes can also carry very large format metadata payloads.
+      "repository.asset", Set.of(CREATED_TYPE, DELETED_TYPE, PURGE_TYPE, RESTORED_TYPE, UPDATED_TYPE + "-uploaded"),
+      "repository.component", Set.of(CREATED_TYPE, DELETED_TYPE, PURGE_TYPE, RESTORED_TYPE));
 
   private final AuditEventStore auditEventStore;
 

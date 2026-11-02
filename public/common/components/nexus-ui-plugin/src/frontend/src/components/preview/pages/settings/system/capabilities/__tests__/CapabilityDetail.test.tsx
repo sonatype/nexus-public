@@ -297,4 +297,83 @@ describe('CapabilityDetail', () => {
       expect(screen.queryByTestId('capability-delete-button')).not.toBeInTheDocument();
     });
   });
+
+  // CVE-2026-14645 / NEXUS-54726: security-sensitive capability types (those whose type carries
+  // requiresSettingsUpdate) additionally require nexus:settings:update to enable/save. The control
+  // stays visible but is disabled when the user lacks it. Disable is de-escalation and is NOT gated.
+  describe('settings:update gating for sensitive types (NEXUS-54726)', () => {
+    const sensitiveType: CapabilityType = {
+      ...capabilityType,
+      requiresSettingsUpdate: true,
+    };
+
+    const disabledCapability: Capability = {
+      ...baseCapability,
+      enabled: false,
+      active: false,
+      state: 'disabled',
+    };
+
+    const renderDetail = (capability: Capability) =>
+      renderWithTheme(
+        <CapabilityDetail
+          capability={capability}
+          onSave={mockOnSave}
+          onDelete={mockOnDelete}
+          onEnable={mockOnEnable}
+          onDisable={mockOnDisable}
+          onBack={mockOnBack}
+        />
+      );
+
+    it('disables (not hides) the Enable button for a sensitive type without settings:update', async () => {
+      mockFetchCapabilityTypes.mockResolvedValue([sensitiveType]);
+      mockCheckPermission.mockImplementation((permission) => permission !== 'nexus:settings:update');
+
+      renderDetail(disabledCapability);
+
+      const enableButton = await screen.findByRole('button', { name: /enable/i });
+      expect(enableButton).toBeInTheDocument();
+      await waitFor(() => expect(enableButton).toBeDisabled());
+
+      await userEvent.click(enableButton);
+      expect(mockOnEnable).not.toHaveBeenCalled();
+    });
+
+    it('enables the Enable button for a sensitive type when the user has settings:update', async () => {
+      mockFetchCapabilityTypes.mockResolvedValue([sensitiveType]);
+      mockCheckPermission.mockReturnValue(true);
+
+      renderDetail(disabledCapability);
+
+      const enableButton = await screen.findByRole('button', { name: /enable/i });
+      await waitFor(() => expect(enableButton).toBeEnabled());
+
+      await userEvent.click(enableButton);
+      expect(mockOnEnable).toHaveBeenCalled();
+    });
+
+    it('leaves the Enable button enabled for a non-sensitive type without settings:update', async () => {
+      mockFetchCapabilityTypes.mockResolvedValue([capabilityType]);
+      mockCheckPermission.mockImplementation((permission) => permission !== 'nexus:settings:update');
+
+      renderDetail(disabledCapability);
+
+      const enableButton = await screen.findByRole('button', { name: /enable/i });
+      await waitFor(() => expect(enableButton).toBeEnabled());
+    });
+
+    it('does not gate the Disable button for a sensitive type without settings:update', async () => {
+      mockFetchCapabilityTypes.mockResolvedValue([sensitiveType]);
+      mockCheckPermission.mockImplementation((permission) => permission !== 'nexus:settings:update');
+
+      renderDetail({ ...baseCapability, disableWarningMessage: undefined });
+
+      const disableButton = await screen.findByRole('button', { name: /disable/i });
+      expect(disableButton).toBeEnabled();
+
+      await userEvent.click(disableButton);
+      expect(mockOnDisable).toHaveBeenCalled();
+    });
+  });
 });

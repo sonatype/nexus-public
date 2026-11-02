@@ -12,12 +12,13 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
+import java.util.HashSet;
+
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
-import com.google.common.collect.Sets;
 import org.springframework.stereotype.Component;
 
 import static java.util.Objects.nonNull;
@@ -48,7 +49,7 @@ public class HostedRepositoryApiRequestToConfigurationConverter<S extends Hosted
 
     if (request.getCleanup() != null) {
       configuration.attributes(CLEANUP_ATTRIBUTES_KEY)
-          .set(CLEANUP_NAME_KEY, Sets.newHashSet(request.getCleanup().getPolicyNames()));
+          .set(CLEANUP_NAME_KEY, new HashSet<>(request.getCleanup().getPolicyNames()));
     }
     return configuration;
   }

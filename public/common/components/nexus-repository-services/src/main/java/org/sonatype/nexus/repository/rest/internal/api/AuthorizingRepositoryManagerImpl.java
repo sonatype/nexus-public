@@ -83,6 +83,8 @@ public class AuthorizingRepositoryManagerImpl
     if (repository != null) {
       repositoryPermissionChecker.ensureUserCanAdmin(EDIT, repository);
       Configuration updatedConfig = repository.getConfiguration().copy();
+      ProxySecretPlaceholders.guardAndRestore(repository.getConfiguration().getAttributes(),
+          configuration.getAttributes());
       updatedConfig.setRoutingRuleId(configuration.getRoutingRuleId());
       updatedConfig.setOnline(configuration.isOnline());
       updatedConfig.setAttributes(configuration.getAttributes());
@@ -119,6 +121,14 @@ public class AuthorizingRepositoryManagerImpl
   public Optional<Repository> getRepositoryWithAdmin(final String repositoryName) {
     return Optional.ofNullable(repositoryManager.get(repositoryName))
         .flatMap(repo -> repositoryPermissionChecker.userHasRepositoryAdminPermission(singletonList(repo), READ)
+            .stream()
+            .findFirst());
+  }
+
+  @Override
+  public Optional<Repository> getRepositoryWithAdminEdit(final String repositoryName) {
+    return Optional.ofNullable(repositoryManager.get(repositoryName))
+        .flatMap(repo -> repositoryPermissionChecker.userHasRepositoryAdminPermission(singletonList(repo), EDIT)
             .stream()
             .findFirst());
   }

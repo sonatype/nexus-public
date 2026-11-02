@@ -33,24 +33,24 @@ class AuditCapabilityConfigurationTest
   private static final int CLOUD_MAX = 1095;
 
   @Test
-  void defaultsTo90WhenMissing() {
+  void defaultsTo30WhenMissing() {
     AuditCapability.Configuration cfg = new AuditCapability.Configuration(new HashMap<>(), DEFAULT_MAX);
-    assertThat(cfg.getRetentionDays(), is(90));
+    assertThat(cfg.getRetentionDays(), is(30));
   }
 
   @Test
-  void defaultsTo90WhenNull() {
+  void defaultsTo30WhenNull() {
     Map<String, String> props = new HashMap<>();
     props.put(AuditCapability.Configuration.RETENTION_DAYS, null);
     AuditCapability.Configuration cfg = new AuditCapability.Configuration(props, DEFAULT_MAX);
-    assertThat(cfg.getRetentionDays(), is(90));
+    assertThat(cfg.getRetentionDays(), is(30));
   }
 
   @Test
-  void defaultsTo90WhenEmpty() {
+  void defaultsTo30WhenEmpty() {
     AuditCapability.Configuration cfg = new AuditCapability.Configuration(
         Map.of(AuditCapability.Configuration.RETENTION_DAYS, ""), DEFAULT_MAX);
-    assertThat(cfg.getRetentionDays(), is(90));
+    assertThat(cfg.getRetentionDays(), is(30));
   }
 
   @Test

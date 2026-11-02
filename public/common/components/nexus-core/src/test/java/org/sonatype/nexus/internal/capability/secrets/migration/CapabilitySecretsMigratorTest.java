@@ -28,7 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import com.google.common.collect.ImmutableList;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
@@ -128,10 +127,10 @@ public class CapabilitySecretsMigratorTest
 
     if (hasEncryptedField) {
       when(descriptor.formFields()).thenReturn(
-          ImmutableList.of(new PasswordFormField("test", "test", "?", true)));
+          List.of(new PasswordFormField("test", "test", "?", true)));
     }
     else {
-      when(descriptor.formFields()).thenReturn(ImmutableList.of());
+      when(descriptor.formFields()).thenReturn(List.of());
     }
 
     return reference;

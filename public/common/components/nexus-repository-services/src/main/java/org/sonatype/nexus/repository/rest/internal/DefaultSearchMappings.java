@@ -17,8 +17,6 @@ import java.util.List;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
-
-import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -72,7 +70,7 @@ public class DefaultSearchMappings
    * logged, so the regression is invisible without
    * ComponentVersionsSearchTableDAOTestSupport.componentVersionFilterUsesPlainColumnsNotTsvector, which guards it.
    */
-  private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
+  private static final List<SearchMapping> MAPPINGS = List.of(
       new SearchMapping(KEYWORD_ALIAS, "keyword", "Query by keyword", KEYWORDS, false),
       new SearchMapping("repository", REPOSITORY_NAME, "Repository name", SearchField.REPOSITORY_NAME),
       new SearchMapping("repositoryName", REPOSITORY_NAME, "Repository name", SearchField.REPOSITORY_NAME),

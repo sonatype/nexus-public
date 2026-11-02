@@ -17,6 +17,7 @@ import java.util.EnumSet;
 
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.bootstrap.entrypoint.EditionVersionFormatter;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
@@ -58,7 +59,7 @@ public class NexusServletContextListener
   public NexusServletContextListener(
       final NexusEditionSelector nexusEditionSelector,
       final NexusLifecycleManager nexusLifecycleManager,
-      @Autowired(required = false) final ApplicationVersion applicationVersion,
+      @Nullable final ApplicationVersion applicationVersion,
       @Value("${" + NEXUS_LIFECYCLE_STARTUP_PHASE + ":#{null}}") final String startupPhaseValue)
   {
     this.nexusLifecycleManager = requireNonNull(nexusLifecycleManager);

@@ -46,11 +46,13 @@ import {
   isHostedRepoEvaluationSupportedFormat,
 } from '../../../../../../utils/hostedRepoEvaluationFormats';
 import { useDebounced } from '../../../../shared/hooks';
+import { APIConstants } from '../../../../../../constants/APIConstants';
 
 import './HostedRepoEvaluationSetupPage.scss';
 
 const PAGE_SIZE = 25;
-const SEARCH_DEBOUNCE_MS = 500; // matches Classic UI search debounce
+// The app-wide default, which is also what the Classic UI list machines use.
+const SEARCH_DEBOUNCE_MS = APIConstants.DEBOUNCE_DELAY;
 
 /** Shown on rows whose format can't be monitored. */
 const notSupportedTooltip = (format: string) => hostedRepoEvaluationUnsupportedMessage(formatLabel(format));

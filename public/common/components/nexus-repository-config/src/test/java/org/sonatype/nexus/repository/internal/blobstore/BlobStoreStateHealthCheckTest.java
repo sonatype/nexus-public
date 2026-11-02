@@ -13,6 +13,8 @@
 
 package org.sonatype.nexus.repository.internal.blobstore;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import jakarta.inject.Provider;
 
@@ -23,7 +25,6 @@ import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 
 import com.codahale.metrics.health.HealthCheck.Result;
-import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -139,7 +140,7 @@ public class BlobStoreStateHealthCheckTest
     when(blobStoreConfiguration2.getType()).thenReturn(FileBlobStore.TYPE);
 
     BlobStoreGroup blobStore3 = mock(BlobStoreGroup.class);
-    when(blobStore3.getMembers()).thenReturn(Lists.newArrayList(blobStore1, blobStore2));
+    when(blobStore3.getMembers()).thenReturn(new ArrayList<>(Arrays.asList(blobStore1, blobStore2)));
     when(blobStore3.isStarted()).thenReturn(true);
     when(blobStore3.isWritable()).thenReturn(false);
     when(blobStore3.isStorageAvailable()).thenReturn(true);
@@ -148,7 +149,7 @@ public class BlobStoreStateHealthCheckTest
     when(blobStoreConfiguration3.getName()).thenReturn("group-blob-store");
     when(blobStoreConfiguration3.getType()).thenReturn(BlobStoreGroup.TYPE);
 
-    when(blobStoreManager.browse()).thenReturn(Lists.newArrayList(blobStore1, blobStore2, blobStore3));
+    when(blobStoreManager.browse()).thenReturn(new ArrayList<>(Arrays.asList(blobStore1, blobStore2, blobStore3)));
 
     Result result = healthCheck.check();
     assertTrue(result.isHealthy());
@@ -197,7 +198,7 @@ public class BlobStoreStateHealthCheckTest
     when(blobStoreConfiguration3.getName()).thenReturn("blob-store-3");
     when(blobStoreConfiguration3.getType()).thenReturn(FileBlobStore.TYPE);
 
-    when(blobStoreManager.browse()).thenReturn(Lists.newArrayList(blobStore, blobStore2, blobStore3));
+    when(blobStoreManager.browse()).thenReturn(new ArrayList<>(Arrays.asList(blobStore, blobStore2, blobStore3)));
 
     Result result = healthCheck.check();
     assertFalse(result.isHealthy());

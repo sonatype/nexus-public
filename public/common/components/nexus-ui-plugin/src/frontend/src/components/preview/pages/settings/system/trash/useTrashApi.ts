@@ -18,14 +18,14 @@ import { restClient, API_BASE } from '../../../../../../interface/api';
 
 import { DEFAULT_RETENTION_DAYS, DeletedItem, DeletedItemType, FacetsResponse, PageResponse } from './types';
 
-const SOFT_DELETE_API = `${API_BASE}/v1/soft-delete`;
+const TRASH_API = `${API_BASE}/v1/trash`;
 
 // =============================================================================
 // Backend response types
 // =============================================================================
 
 // Exported for unit testing.
-export interface SoftDeletedEntityXO {
+export interface TrashedEntityXO {
   entityType: string;
   identifier: string;
   displayName: string;
@@ -55,7 +55,7 @@ export interface BulkActionResponseXO {
 // Mapping helpers
 // =============================================================================
 
-// The backend soft-delete services only support these three entity types (repository, component, asset);
+// The backend trash services only support these three entity types (repository, component, asset);
 // blob-store/tag/user were descoped, so any other value from the server falls back to 'component' below.
 const VALID_ENTITY_TYPES = new Set<DeletedItemType>([
   'repository', 'component', 'asset',
@@ -107,7 +107,7 @@ function parseUniqueId(uniqueId: string): { entityType: string; identifier: stri
 }
 
 // Exported for unit testing.
-export function mapToDeletedItem(xo: SoftDeletedEntityXO, retentionDays: number): DeletedItem {
+export function mapToDeletedItem(xo: TrashedEntityXO, retentionDays: number): DeletedItem {
   let entityType: DeletedItemType;
   if (VALID_ENTITY_TYPES.has(xo.entityType as DeletedItemType)) {
     entityType = xo.entityType as DeletedItemType;
@@ -116,7 +116,7 @@ export function mapToDeletedItem(xo: SoftDeletedEntityXO, retentionDays: number)
     entityType = 'component';
   }
 
-  // For repository entities the soft-deleted item IS the repository, so the
+  // For repository entities the trashed item IS the repository, so the
   // metadata does not carry repositoryName. Surface the entity's own name as
   // the repository field so the Repository column renders the repo name in
   // line with assets and components, instead of falling back to an em-dash.
@@ -193,14 +193,14 @@ export function useDeletedItems(params: UseDeletedItemsParams): UseDeletedItemsR
       if (params.repositoryId) searchParams.set('repositoryId', params.repositoryId);
       if (params.q) searchParams.set('q', params.q);
 
-      const response = await restClient.get<PageResponse<SoftDeletedEntityXO>>(
-        `${SOFT_DELETE_API}/browse-all?${searchParams.toString()}`
+      const response = await restClient.get<PageResponse<TrashedEntityXO>>(
+        `${TRASH_API}/browse-all?${searchParams.toString()}`
       );
 
       if (fetchId !== fetchCountRef.current) return;
 
       const retentionDays: number =
-          ExtJS.state()?.getValue?.('softDeleteRetentionDays') ?? DEFAULT_RETENTION_DAYS;
+          ExtJS.state()?.getValue?.('trashRetentionDays') ?? DEFAULT_RETENTION_DAYS;
       setItems(response.items.map((xo) => mapToDeletedItem(xo, retentionDays)));
       setTotal(response.total);
     } catch (err: unknown) {
@@ -226,7 +226,7 @@ export function useDeletedItems(params: UseDeletedItemsParams): UseDeletedItemsR
 // =============================================================================
 
 /**
- * Fetches the soft-deleted children of a soft-deleted parent (currently a component's soft-deleted
+ * Fetches the trashed children of a trashed parent (currently a component's trashed
  * assets) for the expandable Trash row. The children endpoint returns a bare array (not a page); the
  * child set for a single component is small, so it is not paginated.
  *
@@ -235,9 +235,9 @@ export function useDeletedItems(params: UseDeletedItemsParams): UseDeletedItemsR
 export async function fetchDeletedItemChildren(parentId: string): Promise<DeletedItem[]> {
   const { entityType, identifier } = parseUniqueId(parentId);
   const retentionDays: number =
-      ExtJS.state()?.getValue?.('softDeleteRetentionDays') ?? DEFAULT_RETENTION_DAYS;
-  const children = await restClient.get<SoftDeletedEntityXO[]>(
-    `${SOFT_DELETE_API}/${encodeURIComponent(entityType)}/${encodeURIComponent(identifier)}/children`
+      ExtJS.state()?.getValue?.('trashRetentionDays') ?? DEFAULT_RETENTION_DAYS;
+  const children = await restClient.get<TrashedEntityXO[]>(
+    `${TRASH_API}/${encodeURIComponent(entityType)}/${encodeURIComponent(identifier)}/children`
   );
   return children.map((xo) => mapToDeletedItem(xo, retentionDays));
 }
@@ -268,7 +268,7 @@ export function useRestoreItems(): UseRestoreItemsResult {
 
       try {
         return await restClient.post<BulkActionResponseXO>(
-          `${SOFT_DELETE_API}/bulk-restore`,
+          `${TRASH_API}/bulk-restore`,
           {
             items: items.map((item) => {
               const parsed = parseUniqueId(item.id);
@@ -308,7 +308,7 @@ export function usePurgeItems(): UsePurgeItemsResult {
 
       try {
         return await restClient.post<BulkActionResponseXO>(
-          `${SOFT_DELETE_API}/bulk-purge`,
+          `${TRASH_API}/bulk-purge`,
           {
             items: items.map((item) => {
               const parsed = parseUniqueId(item.id);
@@ -338,7 +338,7 @@ export interface UseFacetsResult {
 }
 
 /**
- * Fetches facet counts from /v1/soft-delete/facets. Counts are computed across the entire
+ * Fetches facet counts from /v1/trash/facets. Counts are computed across the entire
  * trash_index and are NOT filtered by current sidebar selections or search bar.
  *
  * @param refetchKey  controller-supplied integer that callers increment after restore/purge
@@ -365,7 +365,7 @@ export function useDeletedItemsFacets(
       const sp = new URLSearchParams();
       if (deletedByPrefix) sp.set('deletedByPrefix', deletedByPrefix);
       sp.set('deletedByLimit', String(deletedByLimit));
-      const url = `${SOFT_DELETE_API}/facets?${sp.toString()}`;
+      const url = `${TRASH_API}/facets?${sp.toString()}`;
       const data = await restClient.get<FacetsResponse>(url);
       if (fetchId !== fetchCountRef.current) return;
       setFacets(data);

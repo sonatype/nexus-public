@@ -76,6 +76,7 @@ export function createRealmsFormMachine() {
   return createMachine<RealmsFormContext, RealmsFormEvent>(
     {
       id: 'realms-form',
+      predictableActionArguments: true,
       initial: 'loading',
       context: {
         availableRealms: [],

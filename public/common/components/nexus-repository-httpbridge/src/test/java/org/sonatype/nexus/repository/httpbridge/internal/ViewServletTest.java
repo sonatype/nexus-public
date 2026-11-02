@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.repository.BadRequestException;
@@ -251,6 +252,77 @@ class ViewServletTest
     assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
     assertThat(log.logs(), not(hasItem(logLevel(Level.ERROR))));
     assertThat(log.logs(), hasItem(logLevel(Level.DEBUG)));
+  }
+
+  @Test
+  void idleTimeoutWriteFailureIsLoggedAtDebugNotWarn() throws ServletException, IOException {
+    when(httpServletRequest.getPathInfo()).thenReturn("maven-central/some/path");
+
+    doThrow(idleTimeoutWriteFailure()).when(defaultResponseSender).send(any(), any(), any());
+
+    assertThrows(IOException.class, () -> underTest.service(httpServletRequest, servletResponse));
+
+    assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.ERROR))));
+    assertThat(log.logs(), hasItem(logLevel(Level.DEBUG)));
+  }
+
+  @Test
+  void suppressedIdleTimeoutWriteFailureIsLoggedAtDebugNotWarn() throws ServletException, IOException {
+    when(httpServletRequest.getPathInfo()).thenReturn("maven-central/some/path");
+
+    IOException outer = new IOException("write failed");
+    outer.addSuppressed(idleTimeoutWriteFailure());
+    doThrow(outer).when(defaultResponseSender).send(any(), any(), any());
+
+    assertThrows(IOException.class, () -> underTest.service(httpServletRequest, servletResponse));
+
+    assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.ERROR))));
+    assertThat(log.logs(), hasItem(logLevel(Level.DEBUG)));
+  }
+
+  /**
+   * A timeout waiting on a server-side dependency is a real failure operators need to see, so it must keep its WARN
+   * visibility.
+   */
+  @Test
+  void genuineServerSideTimeoutStillLoggedAtWarn() throws ServletException, IOException {
+    when(httpServletRequest.getPathInfo()).thenReturn("maven-central/some/path");
+
+    doThrow(new RuntimeException(new TimeoutException("IQ server unavailable")))
+        .when(defaultResponseSender)
+        .send(any(), any(), any());
+
+    assertThrows(RuntimeException.class, () -> underTest.service(httpServletRequest, servletResponse));
+
+    assertThat(log.logs(), hasItem(logLevel(Level.WARN)));
+  }
+
+  /**
+   * The Azure blob store rethrows Reactor read timeouts in the same IOException-wrapping-TimeoutException shape a
+   * client
+   * write timeout produces, so the shape alone must not silence it.
+   */
+  @Test
+  void serverSideReadTimeoutStillLoggedAtWarn() throws ServletException, IOException {
+    when(httpServletRequest.getPathInfo()).thenReturn("maven-central/some/path");
+
+    doThrow(new IOException(new TimeoutException("Did not observe any item or terminal signal within 30000ms")))
+        .when(defaultResponseSender)
+        .send(any(), any(), any());
+
+    assertThrows(IOException.class, () -> underTest.service(httpServletRequest, servletResponse));
+
+    assertThat(log.logs(), hasItem(logLevel(Level.WARN)));
+  }
+
+  /**
+   * The shape Jetty produces when a blocking write exceeds the connection idle timeout: IdleTimeout raises a plain
+   * TimeoutException which IO.rethrow wraps in an IOException.
+   */
+  private static IOException idleTimeoutWriteFailure() {
+    return new IOException(new TimeoutException("Idle timeout expired: 30000/30000 ms"));
   }
 
   @Test

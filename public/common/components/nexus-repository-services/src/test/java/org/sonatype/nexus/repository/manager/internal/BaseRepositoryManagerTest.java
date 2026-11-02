@@ -16,6 +16,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -66,8 +67,6 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.collect.Iterables.size;
-import static com.google.common.collect.Maps.newHashMap;
-import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
@@ -543,9 +542,9 @@ public class BaseRepositoryManagerTest
 
     String cleanupPolicy1 = randomUUID().toString().replace("-", "");
 
-    Set<String> cleanupPolicies = newHashSet(cleanupPolicy1);
+    Set<String> cleanupPolicies = new HashSet<>(asList(cleanupPolicy1));
 
-    Map<String, Object> cleanupAttributes = newHashMap();
+    Map<String, Object> cleanupAttributes = new HashMap<>();
     cleanupAttributes.put(CLEANUP_NAME_KEY, cleanupPolicies);
 
     mavenCentralConfiguration.getAttributes().put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes);
@@ -570,8 +569,8 @@ public class BaseRepositoryManagerTest
 
     String name = randomUUID().toString().replace("-", "");
 
-    Map<String, Object> cleanupAttributes = newHashMap();
-    cleanupAttributes.put(CLEANUP_NAME_KEY, newHashSet(name));
+    Map<String, Object> cleanupAttributes = new HashMap<>();
+    cleanupAttributes.put(CLEANUP_NAME_KEY, new HashSet<>(asList(name)));
 
     mavenCentralConfiguration.getAttributes().put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes);
     apacheSnapshotsConfiguration.getAttributes().put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes);
@@ -771,7 +770,7 @@ public class BaseRepositoryManagerTest
     when(groupConfiguration.getRepositoryId()).thenReturn(groupRepositoryId);
 
     NestedAttributesMap copiedAttributes = mock(NestedAttributesMap.class);
-    Collection<String> memberNames = newHashSet(MAVEN_CENTRAL_NAME, APACHE_SNAPSHOTS_NAME);
+    Collection<String> memberNames = new HashSet<>(asList(MAVEN_CENTRAL_NAME, APACHE_SNAPSHOTS_NAME));
     when(copiedGroupConfig.attributes("group")).thenReturn(copiedAttributes);
     when(copiedAttributes.get("memberNames", Collection.class)).thenReturn(memberNames);
     when(copiedGroupConfig.getRepositoryName()).thenReturn(GROUP_NAME);
@@ -913,15 +912,32 @@ public class BaseRepositoryManagerTest
 
     when(blobStoreManager.blobStoreUsageCount("used")).thenReturn(0L);
     when(blobStoreManager.blobStoreUsageCount("unused")).thenReturn(0L);
-    when(configurationStore.countByBlobStore("used")).thenReturn(1);
-    when(configurationStore.countByBlobStore("unused")).thenReturn(0);
+    // The delete guard counts INCLUDING trashed repositories so a trashed (restorable) repo still protects its
+    // blob store (NEXUS-55233).
+    when(configurationStore.countByBlobStoreIncludingTrashed("used")).thenReturn(1);
+    when(configurationStore.countByBlobStoreIncludingTrashed("unused")).thenReturn(0);
 
     assertThat(repositoryManager.isBlobstoreUsed("used"), is(true));
     assertThat(repositoryManager.isBlobstoreUsed("unused"), is(false));
 
     // proves the authoritative store was consulted, not the in-memory browse() cache
-    verify(configurationStore).countByBlobStore("used");
-    verify(configurationStore).countByBlobStore("unused");
+    verify(configurationStore).countByBlobStoreIncludingTrashed("used");
+    verify(configurationStore).countByBlobStoreIncludingTrashed("unused");
+  }
+
+  /**
+   * NEXUS-55233: a blob store referenced only by a trashed (restorable) repository must still count as in-use,
+   * so it cannot be deleted out from under the repository while it sits in Trash.
+   */
+  @Test
+  public void testIsBlobstoreUsed_trashedRepositoryStillCountsAsInUse() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    when(blobStoreManager.blobStoreUsageCount("trashed-only")).thenReturn(0L);
+    // No live repository uses it, but the trash-inclusive count sees the trashed one.
+    when(configurationStore.countByBlobStoreIncludingTrashed("trashed-only")).thenReturn(1);
+
+    assertThat(repositoryManager.isBlobstoreUsed("trashed-only"), is(true));
   }
 
   /**
@@ -1426,17 +1442,17 @@ public class BaseRepositoryManagerTest
     assertThat(size(repositoryManager.browse()), equalTo(3));
   }
 
-  // ---- Soft-delete / restore / hard-delete tests ----
+  // ---- Trash / restore / hard-delete tests ----
 
   @Test
-  public void testSoftDelete_stopsUntracksAndMarksInDb() throws Exception {
+  public void testTrash_stopsUntracksAndMarksInDb() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
 
-    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    repositoryManager.trash(MAVEN_CENTRAL_NAME, "testuser");
 
     verify(mavenCentralRepository).stopSafe();
     verify(mavenCentralRepository).destroy();
-    verify(configurationStore).softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    verify(configurationStore).trash(MAVEN_CENTRAL_NAME, "testuser");
 
     // Verify untracked: browse should no longer contain the repo
     assertThat(size(repositoryManager.browse()), equalTo(7));
@@ -1452,10 +1468,10 @@ public class BaseRepositoryManagerTest
   }
 
   @Test
-  public void testSoftDelete_removesFromGroups() throws Exception {
+  public void testTrash_removesFromGroups() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
 
-    repositoryManager.softDelete(APACHE_SNAPSHOTS_NAME, "admin");
+    repositoryManager.trash(APACHE_SNAPSHOTS_NAME, "admin");
 
     // apache-snapshots is a member of group, parentGroup, cycleA, cycleB
     verify(configurationStore).update(groupConfiguration);
@@ -1463,17 +1479,17 @@ public class BaseRepositoryManagerTest
   }
 
   @Test(expected = MissingRepositoryException.class)
-  public void testSoftDelete_throwsForMissingRepository() throws Exception {
+  public void testTrash_throwsForMissingRepository() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
-    repositoryManager.softDelete("non-existent", "testuser");
+    repositoryManager.trash("non-existent", "testuser");
   }
 
   @Test
-  public void testRestoreFromSoftDelete_createsTracksAndStarts() throws Exception {
+  public void testRestoreFromTrash_createsTracksAndStarts() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
 
-    // First soft-delete maven-central
-    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    // First trash maven-central
+    repositoryManager.trash(MAVEN_CENTRAL_NAME, "testuser");
     org.mockito.Mockito.clearInvocations(eventManager, configurationStore, repositoryFactory);
 
     // Setup for restore: store.readByNames returns the config, factory creates a new repo
@@ -1487,29 +1503,30 @@ public class BaseRepositoryManagerTest
 
     when(repositoryFactory.create(type, format)).thenReturn(restoredRepo);
 
-    Repository result = repositoryManager.restoreFromSoftDelete(MAVEN_CENTRAL_NAME);
+    Repository result = repositoryManager.restoreFromTrash(MAVEN_CENTRAL_NAME);
 
-    verify(configurationStore).undoSoftDelete(MAVEN_CENTRAL_NAME);
+    verify(configurationStore).undoTrash(MAVEN_CENTRAL_NAME);
     verify(restoredRepo).init(mavenCentralConfiguration);
     verify(restoredRepo).start();
 
-    // Verify event posted
+    // Verify event posted: a Trash restore posts RepositoryTrashRestoredEvent (a RepositoryCreatedEvent subclass,
+    // so created-event subscribers still run) rather than a plain RepositoryCreatedEvent (NEXUS-55410).
     ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
     verify(eventManager).post(eventCaptor.capture());
-    assertThat(eventCaptor.getValue().getClass().getSimpleName(), equalTo("RepositoryCreatedEvent"));
+    assertThat(eventCaptor.getValue().getClass().getSimpleName(), equalTo("RepositoryTrashRestoredEvent"));
 
     // Verify repo is now browsable again
     assertThat(repositoryManager.get(MAVEN_CENTRAL_NAME), is(restoredRepo));
   }
 
   @Test(expected = MissingRepositoryException.class)
-  public void testRestoreFromSoftDelete_throwsWhenConfigNotFound() throws Exception {
+  public void testRestoreFromTrash_throwsWhenConfigNotFound() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(false, true);
 
     when(configurationStore.readByNames(Set.of("missing")))
         .thenReturn(Set.of());
 
-    repositoryManager.restoreFromSoftDelete("missing");
+    repositoryManager.restoreFromTrash("missing");
   }
 
   @Test
@@ -1546,7 +1563,7 @@ public class BaseRepositoryManagerTest
   }
 
   @Test(expected = IllegalStateException.class)
-  public void testHardDelete_throwsWhenNotSoftDeleted() throws Exception {
+  public void testHardDelete_throwsWhenNotTrashed() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(false, true);
 
     when(configurationStore.readDeleted("not-deleted")).thenReturn(null);
@@ -1587,13 +1604,13 @@ public class BaseRepositoryManagerTest
   }
 
   @Test
-  public void testSoftDelete_cleansSearchIndex() throws Exception {
+  public void testTrash_cleansSearchIndex() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
 
     SearchIndexFacet searchFacet = mock(SearchIndexFacet.class);
     when(mavenCentralRepository.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(searchFacet));
 
-    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    repositoryManager.trash(MAVEN_CENTRAL_NAME, "testuser");
 
     verify(searchFacet).deleteIndex();
     verify(mavenCentralRepository).stopSafe();
@@ -1601,38 +1618,38 @@ public class BaseRepositoryManagerTest
   }
 
   @Test
-  public void testSoftDelete_continuesWhenSearchCleanupFails() throws Exception {
+  public void testTrash_continuesWhenSearchCleanupFails() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
 
     SearchIndexFacet searchFacet = mock(SearchIndexFacet.class);
     when(mavenCentralRepository.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(searchFacet));
     doThrow(new RuntimeException("Search cleanup failed")).when(searchFacet).deleteIndex();
 
-    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    repositoryManager.trash(MAVEN_CENTRAL_NAME, "testuser");
 
     verify(searchFacet).deleteIndex();
     verify(mavenCentralRepository).destroy();
-    verify(configurationStore).softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    verify(configurationStore).trash(MAVEN_CENTRAL_NAME, "testuser");
   }
 
   @Test
-  public void testSoftDelete_worksWithoutSearchFacet() throws Exception {
+  public void testTrash_worksWithoutSearchFacet() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
 
     // Default mock returns Optional.empty() for optionalFacet
 
-    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    repositoryManager.trash(MAVEN_CENTRAL_NAME, "testuser");
 
     verify(mavenCentralRepository).stopSafe();
     verify(mavenCentralRepository).destroy();
-    verify(configurationStore).softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    verify(configurationStore).trash(MAVEN_CENTRAL_NAME, "testuser");
   }
 
   @Test
-  public void testRestoreFromSoftDelete_rebuildsSearchIndex() throws Exception {
+  public void testRestoreFromTrash_rebuildsSearchIndex() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
 
-    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    repositoryManager.trash(MAVEN_CENTRAL_NAME, "testuser");
     org.mockito.Mockito.clearInvocations(eventManager, configurationStore, repositoryFactory);
 
     Repository restoredRepo = mock(Repository.class);
@@ -1647,17 +1664,17 @@ public class BaseRepositoryManagerTest
         .thenReturn(Set.of(mavenCentralConfiguration));
     when(repositoryFactory.create(type, format)).thenReturn(restoredRepo);
 
-    repositoryManager.restoreFromSoftDelete(MAVEN_CENTRAL_NAME);
+    repositoryManager.restoreFromTrash(MAVEN_CENTRAL_NAME);
 
     verify(restoredRepo).start();
     verify(searchFacet).rebuildIndex();
   }
 
   @Test
-  public void testRestoreFromSoftDelete_continuesWhenSearchRebuildFails() throws Exception {
+  public void testRestoreFromTrash_continuesWhenSearchRebuildFails() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
 
-    repositoryManager.softDelete(MAVEN_CENTRAL_NAME, "testuser");
+    repositoryManager.trash(MAVEN_CENTRAL_NAME, "testuser");
     org.mockito.Mockito.clearInvocations(eventManager, configurationStore, repositoryFactory);
 
     Repository restoredRepo = mock(Repository.class);
@@ -1673,7 +1690,7 @@ public class BaseRepositoryManagerTest
         .thenReturn(Set.of(mavenCentralConfiguration));
     when(repositoryFactory.create(type, format)).thenReturn(restoredRepo);
 
-    Repository result = repositoryManager.restoreFromSoftDelete(MAVEN_CENTRAL_NAME);
+    Repository result = repositoryManager.restoreFromTrash(MAVEN_CENTRAL_NAME);
 
     verify(searchFacet).rebuildIndex();
     assertThat(result, is(restoredRepo));

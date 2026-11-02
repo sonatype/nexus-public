@@ -49,7 +49,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.BaseEncoding;
@@ -171,7 +170,7 @@ public class WebhookServiceImpl
 
   @Override
   public List<Webhook> getWebhooks() {
-    return ImmutableList.copyOf(webhooks);
+    return List.copyOf(webhooks);
   }
 
   //

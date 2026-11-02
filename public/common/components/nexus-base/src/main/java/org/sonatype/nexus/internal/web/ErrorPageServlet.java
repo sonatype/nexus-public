@@ -13,7 +13,6 @@
 package org.sonatype.nexus.internal.web;
 
 import java.io.IOException;
-import java.util.stream.Stream;
 
 import org.sonatype.nexus.common.app.WebFilterPriority;
 import org.sonatype.nexus.internal.web.ErrorPageService.ErrorInfo;
@@ -23,7 +22,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.eclipse.jetty.io.QuietException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Throwables.getRootCause;
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.bootstrap.jetty.JettyQuietFailures.isQuiet;
 
 /**
  * An {@code error.html} servlet to handle generic servlet error-page dispatched requests.
@@ -115,7 +114,7 @@ public class ErrorPageServlet
       // Log java.lang.Error exceptions at error level
       log.error("Unexpected exception", getRootCause(cause));
     }
-    else if (isQuietException(cause)) {
+    else if (isQuiet(cause)) {
       log.trace("Caught Jetty QuietException ignoring", cause);
     }
     else {
@@ -123,18 +122,6 @@ public class ErrorPageServlet
     }
     request.setAttribute(ERROR_EXCEPTION_TYPE, cause.getClass());
     request.setAttribute(ERROR_EXCEPTION, cause);
-  }
-
-  /*
-   * Jetty uses QuietExceptions for failures outside the application such as the client disconnecting or invalid
-   * encoding.
-   */
-  private static boolean isQuietException(final Throwable e) {
-    if (QuietException.isQuiet(e)) {
-      return true;
-    }
-    return Stream.of(e.getSuppressed())
-        .anyMatch(t -> t instanceof QuietException);
   }
 
   private static boolean isJavaLangError(final Throwable e) {

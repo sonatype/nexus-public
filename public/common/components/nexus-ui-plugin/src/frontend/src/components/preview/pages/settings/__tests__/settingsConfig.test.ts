@@ -11,6 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+import Permissions from '../../../../../constants/Permissions';
 import { SETTINGS_SECTIONS, type SettingCard } from '../settingsConfig';
 import {
   PRO_AND_COMMUNITY_EDITIONS,
@@ -178,5 +179,21 @@ describe('settingsConfig permission gating (NEXUS-54048)', () => {
     // adminOnly is the fail-closed early guard: SettingsHubPage filters it before isVisible(),
     // whose NXSESSIONID cookie fast-path would otherwise flash the tile to non-admins on cold load.
     expect(card?.adminOnly).toBe(true);
+  });
+
+  it('shows the global-distribution card on every edition behind any of settings, repository-admin or blobstore read', () => {
+    const card = cardById('global-distribution');
+    expect(card).toBeDefined();
+    expect(card?.path).toBe('repository/global-distribution');
+    expect(card).not.toHaveProperty('featureKey');
+    expect(card?.visibilityRequirements).toEqual({
+      requiresAnyPermission: [
+        Permissions.SETTINGS.READ,
+        Permissions.REPOSITORY_ADMIN.READ,
+        Permissions.BLOB_STORES.READ,
+      ],
+    });
+    expect(card?.editionPill).toBe('enterprise');
+    expect(card?.description).toBe('Distribute repository content globally');
   });
 });

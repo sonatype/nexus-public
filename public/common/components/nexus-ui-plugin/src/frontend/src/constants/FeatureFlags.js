@@ -22,5 +22,6 @@ export default {
   MALWARE_RISK_ENABLED: 'nexus.malware.risk.enabled',
   MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED: 'nexus.malware.risk.on.disk.nonadmin.override.enabled',
   NUGET_SYMBOL_SERVER_ENABLED: 'nexus.nuget.symbol.server.enabled',
-  HUGGING_FACE_XET_ENABLED: 'nexus.format.huggingface.xet.enabled'
+  HUGGING_FACE_XET_ENABLED: 'nexus.format.huggingface.xet.enabled',
+  FIREWALL_SECURITY_PAGES_STATE: 'nexus.firewall.security.pages'
 };

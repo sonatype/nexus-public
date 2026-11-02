@@ -21,11 +21,12 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationDAO;
 import org.sonatype.nexus.upgrade.datastore.UpgradeConfigStoreSupport;
 
-import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
@@ -54,7 +55,7 @@ public final class UpgradeBlobStoreConfigurationStore
    */
   public List<BlobStoreConfiguration> list() {
     try (DataSession<?> session = sessionSupplier.openSession(DEFAULT_DATASTORE_NAME)) {
-      return ImmutableList.copyOf(session.access(BlobStoreConfigurationDAO.class).browse());
+      return toImmutableList(session.access(BlobStoreConfigurationDAO.class).browse());
     }
   }
 }

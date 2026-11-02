@@ -348,6 +348,12 @@ public class HttpClientFacetImpl
   }
 
   private AutoBlockConfiguration getAutoBlockConfiguration() {
+    // NEXUS-54758: an explicit, non-empty per-repository list of status codes overrides the format default entirely.
+    if (this.config != null && this.config.autoBlockStatusCodes != null
+        && !this.config.autoBlockStatusCodes.isEmpty()) {
+      return new ConfigurableAutoBlockConfiguration(this.config.autoBlockStatusCodes);
+    }
+
     AutoBlockConfiguration config = this.autoBlockConfiguration.get(getRepository().getFormat().getValue());
 
     if (config == null) {

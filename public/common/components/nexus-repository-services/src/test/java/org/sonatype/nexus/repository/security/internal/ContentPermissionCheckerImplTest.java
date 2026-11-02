@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.security.internal;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,7 +30,6 @@ import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
-import com.google.common.collect.Sets;
 import org.apache.shiro.subject.Subject;
 import org.junit.Before;
 import org.junit.Test;
@@ -186,13 +187,13 @@ public class ContentPermissionCheckerImplTest
             eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
                 .thenReturn(true);
 
-    assertThat(impl.isViewPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat",
+    assertThat(impl.isViewPermitted(new LinkedHashSet<>(Arrays.asList("repoName", "repoName2")), "repoFormat",
         BreadActions.READ), is(true));
   }
 
   @Test
   public void testIsViewPermittedMultipleRepositories_notPermitted() throws Exception {
-    assertThat(impl.isViewPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat",
+    assertThat(impl.isViewPermitted(new LinkedHashSet<>(Arrays.asList("repoName", "repoName2")), "repoFormat",
         BreadActions.READ), is(false));
 
     // just to make sure it was actually called, since returning false is the default behaviour
@@ -214,7 +215,7 @@ public class ContentPermissionCheckerImplTest
                 Arrays.asList(BreadActions.READ)))))
                     .thenReturn(true);
 
-    assertThat(impl.isContentPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat",
+    assertThat(impl.isContentPermitted(new LinkedHashSet<>(Arrays.asList("repoName", "repoName2")), "repoFormat",
         BreadActions.READ, config, variableSource), is(true));
   }
 
@@ -222,7 +223,7 @@ public class ContentPermissionCheckerImplTest
   public void testIsContentPermittedMultipleRepositories_notPermitted() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
-    assertThat(impl.isContentPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat",
+    assertThat(impl.isContentPermitted(new LinkedHashSet<>(Arrays.asList("repoName", "repoName2")), "repoFormat",
         BreadActions.READ, config, variableSource), is(false));
 
     // just to make sure it was actually called, since returning false is the default behaviour
@@ -246,7 +247,7 @@ public class ContentPermissionCheckerImplTest
 
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
-    assertThat(impl.isPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat",
+    assertThat(impl.isPermitted(new LinkedHashSet<>(Arrays.asList("repoName", "repoName2")), "repoFormat",
         BreadActions.READ, variableSource), is(true));
   }
 
@@ -262,7 +263,7 @@ public class ContentPermissionCheckerImplTest
 
     when(selectorManager.evaluate(any(), any())).thenReturn(false);
 
-    assertThat(impl.isPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat",
+    assertThat(impl.isPermitted(new LinkedHashSet<>(Arrays.asList("repoName", "repoName2")), "repoFormat",
         BreadActions.READ, variableSource), is(true));
   }
 
@@ -276,14 +277,14 @@ public class ContentPermissionCheckerImplTest
                 Arrays.asList(BreadActions.READ)))))
                     .thenReturn(true);
 
-    Set<String> repositoryNames = Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2"));
+    Set<String> repositoryNames = new LinkedHashSet<>(Arrays.asList("repoName", "repoName2"));
 
     when(selectorManager.browseActive(repositoryNames, Collections.singletonList("repoFormat")))
         .thenReturn(Arrays.asList(config));
 
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
-    assertThat(impl.isPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat",
+    assertThat(impl.isPermitted(new LinkedHashSet<>(Arrays.asList("repoName", "repoName2")), "repoFormat",
         BreadActions.READ, variableSource), is(true));
 
     // just to validate 'view' permission didn't sneak in and authorize the above call
@@ -307,7 +308,8 @@ public class ContentPermissionCheckerImplTest
     when(selectorManager.evaluate(any(), any())).thenReturn(false);
 
     assertThat(
-        impl.isPermitted(Sets.newHashSet("repoName", "repoName2"), "repoFormat", BreadActions.READ, variableSource),
+        impl.isPermitted(new HashSet<>(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ,
+            variableSource),
         is(false));
   }
 

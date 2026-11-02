@@ -94,6 +94,7 @@ export interface HttpClientAuthenticationConfig {
 export interface HttpClientConfig {
   blocked: boolean;
   autoBlock: boolean;
+  autoBlockStatusCodes?: number[];
   connection?: HttpClientConnectionConfig | null;
   authentication?: HttpClientAuthenticationConfig | null;
 }
@@ -335,6 +336,16 @@ export interface XetConfig {
   enabled: boolean;
 }
 
+/**
+ * Cargo configuration. Controls whether the repository advertises
+ * `auth-required` in the /config.json document served to Cargo clients. This is
+ * metadata advertising, not enforcement — access control remains with Anonymous
+ * Access and repository privileges.
+ */
+export interface CargoConfig {
+  requireAuthentication: boolean;
+}
+
 // =============================================================================
 // Repository Data Models
 // =============================================================================
@@ -367,6 +378,7 @@ export interface RepositoryAttributes {
   pypi?: PypiConfig;
   terraformSigning?: TerraformSigningConfig | null;
   xet?: XetConfig;
+  cargo?: CargoConfig;
 }
 
 /**
@@ -420,6 +432,7 @@ export interface RepositoryFormData {
   pypi?: PypiConfig;
   terraformSigning?: TerraformSigningConfig | null;
   xet?: XetConfig;
+  cargo?: CargoConfig;
 }
 
 /**
@@ -449,6 +462,8 @@ export interface Recipe {
 export interface BlobStore {
   name: string;
   type?: string;
+  /** True when the blob store has CloudFront or S3 Transfer Acceleration configured. */
+  globalDistributionEnabled?: boolean;
 }
 
 /**
@@ -502,7 +517,7 @@ export interface HealthCheckStatus {
 
 /**
  * Repository list item with extended display info
- * This matches the data returned by /service/rest/internal/ui/repositories/details/
+ * This matches the data returned by /service/rest/internal/ui/repositories/details
  */
 export interface RepositoryListItem extends Repository {
   // From the details endpoint
@@ -569,6 +584,7 @@ export interface RepositoryFormErrors {
       username?: string;
       password?: string;
     };
+    autoBlockStatusCodes?: string;
   };
   group?: {
     memberNames?: string;
@@ -996,4 +1012,22 @@ export function getFormErrorMessages(errors: RepositoryFormErrors): string[] {
     }
   }
   return messages;
+}
+
+/**
+ * Single source of truth for a repository's effective online state.
+ *
+ * A repository carries online state in two shapes depending on the endpoint that
+ * produced it: the list `/details` payload has `status.online` (no top-level `online`),
+ * while a single-repo refetch has top-level `online` (no `status`). Reading `status.online`
+ * in isolation goes stale after a toggle-refetch merges fresh `online` over an old `status`.
+ * Prefer `status.online` when present, fall back to `online`, and default to online.
+ */
+export function isRepositoryOnline(repo: Pick<Repository, 'online' | 'status'>): boolean {
+  return repo.status?.online ?? repo.online ?? true;
+}
+
+/** Toggle confirm variant: green (positive) coming online, red (disruptive) going offline. */
+export function onlineToggleVariant(nextOnline: boolean): 'success' | 'danger' {
+  return nextOnline ? 'success' : 'danger';
 }

@@ -11,6 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+import ExtJS from '../../../../../interface/ExtJS';
+
 /**
  * Utility functions for the Browse detail panel components.
  */
@@ -130,12 +132,46 @@ export function formatRelativeDate(isoDate: string | null | undefined): string {
  *
  * @param repositoryName - Repository name
  * @param assetPath - Asset path within the repository
- * @returns Download URL
+ * @returns Download URL including the context path (relative to the page, e.g. `./repository/...`)
  */
 export function getAssetDownloadUrl(repositoryName: string, assetPath: string): string {
   // Remove leading slash if present
   const cleanPath = assetPath.startsWith('/') ? assetPath.slice(1) : assetPath;
-  return `/repository/${repositoryName}/${cleanPath}`;
+  return ExtJS.urlOf(`/repository/${repositoryName}/${cleanPath}`);
+}
+
+/**
+ * Builds a full, resolvable asset URL for copy-to-clipboard, so the copied value opens directly in
+ * a browser or works in a CLI (AC1, NEXUS-54502) rather than being a bare relative path segment.
+ *
+ * Prefers the given `downloadUrl`: absolute URLs are returned as-is, context-relative ones (`./...`,
+ * as produced by `NX.util.Url.urlOf`) are resolved against the current page, and origin-relative
+ * ones get the current origin prepended. When no `downloadUrl` is available it falls back to
+ * {@link getAssetDownloadUrl} resolved against the current page. Returns an empty string when there
+ * is nothing to build a URL from.
+ */
+export function getFullAssetUrl(
+  repositoryName: string,
+  downloadUrl: string | null | undefined,
+  assetPath: string | null | undefined,
+): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
+  if (downloadUrl) {
+    if (/^https?:\/\//i.test(downloadUrl)) {
+      return downloadUrl;
+    }
+    if (downloadUrl.startsWith('./')) {
+      // Context-relative form produced by NX.util.Url.urlOf (NEXUS-55899)
+      return new URL(downloadUrl, window.location.href).toString();
+    }
+    return `${origin}${downloadUrl.startsWith('/') ? '' : '/'}${downloadUrl}`;
+  }
+
+  if (!assetPath) {
+    return '';
+  }
+  return new URL(getAssetDownloadUrl(repositoryName, assetPath), window.location.href).toString();
 }
 
 /**

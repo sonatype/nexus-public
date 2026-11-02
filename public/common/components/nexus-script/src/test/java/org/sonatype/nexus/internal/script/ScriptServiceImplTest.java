@@ -41,6 +41,8 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -83,27 +85,40 @@ public class ScriptServiceImplTest
   }
 
   @Test
+  public void evalIsRejectedWhenExecutionIsDisabled() {
+    ScriptService scriptService = new ScriptServiceImpl(
+        engineManager, mock(GlobalComponentLookupHelper.class), new ArrayList<>(), mock(ScriptCleanupHandler.class),
+        true, false);
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        () -> scriptService.eval("groovy", "return 1", new HashMap<>()));
+    assertEquals("Script execution is disabled", exception.getMessage());
+    verify(engineManager, never()).getEngineByName(any());
+  }
+
+  @Test
   public void constructorRejectsNullEngineManager() {
     assertThrows(NullPointerException.class, () -> new ScriptServiceImpl(
-        null, mock(GlobalComponentLookupHelper.class), new ArrayList<>(), mock(ScriptCleanupHandler.class), true));
+        null, mock(GlobalComponentLookupHelper.class), new ArrayList<>(), mock(ScriptCleanupHandler.class), true,
+        true));
   }
 
   @Test
   public void constructorRejectsNullLookupHelper() {
     assertThrows(NullPointerException.class, () -> new ScriptServiceImpl(
-        engineManager, null, new ArrayList<>(), mock(ScriptCleanupHandler.class), true));
+        engineManager, null, new ArrayList<>(), mock(ScriptCleanupHandler.class), true, true));
   }
 
   @Test
   public void constructorRejectsNullScriptApis() {
     assertThrows(NullPointerException.class, () -> new ScriptServiceImpl(
-        engineManager, mock(GlobalComponentLookupHelper.class), null, mock(ScriptCleanupHandler.class), true));
+        engineManager, mock(GlobalComponentLookupHelper.class), null, mock(ScriptCleanupHandler.class), true, true));
   }
 
   @Test
   public void constructorRejectsNullScriptCleanupHandler() {
     assertThrows(NullPointerException.class, () -> new ScriptServiceImpl(
-        engineManager, mock(GlobalComponentLookupHelper.class), new ArrayList<>(), null, true));
+        engineManager, mock(GlobalComponentLookupHelper.class), new ArrayList<>(), null, true, true));
   }
 
   @Test
@@ -133,7 +148,7 @@ public class ScriptServiceImplTest
     scriptApis.add(scriptApi);
 
     ScriptService scriptService =
-        new ScriptServiceImpl(engineManager, lookupHelper, scriptApis, scriptCleanupHandler, true);
+        new ScriptServiceImpl(engineManager, lookupHelper, scriptApis, scriptCleanupHandler, true, true);
 
     Bindings bindings = new SimpleBindings();
     scriptService.applyDefaultBindings(bindings);
@@ -169,7 +184,7 @@ public class ScriptServiceImplTest
     GlobalComponentLookupHelper lookupHelper = mock(GlobalComponentLookupHelper.class);
     ScriptCleanupHandler scriptCleanupHandler = mock(ScriptCleanupHandler.class);
     ScriptService scriptService =
-        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true);
+        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true, true);
 
     ScriptContext context = new SimpleScriptContext();
     context.setBindings(new SimpleBindings(), ScriptContext.ENGINE_SCOPE);
@@ -190,7 +205,7 @@ public class ScriptServiceImplTest
     GlobalComponentLookupHelper lookupHelper = mock(GlobalComponentLookupHelper.class);
     ScriptCleanupHandler scriptCleanupHandler = mock(ScriptCleanupHandler.class);
     ScriptService scriptService =
-        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true);
+        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true, true);
 
     ScriptContext context = new SimpleScriptContext();
     context.setBindings(new SimpleBindings(), ScriptContext.ENGINE_SCOPE);
@@ -223,7 +238,7 @@ public class ScriptServiceImplTest
     GlobalComponentLookupHelper lookupHelper = mock(GlobalComponentLookupHelper.class);
     ScriptCleanupHandler scriptCleanupHandler = mock(ScriptCleanupHandler.class);
     ScriptService scriptService =
-        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true);
+        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true, true);
 
     ScriptEngine engine = mock(ScriptEngine.class);
     Bindings engineBindings = new SimpleBindings();
@@ -262,7 +277,7 @@ public class ScriptServiceImplTest
     scriptApis.add(secondApi);
 
     ScriptService scriptService =
-        new ScriptServiceImpl(engineManager, lookupHelper, scriptApis, scriptCleanupHandler, true);
+        new ScriptServiceImpl(engineManager, lookupHelper, scriptApis, scriptCleanupHandler, true, true);
 
     Bindings bindings = new SimpleBindings();
     scriptService.applyDefaultBindings(bindings);
@@ -276,7 +291,7 @@ public class ScriptServiceImplTest
     GlobalComponentLookupHelper lookupHelper = mock(GlobalComponentLookupHelper.class);
     ScriptCleanupHandler scriptCleanupHandler = mock(ScriptCleanupHandler.class);
     ScriptService scriptService =
-        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true);
+        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true, true);
 
     ScriptContext context = new SimpleScriptContext();
     context.setBindings(new SimpleBindings(), ScriptContext.GLOBAL_SCOPE);
@@ -302,7 +317,7 @@ public class ScriptServiceImplTest
     GlobalComponentLookupHelper lookupHelper = mock(GlobalComponentLookupHelper.class);
     ScriptCleanupHandler scriptCleanupHandler = mock(ScriptCleanupHandler.class);
     ScriptService scriptService =
-        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true);
+        new ScriptServiceImpl(engineManager, lookupHelper, new ArrayList<>(), scriptCleanupHandler, true, true);
 
     ScriptContext context = new SimpleScriptContext();
     context.setBindings(new SimpleBindings(), ScriptContext.ENGINE_SCOPE);
@@ -359,6 +374,7 @@ public class ScriptServiceImplTest
         mock(GlobalComponentLookupHelper.class),
         new ArrayList<>(),
         mock(ScriptCleanupHandler.class),
-        groovyOnly);
+        groovyOnly,
+        true);
   }
 }

@@ -124,6 +124,10 @@
         <Arg>GET</Arg>
       </Call>
       <Call name="compressIncludeMethod">
+        <!-- Include head due to etag modification  -->
+        <Arg>HEAD</Arg>
+      </Call>
+      <Call name="compressIncludeMethod">
         <Arg>POST</Arg>
       </Call>
       <Call name="compressIncludeMimeType">
@@ -178,6 +182,10 @@
         <Arg>GET</Arg>
       </Call>
       <Call name="compressIncludeMethod">
+        <!-- Include head due to etag modification  -->
+        <Arg>HEAD</Arg>
+      </Call>
+      <Call name="compressIncludeMethod">
         <Arg>POST</Arg>
       </Call>
       <Call name="compressIncludeMethod">
@@ -197,6 +205,36 @@
         <Arg>application/octet-stream</Arg>
       </Call>
       <Call name="compressExcludeMimeType">
+        <Arg>application/vnd.android.package-archive</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/vnd.debian.binary-package</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/vnd.docker.image.rootfs.diff.tar.gzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/vnd.docker.image.rootfs.foreign.diff.tar.gzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/vnd.oci.image.layer.nondistributable.v1.tar+gzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/vnd.oci.image.layer.v1.tar+gzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/vnd.oci.image.layer.v1.tar+zstd</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/vnd.oci.ml.pytorch.model.v1+tar+gzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/vnd.oci.ml.tensorflow.model.v1+tar+gzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/x-bzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
         <Arg>application/x-bzip2</Arg>
       </Call>
       <Call name="compressExcludeMimeType">
@@ -209,10 +247,22 @@
         <Arg>application/x-rar-compressed</Arg>
       </Call>
       <Call name="compressExcludeMimeType">
+        <Arg>application/x-rpm</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/x-tar+gzip</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
         <Arg>application/x-tgz</Arg>
       </Call>
       <Call name="compressExcludeMimeType">
+        <Arg>application/x-tika-ooxml</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
         <Arg>application/x-xz</Arg>
+      </Call>
+      <Call name="compressExcludeMimeType">
+        <Arg>application/x-zip-compressed</Arg>
       </Call>
       <Call name="compressExcludeMimeType">
         <Arg>application/zip</Arg>
@@ -228,8 +278,9 @@
       <!--
         Prefix ^ triggers regular expression.
         Exclude token endpoints
+        Exclude rubygems info endpoint
       -->
-      <Arg>^/repository/[^/]+/(?!(-/user/org\.couchdb\.user:.*)|(v2/token)|(api/token)|((v2|v1)/users/authenticate)).*</Arg>
+      <Arg>^/repository/[^/]+/(?!(-/user/org\.couchdb\.user:.*)|(v2/token)|(api/token)|((v2|v1)/users/authenticate)|(info/.+)).*</Arg>
       <Arg>
         <Ref refid="repoCfg" />
       </Arg>

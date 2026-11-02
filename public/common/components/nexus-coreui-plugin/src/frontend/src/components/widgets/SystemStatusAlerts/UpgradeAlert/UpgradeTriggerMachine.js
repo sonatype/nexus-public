@@ -22,6 +22,7 @@ import {createMachine} from "xstate";
 const UpgradeTriggerMachine = createMachine({
     id: 'UpgradeTriggerMachine',
     initial: 'loaded',
+    predictableActionArguments: true,
     states: {
       loaded: {
         on: {

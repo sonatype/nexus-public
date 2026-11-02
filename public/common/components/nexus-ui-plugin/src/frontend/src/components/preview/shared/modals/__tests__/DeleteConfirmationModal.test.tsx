@@ -80,7 +80,7 @@ describe('DeleteConfirmationModal', () => {
     });
   });
 
-  describe('Soft-delete (Trash) messaging', () => {
+  describe('Trash (Trash) messaging', () => {
     it('shows "moved to Trash" copy with retention window instead of permanent-delete copy', () => {
       render(
         <DeleteConfirmationModal
@@ -89,7 +89,7 @@ describe('DeleteConfirmationModal', () => {
           onConfirm={mockOnConfirm}
           entityName="maven-releases"
           entityType="repository"
-          softDelete
+          trash
           retentionDays={30}
         />
       );
@@ -108,7 +108,7 @@ describe('DeleteConfirmationModal', () => {
           onConfirm={mockOnConfirm}
           entityName="maven-releases"
           entityType="repository"
-          softDelete
+          trash
         />
       );
 
@@ -116,7 +116,7 @@ describe('DeleteConfirmationModal', () => {
       expect(screen.getByText(/can be restored before it is permanently removed/)).toBeInTheDocument();
     });
 
-    it('shows permanent-delete copy by default (softDelete off)', () => {
+    it('shows permanent-delete copy by default (trash off)', () => {
       render(
         <DeleteConfirmationModal
           open={true}
@@ -604,6 +604,181 @@ describe('DeleteConfirmationModal', () => {
       // Radix UI Dialog automatically associates Description with Content via aria-describedby
       const description = screen.getByText(/This action cannot be undone/);
       expect(description).toBeInTheDocument();
+    });
+  });
+
+  // Callers can require typing a specific identifier (a username) instead of "Delete"; the match is then case-sensitive.
+  describe('requiredConfirmationText override', () => {
+    const REQUIRED_TEXT = 'jdoe';
+    const PLACEHOLDER = `Type "${REQUIRED_TEXT}" to confirm`;
+
+    it('requires typing the required text and not the generic "Delete" word', async () => {
+      render(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="John Doe"
+          entityType="user"
+          requiredConfirmationText={REQUIRED_TEXT}
+        />
+      );
+
+      const input = screen.getByPlaceholderText(PLACEHOLDER);
+      const deleteButton = screen.getByRole('button', { name: /^delete$/i });
+
+      expect(deleteButton).toBeDisabled();
+
+      // The old acknowledgement word must no longer confirm.
+      await userEvent.type(input, 'Delete');
+      expect(deleteButton).toBeDisabled();
+
+      await userEvent.clear(input);
+      await userEvent.type(input, REQUIRED_TEXT);
+      await waitFor(() => {
+        expect(deleteButton).toBeEnabled();
+      });
+    });
+
+    it('matches the required text case-sensitively', async () => {
+      render(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="John Doe"
+          entityType="user"
+          requiredConfirmationText={REQUIRED_TEXT}
+        />
+      );
+
+      const input = screen.getByPlaceholderText(PLACEHOLDER);
+      const deleteButton = screen.getByRole('button', { name: /^delete$/i });
+
+      // Wrong casing is rejected and flagged as incorrect.
+      await userEvent.type(input, 'JDOE');
+      expect(deleteButton).toBeDisabled();
+      expect(
+        screen.getByText('The confirmation text provided is incorrect')
+      ).toBeInTheDocument();
+
+      // Exact casing confirms.
+      await userEvent.clear(input);
+      await userEvent.type(input, REQUIRED_TEXT);
+      await waitFor(() => {
+        expect(deleteButton).toBeEnabled();
+      });
+    });
+
+    it('does not flag a correct-so-far prefix but flags a wrong-cased prefix', async () => {
+      render(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="John Doe"
+          entityType="user"
+          requiredConfirmationText={REQUIRED_TEXT}
+        />
+      );
+
+      const input = screen.getByPlaceholderText(PLACEHOLDER);
+
+      // Correct-so-far prefix: no error while typing.
+      await userEvent.type(input, 'jd');
+      expect(
+        screen.queryByText('The confirmation text provided is incorrect')
+      ).not.toBeInTheDocument();
+
+      // A wrong-cased first character diverges immediately.
+      await userEvent.clear(input);
+      await userEvent.type(input, 'Jd');
+      expect(
+        screen.getByText('The confirmation text provided is incorrect')
+      ).toBeInTheDocument();
+    });
+
+    it('renders the required text in the warning box and placeholder', () => {
+      render(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="John Doe"
+          entityType="user"
+          requiredConfirmationText={REQUIRED_TEXT}
+        />
+      );
+
+      expect(screen.getByPlaceholderText(PLACEHOLDER)).toBeInTheDocument();
+      // Warning box shows the required text (disambiguated via its helper caption).
+      const helper = screen.getByText('Type this to confirm deletion');
+      expect(helper.parentElement).toHaveTextContent(REQUIRED_TEXT);
+    });
+
+    it('ignores a blank required text and falls back to the default acknowledgement word', async () => {
+      render(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="John Doe"
+          entityType="user"
+          requiredConfirmationText=""
+        />
+      );
+
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
+      const deleteButton = screen.getByRole('button', { name: /^delete$/i });
+
+      // A blank override must not auto-enable the button with empty input.
+      expect(deleteButton).toBeDisabled();
+
+      // The default word confirms case-insensitively, proving the fallback is active.
+      await userEvent.type(input, 'delete');
+      await waitFor(() => {
+        expect(deleteButton).toBeEnabled();
+      });
+    });
+
+    it('resets the required-text input when the modal closes', async () => {
+      const { rerender } = render(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="John Doe"
+          entityType="user"
+          requiredConfirmationText={REQUIRED_TEXT}
+        />
+      );
+
+      const input = screen.getByPlaceholderText(PLACEHOLDER);
+      await userEvent.type(input, REQUIRED_TEXT);
+
+      rerender(
+        <DeleteConfirmationModal
+          open={false}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="John Doe"
+          entityType="user"
+          requiredConfirmationText={REQUIRED_TEXT}
+        />
+      );
+
+      rerender(
+        <DeleteConfirmationModal
+          open={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          entityName="John Doe"
+          entityType="user"
+          requiredConfirmationText={REQUIRED_TEXT}
+        />
+      );
+
+      expect(screen.getByPlaceholderText(PLACEHOLDER)).toHaveValue('');
     });
   });
 });

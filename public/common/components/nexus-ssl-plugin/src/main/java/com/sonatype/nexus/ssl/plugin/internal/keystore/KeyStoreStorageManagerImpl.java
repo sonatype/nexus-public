@@ -17,8 +17,8 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.sonatype.nexus.common.entity.EntityVersion;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -26,6 +26,8 @@ import org.sonatype.nexus.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 
 /**
  * MyBatis {@link PersistentKeyStoreStorageManager} implementation.
@@ -67,7 +69,7 @@ public class KeyStoreStorageManagerImpl
   @Transactional
   @Override
   public List<KeyStoreData> browse() {
-    return ImmutableList.copyOf(dao().browse());
+    return toImmutableList(dao().browse());
   }
 
   private static KeyStoreDataEvent event(final String keyStoreName) {

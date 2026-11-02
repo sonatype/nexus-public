@@ -13,9 +13,11 @@
 package org.sonatype.nexus.blobstore.s3;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import org.mockito.MockedStatic;
@@ -30,9 +32,13 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_DISTRIBUTION_URL_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CLOUDFRONT_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredBucket;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredRegion;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.TRANSFER_ACCELERATION_ENABLED_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.isGlobalDistributionEnabled;
 
 public class S3BlobStoreConfigurationHelperTest
 {
@@ -82,6 +88,43 @@ public class S3BlobStoreConfigurationHelperTest
 
     // Running region doesn't match anything, use primary
     withRegion(Region.AF_SOUTH_1, () -> assertThat(getConfiguredRegion(configuration), is("default")));
+  }
+
+  @Test
+  public void testIsGlobalDistributionEnabled() {
+    // not an S3 blob store
+    assertThat(isGlobalDistributionEnabled(configuration("File", ImmutableMap.of())), is(false));
+
+    // S3 without CloudFront or transfer acceleration
+    assertThat(isGlobalDistributionEnabled(configuration(S3BlobStore.TYPE, ImmutableMap.of())), is(false));
+
+    assertThat(isGlobalDistributionEnabled(
+        configuration(S3BlobStore.TYPE, ImmutableMap.of(TRANSFER_ACCELERATION_ENABLED_KEY, true))), is(true));
+
+    assertThat(isGlobalDistributionEnabled(
+        configuration(S3BlobStore.TYPE, ImmutableMap.of(TRANSFER_ACCELERATION_ENABLED_KEY, false))), is(false));
+
+    // persisted as a String: AttributesMap coerces to Boolean via Boolean.valueOf
+    assertThat(isGlobalDistributionEnabled(
+        configuration(S3BlobStore.TYPE, ImmutableMap.of(TRANSFER_ACCELERATION_ENABLED_KEY, "true"))), is(true));
+
+    assertThat(isGlobalDistributionEnabled(
+        configuration(S3BlobStore.TYPE, ImmutableMap.of(TRANSFER_ACCELERATION_ENABLED_KEY, "false"))), is(false));
+
+    assertThat(isGlobalDistributionEnabled(configuration(S3BlobStore.TYPE, ImmutableMap.of(CLOUDFRONT_KEY,
+        ImmutableMap.of(CLOUDFRONT_DISTRIBUTION_URL_KEY, "https://d111111abcdef8.cloudfront.net")))), is(true));
+
+    // CloudFront block present but not yet distributed
+    assertThat(isGlobalDistributionEnabled(
+        configuration(S3BlobStore.TYPE, ImmutableMap.of(CLOUDFRONT_KEY, ImmutableMap.of()))), is(false));
+  }
+
+  private static BlobStoreConfiguration configuration(final String type, final Map<String, Object> s3Attributes) {
+    BlobStoreConfiguration configuration = mock(BlobStoreConfiguration.class);
+    when(configuration.getType()).thenReturn(type);
+    when(configuration.attributes(CONFIG_KEY))
+        .thenReturn(new NestedAttributesMap(CONFIG_KEY, new HashMap<>(s3Attributes)));
+    return configuration;
   }
 
   private static void withRegion(final Region region, final Runnable runnable) {

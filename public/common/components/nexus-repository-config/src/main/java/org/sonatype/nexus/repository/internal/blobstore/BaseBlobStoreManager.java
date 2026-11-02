@@ -24,7 +24,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
@@ -68,8 +70,6 @@ import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManag
 import org.sonatype.nexus.security.UserIdHelper;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Provider;
 
@@ -95,7 +95,7 @@ public abstract class BaseBlobStoreManager
 
   private final EventManager eventManager;
 
-  protected final Map<String, BlobStore> stores = Maps.newConcurrentMap();
+  protected final Map<String, BlobStore> stores = new ConcurrentHashMap<>();
 
   protected final BlobStoreConfigurationStore store;
 
@@ -300,7 +300,7 @@ public abstract class BaseBlobStoreManager
   @Override
   @Guarded(by = STARTED)
   public Iterable<BlobStore> browse() {
-    return ImmutableList.copyOf(stores.values());
+    return List.copyOf(stores.values());
   }
 
   @Override
@@ -922,31 +922,62 @@ public abstract class BaseBlobStoreManager
     List<String> sensitiveAttributes = blobStoreDescriptors.get(typeKey).getSensitiveConfigurationFields();
     List<Secret> secrets = new ArrayList<>();
     for (String sensitiveAttrKey : sensitiveAttributes) {
-      String value =
-          Objects.equals(newBlobStoreTypeData.get(sensitiveAttrKey), oldBlobStoreTypeData.get(sensitiveAttrKey))
-              ? oldBlobStoreTypeData.get(sensitiveAttrKey, String.class)
-              : newBlobStoreTypeData.get(sensitiveAttrKey, String.class);
+      String oldValue = getAttributeValue(oldBlobStoreTypeData, sensitiveAttrKey);
+      String newValue = getAttributeValue(newBlobStoreTypeData, sensitiveAttrKey);
+
+      String value = Objects.equals(newValue, oldValue) ? oldValue : newValue;
 
       if (value != null) {
         // Check if the value is already a secret ID (from configuration import)
-        // Secret IDs start with underscore (e.g., "_1", "_2")
-        if (value.startsWith("_") && value.length() > 1 && Character.isDigit(value.charAt(1))) {
+        if (SecretsService.hasSecretIdFormat(value)) {
           log.debug("Skipping re-encryption for {}, already a secret ID: {}", sensitiveAttrKey, value);
           // Value is already a secret ID, don't re-encrypt it but track it for cleanup
           secrets.add(secretService.from(value));
           continue;
         }
 
-        Secret newSecret =
-            Objects.equals(newBlobStoreTypeData.get(sensitiveAttrKey), oldBlobStoreTypeData.get(sensitiveAttrKey))
-                ? secretService.encryptMaven(BLOBSTORE_CONFIG, secretService.from(value).decrypt(), UserIdHelper.get())
-                : secretService.encryptMaven(BLOBSTORE_CONFIG, value.toCharArray(), UserIdHelper.get());
+        Secret newSecret = Objects.equals(newValue, oldValue)
+            ? secretService.encryptMaven(BLOBSTORE_CONFIG, secretService.from(value).decrypt(), UserIdHelper.get())
+            : secretService.encryptMaven(BLOBSTORE_CONFIG, value.toCharArray(), UserIdHelper.get());
 
-        newBlobStoreTypeData.set(sensitiveAttrKey, newSecret.getId());
+        setAttributeValue(newBlobStoreTypeData, sensitiveAttrKey, newSecret.getId());
         secrets.add(newSecret);
       }
     }
     return secrets;
+  }
+
+  private static String getAttributeValue(final NestedAttributesMap attributes, final String key) {
+    if (key.contains(".")) {
+      String[] parts = key.split("\\.");
+      NestedAttributesMap current = attributes;
+      for (int i = 0; i < parts.length - 1; i++) {
+        current = current.child(parts[i]);
+        if (current == null) {
+          return null;
+        }
+      }
+      return current.get(parts[parts.length - 1], String.class);
+    }
+    return attributes.get(key, String.class);
+  }
+
+  private static void setAttributeValue(
+      final NestedAttributesMap attributes,
+      final String key,
+      final String value)
+  {
+    if (key.contains(".")) {
+      String[] parts = key.split("\\.");
+      NestedAttributesMap current = attributes;
+      for (int i = 0; i < parts.length - 1; i++) {
+        current = current.child(parts[i]);
+      }
+      current.set(parts[parts.length - 1], value);
+    }
+    else {
+      attributes.set(key, value);
+    }
   }
 
   private void removeEncryptedAttributes(
@@ -960,10 +991,11 @@ public abstract class BaseBlobStoreManager
     log.debug("Removing sensitive attributes from old store configuration. Blob store name: '{}'",
         oldBlobStoreConfiguration.getName());
     for (String sensitiveAttrKey : sensitiveAttributes) {
-      if (oldBlobStoreTypeData.get(sensitiveAttrKey) != null &&
-          !Objects.equals(newBlobStoreTypeData.get(sensitiveAttrKey), oldBlobStoreTypeData.get(sensitiveAttrKey))) {
-        String value = (String) oldBlobStoreTypeData.get(sensitiveAttrKey);
-        removeSecret(secretService.from(value));
+      String oldValue = getAttributeValue(oldBlobStoreTypeData, sensitiveAttrKey);
+      String newValue = getAttributeValue(newBlobStoreTypeData, sensitiveAttrKey);
+
+      if (oldValue != null && !Objects.equals(newValue, oldValue)) {
+        removeSecret(secretService.from(oldValue));
       }
     }
   }

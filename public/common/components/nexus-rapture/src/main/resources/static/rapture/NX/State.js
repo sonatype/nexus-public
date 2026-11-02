@@ -167,6 +167,19 @@ Ext.define('NX.State', {
   },
 
   /**
+   * Returns true if the running edition id is {@code nexus-enterprise-edition}. Reads the
+   * {@code editionId} state key published by StatusStateContributor / EditionStateContributor
+   * this is the tier-accurate check, unlike {@link #getEdition} whose short
+   * name still collapses Pro/Pro+/Enterprise to {@code 'PRO'}.
+   *
+   * @public
+   * @returns {boolean}
+   */
+  isEnterpriseEdition: function() {
+    return this.getValue('editionId') === 'nexus-enterprise-edition';
+  },
+
+  /**
    * Returns the human-readable display name for the running edition.
    * Reads the stable edition identifier ({@code editionId} state key) and
    * maps it to a display name. Falls back to the legacy short name if the
@@ -185,8 +198,7 @@ Ext.define('NX.State', {
       'nexus-community-edition': 'Community Edition',
       'nexus-professional-edition': 'Pro',
       'nexus-professional-plus-edition': 'Pro+',
-      'nexus-enterprise-edition': 'Enterprise',
-      'nexus-cloud-edition': 'Pro'
+      'nexus-enterprise-edition': 'Enterprise'
     };
     var editionId = this.getValue('editionId');
     return editionId ? (DISPLAY_NAMES[editionId] || editionId) : this.getEdition();

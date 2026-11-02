@@ -27,7 +27,7 @@ import org.sonatype.nexus.extender.NexusLifecycleManager;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Strings;
 import jakarta.annotation.PreDestroy;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
@@ -62,7 +62,7 @@ public class NexusLifecycleLauncher
   public NexusLifecycleLauncher(
       final NexusEditionSelector nexusEditionSelector,
       final ShutdownDelegate shutdownDelegate,
-      @Autowired(required = false) final ApplicationVersion applicationVersion,
+      @Nullable final ApplicationVersion applicationVersion,
       @Value("${nexus.lifecycle.startupPhase:#{null}}") final String startupPhaseName)
   {
     this.nexusEditionSelector = requireNonNull(nexusEditionSelector);

@@ -14,7 +14,6 @@ package org.sonatype.nexus.blobstore.group.internal;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -41,13 +40,13 @@ public class RoundRobinFillPolicyTest
   @Mock
   private BlobStoreQuotaService blobStoreQuotaService;
 
-  @InjectMocks
   private RoundRobinFillPolicy roundRobinFillPolicy;
 
   private BlobStoreQuotaResult blobStoreQuotaResult;
 
   @Before
   public void setup() {
+    roundRobinFillPolicy = new RoundRobinFillPolicy(blobStoreQuotaService, false);
     blobStoreQuotaResult = new BlobStoreQuotaResult(true, "", "");
   }
 
@@ -145,7 +144,7 @@ public class RoundRobinFillPolicyTest
         mockMember("Three", blobStoreQuotaResult));
     when(blobStoreGroup.getMembers()).thenReturn(members);
 
-    roundRobinFillPolicy.skipOnSoftQuotaViolation = true;
+    roundRobinFillPolicy = new RoundRobinFillPolicy(blobStoreQuotaService, true);
     assertNull(roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, Collections.emptyMap()));
   }
 
@@ -159,7 +158,7 @@ public class RoundRobinFillPolicyTest
         mockMember("Four", null));
     when(blobStoreGroup.getMembers()).thenReturn(members);
 
-    roundRobinFillPolicy.skipOnSoftQuotaViolation = true;
+    roundRobinFillPolicy = new RoundRobinFillPolicy(blobStoreQuotaService, true);
     assertThat(roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, Collections.emptyMap())
         .getBlobStoreConfiguration()
         .getName(), is("Two"));

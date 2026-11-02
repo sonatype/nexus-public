@@ -91,6 +91,7 @@ export function createCrowdSettingsMachine() {
   return createMachine<CrowdMachineContext, CrowdEvent>(
     {
       id: 'crowd-settings',
+      predictableActionArguments: true,
       initial: 'loading',
       context: {
         data: { ...DEFAULT_CROWD_CONFIG },

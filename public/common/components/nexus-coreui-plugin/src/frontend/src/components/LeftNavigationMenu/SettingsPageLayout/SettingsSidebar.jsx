@@ -80,6 +80,11 @@ export default function SettingsSidebar() {
           params={{ itemId: null }}
           data-analytics-id="nxrm-global-secondary-navbar-repository-routingrules"
         />
+        <LeftNavigationMenuCollapsibleChildItem
+          name={ADMIN.REPOSITORY.GLOBAL_DISTRIBUTION.ROOT}
+          text="Global Distribution"
+          data-analytics-id="nxrm-global-secondary-navbar-repository-global-distribution"
+        />
       </LeftNavigationMenuCollapsibleItem>
 
       {/* === Security -- Collapsible Menu === */}

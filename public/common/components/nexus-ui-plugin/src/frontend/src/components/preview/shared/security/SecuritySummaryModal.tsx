@@ -13,11 +13,15 @@
 
 import React from 'react';
 import { Dialog, Flex, Text, Box, Button, Separator, Badge, Spinner } from '@radix-ui/themes';
-import { ShieldCheck, Shield, ExternalLink, X, AlertCircle } from 'lucide-react';
+import { ShieldCheck, ExternalLink, X, AlertCircle } from 'lucide-react';
 import { SecurityStatusData } from './security.types';
+import { FirewallModePickerDialog } from './FirewallModePickerDialog';
+import FirewallStrings from './FirewallStrings';
 import { restClient } from '../../../../interface/api';
 
 import './SecuritySummaryModal.scss';
+
+const { dialog: DIALOG_STRINGS } = FirewallStrings.FIREWALL;
 
 interface MalwareCleanupSummary {
   repositoryName: string;
@@ -36,12 +40,17 @@ export interface SecuritySummaryModalProps {
   type: 'health-check' | 'firewall';
   onViewFullReport?: () => void;
   reportUrl?: string;
-  firewallStatus?: 'protected' | 'audit' | 'unprotected' | 'unavailable';
+  firewallStatus?: 'protected' | 'audit' | 'unprotected' | 'unavailable' | 'inactive';
+  /** Repository format; decides which firewall modes the enable picker offers. */
+  repositoryFormat?: string;
+  /** Firewall is enabled but its violation counts could not be loaded (do not claim a clean report). */
+  countsUnavailable?: boolean;
   hasFirewallLicense?: boolean;
-  /** @deprecated Enable buttons removed from modal -- prop accepted for backwards compat but ignored */
+  /** Whether the current user may change firewall configuration (repository-admin edit). */
+  canEditFirewall?: boolean;
+  /** Called after the firewall mode is changed so the parent can refresh status. */
   onEnableSuccess?: () => void;
   onBrowseRepo?: () => void;
-  onConfigureFirewall?: () => void;
   unsupportedMessage?: string;
   unsupportedBadgeColor?: 'green' | 'amber' | 'red';
   unsupportedBadgeText?: string;
@@ -61,9 +70,12 @@ export function SecuritySummaryModal({
   onViewFullReport,
   reportUrl,
   firewallStatus = 'unavailable',
+  repositoryFormat = '',
+  countsUnavailable = false,
   hasFirewallLicense = false,
+  canEditFirewall = false,
+  onEnableSuccess,
   onBrowseRepo,
-  onConfigureFirewall,
   unsupportedMessage,
   unsupportedBadgeColor,
   unsupportedBadgeText,
@@ -74,8 +86,14 @@ export function SecuritySummaryModal({
 }: SecuritySummaryModalProps): JSX.Element {
   const [malwareSummary, setMalwareSummary] = React.useState<MalwareCleanupSummary | null>(null);
   const isHealthCheck = type === 'health-check';
-  const Icon = isHealthCheck ? ShieldCheck : Shield;
   const title = isHealthCheck ? `Health Check – ${repositoryName}` : `Firewall Report – ${repositoryName}`;
+
+  const [showModePicker, setShowModePicker] = React.useState(false);
+  const handleModeChanged = React.useCallback(() => {
+    setShowModePicker(false);
+    onClose();
+    onEnableSuccess?.();
+  }, [onClose, onEnableSuccess]);
 
   React.useEffect(() => {
     if (!isHealthCheck && isOpen) {
@@ -157,12 +175,16 @@ export function SecuritySummaryModal({
   const isFirewallNoLicense = type === 'firewall' && !hasFirewallLicense;
   const isFirewallUnavailable = type === 'firewall' && (firewallStatus === 'unavailable' || isFirewallNoLicense);
   const isFirewallUnprotected = type === 'firewall' && firewallStatus === 'unprotected' && hasFirewallLicense;
+  const isFirewallInactive = type === 'firewall' && firewallStatus === 'inactive' && hasFirewallLicense;
+  const isFirewallCountsUnavailable =
+    type === 'firewall' && countsUnavailable && !isFirewallUnavailable && !isFirewallUnprotected && !isFirewallInactive;
+  const isFirewallNotice =
+    isFirewallUnavailable || isFirewallUnprotected || isFirewallInactive || isFirewallCountsUnavailable;
 
   const isFirewallReportBodyLoading =
     isFirewall &&
     isFirewallReportDetailLoading &&
-    !isFirewallUnavailable &&
-    !isFirewallUnprotected &&
+    !isFirewallNotice &&
     !unsupportedMessage;
 
   return (
@@ -170,7 +192,7 @@ export function SecuritySummaryModal({
       <Dialog.Content className="security-summary-modal" aria-describedby={undefined} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
         <Flex justify="between" align="center" gap="3" className="security-summary-modal__header">
           <Flex align="center" gap="3">
-            <Icon size={24} color="var(--accent-9)" aria-hidden />
+            {isHealthCheck && <ShieldCheck size={24} color="var(--accent-9)" aria-hidden />}
             <Dialog.Title asChild>
               <Text as="h2" size="5" weight="bold">{title}</Text>
             </Dialog.Title>
@@ -197,9 +219,9 @@ export function SecuritySummaryModal({
                 they're requested—before they ever enter your repo. No manual cleanup, no
                 surprises in builds, just trusted dependencies from the start.
               </Text>
-              <Flex gap="2" mt="4">
+              <Flex gap="2" mt="4" justify="end">
                 <Button
-                  variant="solid"
+                  variant="soft"
                   size="2"
                   onClick={() => window.open('https://links.sonatype.com/nexus-repository-firewall', '_blank', 'noopener,noreferrer')}
                 >
@@ -220,22 +242,21 @@ export function SecuritySummaryModal({
               </Text>
               <Text size="2" color="gray" as="p">
                 Enable Firewall to automatically evaluate components against your organization's
-                security policies. Choose Audit mode to monitor violations, or Quarantine mode
-                to block risky downloads.
+                security policies and block risky downloads.
               </Text>
-              <Flex gap="2" mt="4">
-                {onConfigureFirewall && (
-                  <Button variant="solid" size="2" onClick={onConfigureFirewall}>
-                    Enable Firewall Protection
-                  </Button>
-                )}
+              <Flex gap="2" mt="4" justify="end">
                 <Button
-                  variant="solid"
+                  variant="soft"
                   size="2"
                   onClick={() => window.open('https://links.sonatype.com/nexus-repository-firewall', '_blank', 'noopener,noreferrer')}
                 >
                   Learn More <ExternalLink size={12} />
                 </Button>
+                {canEditFirewall && (
+                  <Button variant="solid" size="2" onClick={() => setShowModePicker(true)}>
+                    Enable Firewall Protection
+                  </Button>
+                )}
               </Flex>
             </Box>
           )}
@@ -249,6 +270,26 @@ export function SecuritySummaryModal({
               <Text size="2" color="gray" as="p">
                 Firewall status is temporarily unavailable. The IQ Server may be unreachable.
               </Text>
+            </Box>
+          )}
+
+          {/* Enabled but not active (e.g. repository offline) */}
+          {isFirewallInactive && !unsupportedMessage && (
+            <Box p="4">
+              <Badge size="2" color="gray" variant="soft" style={{ marginBottom: 'var(--space-3)', display: 'inline-flex' }}>
+                {DIALOG_STRINGS.inactiveHeading}
+              </Badge>
+              <Text size="2" color="gray" as="p">{DIALOG_STRINGS.inactiveBody}</Text>
+            </Box>
+          )}
+
+          {/* Enabled, but violation counts failed to load: never show the clean "No issues" state */}
+          {isFirewallCountsUnavailable && !unsupportedMessage && (
+            <Box p="4">
+              <Badge size="2" color="amber" variant="soft" style={{ marginBottom: 'var(--space-3)', display: 'inline-flex' }}>
+                {DIALOG_STRINGS.countsUnavailableHeading}
+              </Badge>
+              <Text size="2" color="gray" as="p">{DIALOG_STRINGS.countsUnavailableBody}</Text>
             </Box>
           )}
 
@@ -275,9 +316,9 @@ export function SecuritySummaryModal({
                 </Flex>
               )}
               {unsupportedExtraButtons === 'learn-more' && (
-                <Flex gap="2" mt="3">
+                <Flex gap="2" mt="3" justify="end">
                   <Button
-                    variant="solid"
+                    variant="soft"
                     size="2"
                     onClick={() => window.open('https://links.sonatype.com/nexus-repository-firewall', '_blank', 'noopener,noreferrer')}
                   >
@@ -289,7 +330,7 @@ export function SecuritySummaryModal({
           )}
 
           {/* Report metadata + violations (or firewall per-repo loading) */}
-          {!((isFirewallUnavailable || isFirewallUnprotected ) || unsupportedMessage ) && (
+          {!(isFirewallNotice || unsupportedMessage) && (
             isFirewallReportBodyLoading ? (
               <Flex align="center" justify="center" gap="3" py="6" px="4" className="security-summary-modal__report-loading">
                 <Spinner size="3" />
@@ -386,7 +427,7 @@ export function SecuritySummaryModal({
           )}
 
           {/* Firewall: malicious packages summary */}
-          {type === 'firewall' && !isFirewallUnavailable && !isFirewallUnprotected && !isFirewallReportBodyLoading && malwareSummary && (malwareSummary.scrubbedCount > 0 || malwareSummary.pendingCount > 0) && (
+          {type === 'firewall' && !isFirewallNotice && !isFirewallReportBodyLoading && malwareSummary && (malwareSummary.scrubbedCount > 0 || malwareSummary.pendingCount > 0) && (
             <>
               <Separator size="4" my="3" />
               <Box>
@@ -424,7 +465,7 @@ export function SecuritySummaryModal({
           )}
 
           {/* Empty state (not while firewall per-repo report is still loading) */}
-          {!(((((isFirewallUnavailable || isFirewallUnprotected ) || unsupportedMessage ) || isFirewallReportBodyLoading ) || hasSecurityIssues ) || hasLicenseData ) && (
+          {!(isFirewallNotice || unsupportedMessage || isFirewallReportBodyLoading || hasSecurityIssues || hasLicenseData) && (
             <Flex align="center" gap="3" p="4" className="security-summary-modal__empty">
               <ShieldCheck size={32} color="var(--green-9)" />
               <Box>
@@ -435,8 +476,8 @@ export function SecuritySummaryModal({
 
           <Separator size="4" my="4" />
 
-          {/* CTAs -- read-only: View Full Report and Browse Repo only */}
-          <Flex gap="3" wrap="wrap" className="security-summary-modal__ctas">
+          {/* CTAs right-aligned. Firewall dialog drops the redundant Browse Repo link (NEXUS-54499). */}
+          <Flex gap="3" wrap="wrap" justify="end" className="security-summary-modal__ctas">
             {reportUrl ? (
               <Button variant="soft" size="3" asChild>
                 <a href={reportUrl} target="_blank" rel="noopener noreferrer">
@@ -448,7 +489,7 @@ export function SecuritySummaryModal({
                 View Full Report <ExternalLink size={14} />
               </Button>
             ) : null}
-            {onBrowseRepo && (
+            {!isFirewall && onBrowseRepo && (
               <Button variant="ghost" size="2" onClick={onBrowseRepo}>
                 Browse Repo
               </Button>
@@ -456,6 +497,15 @@ export function SecuritySummaryModal({
           </Flex>
         </Box>
       </Dialog.Content>
+      {showModePicker && (
+        <FirewallModePickerDialog
+          repositoryName={repositoryName}
+          repositoryFormat={repositoryFormat}
+          isOpen={showModePicker}
+          onClose={() => setShowModePicker(false)}
+          onModeChanged={handleModeChanged}
+        />
+      )}
     </Dialog.Root>
   );
 }

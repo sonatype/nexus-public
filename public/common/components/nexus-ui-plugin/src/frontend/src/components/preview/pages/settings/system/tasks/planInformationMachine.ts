@@ -90,6 +90,7 @@ export function aggregatePlans(plans: ReconcilePlanXO[]): Omit<PlanInformationCo
 export const planInformationMachine = createMachine<PlanInformationContext, PlanInformationEvent>(
   {
     id: 'planInformation',
+    predictableActionArguments: true,
     initial: 'loading',
     context: {
       planCount: 0,

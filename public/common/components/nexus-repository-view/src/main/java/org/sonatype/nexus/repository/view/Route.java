@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.repository.view;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
-
-import com.google.common.collect.Lists;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -70,7 +69,7 @@ public class Route
   {
     private Matcher matcher;
 
-    private List<Handler> handlers = Lists.newArrayList();
+    private List<Handler> handlers = new ArrayList<>();
 
     public Builder matcher(final Matcher matcher) {
       checkState(this.matcher == null, "Only one matcher allowed");

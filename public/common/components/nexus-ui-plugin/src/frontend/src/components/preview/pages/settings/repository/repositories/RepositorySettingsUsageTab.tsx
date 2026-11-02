@@ -16,8 +16,8 @@ import { Box, Flex, Text, Card, Grid, Tooltip } from '@radix-ui/themes';
 import { HardDrive, Package, FileBox } from 'lucide-react';
 
 import { LoadingState, ErrorState } from '../../../../shared';
+import { useIsRepositorySizeSupported } from '../../../../shared/hooks';
 import HumanReadableUtils from '../../../../../../interface/HumanReadableUtils';
-import { ExtJS } from '../../../../../../interface/ExtJS';
 import UIStrings from '../../../../../../constants/UIStrings';
 import { useRepositorySettingsUsageTab, type GroupMember } from './useRepositorySettingsUsageTab';
 import type { RepositoryUsageKind } from './repositoryUsageMachine';
@@ -125,6 +125,18 @@ export function RepositorySettingsUsageTab({
     retry,
   } = useRepositorySettingsUsageTab(repositoryName, repositoryType);
 
+  // Repository Size and Assets are both populated from RepositoryMetricsService, whose isAvailable()
+  // is exactly RepositoryMetricsFeatureCheck.isRepositorySizeSupported(): the feature flag AND a
+  // repository-metrics licence AND Postgres AND a finished CopyBlobSizeTask. The backend resolves all
+  // four and publishes the single answer as the `nexus.repository.size` state key
+  // (RepositoryMetricsStateContributor), so we read that rather than re-deriving it from the
+  // datastore flag, which covers only one of the four conditions and left Community Edition on
+  // Postgres showing permanently-empty cards (NEXUS-55079). When the feature is unavailable the cards
+  // are hidden outright rather than showing a "not yet calculated" tooltip that reads as broken.
+  // Components is unaffected: the backend never populates componentCount on any DB/edition yet, so it
+  // always shows its own pending tooltip regardless of this gate.
+  const showMetricsCards = useIsRepositorySizeSupported();
+
   if (loading && !loaded) {
     return <LoadingState message={Strings.LOADING} />;
   }
@@ -140,12 +152,6 @@ export function RepositorySettingsUsageTab({
   }
 
   const showGroupMembers = repositoryType === 'group';
-  // Repository Size and Assets are populated by RepositoryMetricsFeatureCheck, which requires
-  // Postgres (+ license + a finished CopyBlobSizeTask). On H2 those metrics never exist, so we
-  // hide the cards instead of showing a permanently-pending "not yet calculated" tooltip that
-  // reads as broken. Components is unaffected: the backend never populates componentCount on any
-  // DB/edition yet, so it always shows its own pending tooltip regardless of this gate.
-  const isPostgresql = Boolean(ExtJS.state().getValue('datastore.isPostgresql'));
 
   return (
     <Flex direction="column" gap="5" p="4">
@@ -153,8 +159,8 @@ export function RepositorySettingsUsageTab({
         <Text size="3" weight="bold" as="div" mb="3">
           {Strings.STORAGE_METRICS.TITLE}
         </Text>
-        <Grid columns={isPostgresql ? '3' : '1'} gap="4">
-          {isPostgresql && (
+        <Grid columns={showMetricsCards ? '3' : '1'} gap="4">
+          {showMetricsCards && (
             <Card size="2">
               <Flex direction="column" gap="2" align="center" py="2">
                 <HardDrive size={22} color="var(--accent-9)" />
@@ -180,7 +186,7 @@ export function RepositorySettingsUsageTab({
             </Flex>
           </Card>
 
-          {isPostgresql && (
+          {showMetricsCards && (
             <Card size="2">
               <Flex direction="column" gap="2" align="center" py="2">
                 <FileBox size={22} color="var(--accent-9)" />

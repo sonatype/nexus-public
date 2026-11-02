@@ -17,9 +17,11 @@ import { Theme } from '@radix-ui/themes';
 import SettingsCard from '../SettingsCard';
 import { SettingCard } from '../types';
 
-// Mock previewFeatureFlags — repositories is enabled, users is disabled
-jest.mock('../../../config/featureFlags', () => ({
-  isFeatureEnabled: (key: string) => key === 'repository.repositories',
+const mockIsEnterpriseEdition = jest.fn(() => false);
+const mockIsLicensedEdition = jest.fn(() => false);
+jest.mock('../../../shared/hooks', () => ({
+  useIsEnterpriseEdition: () => mockIsEnterpriseEdition(),
+  useIsLicensedEdition: () => mockIsLicensedEdition(),
 }));
 
 const renderWithTheme = (ui: React.ReactElement) => {
@@ -117,44 +119,55 @@ describe('SettingsCard', () => {
     expect(screen.getByText('Configure SSL/TLS certificates & security settings')).toBeInTheDocument();
   });
 
-  describe('Coming Soon Badge', () => {
-    it('renders badge when featureKey is disabled', () => {
-      const comingSoonCard: SettingCard = {
-        ...mockCard,
-        featureKey: 'security.users', // disabled in mock
-      };
-      renderWithTheme(<SettingsCard card={comingSoonCard} />);
+  describe('edition pill', () => {
+    const enterpriseCard: SettingCard = {
+      id: 'global-distribution',
+      path: 'repository/global-distribution',
+      label: 'Global Distribution',
+      description: 'Distribute repository content globally',
+      editionPill: 'enterprise',
+    };
 
-      expect(screen.getByText('Coming Soon')).toBeInTheDocument();
+    beforeEach(() => {
+      mockIsEnterpriseEdition.mockReturnValue(false);
+      mockIsLicensedEdition.mockReturnValue(false);
     });
 
-    it('does not render badge when featureKey is enabled', () => {
-      const enabledCard: SettingCard = {
-        id: 'repositories',
-        path: 'repository/repositories',
-        label: 'Repositories',
-        description: 'Manage repository configurations',
-        featureKey: 'repository.repositories', // enabled in mock
-      };
-      renderWithTheme(<SettingsCard card={enabledCard} />);
+    it('shows the Enterprise pill next to the label when the license is not Enterprise', () => {
+      mockIsLicensedEdition.mockReturnValue(true);
+      renderWithTheme(<SettingsCard card={enterpriseCard} />);
 
-      expect(screen.queryByText('Coming Soon')).not.toBeInTheDocument();
+      expect(screen.getByTestId('edition-pill-enterprise')).toHaveTextContent('Enterprise');
     });
 
-    it('does not render badge when featureKey is absent', () => {
+    it('hides the Enterprise pill on an Enterprise license', () => {
+      mockIsEnterpriseEdition.mockReturnValue(true);
+      mockIsLicensedEdition.mockReturnValue(true);
+      renderWithTheme(<SettingsCard card={enterpriseCard} />);
+
+      expect(screen.queryByTestId('edition-pill-enterprise')).not.toBeInTheDocument();
+    });
+
+    it('shows the Pro pill only on unlicensed editions', () => {
+      const proCard: SettingCard = { ...enterpriseCard, editionPill: 'pro' };
+      const { rerender } = renderWithTheme(<SettingsCard card={proCard} />);
+      expect(screen.getByTestId('edition-pill-pro')).toHaveTextContent('Pro');
+
+      mockIsLicensedEdition.mockReturnValue(true);
+      rerender(<Theme><SettingsCard card={proCard} /></Theme>);
+      expect(screen.queryByTestId('edition-pill-pro')).not.toBeInTheDocument();
+    });
+
+    it('renders no pill when the card declares none', () => {
       renderWithTheme(<SettingsCard card={mockCard} />);
 
-      expect(screen.queryByText('Coming Soon')).not.toBeInTheDocument();
+      expect(screen.queryByTestId(/^edition-pill-/)).not.toBeInTheDocument();
     });
 
-    it('badge is visible to screen readers via text content', () => {
-      const comingSoonCard: SettingCard = {
-        ...mockCard,
-        featureKey: 'security.users',
-      };
-      renderWithTheme(<SettingsCard card={comingSoonCard} />);
+    it('keeps the card a single link to the settings page', () => {
+      renderWithTheme(<SettingsCard card={enterpriseCard} />);
 
-      expect(screen.getByText('Coming Soon')).toBeInTheDocument();
+      expect(screen.getByRole('link')).toHaveAttribute('href', '#preview/admin/repository/global-distribution');
     });
   });
 });

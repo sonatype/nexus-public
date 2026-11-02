@@ -14,6 +14,8 @@ package org.sonatype.nexus.security.authz;
 
 import java.time.Duration;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.common.time.Time;
 
 import jakarta.inject.Provider;
@@ -60,9 +62,8 @@ public class PrincipalPermissionsCacheFactory
 
   private final int cacheConcurrencyLevel;
 
-  // Field-injected so per-realm overrides can be resolved by realm name at create() time; absent in plain unit tests
+  // Setter-injected so per-realm overrides can be resolved by realm name at create() time; absent in plain unit tests
   // (constructed without Spring), where create() falls back to the default maximum size.
-  @Autowired(required = false)
   private Environment environment;
 
   @Autowired
@@ -78,6 +79,11 @@ public class PrincipalPermissionsCacheFactory
     this.defaultTimeToLive = requireNonNull(defaultTimeToLive);
     this.cacheRecordStats = cacheRecordStats;
     this.cacheConcurrencyLevel = cacheConcurrencyLevel;
+  }
+
+  @Autowired(required = false)
+  public void setEnvironment(@Nullable final Environment environment) {
+    this.environment = environment;
   }
 
   /**

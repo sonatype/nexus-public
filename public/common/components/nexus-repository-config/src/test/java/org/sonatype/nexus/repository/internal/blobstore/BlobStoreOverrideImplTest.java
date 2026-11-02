@@ -112,11 +112,10 @@ public class BlobStoreOverrideImplTest
   // Whether a field is encrypted is decided entirely by the descriptor's
   // getSensitiveConfigurationFields(). S3 declares secretAccessKey/sessionToken, and as of this
   // ticket AzureBlobStoreDescriptor declares accountKey (AzureStorageClientFactory now dereferences
-  // the _<id> on the read side), so both types encrypt. GCS is the one type still left out: its
-  // descriptor does not override the interface default (Collections.emptyList) because its read path
-  // decrypts with EncryptDecryptService under a separate key, so encrypting here would break
-  // authentication outright — see testGcsAuthAccountKeyMergedVerbatimWithoutEncryption below.
-  // Arming GCS is NEXUS-54379.
+  // the _<id> on the read side), so both types encrypt. GCS now also encrypts auth_account_key
+  // when the descriptor reports it sensitive (2.173 gates the write paths; the read path accepts
+  // every shape unconditionally); when the descriptor reports nothing sensitive, the value passes
+  // through verbatim for ZDU compatibility.
   //
   // Each test stubs its descriptor to match that production declaration; the shared setUp defaults
   // every descriptor to emptyList so an unstubbed one can never silently pass a credential through.
@@ -182,10 +181,9 @@ public class BlobStoreOverrideImplTest
   }
 
   @Test
-  public void testGcsAuthAccountKeyMergedVerbatimWithoutEncryption() {
-    // GCS is the remaining type whose descriptor declares nothing sensitive (see comment on
-    // "Credential encryption tests" above), so auth_account_key must land in the config verbatim
-    // without any SecretsService interaction. This test locks that in until NEXUS-54379 arms GCS.
+  public void testGcsAuthAccountKeyMergedVerbatimWhileDescriptorReportsNoSensitiveFields() {
+    // When the descriptor reports nothing sensitive, auth_account_key lands in the config verbatim
+    // without any SecretsService interaction — the ZDU-compatible fallback for nodes not yet on 2.173.
     environmentVariables.set(NEXUS_BLOB_STORE_OVERRIDE,
         "{\"my-gcs\":{\"google cloud storage\":{\"auth_account_key\":\"gcs-plaintext\"}}}");
 
@@ -198,6 +196,26 @@ public class BlobStoreOverrideImplTest
     verify(configStore).update(config);
     assertThat((String) config.getAttributes().get("google cloud storage").get("auth_account_key"),
         equalTo("gcs-plaintext"));
+  }
+
+  @Test
+  public void testGcsAuthAccountKeyEncryptedWhenDescriptorReportsItSensitive() {
+    environmentVariables.set(NEXUS_BLOB_STORE_OVERRIDE,
+        "{\"my-gcs\":{\"google cloud storage\":{\"auth_account_key\":\"gcs-plaintext\"}}}");
+    when(gcsDescriptor.getSensitiveConfigurationFields()).thenReturn(singletonList("auth_account_key"));
+
+    BlobStoreConfiguration config = createConfig("my-gcs", "Google Cloud Storage");
+    when(configStore.list()).thenReturn(singletonList(config));
+
+    Secret newSecret = stubEncryptMavenReturning("_42");
+
+    underTest.apply();
+
+    verify(secretsService).encryptMaven(eq("blobstore-config"), argCharArrayEquals("gcs-plaintext"),
+        isNull());
+    verify(configStore).update(config);
+    assertThat((String) config.getAttributes().get("google cloud storage").get("auth_account_key"),
+        equalTo("_42"));
   }
 
   @Test

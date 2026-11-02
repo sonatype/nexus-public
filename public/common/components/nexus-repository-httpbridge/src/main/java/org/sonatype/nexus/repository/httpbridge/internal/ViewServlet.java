@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 
 import java.io.IOException;
 import java.util.Enumeration;
-import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -48,7 +47,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.web.util.WebUtils;
 import org.eclipse.jetty.http.BadMessageException;
-import org.eclipse.jetty.io.QuietException;
 import org.jboss.logging.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +54,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.bootstrap.jetty.JettyQuietFailures.isQuiet;
 
 /**
  * Repository view servlet.
@@ -142,7 +141,7 @@ public class ViewServlet
       send(null, HttpResponses.badRequest(e.getReason()), httpResponse);
     }
     catch (Exception e) {
-      if (isQuietException(e)) {
+      if (isQuiet(e)) {
         log.debug("Caught jetty QuietException", e);
       }
       else if (!(e instanceof AuthorizationException)) {
@@ -154,18 +153,6 @@ public class ViewServlet
     finally {
       MDC.remove(getClass().getName());
     }
-  }
-
-  /*
-   * Jetty uses QuietExceptions for failures outside the application such as the client disconnecting or invalid
-   * encoding.
-   */
-  private static boolean isQuietException(final Exception e) {
-    if (QuietException.isQuiet(e)) {
-      return true;
-    }
-    return Stream.of(e.getSuppressed())
-        .anyMatch(t -> t instanceof QuietException);
   }
 
   protected void doService(

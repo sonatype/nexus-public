@@ -125,6 +125,7 @@ public class FirewallFacetProxyRecipeCoverageTest
       entry("NpmProxy.js", "npm"),
       entry("NugetProxy.js", "nuget"),
       entry("OciProxy.js", "oci"),
+      entry("OpenVSXProxy.js", "openvsx"),
       entry("P2Proxy.js", "p2"),
       entry("PubProxy.js", "pub"),
       entry("PyPiProxy.js", "pypi"),

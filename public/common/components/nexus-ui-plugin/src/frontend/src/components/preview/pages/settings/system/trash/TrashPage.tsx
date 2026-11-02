@@ -49,13 +49,14 @@ import {
 const DEFAULT_LIMIT = 20;
 const DEFAULT_SORT = 'deletedOn:desc';
 const SEARCH_DEBOUNCE_MS = 300;
-const SEARCH_MIN_LENGTH = 2;
+// Any non-empty (trimmed) term is searched; a single character now fires a query.
+const SEARCH_MIN_LENGTH = 1;
 
 /**
  * TrashPage
  *
  * Trash page (registered as the {@code preview.browse.trash} route) that lets repository admins view,
- * restore, and purge soft-deleted entities (NEXUS-51733).
+ * restore, and purge trashed entities (NEXUS-51733).
  *
  * URL: #preview/browse/trash
  */
@@ -79,9 +80,9 @@ export function TrashPage() {
       clearTimeout(debounceRef.current);
     }
     debounceRef.current = setTimeout(() => {
-      // Only reset pagination/selection when the effective server query actually changes. Typing below
-      // SEARCH_MIN_LENGTH sends no query to the server, so it must not clear the user's page or selection
-      // (NEXUS-51733). Compare the pre/post effective queries (both normalized to '' when under threshold).
+      // Only reset pagination/selection when the effective server query actually changes. An empty
+      // (whitespace-only) term sends no query to the server, so it must not clear the user's page or
+      // selection (NEXUS-51733). Compare the pre/post effective queries (both normalized to '' when empty).
       const prevEffective =
         debouncedQuery.trim().length >= SEARCH_MIN_LENGTH ? debouncedQuery.trim() : '';
       const nextEffective =
@@ -100,7 +101,7 @@ export function TrashPage() {
     };
   }, [searchQuery]);
 
-  // Only send `q` to the server once the user has typed at least 2 chars.
+  // Send `q` to the server as soon as the user has typed any non-empty (trimmed) term.
   const effectiveQuery =
     debouncedQuery.trim().length >= SEARCH_MIN_LENGTH ? debouncedQuery.trim() : undefined;
 
@@ -450,7 +451,7 @@ export function TrashPage() {
                 <Box mb="4">
                   <PageHeader
                     title="Trash"
-                    description="View and manage soft-deleted repositories, components, and assets"
+                    description="View and manage repositories, components, and assets in the Trash"
                   />
                 </Box>
                 <Box mb="4">

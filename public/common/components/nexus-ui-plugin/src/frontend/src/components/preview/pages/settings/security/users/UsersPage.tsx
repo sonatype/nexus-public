@@ -351,8 +351,9 @@ export function UsersPage() {
         data-analytics-id="nxrm-user-delete"
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDeleteConfirm}
-        entityName={user ? (getFullName(user) || user.userId) : ''}
+        entityName={user?.userId}
         entityType="user"
+        requiredConfirmationText={user?.userId}
         loading={isDeleting}
       />
     </Box>

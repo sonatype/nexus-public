@@ -78,27 +78,24 @@ describe('useFirewallEnable module', () => {
   });
 
   describe('setFirewallMode', () => {
-    it('reads the typed repo, sets firewall.mode, and PUTs the modified body', async () => {
-      mockGet
-        // basic
-        .mockResolvedValueOnce({ format: 'maven2', type: 'proxy' })
-        // typed
-        .mockResolvedValueOnce({
-          name: 'maven-central',
-          format: 'maven2',
-          type: 'proxy',
-          url: 'http://example/maven-central',
-          online: true,
-          storage: { blobStoreName: 'default' },
-          firewall: null,
-        });
+    it('reads the internal repo, sets firewall.mode, and PUTs the modified body', async () => {
+      mockGet.mockResolvedValueOnce({
+        name: 'maven-central',
+        format: 'maven2',
+        type: 'proxy',
+        url: 'http://example/maven-central',
+        online: true,
+        storage: { blobStoreName: 'default' },
+        firewall: null,
+      });
       mockPut.mockResolvedValueOnce(undefined);
 
       await setFirewallMode('maven-central', 'AUDIT');
 
-      // Maven format is mapped maven2 -> maven for the typed REST path.
-      expect(mockGet).toHaveBeenNthCalledWith(2, '/service/rest/v1/repositories/maven/proxy/maven-central');
+      expect(mockGet).toHaveBeenCalledTimes(1);
+      expect(mockGet).toHaveBeenCalledWith('/service/rest/internal/ui/repositories/repository/maven-central');
       expect(mockPut).toHaveBeenCalledTimes(1);
+      // Maven format is mapped maven2 -> maven for the typed REST path.
       const [putUrl, putBody] = mockPut.mock.calls[0] as [string, Record<string, unknown>];
       expect(putUrl).toBe('/service/rest/v1/repositories/maven/proxy/maven-central');
       // Read-only fields stripped on the way out
@@ -113,19 +110,58 @@ describe('useFirewallEnable module', () => {
     });
 
     it('uses the format directly when it is not maven (no mapping)', async () => {
-      mockGet
-        .mockResolvedValueOnce({ format: 'npm', type: 'proxy' })
-        .mockResolvedValueOnce({ name: 'npm-proxy', online: true });
+      mockGet.mockResolvedValueOnce({ format: 'npm', type: 'proxy', name: 'npm-proxy', online: true });
       mockPut.mockResolvedValueOnce(undefined);
 
       await setFirewallMode('npm-proxy', 'PCCS');
 
-      expect(mockGet).toHaveBeenNthCalledWith(2, '/service/rest/v1/repositories/npm/proxy/npm-proxy');
-      const [, putBody] = mockPut.mock.calls[0] as [string, Record<string, unknown>];
+      const [putUrl, putBody] = mockPut.mock.calls[0] as [string, Record<string, unknown>];
+      expect(putUrl).toBe('/service/rest/v1/repositories/npm/proxy/npm-proxy');
       expect(putBody.firewall).toEqual({ mode: 'PCCS' });
     });
 
-    it('throws if the basic repository lookup returns nothing', async () => {
+    it('sends the stored-password placeholder back unchanged for an authenticated proxy', async () => {
+      const placeholder = '#~NXRM~PLACEHOLDER~PASSWORD~#';
+      mockGet.mockResolvedValueOnce({
+        name: 'docker-proxy',
+        format: 'docker',
+        type: 'proxy',
+        online: true,
+        httpClient: {
+          authentication: { type: 'username', username: 'u', password: placeholder },
+        },
+      });
+      mockPut.mockResolvedValueOnce(undefined);
+
+      await setFirewallMode('docker-proxy', 'QUARANTINE');
+
+      const [, putBody] = mockPut.mock.calls[0] as [string, Record<string, unknown>];
+      expect(putBody.httpClient).toEqual({
+        authentication: { type: 'username', username: 'u', password: placeholder },
+      });
+      expect(putBody.firewall).toEqual({ mode: 'QUARANTINE' });
+    });
+
+    it('sends the bearer-token and ECR session-token placeholders back unchanged', async () => {
+      const placeholder = '#~NXRM~PLACEHOLDER~PASSWORD~#';
+      mockGet.mockResolvedValueOnce({
+        name: 'npm-proxy',
+        format: 'npm',
+        type: 'proxy',
+        online: true,
+        httpClient: { authentication: { type: 'bearer', bearerToken: placeholder } },
+        dockerProxy: { ecrAuth: { enabled: true, sessionToken: placeholder } },
+      });
+      mockPut.mockResolvedValueOnce(undefined);
+
+      await setFirewallMode('npm-proxy', 'AUDIT');
+
+      const [, putBody] = mockPut.mock.calls[0] as [string, Record<string, unknown>];
+      expect(putBody.httpClient).toEqual({ authentication: { type: 'bearer', bearerToken: placeholder } });
+      expect(putBody.dockerProxy).toEqual({ ecrAuth: { enabled: true, sessionToken: placeholder } });
+    });
+
+    it('throws if the internal repository lookup returns nothing', async () => {
       mockGet.mockResolvedValueOnce(null);
 
       await expect(setFirewallMode('ghost-repo', 'AUDIT')).rejects.toThrow(/not found/);
@@ -135,9 +171,7 @@ describe('useFirewallEnable module', () => {
 
   describe('convenience wrappers', () => {
     function stubLookup() {
-      mockGet
-        .mockResolvedValueOnce({ format: 'npm', type: 'proxy' })
-        .mockResolvedValueOnce({ name: 'r', online: true });
+      mockGet.mockResolvedValueOnce({ format: 'npm', type: 'proxy', name: 'r', online: true });
       mockPut.mockResolvedValueOnce(undefined);
     }
 

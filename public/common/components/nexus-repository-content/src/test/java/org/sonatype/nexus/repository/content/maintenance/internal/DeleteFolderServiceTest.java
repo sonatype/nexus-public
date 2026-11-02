@@ -20,7 +20,7 @@ import java.util.Optional;
 
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
+import org.sonatype.nexus.common.app.trash.TrashFormatGate;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
@@ -97,7 +97,7 @@ public class DeleteFolderServiceTest
   public void setUp() {
     deleteFolderService = spy(new DeleteFolderServiceImpl(
         browseNodeQueryService, configuration, contentPermissionChecker,
-        variableResolverAdapterManager, securityHelper, databaseCheck, new SoftDeleteFormatGate(false, "")));
+        variableResolverAdapterManager, securityHelper, databaseCheck, new TrashFormatGate(false, ""), null));
 
     BrowseNodeData node = mock(BrowseNodeData.class);
     when(node.getNodeId()).thenReturn(1L);

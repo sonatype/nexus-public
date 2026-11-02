@@ -17,8 +17,6 @@ import java.util.Set;
 
 import org.sonatype.nexus.security.config.CUserRoleMapping;
 
-import static com.google.common.collect.Sets.newHashSet;
-
 /**
  * An implementation of {@link CUserRoleMapping} suitable for an in-memory backing store.
  *
@@ -46,7 +44,7 @@ public class MemoryCUserRoleMapping
       MemoryCUserRoleMapping copy = (MemoryCUserRoleMapping) super.clone();
 
       if (this.roles != null) {
-        copy.roles = newHashSet(this.roles);
+        copy.roles = new HashSet<>(this.roles);
       }
 
       return copy;
@@ -59,7 +57,7 @@ public class MemoryCUserRoleMapping
   @Override
   public Set<String> getRoles() {
     if (this.roles == null) {
-      this.roles = newHashSet();
+      this.roles = new HashSet<>();
     }
     return this.roles;
   }

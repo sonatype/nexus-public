@@ -13,7 +13,10 @@
 package org.sonatype.nexus.repository.manager.internal;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,11 +25,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Facet;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,12 +46,12 @@ public class FacetLookup
   /**
    * All facet instances. Retain order.
    */
-  private final Set<Facet> facets = Sets.newLinkedHashSet();
+  private final Set<Facet> facets = new LinkedHashSet<>();
 
   /**
    * Exposed type to facet instance map.
    */
-  private final Map<Class<? extends Facet>, Facet> exposed = Maps.newHashMap();
+  private final Map<Class<? extends Facet>, Facet> exposed = new HashMap<>();
 
   /**
    * Add a facet and bind exposed types.
@@ -86,7 +85,7 @@ public class FacetLookup
    */
   @SuppressWarnings("unchecked")
   private List<Class<? extends Facet>> exposedTypes(final Class<? extends Facet> root) {
-    List<Class<? extends Facet>> exposed = Lists.newArrayList();
+    List<Class<? extends Facet>> exposed = new ArrayList<>();
 
     for (Class<?> type : TypeToken.of(root).getTypes().rawTypes()) {
       if (Facet.class.isAssignableFrom(type)) {
@@ -131,6 +130,6 @@ public class FacetLookup
    * Returns reversed list of all facet instances.
    */
   public Iterable<Facet> reverse() {
-    return ImmutableList.copyOf(facets).reverse();
+    return List.copyOf(facets).reversed();
   }
 }

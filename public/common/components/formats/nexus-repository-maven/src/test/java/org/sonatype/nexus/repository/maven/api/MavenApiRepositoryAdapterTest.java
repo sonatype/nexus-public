@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.api;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.function.Consumer;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -40,7 +41,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mockito;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -124,7 +124,7 @@ public class MavenApiRepositoryAdapterTest
     Configuration configuration = mock(Configuration.class);
     when(configuration.isOnline()).thenReturn(true);
     when(configuration.getRepositoryName()).thenReturn(repositoryName);
-    when(configuration.attributes(not(eq("maven")))).thenReturn(new NestedAttributesMap("dummy", newHashMap()));
+    when(configuration.attributes(not(eq("maven")))).thenReturn(new NestedAttributesMap("dummy", new HashMap<>()));
     return configuration;
   }
 
@@ -145,7 +145,7 @@ public class MavenApiRepositoryAdapterTest
     Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new Maven2Format());
 
     Configuration configuration = config("my-repo");
-    NestedAttributesMap maven = new NestedAttributesMap("maven", newHashMap());
+    NestedAttributesMap maven = new NestedAttributesMap("maven", new HashMap<>());
     maven.set("layoutPolicy", layoutPolicy.toString());
     maven.set("versionPolicy", versionPolicy.toString());
     maven.set("contentDisposition", contentDisposition.toString());
@@ -174,7 +174,7 @@ public class MavenApiRepositoryAdapterTest
     Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new Maven2Format());
 
     Configuration configuration = config("my-repo");
-    NestedAttributesMap maven = new NestedAttributesMap("maven", newHashMap());
+    NestedAttributesMap maven = new NestedAttributesMap("maven", new HashMap<>());
     maven.set("layoutPolicy", "STRICT");
     maven.set("versionPolicy", "MIXED");
     // Intentionally NOT setting contentDisposition - it will be null

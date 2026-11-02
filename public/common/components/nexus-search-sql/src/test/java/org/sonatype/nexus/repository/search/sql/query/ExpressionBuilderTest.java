@@ -34,7 +34,6 @@ import org.sonatype.nexus.repository.search.sql.query.security.SqlSearchPermissi
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Before;
@@ -184,11 +183,14 @@ public class ExpressionBuilderTest
 
   @Nonnull
   private static Map<String, SearchMappings> getSearchMappingsMap() {
-    SearchMappings searchMappings = () -> ImmutableList.<SearchMapping>builder()
-        .addAll(new DefaultSearchMappings().get())
-        .add(new SearchMapping("attributes.architecture", "architecture", "", ASSET_FORMAT_VALUE_1, FilterType.ASSET),
-            new SearchMapping("attributes.os", "os", "", ASSET_FORMAT_VALUE_2, FilterType.ASSET))
-        .build();
+    SearchMappings searchMappings = () -> {
+      List<SearchMapping> result = new ArrayList<>();
+      new DefaultSearchMappings().get().forEach(result::add);
+      result.add(
+          new SearchMapping("attributes.architecture", "architecture", "", ASSET_FORMAT_VALUE_1, FilterType.ASSET));
+      result.add(new SearchMapping("attributes.os", "os", "", ASSET_FORMAT_VALUE_2, FilterType.ASSET));
+      return List.copyOf(result);
+    };
     return ImmutableMap.of("test", searchMappings);
   }
 

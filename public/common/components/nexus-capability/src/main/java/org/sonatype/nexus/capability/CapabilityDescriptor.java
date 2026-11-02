@@ -61,6 +61,39 @@ public interface CapabilityDescriptor
   boolean isExposed();
 
   /**
+   * Whether creating, updating, or enabling a capability of this type additionally requires the
+   * {@code nexus:settings:update} permission (realm-administration authority), on top of the usual
+   * {@code nexus:capabilities:create}/{@code :update} permission.
+   * <p/>
+   * Capability types whose activation enables or configures a security realm (authentication/authorization power)
+   * override this to {@code true} so that the weaker capabilities permission alone cannot be used to escalate
+   * privileges (CVE-2026-14645 / NEXUS-54726). The default is {@code false}.
+   *
+   * @return true if the capability type grants authentication/authorization power and must be gated behind
+   *         {@code nexus:settings:update}
+   */
+  default boolean requiresSettingsUpdatePermission() {
+    return false;
+  }
+
+  /**
+   * The application-permission domain whose {@code update} action gates this type when
+   * {@link #requiresSettingsUpdatePermission()} is {@code true}. The resulting permission is
+   * {@code nexus:<domain>:update}.
+   * <p/>
+   * Defaults to {@code "settings"} (i.e. {@code nexus:settings:update}, the global realm-administration
+   * authority). Types backed by a realm that has its own dedicated administration permission override this to
+   * return that realm's settings domain, so the gate matches the authority already required to manage that realm
+   * directly (CVE-2026-14645 / NEXUS-54726).
+   *
+   * @return the permission domain that gates this type; only consulted when
+   *         {@link #requiresSettingsUpdatePermission()} is {@code true}
+   */
+  default String settingsUpdatePermissionDomain() {
+    return "settings";
+  }
+
+  /**
    * Whether or not capabilities of this type should be hidden by default. Usually hidden capabilities are managed
    * (CRUD) by some other means like for example a custom made UI.
    * <p/>

@@ -60,9 +60,14 @@ public abstract class AuditorSupport
   public static final String DELETED_TYPE = "deleted";
 
   /**
-   * Common type for deleted events.
+   * Common type for restored (un-trashed) events.
    */
-  protected static final String PURGE_TYPE = "purged";
+  public static final String RESTORED_TYPE = "restored";
+
+  /**
+   * Common type for purged events.
+   */
+  public static final String PURGE_TYPE = "purged";
 
   /**
    * Common type for changed events.

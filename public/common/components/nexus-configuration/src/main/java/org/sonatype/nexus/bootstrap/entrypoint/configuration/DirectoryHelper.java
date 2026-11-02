@@ -28,6 +28,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 import org.springframework.stereotype.Component;
@@ -167,7 +169,7 @@ public class DirectoryHelper
    */
   public void delete(
       final Path dir,
-      @Nullable final com.google.common.base.Predicate<Path> excludeFilter) throws IOException
+      @Nullable final Predicate<Path> excludeFilter) throws IOException
   {
     validateDirectoryOrFile(dir);
     if (Files.isDirectory(dir)) {
@@ -176,7 +178,7 @@ public class DirectoryHelper
           {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-              if (excludeFilter != null && excludeFilter.apply(dir)) {
+              if (excludeFilter != null && excludeFilter.test(dir)) {
                 return FileVisitResult.SKIP_SUBTREE;
               }
               return FileVisitResult.CONTINUE;
@@ -233,7 +235,7 @@ public class DirectoryHelper
    */
   public boolean deleteIfExists(
       final Path dir,
-      @Nullable final com.google.common.base.Predicate<Path> excludeFilter) throws IOException
+      @Nullable final Predicate<Path> excludeFilter) throws IOException
   {
     requireNonNull(dir);
     if (Files.exists(dir)) {
@@ -263,7 +265,7 @@ public class DirectoryHelper
   public void copy(
       final Path from,
       final Path to,
-      @Nullable final com.google.common.base.Predicate<Path> excludeFilter) throws IOException
+      @Nullable final Predicate<Path> excludeFilter) throws IOException
   {
     validateDirectoryOrFile(from);
     requireNonNull(to);
@@ -341,20 +343,20 @@ public class DirectoryHelper
   public void copyDeleteMove(
       final Path from,
       final Path to,
-      @Nullable final com.google.common.base.Predicate<Path> excludeFilter) throws IOException
+      @Nullable final Predicate<Path> excludeFilter) throws IOException
   {
     copy(from, to, excludeFilter);
     delete(from, excludeFilter);
   }
 
   /**
-   * Traverses the subtree starting with "from" and applies passed in {@link com.google.common.base.Function} onto files
+   * Traverses the subtree starting with "from" and applies passed in {@link Function} onto files
    * and directories.
    * This method accepts only existing directories.
    */
   public void apply(
       final Path from,
-      final com.google.common.base.Function<Path, FileVisitResult> func) throws IOException
+      final Function<Path, FileVisitResult> func) throws IOException
   {
     validateDirectory(from);
     Files.walkFileTree(from, DEFAULT_FILE_VISIT_OPTIONS, Integer.MAX_VALUE, new FunctionVisitor(func));
@@ -425,9 +427,9 @@ public class DirectoryHelper
   private static class FunctionVisitor
       extends SimpleFileVisitor<Path>
   {
-    private final com.google.common.base.Function<Path, FileVisitResult> func;
+    private final Function<Path, FileVisitResult> func;
 
-    public FunctionVisitor(final com.google.common.base.Function<Path, FileVisitResult> func) {
+    public FunctionVisitor(final Function<Path, FileVisitResult> func) {
       this.func = requireNonNull(func);
     }
 
@@ -452,14 +454,14 @@ public class DirectoryHelper
 
     private final Path to;
 
-    private final com.google.common.base.Predicate<Path> excludeFilter;
+    private final Predicate<Path> excludeFilter;
 
     private final DirectoryHelper directoryHelper;
 
     public CopyVisitor(
         final Path from,
         final Path to,
-        @Nullable final com.google.common.base.Predicate<Path> excludeFilter,
+        @Nullable final Predicate<Path> excludeFilter,
         final DirectoryHelper directoryHelper)
     {
       this.from = from;
@@ -470,7 +472,7 @@ public class DirectoryHelper
 
     @Override
     public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes a) throws IOException {
-      if (excludeFilter != null && excludeFilter.apply(dir)) {
+      if (excludeFilter != null && excludeFilter.test(dir)) {
         return FileVisitResult.SKIP_SUBTREE;
       }
       final Path targetPath = to.resolve(from.relativize(dir));

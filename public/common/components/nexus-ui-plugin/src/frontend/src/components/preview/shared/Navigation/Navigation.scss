@@ -270,3 +270,22 @@ $repository-primary: #138653;
     z-index: 9999 !important;
   }
 }
+
+// Count badge on a nav item (expanded) and the dot shown on the icon when collapsed
+.guide-nav-item__icon {
+  position: relative;
+}
+
+.guide-nav-item__badge {
+  margin-left: auto;
+}
+
+.guide-nav-item__badge-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red-9);
+}

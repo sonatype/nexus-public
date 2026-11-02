@@ -27,12 +27,13 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import javax.annotation.Nullable;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
-import org.sonatype.nexus.common.app.softdelete.SoftDeletedEntityInfo;
-import org.sonatype.nexus.common.app.softdelete.TrashIndexRecorder;
+import org.sonatype.nexus.common.app.trash.TrashFormatGate;
+import org.sonatype.nexus.common.app.trash.TrashedEntityInfo;
+import org.sonatype.nexus.common.app.trash.TrashIndexRecorder;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
@@ -93,10 +94,10 @@ public class DeleteFolderServiceImpl
 
   private final DatabaseCheck databaseCheck;
 
-  private final SoftDeleteFormatGate softDeleteFormatGate;
+  private final TrashFormatGate trashFormatGate;
 
-  @Autowired(required = false)
-  private TrashIndexRecorder trashIndexRecorder;
+  // Nullable: absent in editions without the trash plugin (e.g. OSS). Callers null-guard before use.
+  private final TrashIndexRecorder trashIndexRecorder;
 
   @Autowired
   public DeleteFolderServiceImpl(
@@ -106,7 +107,8 @@ public class DeleteFolderServiceImpl
       final VariableResolverAdapterManager variableResolverAdapterManager,
       final SecurityHelper securityHelper,
       final DatabaseCheck databaseCheck,
-      final SoftDeleteFormatGate softDeleteFormatGate)
+      final TrashFormatGate trashFormatGate,
+      @Nullable final TrashIndexRecorder trashIndexRecorder)
   {
     this.browseNodeQueryService = requireNonNull(browseNodeQueryService);
     this.configuration = requireNonNull(configuration);
@@ -114,7 +116,8 @@ public class DeleteFolderServiceImpl
     this.variableResolverAdapterManager = requireNonNull(variableResolverAdapterManager);
     this.securityHelper = requireNonNull(securityHelper);
     this.databaseCheck = requireNonNull(databaseCheck);
-    this.softDeleteFormatGate = requireNonNull(softDeleteFormatGate);
+    this.trashFormatGate = requireNonNull(trashFormatGate);
+    this.trashIndexRecorder = trashIndexRecorder;
   }
 
   @Override
@@ -126,10 +129,10 @@ public class DeleteFolderServiceImpl
     boolean canDeleteComponent = canDeleteComponent(repository);
 
     // The plain deleteFolders() path removes assets/components but relies on the asynchronous browse-node
-    // trimming that reacts to hard-delete events. Soft-delete records deletions as UPDATEs (deleted_on),
+    // trimming that reacts to hard-delete events. Trash records deletions as UPDATEs (deleted_on),
     // which never fire those events, so browse nodes would linger and 404 on click. Use the browse-node-aware
-    // path (which removes nodes synchronously) whenever soft-delete is enabled, in addition to PostgreSQL.
-    if (this.databaseCheck.isPostgresql() || softDeleteFormatGate.isEnabled()) {
+    // path (which removes nodes synchronously) whenever trash is enabled, in addition to PostgreSQL.
+    if (this.databaseCheck.isPostgresql() || trashFormatGate.isEnabled()) {
       deleteFoldersAndBrowseNode(repository, treePath, timestamp, contentFacet, contentMaintenance, maxNodes,
           canDeleteComponent);
     }
@@ -374,8 +377,8 @@ public class DeleteFolderServiceImpl
     OffsetDateTime lastUpdated = component.lastUpdated();
     if (timestamp.isAfter(lastUpdated)) {
       try {
-        if (shouldSoftDelete(repository)) {
-          return softDeleteComponent(repository, component, contentMaintenance, timestamp);
+        if (shouldMoveToTrash(repository)) {
+          return trashComponent(repository, component, contentMaintenance, timestamp);
         }
         contentMaintenance.deleteComponent(component);
         return true;
@@ -402,8 +405,8 @@ public class DeleteFolderServiceImpl
     if (timestamp.isAfter(asset.blob().map(AssetBlob::blobCreated).orElse(now()))
         && canDeleteAsset(repositoryName, format, variableResolverAdapter, asset)) {
       try {
-        if (shouldSoftDelete(repository)) {
-          return softDeleteAsset(repository, asset, contentMaintenance, timestamp);
+        if (shouldMoveToTrash(repository)) {
+          return trashAsset(repository, asset, contentMaintenance, timestamp);
         }
         contentMaintenance.deleteAsset(asset);
         return true;
@@ -433,20 +436,20 @@ public class DeleteFolderServiceImpl
   /**
    * Resolves the current subject's principal for the {@code deleted_by} audit field, falling back to {@code "system"}
    * for an anonymous/unauthenticated subject (principal can be {@code null}). Mirrors
-   * {@code ContentDeletionService.softDeleteContext()} so the folder-delete path is consistent and NPE-safe.
+   * {@code ContentDeletionService.trashContext()} so the folder-delete path is consistent and NPE-safe.
    */
   private String currentPrincipalOrSystem() {
     Subject subject = securityHelper.subject();
     return subject != null && subject.getPrincipal() != null ? subject.getPrincipal().toString() : "system";
   }
 
-  private boolean shouldSoftDelete(final Repository repository) {
-    return softDeleteFormatGate.isEnabled()
+  private boolean shouldMoveToTrash(final Repository repository) {
+    return trashFormatGate.isEnabled()
         && HostedType.NAME.equals(repository.getType().getValue())
-        && softDeleteFormatGate.isEnabledForFormat(repository.getFormat().getValue());
+        && trashFormatGate.isEnabledForFormat(repository.getFormat().getValue());
   }
 
-  private boolean softDeleteComponent(
+  private boolean trashComponent(
       final Repository repository,
       final FluentComponent component,
       final ContentMaintenanceFacet contentMaintenance,
@@ -458,17 +461,17 @@ public class DeleteFolderServiceImpl
     ComponentStore<?> componentStore = contentFacet.stores().componentStore;
     AssetStore<?> assetStore = contentFacet.stores().assetStore;
 
-    componentStore.softDeleteComponent(component, deletedBy);
-    assetStore.softDeleteComponentAssets(component, deletedBy);
-    assetStore.reSoftDeleteComponentAssets(component, deletedBy, folderDeleteStarted);
-    contentMaintenance.afterComponentSoftDeleted(component);
+    componentStore.trashComponent(component, deletedBy);
+    assetStore.trashComponentAssets(component, deletedBy);
+    assetStore.reTrashComponentAssets(component, deletedBy, folderDeleteStarted);
+    contentMaintenance.afterComponentTrashed(component);
     recordComponentInTrashIndex(repository, component, contentFacet, deletedBy);
 
-    log.info("Soft-deleted component '{}' in repository '{}'", component.name(), repository.getName());
+    log.info("Trashed component '{}' in repository '{}'", component.name(), repository.getName());
     return true;
   }
 
-  private boolean softDeleteAsset(
+  private boolean trashAsset(
       final Repository repository,
       final FluentAsset asset,
       final ContentMaintenanceFacet contentMaintenance,
@@ -477,25 +480,25 @@ public class DeleteFolderServiceImpl
     ContentFacetSupport contentFacet = (ContentFacetSupport) repository.facet(ContentFacet.class);
     String deletedBy = currentPrincipalOrSystem();
 
-    // Referential-integrity guard (NEXUS-54127): refuse soft-deleting an asset still referenced by a
+    // Referential-integrity guard (NEXUS-54127): refuse trashing an asset still referenced by a
     // live/restorable sibling (e.g. a Docker/OCI blob referenced by a manifest), mirroring the hard-delete
     // guard in the format's ContentMaintenanceFacet.deleteAsset so folder-delete cannot strand referenced content.
     contentMaintenance.validateAssetDeletable(asset);
 
     AssetStore<?> assetStore = contentFacet.stores().assetStore;
-    assetStore.softDeleteAsset(asset, deletedBy);
-    contentMaintenance.afterAssetSoftDeleted(asset);
+    assetStore.trashAsset(asset, deletedBy);
+    contentMaintenance.afterAssetTrashed(asset);
     recordAssetInTrashIndex(repository, asset, contentFacet, deletedBy);
 
     asset.component()
-        .ifPresent(component -> handleAssetSoftDeleteCascade(repository, component, contentFacet, contentMaintenance,
+        .ifPresent(component -> handleAssetTrashCascade(repository, component, contentFacet, contentMaintenance,
             deletedBy, folderDeleteStarted));
 
-    log.info("Soft-deleted asset '{}' in repository '{}'", asset.path(), repository.getName());
+    log.info("Trashed asset '{}' in repository '{}'", asset.path(), repository.getName());
     return true;
   }
 
-  private void handleAssetSoftDeleteCascade(
+  private void handleAssetTrashCascade(
       final Repository repository,
       final org.sonatype.nexus.repository.content.Component component,
       final ContentFacetSupport contentFacet,
@@ -514,11 +517,11 @@ public class DeleteFolderServiceImpl
       }
 
       if (shouldCascade) {
-        log.info("Auto-soft-deleting component (no remaining active assets) in repository '{}'",
+        log.info("Auto-trashing component (no remaining active assets) in repository '{}'",
             repository.getName());
-        contentFacet.stores().componentStore.softDeleteComponent(component, deletedBy);
-        contentFacet.stores().assetStore.reSoftDeleteComponentAssets(component, deletedBy, folderDeleteStarted);
-        contentMaintenance.afterComponentSoftDeleted(component);
+        contentFacet.stores().componentStore.trashComponent(component, deletedBy);
+        contentFacet.stores().assetStore.reTrashComponentAssets(component, deletedBy, folderDeleteStarted);
+        contentMaintenance.afterComponentTrashed(component);
         recordComponentInTrashIndex(repository, component, contentFacet, deletedBy);
       }
     }
@@ -580,7 +583,7 @@ public class DeleteFolderServiceImpl
         metadata.put("parentComponentId", encodeIdentifier(repoName, compExternalId));
       });
 
-      SoftDeletedEntityInfo info = new SoftDeletedEntityInfo(
+      TrashedEntityInfo info = new TrashedEntityInfo(
           "asset", encodedId, asset.path(), now(), deletedBy, metadata);
       trashIndexRecorder.record(info);
     }
@@ -614,11 +617,11 @@ public class DeleteFolderServiceImpl
       metadata.put("version", component.version());
       metadata.put("kind", component.kind());
 
-      SoftDeletedEntityInfo info = new SoftDeletedEntityInfo(
+      TrashedEntityInfo info = new TrashedEntityInfo(
           "component", encodedId, componentDisplayName(component), now(), deletedBy, metadata);
       trashIndexRecorder.record(info);
       // Subsume ALL of this component's child-asset Trash entries under the component -- matching the single
-      // component soft-delete path -- so an asset soft-deleted before this folder operation is not left as a
+      // component trash path -- so an asset trashed before this folder operation is not left as a
       // separate top-level row while also appearing as a child of the expanded component.
       trashIndexRecorder.removeByParentComponent(encodedId);
     }
@@ -630,7 +633,7 @@ public class DeleteFolderServiceImpl
   /**
    * Builds a {@code namespace:name:version} display name (omitting empty parts) so that components which
    * share a name but differ by version are distinguishable in Trash, matching the per-component
-   * soft-delete path ({@code ComponentSoftDeletedEntityService}).
+   * trash path ({@code ComponentTrashedEntityService}).
    */
   @VisibleForTesting
   static String componentDisplayName(final org.sonatype.nexus.repository.content.Component component) {

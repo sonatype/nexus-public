@@ -425,6 +425,7 @@ export const maliciousPackagesMachine = createMachine<
 >(
   {
     id: 'maliciousPackages',
+    predictableActionArguments: true,
     initial: 'loading',
     context: makeInitialContext(),
     on: {

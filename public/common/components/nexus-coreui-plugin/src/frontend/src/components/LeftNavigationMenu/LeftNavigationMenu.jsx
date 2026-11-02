@@ -238,7 +238,7 @@ export default function LeftNavigationMenu() {
       />
       {/*
         * Visibility is resolved by the route itself (LeftNavigationMenuItem -> useNavigationLinkState):
-        * the browse.trash route declares statesEnabled [nexus.softDelete.enabled], editions ['PRO'] and
+        * the browse.trash route declares statesEnabled [nexus.trash.enabled], editions ['PRO'] and
         * permissions [ADMIN]. A manual gate here is redundant and, because it called the ExtJS.useUser()
         * hook behind && short-circuits, could add/drop a hook between renders and crash the nav
         * ("Rendered more hooks than during the previous render") when NX.State resolves asynchronously (NEXUS-51733).

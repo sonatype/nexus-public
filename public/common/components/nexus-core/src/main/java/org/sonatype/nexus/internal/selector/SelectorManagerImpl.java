@@ -66,7 +66,6 @@ import org.sonatype.nexus.selector.VariableSource;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.lang3.StringUtils;
@@ -144,7 +143,7 @@ public class SelectorManagerImpl
     if ((result = cachedBrowseResult.get()) == null) {
       synchronized (this) {
         if ((result = cachedBrowseResult.get()) == null) {
-          result = ImmutableList.copyOf(store.browse());
+          result = store.browse();
           // maintain this result in memory-sensitive cache
           cachedBrowseResult = new SoftReference<>(result);
         }

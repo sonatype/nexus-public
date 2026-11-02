@@ -14,13 +14,12 @@ import React, { Suspense, useEffect, useLayoutEffect } from 'react';
 import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
 import { UIRouter, UIView, useRouter } from '@uirouter/react';
-import { ExtJS, UnsavedChangesModal, PreviewUnsavedDialog, RouteLoadingFallback, ToastProvider, useToast, bootstrapFromREST, SessionExpiryModal, useSessionExpiry, TooltipContainerProvider as NuiTooltipContainerProvider, OnboardingWizardMount } from '@sonatype/nexus-ui-plugin';
+import { ExtJS, UnsavedChangesModal, PreviewUnsavedDialog, RouteLoadingFallback, ToastProvider, useToast, bootstrapFromREST, SessionExpiryModal, useSessionExpiry, ServerLifecycleModals, TooltipContainerProvider as NuiTooltipContainerProvider, OnboardingWizardMount, GlobalHeader } from '@sonatype/nexus-ui-plugin';
 import LeftNavigationMenuRadix from './components/LeftNavigationMenu/LeftNavigationMenuRadix';
 import { Theme } from '@radix-ui/themes';
 import { TooltipContainerProvider } from './components/shared/Tooltip/TooltipContainerContext';
 import { getRouter } from './routerConfig/routerConfig';
 import { ROUTE_NAMES } from './routerConfig/routeNames/routeNames';
-import GlobalHeaderRadix from './components/GlobalHeader/GlobalHeaderRadix';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 import './App.scss';
@@ -29,6 +28,7 @@ import SystemNoticesSwitch from './components/widgets/SystemStatusAlerts/SystemN
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
 import { useRedirectOnLogout } from './hooks/useRedirectOnLogout';
 import usePreventPushStateOnHash from './hooks/usePreventPushStateOnHash';
+import UIStrings from './constants/UIStrings';
 
 // WHOLE_DOCUMENT allows DOMPurify to parse <head> and preserve <style> tags that customers
 // place there; FORCE_BODY returns only body content so no <html>/<head> wrapper leaks into the DOM.
@@ -53,7 +53,7 @@ function SessionExpiryHost() {
 
 /**
  * AppWithRadixTheme - Connects ThemeProvider to Radix Theme.
- * Keeps the Radix-based UI improvements (GlobalHeaderRadix, LeftNavigationMenuRadix)
+ * Keeps the Radix-based UI improvements (shared GlobalHeader, LeftNavigationMenuRadix)
  * while using ExtJS for session/auth/state management.
  */
 function AppWithRadixTheme() {
@@ -65,6 +65,7 @@ function AppWithRadixTheme() {
         <NuiTooltipContainerProvider>
           <ToastProvider>
             <SessionExpiryHost />
+            <ServerLifecycleModals />
             <App />
           </ToastProvider>
         </NuiTooltipContainerProvider>
@@ -113,7 +114,21 @@ export function App() {
         />
       )}
 
-      <GlobalHeaderRadix />
+      <GlobalHeader
+        routes={{
+          searchGeneric: ROUTE_NAMES.BROWSE.SEARCH.GENERIC,
+          previewSearchUnified: 'preview.browse.search.unified',
+          previewSearchComponent: 'preview.browse.search.component',
+          login: ROUTE_NAMES.LOGIN,
+          userAccount: ROUTE_NAMES.USER.ACCOUNT,
+          userNugetApiToken: ROUTE_NAMES.USER.NUGETAPITOKEN,
+          userToken: ROUTE_NAMES.USER.USER_TOKEN,
+          previewUserAccount: 'preview.user.account',
+          previewUserNugetApiToken: 'preview.user.nugetapitoken',
+          previewUserToken: 'preview.user.usertoken',
+        }}
+        accountMenuLabel={UIStrings.USER_ACCOUNT.MENU.text}
+      />
 
       <LeftNavigationMenuRadix />
 

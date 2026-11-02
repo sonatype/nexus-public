@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.selector;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.common.time.Time;
@@ -28,7 +29,6 @@ import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.internal.DatastoreCselToSql;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -82,7 +82,7 @@ public class SelectorFilterBuilderImplTest
   public void testFormat() {
     SelectorConfiguration selector = createSelectorConfiguration("selector", "format == 'raw'");
     Map<String, Object> filterParameters = new HashMap<>();
-    String filter = underTest.buildFilter("raw", "request_path", ImmutableList.of(selector), filterParameters);
+    String filter = underTest.buildFilter("raw", "request_path", List.of(selector), filterParameters);
 
     assertThat(filter, is("('raw' = #{filterParams.s0p0})"));
     assertThat(filterParameters.keySet().size(), is(1));
@@ -93,7 +93,7 @@ public class SelectorFilterBuilderImplTest
   public void testPath() {
     SelectorConfiguration selector = createSelectorConfiguration("selector", "path =~ '/bar/.*'");
     Map<String, Object> filterParameters = new HashMap<>();
-    String filter = underTest.buildFilter("raw", "request_path", ImmutableList.of(selector), filterParameters);
+    String filter = underTest.buildFilter("raw", "request_path", List.of(selector), filterParameters);
 
     assertThat(filter, is("(request_path ~ #{filterParams.s0p0})"));
     assertThat(filterParameters.keySet().size(), is(1));
@@ -104,7 +104,7 @@ public class SelectorFilterBuilderImplTest
   public void testMultipleExpressions() {
     SelectorConfiguration selector = createSelectorConfiguration("selector", "path =~ '/bar/.*' or format == 'raw'");
     Map<String, Object> filterParameters = new HashMap<>();
-    String filter = underTest.buildFilter("raw", "request_path", ImmutableList.of(selector), filterParameters);
+    String filter = underTest.buildFilter("raw", "request_path", List.of(selector), filterParameters);
 
     assertThat(filter, is("(request_path ~ #{filterParams.s0p0} or 'raw' = #{filterParams.s0p1})"));
     assertThat(filterParameters.keySet().size(), is(2));
@@ -119,7 +119,7 @@ public class SelectorFilterBuilderImplTest
 
     Map<String, Object> filterParameters = new HashMap<>();
     String filter =
-        underTest.buildFilter("raw", "request_path", ImmutableList.of(selector1, selector2), filterParameters);
+        underTest.buildFilter("raw", "request_path", List.of(selector1, selector2), filterParameters);
 
     assertThat(filter,
         is("((request_path ~ #{filterParams.s0p0} or 'raw' = #{filterParams.s0p1}) or (request_path = #{filterParams.s1p0}))"));
@@ -137,7 +137,7 @@ public class SelectorFilterBuilderImplTest
 
     Map<String, Object> filterParameters = new HashMap<>();
     String filter =
-        underTest.buildFilter("raw", "request_path", ImmutableList.of(selector1, selector2), filterParameters);
+        underTest.buildFilter("raw", "request_path", List.of(selector1, selector2), filterParameters);
 
     // appends extra parenthesis because it expected more than one expression
     assertThat(filter, is("(('raw' = #{filterParams.s0p0}))"));
@@ -151,7 +151,7 @@ public class SelectorFilterBuilderImplTest
     SelectorConfiguration selector = createSelectorConfiguration(JexlSelector.TYPE, "selector", "path.size() > 5");
 
     Map<String, Object> filterParameters = new HashMap<>();
-    String filter = underTest.buildFilter("raw", "request_path", ImmutableList.of(selector), filterParameters);
+    String filter = underTest.buildFilter("raw", "request_path", List.of(selector), filterParameters);
 
     assertThat(filter, nullValue());
     assertThat(filterParameters.size(), is(0));
@@ -165,7 +165,7 @@ public class SelectorFilterBuilderImplTest
 
     Map<String, Object> filterParameters = new HashMap<>();
     String filter =
-        underTest.buildFilter("raw", "request_path", ImmutableList.of(selector1, selector2), filterParameters);
+        underTest.buildFilter("raw", "request_path", List.of(selector1, selector2), filterParameters);
 
     assertThat(filter, nullValue());
     assertThat(filterParameters.size(), is(0));
@@ -179,7 +179,7 @@ public class SelectorFilterBuilderImplTest
 
     Map<String, Object> filterParameters = new HashMap<>();
     String filter =
-        underTest.buildFilter("raw", "request_path", ImmutableList.of(selector1, selector2), filterParameters);
+        underTest.buildFilter("raw", "request_path", List.of(selector1, selector2), filterParameters);
 
     assertThat(filter, is("(request_path = #{filterParams.s0p0})"));
     assertThat(filterParameters.size(), is(1));

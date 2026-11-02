@@ -127,7 +127,7 @@ const PERMUTATIONS: FirewallPermutation[] = [
     label: 'Clean — no issues, no report URL',
     description: '0 violations, 0 quarantined, no reportUrl. Shows green badge.',
     repository: PROXY_MAVEN,
-    firewallStatus: { repositoryName: 'maven-central', affectedComponentCount: 0, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 0 },
+    firewallStatus: { message: 'Quarantine enabled', repositoryName: 'maven-central', affectedComponentCount: 0, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 0 },
     group: 'Proxy — Clean',
   },
   {
@@ -135,7 +135,7 @@ const PERMUTATIONS: FirewallPermutation[] = [
     label: 'Clean — with report URL',
     description: '0 violations but reportUrl present. Shows green badge + clickable.',
     repository: PROXY_MAVEN,
-    firewallStatus: { repositoryName: 'maven-central', affectedComponentCount: 0, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
+    firewallStatus: { message: 'Quarantine enabled', repositoryName: 'maven-central', affectedComponentCount: 0, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
     group: 'Proxy — Clean',
   },
 
@@ -145,7 +145,7 @@ const PERMUTATIONS: FirewallPermutation[] = [
     label: 'Critical violations only',
     description: 'criticalComponentCount=25, rest 0. Shows red cell.',
     repository: PROXY_MAVEN,
-    firewallStatus: { repositoryName: 'maven-central', affectedComponentCount: 25, criticalComponentCount: 25, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
+    firewallStatus: { message: 'Quarantine enabled', repositoryName: 'maven-central', affectedComponentCount: 25, criticalComponentCount: 25, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
     group: 'Proxy — Violations (not quarantined)',
   },
   {
@@ -153,7 +153,7 @@ const PERMUTATIONS: FirewallPermutation[] = [
     label: 'Severe violations only',
     description: 'severeComponentCount=12.',
     repository: PROXY_NPM,
-    firewallStatus: { repositoryName: 'npm-proxy', affectedComponentCount: 12, criticalComponentCount: 0, severeComponentCount: 12, moderateComponentCount: 0, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
+    firewallStatus: { message: 'Quarantine enabled', repositoryName: 'npm-proxy', affectedComponentCount: 12, criticalComponentCount: 0, severeComponentCount: 12, moderateComponentCount: 0, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
     group: 'Proxy — Violations (not quarantined)',
   },
   {
@@ -161,7 +161,7 @@ const PERMUTATIONS: FirewallPermutation[] = [
     label: 'Moderate violations only',
     description: 'moderateComponentCount=7.',
     repository: PROXY_NUGET,
-    firewallStatus: { repositoryName: 'nuget-proxy', affectedComponentCount: 7, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 7, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
+    firewallStatus: { message: 'Quarantine enabled', repositoryName: 'nuget-proxy', affectedComponentCount: 7, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 7, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
     group: 'Proxy — Violations (not quarantined)',
   },
   {
@@ -169,7 +169,7 @@ const PERMUTATIONS: FirewallPermutation[] = [
     label: 'Critical + Severe + Moderate',
     description: 'All three severity buckets populated.',
     repository: PROXY_MAVEN,
-    firewallStatus: { repositoryName: 'maven-central', affectedComponentCount: 44, criticalComponentCount: 20, severeComponentCount: 15, moderateComponentCount: 9, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
+    firewallStatus: { message: 'Quarantine enabled', repositoryName: 'maven-central', affectedComponentCount: 44, criticalComponentCount: 20, severeComponentCount: 15, moderateComponentCount: 9, quarantinedComponentCount: 0, reportUrl: REPORT_URL },
     group: 'Proxy — Violations (not quarantined)',
   },
 
@@ -179,7 +179,7 @@ const PERMUTATIONS: FirewallPermutation[] = [
     label: 'Quarantined only (no violations)',
     description: 'quarantinedComponentCount=13, no policy violations. Shows quarantined badge.',
     repository: PROXY_NPM,
-    firewallStatus: { repositoryName: 'npm-proxy', affectedComponentCount: 13, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 13 },
+    firewallStatus: { message: 'Quarantine enabled', repositoryName: 'npm-proxy', affectedComponentCount: 13, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 13 },
     group: 'Proxy — Quarantined',
   },
   {
@@ -187,7 +187,7 @@ const PERMUTATIONS: FirewallPermutation[] = [
     label: 'Quarantined + violations',
     description: 'Both quarantined and policy violations present.',
     repository: PROXY_NPM,
-    firewallStatus: { repositoryName: 'npm-proxy', affectedComponentCount: 95, criticalComponentCount: 82, severeComponentCount: 11, moderateComponentCount: 1, quarantinedComponentCount: 13, reportUrl: REPORT_URL },
+    firewallStatus: { message: 'Quarantine enabled', repositoryName: 'npm-proxy', affectedComponentCount: 95, criticalComponentCount: 82, severeComponentCount: 11, moderateComponentCount: 1, quarantinedComponentCount: 13, reportUrl: REPORT_URL },
     group: 'Proxy — Quarantined',
   },
   {
@@ -195,7 +195,7 @@ const PERMUTATIONS: FirewallPermutation[] = [
     label: 'Quarantined — no report URL',
     description: 'Quarantined but no reportUrl available.',
     repository: PROXY_NPM,
-    firewallStatus: { repositoryName: 'npm-proxy', affectedComponentCount: 5, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 5 },
+    firewallStatus: { message: 'Quarantine enabled', repositoryName: 'npm-proxy', affectedComponentCount: 5, criticalComponentCount: 0, severeComponentCount: 0, moderateComponentCount: 0, quarantinedComponentCount: 5 },
     group: 'Proxy — Quarantined',
   },
 
@@ -305,6 +305,7 @@ export default function SearchFirewallTestPage() {
                         <FirewallCell
                           repository={p.repository}
                           firewallStatus={p.firewallStatus}
+                          firewallCounts={p.firewallStatus?.message ? p.firewallStatus : undefined}
                           hasFirewallLicense={p.hasFirewallLicense ?? true}
                           proxyProtectionSummary={p.proxyProtectionSummary}
                         />

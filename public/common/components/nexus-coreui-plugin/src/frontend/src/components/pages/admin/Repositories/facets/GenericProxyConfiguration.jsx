@@ -56,6 +56,17 @@ export default function GenericProxyConfiguration({parentMachine}) {
     });
   }
 
+  // httpClient.autoBlockStatusCodes is stored as an array of integers in form state;
+  // the input renders/accepts it as a comma-separated string of status codes.
+  function handleAutoBlockStatusCodesUpdate(value) {
+    const statusCodes = value
+      .split(',')
+      .map((code) => code.trim())
+      .filter((code) => code.length > 0)
+      .map(Number);
+    FormUtils.handleUpdate('httpClient.autoBlockStatusCodes', sendParent)(statusCodes);
+  }
+
   return (
     <>
       <h2 className="nx-h2">{EDITOR.PROXY_CAPTION}</h2>
@@ -139,6 +150,19 @@ export default function GenericProxyConfiguration({parentMachine}) {
         >
           {EDITOR.AUTO_BLOCK_DESCR}
         </NxCheckbox>
+        {format === 'swift' && (
+          <NxFormGroup
+            label={EDITOR.AUTO_BLOCK_STATUS_CODES_LABEL}
+            sublabel={EDITOR.AUTO_BLOCK_STATUS_CODES_DESCR}
+          >
+            <NxTextInput
+              {...FormUtils.fieldProps('httpClient.autoBlockStatusCodes', parentState)}
+              value={(parentState.context.data.httpClient?.autoBlockStatusCodes || []).join(', ')}
+              onChange={handleAutoBlockStatusCodesUpdate}
+              placeholder={EDITOR.AUTO_BLOCK_STATUS_CODES_PLACEHOLDER}
+            />
+          </NxFormGroup>
+        )}
       </NxFieldset>
 
       <NxFormGroup

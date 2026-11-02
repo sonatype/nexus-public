@@ -250,3 +250,46 @@ describe('component detail tab URLs survive a cold parse (NEXUS-54431)', () => {
     expect(params.gaId).toBe(dockerGaId);
   });
 });
+
+describe('preview.security routes (NEXUS-55508)', () => {
+  const SECTIONS = ['quarantine', 'waivers', 'malware', 'evaluations', 'policies'];
+
+  it('declares preview.security as an abstract /security parent with no query params', () => {
+    const parent = routeByName('preview.security');
+    expect(parent).toBeDefined();
+    expect(parent.abstract).toBe(true);
+    expect(parent.url).toBe('/security');
+    expect(parent.params).toBeUndefined();
+  });
+
+  it.each(SECTIONS)('declares preview.security.%s with requiresUser as its only visibility requirement', (id) => {
+    const route = routeByName(`preview.security.${id}`);
+    expect(route).toBeDefined();
+    expect(route.url).toBe(`/${id}`);
+    expect(route.component).toBeDefined();
+    expect(route.data.visibilityRequirements).toEqual({ requiresUser: true });
+  });
+
+  it('registers exactly the five section routes under preview.security', () => {
+    const names = previewBrowseRoutes.map((r) => r.name).filter((n) => n.startsWith('preview.security'));
+    expect(names).toEqual(['preview.security', ...SECTIONS.map((id) => `preview.security.${id}`)]);
+  });
+
+  it('matches each section URL and not a bare /security', () => {
+    const router = new UIRouter();
+    router.plugin(servicesPlugin);
+    router.plugin(memoryLocationPlugin);
+    router.stateRegistry.register({ name: 'root', url: '', abstract: true });
+    const parent = routeByName('preview.security');
+    router.stateRegistry.register({ name: 'root.security', url: parent.url, abstract: true });
+    SECTIONS.forEach((id) =>
+      router.stateRegistry.register({ name: `root.security.${id}`, url: routeByName(`preview.security.${id}`).url })
+    );
+
+    SECTIONS.forEach((id) => {
+      const match = router.urlService.match({ path: `/security/${id}`, search: {}, hash: '' });
+      expect(match?.rule?.state?.name).toBe(`root.security.${id}`);
+    });
+    expect(router.urlService.match({ path: '/security', search: {}, hash: '' })?.rule?.state?.name).toBeUndefined();
+  });
+});

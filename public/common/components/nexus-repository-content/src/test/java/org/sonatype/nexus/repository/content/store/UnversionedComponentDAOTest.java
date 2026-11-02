@@ -112,8 +112,8 @@ class UnversionedComponentDAOTest
 
   @Override
   @DatabaseTest
-  protected void testPurgeSelectedSoftDeletedComponentsRespectsRestoreGuard() {
-    super.testPurgeSelectedSoftDeletedComponentsRespectsRestoreGuard();
+  protected void testPurgeSelectedTrashedComponentsRespectsRestoreGuard() {
+    super.testPurgeSelectedTrashedComponentsRespectsRestoreGuard();
   }
 
   @Override

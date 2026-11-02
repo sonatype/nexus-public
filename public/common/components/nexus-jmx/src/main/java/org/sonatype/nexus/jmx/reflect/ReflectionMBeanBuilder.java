@@ -13,6 +13,7 @@
 package org.sonatype.nexus.jmx.reflect;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -21,7 +22,6 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.jmx.MBeanBuilder;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 
 import static java.util.Objects.requireNonNull;
 
@@ -63,7 +63,7 @@ public class ReflectionMBeanBuilder
     requireNonNull(managedDescriptor);
 
     // track attribute builders for getter/setter correlation
-    Map<String, ReflectionMBeanAttribute.Builder> attributeBuilders = Maps.newHashMap();
+    Map<String, ReflectionMBeanAttribute.Builder> attributeBuilders = new HashMap<>();
 
     // discover attributes and operations
     for (Method method : type.getMethods()) {

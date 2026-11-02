@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security.user;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,7 +23,6 @@ import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.user.UserManagementTest.UserManagementTestConfiguration;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Bean;
@@ -54,7 +54,7 @@ class UserManagementTest
     securitySystem = getSecuritySystem();
 
     RealmManager realmManager = lookup(RealmManager.class);
-    realmManager.setConfiguredRealmIds(ImmutableList.of("MockRealmA", "MockRealmB"));
+    realmManager.setConfiguredRealmIds(List.of("MockRealmA", "MockRealmB"));
   }
 
   @Test

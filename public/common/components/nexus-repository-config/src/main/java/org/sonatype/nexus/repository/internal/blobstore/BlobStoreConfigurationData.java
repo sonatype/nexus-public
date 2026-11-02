@@ -15,9 +15,8 @@ package org.sonatype.nexus.repository.internal.blobstore;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
@@ -31,7 +30,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Maps;
 
 import static java.util.Objects.requireNonNull;
 
@@ -53,6 +51,15 @@ public class BlobStoreConfigurationData
   public static final String SECRET_ACCESS_KEY = "secretAccessKey";
 
   public static final String S_3 = "s3";
+
+  public static final String SESSION_TOKEN = "sessionToken";
+
+  public static final String AUTH_ACCOUNT_KEY = "auth_account_key";
+
+  public static final String ACCOUNT_KEY = "accountKey";
+
+  private static final Set<String> SENSITIVE_ATTRIBUTE_KEYS =
+      Set.of(ACCESS_KEY_ID, SECRET_ACCESS_KEY, SESSION_TOKEN, AUTH_ACCOUNT_KEY, ACCOUNT_KEY);
 
   // do not serialize EntityId, it can be generated on the fly
   @JsonIgnore
@@ -97,7 +104,7 @@ public class BlobStoreConfigurationData
   @Override
   public Map<String, Map<String, Object>> getAttributes() {
     if (attributes == null) {
-      attributes = Maps.newHashMap();
+      attributes = new HashMap<>();
     }
 
     return attributes;
@@ -113,12 +120,12 @@ public class BlobStoreConfigurationData
     requireNonNull(key);
 
     if (attributes == null) {
-      attributes = Maps.newHashMap();
+      attributes = new HashMap<>();
     }
 
     Map<String, Object> map = attributes.get(key);
     if (map == null) {
-      map = Maps.newHashMap();
+      map = new HashMap<>();
       attributes.put(key, map);
     }
 
@@ -134,19 +141,21 @@ public class BlobStoreConfigurationData
         '}';
   }
 
-  private Map<String, Map<String, Object>> sanitizeAttributes(Map<String, Map<String, Object>> attributes) {
-    if (attributes != null && attributes.containsKey(S_3)) {
-      Map<String, Object> cleanedS3 = attributes.get(S_3)
-          .entrySet()
-          .stream()
-          .filter(e -> !ACCESS_KEY_ID.equals(e.getKey()))
-          .filter(e -> !SECRET_ACCESS_KEY.equals(e.getKey()))
-          .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-      Map<String, Map<String, Object>> newAttributes = new HashMap<>(attributes);
-      newAttributes.replace(S_3, cleanedS3);
-      return newAttributes;
+  private Map<String, Map<String, Object>> sanitizeAttributes(final Map<String, Map<String, Object>> attributes) {
+    if (attributes == null) {
+      return null;
     }
-    return attributes;
+
+    Map<String, Map<String, Object>> sanitized = new HashMap<>(attributes);
+    sanitized.replaceAll((section, values) -> {
+      if (values == null) {
+        return null;
+      }
+      Map<String, Object> cleaned = new HashMap<>(values);
+      cleaned.keySet().removeAll(SENSITIVE_ATTRIBUTE_KEYS);
+      return cleaned;
+    });
+    return sanitized;
   }
 
   private static final ObjectMapper MAPPER = makeObjectMapper();

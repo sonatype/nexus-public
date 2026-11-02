@@ -35,7 +35,6 @@ import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 import org.sonatype.nexus.selector.SelectorManager;
 
-import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.Permission;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -116,7 +115,7 @@ public class RepositoryContentSelectorPrivilegeDescriptor
   {
     super(TYPE, repositoryManager, formats);
     this.selectorManager = requireNonNull(selectorManager);
-    this.formFields = ImmutableList.of(
+    this.formFields = List.of(
         new SelectorComboFormField(
             P_CONTENT_SELECTOR,
             messages.contentSelector(),

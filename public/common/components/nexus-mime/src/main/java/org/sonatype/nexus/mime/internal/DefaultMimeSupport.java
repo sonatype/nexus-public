@@ -29,7 +29,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.tika.config.TikaConfig;
@@ -54,6 +53,8 @@ import static java.util.Objects.requireNonNull;
 public class DefaultMimeSupport
     implements MimeSupport
 {
+  private static final MediaType TIKA_OOXML = MediaType.application("x-tika-ooxml");
+
   private final TikaConfig tikaConfig;
 
   /**
@@ -82,7 +83,7 @@ public class DefaultMimeSupport
         {
           @Override
           public List<String> load(final String key) throws Exception {
-            final List<String> detected = Lists.newArrayList();
+            final List<String> detected = new ArrayList<>();
             final MimeRule mimeType = nexusMimeTypes.getMimeRuleForExtension(key);
             if (mimeType != null) {
               // add Nexus matches first
@@ -137,7 +138,7 @@ public class DefaultMimeSupport
   public List<String> detectMimeTypes(final InputStream input, @Nullable final String fileName) throws IOException {
     requireNonNull(input);
 
-    List<String> detected = Lists.newArrayList();
+    List<String> detected = new ArrayList<>();
     Metadata metadata = new Metadata();
     if (fileName != null) {
       metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
@@ -185,6 +186,12 @@ public class DefaultMimeSupport
    * Unravels media type by aliases and supertype recursively.
    */
   private void unravel(final List<String> detected, final MediaType mt) {
+    if (TIKA_OOXML.equals(mt.getBaseType())) {
+      // Tika-internal marker for any zip whose first entry is [Content_Types].xml (OPC packages such as .nupkg),
+      // not a type any format understands, so report the underlying zip instead
+      unravel(detected, tikaConfig.getMediaTypeRegistry().getSupertype(mt));
+      return;
+    }
     detected.add(mt.getBaseType().toString());
     // add aliases, for example "application/xml" type has "text/xml" alias
     for (MediaType alias : tikaConfig.getMediaTypeRegistry().getAliases(mt)) {

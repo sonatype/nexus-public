@@ -14,7 +14,16 @@
 import React, { useCallback, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-/** Debounce delay for select filter changes (ms) */
+/**
+ * Debounce delay for select filter changes (ms).
+ *
+ * 200 ms rather than `APIConstants.DEBOUNCE_DELAY`: a select fires one discrete change per
+ * interaction rather than a stream of keystrokes, so the interval only has to coalesce a user
+ * cycling through options — a longer wait would just feel unresponsive.
+ *
+ * This component debounces a *callback*, not a value, so it keeps its own timer ref rather than
+ * using the shared `useDebounced` hook. See `private/developer-documentation/frontend/debouncing.md`.
+ */
 const SELECT_FILTER_DEBOUNCE_MS = 200;
 
 export interface SelectFilterOption {

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.metrics.reconcile;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
@@ -28,7 +29,6 @@ import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
@@ -87,7 +87,7 @@ public class RecalculateBlobStoreSizeTaskTest
     TaskConfiguration configuration = buildTaskConfiguration("test-all-blobstores", ALL);
 
     when(blobStoreManager.browse()).thenReturn(
-        ImmutableList.of(blobstore1Mocks.getLeft(), blobstore2Mocks.getLeft(), blobstore3Mocks.getLeft()));
+        List.of(blobstore1Mocks.getLeft(), blobstore2Mocks.getLeft(), blobstore3Mocks.getLeft()));
 
     underTest.configure(configuration);
     underTest.call();
@@ -107,7 +107,7 @@ public class RecalculateBlobStoreSizeTaskTest
     TaskConfiguration configuration = buildTaskConfiguration("test-multiple-failures", ALL);
 
     when(blobStoreManager.browse()).thenReturn(
-        ImmutableList.of(unavailableMocks.getLeft(), available1Mocks.getLeft(), available2Mocks.getLeft()));
+        List.of(unavailableMocks.getLeft(), available1Mocks.getLeft(), available2Mocks.getLeft()));
 
     underTest.configure(configuration);
     assertThrows(MultipleFailuresException.class, () -> underTest.call());

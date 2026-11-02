@@ -31,6 +31,12 @@ class VersionedAssetStoreTest
 
   @Override
   @DatabaseTest
+  protected void testUndoTrashAsset_liveAsset_returnsZeroAndFiresNoRestoredEvent() {
+    super.testUndoTrashAsset_liveAsset_returnsZeroAndFiresNoRestoredEvent();
+  }
+
+  @Override
+  @DatabaseTest
   protected void testBrowseUpdatedAssetsDifferentDates() {
     super.testBrowseUpdatedAssetsDifferentDates();
   }

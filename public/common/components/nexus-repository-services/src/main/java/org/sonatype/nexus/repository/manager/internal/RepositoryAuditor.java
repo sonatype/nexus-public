@@ -32,6 +32,7 @@ import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryLoadedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryRestoredEvent;
+import org.sonatype.nexus.repository.manager.RepositoryTrashRestoredEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
@@ -82,6 +83,9 @@ public class RepositoryAuditor
     registerType(RepositoryCacheInvalidationEvent.class, "cacheInvalidated");
     registerType(RepositoryCreatedEvent.class, CREATED_TYPE);
     registerType(RepositoryRestoredEvent.class, "restored");
+    // Trash restore extends RepositoryCreatedEvent; audit it as "restored" (not "created") since type() keys on the
+    // exact class (NEXUS-55410).
+    registerType(RepositoryTrashRestoredEvent.class, "restored");
     registerType(RepositoryUpdatedEvent.class, UPDATED_TYPE);
     registerType(RepositoryDestroyedEvent.class, "destroyed");
     registerType(RepositoryDeletedEvent.class, DELETED_TYPE);

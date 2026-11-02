@@ -23,6 +23,9 @@ import {
   PREVIEW_FEATURE_FLAGS,
 } from '@sonatype/nexus-ui-plugin/src/frontend/src/components/preview/config/featureFlags';
 
+// Synthetic key absent from the map; gating logic treats it the same as a disabled flag.
+const DISABLED_FEATURE_KEY = 'test.disabled.feature';
+
 describe('previewFeatureFlags', () => {
   // Store original window properties
   const originalLocation = window.location;
@@ -164,8 +167,8 @@ describe('previewFeatureFlags', () => {
       expect(PREVIEW_FEATURE_FLAGS['system.tasks']).toBe(true);
       expect(PREVIEW_FEATURE_FLAGS['system.http']).toBe(true); // NEXUS-52594
       expect(PREVIEW_FEATURE_FLAGS['system.licensing']).toBe(true); // Enabled — NEXUS-52900
-      // Coming Soon
-      expect(PREVIEW_FEATURE_FLAGS['system.upgrade']).toBe(false);
+      // Removed; the Upgrade page is no longer gated.
+      expect(PREVIEW_FEATURE_FLAGS['system.upgrade']).toBeUndefined();
       expect(PREVIEW_FEATURE_FLAGS['system.emailserver']).toBe(true);
       // IQ Server (Lifecycle/Firewall entry page). The
       // hosted-repo-eval sub-flag was dropped as unused; enablement is gated
@@ -185,15 +188,12 @@ describe('previewFeatureFlags', () => {
       expect(isFeatureEnabled('security.ldap')).toBe(true); // Enabled — NEXUS-54147
     });
 
-    // These blocks need a flag that is genuinely still disabled. They used
-    // security.sslcertificates until NEXUS-54265 enabled it; system.upgrade is the
-    // remaining Coming Soon flag. Whoever enables that one next has to move these
-    // over again — or add a test-only flag if none is left.
+    // No real flag is disabled anymore; these use DISABLED_FEATURE_KEY.
     it('returns false for disabled features in production', () => {
       window.location.hostname = 'production.example.com';
       window.location.search = '';
 
-      expect(isFeatureEnabled('system.upgrade')).toBe(false);
+      expect(isFeatureEnabled(DISABLED_FEATURE_KEY)).toBe(false);
     });
 
     it('returns false for unknown features', () => {
@@ -206,38 +206,38 @@ describe('previewFeatureFlags', () => {
       });
 
       it('returns true when enableWip matches feature key', () => {
-        window.location.search = '?enableWip=system.upgrade';
+        window.location.search = `?enableWip=${DISABLED_FEATURE_KEY}`;
         
-        expect(isFeatureEnabled('system.upgrade')).toBe(true);
+        expect(isFeatureEnabled(DISABLED_FEATURE_KEY)).toBe(true);
       });
 
       it('returns true when enableWip=all', () => {
         window.location.search = '?enableWip=all';
         
-        expect(isFeatureEnabled('system.upgrade')).toBe(true);
+        expect(isFeatureEnabled(DISABLED_FEATURE_KEY)).toBe(true);
         expect(isFeatureEnabled('system.capabilities')).toBe(true);
       });
 
       it('returns false when enableWip does not match', () => {
         window.location.search = '?enableWip=system.capabilities';
         
-        expect(isFeatureEnabled('system.upgrade')).toBe(false);
+        expect(isFeatureEnabled(DISABLED_FEATURE_KEY)).toBe(false);
       });
     });
 
     describe('production mode security', () => {
       it('ignores enableWip param in production', () => {
         window.location.hostname = 'production.example.com';
-        window.location.search = '?enableWip=system.upgrade';
+        window.location.search = `?enableWip=${DISABLED_FEATURE_KEY}`;
         
-        expect(isFeatureEnabled('system.upgrade')).toBe(false);
+        expect(isFeatureEnabled(DISABLED_FEATURE_KEY)).toBe(false);
       });
 
       it('ignores enableWip=all in production', () => {
         window.location.hostname = 'production.example.com';
         window.location.search = '?enableWip=all';
         
-        expect(isFeatureEnabled('system.upgrade')).toBe(false);
+        expect(isFeatureEnabled(DISABLED_FEATURE_KEY)).toBe(false);
       });
     });
   });
@@ -253,21 +253,21 @@ describe('previewFeatureFlags', () => {
     it('returns true for disabled features in development mode', () => {
       window.location.hostname = 'localhost';
       
-      expect(canPreviewWip('system.upgrade')).toBe(true);
+      expect(canPreviewWip(DISABLED_FEATURE_KEY)).toBe(true);
     });
 
     it('returns false for disabled features in production', () => {
       window.location.hostname = 'production.example.com';
       window.location.search = '';
       
-      expect(canPreviewWip('system.upgrade')).toBe(false);
+      expect(canPreviewWip(DISABLED_FEATURE_KEY)).toBe(false);
     });
 
     it('returns true when debug param present', () => {
       window.location.hostname = 'production.example.com';
       window.location.search = '?debug';
       
-      expect(canPreviewWip('system.upgrade')).toBe(true);
+      expect(canPreviewWip(DISABLED_FEATURE_KEY)).toBe(true);
     });
   });
 

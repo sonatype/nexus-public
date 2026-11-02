@@ -13,6 +13,7 @@
 
 export { FormatBadge, type FormatBadgeProps } from './FormatBadge';
 export { FormatIcon, type FormatIconProps } from './FormatIcon';
+export { EditionPill, type EditionPillProps, type EditionPillTier } from './EditionPill';
 export { FORMAT_LABELS } from './formatConstants';
 export {
   FORMAT_SVGS,

@@ -53,4 +53,29 @@ public class QuartzScheduleFactoryTest
   public void testBadOneLAtBadPosition() {
     cron("0 0 L L * ?");
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBadWildcardStepInDayOfMonth() {
+    cron("0 0 3 */2 * ?");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBadWildcardStepInMonth() {
+    cron("0 0 3 1 */2 ?");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBadWildcardStepInDayOfWeek() {
+    cron("0 0 3 ? * */2");
+  }
+
+  @Test
+  public void testGoodNumericStepInDayOfMonth() {
+    cron("0 0 3 1/2 * ?");
+  }
+
+  @Test
+  public void testGoodWildcardStepInTimeFields() {
+    cron("*/30 */5 */2 * * ?");
+  }
 }

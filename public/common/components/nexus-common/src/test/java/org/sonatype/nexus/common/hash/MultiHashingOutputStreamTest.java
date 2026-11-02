@@ -18,7 +18,6 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.hash.HashCode;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +48,7 @@ public class MultiHashingOutputStreamTest
 
   @Before
   public void setup() throws Exception {
-    hashes = ImmutableList.of(SHA256, SHA1, SHA512, MD5);
+    hashes = List.of(SHA256, SHA1, SHA512, MD5);
     underTest = new MultiHashingOutputStream(hashes, outputStream);
   }
 

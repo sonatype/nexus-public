@@ -17,14 +17,26 @@
   flex-direction: row;
   flex: 1;
   min-height: 0;
-  min-width: 0;
   width: 100%;
   height: 100%;
+
+  // NEXUS-55145: Classic Settings pages do not reflow. With the shell's 1366px floor
+  // removed, keep a usable combined width for sidebar + content and let the enclosing
+  // .nxrm-main-content (overflow: auto) scroll them horizontally inside the content
+  // area, so the header and left nav stay put and the window gets no scrollbar.
+  // 1100px is a trial value from the ticket, not a hard requirement.
+  min-width: 1100px;
 }
 
 .nxrm-settings.nx-page-sidebar{
   background-color: var(--color-surface);
   border-right: var(--nx-border-width) solid var(--color-border);
+
+  // NEXUS-55145: pin the Settings sidebar to a fixed width. The shared stylesheet
+  // sets flex: 0 0 24%, which collapses it to ~62px at narrow widths and wraps
+  // "Settings" one letter per line. A fixed basis keeps it readable while the
+  // content area scrolls.
+  flex: 0 0 270px;
   .nxrm-navigation-expandable-link:has(.nxrm-navigation-expandable-link__expandable-list:empty) {
     display: none;
   }

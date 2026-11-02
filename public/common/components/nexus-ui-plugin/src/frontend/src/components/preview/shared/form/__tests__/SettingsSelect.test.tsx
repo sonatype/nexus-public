@@ -40,7 +40,9 @@ jest.mock('@radix-ui/themes', () => {
         </button>
       ),
       Content: ({ children }: any) => <div>{children}</div>,
-      Item: ({ children, value }: any) => <div data-value={value}>{children}</div>,
+      Item: ({ children, value, textValue }: any) => (
+        <div data-value={value} data-text-value={textValue}>{children}</div>
+      ),
     },
   };
 });
@@ -90,7 +92,7 @@ describe('SettingsSelect', () => {
       expect(screen.getByText('Selection is required')).toBeInTheDocument();
     });
 
-    it('hides help text when error is present', () => {
+    it('shows help text alongside error when both are present', () => {
       render(
         <SettingsSelect
           {...defaultProps}
@@ -98,7 +100,7 @@ describe('SettingsSelect', () => {
           error="Error message"
         />
       );
-      expect(screen.queryByText('Help text')).not.toBeInTheDocument();
+      expect(screen.getByText('Help text')).toBeInTheDocument();
       expect(screen.getByText('Error message')).toBeInTheDocument();
     });
 
@@ -172,6 +174,41 @@ describe('SettingsSelect', () => {
     it('passes the raw value to Radix Root when a real value is selected', () => {
       render(<SettingsSelect {...defaultProps} value="option2" />);
       expect(screen.getByTestId('select-root')).toHaveAttribute('data-value', 'option2');
+    });
+  });
+
+  describe('option badge', () => {
+    it('renders an option badge inside its item', () => {
+      const { container } = render(
+        <SettingsSelect
+          {...defaultProps}
+          options={[
+            ...defaultOptions,
+            { value: 'option4', label: 'Option 4', disabled: true, badge: <span data-testid="option4-badge">Enterprise</span> },
+          ]}
+        />
+      );
+
+      const item = container.querySelector('[data-value="option4"]');
+      expect(item).toHaveTextContent('Option 4');
+      expect(item).toContainElement(screen.getByTestId('option4-badge'));
+    });
+
+    it('keeps the plain label as the typeahead text of a badged option', () => {
+      const { container } = render(
+        <SettingsSelect
+          {...defaultProps}
+          options={[{ value: 'option4', label: 'Option 4', badge: <span>Enterprise</span> }]}
+        />
+      );
+
+      expect(container.querySelector('[data-value="option4"]')).toHaveAttribute('data-text-value', 'Option 4');
+    });
+
+    it('renders options without a badge as the plain label', () => {
+      const { container } = render(<SettingsSelect {...defaultProps} />);
+
+      expect(container.querySelector('[data-value="option1"]')?.innerHTML).toBe('Option 1');
     });
   });
 });

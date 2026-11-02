@@ -72,16 +72,22 @@ public class NexusBasicHttpAuthenticationFilter
 
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  @Autowired(required = false)
-  @Nullable
   private AuthRateLimiterService rateLimiterService;
 
-  @Autowired(required = false)
-  @Nullable
   private EventManager eventManager;
 
   public NexusBasicHttpAuthenticationFilter() {
     setApplicationName(BASIC_AUTH_REALM);
+  }
+
+  @Autowired(required = false)
+  public void setRateLimiterService(@Nullable final AuthRateLimiterService rateLimiterService) {
+    this.rateLimiterService = rateLimiterService;
+  }
+
+  @Autowired(required = false)
+  public void setEventManager(@Nullable final EventManager eventManager) {
+    this.eventManager = eventManager;
   }
 
   /**
@@ -341,8 +347,8 @@ public class NexusBasicHttpAuthenticationFilter
    * For regular username/password authentication, uses the principal (username).
    *
    * <p>
-   * Returns {@code null} for tokens with empty principal (e.g., malformed base64),
-   * indicating that rate limiting should be skipped.
+   * Returns {@code null} for tokens with an empty principal (e.g., malformed base64) or an empty password
+   * (incomplete credentials, not a password guess), indicating that rate limiting should be skipped.
    *
    * @param token the authentication token
    * @return the rate limit key, or {@code null} if rate limiting should be skipped
@@ -363,6 +369,9 @@ public class NexusBasicHttpAuthenticationFilter
     Object principal = token.getPrincipal();
     if (principal == null || principal.toString().isEmpty()) {
       return null; // Skip rate limiting for malformed base64 (empty principal)
+    }
+    if (token.getCredentials() instanceof char[] password && password.length == 0) {
+      return null; // A request carrying no password is not a guess at one, so it must not consume the user's attempts
     }
     return principal.toString();
   }

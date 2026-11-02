@@ -109,6 +109,15 @@ export function CapabilityDetail({
     () => ExtJS.checkPermission(Permissions.CAPABILITIES.DELETE),
     [hasUser],
   );
+  // Security-sensitive capability types (those that activate/configure a realm) additionally require
+  // nexus:settings:update to create/update/enable (CVE-2026-14645 / NEXUS-54726). Enabling and saving
+  // are gated; disabling is de-escalation and stays on nexus:capabilities:update only.
+  const canSettingsUpdate = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.SETTINGS.UPDATE),
+    [hasUser],
+  );
+  const typeRequiresSettingsUpdate = capabilityType?.requiresSettingsUpdate ?? false;
+  const canManageSensitive = !typeRequiresSettingsUpdate || canSettingsUpdate;
 
   useEffect(() => {
     const loadType = async () => {
@@ -216,7 +225,10 @@ export function CapabilityDetail({
             <SettingsButton
               variant="secondary"
               onClick={handleEnable}
-              disabled={loading}
+              disabled={loading || !canManageSensitive}
+              title={!canManageSensitive
+                ? 'Insufficient privileges to enable this capability because it activates a security realm.'
+                : undefined}
               icon={Power}
               data-analytics-id="nxrm-capability-toggle-enable"
             >
@@ -330,7 +342,7 @@ export function CapabilityDetail({
                 onCancel={onBack}
                 loading={loading}
                 error={error}
-                canEdit={canUpdate}
+                canEdit={canUpdate && canManageSensitive}
                 isEnabled={isEnabled}
                 onEnabledChange={handleEnabledChange}
               />

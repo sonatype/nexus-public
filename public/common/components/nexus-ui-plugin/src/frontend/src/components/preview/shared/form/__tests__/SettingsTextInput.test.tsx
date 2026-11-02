@@ -54,7 +54,7 @@ describe('SettingsTextInput', () => {
       expect(screen.getByText('This field is required')).toBeInTheDocument();
     });
 
-    it('hides help text when error is present', () => {
+    it('shows help text alongside error when both are present', () => {
       render(
         <SettingsTextInput
           {...defaultProps}
@@ -62,7 +62,7 @@ describe('SettingsTextInput', () => {
           error="Error message"
         />
       );
-      expect(screen.queryByText('Help text')).not.toBeInTheDocument();
+      expect(screen.getByText('Help text')).toBeInTheDocument();
       expect(screen.getByText('Error message')).toBeInTheDocument();
     });
 

@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.content.maven.internal.recipe;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
@@ -30,10 +34,13 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
+import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
+import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
@@ -49,12 +56,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static java.util.stream.Collectors.toList;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 
 @ExtendWith(MockitoExtension.class)
 public class MavenContentFacetImplTest
@@ -241,5 +253,110 @@ public class MavenContentFacetImplTest
     ArgumentCaptor<Maven2ComponentData> captor = ArgumentCaptor.forClass(Maven2ComponentData.class);
     verify(maven2ComponentStore).updateBaseVersion(captor.capture());
     assertThat(captor.getValue().normalizedVersion(), is("005.000.028"));
+  }
+
+  @Test
+  public void shouldFlagGabvForRebuildWhenGroupArtifactAndBaseVersionStillHaveComponents() {
+    when(repository.getType()).thenReturn(new HostedType());
+    when(underTest.contentRepositoryId()).thenReturn(123);
+    Component component = mockComponent("com.example", "artifact", "1.0-SNAPSHOT");
+    stubMetadataAssetLookupMissing();
+
+    when(maven2ComponentStore.existsInNamespace(123, "com.example")).thenReturn(true);
+    when(fluentComponents.existsByName("com.example", "artifact")).thenReturn(true);
+    when(maven2ComponentStore.existsInGabv(123, "com.example", "artifact", "1.0-SNAPSHOT")).thenReturn(true);
+
+    underTest.deleteMetadataOrFlagForRebuild(component);
+
+    assertThat(capturedMetadataCoordinatesToDelete(), is(List.of()));
+  }
+
+  @Test
+  public void shouldDeleteGabvMetadataAndFlagGaForRebuildWhenOnlyGroupAndArtifactStillHaveComponents() {
+    when(repository.getType()).thenReturn(new HostedType());
+    when(underTest.contentRepositoryId()).thenReturn(123);
+    Component component = mockComponent("com.example", "artifact", "1.0-SNAPSHOT");
+    stubMetadataAssetLookupMissing();
+
+    when(maven2ComponentStore.existsInNamespace(123, "com.example")).thenReturn(true);
+    when(fluentComponents.existsByName("com.example", "artifact")).thenReturn(true);
+    when(maven2ComponentStore.existsInGabv(123, "com.example", "artifact", "1.0-SNAPSHOT")).thenReturn(false);
+
+    underTest.deleteMetadataOrFlagForRebuild(component);
+
+    assertThat(capturedMetadataCoordinatesToDelete(), is(List.of(
+        List.of("com.example", "artifact", "1.0-SNAPSHOT"))));
+  }
+
+  @Test
+  public void shouldDeleteGaAndGabvMetadataAndFlagGroupForRebuildWhenOnlyGroupStillHasComponents() {
+    when(repository.getType()).thenReturn(new HostedType());
+    when(underTest.contentRepositoryId()).thenReturn(123);
+    Component component = mockComponent("com.example", "artifact", "1.0-SNAPSHOT");
+    stubMetadataAssetLookupMissing();
+
+    when(maven2ComponentStore.existsInNamespace(123, "com.example")).thenReturn(true);
+    when(fluentComponents.existsByName("com.example", "artifact")).thenReturn(false);
+
+    underTest.deleteMetadataOrFlagForRebuild(component);
+
+    assertThat(capturedMetadataCoordinatesToDelete(), is(List.of(
+        Arrays.asList("com.example", "artifact", "1.0-SNAPSHOT"),
+        Arrays.asList("com.example", "artifact", null))));
+    verify(maven2ComponentStore, never()).existsInGabv(anyInt(), anyString(), anyString(), anyString());
+  }
+
+  @Test
+  public void shouldDeleteAllLevelsOfMetadataWhenGroupHasNoComponentsLeft() {
+    when(repository.getType()).thenReturn(new HostedType());
+    when(underTest.contentRepositoryId()).thenReturn(123);
+    Component component = mockComponent("com.example", "artifact", "1.0-SNAPSHOT");
+    stubMetadataAssetLookupMissing();
+
+    when(maven2ComponentStore.existsInNamespace(123, "com.example")).thenReturn(false);
+
+    underTest.deleteMetadataOrFlagForRebuild(component);
+
+    assertThat(capturedMetadataCoordinatesToDelete(), is(List.of(
+        Arrays.asList("com.example", "artifact", "1.0-SNAPSHOT"),
+        Arrays.asList("com.example", "artifact", null),
+        Arrays.asList("com.example", null, null))));
+    verify(fluentComponents, never()).existsByName(anyString(), anyString());
+    verify(maven2ComponentStore, never()).existsInGabv(anyInt(), anyString(), anyString(), anyString());
+  }
+
+  @Test
+  public void shouldDoNothingForProxyRepositories() {
+    when(repository.getType()).thenReturn(new ProxyType());
+    Component component = mockComponent("com.example", "artifact", "1.0-SNAPSHOT");
+
+    Set<String> result = underTest.deleteMetadataOrFlagForRebuild(component);
+
+    assertTrue(result.isEmpty());
+    verify(maven2ComponentStore, never()).existsInNamespace(anyInt(), anyString());
+  }
+
+  private void stubMetadataAssetLookupMissing() {
+    lenient().when(fluentAssets.path(anyString())).thenReturn(fluentAssetBuilder);
+    lenient().when(fluentAssetBuilder.find()).thenReturn(Optional.empty());
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<List<String>> capturedMetadataCoordinatesToDelete() {
+    ArgumentCaptor<List<String[]>> captor = ArgumentCaptor.forClass(List.class);
+    verify(metadataRebuilder).deleteMetadata(eq(repository), captor.capture());
+    return captor.getValue().stream().map(Arrays::asList).collect(toList());
+  }
+
+  private Component mockComponent(final String groupId, final String artifactId, final String baseVersion) {
+    Component component = mock();
+    lenient().when(component.namespace()).thenReturn(groupId);
+    lenient().when(component.name()).thenReturn(artifactId);
+
+    NestedAttributesMap formatAttributes = new NestedAttributesMap(Maven2Format.NAME, new HashMap<>());
+    formatAttributes.set(P_BASE_VERSION, baseVersion);
+    lenient().when(component.attributes(Maven2Format.NAME)).thenReturn(formatAttributes);
+
+    return component;
   }
 }

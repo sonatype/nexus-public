@@ -30,6 +30,7 @@ import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.KeyValueEvent;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
+import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -52,6 +53,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -68,6 +70,9 @@ public class ApiKeyServiceImplTest
   private static final PrincipalCollection PRINCIPALS = new SimplePrincipalCollection("bob", "ldap");
 
   private static final PrincipalCollection MISSING_USER = new SimplePrincipalCollection("johndoe", "ldap");
+
+  private static final PrincipalCollection ANONYMOUS_PRINCIPALS =
+      new AnonymousPrincipalCollection("anonymous", "NexusAuthorizingRealm");
 
   private static final char[] TOKEN = "token".toCharArray();
 
@@ -562,6 +567,26 @@ public class ApiKeyServiceImplTest
     underTest.purgeApiKeys();
     verify(v2).browsePrincipals();
     verify(v2).deleteApiKeys(MISSING_USER);
+    verifyNoInteractions(v1);
+  }
+
+  @Test
+  public void testPurgeApiKeys_skipsAnonymousUser() throws UserNotFoundException {
+    // AnonymousPrincipalCollection rows come from AnonymousManagerImpl.buildSubject and survive the
+    // DB roundtrip via PrincipalCollectionTypeHandler's allow-list. No UserManager exposes their
+    // realm as its authentication realm, so UserPrincipalsHelper.getUserStatus would throw
+    // UserNotFoundException. purgeApiKeys must still treat the anonymous user as present so
+    // anonymous Docker bearer tokens survive the task.
+    when(v2.browsePrincipals()).thenReturn(Arrays.asList(PRINCIPALS, ANONYMOUS_PRINCIPALS, MISSING_USER));
+    when(principalsHelper.getUserStatus(MISSING_USER)).thenThrow(new UserNotFoundException("Missing"));
+
+    setMigrationComplete();
+    underTest.purgeApiKeys();
+
+    verify(v2).browsePrincipals();
+    verify(v2).deleteApiKeys(MISSING_USER);
+    verify(v2, never()).deleteApiKeys(ANONYMOUS_PRINCIPALS);
+    verify(principalsHelper, never()).getUserStatus(ANONYMOUS_PRINCIPALS);
     verifyNoInteractions(v1);
   }
 

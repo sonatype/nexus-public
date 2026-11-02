@@ -80,7 +80,7 @@ describe('SettingsTextInput', () => {
     expect(screen.getByText('This is help text')).toBeInTheDocument();
   });
 
-  it('renders error message and hides help text when error is provided', () => {
+  it('renders error message alongside help text when error is provided', () => {
     render(
       <SettingsTextInput 
         {...defaultProps} 
@@ -90,7 +90,7 @@ describe('SettingsTextInput', () => {
     );
     
     expect(screen.getByText('This is an error')).toBeInTheDocument();
-    expect(screen.queryByText('This is help text')).not.toBeInTheDocument();
+    expect(screen.getByText('This is help text')).toBeInTheDocument();
   });
 
   it('sets aria-invalid when error is present', () => {

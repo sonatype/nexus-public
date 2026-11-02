@@ -261,6 +261,7 @@ export function createTagDetailMachine(tagName: string) {
   return createMachine<TagDetailMachineContext, TagDetailMachineEvent>(
     {
       id: 'tagDetail',
+      predictableActionArguments: true,
       initial: 'loading',
       context: createInitialContext(tagName),
       states: {

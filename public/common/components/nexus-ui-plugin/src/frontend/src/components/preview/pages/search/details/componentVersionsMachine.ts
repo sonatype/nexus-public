@@ -124,6 +124,7 @@ export function createComponentVersionsMachine(gaId: string) {
   return createMachine<ComponentVersionsContext, ComponentVersionsEvent>(
     {
       id: `component-versions-${gaId}`,
+      predictableActionArguments: true,
       initial: 'loading',
       context: {
         gaId,

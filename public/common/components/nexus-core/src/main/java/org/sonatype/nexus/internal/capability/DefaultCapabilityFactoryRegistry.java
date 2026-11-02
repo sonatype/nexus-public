@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.capability;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
@@ -23,7 +24,6 @@ import org.sonatype.nexus.capability.CapabilityFactoryRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.QualifierUtil;
 
-import com.google.common.collect.Maps;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -64,7 +64,7 @@ class DefaultCapabilityFactoryRegistry
   {
     this.capabilityDescriptorRegistry = requireNonNull(capabilityDescriptorRegistry);
     this.factories = QualifierUtil.buildQualifierBeanMap(requireNonNull(factoriesList));
-    this.dynamicFactories = Maps.newConcurrentMap();
+    this.dynamicFactories = new ConcurrentHashMap<>();
   }
 
   @Override

@@ -22,7 +22,7 @@ import org.sonatype.nexus.validation.group.Create;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
+import org.hibernate.validator.constraintvalidation.spi.DefaultConstraintValidatorFactory;
 import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -34,7 +34,7 @@ import static org.hamcrest.Matchers.is;
 class RepositoryXOTest
 {
   private final Validator validator =
-      new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
+      new ValidationConfiguration().validatorFactory(new DefaultConstraintValidatorFactory()).getValidator();
 
   @Test
   void nameIsAlwaysRequired() {

@@ -76,9 +76,14 @@ public class SimpleApiRepositoryAdapter
     this.databaseCheck = databaseCheck;
   }
 
-  @Autowired
-  @Value("${" + REPLICATION_HTTP_ENABLED + ":true}")
   private boolean replicationFeatureEnabled;
+
+  @Autowired
+  void setReplicationFeatureEnabled(
+      @Value("${" + REPLICATION_HTTP_ENABLED + ":true}") final boolean replicationFeatureEnabled)
+  {
+    this.replicationFeatureEnabled = replicationFeatureEnabled;
+  }
 
   @Autowired
   public SimpleApiRepositoryAdapter(final RoutingRuleStore routingRuleStore) {

@@ -26,7 +26,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 
 import static java.util.Objects.requireNonNull;
 
@@ -93,12 +92,12 @@ public class MockBlobStoreConfiguration
     requireNonNull(key);
 
     if (attributes == null) {
-      attributes = Maps.newHashMap();
+      attributes = new HashMap<>();
     }
 
     Map<String, Object> map = attributes.get(key);
     if (map == null) {
-      map = Maps.newHashMap();
+      map = new HashMap<>();
       attributes.put(key, map);
     }
 

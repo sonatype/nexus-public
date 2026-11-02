@@ -47,26 +47,6 @@ export interface IqVerificationResult {
 }
 
 /**
- * IQ Server capabilities data model
- */
-export interface IqCapabilities {
-  hasFirewall: boolean;
-  hasLifecycle: boolean;
-  connected: boolean;
-  url: string | null;
-}
-
-/**
- * Default IQ Server capabilities
- */
-export const DEFAULT_IQ_CAPABILITIES: IqCapabilities = {
-  hasFirewall: false,
-  hasLifecycle: false,
-  connected: false,
-  url: null,
-};
-
-/**
  * Default IQ Server configuration
  */
 export const DEFAULT_IQ_CONFIGURATION: IqServerConfiguration = {

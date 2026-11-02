@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.rest;
 
-import com.google.common.collect.ImmutableList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import jakarta.ws.rs.core.MediaType;
@@ -41,7 +41,7 @@ public class WebApplicationMessageExceptionTest
     assertTrue(entity instanceof ValidationErrorXO);
     assertEquals("Message", ((ValidationErrorXO) entity).getMessage());
     assertEquals(ValidationErrorXO.GENERIC, ((ValidationErrorXO) entity).getId());
-    assertEquals(ImmutableList.of(MediaType.APPLICATION_JSON), response.getHeaders().get("Content-Type"));
+    assertEquals(List.of(MediaType.APPLICATION_JSON), response.getHeaders().get("Content-Type"));
   }
 
   /**
@@ -60,6 +60,6 @@ public class WebApplicationMessageExceptionTest
     assertTrue(entity instanceof ValidationErrorXO);
     assertEquals("Message", ((ValidationErrorXO) entity).getMessage());
     assertEquals(ValidationErrorXO.GENERIC, ((ValidationErrorXO) entity).getId());
-    assertEquals(ImmutableList.of(MediaType.TEXT_PLAIN), response.getHeaders().get("Content-Type"));
+    assertEquals(List.of(MediaType.TEXT_PLAIN), response.getHeaders().get("Content-Type"));
   }
 }

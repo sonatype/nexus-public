@@ -11,17 +11,22 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Flex, Text, Badge, Tooltip } from '@radix-ui/themes';
 import { Shield, ShieldAlert } from 'lucide-react';
-import { useRouter } from '@uirouter/react';
 import { SecurityStatusData, SecurityRepositoryInfo } from './security.types';
 import { SecuritySummaryModal } from './SecuritySummaryModal';
 import { FirewallNotSupportedEmptyState } from '../FirewallNotSupportedEmptyState';
 import { isFirewallSupportedFormat } from '../../../../utils/firewallFormats';
-import { restClient, ENDPOINTS } from '../../../../interface/api';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
+
+import { classifyFirewallStatus } from './firewallStatusKind';
+import FirewallStrings from './FirewallStrings';
 
 import './FirewallCell.scss';
+
+const { cell: CELL_STRINGS } = FirewallStrings.FIREWALL;
 
 export interface ProxyProtectionSummary {
   totalProxy: number;
@@ -35,6 +40,15 @@ export interface FirewallCellProps {
   firewallStatus?: SecurityStatusData;
   /** Whether the firewall summary API has finished loading */
   firewallLoaded?: boolean;
+  /**
+   * Whether the summary loaded successfully. Only then does a missing row mean "firewall not
+   * enabled"; after a failure or without read permission the state is unknown, not Unprotected.
+   */
+  firewallSummaryReady?: boolean;
+  /** Per-repository violation counts, fetched by the list ViewModel */
+  firewallCounts?: SecurityStatusData;
+  /** The counts request for this repository is still in flight or queued */
+  firewallCountsLoading?: boolean;
   /** Whether user has Firewall license (shows Enable buttons when unprotected) */
   hasFirewallLicense?: boolean;
   /** Called after successful enable (parent can refresh) */
@@ -51,31 +65,26 @@ export function FirewallCell({
   repository,
   firewallStatus,
   firewallLoaded = false,
+  firewallSummaryReady = firewallLoaded,
+  firewallCounts,
+  firewallCountsLoading = false,
   hasFirewallLicense = true,
   onEnableSuccess,
 }: FirewallCellProps): JSX.Element {
-  let router: ReturnType<typeof useRouter> | null = null;
-  try { router = useRouter(); } catch { /* no UIRouter context */ }
+  // Enable mutates firewall config, so gate it on repository-admin edit (NEXUS-54499/NEXUS-54212).
+  const canEditFirewall = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.REPOSITORY_ADMIN.EDIT),
+    [],
+  );
   const [showModal, setShowModal] = useState(false);
-  const [repoDetail, setRepoDetail] = useState<SecurityStatusData | null>(null);
-  const [repoDetailLoading, setRepoDetailLoading] = useState(false);
 
-  useEffect(() => {
-    if (!showModal) {
-      setRepoDetail(null);
-      setRepoDetailLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setRepoDetailLoading(true);
-    restClient.get<SecurityStatusData>(ENDPOINTS.FIREWALL_STATUS_REPO(repository.name))
-      .then((data) => { if (!cancelled && data) setRepoDetail(data); })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setRepoDetailLoading(false); });
-    return () => { cancelled = true; };
-  }, [showModal, repository.name]);
+  const summaryMessage = firewallStatus?.message ?? undefined;
+  // Overlay the counts fetched by the list ViewModel onto the summary status for inline chiclets.
+  const statusWithCounts = firewallCounts
+    ? { ...firewallStatus, ...firewallCounts, message: summaryMessage }
+    : firewallStatus;
 
-  const modalData = repoDetail ?? firewallStatus ?? {
+  const modalData = firewallCounts ?? firewallStatus ?? {
     repositoryName: repository.name,
     affectedComponentCount: 0,
     criticalComponentCount: 0,
@@ -116,12 +125,16 @@ export function FirewallCell({
     );
   }
 
-  const stillLoading = !(firewallLoaded || firewallStatus);
-  const { message } = firewallStatus ?? {};
-  const hasError = Boolean((firewallStatus?.errorMessage));
-
-  const isUnprotected = !firewallStatus || (Boolean(message) && !message.includes('enabled'));
-  const isAudit = Boolean(message?.toLowerCase().includes('audit'));
+  const kind = classifyFirewallStatus({ status: firewallStatus, loaded: firewallLoaded, summaryReady: firewallSummaryReady });
+  const stillLoading = kind === 'loading';
+  const hasError = kind === 'error';
+  const isUnprotected = kind === 'unprotected';
+  const isUnknown = kind === 'unknown';
+  const isInactive = kind === 'inactive';
+  const isAudit = kind === 'audit';
+  // An enabled repository with no counts and none on the way must never read as a clean report,
+  // whether the request failed or no caller supplies counts at all.
+  const countsUnavailable = (kind === 'quarantine' || kind === 'audit') && !firewallCounts && !firewallCountsLoading;
   const openModal = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (stillLoading) return;
@@ -140,7 +153,8 @@ export function FirewallCell({
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openModal(e as unknown as React.MouseEvent)}
         aria-label={
           stillLoading ? 'Firewall: Loading status...'
-            : hasError ? 'Firewall: Unavailable. Click for details.'
+            : hasError || isUnknown ? 'Firewall: Unavailable. Click for details.'
+            : isInactive ? 'Firewall: Inactive. Click for details.'
             : isUnprotected ? 'Firewall: Unprotected. Click for details.'
             : isAudit ? 'Firewall: Audited. Click for details.'
             : 'Firewall: Quarantine. Click for details.'
@@ -160,6 +174,17 @@ export function FirewallCell({
               <Badge variant="soft" color="amber" size="1">Unavailable</Badge>
             </Flex>
           </Tooltip>
+        ) : isUnknown ? (
+          <Tooltip content={CELL_STRINGS.unknownTooltip}>
+            <Flex align="center" gap="1">
+              <ShieldAlert size={14} color="var(--gray-9)" />
+              <Badge variant="soft" color="gray" size="1">{CELL_STRINGS.unknown}</Badge>
+            </Flex>
+          </Tooltip>
+        ) : isInactive ? (
+          <Tooltip content={CELL_STRINGS.inactiveTooltip}>
+            <Badge variant="soft" color="gray" size="1">{CELL_STRINGS.inactive}</Badge>
+          </Tooltip>
         ) : isUnprotected ? (
           <Tooltip content={hasFirewallLicense ? 'Click to configure Firewall protection' : 'Firewall license not available'}>
             <Badge variant="soft" color="red" size="1">Unprotected</Badge>
@@ -168,18 +193,14 @@ export function FirewallCell({
           <Tooltip content="Audit mode - violations reported but not blocked">
             <Flex align="center" gap="1">
               <Badge variant="soft" color="amber" size="1">Audited</Badge>
-              {(firewallStatus?.criticalComponentCount ?? 0) > 0 && (
-                <Badge variant="soft" color="red" size="1">{firewallStatus?.criticalComponentCount}</Badge>
-              )}
+              <ViolationChiclets status={statusWithCounts} />
             </Flex>
           </Tooltip>
         ) : (
           <Tooltip content="Quarantine mode - risky components blocked">
             <Flex align="center" gap="1">
               <Badge variant="soft" color="green" size="1">Quarantine</Badge>
-              {(firewallStatus?.quarantinedComponentCount ?? 0) > 0 && (
-                <Badge variant="soft" color="orange" size="1">{firewallStatus?.quarantinedComponentCount}</Badge>
-              )}
+              <ViolationChiclets status={statusWithCounts} />
             </Flex>
           </Tooltip>
         )}
@@ -187,37 +208,59 @@ export function FirewallCell({
       {showModal && (
         <SecuritySummaryModal
           repositoryName={repository.name}
+          repositoryFormat={repository.format}
           data={modalData}
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           type="firewall"
-          isFirewallReportDetailLoading={repoDetailLoading}
-          reportUrl={repoDetail?.reportUrl ?? firewallStatus?.reportUrl}
-          onViewFullReport={(repoDetail?.reportUrl ?? firewallStatus?.reportUrl) ? () => {
-            window.open(repoDetail?.reportUrl ?? firewallStatus?.reportUrl, '_blank', 'noopener,noreferrer');
+          isFirewallReportDetailLoading={firewallCountsLoading && !firewallCounts}
+          countsUnavailable={countsUnavailable}
+          reportUrl={firewallCounts?.reportUrl ?? firewallStatus?.reportUrl}
+          onViewFullReport={(firewallCounts?.reportUrl ?? firewallStatus?.reportUrl) ? () => {
+            window.open(firewallCounts?.reportUrl ?? firewallStatus?.reportUrl, '_blank', 'noopener,noreferrer');
           } : undefined}
-          onBrowseRepo={() => {
-            setShowModal(false);
-            router?.stateService.go('preview.browse.browse.repo', { repoName: repository.name });
-          }}
-          onConfigureFirewall={() => {
-            setShowModal(false);
-            router?.stateService.go('preview.admin.repository.repositories.detail', { repositoryName: repository.name, tab: 'firewall' });
-          }}
+          canEditFirewall={canEditFirewall}
           firewallStatus={
             isUnprotected
               ? 'unprotected'
-              : (repoDetail?.errorMessage ?? firewallStatus?.errorMessage)
-                ? 'unavailable'
-                : isAudit
-                  ? 'audit'
-                  : 'protected'
+              : isInactive
+                ? 'inactive'
+                : isUnknown || firewallCounts?.errorMessage || firewallStatus?.errorMessage
+                  ? 'unavailable'
+                  : isAudit
+                    ? 'audit'
+                    : 'protected'
           }
           hasFirewallLicense={hasFirewallLicense}
-          onEnableSuccess={() => {
-            onEnableSuccess?.();
-          }}
+          onEnableSuccess={onEnableSuccess}
         />
+      )}
+    </>
+  );
+}
+
+/**
+ * Inline violation counts for the firewall column, mirroring Classic's chiclets
+ * (critical/severe/moderate + quarantined). Renders nothing until the per-repo
+ * counts have loaded, so the summary-only first paint stays clean.
+ */
+function ViolationChiclets({ status }: { status?: SecurityStatusData }): JSX.Element | null {
+  const critical = status?.criticalComponentCount ?? 0;
+  const severe = status?.severeComponentCount ?? 0;
+  const moderate = status?.moderateComponentCount ?? 0;
+  const quarantined = status?.quarantinedComponentCount ?? 0;
+  if (critical === 0 && severe === 0 && moderate === 0 && quarantined === 0) {
+    return null;
+  }
+  return (
+    <>
+      {critical > 0 && <Badge variant="soft" color="red" size="1">{critical}</Badge>}
+      {severe > 0 && <Badge variant="soft" color="orange" size="1">{severe}</Badge>}
+      {moderate > 0 && <Badge variant="soft" color="yellow" size="1">{moderate}</Badge>}
+      {quarantined > 0 && (
+        <Badge variant="soft" color="amber" size="1" aria-label={`${quarantined} quarantined`}>
+          Q{quarantined}
+        </Badge>
       )}
     </>
   );

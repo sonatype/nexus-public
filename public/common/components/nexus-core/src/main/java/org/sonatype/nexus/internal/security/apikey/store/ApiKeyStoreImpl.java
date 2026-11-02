@@ -219,6 +219,15 @@ public class ApiKeyStoreImpl
   }
 
   @Override
+  public Collection<ApiKeyInternal> browseByUserAndDomains(final Collection<String> domains, final String username) {
+    // V1 store doesn't support SQL filtering, fall back to browse + filter
+    return domains.stream()
+        .flatMap(domain -> browse(domain).stream())
+        .filter(key -> username.equals(key.getPrincipals().getPrimaryPrincipal()))
+        .collect(Collectors.toList());
+  }
+
+  @Override
   public int countFiltered(final String domain, final String realm, final String username) {
     // V1 store doesn't support SQL filtering, fall back to browse + count
     return (int) browse(domain).stream()

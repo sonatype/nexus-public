@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
-import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.DateBasedLocationStrategy;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -126,8 +125,6 @@ public class FileBlobStoreTest
 
   private static final byte[] EMPTY_BLOB_STORE_PROPERTIES = "".getBytes(StandardCharsets.ISO_8859_1);
 
-  private static final String RECONCILIATION = "reconciliation";
-
   private AtomicBoolean cancelled = new AtomicBoolean(false);
 
   private final DirectoryHelper directoryHelper = new DirectoryHelper();
@@ -171,9 +168,6 @@ public class FileBlobStoreTest
   @Mock
   DryRunPrefix dryRunPrefix;
 
-  @Mock
-  BlobStoreReconciliationLogger reconciliationLogger;
-
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
       BLOB_NAME_HEADER, "test/randomData.bin");
@@ -209,7 +203,7 @@ public class FileBlobStoreTest
     configuration.setAttributes(attributes);
 
     underTest = new FileBlobStore(temporaryFolder.newFolder().toPath(), blobIdLocationResolver, fileOperations, appDirs,
-        directoryHelper, metrics, configuration, nodeAccess, dryRunPrefix, reconciliationLogger, 0L,
+        directoryHelper, metrics, configuration, nodeAccess, dryRunPrefix, 0L,
         blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
 
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
@@ -260,8 +254,6 @@ public class FileBlobStoreTest
 
     assertThrows(BlobStoreException.class,
         () -> underTest.create(path, TEST_HEADERS, 0, HashCode.fromString("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
-
-    verifyNoInteractions(reconciliationLogger);
   }
 
   @Test
@@ -275,7 +267,6 @@ public class FileBlobStoreTest
 
     assertThat(blob.getMetrics().getContentSize(), is(size));
     assertThat(blob.getMetrics().getSha1Hash(), is("356a192b7913b04c54574d18c28d46e6395428ab"));
-    verify(reconciliationLogger).logBlobCreated(eq(underTest.getAbsoluteBlobDir().resolve(RECONCILIATION)), any());
   }
 
   @Test
@@ -289,8 +280,6 @@ public class FileBlobStoreTest
     underTest.create(path, TEST_HEADERS, size, sha1);
 
     verify(fileOperations, times(4)).exists(any());
-    verify(reconciliationLogger, times(1))
-        .logBlobCreated(eq(underTest.getAbsoluteBlobDir().resolve(RECONCILIATION)), any());
   }
 
   @Test
@@ -700,7 +689,7 @@ public class FileBlobStoreTest
 
     TestFileBlobStore underTest = spy(new TestFileBlobStore(
         temporaryFolder.newFolder().toPath(), blobIdLocationResolver, fileOperations, appDirs, directoryHelper, metrics,
-        configuration, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker,
+        configuration, nodeAccess, dryRunPrefix, 0L, blobStoreQuotaUsageChecker,
         fileBlobDeletionIndex));
 
     underTest.init(configuration);
@@ -724,7 +713,7 @@ public class FileBlobStoreTest
   private FileBlobStore createBlobStore(final BlobStoreConfiguration configuration) throws Exception {
     FileBlobStore blobstore = new FileBlobStore(temporaryFolder.newFolder().toPath(), blobIdLocationResolver,
         fileOperations, appDirs, directoryHelper, metrics, configuration, nodeAccess, dryRunPrefix,
-        reconciliationLogger, 0L, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
+        0L, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
     blobstore.init(configuration);
     blobstore.setLiveBlobs(loadingCache);
     blobstore.start();
@@ -746,13 +735,12 @@ public class FileBlobStoreTest
         final BlobStoreConfiguration configuration,
         final NodeAccess nodeAccess,
         final DryRunPrefix dryRunPrefix,
-        final BlobStoreReconciliationLogger reconciliationLogger,
         final long blobStoreQuota,
         final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
         final FileBlobDeletionIndex fileBlobDeletionIndex)
     {
       super(root, blobIdLocationResolver, fileOperations, appDirs, directoryHelper, metrics, configuration, nodeAccess,
-          dryRunPrefix, reconciliationLogger, blobStoreQuota, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
+          dryRunPrefix, blobStoreQuota, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
     }
   }
 

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.97.2-02</version>
+    <version>3.98.0-07</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-rest</artifactId>
@@ -28,14 +28,8 @@
   <packaging>pom</packaging>
 
   <properties>
-    <!-- 2.22.3 is a security floor: jackson-core through 2.22.2 carries CVE-2026-89407
-         (ReDoS in NumberInput.looksLikeValidNumber via PATTERN_FLOAT, CWE-1333) and
-         CVE-2026-89425 (uncontrolled resource consumption), both CVSS 7.5, first fixed
-         in 2.22.3. The same bump also clears CVE-2026-91776 / CVE-2026-91777 (CVSS 6.9)
-         on jackson-databind. This property imports jackson-bom, so it governs the whole
-         Jackson 2.x family. Do not downgrade below 2.22.3; this floor is superseded only
-         by a later 2.x release that also carries the fixes for those CVEs. -->
-    <jackson2.version>2.22.3</jackson2.version>
+    <!-- Security floor: 2.22.4 fixes CVE-2026-110879 (jackson-databind). Do not downgrade below it. -->
+    <jackson2.version>2.22.4</jackson2.version>
     <!-- NEXUS-46395: Jakarta XML Binding 4.0 for Jakarta EE 10 (was 2.3.3). -->
     <jaxb.version>4.0.5</jaxb.version>
     <!-- NEXUS-46395: RESTEasy 7.x is the Jakarta EE 10 / JAX-RS 3.1 line.
@@ -194,6 +188,24 @@
             <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-impl</artifactId>
           </exclusion>
+          <!-- NEXUS-55859: schema generation/compilation tools are not used at runtime.
+               xsom carries CVE-2026-92877 (XXE in XmlFactory) with no fixed release. -->
+          <exclusion>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-jxc</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-xjc</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>xsom</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>codemodel</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
 
@@ -266,16 +278,17 @@
            declares it would once again pull javax.xml.bind onto the runtime classpath
            and trigger the NoClassDefFoundError on XmlElement seen at startup. -->
 
-      <!-- Jackson 3.x line. 3.2.3 is a security floor: tools.jackson.core:jackson-core
-           through 3.2.2 carries CVE-2026-89425 (uncontrolled resource consumption,
-           CVSS 7.5), the same defect fixed on the 2.x line in 2.22.3. The bump also
-           clears CVE-2026-91777 (CVSS 6.9) on tools.jackson.core:jackson-databind.
-           Do not downgrade below 3.2.3; this floor is superseded only by a later 3.x
+      <!-- Jackson 3.x line. 3.2.4 is a security floor: tools.jackson.core:jackson-databind
+           3.2.3 carries CVE-2026-110879 (NEXUS-55947). 3.2.3 was the floor for
+           CVE-2026-89425 (uncontrolled resource consumption in jackson-core through 3.2.2,
+           CVSS 7.5, the same defect fixed on the 2.x line in 2.22.3) and CVE-2026-91777
+           (CVSS 6.9) on jackson-databind; 3.2.4 carries those fixes too.
+           Do not downgrade below 3.2.4; this floor is superseded only by a later 3.x
            release that also carries the fixes for those CVEs. -->
       <dependency>
         <groupId>tools.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
-        <version>3.2.3</version>
+        <version>3.2.4</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

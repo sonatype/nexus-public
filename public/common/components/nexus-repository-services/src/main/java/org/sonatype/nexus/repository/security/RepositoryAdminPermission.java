@@ -18,8 +18,6 @@ import java.util.List;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 
-import com.google.common.collect.ImmutableList;
-
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -45,7 +43,7 @@ public class RepositoryAdminPermission
     this.name = requireNonNull(name);
     this.actions = requireNonNull(actions);
 
-    setParts(ImmutableList.of(SYSTEM, DOMAIN, format, name), actions);
+    setParts(List.of(SYSTEM, DOMAIN, format, name), actions);
   }
 
   public RepositoryAdminPermission(final String format, final String name, final String... actions) {

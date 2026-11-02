@@ -15,6 +15,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useIsActive, useSref, useTransitionHook } from '@uirouter/react';
 import {
   ExtJS,
+  useFirewallSecurityPagesVisible,
+  useQuarantineBadgeCount,
   isSonatypeDevMode,
   useIsLicensedEdition,
   useIsPreviewUI,
@@ -159,6 +161,10 @@ export interface UseLeftNavigationMenuResult {
   showTestHub: boolean;
   /** Whether the instance runs the Pro edition (gates Pro-only entries like Tags). */
   isLicensedEdition: boolean;
+  /** Whether the "Security" nav group is shown (Preview UI, and the Firewall Security pages are visible to this user). */
+  isSecuritySectionVisible: boolean;
+  /** Quarantined-component count for the Security nav badge; null when unknown or not applicable. */
+  securityBadgeCount: number | null;
 }
 
 /**
@@ -177,6 +183,9 @@ export function useLeftNavigationMenu(): UseLeftNavigationMenuResult {
   // Test Hub is visible in Preview UI when the SONATYPE_INTERNAL build flag or localStorage flag is set
   const showTestHub = isPreviewUI && isSonatypeDevMode();
   const isLicensedEdition = useIsLicensedEdition();
+  const isFirewallSecurityPagesVisible = useFirewallSecurityPagesVisible();
+  const isSecuritySectionVisible = isPreviewUI && isFirewallSecurityPagesVisible;
+  const securityBadgeCount = useQuarantineBadgeCount(isSecuritySectionVisible);
 
   return {
     isCollapsed: !isOpen,
@@ -185,5 +194,7 @@ export function useLeftNavigationMenu(): UseLeftNavigationMenuResult {
     isSettingsVisible,
     showTestHub,
     isLicensedEdition,
+    isSecuritySectionVisible,
+    securityBadgeCount,
   };
 }

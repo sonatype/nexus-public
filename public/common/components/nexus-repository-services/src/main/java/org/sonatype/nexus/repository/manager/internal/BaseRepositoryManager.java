@@ -60,14 +60,13 @@ import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryLoadedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.manager.RepositoryRestoredEvent;
+import org.sonatype.nexus.repository.manager.RepositoryTrashRestoredEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Provider;
 import jakarta.validation.ConstraintViolation;
@@ -118,7 +117,7 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
 
   private final List<DefaultRepositoriesContributor> defaultRepositoriesContributors;
 
-  protected final Map<String, Repository> repositories = Maps.newConcurrentMap();
+  protected final Map<String, Repository> repositories = new ConcurrentHashMap<>();
 
   private final boolean skipDefaultRepositories;
 
@@ -485,7 +484,7 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   @Override
   @Guarded(by = STARTED)
   public Iterable<Repository> browse() {
-    return ImmutableList.copyOf(repositories.values());
+    return List.copyOf(repositories.values());
   }
 
   @Override
@@ -990,11 +989,11 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
 
   @Override
   @Guarded(by = STARTED)
-  public void softDelete(final String name, final String deletedBy) throws Exception {
+  public void trash(final String name, final String deletedBy) throws Exception {
     requireNonNull(name);
     requireNonNull(deletedBy);
 
-    log.info("Soft-deleting repository: {}", name);
+    log.info("Trashing repository: {}", name);
 
     Repository repository = repositories.get(name.toLowerCase());
     if (repository == null) {
@@ -1009,11 +1008,11 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
 
     repository.optionalFacet(SearchIndexFacet.class).ifPresent(searchFacet -> {
       try {
-        log.debug("Cleaning search index for soft-deleted repository: {}", name);
+        log.debug("Cleaning search index for trashed repository: {}", name);
         searchFacet.deleteIndex();
       }
       catch (Exception e) {
-        log.warn("Failed to clean search index for soft-deleted repository: {}", name, e);
+        log.warn("Failed to clean search index for trashed repository: {}", name, e);
       }
     });
 
@@ -1022,22 +1021,22 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     untrack(repository);
 
     if (!EventHelper.isReplicating()) {
-      store.softDelete(name, deletedBy);
+      store.trash(name, deletedBy);
     }
 
     eventManager.post(new RepositoryDeletedEvent(repository));
 
-    log.info("Soft-deleted repository: {}", name);
+    log.info("Trashed repository: {}", name);
   }
 
   @Override
   @Guarded(by = STARTED)
-  public Repository restoreFromSoftDelete(final String name) throws Exception {
+  public Repository restoreFromTrash(final String name) throws Exception {
     requireNonNull(name);
 
-    log.info("Restoring soft-deleted repository: {}", name);
+    log.info("Restoring trashed repository: {}", name);
 
-    store.undoSoftDelete(name);
+    store.undoTrash(name);
 
     Configuration configuration = store.readByNames(Collections.singleton(name))
         .stream()
@@ -1058,9 +1057,12 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
       }
     });
 
-    eventManager.post(new RepositoryCreatedEvent(repository));
+    // NEXUS-55410: post RepositoryTrashRestoredEvent (a RepositoryCreatedEvent subclass) rather than a plain
+    // RepositoryCreatedEvent, so created-event subscribers still run (the repository is materialized just like a
+    // creation) while the webhook and audit can report this as a RESTORE instead of a CREATE.
+    eventManager.post(new RepositoryTrashRestoredEvent(repository));
 
-    log.info("Restored soft-deleted repository: {}", name);
+    log.info("Restored trashed repository: {}", name);
     return repository;
   }
 
@@ -1069,11 +1071,11 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   public void hardDelete(final String name) throws Exception {
     requireNonNull(name);
 
-    log.info("Hard-deleting soft-deleted repository: {}", name);
+    log.info("Hard-deleting trashed repository: {}", name);
 
     Configuration configuration = store.readDeleted(name);
     if (configuration == null) {
-      throw new IllegalStateException("Repository '" + name + "' is not in soft-deleted state");
+      throw new IllegalStateException("Repository '" + name + "' is not in trashed state");
     }
 
     // Re-instantiate temporarily to run facet content cleanup
@@ -1165,7 +1167,12 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     // blob store delete -- the S3BlobStoreIT teardown 400) or a false "not used" (allowing deletion of a blob
     // store still referenced by a not-yet-materialized repository). The store reflects the committed cross-node
     // truth. See NEXUS-54229. The second clause still covers group blob stores that embed this member.
-    return store.countByBlobStore(blobStoreName) > 0 ||
+    //
+    // Count INCLUDING trashed repositories (NEXUS-55233): a repository sitting in Trash can be restored and
+    // still references its blobs, so its blob store must not be deletable while trashed -- otherwise restore
+    // would bring the repository back with every download broken. The including-trashed count also covers live
+    // repositories, so it subsumes the previous live-only countByBlobStore.
+    return store.countByBlobStoreIncludingTrashed(blobStoreName) > 0 ||
         blobStoreManager.blobStoreUsageCount(blobStoreName) > 0;
   }
 
@@ -1176,6 +1183,11 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     // list UI instead of an isBlobstoreUsed() query per blob store. The repository table is small, so the full
     // read is cheap; the countByBlobStore expression index backs the per-name isBlobstoreUsed() path instead.
     // See NEXUS-54229.
+    //
+    // Intentionally covers only live repositories (store.list()); it is a UI hint, not a deletion guard. Deletion
+    // protection goes through isBlobstoreUsed(), which uses countByBlobStoreIncludingTrashed() so a Trashed
+    // repository still blocks blob-store deletion. Do not "fix" this to include Trashed repositories -- that would
+    // regress the efficient isBlobstoreUsed() contract (NEXUS-55409).
     return store.list()
         .stream()
         .map(Configuration::getAttributes)

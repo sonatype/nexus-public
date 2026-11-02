@@ -48,12 +48,56 @@ const { NUGET_SYMBOL_SERVER_ENABLED } = FeatureFlags;
 // =============================================================================
 
 const REPOSITORIES_REST_URL = '/service/rest/v1/repositories';
-const REPOSITORIES_DETAILS_URL = '/service/rest/internal/ui/repositories/details/';
+const REPOSITORIES_DETAILS_URL = '/service/rest/internal/ui/repositories/details';
 const REPOSITORIES_LIST_URL = '/service/rest/internal/ui/repositories';
 const RECIPES_URL = '/service/rest/internal/ui/repositories/recipes';
 const BLOB_STORES_URL = '/service/rest/v1/blobstores';
 const ROUTING_RULES_URL = '/service/rest/v1/routing-rules';
 const CLEANUP_POLICIES_URL = '/service/rest/internal/cleanup-policies';
+
+type SigningSectionKey = 'aptSigning' | 'yumSigning' | 'terraformSigning' | 'alpineSigning';
+
+// Formats whose masked GPG passphrase is refilled from the EDIT-gated endpoint; keys must match the server's SIGNING_ATTRIBUTES_BY_FORMAT.
+const SIGNING_SECTION_BY_FORMAT: Record<string, SigningSectionKey> = {
+  apt: 'aptSigning',
+  yum: 'yumSigning',
+  terraform: 'terraformSigning',
+  alpine: 'alpineSigning',
+};
+
+/*
+ * Refill a masked GPG signing passphrase in place from the EDIT-gated endpoint.
+ *
+ * The public REST read masks the passphrase (returns null) so read-only admins never see it
+ * (CWE-522). Any config PUT back afterwards would persist that null and wipe the stored secret, so
+ * before a write we refill the field for an EDIT admin.
+ *
+ * A 404 is the expected benign case (no EDIT, or no stored passphrase): it leaves the field null
+ * and returns quietly. Every other failure (5xx, network) is rethrown, because swallowing it would
+ * silently PUT a null passphrase and wipe the stored secret on a transient error - the exact
+ * data-loss this refill exists to prevent. Rethrowing lets the caller abort before the write:
+ * fetchRepository surfaces a load error, setRepositoryOnline skips the toggle PUT.
+ */
+const refillSigningPassphrase = async (name: string, format: string, config: Record<string, unknown>): Promise<void> => {
+  const signingSectionKey = SIGNING_SECTION_BY_FORMAT[format];
+  if (!signingSectionKey) {
+    return;
+  }
+  try {
+    const signing = await restClient.get<{ passphrase: string | null }>(
+      `${REPOSITORIES_LIST_URL}/repository/${encodeURIComponent(name)}/signing-passphrase`
+    );
+    if (signing?.passphrase != null) {
+      const section = config[signingSectionKey] as Record<string, unknown> | undefined;
+      config[signingSectionKey] = { ...section, passphrase: signing.passphrase };
+    }
+  } catch (err: unknown) {
+    if (parseApiError(err).status === 404) {
+      return; // no EDIT or no stored secret: expected, leave the field null
+    }
+    throw err;
+  }
+};
 
 /**
  * Maps format names to REST API endpoint paths.
@@ -125,7 +169,7 @@ export function useRepositoriesApi() {
 
   /**
    * Fetch all repositories
-   * Uses REST API: GET /service/rest/internal/ui/repositories/details/
+   * Uses REST API: GET /service/rest/internal/ui/repositories/details
    */
   const fetchRepositories = useCallback(async (): Promise<Repository[]> => {
     try {
@@ -175,23 +219,8 @@ export function useRepositoriesApi() {
         // repository-view read/browse not granted — proceed with the admin config only.
       }
 
-      // Fetch signing passphrase from internal endpoint for apt/yum repos
-      if (repo.format === 'apt' || repo.format === 'yum') {
-        try {
-          const signing = await restClient.get<{ passphrase: string | null }>(
-            `${REPOSITORIES_LIST_URL}/repository/${encodeURIComponent(name)}/signing-passphrase`
-          );
-          if (signing?.passphrase != null) {
-            if (repo.format === 'apt') {
-              repo.aptSigning = { ...repo.aptSigning, passphrase: signing.passphrase };
-            } else {
-              repo.yumSigning = { ...repo.yumSigning, passphrase: signing.passphrase };
-            }
-          }
-        } catch {
-          // Non-critical — passphrase field will just be empty
-        }
-      }
+      // Refill the masked GPG passphrase so an EDIT admin's save does not wipe the stored secret.
+      await refillSigningPassphrase(name, repo.format, repo as unknown as Record<string, unknown>);
 
       return repo;
     } catch (err: unknown) {
@@ -329,6 +358,8 @@ export function useRepositoriesApi() {
         if (!fullConfig) {
           throw new Error('Could not fetch repository configuration for update');
         }
+        // The GET masks the signing passphrase; refill so this toggle PUT does not wipe it (CWE-522).
+        await refillSigningPassphrase(name, format, fullConfig);
         // Sanitised because this echoes the GET response straight back: a legacy KEYLESS
         // cosign policy would otherwise round-trip to a server that rejects it, making the
         // Online/Offline toggle fail with a 400 on those repositories.
@@ -377,11 +408,14 @@ export function useRepositoriesApi() {
    */
   const fetchBlobStores = useCallback(async (): Promise<BlobStore[]> => {
     try {
-      const data = await restClient.get<Array<{ name: string; type?: string }>>(BLOB_STORES_URL);
+      const data = await restClient.get<
+        Array<{ name: string; type?: string; globalDistributionEnabled?: boolean }>
+      >(BLOB_STORES_URL);
       const stores = Array.isArray(data) ? data : [];
       return stores.map((s) => ({
         name: s.name,
         type: s.type,
+        globalDistributionEnabled: s.globalDistributionEnabled,
       }));
     } catch (err: unknown) {
       console.error('Failed to fetch blob stores:', err);
@@ -594,12 +628,20 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
       };
     }
     if (data.httpClient) {
-      config.httpClient = {
+      const httpClientConfig: Record<string, unknown> = {
         blocked: data.httpClient.blocked ?? false,
         autoBlock: data.httpClient.autoBlock ?? true,
         connection: data.httpClient.connection,
         authentication: data.httpClient.authentication,
       };
+      if (
+        data.format === 'swift' &&
+        Array.isArray(data.httpClient.autoBlockStatusCodes) &&
+        data.httpClient.autoBlockStatusCodes.length > 0
+      ) {
+        httpClientConfig.autoBlockStatusCodes = data.httpClient.autoBlockStatusCodes;
+      }
+      config.httpClient = httpClientConfig;
     }
     if (data.replication) {
       config.replication = {
@@ -706,6 +748,19 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     }
   }
 
+  // Cargo: always emit for all three types. CargoFacet always renders an
+  // explicit boolean (never an unset/indeterminate state), and
+  // buildDefaultFormData seeds `cargo.requireAuthentication = false` on
+  // create, so `data.cargo` is always present by the time save is called.
+  // Guarding this on `data.cargo` truthiness would still be correct today,
+  // but format-gating matches the pattern used for apt/yum/docker above and
+  // is robust if a future edit ever seeds cargo differently.
+  if (data.format === 'cargo') {
+    config.cargo = {
+      requireAuthentication: data.cargo?.requireAuthentication ?? false,
+    };
+  }
+
   if (data.format === 'apt' || data.apt) {
     config.apt = {
       distribution: data.apt?.distribution || '',
@@ -725,20 +780,24 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     }
   }
 
-  // Always include alpineSigning for alpine group repositories (signing is mandatory).
-  // For other alpine types, include only when a keypair is provided.
-  if (data.format === 'alpine' && data.type === 'group') {
-    config.alpineSigning = {
-      keypair: data.alpineSigning?.keypair || '',
-      passphrase: data.alpineSigning?.passphrase || '',
-    };
-  } else {
-    const alpineKeypair = data.alpineSigning?.keypair?.trim();
-    if (alpineKeypair) {
+  // `alpineSigning` is @NotNull for proxy/group, @Valid-only for hosted — and its keypair is
+  // @NotEmpty, so hosted must omit the block rather than send `{keypair: ''}`. Both branches
+  // stay scoped to alpine; the fallback used to be a bare `else` and ran for every format.
+  if (data.format === 'alpine') {
+    if (data.type === 'proxy' || data.type === 'group') {
       config.alpineSigning = {
-        keypair: alpineKeypair,
+        keypair: data.alpineSigning?.keypair || '',
         passphrase: data.alpineSigning?.passphrase || '',
       };
+    }
+    else {
+      const alpineKeypair = data.alpineSigning?.keypair?.trim();
+      if (alpineKeypair) {
+        config.alpineSigning = {
+          keypair: alpineKeypair,
+          passphrase: data.alpineSigning?.passphrase || '',
+        };
+      }
     }
   }
 
@@ -828,6 +887,15 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     config.xet = {
       enabled: data.xet.enabled,
     };
+    // NEXUS-54933: XET and Firewall are mutually exclusive. When XET is
+    // enabled, include firewall.mode=DISABLED in the same PUT/POST payload so
+    // the backend persists a consistent state in one atomic save. Without this,
+    // the Firewall mode from a previous edit (e.g. AUDIT) would remain in the
+    // DB after enabling XET, since the Preview UI manages Firewall state via
+    // independent API calls (RepositoryFirewallConfigTab) that don't fire here.
+    if (data.xet.enabled) {
+      config.firewall = { mode: 'DISABLED' };
+    }
   }
 
   if (data.format === 'pypi' && data.type === 'proxy') {

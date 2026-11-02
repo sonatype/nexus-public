@@ -64,7 +64,7 @@ public class RepositoriesApiResource
   @Path("/{repositoryName}")
   @RequiresAuthentication
   public Response deleteRepository(@PathParam("repositoryName") final String repositoryName) throws Exception {
-    // The soft-delete-vs-hard-delete decision and the per-repository DELETE authorization are owned
+    // The trash-vs-hard-delete decision and the per-repository DELETE authorization are owned
     // by RepositoryDeletionService (NEXUS-49147). Authorization/validation failures and missing
     // repositories map to 404, preserving this endpoint's existing contract.
     try {

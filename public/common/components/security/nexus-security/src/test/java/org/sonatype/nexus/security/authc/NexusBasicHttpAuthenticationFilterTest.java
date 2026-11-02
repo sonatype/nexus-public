@@ -649,6 +649,29 @@ public class NexusBasicHttpAuthenticationFilterTest
   }
 
   @Test
+  public void testGetRateLimitKeyEmptyPasswordReturnsNull() throws Exception {
+    AuthenticationToken token = new UsernamePasswordToken("testuser", "");
+
+    assertThat(filter.getRateLimitKey(token), is(nullValue()));
+  }
+
+  @Test
+  public void testOnLoginFailureEmptyPasswordSkipsRateLimit() throws Exception {
+    AuthRateLimiterService rateLimiterService = mock(AuthRateLimiterService.class);
+    injectField(filter, "rateLimiterService", rateLimiterService);
+
+    AuthenticationToken token = new UsernamePasswordToken("testuser", "");
+    AuthenticationException e = new AuthenticationException("bad credentials",
+        new IncorrectCredentialsException());
+
+    boolean result = filter.onLoginFailure(token, e, request, response);
+
+    verify(rateLimiterService, never()).checkAndRecord(anyString());
+    verify(response, never()).sendError(eq(429), anyString());
+    assertThat(result, is(false));
+  }
+
+  @Test
   public void testOnLoginFailureEmptyPrincipalSkipsRateLimit() throws Exception {
     AuthRateLimiterService rateLimiterService = mock(AuthRateLimiterService.class);
     injectField(filter, "rateLimiterService", rateLimiterService);

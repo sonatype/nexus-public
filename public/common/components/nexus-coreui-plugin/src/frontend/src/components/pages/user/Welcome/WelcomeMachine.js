@@ -14,6 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+
 import {assign, createMachine} from 'xstate';
 
 import { ExtAPIUtils, ExtJS, APIConstants } from '@sonatype/nexus-ui-plugin';
@@ -24,6 +25,10 @@ const action = APIConstants.EXT.OUTREACH.ACTION,
     outreachStatusMethod = APIConstants.EXT.OUTREACH.METHODS.READ_STATUS,
     proxyDownloadNumbersMethod = APIConstants.EXT.OUTREACH.METHODS.GET_PROXY_DOWNLOAD_NUMBERS;
 
+/**
+ * @deprecated Classic UI only; unreachable from the Preview UI. Left on XState v4 semantics
+ * pending Classic UI deletion (NEXUS-55299) ahead of the XState v5 upgrade (NEXUS-51654).
+ */
 const welcomeMachine = createMachine({
   id: 'WelcomeMachine',
   predictableActionArguments: true,

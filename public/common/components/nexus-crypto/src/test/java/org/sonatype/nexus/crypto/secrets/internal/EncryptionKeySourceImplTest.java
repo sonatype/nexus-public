@@ -21,7 +21,6 @@ import java.util.Optional;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -126,7 +125,7 @@ public class EncryptionKeySourceImplTest
     verify(mapper, times(1)).readValue(any(File.class), eq(EncryptionKeyList.class));
 
     // mock new call to get secrets
-    doReturn(mockEncryptionKeys("new-key-2", ImmutableList.of(new SecretEncryptionKey("new-key", "random-s3cr3t"),
+    doReturn(mockEncryptionKeys("new-key-2", List.of(new SecretEncryptionKey("new-key", "random-s3cr3t"),
         new SecretEncryptionKey("new-key-2", "random-s3cr3t-2"))))
             .when(mapper)
             .readValue(any(File.class), eq(EncryptionKeyList.class));
@@ -172,7 +171,7 @@ public class EncryptionKeySourceImplTest
   @Test
   public void testNoFixedEncryptionFields() throws IOException {
     ObjectMapper mapper = spy(objectMapper);
-    doReturn(mockEncryptionKeys("my-secret", ImmutableList.of(new SecretEncryptionKey("my-secret", "key"))))
+    doReturn(mockEncryptionKeys("my-secret", List.of(new SecretEncryptionKey("my-secret", "key"))))
         .when(mapper)
         .readValue(any(File.class), eq(EncryptionKeyList.class));
     EncryptionKeySource encryptionKeySource = new EncryptionKeySourceImpl(TEST_SECRET_KEYS_PATH, mapper);

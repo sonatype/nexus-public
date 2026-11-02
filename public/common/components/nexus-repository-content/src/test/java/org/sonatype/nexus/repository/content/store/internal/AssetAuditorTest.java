@@ -32,6 +32,9 @@ import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetRestoredEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.AssetData;
 
 import org.junit.Before;
@@ -54,6 +57,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -114,12 +118,13 @@ public class AssetAuditorTest
   }
 
   @Test
-  public void testOnAssetPurgedEvent_whenRecording() {
+  public void testOnAssetPurgedEvent_whenRecording_noAssets_fallsBackToIds() {
     underTest = createAuditor(true, true);
     int[] assetIds = {1, 2, 3};
 
     AssetPurgedEvent event = mock(AssetPurgedEvent.class);
     when(event.getAssetIds()).thenReturn(assetIds);
+    when(event.getAssets()).thenReturn(null);
     when(event.getRepository()).thenReturn(Optional.of(repository));
 
     try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
@@ -138,6 +143,171 @@ public class AssetAuditorTest
     Map<String, Object> attributes = auditData.getAttributes();
     assertThat(attributes, hasEntry("repository.name", REPO_NAME));
     assertThat(attributes, hasEntry("assetIds", Arrays.toString(assetIds)));
+  }
+
+  @Test
+  public void testOnAssetPurgedEvent_whenRecording_withAssets_logsPerAssetDetails() {
+    underTest = createAuditor(true, true);
+    int[] assetIds = {1, 2};
+
+    AssetBlob blob1 = mock(AssetBlob.class);
+    BlobRef blobRef1 = new BlobRef(BLOB_STORE_NAME, BLOB_ID_STRING);
+    when(blob1.blobRef()).thenReturn(blobRef1);
+
+    Asset asset1 = mock(Asset.class);
+    when(asset1.path()).thenReturn(ASSET_PATH);
+    when(asset1.kind()).thenReturn(ASSET_KIND);
+    when(asset1.blob()).thenReturn(Optional.of(blob1));
+
+    Asset asset2 = mock(Asset.class);
+    when(asset2.path()).thenReturn("/other/asset.jar");
+    when(asset2.kind()).thenReturn(ASSET_KIND);
+    when(asset2.blob()).thenReturn(Optional.empty());
+
+    AssetPurgedEvent event = mock(AssetPurgedEvent.class);
+    when(event.getAssetIds()).thenReturn(assetIds);
+    when(event.getAssets()).thenReturn(List.of(asset1, asset2));
+    when(event.getRepository()).thenReturn(Optional.of(repository));
+
+    try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
+      mockedStatic.when(EventHelper::isReplicating).thenReturn(false);
+      underTest.on(event);
+    }
+
+    ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
+    verify(auditRecorder, times(2)).record(captor.capture());
+
+    List<AuditData> capturedData = captor.getAllValues();
+
+    AuditData data1 = capturedData.get(0);
+    assertThat(data1.getDomain(), is("repository.asset"));
+    assertThat(data1.getType(), is("purged"));
+    assertThat(data1.getContext(), is(ASSET_PATH));
+    assertThat(data1.getAttributes(), hasEntry("repository.name", REPO_NAME));
+    assertThat(data1.getAttributes(), hasEntry("path", ASSET_PATH));
+    assertThat(data1.getAttributes(), hasEntry("kind", ASSET_KIND));
+    assertThat((String) data1.getAttributes().get("blob.path"), containsString(BLOB_STORE_NAME + "/content/"));
+
+    AuditData data2 = capturedData.get(1);
+    assertThat(data2.getContext(), is("/other/asset.jar"));
+    assertThat(data2.getAttributes(), hasEntry("path", "/other/asset.jar"));
+    assertThat(data2.getAttributes().get("blob.path"), is("unknown/content/unknown"));
+  }
+
+  @Test
+  public void testOnComponentPurgedEvent_withAssets_logsPerAssetDetails() {
+    underTest = createAuditor(true, true);
+
+    AssetBlob blob = mock(AssetBlob.class);
+    BlobRef blobRef = new BlobRef(BLOB_STORE_NAME, BLOB_ID_STRING);
+    when(blob.blobRef()).thenReturn(blobRef);
+
+    FluentAsset fluentAsset = mock(FluentAsset.class);
+    when(fluentAsset.path()).thenReturn(ASSET_PATH);
+    when(fluentAsset.kind()).thenReturn(ASSET_KIND);
+    when(fluentAsset.blob()).thenReturn(Optional.of(blob));
+
+    ComponentPurgedEvent event = mock(ComponentPurgedEvent.class);
+    when(event.getComponentIds()).thenReturn(new int[]{10});
+    when(event.getAssets()).thenReturn(List.of(fluentAsset));
+    when(event.getRepository()).thenReturn(Optional.of(repository));
+
+    try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
+      mockedStatic.when(EventHelper::isReplicating).thenReturn(false);
+      underTest.on(event);
+    }
+
+    ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
+    verify(auditRecorder).record(captor.capture());
+
+    AuditData auditData = captor.getValue();
+    assertThat(auditData.getDomain(), is("repository.asset"));
+    assertThat(auditData.getType(), is("purged"));
+    assertThat(auditData.getContext(), is(ASSET_PATH));
+
+    Map<String, Object> attributes = auditData.getAttributes();
+    assertThat(attributes, hasEntry("repository.name", REPO_NAME));
+    assertThat(attributes, hasEntry("path", ASSET_PATH));
+    assertThat(attributes, hasEntry("kind", ASSET_KIND));
+    assertThat((String) attributes.get("blob.path"), containsString(BLOB_STORE_NAME + "/content/"));
+  }
+
+  @Test
+  public void testOnComponentPurgedEvent_withoutAssets_fallsBackToComponentIds() {
+    underTest = createAuditor(true, true);
+    int[] componentIds = {10};
+
+    ComponentPurgedEvent event = mock(ComponentPurgedEvent.class);
+    when(event.getComponentIds()).thenReturn(componentIds);
+    when(event.getAssets()).thenReturn(null);
+    when(event.getRepository()).thenReturn(Optional.of(repository));
+
+    try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
+      mockedStatic.when(EventHelper::isReplicating).thenReturn(false);
+      underTest.on(event);
+    }
+
+    ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
+    verify(auditRecorder).record(captor.capture());
+
+    AuditData auditData = captor.getValue();
+    assertThat(auditData.getDomain(), is("repository.asset"));
+    assertThat(auditData.getType(), is("purged"));
+    assertThat(auditData.getContext(), is(REPO_NAME));
+
+    Map<String, Object> attributes = auditData.getAttributes();
+    assertThat(attributes, hasEntry("repository.name", REPO_NAME));
+    assertThat(attributes, hasEntry("componentIds", Arrays.toString(componentIds)));
+  }
+
+  @Test
+  public void testOnComponentPurgedEvent_withEmptyAssets_fallsBackToComponentIds() {
+    underTest = createAuditor(true, true);
+    int[] componentIds = {10};
+
+    ComponentPurgedEvent event = mock(ComponentPurgedEvent.class);
+    when(event.getComponentIds()).thenReturn(componentIds);
+    when(event.getAssets()).thenReturn(List.of());
+    when(event.getRepository()).thenReturn(Optional.of(repository));
+
+    try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
+      mockedStatic.when(EventHelper::isReplicating).thenReturn(false);
+      underTest.on(event);
+    }
+
+    ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
+    verify(auditRecorder).record(captor.capture());
+
+    AuditData auditData = captor.getValue();
+    assertThat(auditData.getDomain(), is("repository.asset"));
+    assertThat(auditData.getType(), is("purged"));
+    assertThat(auditData.getContext(), is(REPO_NAME));
+
+    Map<String, Object> attributes = auditData.getAttributes();
+    assertThat(attributes, hasEntry("repository.name", REPO_NAME));
+    assertThat(attributes, hasEntry("componentIds", Arrays.toString(componentIds)));
+  }
+
+  @Test
+  public void testOnComponentPurgedEvent_notRecording_noAuditRecord() {
+    underTest = createAuditor(true, false);
+
+    FluentAsset fluentAsset = mock(FluentAsset.class);
+    when(fluentAsset.path()).thenReturn(ASSET_PATH);
+    when(fluentAsset.kind()).thenReturn(ASSET_KIND);
+    when(fluentAsset.blob()).thenReturn(Optional.empty());
+
+    ComponentPurgedEvent event = mock(ComponentPurgedEvent.class);
+    when(event.getComponentIds()).thenReturn(new int[]{10});
+    when(event.getAssets()).thenReturn(List.of(fluentAsset));
+    when(event.getRepository()).thenReturn(Optional.of(repository));
+
+    try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
+      mockedStatic.when(EventHelper::isReplicating).thenReturn(false);
+      underTest.on(event);
+    }
+
+    verify(auditRecorder, never()).record(any(AuditData.class));
   }
 
   @Test
@@ -225,6 +395,35 @@ public class AssetAuditorTest
     assertThat(attributes, hasEntry("path", ASSET_PATH));
     assertThat(attributes, hasEntry("kind", ASSET_KIND));
     assertThat((String) attributes.get("blob.path"), is("unknown/content/unknown"));
+  }
+
+  @Test
+  public void testOnAssetRestoredEvent_auditsAsRestored() {
+    // A restore (un-trash) must audit under the dedicated "restored" type, not the raw lowercased class name
+    // ("assetrestoredevent"). AssetRestoredEvent is handled by the generic on(AssetEvent) path (NEXUS-55233).
+    underTest = createAuditor(true, true);
+
+    Asset asset = mock(Asset.class);
+    when(asset.path()).thenReturn(ASSET_PATH);
+    when(asset.kind()).thenReturn(ASSET_KIND);
+    when(asset.blob()).thenReturn(Optional.empty());
+
+    AssetRestoredEvent event = mock(AssetRestoredEvent.class);
+    when(event.getAsset()).thenReturn(asset);
+    when(event.getRepository()).thenReturn(Optional.of(repository));
+
+    try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
+      mockedStatic.when(EventHelper::isReplicating).thenReturn(false);
+      underTest.on(event);
+    }
+
+    ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
+    verify(auditRecorder).record(captor.capture());
+
+    AuditData auditData = captor.getValue();
+    assertThat(auditData.getDomain(), is("repository.asset"));
+    assertThat(auditData.getType(), is("restored"));
+    assertThat(auditData.getContext(), is(ASSET_PATH));
   }
 
   @Test

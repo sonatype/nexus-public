@@ -30,6 +30,8 @@ import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
 
 import { RepositoryListTable } from './repository-list/RepositoryListTable';
 import { useRepositoryList, isIqServerEnabled } from './repository-list/useRepositoryList';
+import { useFirewallCounts } from '../../shared/security/useFirewallCounts';
+import { isFirewallActiveMessage } from '../../shared/security/firewallStatusKind';
 import { useRepositoryListServer, arrayToFilterString } from './repository-list/useRepositoryListServer';
 import { BrowseTree, safeDecodeURI } from './tree/BrowseTree';
 import { BROWSE_ROUTE_STATES } from './browse.routes';
@@ -360,7 +362,9 @@ export function BrowsePage(): JSX.Element {
     state: repoState,
     showHealthCheckColumn,
     showIqPolicyViolationsColumn,
+    showFirewallColumn,
     enableHealthCheck,
+    refresh: refreshFirewallStatus,
   } = useRepositoryList();
 
   const toast = useToast();
@@ -369,12 +373,12 @@ export function BrowsePage(): JSX.Element {
 
   const isLicensedEdition = useIsLicensedEdition();
 
-  // Soft-delete feature active (flag + PRO/cloud). Deleting hosted content under this mode moves it to
+  // Trash feature active (flag + PRO/cloud). Deleting hosted content under this mode moves it to
   // Trash (recoverable) — drives the DetailPanel delete-confirm copy.
-  const softDeleteFeatureEnabled =
-    (ExtJS.state()?.getValue?.('nexus.softDelete.enabled', false) ?? false) &&
+  const trashFeatureEnabled =
+    (ExtJS.state()?.getValue?.('nexus.trash.enabled', false) ?? false) &&
     isLicensedEdition;
-  const softDeleteRetentionDays = ExtJS.state()?.getValue?.('softDeleteRetentionDays');
+  const trashRetentionDays = ExtJS.state()?.getValue?.('trashRetentionDays');
 
   const handleAnalyze = useCallback(async (repositoryName: string) => {
     setAnalyzingRepos((prev) => new Set(prev).add(repositoryName));
@@ -401,20 +405,20 @@ export function BrowsePage(): JSX.Element {
   const [allReposForFilters, setAllReposForFilters] = useState<RepositoryReference[]>([]);
   const [_filterOptionsLoading, setFilterOptionsLoading] = useState(true);
 
-  // Soft-delete is gated server-side by enabled + hosted + per-format allowlist, so the delete-confirm
+  // Trash is gated server-side by enabled + hosted + per-format allowlist, so the delete-confirm
   // "moved to Trash" copy must apply the same three checks. Resolve the selected repo (type + format)
   // from the full repository list, and the allowlist from published state ("*" means all formats).
-  const softDeleteFormats = (ExtJS.state()?.getValue?.('softDeleteFormats') as string[] | undefined) ?? [];
+  const trashFormats = (ExtJS.state()?.getValue?.('trashFormats') as string[] | undefined) ?? [];
   const selectedRepositoryRef = useMemo(
     () => allReposForFilters.find((repo) => repo.name === selectedRepository),
     [allReposForFilters, selectedRepository],
   );
   const selectedRepositoryIsHosted = selectedRepositoryRef?.type === 'hosted';
-  const selectedFormatSoftDeleteEligible = !!selectedRepositoryRef
-    && (softDeleteFormats.includes('*')
-      || softDeleteFormats.includes(selectedRepositoryRef.format?.toLowerCase()));
-  const repositorySoftDeleteActive =
-    softDeleteFeatureEnabled && selectedRepositoryIsHosted && selectedFormatSoftDeleteEligible;
+  const selectedFormatTrashEligible = !!selectedRepositoryRef
+    && (trashFormats.includes('*')
+      || trashFormats.includes(selectedRepositoryRef.format?.toLowerCase()));
+  const repositoryTrashActive =
+    trashFeatureEnabled && selectedRepositoryIsHosted && selectedFormatTrashEligible;
 
   useEffect(() => {
     let cancelled = false;
@@ -590,6 +594,17 @@ export function BrowsePage(): JSX.Element {
     }
     return repos;
   }, [serverRepositories, protectionFilter, iqAuditRepos, healthCheckFilter, repoState.healthCheck]);
+
+  // Counts are fetched only for firewall-enabled repositories on the current page.
+  const enabledFirewallRepoNames = useMemo(
+    () => (showFirewallColumn
+      ? filteredRepositories
+          .filter((repo) => isFirewallActiveMessage(repoState.firewallStatus[repo.name]?.message))
+          .map((repo) => repo.name)
+      : []),
+    [showFirewallColumn, filteredRepositories, repoState.firewallStatus],
+  );
+  const firewallCounts = useFirewallCounts(enabledFirewallRepoNames);
 
   // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
@@ -1027,12 +1042,16 @@ export function BrowsePage(): JSX.Element {
                   healthCheck={repoState.healthCheck}
                   firewallStatus={repoState.firewallStatus}
                   firewallLoaded={repoState.firewallLoaded}
+                  firewallSummaryReady={repoState.firewallSummaryReady}
+                  firewallCounts={firewallCounts.counts}
+                  firewallCountsLoading={firewallCounts.loadingNames}
                   showHealthCheck={showHealthCheckColumn}
-                  showIqPolicyViolations={true}
+                  showIqPolicyViolations={showFirewallColumn}
                   hasFilters={hasActiveFilters}
                   onAnalyze={handleAnalyze}
                   analyzingRepos={analyzingRepos}
                   hasFirewallLicense={showIqPolicyViolationsColumn}
+                  onFirewallEnableSuccess={() => { refreshFirewallStatus(); firewallCounts.refresh(); }}
                   proxyProtectionSummary={
                     protectionOptions.length > 0
                       ? {
@@ -1101,7 +1120,7 @@ export function BrowsePage(): JSX.Element {
           borderBottom: '1px solid var(--gray-5)',
         }}
       >
-        <Box maxWidth="1280px" mx="auto" width="100%">
+        <Box width="100%">
           <Breadcrumbs items={breadcrumbItems} />
 
           {/* Malware Alert Banner */}
@@ -1179,7 +1198,7 @@ export function BrowsePage(): JSX.Element {
           overflow: 'hidden',
         }}
       >
-        <Box maxWidth="1280px" mx="auto" width="100%" height="100%">
+        <Box width="100%" height="100%">
           <ResizablePanel
             leftPanel={
               <BrowseTree
@@ -1203,8 +1222,8 @@ export function BrowsePage(): JSX.Element {
                 canDelete={canDelete}
                 activeTab={params.tab || 'summary'}
                 onTabChange={handleTabChange}
-                softDelete={repositorySoftDeleteActive}
-                retentionDays={typeof softDeleteRetentionDays === 'number' ? softDeleteRetentionDays : undefined}
+                trash={repositoryTrashActive}
+                retentionDays={typeof trashRetentionDays === 'number' ? trashRetentionDays : undefined}
               />
             }
             defaultLeftWidth={400}

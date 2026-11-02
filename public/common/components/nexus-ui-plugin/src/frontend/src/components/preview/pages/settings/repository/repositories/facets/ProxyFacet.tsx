@@ -74,6 +74,7 @@ const REMOTE_URL_EXAMPLES: Record<string, string> = {
   r: 'e.g., https://cran.r-project.org',
   rubygems: 'e.g., https://rubygems.org',
   huggingface: 'e.g., https://huggingface.co/',
+  openvsx: 'e.g., https://open-vsx.org',
   default: 'e.g., https://example.com/repository/',
 };
 
@@ -89,6 +90,20 @@ export function ProxyFacet({
   originChangeWarning,
 }: ProxyFacetProps) {
   const [showCertDialog, setShowCertDialog] = useState(false);
+
+  const [autoBlockStatusCodesText, setAutoBlockStatusCodesText] = useState(
+    () => (formData.httpClient?.autoBlockStatusCodes ?? []).join(', ')
+  );
+
+  const handleAutoBlockStatusCodesChange = (value: string) => {
+    setAutoBlockStatusCodesText(value);
+    const codes = value
+      .split(',')
+      .map((code) => code.trim())
+      .filter((code) => code.length > 0)
+      .map((code) => Number(code));
+    onNestedChange('httpClient', { autoBlockStatusCodes: codes });
+  };
 
   const handleRemoteUrlChange = (value: string) => {
     onNestedChange('proxy', { remoteUrl: value });
@@ -324,6 +339,19 @@ export function ProxyFacet({
           onChange={(checked) => onNestedChange('httpClient', { autoBlock: checked })}
           description={UIStrings.PROXY.BLOCKING.AUTO_BLOCK.description}
         />
+        {format === 'swift' && (
+          <Box mt="2">
+            <SettingsTextInput
+              name="httpClient-autoBlockStatusCodes"
+              label={UIStrings.PROXY.AUTO_BLOCK_STATUS_CODES.label}
+              value={autoBlockStatusCodesText}
+              onChange={handleAutoBlockStatusCodesChange}
+              placeholder={UIStrings.PROXY.AUTO_BLOCK_STATUS_CODES.placeholder}
+              helpText={UIStrings.PROXY.AUTO_BLOCK_STATUS_CODES.helpText}
+              error={resolveError(errors, 'httpClient.autoBlockStatusCodes', (e) => e.httpClient?.autoBlockStatusCodes)}
+            />
+          </Box>
+        )}
       </Box>
 
       <SettingsTextInput

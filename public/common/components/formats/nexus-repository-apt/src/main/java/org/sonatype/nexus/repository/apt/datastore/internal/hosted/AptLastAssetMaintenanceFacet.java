@@ -54,10 +54,10 @@ public class AptLastAssetMaintenanceFacet
   }
 
   @Override
-  public void afterComponentSoftDeleted(final Component component) {
-    // Remove the key-value entries, then rebuild the stored Packages index so the soft-deleted package
+  public void afterComponentTrashed(final Component component) {
+    // Remove the key-value entries, then rebuild the stored Packages index so the trashed package
     // stops being advertised. Without the rebuild the .deb 404s while Packages still lists it, breaking
-    // apt clients (NEXUS-53523 fixed the restore side for APT but missed this soft-delete drop side).
+    // apt clients (NEXUS-53523 fixed the restore side for APT but missed this trash drop side).
     contentFacet().components().with(component).assets().forEach(this::removeAssetMetadata);
     rebuildMetadataQuietly();
   }
@@ -65,7 +65,7 @@ public class AptLastAssetMaintenanceFacet
   @Override
   public void afterComponentRestored(final Component component) {
     try {
-      // The Packages index is rebuilt from the key-value store, whose entries were removed on soft-delete.
+      // The Packages index is rebuilt from the key-value store, whose entries were removed on trash.
       // Re-populate them from the (surviving) asset format attributes BEFORE rebuilding, otherwise the restored
       // package is physically present but invisible to apt clients (NEXUS-53523).
       contentFacet().components().with(component).assets().forEach(this::addAssetMetadata);
@@ -77,7 +77,7 @@ public class AptLastAssetMaintenanceFacet
   }
 
   @Override
-  public void afterAssetSoftDeleted(final Asset asset) {
+  public void afterAssetTrashed(final Asset asset) {
     removeAssetMetadata(asset);
     rebuildMetadataQuietly();
   }
@@ -104,7 +104,7 @@ public class AptLastAssetMaintenanceFacet
       metadata().rebuildMetadata();
     }
     catch (IOException e) {
-      log.warn("Failed to rebuild APT metadata after soft-delete", e);
+      log.warn("Failed to rebuild APT metadata after trash", e);
     }
   }
 

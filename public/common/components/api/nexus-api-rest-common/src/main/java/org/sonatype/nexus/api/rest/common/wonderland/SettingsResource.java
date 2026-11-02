@@ -14,6 +14,7 @@ package org.sonatype.nexus.api.rest.common.wonderland;
 
 import org.sonatype.nexus.api.rest.common.wonderland.model.PropertyXO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.ws.rs.GET;
@@ -23,7 +24,6 @@ import jakarta.ws.rs.Produces;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.rest.Resource;
 
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +46,7 @@ public class SettingsResource
   @GET
   @Produces({APPLICATION_JSON, APPLICATION_XML})
   public List<PropertyXO> get() {
-    List<PropertyXO> properties = Lists.newArrayList();
+    List<PropertyXO> properties = new ArrayList<>();
 
     properties.add(
         new PropertyXO().withKey("keepAlive")

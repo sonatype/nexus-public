@@ -18,12 +18,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.common.app.softdelete.SoftDeletedAssetRef;
-import org.sonatype.nexus.common.app.softdelete.TrashIndexRecorder;
+import org.sonatype.nexus.common.app.trash.TrashedAssetRef;
+import org.sonatype.nexus.common.app.trash.TrashIndexRecorder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -71,7 +69,7 @@ import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION_ENABLED;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
@@ -131,10 +129,6 @@ public abstract class ContentFacetSupport
   private Integer contentRepositoryId;
 
   private AssetBlobValidator assetBlobValidator;
-
-  @Nullable
-  @Autowired(required = false)
-  private TrashIndexRecorder trashIndexRecorder;
 
   private boolean globalDistributionEnabled;
 
@@ -213,7 +207,7 @@ public abstract class ContentFacetSupport
     if (storage == null) {
       return false;
     }
-    Object raw = storage.getOrDefault(GLOBAL_DISTRIBUTION_ENABLED, Boolean.FALSE);
+    Object raw = storage.getOrDefault(GLOBAL_DISTRIBUTION, Boolean.FALSE);
     if (raw instanceof Boolean b) {
       return b;
     }
@@ -434,39 +428,41 @@ public abstract class ContentFacetSupport
   }
 
   /**
-   * Removes a stale trash index entry when {@code createAsset} upserts over a soft-deleted row,
+   * Removes a stale trash index entry when {@code createAsset} upserts over a trashed row,
    * silently clearing {@code deleted_on}. Without this, the trash index would retain a ghost entry
-   * for an asset that is no longer soft-deleted (e.g., metadata files rebuilt after component restore).
+   * for an asset that is no longer trashed (e.g., metadata files rebuilt after component restore).
    */
   public void cleanupTrashIndex(final String assetPath) {
-    if (trashIndexRecorder != null) {
+    dependencies.getTrashIndexRecorder().ifPresent(recorder -> {
       try {
-        trashIndexRecorder.removeAssetByPath(getRepository().getName(), assetPath);
+        recorder.removeAssetByPath(getRepository().getName(), assetPath);
       }
       catch (Exception e) {
         log.debug("Could not clean up trash index for asset path '{}'", assetPath, e);
       }
-    }
+    });
   }
 
   /**
-   * Reconciles the trash index when {@code createComponent} upserts over a soft-deleted row, silently
+   * Reconciles the trash index when {@code createComponent} upserts over a trashed row, silently
    * clearing {@code deleted_on} (i.e. a component revived by re-upload). Removes the component's now-stale
-   * "umbrella" trash entry, and re-records any sibling asset that is still soft-deleted (not part of this
+   * "umbrella" trash entry, and re-records any sibling asset that is still trashed (not part of this
    * re-upload) as its own entry so it stays individually restorable -- otherwise it would become an
    * invisible orphan once the umbrella entry is gone. Re-uploaded assets clear their own re-surfaced entry
    * via {@link #cleanupTrashIndex(String)} when they are created immediately after the component.
    */
   public void cleanupComponentTrashIndex(final Component component) {
-    // Gated only on the recorder's presence (absent in editions without the soft-delete plugin), NOT on the
-    // nexus.softDelete.enabled flag: a stale trash index row can be left behind by a period when the flag
+    // Gated only on the recorder's presence (absent in editions without the trash plugin), NOT on the
+    // nexus.trash.enabled flag: a stale trash index row can be left behind by a period when the flag
     // was ON, then silently revived by a createComponent upsert while the flag is OFF. If this reconciliation
     // were gated on the current flag state, that ghost row would survive -- showing the component in Trash
-    // while it is live in the repository, un-restorable ("not in the soft-deleted state"). The asset path
+    // while it is live in the repository, un-restorable ("not in the trashed state"). The asset path
     // ({@link #cleanupTrashIndex(String)}) is likewise ungated, so this keeps the two paths symmetric.
-    if (trashIndexRecorder == null) {
+    Optional<TrashIndexRecorder> maybeRecorder = dependencies.getTrashIndexRecorder();
+    if (maybeRecorder.isEmpty()) {
       return;
     }
+    TrashIndexRecorder trashIndexRecorder = maybeRecorder.get();
     String repositoryName = getRepository().getName();
     try {
       String componentExternalId =
@@ -474,7 +470,7 @@ public abstract class ContentFacetSupport
       int removed = trashIndexRecorder.removeComponentByExternalId(repositoryName, componentExternalId);
 
       // Fast path: if no umbrella entry was removed, this component was never in Trash (a brand-new or
-      // never-deleted upload -- the overwhelmingly common case), so there are no soft-deleted siblings to
+      // never-deleted upload -- the overwhelmingly common case), so there are no trashed siblings to
       // re-surface. Skip the per-asset scan to keep the create/upload hot path cheap.
       if (removed == 0) {
         return;
@@ -486,13 +482,13 @@ public abstract class ContentFacetSupport
       // component owns only a handful of assets in every format, and this scan runs solely on the rare revive path
       // (removed > 0). Docker/OCI layers and blobs are component-less shared assets, not children here, so the
       // per-component asset count stays small -- no streaming/pagination needed (NEXUS-51733).
-      for (Asset asset : stores().assetStore.browseAllComponentAssetsWithSoftDelete(component)) {
+      for (Asset asset : stores().assetStore.browseAllComponentAssetsWithTrash(component)) {
         AssetData assetData = (AssetData) asset;
         if (assetData.getDeletedOn() != null) {
           String assetExternalId =
               InternalIds.toExternalId(InternalIds.internalAssetId(asset)).getValue();
           String deletedBy = assetData.getDeletedBy() != null ? assetData.getDeletedBy() : "system";
-          trashIndexRecorder.resurfaceSoftDeletedChildAsset(new SoftDeletedAssetRef(
+          trashIndexRecorder.resurfaceTrashedChildAsset(new TrashedAssetRef(
               repositoryName, repositoryId, format, componentExternalId, assetExternalId,
               asset.path(), asset.kind(), assetData.getDeletedOn(), deletedBy));
         }

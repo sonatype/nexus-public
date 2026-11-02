@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.internal.search.index.task;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
@@ -24,8 +25,6 @@ import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
-
-import com.google.common.collect.ImmutableList;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -140,7 +139,7 @@ public class SearchUpdateTaskManagerTest
     when(searchUpdateService.needsReindex(repository1)).thenReturn(false);
     when(searchUpdateService.needsReindex(repository2)).thenReturn(false);
     when(searchUpdateService.needsReindex(repository3)).thenReturn(false);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1, repository2, repository3));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1, repository2, repository3));
     underTest.doStart();
     verifyNoMoreInteractions(taskScheduler);
   }
@@ -150,7 +149,7 @@ public class SearchUpdateTaskManagerTest
     when(searchUpdateService.needsReindex(repository1)).thenReturn(false);
     when(searchUpdateService.needsReindex(repository2)).thenReturn(true);
     when(searchUpdateService.needsReindex(repository3)).thenReturn(false);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1, repository2, repository3));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1, repository2, repository3));
     underTest.doStart();
     assertEquals("repository2", taskConfiguration.getString("repositoryNames"));
     verify(taskScheduler).submit(taskConfiguration);
@@ -161,7 +160,7 @@ public class SearchUpdateTaskManagerTest
     when(searchUpdateService.needsReindex(repository1)).thenReturn(true);
     when(searchUpdateService.needsReindex(repository2)).thenReturn(true);
     when(searchUpdateService.needsReindex(repository3)).thenReturn(false);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1, repository2, repository3));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1, repository2, repository3));
     underTest.doStart();
     assertEquals("repository1,repository2", taskConfiguration.getString("repositoryNames"));
     verify(taskScheduler).submit(taskConfiguration);
@@ -172,7 +171,7 @@ public class SearchUpdateTaskManagerTest
     when(searchUpdateService.needsReindex(repository1)).thenReturn(true);
     when(searchUpdateService.needsReindex(repository2)).thenReturn(true);
     when(searchUpdateService.needsReindex(repository3)).thenReturn(false);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1, repository2, repository3));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1, repository2, repository3));
     when(taskScheduler.findAndSubmit(any())).thenReturn(true);
     underTest.doStart();
     verify(taskScheduler, never()).submit(any());
@@ -181,7 +180,7 @@ public class SearchUpdateTaskManagerTest
   @Test
   public void onStartup_submit_throwsValidationError_doesNotLogError() {
     when(searchUpdateService.needsReindex(repository1)).thenReturn(true);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1));
     when(taskScheduler.findAndSubmit(any())).thenReturn(false);
     when(taskScheduler.submit(any()))
         .thenThrow(new ValidationErrorsException("Task repository.search.update already exists, ignoring"));
@@ -206,7 +205,7 @@ public class SearchUpdateTaskManagerTest
     MissingFacetException missingFacet = new MissingFacetException(repository1, Facet.class);
     when(searchUpdateService.needsReindex(repository1)).thenThrow(missingFacet);
     when(searchUpdateService.needsReindex(repository2)).thenReturn(true);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1, repository2));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1, repository2));
 
     underTest.doStart();
 
@@ -232,7 +231,7 @@ public class SearchUpdateTaskManagerTest
     when(searchUpdateService.needsReindex(repository1))
         .thenThrow(new InvalidStateException("DELETED", new String[]{}));
     when(searchUpdateService.needsReindex(repository2)).thenReturn(true);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1, repository2));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1, repository2));
 
     underTest.doStart();
 

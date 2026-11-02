@@ -148,6 +148,7 @@ export function createRepositoryUsageMachine(options: RepositoryUsageMachineOpti
   return createMachine<RepositoryUsageContext, RepositoryUsageEvent>(
     {
       id: 'repositoryUsage',
+      predictableActionArguments: true,
       initial: 'loading',
       context: {
         repositoryName,

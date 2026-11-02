@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -167,7 +166,7 @@ public class DetachingListTest
 
   @Test
   public void simpleDetach() {
-    List<String> original = ImmutableList.of("HELLO", "THERE");
+    List<String> original = List.of("HELLO", "THERE");
 
     underTest = new DetachingList<>(original, allowDetach, detach);
 

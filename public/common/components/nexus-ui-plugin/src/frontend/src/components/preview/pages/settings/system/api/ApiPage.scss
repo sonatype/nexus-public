@@ -35,6 +35,15 @@
   }
 
   .api-endpoint-list {
+    &__count {
+      letter-spacing: var(--letter-spacing-1);
+    }
+
+    &__group-title {
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-1);
+    }
+
     &__row {
       width: 100%;
       border: 1px solid transparent;
@@ -54,12 +63,21 @@
       }
     }
 
+    // Fixed-height block so the icon stays centered on the first line of a
+    // wrapped multi-line path (row aligns items to the top).
+    &__access {
+      display: flex;
+      align-items: center;
+      flex: none;
+      height: calc(var(--line-height-2) + var(--space-1));
+    }
+
     &__path {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
       flex: 1;
       min-width: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      font-family: var(--code-font-family);
     }
   }
 

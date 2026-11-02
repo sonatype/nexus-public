@@ -187,6 +187,7 @@ export function createFormMachine<TData>(config: FormMachineConfig<TData>) {
   return createMachine<FormContext<TData>, FormEvent>(
     {
       id,
+      predictableActionArguments: true,
       initial: hasLoad ? 'loading' : 'editing',
       context: initialContext,
 

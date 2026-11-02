@@ -47,6 +47,7 @@ const SearchHuggingFaceExt = lazyLoad(() => import('../../components/pages/brows
 const SearchMavenExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchMavenExt'));
 const SearchNpmExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchNpmExt'));
 const SearchNugetExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchNugetExt'));
+const SearchOpenVSXExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchOpenVSXExt'));
 const SearchP2Ext = lazyLoad(() => import('../../components/pages/browse/Search/SearchP2Ext'));
 const SearchPubExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchPubExt'));
 const SearchPypiExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchPypiExt'));
@@ -444,6 +445,25 @@ export const browseRoutes = [
     },
   },
   {
+    name: BROWSE.SEARCH.OPENVSX,
+    url: '/openvsx/:keyword',
+    component: SearchOpenVSXExt,
+    data: {
+      visibilityRequirements: {
+        permissions: ['nexus:search:read'],
+        browseableFormat: 'openvsx',
+      },
+      title: BROWSE.SEARCH.TITLE,
+    },
+    params: {
+      keyword: {
+        value: null,
+        raw: true,
+        dynamic: true,
+      },
+    },
+  },
+  {
     name: BROWSE.SEARCH.P2,
     url: '/p2/:keyword',
     component: SearchP2Ext,
@@ -668,7 +688,7 @@ export const browseRoutes = [
     data: {
       title: BROWSE.TRASH.TITLE,
       visibilityRequirements: {
-        statesEnabled: [{ key: 'nexus.softDelete.enabled', defaultValue: false }],
+        statesEnabled: [{ key: 'nexus.trash.enabled', defaultValue: false }],
         permissions: [Permissions.ADMIN],
         editions: PRO_FAMILY_EDITIONS,
       },

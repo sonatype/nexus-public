@@ -54,7 +54,7 @@ describe('SettingsTextArea', () => {
       expect(screen.getByText('This field is required')).toBeInTheDocument();
     });
 
-    it('hides help text when error is present', () => {
+    it('shows help text alongside error when both are present', () => {
       render(
         <SettingsTextArea
           {...defaultProps}
@@ -62,8 +62,21 @@ describe('SettingsTextArea', () => {
           error="Error message"
         />
       );
-      expect(screen.queryByText('Help text')).not.toBeInTheDocument();
+      expect(screen.getByText('Help text')).toBeInTheDocument();
       expect(screen.getByText('Error message')).toBeInTheDocument();
+    });
+
+    it('references both help and error in aria-describedby when both are present', () => {
+      render(
+        <SettingsTextArea {...defaultProps} helpText="Help text" error="Error message" />
+      );
+      const describedBy = screen.getByRole('textbox').getAttribute('aria-describedby') || '';
+      expect(describedBy).toContain('help');
+      expect(describedBy).toContain('error');
+      // every referenced id must resolve to a real element (no dangling idref)
+      for (const id of describedBy.split(/\s+/).filter(Boolean)) {
+        expect(document.getElementById(id)).not.toBeNull();
+      }
     });
 
     it('shows required indicator when required', () => {

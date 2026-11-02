@@ -51,12 +51,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -68,6 +68,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 import static org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor.P_REPOSITORY;
 import static org.sonatype.nexus.repository.security.RepositorySelector.ALL;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
@@ -170,12 +171,29 @@ public class SelectorManagerImplTest
   }
 
   @Test
+  public void browseReturnsTheStoreListWithoutCopyingItAgain() {
+    List<SelectorConfiguration> configs =
+        toImmutableList(asList(getSelectorConfiguration(JexlSelector.TYPE, "true")));
+    when(store.browse()).thenReturn(configs);
+
+    assertSame(configs, manager.browse());
+  }
+
+  @Test
+  public void browseResultToleratesNullQueries() {
+    when(store.browse())
+        .thenReturn(toImmutableList(asList(getSelectorConfiguration(JexlSelector.TYPE, "true"))));
+
+    assertThat(manager.browse().contains(null), is(false));
+  }
+
+  @Test
   public void browseActiveReturnsAllContentSelectorsForMatchingNestedRoles() throws Exception {
     createSelectorConfiguration("roleId", "rolePrivilegeId", "roleSelectorName", "repository");
     securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream().findFirst().get().getRoles().add("nestedRoleId");
     SelectorConfiguration nestedRoleConfig = createSelectorConfiguration("nestedRoleId", "nestedRolePrivilegeId",
         "nestedRoleSelectorName", ALL);
-    when(user.getRoles()).thenReturn(newHashSet(new RoleIdentifier("", "roleId")));
+    when(user.getRoles()).thenReturn(new HashSet<>(asList(new RoleIdentifier("", "roleId"))));
     when(authorizationManager.getPrivileges(ImmutableSet.of("rolePrivilegeId", "nestedRolePrivilegeId")))
         .thenReturn(privileges);
 
@@ -213,7 +231,7 @@ public class SelectorManagerImplTest
     createSelectorConfiguration("roleId", "rolePrivilegeId", "roleSelectorName", ALL + '-' + repositoryFormat);
     createSelectorConfiguration("nestedRoleId", "nestedRolePrivilegeId", "nestedRoleSelectorName",
         ALL + '-' + repositoryFormat);
-    when(user.getRoles()).thenReturn(newHashSet(new RoleIdentifier("", "roleId")));
+    when(user.getRoles()).thenReturn(new HashSet<>(asList(new RoleIdentifier("", "roleId"))));
     when(authorizationManager.getPrivileges(ImmutableSet.of("rolePrivilegeId", "nestedRolePrivilegeId")))
         .thenReturn(privileges);
 
@@ -231,7 +249,7 @@ public class SelectorManagerImplTest
     securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream().findFirst().get().getRoles().add("nestedRoleId");
     SelectorConfiguration nestedRoleConfig = createSelectorConfiguration("nestedRoleId",
         "nestedRolePrivilegeId", "nestedRoleSelectorName", repositoryName);
-    when(user.getRoles()).thenReturn(newHashSet(new RoleIdentifier("", "roleId")));
+    when(user.getRoles()).thenReturn(new HashSet<>(asList(new RoleIdentifier("", "roleId"))));
     when(authorizationManager.getPrivileges(ImmutableSet.of("rolePrivilegeId", "nestedRolePrivilegeId")))
         .thenReturn(privileges);
 

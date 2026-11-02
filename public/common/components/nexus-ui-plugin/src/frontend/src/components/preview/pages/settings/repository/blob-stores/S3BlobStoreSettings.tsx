@@ -11,9 +11,11 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React from 'react';
-import { Cloud, Plus, Trash2, AlertTriangle, Info } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Cloud, Plus, Trash2, AlertTriangle, Info, Globe, Edit, X } from 'lucide-react';
+import { Flex } from '@radix-ui/themes';
 import { ExtJS } from '../../../../../../interface/ExtJS';
+import { useLicenseLevel, LicenseLevel } from '../../../../shared/hooks/useLicenseLevel';
 import {
   SettingsFormSection,
   SettingsTextInput,
@@ -21,11 +23,15 @@ import {
   SettingsSelect,
   SettingsCheckbox,
   SettingsAlert,
-  SettingsButton
+  SettingsButton,
+  SettingsTextArea
 } from '../../../../shared/form';
 import { useIsLicensedEdition } from '../../../../shared/hooks';
 import { useS3DropdownValues } from './useBlobStores';
-import type { BlobStoreFormData, S3BlobStoreConfig, } from './types';
+import { EditionPill } from '../../../../shared/Badges/EditionPill';
+import { LicenseRequiredCallout } from './LicenseRequiredCallout';
+import { getGlobalDistributionTypeOptions } from './globalDistributionTypeOptions';
+import type { BlobStoreFormData, S3BlobStoreConfig, S3CloudFrontConfig } from './types';
 import './S3BlobStoreSettings.scss';
 
 interface S3BlobStoreSettingsProps {
@@ -125,10 +131,40 @@ const STRINGS = {
       helpText: 'S3 Bucket Name for replication'
     }
   },
+  GLOBAL_DISTRIBUTION: {
+    title: 'Global Distribution (Optional)',
+    description: 'Configure content distribution for improved download performance across regions',
+    TYPE: {
+      label: 'Distribution Type',
+      helpText: 'Select a global distribution method. Options are mutually exclusive.'
+    },
+    CLOUDFRONT: {
+      DISTRIBUTION_URL: {
+        label: 'Distribution URL',
+        helpText: 'The CloudFront distribution URL',
+        placeholder: 'https://d111111abcdef8.cloudfront.net/'
+      },
+      KEY_ID: {
+        label: 'Key ID',
+        helpText: 'The identifier in CloudFront for the provided private key'
+      },
+      PRIVATE_KEY: {
+        label: 'Private Key',
+        helpText: 'The private key used to create pre-signed URLs (PEM PKCS#8 format)',
+        placeholder: '-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----'
+      },
+      PRIVATE_KEY_PASSWORD: {
+        label: 'Private Key Password',
+        helpText: 'The password for the private key (optional)'
+      }
+    }
+  },
   HELP: 'S3 blob stores require specific permissions to support full provisioning and functionality. Consult our documentation for the required set of permissions.'
 };
 
 const MAX_FAILOVER_BUCKETS = 5;
+
+export const PLACEHOLDER_PASSWORD = '#~NXRM~PLACEHOLDER~PASSWORD~#';
 
 export default function S3BlobStoreSettings({
   data,
@@ -138,6 +174,17 @@ export default function S3BlobStoreSettings({
   errors = {},
 }: S3BlobStoreSettingsProps) {
   const { values: dropdownValues, loading: dropdownLoading } = useS3DropdownValues();
+  const [isEditingPrivateKey, setIsEditingPrivateKey] = useState(false);
+
+  // Track whether CloudFront was configured when the component initially loaded
+  // This prevents the UI from jumping to "Edit" mode when user fills in fields while editing
+  // We initialize directly in the ref to avoid useEffect timing issues
+  const hadCloudFrontOnMountRef = useRef(
+    isEdit &&
+    data.globalDistribution?.type === 'CLOUDFRONT' &&
+    Boolean((data.globalDistribution as S3CloudFrontConfig)?.distributionUrl) &&
+    Boolean((data.globalDistribution as S3CloudFrontConfig)?.keyId)
+  );
 
   const isLicensedEdition = useIsLicensedEdition();
   const isFailoverAvailable = ExtJS.state().getValue('S3FailoverEnabled', false);
@@ -184,12 +231,61 @@ export default function S3BlobStoreSettings({
     onChange('bucketConfiguration.failoverBuckets', updated);
   };
 
+  const updateGlobalDistribution = (type: string) => {
+    // Reset edit state when switching distribution types
+    setIsEditingPrivateKey(false);
+
+    if (type === '') {
+      onChange('globalDistribution', undefined);
+    } else if (type === 'CLOUDFRONT') {
+      const current = data.globalDistribution as S3CloudFrontConfig;
+      onChange('globalDistribution', {
+        type: 'CLOUDFRONT',
+        distributionUrl: current?.distributionUrl || '',
+        keyId: current?.keyId || '',
+        privateKey: current?.privateKey || '',
+        privateKeyPassword: current?.privateKeyPassword || ''
+      });
+    } else if (type === 'TRANSFER_ACCELERATION') {
+      onChange('globalDistribution', { type: 'TRANSFER_ACCELERATION' });
+    }
+  };
+
+  const updateCloudFront = (field: keyof S3CloudFrontConfig, value: string) => {
+    onChange(`globalDistribution.${field}`, value);
+  };
+
+  const handleEditPrivateKey = () => {
+    setIsEditingPrivateKey(true);
+    // Clear the private key and password fields when entering edit mode
+    updateCloudFront('privateKey', '');
+    updateCloudFront('privateKeyPassword', '');
+  };
+
+  const handleCancelEditPrivateKey = () => {
+    setIsEditingPrivateKey(false);
+    // Clear the values when canceling
+    updateCloudFront('privateKey', '');
+    updateCloudFront('privateKeyPassword', '');
+  };
+
   const regions = dropdownValues?.regions || [];
   const encryptionTypes = dropdownValues?.encryptionTypes || [];
   const hasAuth = Boolean(config.bucketSecurity?.accessKeyId);
   const hasEncryption = Boolean(config.encryption?.encryptionType || config.encryption?.encryptionKey);
   const hasAdvanced = Boolean(config.advancedBucketConnection?.endpoint || config.advancedBucketConnection?.forcePathStyle);
   const hasFailover = (config.failoverBuckets?.length || 0) > 0;
+  const hasGlobalDistribution = Boolean(data.globalDistribution);
+
+  // CloudFront and S3 Transfer Acceleration need an Enterprise license; below it they render disabled with a pill
+  const isGlobalDistributionAvailable = useLicenseLevel(LicenseLevel.ENTERPRISE);
+  const isCloudFrontLocked = disabled || !isGlobalDistributionAvailable;
+
+  // Check if we're editing an existing CloudFront configuration (has a saved private key)
+  const isEditingExistingCloudFront = hadCloudFrontOnMountRef.current === true;
+
+  // Don't show private key fields when editing a configuration with CloudFront saved
+  const shouldShowPrivateKeyFields = !isEdit || isEditingPrivateKey || !hadCloudFrontOnMountRef.current;
 
   return (
     <div className="s3-blob-store-settings">
@@ -248,15 +344,110 @@ export default function S3BlobStoreSettings({
           disabled={disabled}
         />
 
-        {isLicensedEdition && (
+        <Flex direction="column" gap="2">
+          {!isLicensedEdition && <LicenseRequiredCallout feature="presignedUrl" />}
           <SettingsCheckbox
             name="s3-presigned"
             label={STRINGS.BASIC.PRESIGNED.label}
             description={STRINGS.BASIC.PRESIGNED.description}
             checked={config.preSignedUrlEnabled || false}
             onChange={(checked) => onChange('bucketConfiguration.preSignedUrlEnabled', checked)}
-            disabled={disabled}
+            disabled={disabled || !isLicensedEdition}
+            badge={isLicensedEdition ? undefined : <EditionPill tier="pro" />}
           />
+        </Flex>
+      </SettingsFormSection>
+
+      {/* Global Distribution */}
+      {!isGlobalDistributionAvailable && <LicenseRequiredCallout feature="globalDistribution" mb="1" />}
+      <SettingsFormSection
+        title={STRINGS.GLOBAL_DISTRIBUTION.title}
+        description={STRINGS.GLOBAL_DISTRIBUTION.description}
+        icon={<Globe size={20} />}
+        collapsible
+        defaultExpanded={hasGlobalDistribution}
+      >
+        <SettingsSelect
+          name="s3-global-distribution-type"
+          label={STRINGS.GLOBAL_DISTRIBUTION.TYPE.label}
+          value={data.globalDistribution?.type || ''}
+          onChange={(value) => updateGlobalDistribution(value)}
+          options={getGlobalDistributionTypeOptions(isGlobalDistributionAvailable)}
+          helpText={STRINGS.GLOBAL_DISTRIBUTION.TYPE.helpText}
+          disabled={disabled}
+        />
+
+        {data.globalDistribution?.type === 'CLOUDFRONT' && (
+          <>
+            <SettingsTextInput
+              label={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.DISTRIBUTION_URL.label}
+              value={(data.globalDistribution as S3CloudFrontConfig)?.distributionUrl || ''}
+              onChange={(value) => updateCloudFront('distributionUrl', value)}
+              helpText={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.DISTRIBUTION_URL.helpText}
+              placeholder={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.DISTRIBUTION_URL.placeholder}
+              required
+              disabled={isCloudFrontLocked}
+            />
+
+            <SettingsTextInput
+              label={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.KEY_ID.label}
+              value={(data.globalDistribution as S3CloudFrontConfig)?.keyId || ''}
+              onChange={(value) => updateCloudFront('keyId', value)}
+              helpText={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.KEY_ID.helpText}
+              required
+              disabled={isCloudFrontLocked}
+            />
+
+            {shouldShowPrivateKeyFields ? (
+              <>
+                <SettingsTextArea
+                  label={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.PRIVATE_KEY.label}
+                  value={(data.globalDistribution as S3CloudFrontConfig)?.privateKey || ''}
+                  onChange={(value) => updateCloudFront('privateKey', value)}
+                  helpText={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.PRIVATE_KEY.helpText}
+                  placeholder={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.PRIVATE_KEY.placeholder}
+                  required
+                  disabled={isCloudFrontLocked}
+                  monospace
+                  rows={6}
+                />
+
+                <SettingsPasswordInput
+                  label={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.PRIVATE_KEY_PASSWORD.label}
+                  value={(data.globalDistribution as S3CloudFrontConfig)?.privateKeyPassword || ''}
+                  onChange={(value) => updateCloudFront('privateKeyPassword', value)}
+                  helpText={STRINGS.GLOBAL_DISTRIBUTION.CLOUDFRONT.PRIVATE_KEY_PASSWORD.helpText}
+                  disabled={isCloudFrontLocked}
+                  autoComplete="new-password"
+                />
+
+                {isEditingExistingCloudFront && isEditingPrivateKey && (
+                  <SettingsButton
+                    variant="secondary"
+                    onClick={handleCancelEditPrivateKey}
+                    disabled={isCloudFrontLocked}
+                    icon={X}
+                  >
+                    Cancel
+                  </SettingsButton>
+                )}
+              </>
+            ) : (
+              <div className="s3-blob-store-settings__private-key-notice">
+                <SettingsAlert variant="info">
+                  A private key has been configured for this CloudFront distribution.
+                </SettingsAlert>
+                <SettingsButton
+                  variant="secondary"
+                  onClick={handleEditPrivateKey}
+                  disabled={isCloudFrontLocked}
+                  icon={Edit}
+                >
+                  Edit Private Key
+                </SettingsButton>
+              </div>
+            )}
+          </>
         )}
       </SettingsFormSection>
 

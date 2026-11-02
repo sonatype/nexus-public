@@ -27,7 +27,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -148,9 +147,6 @@ public abstract class FileBlobStoreITSupport
   @Mock
   private BlobStoreQuotaService quotaService;
 
-  @Mock
-  private BlobStoreReconciliationLogger reconciliationLogger;
-
   protected abstract FileBlobDeletionIndex fileBlobDeletionIndex();
 
   @Before
@@ -181,7 +177,7 @@ public abstract class FileBlobStoreITSupport
     config.setName(name);
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
     FileBlobStore blobstore = new FileBlobStore(blobIdResolver, fileOperations, applicationDirectories, directoryHelper,
-        metricsStore, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, index);
+        metricsStore, nodeAccess, dryRunPrefix, 0L, blobStoreQuotaUsageChecker, index);
     blobstore.init(config);
     blobstore.start();
     return blobstore;

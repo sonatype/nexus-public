@@ -12,8 +12,13 @@
  */
 package org.sonatype.nexus.repository.httpclient;
 
+import java.util.List;
 import javax.annotation.Nullable;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
@@ -33,4 +38,14 @@ public class HttpClientConfig
 
   @Nullable
   public Boolean autoBlock;
+
+  /**
+   * The exact set of HTTP status codes that trigger auto-block for this repository. When non-empty, only these
+   * codes trigger auto-blocking and this list fully replaces the format-specific default -- any code not listed
+   * will not auto-block. When null or empty, the format-specific default {@link AutoBlockConfiguration} applies
+   * instead. Each element must be a valid HTTP status code in the range 100-599.
+   */
+  @Nullable
+  @Size(max = 500, message = "autoBlockStatusCodes may contain at most 500 entries")
+  public List<@NotNull @Min(100) @Max(599) Integer> autoBlockStatusCodes;
 }

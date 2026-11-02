@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Objects;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "CapabilityType")
 public class CapabilityTypeDTO
@@ -33,6 +32,11 @@ public class CapabilityTypeDTO
   @Schema(description = "Form fields configuration for this capability type")
   private List<FormFieldDTO> formFields;
 
+  @Schema(
+      description = "Whether managing a capability of this type additionally requires the nexus:settings:update "
+          + "permission because it activates or configures a security realm")
+  private boolean requiresSettingsUpdate;
+
   protected CapabilityTypeDTO() {
     // deserialization
   }
@@ -43,10 +47,21 @@ public class CapabilityTypeDTO
       final String about,
       final List<FormFieldDTO> formFields)
   {
+    this(id, name, about, formFields, false);
+  }
+
+  public CapabilityTypeDTO(
+      final String id,
+      final String name,
+      final String about,
+      final List<FormFieldDTO> formFields,
+      final boolean requiresSettingsUpdate)
+  {
     this.id = id;
     this.name = name;
     this.about = about;
     this.formFields = formFields;
+    this.requiresSettingsUpdate = requiresSettingsUpdate;
   }
 
   public String getId() {
@@ -81,6 +96,14 @@ public class CapabilityTypeDTO
     this.formFields = formFields;
   }
 
+  public boolean isRequiresSettingsUpdate() {
+    return requiresSettingsUpdate;
+  }
+
+  public void setRequiresSettingsUpdate(final boolean requiresSettingsUpdate) {
+    this.requiresSettingsUpdate = requiresSettingsUpdate;
+  }
+
   @Override
   public String toString() {
     return "CapabilityTypeDTO(" +
@@ -88,6 +111,7 @@ public class CapabilityTypeDTO
         ", name:" + name +
         ", about:" + about +
         ", formFields:" + formFields +
+        ", requiresSettingsUpdate:" + requiresSettingsUpdate +
         ")";
   }
 
@@ -98,11 +122,12 @@ public class CapabilityTypeDTO
     }
     CapabilityTypeDTO that = (CapabilityTypeDTO) o;
     return Objects.equals(id, that.id) && Objects.equals(name, that.name) &&
-        Objects.equals(about, that.about) && Objects.equals(formFields, that.formFields);
+        Objects.equals(about, that.about) && Objects.equals(formFields, that.formFields) &&
+        requiresSettingsUpdate == that.requiresSettingsUpdate;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, about, formFields);
+    return Objects.hash(id, name, about, formFields, requiresSettingsUpdate);
   }
 }

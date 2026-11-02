@@ -61,18 +61,25 @@ jest.mock('@uirouter/react', () => ({
 jest.mock('../useRepositoriesApi');
 const mockUseRepositoriesApi = useRepositoriesApi as jest.MockedFunction<typeof useRepositoriesApi>;
 
-// Mock ExtJS - include state for isIqServerEnabled (Firewall column visibility)
+// Mock ExtJS state at module scope, read by a STABLE getValue implementation, reset in
+// beforeEach. This avoids the mock-leak that `ExtJS.state.mockReturnValue(...)` caused: with
+// jest.config.js's `clearMocks: true`, mockClear() resets call history but NOT configured
+// return values, so a per-test mockReturnValue override used to leak into every later test in
+// this file (NEXUS-55079 A3). Pattern mirrors RepositorySettingsUsageTab.test.tsx.
+const mockExtState: Record<string, unknown> = { clm: { enabled: true } };
+
+// Mock ExtJS - include state for isIqServerEnabled (Firewall column visibility) and useState
+// for useIsRepositorySizeSupported (Size column visibility).
 // The source imports from relative path, so mock needs to target that path
 // ExtJS has both default and named export
 jest.mock('../../../../../../../interface/ExtJS', () => {
   const mockExtJS = {
     checkPermission: jest.fn().mockReturnValue(true),
     state: jest.fn().mockReturnValue({
-      getValue: jest.fn().mockImplementation((key: string) => {
-        if (key === 'clm') return { enabled: true };
-        return undefined;
-      }),
+      getValue: jest.fn().mockImplementation((key: string) => mockExtState[key]),
     }),
+    useState: jest.fn((getValue: () => unknown) => getValue()),
+    usePermission: jest.fn((getValue: () => unknown) => getValue()),
     showSuccessMessage: jest.fn(),
     showErrorMessage: jest.fn(),
   };
@@ -148,6 +155,8 @@ describe('RepositoriesList', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRepositoriesApi.mockReturnValue(mockApiHook as any);
+    Object.keys(mockExtState).forEach((key) => delete mockExtState[key]);
+    mockExtState.clm = { enabled: true };
   });
 
   it('renders loading state initially', () => {
@@ -581,13 +590,7 @@ describe('RepositoriesList', () => {
     });
 
     it('hides Firewall Report column when IQ Server is disabled', async () => {
-      const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockImplementation((key: string) => {
-          if (key === 'clm') return { enabled: false };
-          return undefined;
-        }),
-      });
+      mockExtState.clm = { enabled: false };
 
       renderWithTheme(
         <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
@@ -605,13 +608,7 @@ describe('RepositoriesList', () => {
     // column is superseded by Firewall Report — the classic UI has always hidden it in this state
     // (see NX.Conditions.hasNoFirewall in ExtJS), and the preview UI must match.
     it('hides Health Check column when IQ Server is enabled and Firewall is licensed', async () => {
-      const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockImplementation((key: string) => {
-          if (key === 'clm') return { enabled: true, hasFirewall: true };
-          return undefined;
-        }),
-      });
+      mockExtState.clm = { enabled: true, hasFirewall: true };
 
       renderWithTheme(
         <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
@@ -627,17 +624,13 @@ describe('RepositoriesList', () => {
 
     // NEXUS-53278 boundary: IQ Server on but no Firewall license (e.g. Sonatype Lifecycle only) —
     // Health Check must still be visible; it is only redundant when Firewall is what the customer paid for.
-    // Reset checkPermission mock because a sibling test above may have overridden it (jest.clearAllMocks
-    // clears call history but not mockImplementation, so implementations leak across tests in this file).
+    // checkPermission is reset explicitly because a sibling test above installs a
+    // mockImplementation, and jest.config.js's `clearMocks` clears call history but NOT
+    // implementations, so it would otherwise leak into this test.
     it('shows Health Check column when IQ Server is enabled but Firewall is not licensed', async () => {
       const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
       ExtJS.checkPermission.mockReturnValue(true);
-      ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockImplementation((key: string) => {
-          if (key === 'clm') return { enabled: true, hasFirewall: false };
-          return undefined;
-        }),
-      });
+      mockExtState.clm = { enabled: true, hasFirewall: false };
 
       renderWithTheme(
         <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
@@ -676,6 +669,243 @@ describe('RepositoriesList', () => {
       } finally {
         getSpy.mockRestore();
       }
+    });
+  });
+
+  describe('Firewall violation counts in the settings list (NEXUS-54499 review)', () => {
+    const PROXY_REPO = 'maven-central';
+    const VIOLATION_COUNT = 7;
+    const SUMMARY_URL = '/service/rest/internal/ui/firewall/status/summary';
+    const REPO_STATUS_FRAGMENT = `firewall/status/repo/${PROXY_REPO}`;
+    const enabledSummary = [{
+      repositoryName: PROXY_REPO,
+      affectedComponentCount: 0,
+      criticalComponentCount: 0,
+      severeComponentCount: 0,
+      moderateComponentCount: 0,
+      quarantinedComponentCount: 0,
+      message: 'Quarantine enabled',
+    }];
+
+    function stubFirewall(repoStatus: () => Promise<unknown>) {
+      return jest.spyOn(restClient, 'get').mockImplementation((url: string) => {
+        if (url === SUMMARY_URL) return Promise.resolve(enabledSummary);
+        if (String(url).includes(REPO_STATUS_FRAGMENT)) return repoStatus();
+        return Promise.resolve([]);
+      });
+    }
+
+    async function openFirewallDialog() {
+      renderWithTheme(<RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
+      const cell = await screen.findByRole('button', { name: /Firewall: Quarantine/i });
+      fireEvent.click(cell);
+    }
+
+    it('shouldShowViolationCountsForEnabledRepoInSettingsList', async () => {
+      const getSpy = stubFirewall(() => Promise.resolve({
+        ...enabledSummary[0],
+        affectedComponentCount: VIOLATION_COUNT,
+        criticalComponentCount: VIOLATION_COUNT,
+      }));
+      try {
+        await openFirewallDialog();
+        expect(await screen.findByText(`Firewall Report \u2013 ${PROXY_REPO}`)).toBeInTheDocument();
+        expect(screen.getAllByText(String(VIOLATION_COUNT)).length).toBeGreaterThan(0);
+        expect(screen.queryByText('No issues found')).not.toBeInTheDocument();
+      } finally {
+        getSpy.mockRestore();
+      }
+    });
+
+    it('shouldRefreshFirewallStatusInRowAfterEnablingFromSettingsList', async () => {
+      let enabled = false;
+      const getSpy = jest.spyOn(restClient, 'get').mockImplementation((url: string) => {
+        if (url === SUMMARY_URL) return Promise.resolve(enabled ? enabledSummary : []);
+        if (url === `/service/rest/v1/repositories/${PROXY_REPO}`) return Promise.resolve({ format: 'maven2', type: 'proxy' });
+        if (url === `/service/rest/v1/repositories/maven/proxy/${PROXY_REPO}`) {
+          return Promise.resolve({ name: PROXY_REPO, firewall: { mode: 'DISABLED' } });
+        }
+        // setFirewallMode reads the repo from the internal UI endpoint (FIRE-1149) before the PUT.
+        if (url === `/service/rest/internal/ui/repositories/repository/${PROXY_REPO}`) {
+          return Promise.resolve({ name: PROXY_REPO, format: 'maven2', type: 'proxy', firewall: { mode: 'DISABLED' } });
+        }
+        if (String(url).includes(REPO_STATUS_FRAGMENT)) return Promise.resolve(enabledSummary[0]);
+        return Promise.resolve([]);
+      });
+      const putSpy = jest.spyOn(restClient, 'put').mockImplementation(async () => { enabled = true; });
+      try {
+        renderWithTheme(<RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
+        const row = (await screen.findByText(PROXY_REPO)).closest('tr') as HTMLElement;
+        fireEvent.click(await within(row).findByRole('button', { name: /Firewall: Unprotected/i }));
+        fireEvent.click(await screen.findByText('Enable Firewall Protection'));
+        fireEvent.click(await screen.findByRole('radio', { name: /Quarantine/ }));
+        fireEvent.click(screen.getByRole('button', { name: 'Enable' }));
+
+        expect(await within(row).findByRole('button', { name: /Firewall: Quarantine/i })).toBeInTheDocument();
+        expect(within(row).queryByRole('button', { name: /Firewall: Unprotected/i })).not.toBeInTheDocument();
+      } finally {
+        getSpy.mockRestore();
+        putSpy.mockRestore();
+      }
+    });
+
+    it('shouldNotShowCleanReportWhenCountsFailForEnabledRepoInSettingsList', async () => {
+      const getSpy = stubFirewall(() => Promise.reject(new Error('IQ down')));
+      try {
+        await openFirewallDialog();
+        expect(await screen.findByText(/Violation counts could not be loaded/)).toBeInTheDocument();
+        expect(screen.queryByText('No issues found')).not.toBeInTheDocument();
+      } finally {
+        getSpy.mockRestore();
+      }
+    });
+  });
+
+  // NEXUS-55079: repository size is a Pro-only feature (RepositoryMetricsFeatureCheck requires a
+  // license AND Postgres AND a finished CopyBlobSizeTask). The backend publishes the resolved answer
+  // as the `nexus.repository.size` state key; when it is not true the column must be hidden outright
+  // rather than rendering an unpopulated size, matching the classic UI (RepositoryList.js:40).
+  describe('Size column (NEXUS-55079)', () => {
+    const mockStateValues = (values: Record<string, unknown>) => {
+      Object.keys(mockExtState).forEach((key) => delete mockExtState[key]);
+      Object.assign(mockExtState, values);
+    };
+
+    it('shouldHideSizeColumnWhenRepositorySizeStateIsAbsent', async () => {
+      mockStateValues({ clm: { enabled: true } });
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('columnheader', { name: /size/i })).not.toBeInTheDocument();
+    });
+
+    it('shouldHideSizeColumnWhenRepositorySizeIsFalse', async () => {
+      mockStateValues({ clm: { enabled: true }, 'nexus.repository.size': false });
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('columnheader', { name: /size/i })).not.toBeInTheDocument();
+    });
+
+    it('shouldShowSizeColumnWhenRepositorySizeIsTrue', async () => {
+      mockStateValues({ clm: { enabled: true }, 'nexus.repository.size': true });
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole('columnheader', { name: /size/i })).toBeInTheDocument();
+    });
+
+    // A repository whose size has not been computed yet (CopyBlobSizeTask still running for that
+    // repository) comes back with no `size` field. That is "unknown", not zero, so it must not be
+    // rendered as "0 B" even while the column is legitimately visible.
+    // The Size column is gated in two places that must stay in step: the header cell and the body
+    // cell. Gating only one of them yields a table whose rows are offset from their headers - every
+    // value lands under the wrong label - which renders without error and is easy to miss by eye.
+    // Assert header count against body cell count rather than against a literal, so the test cannot
+    // drift by making the same off-by-one the code would.
+    const expectHeaderAndBodyCellCountsMatch = async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      const headerCount = screen.getAllByRole('columnheader').length;
+      const firstRow = screen.getByText('maven-central').closest('tr') as HTMLElement;
+      expect(firstRow).not.toBeNull();
+      expect(firstRow.querySelectorAll('td, th').length).toBe(headerCount);
+      return headerCount;
+    };
+
+    it('shouldKeepHeaderAndBodyCellCountsAlignedWhenSizeColumnIsHidden', async () => {
+      mockStateValues({ clm: { enabled: true } });
+
+      await expectHeaderAndBodyCellCountsMatch();
+
+      expect(screen.queryByRole('columnheader', { name: /size/i })).not.toBeInTheDocument();
+    });
+
+    it('shouldKeepHeaderAndBodyCellCountsAlignedWhenSizeColumnIsVisible', async () => {
+      mockStateValues({ clm: { enabled: true }, 'nexus.repository.size': true });
+
+      await expectHeaderAndBodyCellCountsMatch();
+
+      expect(screen.getByRole('columnheader', { name: /size/i })).toBeInTheDocument();
+    });
+
+    // Asserting the counts match in each state still permits the gate adding or removing the wrong
+    // NUMBER of columns, as long as header and body agree. Pin the delta to exactly one so that a
+    // gate accidentally wrapping a neighbouring column is caught too. Absolute counts are left
+    // unasserted deliberately: the health-check and firewall columns are independently gated, so a
+    // literal here would break whenever an unrelated column is added.
+    it('shouldAddExactlyOneColumnWhenRepositorySizeBecomesSupported', async () => {
+      mockStateValues({ clm: { enabled: true } });
+      const { unmount } = renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+      const withoutSize = screen.getAllByRole('columnheader').length;
+      unmount();
+
+      mockStateValues({ clm: { enabled: true }, 'nexus.repository.size': true });
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+      const withSize = screen.getAllByRole('columnheader').length;
+
+      expect(withSize).toBe(withoutSize + 1);
+    });
+
+    it('shouldRenderPlaceholderRatherThanZeroForUnknownSize', async () => {
+      mockStateValues({ clm: { enabled: true }, 'nexus.repository.size': true });
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepositories: jest.fn().mockResolvedValue([
+          { ...mockRepositories[0], size: undefined },
+          { ...mockRepositories[1], size: 0 },
+        ]),
+      } as any);
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      const unknownSizeRow = screen.getByText('maven-central').closest('tr') as HTMLElement;
+      expect(within(unknownSizeRow).getByText('-')).toBeInTheDocument();
+      expect(within(unknownSizeRow).queryByText('0 B')).not.toBeInTheDocument();
+
+      // A genuinely empty repository still reads as "0 B" — only unknown becomes a placeholder.
+      const emptyRepoRow = screen.getByText('maven-releases').closest('tr') as HTMLElement;
+      expect(within(emptyRepoRow).getByText('0 B')).toBeInTheDocument();
     });
   });
 
@@ -882,14 +1112,13 @@ describe('RepositoriesList', () => {
         expect(screen.getByText('maven-central')).toBeInTheDocument();
       });
 
-      // maven-central + maven-releases are online → "Disable System Status"
-      // npm-proxy is offline → "Enable System Status"
+      // online repos show "Take Offline"; offline npm-proxy shows "Bring Online"
       const central = screen.getByTestId('repo-action-toggle-online-maven-central');
-      expect(central).toHaveTextContent('Disable System Status');
+      expect(central).toHaveTextContent('Take Offline');
       const releases = screen.getByTestId('repo-action-toggle-online-maven-releases');
-      expect(releases).toHaveTextContent('Disable System Status');
+      expect(releases).toHaveTextContent('Take Offline');
       const npm = screen.getByTestId('repo-action-toggle-online-npm-proxy');
-      expect(npm).toHaveTextContent('Enable System Status');
+      expect(npm).toHaveTextContent('Bring Online');
     });
 
     it('opens confirm dialog and calls rebuildIndex on confirm', async () => {
@@ -965,6 +1194,135 @@ describe('RepositoriesList', () => {
           false,
         );
       });
+    });
+  });
+
+  describe('row toggle status freshness (NEXUS-55318)', () => {
+    const ONLINE_REPO = 'maven-central';
+    const TAKE_OFFLINE = /take offline/i;
+    const BRING_ONLINE = /bring online/i;
+
+    // The real fetchRepository returns a fresh top-level `online` but NO `status`.
+    // The default suite mock returns `status`, which would mask the stale-merge bug,
+    // so this block installs a realistic refetch payload.
+    const mockRealisticRefetch = (online: boolean) =>
+      jest.fn().mockImplementation((name: string) =>
+        Promise.resolve({
+          name,
+          type: 'proxy',
+          format: 'maven2',
+          url: `http://localhost:8081/repository/${name}/`,
+          online,
+        })
+      );
+
+    const openRowMenuAndConfirm = async (label: RegExp) => {
+      fireEvent.click(screen.getByTestId(`repo-action-toggle-online-${ONLINE_REPO}`));
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+      await userEvent.click(screen.getByRole('button', { name: label }));
+    };
+
+    it('shouldUpdateStatusCellAfterTakeOfflineWithoutReload', async () => {
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepository: mockRealisticRefetch(false),
+      } as any);
+
+      renderWithTheme(<RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
+      await waitFor(() => {
+        expect(screen.getByText(ONLINE_REPO)).toBeInTheDocument();
+      });
+
+      // Baseline: 2 online repos in the fixture.
+      expect(screen.getAllByText('Online').length).toBe(2);
+
+      await openRowMenuAndConfirm(TAKE_OFFLINE);
+
+      // After the toggle the just-toggled row must flip to Offline without a reload.
+      await waitFor(() => {
+        expect(screen.getAllByText('Online').length).toBe(1);
+        // npm-proxy was already offline; maven-central now joins it.
+        expect(screen.getAllByText('Offline').length).toBe(2);
+      });
+    });
+
+    it('shouldFlipRowMenuLabelAfterTakeOfflineWithoutReload', async () => {
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepository: mockRealisticRefetch(false),
+      } as any);
+
+      renderWithTheme(<RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
+      await waitFor(() => {
+        expect(screen.getByTestId(`repo-action-toggle-online-${ONLINE_REPO}`)).toHaveTextContent('Take Offline');
+      });
+
+      await openRowMenuAndConfirm(TAKE_OFFLINE);
+
+      await waitFor(() => {
+        expect(screen.getByTestId(`repo-action-toggle-online-${ONLINE_REPO}`)).toHaveTextContent('Bring Online');
+      });
+    });
+
+    it('shouldBringRowBackOnlineWithoutReload', async () => {
+      // Fixture starts npm-proxy offline; bring it online and confirm the row updates.
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepository: mockRealisticRefetch(true),
+      } as any);
+
+      renderWithTheme(<RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
+      await waitFor(() => {
+        expect(screen.getByTestId('repo-action-toggle-online-npm-proxy')).toHaveTextContent('Bring Online');
+      });
+
+      fireEvent.click(screen.getByTestId('repo-action-toggle-online-npm-proxy'));
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+      await userEvent.click(screen.getByRole('button', { name: BRING_ONLINE }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('repo-action-toggle-online-npm-proxy')).toHaveTextContent('Take Offline');
+        // all 3 repos now online
+        expect(screen.getAllByText('Online').length).toBe(3);
+      });
+    });
+  });
+
+  describe('row toggle confirm button color (NEXUS-55035)', () => {
+    const findConfirmButton = (label: RegExp) => screen.getByRole('button', { name: label });
+
+    it('shouldRenderTakeOfflineConfirmButtonRed', async () => {
+      renderWithTheme(<RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('repo-action-toggle-online-maven-central'));
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      // Take Offline is disruptive: Radix renders the danger variant with color="red".
+      expect(findConfirmButton(/take offline/i)).toHaveAttribute('data-accent-color', 'red');
+    });
+
+    it('shouldRenderBringOnlineConfirmButtonGreen', async () => {
+      renderWithTheme(<RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
+      await waitFor(() => {
+        expect(screen.getByTestId('repo-action-toggle-online-npm-proxy')).toHaveTextContent('Bring Online');
+      });
+
+      fireEvent.click(screen.getByTestId('repo-action-toggle-online-npm-proxy'));
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      // Bring Online is positive: Radix renders the success variant with color="green".
+      expect(findConfirmButton(/bring online/i)).toHaveAttribute('data-accent-color', 'green');
     });
   });
 

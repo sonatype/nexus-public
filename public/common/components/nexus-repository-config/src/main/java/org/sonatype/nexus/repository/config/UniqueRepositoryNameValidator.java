@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Ensure that Repository names are unique case-insensitively.
- * Also checks for soft-deleted repositories occupying the name.
+ * Also checks for trashed repositories occupying the name.
  *
  * @since 3.0
  */
@@ -56,8 +56,8 @@ public class UniqueRepositoryNameValidator
     if (repositoryManager.exists(value)) {
       return false;
     }
-    // Repository names are unique case-insensitively, so a case-variant of a soft-deleted repository must
-    // also be rejected — otherwise the soft-deleted repository could never be cleanly restored.
+    // Repository names are unique case-insensitively, so a case-variant of a trashed repository must
+    // also be rejected — otherwise the trashed repository could never be cleanly restored.
     if (configurationStore.existsDeletedByNameCaseInsensitive(value)) {
       context.disableDefaultConstraintViolation();
       context.buildConstraintViolationWithTemplate(

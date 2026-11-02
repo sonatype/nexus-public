@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import org.junit.Test;
@@ -52,7 +51,7 @@ public class HashesTest
 
   @Test
   public void hashThree() throws Exception {
-    Map<HashAlgorithm, HashCode> hashes = Hashes.hash(ImmutableList.of(MD5, SHA1, SHA512), inputStream());
+    Map<HashAlgorithm, HashCode> hashes = Hashes.hash(List.of(MD5, SHA1, SHA512), inputStream());
 
     assertThat(hashes.size(), is(3));
     assertThat(hashes.get(MD5).toString(), is(MD5_HASH));
@@ -62,7 +61,7 @@ public class HashesTest
 
   @Test
   public void hashZero() throws Exception {
-    List<HashAlgorithm> zeroAlgorithms = ImmutableList.of();
+    List<HashAlgorithm> zeroAlgorithms = List.of();
     Map<HashAlgorithm, HashCode> hashes = Hashes.hash(zeroAlgorithms, inputStream());
 
     assertThat(hashes.size(), is(0));

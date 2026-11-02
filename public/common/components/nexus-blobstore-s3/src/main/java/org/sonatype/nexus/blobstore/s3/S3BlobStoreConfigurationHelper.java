@@ -20,6 +20,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -92,6 +93,21 @@ public class S3BlobStoreConfigurationHelper
   @Nullable
   public static String getConfiguredEndpoint(final BlobStoreConfiguration blobStoreConfiguration) {
     return blobStoreConfiguration.attributes(CONFIG_KEY).get(ENDPOINT_KEY, String.class);
+  }
+
+  /**
+   * Returns whether the configuration is an S3 blob store with CloudFront or S3 Transfer Acceleration configured.
+   */
+  public static boolean isGlobalDistributionEnabled(final BlobStoreConfiguration blobStoreConfiguration) {
+    if (!S3BlobStore.TYPE.equals(blobStoreConfiguration.getType())) {
+      return false;
+    }
+    NestedAttributesMap s3Attributes = blobStoreConfiguration.attributes(CONFIG_KEY);
+    if (s3Attributes.get(TRANSFER_ACCELERATION_ENABLED_KEY, Boolean.class, false)) {
+      return true;
+    }
+    return s3Attributes.contains(CLOUDFRONT_KEY) && !Strings.isNullOrEmpty(
+        s3Attributes.child(CLOUDFRONT_KEY).get(CLOUDFRONT_DISTRIBUTION_URL_KEY, String.class));
   }
 
   private static Map<String, String> getBucketConfiguration(final BlobStoreConfiguration blobStoreConfiguration) {

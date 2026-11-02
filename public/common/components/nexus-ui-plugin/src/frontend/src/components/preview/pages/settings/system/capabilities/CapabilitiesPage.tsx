@@ -77,6 +77,12 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
   const formSubmitRef = useRef<(() => void) | null>(null);
 
   const canCreate = ExtJS.checkPermission('nexus:capabilities:create');
+  // Security-sensitive capability types (those that activate/configure a realm) additionally require
+  // nexus:settings:update, so the create wizard's Create button is shown but disabled when the selected
+  // type is sensitive and the user lacks that permission (CVE-2026-14645 / NEXUS-54726).
+  const canSettingsUpdate = ExtJS.checkPermission('nexus:settings:update');
+  const selectedTypeBlocked =
+    createStep === 1 && !!selectedType?.requiresSettingsUpdate && !canSettingsUpdate;
 
   // Deep link: load capability or type from URL params
   useEffect(() => {
@@ -171,11 +177,16 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
   }, [selectedType, router, handleBackToTypeSelect]);
 
   const handleWizardComplete = useCallback(() => {
+    // Defense-in-depth: never submit a security-sensitive type without nexus:settings:update.
+    // The backend is the authority (returns 403), but the button is also disabled via canAdvance.
+    if (selectedTypeBlocked) {
+      return;
+    }
     // Trigger form submission
     if (formSubmitRef.current) {
       formSubmitRef.current();
     }
-  }, []);
+  }, [selectedTypeBlocked]);
 
   const handleWizardCancel = useCallback(() => {
     if (createStep === 0) {
@@ -338,13 +349,21 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
             onCancel={handleWizardCancel}
             completeLabel="Create"
             dirty={createStep > 0}
-            canAdvance={createStep === 0 ? !!selectedType : formReady}
+            canAdvance={createStep === 0 ? !!selectedType : (formReady && !selectedTypeBlocked)}
             loading={loading}
             testId="capability-wizard"
             noDirtyTracking={true}
           >
             {createStep === 0 && (
               <CapabilityTypeSelector onSelect={handleSelectType} selectedTypeId={selectedType?.id} />
+            )}
+            {createStep === 1 && selectedType && selectedTypeBlocked && (
+              <Box mb="3" data-testid="capability-settings-permission-warning">
+                <Text size="2" color="red">
+                  Insufficient privileges to create this capability because it activates a security
+                  realm.
+                </Text>
+              </Box>
             )}
             {createStep === 1 && selectedType && (
               <DynamicCapabilityForm

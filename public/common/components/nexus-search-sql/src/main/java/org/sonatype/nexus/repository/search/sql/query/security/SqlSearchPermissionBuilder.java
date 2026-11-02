@@ -20,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -47,10 +48,10 @@ import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
@@ -143,7 +144,7 @@ public class SqlSearchPermissionBuilder
           createContentSelectorCondition(contentSelectorToRepositories, repositoriesWithCompleteAccess);
     }
 
-    if (!directAccessCondition.isPresent() && !contentAccessCondition.isPresent()) {
+    if (!directAccessCondition.isPresent() && !contentAccessCondition.isPresent() && request.isCheckAuthorization()) {
       throw new SqlSearchPermissionException("User does not have permissions to required repositories.");
     }
 
@@ -275,14 +276,25 @@ public class SqlSearchPermissionBuilder
   }
 
   /*
-   * Compute repositories to which the user has direct access
+   * Compute repositories to which the user has access, directly or through a containing group
    */
   private Set<Repository> computeRepositoriesWithAccess(final Set<Repository> repositories) {
     return repositories.stream()
-        .filter(repository -> securityHelper.anyPermitted(
-            new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), BreadActions.BROWSE),
-            new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), BreadActions.READ)))
+        .filter(repository -> hasAccess(repository) || containingGroups(repository).anyMatch(this::hasAccess))
         .collect(Collectors.toCollection(LinkedHashSet::new));
+  }
+
+  private boolean hasAccess(final Repository repository) {
+    return securityHelper.anyPermitted(
+        new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), BreadActions.BROWSE),
+        new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), BreadActions.READ));
+  }
+
+  private Stream<Repository> containingGroups(final Repository repository) {
+    return repositoryManager.findContainingGroups(repository.getName())
+        .stream()
+        .map(repositoryManager::get)
+        .filter(Objects::nonNull);
   }
 
   /*
@@ -294,13 +306,20 @@ public class SqlSearchPermissionBuilder
     Map<SelectorConfiguration, List<Repository>> selectorToRepositories = new HashMap<>();
     repositories
         .forEach(repository -> selectorManager
-            .browseActive(Collections.singleton(repository.getName()),
+            .browseActive(repositoryAndContainingGroupNames(repository),
                 Collections.singleton(repository.getFormat().getValue()))
             .stream()
             .forEach(
                 selector -> selectorToRepositories.computeIfAbsent(selector, __ -> new ArrayList<>()).add(repository)));
 
     return selectorToRepositories;
+  }
+
+  private Set<String> repositoryAndContainingGroupNames(final Repository repository) {
+    Set<String> names = new LinkedHashSet<>();
+    names.add(repository.getName());
+    names.addAll(repositoryManager.findContainingGroups(repository.getName()));
+    return names;
   }
 
   /*

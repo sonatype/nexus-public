@@ -219,10 +219,13 @@ public abstract class QuartzSchedulerSPI
       return;
     }
 
+    // NEXUS-54368: fetched once, so interrupt-detection costs one extra query per startup
+    final Map<JobKey, String> executingInstanceIds = getExecutingInstanceIds();
+
     // Update last run state info for all jobs
     for (Entry<Trigger, JobDetail> entry : nexusJobs.entrySet()) {
       try {
-        updateLastRunStateInfo(entry.getValue(), lastShutdownTime);
+        updateLastRunStateInfo(entry.getValue(), lastShutdownTime, executingInstanceIds);
       }
       catch (SchedulerException e) {
         log.error("Error updating last run state for {}", entry.getValue().getKey(), e);
@@ -250,7 +253,9 @@ public abstract class QuartzSchedulerSPI
       });
 
       if (recoverInterruptedJobs) {
-        forEachNexusJob(this::recoverJob);
+        // fetched here, not reused from startup: this block runs later and that snapshot may be stale
+        Map<JobKey, String> executing = getExecutingInstanceIds();
+        forEachNexusJob((trigger, jobDetail) -> recoverJob(trigger, jobDetail, executing));
       }
     });
   }
@@ -267,8 +272,12 @@ public abstract class QuartzSchedulerSPI
   }
 
   @VisibleForTesting
-  public void recoverJob(final Trigger trigger, final JobDetail jobDetail) {
-    if (shouldRecoverJob(trigger, jobDetail)) {
+  public void recoverJob(
+      final Trigger trigger,
+      final JobDetail jobDetail,
+      final Map<JobKey, String> executingInstanceIds)
+  {
+    if (shouldRecoverJob(trigger, jobDetail, executingInstanceIds)) {
       try {
         Trigger newTrigger = newTrigger()
             .usingJobData(trigger.getJobDataMap())
@@ -285,22 +294,72 @@ public abstract class QuartzSchedulerSPI
     }
   }
 
-  private static Boolean shouldRecoverJob(final Trigger trigger, final JobDetail jobDetail) {
+  /**
+   * A stored {@code INTERRUPTED} is not cleared when a task is re-fired, so it outlives the interruption
+   * that set it. Recovering on it while a live instance is executing the job duplicates the run.
+   */
+  private boolean shouldRecoverJob(
+      final Trigger trigger,
+      final JobDetail jobDetail,
+      final Map<JobKey, String> executingInstanceIds)
+  {
+    if (isExecutingInCluster(jobDetail.getKey(), executingInstanceIds)) {
+      log.debug("Not recovering jobKey {}, it is executing on instance {}", jobDetail.getKey(),
+          executingInstanceIds.get(jobDetail.getKey()));
+      return false;
+    }
     return jobDetail.requestsRecovery() && isInterruptedJob(jobDetail) || isRunNow(trigger);
+  }
+
+  /**
+   * Instance executing each Nexus job, or empty if that cannot be determined. An empty map only means
+   * interrupt-detection is not suppressed, so failure here must not abort startup.
+   */
+  private Map<JobKey, String> getExecutingInstanceIds() {
+    try {
+      return scheduler.getExecutingInstanceIdsForGroup(GROUP_NAME);
+    }
+    catch (SchedulerException e) {
+      log.warn("Unable to determine which jobs are executing, interrupt-detection may be inaccurate", e);
+      return emptyMap();
+    }
+  }
+
+  /**
+   * Whether a live instance in the cluster has begun executing this job.
+   * <p>
+   * Clustered only: a standalone node's id is persistent, so its own records outlive a restart and must
+   * still count as interrupted. The owner is necessarily another node, since the local scheduler is still
+   * in stand-by here; calling this after {@code scheduler.start()} would need the local id excluded.
+   */
+  private boolean isExecutingInCluster(final JobKey jobKey, final Map<JobKey, String> executingInstanceIds) {
+    return nodeAccess.isClustered() && executingInstanceIds.containsKey(jobKey);
   }
 
   /**
    * Checks the last run time against its last trigger fire time.
    * If the trigger's last fire time doesn't match with the jobs last fire time,
    * then the {@link TaskState} is set to interrupted
+   * <p>
+   * NEXUS-54368: {@code lastRunState} is written only on completion, so a task still executing looks
+   * identical to an interrupted one by fire times alone, and a restarting node would flip a task running
+   * elsewhere to {@link TaskState#INTERRUPTED}. Jobs a live instance is executing are therefore skipped.
    *
    * @param nexusLastRunTime - approximate time at which the last instance of nexus was shutdown
+   * @param executingInstanceIds - scheduler instance executing each job, keyed by job key
    */
   @VisibleForTesting
   public void updateLastRunStateInfo(
       final JobDetail jobDetail,
-      final Optional<Date> nexusLastRunTime) throws SchedulerException
+      final Optional<Date> nexusLastRunTime,
+      final Map<JobKey, String> executingInstanceIds) throws SchedulerException
   {
+    if (isExecutingInCluster(jobDetail.getKey(), executingInstanceIds)) {
+      log.debug("Not marking jobKey {} interrupted, it is executing on instance {}", jobDetail.getKey(),
+          executingInstanceIds.get(jobDetail.getKey()));
+      return;
+    }
+
     Optional<Date> latestFireWrapper = scheduler.getTriggersOfJob(jobDetail.getKey())
         .stream()
         .filter(Objects::nonNull)

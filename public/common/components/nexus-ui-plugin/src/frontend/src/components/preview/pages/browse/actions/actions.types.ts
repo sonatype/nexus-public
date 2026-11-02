@@ -54,10 +54,10 @@ export interface DeleteDialogProps {
   /** Whether the delete operation is in progress */
   isDeleting?: boolean;
   /** When true, the item is moved to Trash (recoverable) instead of permanently deleted, so the
-   *  copy reflects a recoverable soft-delete. Callers pass this only when a soft-delete will actually
-   *  occur (soft-delete enabled on a hosted repository). */
-  softDelete?: boolean;
-  /** Optional retention window (days) surfaced in the soft-delete copy. Only used when softDelete. */
+   *  copy reflects a recoverable trash. Callers pass this only when a trash will actually
+   *  occur (trash enabled on a hosted repository). */
+  trash?: boolean;
+  /** Optional retention window (days) surfaced in the trash copy. Only used when trash. */
   retentionDays?: number;
 }
 
@@ -137,7 +137,7 @@ export interface ActionStrings {
     readonly componentMessage: (name: string) => string;
     readonly assetMessage: (name: string) => string;
     readonly folderMessage: (name: string) => string;
-    /** Recoverable soft-delete (Trash) variants, used when deleting from a hosted repo with soft-delete on. */
+    /** Recoverable trash (Trash) variants, used when deleting from a hosted repo with trash on. */
     readonly componentTrashMessage: (name: string, retentionDays?: number) => string;
     readonly assetTrashMessage: (name: string, retentionDays?: number) => string;
     readonly folderTrashMessage: (name: string, retentionDays?: number) => string;

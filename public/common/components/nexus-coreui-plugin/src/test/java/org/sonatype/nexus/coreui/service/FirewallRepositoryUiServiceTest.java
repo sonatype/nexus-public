@@ -119,6 +119,9 @@ class FirewallRepositoryUiServiceTest
   private HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder;
 
   @Mock
+  private org.sonatype.nexus.repository.security.GroupMemberAuthorizationChecker groupMemberAuthorizationChecker;
+
+  @Mock
   private Format format;
 
   @Mock
@@ -151,7 +154,7 @@ class FirewallRepositoryUiServiceTest
     underTest = Mockito.spy(new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager,
         repositoryMetricsService,
         configurationStore, securityHelper, recipeList, taskScheduler, typeLookup, formats, repositoryPermissionChecker,
-        failedRepositoryTracker, httpAuthenticationSecretEncoder)
+        failedRepositoryTracker, httpAuthenticationSecretEncoder, groupMemberAuthorizationChecker)
     {
       @Override
       RepositoryXO asRepository(final Repository input) {

@@ -69,44 +69,44 @@ public interface ConfigurationStore
   Collection<Configuration> readByRecipe(String recipeName);
 
   /**
-   * Mark a repository configuration as soft-deleted.
+   * Mark a repository configuration as trashed.
    */
-  void softDelete(String repositoryName, String deletedBy);
+  void trash(String repositoryName, String deletedBy);
 
   /**
-   * Restore a soft-deleted repository configuration.
+   * Restore a trashed repository configuration.
    */
-  void undoSoftDelete(String repositoryName);
+  void undoTrash(String repositoryName);
 
   /**
-   * Browse soft-deleted repository configurations with pagination.
+   * Browse trashed repository configurations with pagination.
    */
   List<Configuration> browseDeleted(int limit, @Nullable String continuationToken);
 
   /**
-   * @return the count of soft-deleted repository configurations
+   * @return the count of trashed repository configurations
    */
   int countDeleted();
 
   /**
-   * Read a soft-deleted repository configuration by name.
+   * Read a trashed repository configuration by name.
    */
   Configuration readDeleted(String repositoryName);
 
   /**
-   * Returns {@code true} if a soft-deleted repository configuration exists whose name matches
+   * Returns {@code true} if a trashed repository configuration exists whose name matches
    * {@code repositoryName} ignoring case. Repository names are unique case-insensitively, so this guards
    * against creating (or restoring) a repository whose name would collide with one still in Trash.
    */
   boolean existsDeletedByNameCaseInsensitive(String repositoryName);
 
   /**
-   * Permanently remove a soft-deleted repository configuration.
+   * Permanently remove a trashed repository configuration.
    */
   void hardDelete(String repositoryName);
 
   /**
-   * Read the names of all repositories soft-deleted more than {@code retentionDays} ago.
+   * Read the names of all repositories trashed more than {@code retentionDays} ago.
    */
   List<String> readDeletedNamesBefore(int retentionDays);
 
@@ -120,4 +120,17 @@ public interface ConfigurationStore
    * @return the number of repositories configured to use the blob store
    */
   int countByBlobStore(String blobStoreName);
+
+  /**
+   * Counts repositories configured to use the given blob store, INCLUDING trashed (soft-deleted) ones.
+   * <p>
+   * Unlike {@link #countByBlobStore} (which excludes trashed repositories), this is used by the blob-store
+   * delete guard: a trashed repository can be restored and still needs its blobs, so its blob store must not be
+   * deletable while it sits in Trash (NEXUS-55233). Omits the {@code deleted_on} predicate, so it is also safe
+   * before the trash columns are migrated (ZDU).
+   *
+   * @param blobStoreName the blob store name to match
+   * @return the number of live or trashed repositories configured to use the blob store
+   */
+  int countByBlobStoreIncludingTrashed(String blobStoreName);
 }

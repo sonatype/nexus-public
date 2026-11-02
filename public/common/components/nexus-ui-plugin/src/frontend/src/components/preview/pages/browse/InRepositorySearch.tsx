@@ -16,9 +16,12 @@ import { Box, Card, Spinner, Text, TextField } from '@radix-ui/themes';
 import { Search, X } from 'lucide-react';
 import { searchInRepository, type SearchResultItem as SearchResult } from './browse.api';
 import { SearchResultItem } from './SearchResultItem';
+import { debouncedValueOf, useDebouncedWithDiscard } from '../../shared/hooks';
 
 import './InRepositorySearch.scss';
 
+// 300 ms rather than `APIConstants.DEBOUNCE_DELAY`: this is a type-ahead dropdown, where the
+// result list is expected to track the keystrokes closely.
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 2;
 const MAX_RESULTS = 20;
@@ -87,47 +90,77 @@ export function InRepositorySearch({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
 
-  // Cleanup debounce on unmount
+  // Identifies the most recently issued search. Only that request may publish its outcome.
+  //
+  // Two things can leave a request describing a query that is no longer on screen. Typing is
+  // debounced, but `repositoryName` is not: switching repositories re-runs the search effect at
+  // once, so two requests can be in flight together and the slower one can land last. And a query
+  // deleted below the minimum length abandons its request outright. Without this guard either case
+  // lets a stale response publish over the current state.
+  const latestRequestRef = useRef(0);
+
+  const [searchToken, discardResults] = useDebouncedWithDiscard(query, DEBOUNCE_MS);
+
+  // Close the dropdown as soon as the query is too short to search. This keys off the raw query,
+  // not the debounced one: deleting back down to one character has to close the results at once
+  // rather than leaving them up for another debounce interval.
+  //
+  // Clearing the field and picking a result both empty the query, so this is the one place results
+  // are discarded, and therefore the one place the discard has to be recorded.
   useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
-
-  // Handle search with debounce
-  useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
     if (query.length < MIN_QUERY_LENGTH) {
       setResults([]);
       setIsOpen(false);
       setError(null);
+
+      // Abandon whatever is still in flight: its response describes a query the user has already
+      // deleted, and would reopen the dropdown over an input too short to have asked for it.
+      // Guarding the request out also guards its `finally` out, so the spinner has to be stopped
+      // here rather than when that request settles.
+      latestRequestRef.current += 1;
+      setLoading(false);
+
+      discardResults();
+    }
+  }, [query, discardResults]);
+
+  // Search once typing settles.
+  useEffect(() => {
+    const debouncedQuery = debouncedValueOf(searchToken);
+    if (debouncedQuery.length < MIN_QUERY_LENGTH) {
       return;
     }
 
-    debounceRef.current = setTimeout(async () => {
+    const requestId = ++latestRequestRef.current;
+    const isLatestRequest = () => requestId === latestRequestRef.current;
+
+    void (async () => {
       setLoading(true);
       setError(null);
       try {
-        const searchResults = await searchInRepository(repositoryName, query, MAX_RESULTS);
+        const searchResults = await searchInRepository(repositoryName, debouncedQuery, MAX_RESULTS);
+        if (!isLatestRequest()) {
+          return;
+        }
         setResults(searchResults);
         setIsOpen(true);
         setSelectedIndex(-1);
       } catch (_err) {
+        if (!isLatestRequest()) {
+          return;
+        }
         setError('Search failed. Please try again.');
         setResults([]);
         setIsOpen(true);
       } finally {
-        setLoading(false);
+        // A superseded request must not report that the current one finished loading.
+        if (isLatestRequest()) {
+          setLoading(false);
+        }
       }
-    }, DEBOUNCE_MS);
-  }, [query, repositoryName]);
+    })();
+  }, [searchToken, repositoryName]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);

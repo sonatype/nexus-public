@@ -13,6 +13,7 @@
 package org.sonatype.nexus.quartz;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,6 @@ import org.sonatype.nexus.scheduling.events.TaskStartedRunningEvent;
 
 import org.sonatype.nexus.testdb.DatabaseTest;
 
-import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
@@ -297,7 +297,7 @@ class ScheduledTaskEventsTest
 
   class Listener
   {
-    final List<TaskEvent> arrivedEvents = Lists.newArrayList();
+    final List<TaskEvent> arrivedEvents = new ArrayList<>();
 
     @Subscribe
     public void on(final TaskEvent e) {

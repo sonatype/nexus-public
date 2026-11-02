@@ -73,6 +73,7 @@ export const PREVIEW_TO_HERITAGE_ROUTES = [
   { preview: 'preview/browse/welcome', heritage: 'browse/welcome' },
   { preview: 'preview/browse/upload', heritage: 'browse/upload' },
   { preview: 'preview/browse/tags', heritage: 'browse/tags' },
+  { preview: 'preview/browse/malwarerisk', heritage: 'browse/malwarerisk' },
   { preview: 'preview/browse/protect', heritage: 'browse/browse' },
   { preview: 'preview/browse/audit', heritage: 'browse/browse' },
   { preview: 'preview/browse/malicious-packages', heritage: 'browse/malwarerisk' },
@@ -183,7 +184,7 @@ export function heritageToPreviewPath(currentPath) {
   } else if (cleanPath === 'browse/search/generic' || cleanPath.startsWith('browse/search/')) {
     newPath = 'preview/browse/search';
   } else if (cleanPath === 'browse/malwarerisk' || cleanPath.startsWith('browse/malwarerisk/')) {
-    newPath = 'preview/browse/malicious-packages';
+    newPath = 'preview/browse/malwarerisk';
   } else if (cleanPath === 'admin/hub' || cleanPath === 'admin' || cleanPath === 'admin/') {
     newPath = 'preview/settings';
   } else if (cleanPath === 'admin/iq/sonatype-lifecycle/hosted-repos-eval' || cleanPath.startsWith('admin/iq/sonatype-lifecycle/hosted-repos-eval/')) {

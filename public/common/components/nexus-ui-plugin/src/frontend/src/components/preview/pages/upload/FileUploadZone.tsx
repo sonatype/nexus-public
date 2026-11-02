@@ -18,7 +18,7 @@ import { AlertTriangle, Info, Plus, Trash2 } from 'lucide-react';
 import { FileDropzone } from './components/FileDropzone';
 import { UploadField } from './UploadField';
 import type { AssetFieldData, UploadFieldDefinition, ValidationErrors } from './upload.types';
-import { UPLOAD_FORM_STRINGS } from './upload.types';
+import { FORMAT_FIELD_STRINGS, UPLOAD_FORM_STRINGS } from './upload.types';
 
 interface FileUploadZoneProps {
   assets: AssetFieldData[];
@@ -186,11 +186,15 @@ export function FileUploadZone({
                 .map((field) => (
                   <UploadField
                     key={field.name}
-                    field={field}
+                    field={{
+                      ...field,
+                      helpText: field.helpText || FORMAT_FIELD_STRINGS.asset.help[field.name],
+                    }}
                     value={asset[field.name] as string | boolean}
                     onChange={(val) => onAssetFieldChange(assetIndex, field.name, val)}
                     error={validationErrors.assets?.[assetIndex]?.[field.name]}
                     onBlur={onBlurAssetField ? () => onBlurAssetField(assetIndex, field.name) : undefined}
+                    placeholder={FORMAT_FIELD_STRINGS.asset.placeholders[field.name]}
                   />
                 ))}
             </Box>

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.httpclient;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.time.Time;
@@ -25,7 +27,6 @@ import org.sonatype.nexus.repository.config.ConfigurationObjectMapperCustomizer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +61,7 @@ public class HttpClientConfigurationObjectMapperCustomizer
   @Override
   public void customize(final ObjectMapper objectMapper) {
     objectMapper
-        .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(ImmutableList.of(Secret.class)))
+        .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(List.of(Secret.class)))
         .registerModule(
             new SimpleModule()
                 .addSerializer(

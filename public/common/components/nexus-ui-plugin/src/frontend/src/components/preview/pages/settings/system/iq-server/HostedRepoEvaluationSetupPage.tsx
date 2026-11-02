@@ -163,7 +163,7 @@ export function HostedRepoEvaluationSetupPage() {
           }
           breadcrumbs={[
             { label: 'Settings', onClick: () => router.stateService.go('preview.settings') },
-            { label: 'IQ Server', onClick: () => router.stateService.go('preview.admin.iqConnected') },
+            { label: 'IQ Server', onClick: () => router.stateService.go('preview.admin.iq', { tab: 'overview' }) },
             { label: hasExistingConfig ? 'Hosted Repository Evaluation' : 'Set up Hosted Repository Evaluation' },
           ]}
         />

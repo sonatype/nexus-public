@@ -419,7 +419,7 @@ export function SettingsCombobox({
           )}
         </label>
       )}
-      {helpText && !error && (
+      {helpText && (
         <Text as="p" size="1" id={helpId} className="settings-combobox__help">
           {helpText}
         </Text>

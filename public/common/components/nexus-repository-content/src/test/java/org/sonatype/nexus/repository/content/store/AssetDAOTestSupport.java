@@ -16,7 +16,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,7 +43,6 @@ import org.sonatype.nexus.repository.content.store.example.TestContentRepository
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.hamcrest.collection.IsIterableContainingInOrder;
 
-import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
@@ -150,7 +151,7 @@ public abstract class AssetDAOTestSupport
       session.getTransaction().commit();
     }
 
-    // TRY CREATE AGAIN — with MERGE/upsert (soft-delete support), duplicate path is an update
+    // TRY CREATE AGAIN — with MERGE/upsert (trash support), duplicate path is an update
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
@@ -918,14 +919,14 @@ public abstract class AssetDAOTestSupport
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertThat(
-          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
+          dao.browseAssetsInRepositories(new HashSet<>(Arrays.asList(repositoryId, anotherRepositoryId)), null,
               null, null, Map.of(), 10, true),
           emptyIterable());
 
       dao.createAsset(asset1, false);
 
       assertThat(
-          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
+          dao.browseAssetsInRepositories(new HashSet<>(Arrays.asList(repositoryId, anotherRepositoryId)), null,
               null, null, Map.of(), 10, true),
           contains(allOf(samePath(asset1), sameAttributes(asset1))));
 
@@ -935,7 +936,7 @@ public abstract class AssetDAOTestSupport
 
       // browse all assets
       assertThat(
-          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
+          dao.browseAssetsInRepositories(new HashSet<>(Arrays.asList(repositoryId, anotherRepositoryId)), null,
               null, null, Map.of(), 10, true),
           contains(allOf(samePath(asset1), sameAttributes(asset1)), allOf(samePath(asset2), sameAttributes(asset2)),
               allOf(samePath(asset3), sameAttributes(asset3)), allOf(samePath(asset4), sameAttributes(asset4))));

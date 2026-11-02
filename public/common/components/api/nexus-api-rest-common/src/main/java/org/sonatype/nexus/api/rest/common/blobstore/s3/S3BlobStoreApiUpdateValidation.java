@@ -18,30 +18,33 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
+import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiCloudFront;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiFailoverBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration.FAILOVER_BUCKETS;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.BLOB_STORE_NAME_UPDATE_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.BLOB_STORE_TYPE_MISMATCH_ERROR_FORMAT;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.DUPLICATE_REGIONS_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.FAILOVER_DEFAULT_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.MATCHES_PRIMARY_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT;
-import org.springframework.stereotype.Component;
+import static org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration.FAILOVER_BUCKETS;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 
 /**
  * Performs validation checks on specified {@link S3BlobStoreApiModel} object containing updates to an S3 blob store.
@@ -64,6 +67,7 @@ public class S3BlobStoreApiUpdateValidation
     List<ValidationErrorXO> errors = new ArrayList<>();
     checkBlobStoreNameNotEmpty(s3BlobStoreApiModel.getName(), errors);
     checkFailoverBuckets(s3BlobStoreApiModel, errors);
+    checkCloudFrontPem(s3BlobStoreApiModel, errors);
 
     if (!errors.isEmpty()) {
       throw new ValidationErrorsException().withErrors(errors);
@@ -78,9 +82,24 @@ public class S3BlobStoreApiUpdateValidation
       checkBlobStoreTypeIsS3(blobStoreName, errors);
     }
     checkFailoverBuckets(s3BlobStoreApiModel, errors);
+    checkCloudFrontPem(s3BlobStoreApiModel, errors);
 
     if (!errors.isEmpty()) {
       throw new ValidationErrorsException().withErrors(errors);
+    }
+  }
+
+  private static void checkCloudFrontPem(
+      final S3BlobStoreApiModel s3BlobStoreApiModel,
+      final List<ValidationErrorXO> errors)
+  {
+    if (s3BlobStoreApiModel.getGlobalDistribution() instanceof S3BlobStoreApiCloudFront cloudFront) {
+      if (PasswordPlaceholder.get().equals(cloudFront.privateKey())) {
+        errors.add(new ValidationErrorXO("globalDistribution", "Invalid PEM key"));
+      }
+      else if (Strings2.isBlank(cloudFront.privateKey())) {
+        errors.add(new ValidationErrorXO("globalDistribution", "Missing PEM key"));
+      }
     }
   }
 

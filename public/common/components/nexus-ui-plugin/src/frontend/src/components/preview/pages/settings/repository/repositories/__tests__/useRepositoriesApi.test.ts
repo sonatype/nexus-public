@@ -58,7 +58,7 @@ describe('useRepositoriesApi', () => {
         repositories = await result.current.fetchRepositories();
       });
 
-      expect(mockRestClient.get).toHaveBeenCalledWith('/service/rest/internal/ui/repositories/details/');
+      expect(mockRestClient.get).toHaveBeenCalledWith('/service/rest/internal/ui/repositories/details');
       expect(repositories).toHaveLength(2);
       expect(repositories[0].name).toBe('repo1');
     });
@@ -112,6 +112,59 @@ describe('useRepositoriesApi', () => {
       expect(repo.status).toEqual({ online: true });
     });
 
+    // The adapter returns passphrase=null, so the internal endpoint is the only read path.
+    it('fetches the signing passphrase for an alpine repository and seeds alpineSigning', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({
+          name: 'alpine-proxy',
+          format: 'alpine',
+          type: 'proxy',
+          online: true,
+          alpineSigning: { keypair: 'stored-key', passphrase: null },
+        })
+        .mockResolvedValueOnce({ name: 'alpine-proxy', format: 'alpine', type: 'proxy' })
+        .mockResolvedValueOnce({ passphrase: 'stored-secret' });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('alpine-proxy');
+      });
+
+      expect(mockRestClient.get).toHaveBeenNthCalledWith(
+        3,
+        '/service/rest/internal/ui/repositories/repository/alpine-proxy/signing-passphrase'
+      );
+      expect(repo.alpineSigning).toEqual({ keypair: 'stored-key', passphrase: 'stored-secret' });
+    });
+
+    // URL-keyed so an unconsumed rejection cannot leak into later tests. The endpoint answers 404
+    // when the user lacks EDIT; any other failure aborts the fetch (covered by the terraform test).
+    it('leaves the alpine keypair intact when the passphrase endpoint returns 404', async () => {
+      mockRestClient.get.mockImplementation((url: string) => {
+        if (url.endsWith('/signing-passphrase')) {
+          return Promise.reject({ response: { status: 404 }, message: 'Not Found' });
+        }
+        return Promise.resolve({
+          name: 'alpine-proxy',
+          format: 'alpine',
+          type: 'proxy',
+          online: true,
+          alpineSigning: { keypair: 'stored-key', passphrase: null },
+        });
+      });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('alpine-proxy');
+      });
+
+      expect(repo.alpineSigning.keypair).toBe('stored-key');
+    });
+
     it('returns the admin config when the v1 enrichment call 403s (admin-read-only user)', async () => {
       mockRestClient.get
         .mockResolvedValueOnce({ name: 'repo1', format: 'npm', type: 'hosted', online: true })
@@ -125,6 +178,89 @@ describe('useRepositoriesApi', () => {
       });
 
       expect(repo).toEqual({ name: 'repo1', format: 'npm', type: 'hosted', online: true });
+    });
+
+    /*
+     * The terraform REST adapter masks the GPG passphrase on read (CWE-522), so the edit form must
+     * refill it from the EDIT-gated signing-passphrase endpoint. Without the refill the form would
+     * submit a null passphrase on save and wipe the stored secret.
+     */
+    it('refills the terraform signing passphrase from the edit-gated endpoint', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({ name: 'tf-repo', format: 'terraform', type: 'hosted', terraformSigning: { keypair: 'key', passphrase: null } })
+        .mockResolvedValueOnce({ name: 'tf-repo', format: 'terraform', type: 'hosted', status: { online: true } })
+        .mockResolvedValueOnce({ passphrase: 'terraform-secret' });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('tf-repo');
+      });
+
+      expect(mockRestClient.get).toHaveBeenNthCalledWith(
+        3,
+        '/service/rest/internal/ui/repositories/repository/tf-repo/signing-passphrase',
+      );
+      expect(repo.terraformSigning.keypair).toBe('key');
+      expect(repo.terraformSigning.passphrase).toBe('terraform-secret');
+    });
+
+    it('leaves the terraform form usable when the signing-passphrase endpoint fails', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({ name: 'tf-repo', format: 'terraform', type: 'hosted', terraformSigning: { keypair: 'key', passphrase: null } })
+        .mockResolvedValueOnce({ name: 'tf-repo', format: 'terraform', type: 'hosted', status: { online: true } })
+        .mockRejectedValueOnce({ response: { status: 404 }, message: 'Not Found' });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('tf-repo');
+      });
+
+      expect(repo.terraformSigning.passphrase).toBeNull();
+    });
+
+    /*
+     * A 5xx (or network) failure on the refill GET must NOT be swallowed: leaving the passphrase
+     * null and letting the caller save would wipe the stored secret. fetchRepository rethrows so the
+     * edit form reports a load error instead of presenting an empty field primed to wipe on save.
+     */
+    it('aborts the fetch when the signing-passphrase endpoint fails with a server error', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({ name: 'tf-repo', format: 'terraform', type: 'hosted', terraformSigning: { keypair: 'key', passphrase: null } })
+        .mockResolvedValueOnce({ name: 'tf-repo', format: 'terraform', type: 'hosted', status: { online: true } })
+        .mockRejectedValueOnce({ response: { status: 500 }, message: 'Server error' });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await expect(
+        act(async () => {
+          await result.current.fetchRepository('tf-repo');
+        })
+      ).rejects.toThrow('Server error');
+    });
+
+    it('refills the alpine signing passphrase from the edit-gated endpoint', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({ name: 'alpine-repo', format: 'alpine', type: 'group', alpineSigning: { keypair: 'key', passphrase: null } })
+        .mockResolvedValueOnce({ name: 'alpine-repo', format: 'alpine', type: 'group', status: { online: true } })
+        .mockResolvedValueOnce({ passphrase: 'alpine-secret' });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('alpine-repo');
+      });
+
+      expect(mockRestClient.get).toHaveBeenNthCalledWith(
+        3,
+        '/service/rest/internal/ui/repositories/repository/alpine-repo/signing-passphrase',
+      );
+      expect(repo.alpineSigning.keypair).toBe('key');
+      expect(repo.alpineSigning.passphrase).toBe('alpine-secret');
     });
 
     it('returns null when the repository is not found (404)', async () => {
@@ -311,7 +447,8 @@ describe('useRepositoriesApi', () => {
       expect(postedBody.alpineSigning.passphrase).toBe('secret');
     });
 
-    it('omits alpineSigning for non-group alpine repositories when keypair is blank', async () => {
+    // Hosted is @Valid-only, and keypair is @NotEmpty, so a blank block must not be sent.
+    it('omits alpineSigning for alpine hosted repositories when keypair is blank', async () => {
       mockRestClient.post.mockResolvedValueOnce({});
 
       const { result } = renderHook(() => useRepositoriesApi());
@@ -326,6 +463,102 @@ describe('useRepositoriesApi', () => {
           storage: { blobStoreName: 'default', strictContentTypeValidation: true },
           alpineSigning: { keypair: '', passphrase: '' },
         });
+      });
+
+      const postedBody = mockRestClient.post.mock.calls[0][1];
+      expect(postedBody).not.toHaveProperty('alpineSigning');
+    });
+
+    // @NotNull for proxy: omitting the block made the server reject the create outright.
+    it('always includes alpineSigning block for alpine proxy repositories even when keypair is blank', async () => {
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.createRepository({
+          name: 'alpine-proxy',
+          type: 'proxy',
+          format: 'alpine',
+          recipe: 'alpine-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://dl-cdn.alpinelinux.org/alpine/' },
+          alpineSigning: { keypair: '', passphrase: '' },
+        });
+      });
+
+      const postedBody = mockRestClient.post.mock.calls[0][1];
+      expect(postedBody).toHaveProperty('alpineSigning');
+      expect(postedBody.alpineSigning).toEqual({ keypair: '', passphrase: '' });
+    });
+
+    it('includes alpineSigning with keypair and passphrase when provided for alpine proxy', async () => {
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.createRepository({
+          name: 'alpine-proxy',
+          type: 'proxy',
+          format: 'alpine',
+          recipe: 'alpine-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://dl-cdn.alpinelinux.org/alpine/' },
+          alpineSigning: {
+            keypair: '-----BEGIN RSA PRIVATE KEY-----\ntest\n-----END RSA PRIVATE KEY-----',
+            passphrase: 'proxy-secret',
+          },
+        });
+      });
+
+      const postedBody = mockRestClient.post.mock.calls[0][1];
+      expect(postedBody.alpineSigning.keypair).toContain('BEGIN RSA PRIVATE KEY');
+      expect(postedBody.alpineSigning.passphrase).toBe('proxy-secret');
+    });
+
+    // updateRepository shares buildRepositoryConfig.
+    it('includes alpineSigning on update for alpine proxy repositories', async () => {
+      mockRestClient.put.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.updateRepository('alpine-proxy', {
+          name: 'alpine-proxy',
+          type: 'proxy',
+          format: 'alpine',
+          recipe: 'alpine-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://dl-cdn.alpinelinux.org/alpine/' },
+          alpineSigning: { keypair: 'existing-key', passphrase: 'kept' },
+        });
+      });
+
+      const putBody = mockRestClient.put.mock.calls[0][1];
+      expect(putBody.alpineSigning).toEqual({ keypair: 'existing-key', passphrase: 'kept' });
+    });
+
+    // The pre-fix fallback was a bare `else` and ran for every format.
+    it('never emits alpineSigning for a non-alpine format even when the field carries data', async () => {
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.createRepository({
+          name: 'maven-proxy',
+          type: 'proxy',
+          format: 'maven2',
+          recipe: 'maven2-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://repo1.maven.org/maven2/' },
+          alpineSigning: { keypair: 'leaked-key', passphrase: 'leaked' },
+        } as never);
       });
 
       const postedBody = mockRestClient.post.mock.calls[0][1];
@@ -668,6 +901,84 @@ describe('useRepositoriesApi', () => {
       });
     });
 
+    /*
+     * CWE-522 data-loss guard: the GET masks the signing passphrase (null), so a toggle-only PUT
+     * must refill it from the EDIT-gated endpoint, otherwise flipping online/offline wipes the secret.
+     */
+    it('refills the signing passphrase before the toggle PUT so it is not wiped', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({
+          name: 'tf-signed',
+          format: 'terraform',
+          type: 'hosted',
+          online: false,
+          terraformSigning: { keypair: 'key', passphrase: null },
+        })
+        .mockResolvedValueOnce({ passphrase: 'terraform-secret' });
+      mockRestClient.put.mockResolvedValueOnce({});
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.setRepositoryOnline('tf-signed', 'terraform', 'hosted', true);
+      });
+
+      expect(mockRestClient.get).toHaveBeenNthCalledWith(
+        2,
+        '/service/rest/internal/ui/repositories/repository/tf-signed/signing-passphrase',
+      );
+      const putBody = mockRestClient.put.mock.calls[0][1];
+      expect(putBody.online).toBe(true);
+      expect(putBody.terraformSigning.passphrase).toBe('terraform-secret');
+    });
+
+    it('toggles online without a passphrase when the signing-passphrase endpoint fails', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({
+          name: 'tf-signed',
+          format: 'terraform',
+          type: 'hosted',
+          online: false,
+          terraformSigning: { keypair: 'key', passphrase: null },
+        })
+        .mockRejectedValueOnce({ response: { status: 404 }, message: 'Not Found' });
+      mockRestClient.put.mockResolvedValueOnce({});
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.setRepositoryOnline('tf-signed', 'terraform', 'hosted', true);
+      });
+
+      const putBody = mockRestClient.put.mock.calls[0][1];
+      expect(putBody.online).toBe(true);
+      expect(putBody.terraformSigning.passphrase).toBeNull();
+    });
+
+    /*
+     * A 5xx (or network) failure on the refill GET must abort the toggle before the PUT, otherwise
+     * flipping online/offline during a transient error PUTs a null passphrase and silently wipes the
+     * stored secret while showing a success toast (CWE-522 data-loss).
+     */
+    it('aborts the toggle without a PUT when the signing-passphrase endpoint fails with a server error', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({
+          name: 'tf-signed',
+          format: 'terraform',
+          type: 'hosted',
+          online: false,
+          terraformSigning: { keypair: 'key', passphrase: null },
+        })
+        .mockRejectedValueOnce({ response: { status: 500 }, message: 'Server error' });
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await expect(
+        act(async () => {
+          await result.current.setRepositoryOnline('tf-signed', 'terraform', 'hosted', true);
+        })
+      ).rejects.toThrow('Server error');
+
+      expect(mockRestClient.put).not.toHaveBeenCalled();
+    });
+
     it('omits cosign when the user never selected a policy', async () => {
       mockRestClient.post.mockResolvedValueOnce({});
       const { result } = renderHook(() => useRepositoriesApi());
@@ -874,6 +1185,75 @@ describe('useRepositoriesApi', () => {
 
       const putBody = mockRestClient.put.mock.calls[0][1];
       expect(putBody).not.toHaveProperty('xet');
+    });
+
+    // NEXUS-54933: XET and Firewall are mutually exclusive. When xet.enabled=true the payload
+    // must include firewall.mode=DISABLED so the backend persists a consistent state atomically.
+
+    it('includes firewall.mode=DISABLED in PUT payload when xet.enabled is true', async () => {
+      mockRestClient.put.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.updateRepository('huggingface-proxy', {
+          name: 'huggingface-proxy',
+          type: 'proxy',
+          format: 'huggingface',
+          recipe: 'huggingface-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://huggingface.co/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+          xet: { enabled: true },
+        });
+      });
+
+      const putBody = mockRestClient.put.mock.calls[0][1];
+      expect(putBody.firewall).toEqual({ mode: 'DISABLED' });
+    });
+
+    it('omits firewall from PUT payload when xet.enabled is false', async () => {
+      mockRestClient.put.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.updateRepository('huggingface-proxy', {
+          name: 'huggingface-proxy',
+          type: 'proxy',
+          format: 'huggingface',
+          recipe: 'huggingface-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://huggingface.co/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+          xet: { enabled: false },
+        });
+      });
+
+      const putBody = mockRestClient.put.mock.calls[0][1];
+      expect(putBody).not.toHaveProperty('firewall');
+    });
+
+    it('includes firewall.mode=DISABLED in POST payload when xet.enabled is true', async () => {
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.createRepository({
+          name: 'huggingface-proxy',
+          type: 'proxy',
+          format: 'huggingface',
+          recipe: 'huggingface-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://huggingface.co/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+          xet: { enabled: true },
+        });
+      });
+
+      const postBody = mockRestClient.post.mock.calls[0][1];
+      expect(postBody.firewall).toEqual({ mode: 'DISABLED' });
     });
   });
 
@@ -1090,6 +1470,100 @@ describe('useRepositoriesApi', () => {
 
       const putBody = mockRestClient.put.mock.calls[0][1];
       expect(putBody).not.toHaveProperty('npm');
+    });
+  });
+
+  // NEXUS-55104: CargoFacet toggles formData.cargo.requireAuthentication
+  // correctly, but the save payload is built by buildRepositoryConfig, a
+  // separate whitelist-style serializer — a field only reaches the API if this
+  // function explicitly emits it. Missing the `cargo` branch here meant every
+  // save silently dropped the field regardless of what the checkbox showed,
+  // so the backend kept whatever value was already persisted.
+  describe('buildRepositoryConfig - cargo', () => {
+    it.each<'proxy' | 'hosted' | 'group'>(['proxy', 'hosted', 'group'])(
+      'emits cargo.requireAuthentication=true on create for cargo %s',
+      async (type) => {
+        mockRestClient.post.mockResolvedValueOnce({});
+
+        const { result } = renderHook(() => useRepositoriesApi());
+
+        await act(async () => {
+          await result.current.createRepository({
+            name: `cargo-${type}`,
+            type,
+            format: 'cargo',
+            recipe: `cargo-${type}`,
+            online: true,
+            storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+            cargo: { requireAuthentication: true },
+          });
+        });
+
+        const postedBody = mockRestClient.post.mock.calls[0][1];
+        expect(postedBody).toHaveProperty('cargo');
+        expect(postedBody.cargo).toEqual({ requireAuthentication: true });
+      }
+    );
+
+    it('emits cargo.requireAuthentication=false on update when the checkbox is unchecked', async () => {
+      mockRestClient.put.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.updateRepository('cargo-hosted', {
+          name: 'cargo-hosted',
+          type: 'hosted',
+          format: 'cargo',
+          recipe: 'cargo-hosted',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          cargo: { requireAuthentication: false },
+        });
+      });
+
+      const putBody = mockRestClient.put.mock.calls[0][1];
+      expect(putBody.cargo).toEqual({ requireAuthentication: false });
+    });
+
+    it('defaults to false when the cargo block is absent', async () => {
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.createRepository({
+          name: 'cargo-proxy',
+          type: 'proxy',
+          format: 'cargo',
+          recipe: 'cargo-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+        });
+      });
+
+      const postedBody = mockRestClient.post.mock.calls[0][1];
+      expect(postedBody.cargo).toEqual({ requireAuthentication: false });
+    });
+
+    it('does not emit a cargo block for non-cargo formats', async () => {
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.createRepository({
+          name: 'maven-hosted',
+          type: 'hosted',
+          format: 'maven2',
+          recipe: 'maven2-hosted',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+        });
+      });
+
+      const postedBody = mockRestClient.post.mock.calls[0][1];
+      expect(postedBody).not.toHaveProperty('cargo');
     });
   });
 

@@ -151,6 +151,68 @@ public class Maven2ComponentDAOTest
     }
   }
 
+  @Test
+  public void existsInNamespaceAgreesWithCountForPresentNamespace() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
+      assertTrue(dao.existsInNamespace(repositoryId, "group", true));
+    }
+  }
+
+  @Test
+  public void existsInNamespaceAgreesWithCountForAbsentNamespace() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
+      assertThat(dao.existsInNamespace(repositoryId, "no-such-group", true), is(false));
+    }
+  }
+
+  @Test
+  public void existsInNamespaceIsFalseForOtherRepository() {
+    ContentRepositoryData otherRepository = new ContentRepositoryData();
+    otherRepository.setConfigRepositoryId(new EntityUUID(combUUID()));
+    otherRepository.setAttributes(newAttributes("repository"));
+    createContentRepository(otherRepository);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
+      assertThat(dao.existsInNamespace(otherRepository.contentRepositoryId(), "group", true), is(false));
+    }
+  }
+
+  @Test
+  public void existsInGabvAgreesWithCountForPresentGabv() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
+      assertTrue(dao.existsInGabv(repositoryId, "group", "artifact", "1.0.0", true));
+      assertTrue(dao.existsInGabv(repositoryId, "group", "artifact", "1.0.0-SNAPSHOT", true));
+    }
+  }
+
+  @Test
+  public void existsInGabvAgreesWithCountForAbsentGabv() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
+      assertThat(dao.existsInGabv(repositoryId, "group", "artifact", "9.9.9-does-not-exist", true), is(false));
+      assertThat(dao.existsInGabv(repositoryId, "group", "no-such-artifact", "1.0.0", true), is(false));
+      assertThat(dao.existsInGabv(repositoryId, "no-such-group", "artifact", "1.0.0", true), is(false));
+    }
+  }
+
+  @Test
+  public void existsInGabvIsFalseForOtherRepository() {
+    ContentRepositoryData otherRepository = new ContentRepositoryData();
+    otherRepository.setConfigRepositoryId(new EntityUUID(combUUID()));
+    otherRepository.setAttributes(newAttributes("repository"));
+    createContentRepository(otherRepository);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
+      assertThat(dao.existsInGabv(otherRepository.contentRepositoryId(), "group", "artifact", "1.0.0", true),
+          is(false));
+    }
+  }
+
   private void createContentRepository(final ContentRepositoryData contentRepository) {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(Maven2ContentRepositoryDAO.class);

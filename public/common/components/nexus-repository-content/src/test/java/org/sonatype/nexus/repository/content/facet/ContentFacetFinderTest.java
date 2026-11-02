@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.RepositoryStartedEvent;
 import org.sonatype.nexus.repository.RepositoryStoppedEvent;
 import org.sonatype.nexus.repository.group.GroupFacet;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -122,7 +121,7 @@ public class ContentFacetFinderTest
     Repository memberRepository = mock(Repository.class);
     ContentFacet memberContentFacet = mock(ContentFacet.class);
     when(memberRepository.optionalFacet(ContentFacet.class)).thenReturn(Optional.of(memberContentFacet));
-    when(groupFacet.members()).thenReturn(ImmutableList.of(memberRepository));
+    when(groupFacet.members()).thenReturn(List.of(memberRepository));
 
     Stream<ContentFacet> result = ContentFacetFinder.findContentFacets(groupRepository);
     List<ContentFacet> facets = result.collect(Collectors.toList());

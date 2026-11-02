@@ -36,7 +36,7 @@ class ConfigurationSoftDeleteMigrationStep_2_168Test
   }
 
   /**
-   * NEXUS-54969: the migration is now a no-op. It must NOT add the soft-delete columns to the repository table.
+   * NEXUS-54969: the migration is now a no-op. It must NOT add the trash columns to the repository table.
    */
   @DatabaseTest
   void testMigrate_doesNotAddColumns() throws Exception {

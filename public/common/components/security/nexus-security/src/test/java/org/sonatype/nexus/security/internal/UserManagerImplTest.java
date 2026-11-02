@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
+import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.common.event.EventManager;
@@ -24,7 +25,6 @@ import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.Before;
@@ -91,7 +91,7 @@ public class UserManagerImplTest
     user2.setStatus(CUser.STATUS_CHANGE_PASSWORD);
     user2.setId("test2");
 
-    when(securityConfigurationManager.listUsers()).thenReturn(ImmutableList.of(user1, user2));
+    when(securityConfigurationManager.listUsers()).thenReturn(List.of(user1, user2));
 
     UserSearchCriteria crit = new UserSearchCriteria();
     crit.setSource(DEFAULT_SOURCE);
@@ -131,9 +131,9 @@ public class UserManagerImplTest
     roleMapping3.setSource("EXTERNAL_SOURCE");
     roleMapping3.setRoles(ImmutableSet.of("admin"));
 
-    when(securityConfigurationManager.listUsers()).thenReturn(ImmutableList.of(user1, user2));
+    when(securityConfigurationManager.listUsers()).thenReturn(List.of(user1, user2));
     when(securityConfigurationManager.listUserRoleMappings()).thenReturn(
-        ImmutableList.of(roleMapping1, roleMapping2, roleMapping3));
+        List.of(roleMapping1, roleMapping2, roleMapping3));
     when(securityConfigurationManager.readUser("test3")).thenReturn(user3);
 
     UserSearchCriteria crit = new UserSearchCriteria();

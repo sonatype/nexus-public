@@ -16,16 +16,16 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="${namespace}">
 
-  <!-- NEXUS-54969: explicit column lists (excluding the soft-delete deleted_on/deleted_by columns) so a
+  <!-- NEXUS-54969: explicit column lists (excluding the trash deleted_on/deleted_by columns) so a
        SELECT's result shape cannot drift when those columns are present on some tables but not others, or
-       are added on a live connection. Must NOT list deleted_on/deleted_by: with soft-delete disabled those
+       are added on a live connection. Must NOT list deleted_on/deleted_by: with trash disabled those
        columns may not exist. Physical layout matches every ${format}_component / ${format}_asset table. -->
   <sql id="componentColumns">
     component_id, repository_id, namespace, name, kind, version,
     normalized_version, attributes, created, last_updated, entity_version
   </sql>
 
-  <sql id="componentColumnsWithSoftDelete">
+  <sql id="componentColumnsWithTrash">
     <include refid="componentColumns"/>, deleted_on, deleted_by
   </sql>
 
@@ -110,7 +110,7 @@
 
   <sql id="selectComponentsBySet">
     SELECT <include refid="componentColumns"/> FROM ${format}_component WHERE <include refid="componentSetMatch"/>
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+    <if test="trashAvailable">AND deleted_on IS NULL</if>
     <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
     ORDER BY component_id
     <if test="limit > 0"> LIMIT #{limit}</if>;
@@ -118,7 +118,7 @@
 
   <select id="countComponents" resultType="int">
     SELECT COUNT(*) FROM ${format}_component WHERE repository_id = #{repositoryId}
-        <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+        <if test="trashAvailable">AND deleted_on IS NULL</if>
         <if test="kind != null"> AND kind = #{kind}</if>
         <if test="filter != null"> AND (${filter})</if>;
   </select>
@@ -126,7 +126,7 @@
   <select id="countComponentsWithAssetsBlobs" resultType="int">
     SELECT COUNT(DISTINCT component_id) FROM ${format}_asset
     WHERE asset_blob_id IS NOT NULL AND repository_id = #{repositoryId}
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+    <if test="trashAvailable">AND deleted_on IS NULL</if>
     <if test="kind != null"> AND kind = #{kind}</if>
     <if test="filter != null"> AND (${filter})</if>;
   </select>
@@ -136,12 +136,12 @@
       FROM ${format}_component
      WHERE (normalized_version IS NULL
             OR normalized_version = '')
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
+    <if test="trashAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <select id="browseComponents" resultType="ComponentData">
     SELECT <include refid="componentColumns"/> FROM ${format}_component WHERE repository_id = #{repositoryId}
-        <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+        <if test="trashAvailable">AND deleted_on IS NULL</if>
         <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
         <if test="kind != null"> AND kind = #{kind}</if>
         <if test="filter != null"> AND (${filter})</if>
@@ -151,11 +151,11 @@
   <select id="browseComponentsWithAssets" resultType="ComponentData">
     SELECT <include refid="componentColumns"/> FROM ${format}_component
     WHERE repository_id = #{repositoryId}
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+    <if test="trashAvailable">AND deleted_on IS NULL</if>
     AND EXISTS (
       SELECT 1 FROM ${format}_asset a
       WHERE a.component_id = ${format}_component.component_id
-      <if test="softDeleteAvailable">AND a.deleted_on IS NULL</if>
+      <if test="trashAvailable">AND a.deleted_on IS NULL</if>
     )
     <if test="continuationToken != null">
       AND component_id > #{continuationToken}
@@ -170,7 +170,7 @@
     SELECT <include refid="componentColumns"/> FROM ${format}_component
      WHERE (normalized_version IS NULL
             OR normalized_version = '')
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+    <if test="trashAvailable">AND deleted_on IS NULL</if>
     <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
      ORDER BY component_id LIMIT #{limit};
   </select>
@@ -258,7 +258,7 @@
                  open="(" separator="," close=")">
           #{repositoryId}
         </foreach>
-        <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+        <if test="trashAvailable">AND deleted_on IS NULL</if>
         <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
         <if test="kind != null"> AND kind = #{kind}</if>
         <if test="filter != null"> AND (${filter})</if>
@@ -275,7 +275,7 @@
         asset.last_updated, asset.asset_blob_size
     FROM ${format}_component AS component
     LEFT JOIN ${format}_asset AS asset ON component.component_id = asset.component_id
-      <if test="softDeleteAvailable">AND asset.deleted_on IS NULL</if>
+      <if test="trashAvailable">AND asset.deleted_on IS NULL</if>
     WHERE component.component_id IN (select component_id from componentIds)
     ORDER BY component.component_id
   </select>
@@ -300,7 +300,7 @@
                  open="(" separator="," close=")">
           #{repositoryId}
         </foreach>
-        <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+        <if test="trashAvailable">AND deleted_on IS NULL</if>
         <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
         <if test="kind != null"> AND kind = #{kind}</if>
         <if test="filter != null"> AND (${filter})</if>
@@ -308,7 +308,7 @@
         LIMIT #{limit}
     ) AS component
     LEFT JOIN ${format}_asset AS asset ON component.component_id = asset.component_id
-      <if test="softDeleteAvailable">AND asset.deleted_on IS NULL</if>
+      <if test="trashAvailable">AND asset.deleted_on IS NULL</if>
     ORDER BY component.component_id
   </select>
 
@@ -319,7 +319,7 @@
              open="(" separator="," close=")">
       #{repositoryId}
     </foreach>
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+    <if test="trashAvailable">AND deleted_on IS NULL</if>
     <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
     ORDER BY component_id LIMIT #{limit};
   </select>
@@ -330,12 +330,12 @@
 
   <select id="browseNamespaces" resultType="String">
     SELECT DISTINCT(namespace) FROM ${format}_component WHERE repository_id = #{repositoryId}
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
+    <if test="trashAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <select id="browseNames" resultType="String">
     SELECT DISTINCT(name) FROM ${format}_component WHERE <include refid="componentNamespaceMatch"/>
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
+    <if test="trashAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <!-- Targeted existence probe. Uses the uk_${format}_component_coordinate
@@ -345,25 +345,25 @@
   <select id="existsByName" resultType="boolean">
     SELECT EXISTS (
       SELECT 1 FROM ${format}_component WHERE <include refid="componentNamespaceMatch"/> AND name = #{name}
-      <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+      <if test="trashAvailable">AND deleted_on IS NULL</if>
     );
   </select>
 
   <select id="browseVersions" resultType="String">
     SELECT version FROM ${format}_component WHERE <include refid="componentNamespaceMatch"/> AND name = #{name}
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
+    <if test="trashAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <select id="browseVersionsByRepoIds" resultType="String">
     SELECT version FROM ${format}_component
     WHERE namespace = #{namespace} AND name = #{name}
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+    <if test="trashAvailable">AND deleted_on IS NULL</if>
     AND <include refid="inRepositoryIdsMatch"/>;
   </select>
 
   <select id="browseSets" resultType="org.sonatype.nexus.repository.content.store.ComponentSetData">
     SELECT DISTINCT namespace, name FROM ${format}_component WHERE repository_id = #{repositoryId}
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+    <if test="trashAvailable">AND deleted_on IS NULL</if>
     <if test="continuationToken != null"> AND CONCAT(namespace, '|', name) > #{continuationToken}</if>
     ORDER BY namespace ASC, name ASC
     <if test="limit > 0"> LIMIT #{limit}</if>
@@ -373,20 +373,20 @@
        (SQLState 23503) in FluentComponentBuilderImpl. -->
   <insert id="createComponent" useGeneratedKeys="true" keyProperty="component.componentId">
     MERGE INTO ${format}_component (repository_id, namespace, name, kind, version, normalized_version, attributes
-    <if test="softDeleteAvailable">, deleted_on, deleted_by</if>
+    <if test="trashAvailable">, deleted_on, deleted_by</if>
     <if test="entityVersionEnabled">, entity_version</if>
     )
     KEY (repository_id, namespace, name, version)
     VALUES (#{component.repositoryId}, #{component.namespace}, #{component.name},
     #{component.kind}, #{component.version}, #{component.normalizedVersion}, #{component.attributes}
-    <if test="softDeleteAvailable">, NULL, NULL</if>
+    <if test="trashAvailable">, NULL, NULL</if>
     <if test="entityVersionEnabled">, 1</if>
     );
   </insert>
 
   <!-- Note that the ON CONFLICT requires a DO UPDATE so that the entityId is returned, so that's why only single
        field is set, figure thats less work than setting the other coordinates as well.
-       Also clears soft-delete state so re-uploading the same coordinate revives the component. -->
+       Also clears trash state so re-uploading the same coordinate revives the component. -->
   <!-- The lock_repo CTE acquires FOR SHARE on the content_repository row before the INSERT.
        This prevents a concurrent repository DELETE from committing while the INSERT is in-flight.
        WHERE EXISTS forces the CTE to execute. If the row is already gone (0 rows), the INSERT
@@ -406,25 +406,25 @@
     WHERE EXISTS (SELECT 1 FROM lock_repo)
     ON CONFLICT(repository_id, namespace, name, version) DO UPDATE SET
       repository_id = #{component.repositoryId}
-      <if test="softDeleteAvailable">,
+      <if test="trashAvailable">,
       deleted_on = NULL,
       deleted_by = NULL</if>
   </insert>
 
   <select id="readComponent" resultType="ComponentData">
     SELECT <include refid="componentColumns"/> FROM ${format}_component WHERE <include refid="componentMatch"/>
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
+    <if test="trashAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <select id="readCoordinate" resultType="ComponentData">
     SELECT <include refid="componentColumns"/> FROM ${format}_component WHERE <include refid="componentCoordinateMatch"/>
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
+    <if test="trashAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <select id="readCoordinateInRepoIds" resultType="ComponentData">
     SELECT DISTINCT ON (namespace, name, version) <include refid="componentColumns"/> FROM ${format}_component
     WHERE namespace = #{namespace} AND name = #{name} AND version = #{version}
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+    <if test="trashAvailable">AND deleted_on IS NULL</if>
     AND <include refid="inRepositoryIdsMatch"/>
   </select>
 
@@ -458,7 +458,7 @@
   </update>
 
   <select id="readComponentAttributes" resultType="NestedAttributesMap">
-    <!-- The DAO method takes @Param("component") + softDeleteAvailable. Re-bind the component
+    <!-- The DAO method takes @Param("component") + trashAvailable. Re-bind the component
          fields to the local names that componentMatch expects. -->
     <bind name="componentId" value="component.componentId"/>
     <bind name="repositoryId" value="component.repositoryId"/>
@@ -466,7 +466,7 @@
     <bind name="name" value="component.name"/>
     <bind name="version" value="component.version"/>
     SELECT attributes FROM ${format}_component WHERE <include refid="componentMatch"/>
-    <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
+    <if test="trashAvailable">AND deleted_on IS NULL</if>;
   </select>
 
   <update id="updateComponentAttributes">
@@ -502,7 +502,7 @@
   <select id="selectNotRecentlyDownloaded" resultType="int">
     SELECT component_id FROM ${format}_asset
         WHERE repository_id = #{repositoryId} AND component_id IS NOT NULL
-        <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+        <if test="trashAvailable">AND deleted_on IS NULL</if>
     GROUP BY component_id
         HAVING MAX(last_downloaded) &lt;= CURRENT_TIMESTAMP - CAST(#{daysAgo} AS INT) * INTERVAL '1' DAY
         <if test="limit gt 0"> LIMIT #{limit}</if>;
@@ -541,12 +541,12 @@
     </choose>;
   </delete>
 
-  <!-- Guarded purge for the soft-delete expire path: the deleted_on IS NOT NULL predicate makes both
+  <!-- Guarded purge for the trash expire path: the deleted_on IS NOT NULL predicate makes both
        DELETEs no-ops if a concurrent restore clears deleted_on between the drain's id selection and
        this delete, preventing a just-restored live component from being permanently destroyed by a
        racing purge. The unguarded purgeSelectedComponents above is retained for the GC path, which
-       purges non-soft-deleted components (NEXUS-49147 / NEXUS-51733). -->
-  <delete id="purgeSelectedSoftDeletedComponents">
+       purges non-trashed components (NEXUS-49147 / NEXUS-51733). -->
+  <delete id="purgeSelectedTrashedComponents">
     DELETE FROM ${format}_asset WHERE deleted_on IS NOT NULL AND
     <choose>
       <when test="_databaseId == 'PostgreSQL'">
@@ -579,16 +579,16 @@
     </choose>;
   </delete>
 
-  <!-- Soft-delete operations -->
+  <!-- Trash operations -->
 
-  <update id="softDeleteComponent">
+  <update id="trashComponent">
     UPDATE ${format}_component
     SET deleted_on = CURRENT_TIMESTAMP, deleted_by = #{deletedBy},
         last_updated = CURRENT_TIMESTAMP
     WHERE component_id = #{componentId} AND deleted_on IS NULL;
   </update>
 
-  <update id="undoSoftDeleteComponent">
+  <update id="undoTrashComponent">
     UPDATE ${format}_component
     SET deleted_on = NULL, deleted_by = NULL,
         last_updated = CURRENT_TIMESTAMP
@@ -596,7 +596,7 @@
   </update>
 
   <select id="browseDeletedComponents" resultMap="ComponentDataMap">
-    SELECT <include refid="componentColumnsWithSoftDelete"/> FROM ${format}_component
+    SELECT <include refid="componentColumnsWithTrash"/> FROM ${format}_component
     WHERE deleted_on IS NOT NULL
     <if test="repositoryId != null"> AND repository_id = #{repositoryId}</if>
     <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
@@ -610,11 +610,11 @@
   </select>
 
   <select id="readDeletedComponent" resultMap="ComponentDataMap">
-    SELECT <include refid="componentColumnsWithSoftDelete"/> FROM ${format}_component
+    SELECT <include refid="componentColumnsWithTrash"/> FROM ${format}_component
     WHERE component_id = #{componentId} AND deleted_on IS NOT NULL;
   </select>
 
-  <!-- Returns one drain batch (LIMIT) of expired soft-deleted component ids, oldest-id first.
+  <!-- Returns one drain batch (LIMIT) of expired trashed component ids, oldest-id first.
        The expire task cleans the {format}_component_tag junction for these ids, then deletes the
        batch via purgeSelectedComponents (assets-then-components, FK-ordered). Each batch is its own
        transaction; the next select naturally returns the next set once a batch is deleted. -->

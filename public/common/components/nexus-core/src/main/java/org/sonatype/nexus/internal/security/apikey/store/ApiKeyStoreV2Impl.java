@@ -334,6 +334,15 @@ public class ApiKeyStoreV2Impl
 
   @Transactional
   @Override
+  public Collection<ApiKeyInternal> browseByUserAndDomains(final Collection<String> domains, final String username) {
+    if (domains.isEmpty()) {
+      return List.of();
+    }
+    return dao().browseByUserAndDomains(domains, username);
+  }
+
+  @Transactional
+  @Override
   public int countFiltered(final String domain, final String realm, final String username) {
     return dao().countFiltered(domain, realm, username);
   }

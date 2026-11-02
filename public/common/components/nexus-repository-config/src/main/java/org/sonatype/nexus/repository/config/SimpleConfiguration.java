@@ -12,14 +12,13 @@
  */
 package org.sonatype.nexus.repository.config;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
-
-import com.google.common.collect.Maps;
 
 import static java.util.Objects.requireNonNull;
 
@@ -126,12 +125,12 @@ public class SimpleConfiguration
     requireNonNull(key);
 
     if (attributes == null) {
-      attributes = Maps.newHashMap();
+      attributes = new HashMap<>();
     }
 
     Map<String, Object> map = attributes.get(key);
     if (map == null) {
-      map = Maps.newHashMap();
+      map = new HashMap<>();
       attributes.put(key, map);
     }
 

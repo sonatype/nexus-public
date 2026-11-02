@@ -14,6 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+
 import {assign, createMachine, send, spawn} from 'xstate';
 
 import {APIConstants, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
@@ -21,6 +22,10 @@ import UIStrings from '../../../../constants/UIStrings';
 
 const {EXT: {BROWSE: {ACTION, METHODS: {READ}}}} = APIConstants;
 
+/**
+ * @deprecated Classic UI only; unreachable from the Preview UI. Left on XState v4 semantics
+ * pending Classic UI deletion (NEXUS-55299) ahead of the XState v5 upgrade (NEXUS-51654).
+ */
 const BrowseTreeMachine = createMachine(
   {
     id: 'TreeNode-Root',

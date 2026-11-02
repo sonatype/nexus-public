@@ -21,8 +21,6 @@ import org.sonatype.nexus.webresources.FileWebResource;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
 
-import com.google.common.collect.ImmutableList;
-
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.webresources.WebResource.JAVASCRIPT;
 import org.springframework.stereotype.Component;
@@ -53,7 +51,7 @@ public class ExtDirectWebResources
 
   @Override
   public List<WebResource> getResources() {
-    return ImmutableList.of(
+    return List.of(
         create("nexus-extdirect/api.js", "/static/rapture/extdirect-prod.js"),
         create("nexus-extdirect/api-debug.js", "/static/rapture/extdirect-debug.js"));
   }

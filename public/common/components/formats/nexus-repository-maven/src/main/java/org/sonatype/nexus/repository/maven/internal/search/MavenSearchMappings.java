@@ -17,7 +17,6 @@ import java.util.List;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 
-import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +41,7 @@ public class MavenSearchMappings
 
   public static final String GAVEC = "gavec";
 
-  private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
+  private static final List<SearchMapping> MAPPINGS = List.of(
       new SearchMapping("maven.groupId", "attributes.maven2.groupId", "Maven groupId", NAMESPACE),
       new SearchMapping("maven.artifactId", "attributes.maven2.artifactId", "Maven artifactId", NAME),
       new SearchMapping("maven.baseVersion", "attributes.maven2.baseVersion", "Maven base version", FORMAT_FIELD_1),

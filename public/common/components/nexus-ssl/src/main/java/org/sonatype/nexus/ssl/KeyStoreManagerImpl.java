@@ -16,6 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -32,7 +33,6 @@ import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -326,7 +326,7 @@ public class KeyStoreManagerImpl
     trustedKeyStoreLock.readLock().lock();
     try {
       String[] aliases = trustedKeyStore.listTrustCertificates(config.getTrustedKeyStorePassword());
-      List<Certificate> certificates = Lists.newArrayListWithCapacity(aliases.length);
+      List<Certificate> certificates = new ArrayList<>(aliases.length);
       for (String alias : aliases) {
         Certificate cert = trustedKeyStore.getCertificate(alias);
         // FIXME: Work around some strange case not clear why, but alias is reported for non-existent/removed certs

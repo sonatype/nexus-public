@@ -18,7 +18,6 @@ import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 
-import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +54,7 @@ public class RawSearchMappings
    */
   public static final String RAW_NAME_ATTRIBUTE = "attributes.raw.name";
 
-  private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
+  private static final List<SearchMapping> MAPPINGS = List.of(
       new SearchMapping(RAW_NAME, RAW_NAME_ATTRIBUTE, "Raw asset filename (basename)", NAME, false));
 
   @Override

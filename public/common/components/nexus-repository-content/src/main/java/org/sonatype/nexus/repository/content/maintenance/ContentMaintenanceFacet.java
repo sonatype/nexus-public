@@ -52,7 +52,7 @@ public interface ContentMaintenanceFacet
 
   /**
    * Validates whether {@code asset} may be deleted, throwing if a referential-integrity constraint
-   * forbids it. Called by the soft-delete path before an asset is moved to Trash so that soft-delete
+   * forbids it. Called by the trash path before an asset is moved to Trash so that trash
    * honors the same guards as hard-delete (e.g. Docker/OCI refuse deletion of a blob still referenced
    * by a live manifest — NEXUS-54127). Hard-delete formats enforce the same rule inside
    * {@link #deleteAsset(Asset)}.
@@ -70,10 +70,10 @@ public interface ContentMaintenanceFacet
   }
 
   /**
-   * Whether soft-deleting {@code asset} should also soft-delete its parent component.
+   * Whether trashing {@code asset} should also trash its parent component.
    *
    * <p>
-   * This mirrors the hard-delete {@link #deleteAsset(Asset)} semantics so that soft-delete and
+   * This mirrors the hard-delete {@link #deleteAsset(Asset)} semantics so that trash and
    * hard-delete stay consistent. Formats that treat a component as a single logical asset cascade
    * the delete to the component; formats whose components hold multiple independently-deletable
    * assets (e.g. Swift's manifest/archive/metadata) must not, otherwise the component and its
@@ -87,22 +87,22 @@ public interface ContentMaintenanceFacet
    * behavior.
    * </p>
    *
-   * @param asset the asset being soft-deleted
+   * @param asset the asset being trashed
    * @param lastRemainingAsset whether {@code asset} was the component's last remaining
-   *          (non-soft-deleted) asset
-   * @return {@code true} to cascade the soft-delete to the parent component
+   *          (non-trashed) asset
+   * @return {@code true} to cascade the trash to the parent component
    */
-  default boolean cascadeSoftDeleteToComponent(final Asset asset, final boolean lastRemainingAsset) {
+  default boolean cascadeTrashToComponent(final Asset asset, final boolean lastRemainingAsset) {
     return false;
   }
 
   /**
-   * Called after a component has been soft-deleted. Formats should override to update
+   * Called after a component has been trashed. Formats should override to update
    * aggregate metadata (e.g., Maven's {@code maven-metadata.xml}, npm packument).
    *
    * <p>
-   * <strong>Idempotency contract:</strong> When the last asset of a component is soft-deleted,
-   * both {@link #afterAssetSoftDeleted} and this method may fire for the same logical delete
+   * <strong>Idempotency contract:</strong> When the last asset of a component is trashed,
+   * both {@link #afterAssetTrashed} and this method may fire for the same logical delete
    * operation. Implementations must be idempotent — applying the same metadata update twice
    * (e.g., removing the same version entry from a packument) must produce the same result
    * as applying it once, with no errors or side effects.
@@ -110,12 +110,12 @@ public interface ContentMaintenanceFacet
    *
    * The default implementation is a no-op.
    */
-  default void afterComponentSoftDeleted(Component component) {
+  default void afterComponentTrashed(Component component) {
     // no-op by default; format-specific facets override as needed
   }
 
   /**
-   * Called after a soft-deleted component has been restored. Formats should override to
+   * Called after a trashed component has been restored. Formats should override to
    * rebuild aggregate metadata that now includes the restored component.
    *
    * <p>
@@ -131,12 +131,12 @@ public interface ContentMaintenanceFacet
   }
 
   /**
-   * Called after an individual asset has been soft-deleted. Formats should override to update
+   * Called after an individual asset has been trashed. Formats should override to update
    * aggregate metadata (e.g., npm packument, Yum repodata, APT package index).
    *
    * <p>
-   * <strong>Idempotency contract:</strong> When the last asset of a component is soft-deleted,
-   * both this method and {@link #afterComponentSoftDeleted} may fire for the same logical delete.
+   * <strong>Idempotency contract:</strong> When the last asset of a component is trashed,
+   * both this method and {@link #afterComponentTrashed} may fire for the same logical delete.
    * Implementations must be idempotent — applying the same metadata update twice must produce
    * the same result as applying it once. For example, removing a version entry from an npm
    * packument or marking Yum metadata as stale should be safe to call repeatedly.
@@ -144,12 +144,12 @@ public interface ContentMaintenanceFacet
    *
    * The default implementation is a no-op.
    */
-  default void afterAssetSoftDeleted(Asset asset) {
+  default void afterAssetTrashed(Asset asset) {
     // no-op by default; format-specific facets override as needed
   }
 
   /**
-   * Called after a soft-deleted asset has been restored. Formats should override to rebuild
+   * Called after a trashed asset has been restored. Formats should override to rebuild
    * aggregate metadata that now includes the restored asset.
    *
    * <p>
@@ -161,6 +161,30 @@ public interface ContentMaintenanceFacet
    * The default implementation is a no-op.
    */
   default void afterAssetRestored(Asset asset) {
+    // no-op by default; format-specific facets override as needed
+  }
+
+  /**
+   * Called after a trashed asset has been permanently purged. Formats should override to drop any
+   * write-time, format-specific reference-index rows the purged asset owned (e.g. the Docker/OCI
+   * blob-reference index), which the registry/hard-delete paths clean but the Trash purge path does not
+   * (NEXUS-55233). Without this, a purged image index leaves stale {@code MANIFEST_LIST_ENTRY} rows that
+   * keep falsely protecting its child manifests from deletion until the reference-rebuild task runs.
+   *
+   * <p>
+   * The passed asset has already been removed; implementations must derive what they need (e.g. the
+   * content digest) from the in-memory asset rather than re-reading it.
+   *
+   * <p>
+   * <strong>Idempotency contract:</strong> implementations must be idempotent. This hook is best-effort and may
+   * fire more than once for the same logical purge -- e.g. a retried purge whose {@code trashIndexStore} removal
+   * failed the first time, or a component purge that fires it per constituent manifest. Removing an
+   * already-removed reference row must be a safe no-op.
+   *
+   * <p>
+   * The default implementation is a no-op.
+   */
+  default void afterAssetPurged(Asset asset) {
     // no-op by default; format-specific facets override as needed
   }
 }

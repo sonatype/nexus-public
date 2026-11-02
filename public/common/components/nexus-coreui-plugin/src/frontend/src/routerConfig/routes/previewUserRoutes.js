@@ -17,6 +17,7 @@
 
 import {UIView} from '@uirouter/react';
 import {
+  PRO_FAMILY_EDITIONS,
   UserAccountPage,
   UserTokenPage,
   NuGetApiTokenPage,
@@ -45,6 +46,22 @@ export const previewUserRoutes = [
     name: 'preview.user.usertoken',
     url: '/usertoken',
     component: UserTokenPage,
-    data: {title: 'User Token'},
+    // Mirrors the Classic route's gate in userRoutes.js. Without these the route is visible to
+    // everyone, because isVisible() treats absent requirements as "no restrictions" and the page
+    // then renders the backend's authorization failure instead of redirecting (NEXUS-55523).
+    data: {
+      visibilityRequirements: {
+        bundle: 'nexus-usertoken-plugin',
+        statesEnabled: [
+          {
+            key: 'userTokenRealmEnabled',
+            defaultValue: false,
+          },
+        ],
+        permissions: ['nexus:usertoken-current:read'],
+        editions: PRO_FAMILY_EDITIONS,
+      },
+      title: 'User Token',
+    },
   },
 ];

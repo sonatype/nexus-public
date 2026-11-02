@@ -206,6 +206,12 @@ export const FORMATS: Record<SearchFormat, FormatInfo> = {
     apiFormat: 'oci',
     placeholder: 'Search by image name or tag',
   },
+  openvsx: {
+    id: 'openvsx',
+    label: 'Open VSX',
+    apiFormat: 'openvsx',
+    placeholder: 'Search by extension name',
+  },
   p2: {
     id: 'p2',
     label: 'P2',
@@ -353,7 +359,11 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     aliasPlaceholders: { group: 'e.g., symfony', name: 'e.g., console' },
   },
 
-  // Conan (C/C++) - generic group/name/version + distinct Conan fields
+  // Conan (C/C++) - generic group/name/version + distinct Conan fields.
+  // baseVersionStrict, revisionLatest, and settings.* fields added for
+  // NEXUS-55107.  Backend ConanSearchMappings gates them behind
+  // nodeAccess.isClustered(); Classic UI (SearchConan.js) also exposes them
+  // unconditionally and relies on backend gating.
   conan: {
     format: FORMATS.conan,
     filters: [
@@ -364,6 +374,13 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         label: 'Base Version',
         type: 'text',
         apiParam: 'conan.baseVersion',
+        placeholder: 'e.g., 1.0.0',
+      },
+      {
+        id: 'baseVersionStrict',
+        label: 'Base Version Strict',
+        type: 'text',
+        apiParam: 'conan.baseVersion.strict',
         placeholder: 'e.g., 1.0.0',
       },
       {
@@ -381,6 +398,13 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         placeholder: 'Recipe revision hash',
       },
       {
+        id: 'revisionLatest',
+        label: 'Latest Revision',
+        type: 'text',
+        apiParam: 'conan.revision.latest',
+        placeholder: 'Latest recipe revision hash',
+      },
+      {
         id: 'packageId',
         label: 'Package ID',
         type: 'text',
@@ -394,6 +418,41 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         apiParam: 'conan.packageRevision',
         placeholder: 'Package revision hash',
       },
+      {
+        id: 'arch',
+        label: 'Arch',
+        type: 'text',
+        apiParam: 'conan.settings.arch',
+        placeholder: 'e.g., x86_64',
+      },
+      {
+        id: 'os',
+        label: 'OS',
+        type: 'text',
+        apiParam: 'conan.settings.os',
+        placeholder: 'e.g., Linux',
+      },
+      {
+        id: 'compiler',
+        label: 'Compiler',
+        type: 'text',
+        apiParam: 'conan.settings.compiler',
+        placeholder: 'e.g., gcc',
+      },
+      {
+        id: 'compilerVersion',
+        label: 'Compiler Version',
+        type: 'text',
+        apiParam: 'conan.settings.compiler.version',
+        placeholder: 'e.g., 11',
+      },
+      {
+        id: 'compilerRuntime',
+        label: 'Compiler Runtime',
+        type: 'text',
+        apiParam: 'conan.settings.compiler.runtime',
+        placeholder: 'e.g., MD',
+      },
     ],
   },
 
@@ -405,7 +464,8 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
 
   // Docker - imageName/imageTag alias generic name/version.
   // The old imageName/imageTag rows are deleted; aliasLabels relabels the
-  // generic inputs.  Distinct fields (layerId, contentDigest) remain.
+  // generic inputs.  Distinct fields (layerId, contentDigest, os, architecture,
+  // labels, author) remain — os/architecture/labels/author added for NEXUS-55107.
   docker: {
     format: FORMATS.docker,
     filters: [
@@ -424,6 +484,34 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         type: 'text',
         apiParam: 'docker.contentDigest',
         placeholder: 'sha256:...',
+      },
+      {
+        id: 'os',
+        label: 'OS',
+        type: 'text',
+        apiParam: 'docker.os',
+        placeholder: 'e.g., linux',
+      },
+      {
+        id: 'architecture',
+        label: 'Architecture',
+        type: 'text',
+        apiParam: 'docker.architecture',
+        placeholder: 'e.g., amd64',
+      },
+      {
+        id: 'labels',
+        label: 'Labels',
+        type: 'text',
+        apiParam: 'docker.labels',
+        placeholder: 'e.g., maintainer=team',
+      },
+      {
+        id: 'author',
+        label: 'Author',
+        type: 'text',
+        apiParam: 'docker.author',
+        placeholder: 'Image author',
       },
     ],
     aliasLabels: { name: 'Image Name', version: 'Image Tag' },
@@ -611,6 +699,27 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     aliasPlaceholders: { name: 'e.g., nginx', version: 'e.g., latest' },
   },
 
+  // Open VSX - publisher is stored as the component namespace (OpenVSXContentFacetImpl calls
+  // .namespace(publisher)), so it aliases the generic group input and its own row is dropped, the
+  // same way Composer's vendor and Maven's groupId are. targetPlatform is FORMAT_FIELD_2 with no
+  // generic equivalent, so it stays as a distinct row.
+  openvsx: {
+    format: FORMATS.openvsx,
+    filters: [
+      REPOSITORY_FILTER,
+      ...GENERIC_FILTERS,
+      {
+        id: 'targetPlatform',
+        label: 'Target platform',
+        type: 'text',
+        apiParam: 'openvsx.targetPlatform',
+        placeholder: 'e.g., darwin-arm64',
+      },
+    ],
+    aliasLabels: { group: 'Publisher' },
+    aliasPlaceholders: { group: 'e.g., redhat' },
+  },
+
   // P2 (Eclipse) - generic group/name/version + distinct pluginName
   p2: {
     format: FORMATS.p2,
@@ -732,7 +841,11 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // Terraform - generic group/name/version + distinct provider/namespace
+  // Terraform - generic group/name/version + distinct provider/namespace/name.
+  // terraform.name (FORMAT_FIELD_3) is an asset-level field distinct from the
+  // component-level generic NAME (added for NEXUS-55107).  Named terraformName
+  // to avoid colliding with the generic 'name' filter id, following the same
+  // pattern as yumName, nugetId, collectionName.
   terraform: {
     format: FORMATS.terraform,
     filters: [
@@ -751,6 +864,13 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         type: 'text',
         apiParam: 'terraform.namespace',
         placeholder: 'Module namespace',
+      },
+      {
+        id: 'terraformName',
+        label: 'Module Name',
+        type: 'text',
+        apiParam: 'terraform.name',
+        placeholder: 'e.g., vpc',
       },
     ],
   },
@@ -787,7 +907,7 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
 /** Format order for sidebar checkboxes - alphabetically sorted */
 export const FORMAT_ORDER: SearchFormat[] = [
   'alpine', 'ansiblegalaxy', 'apt', 'cargo', 'cocoapods', 'composer', 'conan', 'conda', 'docker', 'gitlfs',
-  'go', 'helm', 'huggingface', 'maven', 'npm', 'nuget', 'oci', 'p2', 'pub', 'pypi', 'r',
+  'go', 'helm', 'huggingface', 'maven', 'npm', 'nuget', 'oci', 'openvsx', 'p2', 'pub', 'pypi', 'r',
   'raw', 'rubygems', 'swift', 'terraform', 'yum',
 ];
 

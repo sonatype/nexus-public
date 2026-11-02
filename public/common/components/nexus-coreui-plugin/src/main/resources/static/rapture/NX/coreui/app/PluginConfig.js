@@ -257,6 +257,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.SearchOpenVSX',
+      active: function () {
+        return NX.app.Application.bundleActive('nexus-repository-openvsx');
+      }
+    },
+    {
       id: 'NX.coreui.controller.SearchP2',
       active: function () {
         return NX.app.Application.bundleActive('nexus-repository-p2');

@@ -62,7 +62,7 @@ public interface Maven2ComponentDAO
   Set<GAV> findGavsWithSnaphots(
       @Param("repositoryId") final int repositoryId,
       @Param("minimumRetained") final int minimumRetained,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Find components by Group Artifact Version(GAVs)
@@ -84,7 +84,7 @@ public interface Maven2ComponentDAO
       @Param("group") final String group,
       @Param("baseVersion") final String baseVersion,
       @Param("releaseVersion") final String releaseVersion,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Retrieve known base versions for a provided GA.
@@ -99,7 +99,37 @@ public interface Maven2ComponentDAO
       @Param("repositoryId") int repositoryId,
       @Param("namespace") String namespace,
       @Param("name") String name,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
+
+  /**
+   * Whether any component exists under the given namespace (groupId).
+   *
+   * @param repositoryId the repository containing the components
+   * @param namespace the namespace to check
+   *
+   * @return true if at least one component exists under the namespace
+   */
+  boolean existsInNamespace(
+      @Param("repositoryId") int repositoryId,
+      @Param("namespace") String namespace,
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
+
+  /**
+   * Whether any component exists for the given namespace, name and base version (GAbV).
+   *
+   * @param repositoryId the repository containing the components
+   * @param namespace the namespace for the components
+   * @param name the name for the components
+   * @param baseVersion the base version for the components
+   *
+   * @return true if at least one component exists for the given coordinates
+   */
+  boolean existsInGabv(
+      @Param("repositoryId") int repositoryId,
+      @Param("namespace") String namespace,
+      @Param("name") String name,
+      @Param("baseVersion") String baseVersion,
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Find snapshots to delete for which a release version exists
@@ -113,7 +143,7 @@ public interface Maven2ComponentDAO
   int[] selectSnapshotsAfterRelease(
       @Param("repositoryId") final int repositoryId,
       @Param("gracePeriod") final int gracePeriod,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Selects snapshot components ids last used before provided date
@@ -129,7 +159,7 @@ public interface Maven2ComponentDAO
       @Param("repositoryId") int repositoryId,
       @Param("olderThan") LocalDate olderThan,
       @Param("limit") long limit,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   @Override
   @ResultMap("OrderedComponentDataMap")

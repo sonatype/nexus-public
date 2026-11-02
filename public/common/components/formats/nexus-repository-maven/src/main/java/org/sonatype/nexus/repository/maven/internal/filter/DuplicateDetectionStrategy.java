@@ -14,8 +14,7 @@ package org.sonatype.nexus.repository.maven.internal.filter;
 
 import java.io.Closeable;
 import java.io.IOException;
-
-import com.google.common.base.Predicate;
+import java.util.function.Predicate;
 
 /**
  * Strategy for filtering Maven records

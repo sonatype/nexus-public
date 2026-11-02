@@ -13,6 +13,7 @@
 package org.sonatype.nexus.quartz.internal.bulkread;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -78,13 +79,15 @@ class BulkReadSchedulerImplTest
 
   private Scheduler underlyingScheduler;
 
+  private ConfigStoreConnectionProvider connectionProvider;
+
   @BeforeEach
   void setup() throws Exception {
     // Create the Quartz schema
     sessionSupplier.openSession(DEFAULT_DATASTORE_NAME).access(QuartzDAO.class).createSchema();
 
     // Setup the scheduler with BulkReadScheduler wrapper
-    ConfigStoreConnectionProvider connectionProvider = new ConfigStoreConnectionProvider(sessionSupplier);
+    connectionProvider = new ConfigStoreConnectionProvider(sessionSupplier);
     DBConnectionManager.getInstance().addConnectionProvider("testDS", connectionProvider);
 
     JobStoreTX jobStore = new JobStoreTX();
@@ -114,6 +117,79 @@ class BulkReadSchedulerImplTest
     Map<JobKey, JobDetail> result = bulkReadScheduler.getJobDetailsForGroup(TEST_GROUP);
 
     assertThat(result, notNullValue());
+    assertThat(result.entrySet(), hasSize(0));
+  }
+
+  @DatabaseTest
+  void testGetExecutingInstanceIdsForGroup_empty() throws Exception {
+    Map<JobKey, String> result = bulkReadScheduler.getExecutingInstanceIdsForGroup(TEST_GROUP);
+
+    assertThat(result, notNullValue());
+    assertThat(result.entrySet(), hasSize(0));
+  }
+
+  @DatabaseTest
+  void testGetExecutingInstanceIdsForGroup_reportsExecutingJobsWithTheirInstance() throws Exception {
+    insertSchedulerState("node-a", System.currentTimeMillis(), 7500L);
+    insertFiredTrigger("entry-1", "executing-job", TEST_GROUP, "node-a", "EXECUTING");
+
+    Map<JobKey, String> result = bulkReadScheduler.getExecutingInstanceIdsForGroup(TEST_GROUP);
+
+    assertThat(result.entrySet(), hasSize(1));
+    assertThat(result.get(jobKey("executing-job", TEST_GROUP)), is("node-a"));
+  }
+
+  // an acquired trigger has not fired, so its job is not in flight yet
+  @DatabaseTest
+  void testGetExecutingInstanceIdsForGroup_ignoresAcquiredTriggers() throws Exception {
+    insertSchedulerState("node-a", System.currentTimeMillis(), 7500L);
+    insertFiredTrigger("entry-1", "acquired-job", TEST_GROUP, "node-a", "ACQUIRED");
+
+    Map<JobKey, String> result = bulkReadScheduler.getExecutingInstanceIdsForGroup(TEST_GROUP);
+
+    assertThat(result.entrySet(), hasSize(0));
+  }
+
+  // NEXUS-54368: counting a dead node's leftover record would suppress a genuine interruption
+  @DatabaseTest
+  void testGetExecutingInstanceIdsForGroup_ignoresRecordsOfAnInstanceNoLongerCheckingIn() throws Exception {
+    long stale = System.currentTimeMillis() - 60_000L;
+    insertSchedulerState("dead-node", stale, 7500L);
+    insertFiredTrigger("entry-1", "abandoned-job", TEST_GROUP, "dead-node", "EXECUTING");
+
+    Map<JobKey, String> result = bulkReadScheduler.getExecutingInstanceIdsForGroup(TEST_GROUP);
+
+    assertThat(result.entrySet(), hasSize(0));
+  }
+
+  // recovery may delete the state row before the fired-trigger rows; Quartz calls those orphans failed
+  @DatabaseTest
+  void testGetExecutingInstanceIdsForGroup_ignoresRecordsWithNoSchedulerState() throws Exception {
+    insertFiredTrigger("entry-1", "orphaned-job", TEST_GROUP, "vanished-node", "EXECUTING");
+
+    Map<JobKey, String> result = bulkReadScheduler.getExecutingInstanceIdsForGroup(TEST_GROUP);
+
+    assertThat(result.entrySet(), hasSize(0));
+  }
+
+  // older than the interval but inside the grace, so still alive
+  @DatabaseTest
+  void testGetExecutingInstanceIdsForGroup_reportsInstanceWithinCheckinGrace() throws Exception {
+    insertSchedulerState("slow-node", System.currentTimeMillis() - 8_000L, 7500L);
+    insertFiredTrigger("entry-1", "slow-job", TEST_GROUP, "slow-node", "EXECUTING");
+
+    Map<JobKey, String> result = bulkReadScheduler.getExecutingInstanceIdsForGroup(TEST_GROUP);
+
+    assertThat(result.get(jobKey("slow-job", TEST_GROUP)), is("slow-node"));
+  }
+
+  @DatabaseTest
+  void testGetExecutingInstanceIdsForGroup_ignoresOtherGroups() throws Exception {
+    insertSchedulerState("node-a", System.currentTimeMillis(), 7500L);
+    insertFiredTrigger("entry-1", "other-job", "other-group", "node-a", "EXECUTING");
+
+    Map<JobKey, String> result = bulkReadScheduler.getExecutingInstanceIdsForGroup(TEST_GROUP);
+
     assertThat(result.entrySet(), hasSize(0));
   }
 
@@ -612,6 +688,52 @@ class BulkReadSchedulerImplTest
   /**
    * Simple test job for testing purposes.
    */
+  private void insertSchedulerState(
+      final String instanceName,
+      final long lastCheckinTime,
+      final long checkinInterval) throws SQLException
+  {
+    try (Connection conn = connectionProvider.getConnection();
+        PreparedStatement ps = conn.prepareStatement(
+            "INSERT INTO qrtz_scheduler_state (sched_name, instance_name, last_checkin_time, checkin_interval) " +
+                "VALUES (?, ?, ?, ?)")) {
+      ps.setString(1, SCHEDULER_NAME);
+      ps.setString(2, instanceName);
+      ps.setLong(3, lastCheckinTime);
+      ps.setLong(4, checkinInterval);
+      ps.executeUpdate();
+    }
+  }
+
+  private void insertFiredTrigger(
+      final String entryId,
+      final String jobName,
+      final String jobGroup,
+      final String instanceName,
+      final String state) throws SQLException
+  {
+    try (Connection conn = connectionProvider.getConnection();
+        PreparedStatement ps = conn.prepareStatement(
+            "INSERT INTO qrtz_fired_triggers (sched_name, entry_id, trigger_name, trigger_group, instance_name, " +
+                "fired_time, sched_time, priority, state, job_name, job_group, is_nonconcurrent, requests_recovery) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+      ps.setString(1, SCHEDULER_NAME);
+      ps.setString(2, entryId);
+      ps.setString(3, jobName);
+      ps.setString(4, jobGroup);
+      ps.setString(5, instanceName);
+      ps.setLong(6, 1L);
+      ps.setLong(7, 1L);
+      ps.setInt(8, 5);
+      ps.setString(9, state);
+      ps.setString(10, jobName);
+      ps.setString(11, jobGroup);
+      ps.setBoolean(12, true);
+      ps.setBoolean(13, false);
+      ps.executeUpdate();
+    }
+  }
+
   static class TestJob
       implements Job
   {

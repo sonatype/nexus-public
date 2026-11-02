@@ -14,6 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+
 import {actions, assign, createMachine, send} from 'xstate';
 
 import APIConstants from '../constants/APIConstants';
@@ -22,6 +23,10 @@ const {SORT_DIRECTIONS: {ASC, DESC}} = APIConstants;
 
 /**
  * @since 3.38
+ */
+/**
+ * @deprecated Classic UI only; unreachable from the Preview UI. Left on XState v4 semantics
+ * pending Classic UI deletion (NEXUS-55299) ahead of the XState v5 upgrade (NEXUS-51654).
  */
 export default class ListMachineUtils {
   /**

@@ -16,6 +16,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { RepositorySettingsUsageTab } from '../RepositorySettingsUsageTab';
 import { useRepositorySettingsUsageTab } from '../useRepositorySettingsUsageTab';
+import UIStrings from '../../../../../../../constants/UIStrings';
 
 jest.mock('../useRepositorySettingsUsageTab');
 
@@ -25,13 +26,19 @@ jest.mock('@radix-ui/themes', () => ({
   TooltipProvider: ({ children }: any) => <div>{children}</div>,
 }));
 
-const mockExtState: Record<string, unknown> = { 'datastore.isPostgresql': true };
+const mockExtState: Record<string, unknown> = {
+  'nexus.repository.size': true,
+};
 
+// useState mirrors the real ExtJS.useState: it invokes the supplied reader and, in production,
+// re-invokes it on the State store's `datachanged` event. Tests only need the read, so the
+// subscription is elided.
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     state: () => ({
       getValue: (key: string) => mockExtState[key],
     }),
+    useState: (getValue: () => unknown) => getValue(),
   },
 }));
 
@@ -81,7 +88,8 @@ function mockHook(overrides: HookOverrides = {}): jest.Mock {
 describe('RepositorySettingsUsageTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockExtState['datastore.isPostgresql'] = true;
+    Object.keys(mockExtState).forEach((key) => delete mockExtState[key]);
+    mockExtState['nexus.repository.size'] = true;
   });
 
   describe('loading state', () => {
@@ -409,37 +417,70 @@ describe('RepositorySettingsUsageTab', () => {
     });
   });
 
-  describe('H2 vs Postgres stat card gating', () => {
-    it('renders the Repository Size and Assets cards on Postgres', () => {
-      mockExtState['datastore.isPostgresql'] = true;
-      mockHook({ metrics: { componentCount: 10, assetCount: 25, totalSize: 1024000 } });
-
+  // NEXUS-55079: Repository Size and Assets are both populated from RepositoryMetricsService, whose
+  // isAvailable() is exactly RepositoryMetricsFeatureCheck.isRepositorySizeSupported() - licence AND
+  // Postgres AND a finished CopyBlobSizeTask. The backend publishes that resolved answer as the
+  // `nexus.repository.size` state key, so gating on `datastore.isPostgresql` alone was too coarse:
+  // Community Edition on Postgres satisfies the database condition but never populates either metric.
+  // Components is unaffected: the backend does not populate componentCount on any DB/edition yet, so
+  // it always shows its own pending tooltip regardless of this gate.
+  describe('stat card gating on repository size support (NEXUS-55079)', () => {
+    function renderTab(): void {
       render(
         <RepositorySettingsUsageTab
           repositoryName="test-repo"
           repositoryType="hosted"
         />
       );
+    }
+
+    it('shouldShowRepositorySizeAndAssetsCardsWhenRepositorySizeIsSupported', () => {
+      mockExtState['nexus.repository.size'] = true;
+      mockHook({ metrics: { componentCount: 10, assetCount: 25, totalSize: 1024000 } });
+
+      renderTab();
 
       expect(screen.getByText('Repository Size')).toBeInTheDocument();
       expect(screen.getByText('Assets')).toBeInTheDocument();
       expect(screen.getByText('Components')).toBeInTheDocument();
     });
 
-    it('hides the Repository Size and Assets cards on H2, but keeps Components', () => {
-      mockExtState['datastore.isPostgresql'] = false;
+    it('shouldHideRepositorySizeAndAssetsCardsWhenRepositorySizeStateIsAbsent', () => {
+      delete mockExtState['nexus.repository.size'];
       mockHook({ metrics: { componentCount: 10, assetCount: 25, totalSize: 1024000 } });
 
-      render(
-        <RepositorySettingsUsageTab
-          repositoryName="test-repo"
-          repositoryType="hosted"
-        />
-      );
+      renderTab();
 
       expect(screen.queryByText('Repository Size')).not.toBeInTheDocument();
       expect(screen.queryByText('Assets')).not.toBeInTheDocument();
       expect(screen.getByText('Components')).toBeInTheDocument();
+    });
+
+    // The backend collapses every unsupported case to the same published `false`: Community Edition
+    // on Postgres (licence condition fails), Pro on H2 (database condition fails), and Pro on
+    // Postgres with CopyBlobSizeTask still running all arrive here identically. The component reads
+    // only that resolved answer, so one test covers all of them - a per-scenario test would set the
+    // same value and assert the same outcome, distinguishing nothing.
+    it('shouldHideRepositorySizeAndAssetsCardsWhenRepositorySizeIsFalse', () => {
+      mockExtState['nexus.repository.size'] = false;
+      mockHook({ metrics: { componentCount: 10, assetCount: 25, totalSize: 1024000 } });
+
+      renderTab();
+
+      expect(screen.queryByText('Repository Size')).not.toBeInTheDocument();
+      expect(screen.queryByText('Assets')).not.toBeInTheDocument();
+      expect(screen.getByText('Components')).toBeInTheDocument();
+    });
+
+    it('shouldNotRenderUnavailablePlaceholdersForSizeOrAssetsWhenRepositorySizeIsUnsupported', () => {
+      mockExtState['nexus.repository.size'] = false;
+      mockHook({ metrics: { componentCount: null, assetCount: null, totalSize: null } });
+
+      renderTab();
+
+      // Only the Components card may show the unavailable placeholder; the gated cards are gone
+      // entirely rather than rendering an empty value.
+      expect(screen.getAllByText(UIStrings.UNAVAILABLE)).toHaveLength(1);
     });
   });
 

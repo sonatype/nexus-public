@@ -51,6 +51,10 @@ export default {
       ROOT: 'admin.repository.proprietary',
       TITLE: 'Proprietary Repositories',
     },
+    GLOBAL_DISTRIBUTION: {
+      ROOT: 'admin.repository.globaldistribution',
+      TITLE: 'Global Distribution',
+    },
     SELECTORS: {
       ROOT: 'admin.repository.selectors',
       TITLE: 'Content Selectors',

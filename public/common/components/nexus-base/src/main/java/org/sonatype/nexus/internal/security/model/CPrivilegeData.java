@@ -12,12 +12,11 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.common.entity.HasStringId;
 import org.sonatype.nexus.security.config.CPrivilege;
-
-import com.google.common.collect.Maps;
 
 /**
  * {@link CPrivilege} data.
@@ -47,7 +46,7 @@ public class CPrivilegeData
       CPrivilegeData copy = (CPrivilegeData) super.clone();
 
       if (this.properties != null) {
-        copy.properties = Maps.newHashMap(this.properties);
+        copy.properties = new HashMap<>(this.properties);
       }
 
       return copy;
@@ -75,7 +74,7 @@ public class CPrivilegeData
   @Override
   public Map<String, String> getProperties() {
     if (this.properties == null) {
-      this.properties = Maps.newHashMap();
+      this.properties = new HashMap<>();
     }
     return this.properties;
   }

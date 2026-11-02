@@ -33,21 +33,37 @@ import org.sonatype.nexus.repository.purge.PurgeUnusedFacet;
 import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter;
 import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
+import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
+import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAuthenticationAttributes;
+import org.sonatype.nexus.repository.rest.api.model.NegativeCacheAttributes;
+import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
+import org.sonatype.nexus.repository.rest.api.model.SimpleApiProxyRepository;
+import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.swagger.EditionVisibility;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.PropertyFilter;
+import com.fasterxml.jackson.databind.ser.PropertyWriter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -97,6 +113,8 @@ class RepositoryInternalResourceTest
 
   private final HostedType hostedType = new HostedType();
 
+  private final ObjectMapper mapper = new ObjectMapper();
+
   private RepositoryInternalResource underTest;
 
   @BeforeEach
@@ -115,7 +133,9 @@ class RepositoryInternalResourceTest
         convertersByFormat,
         defaultAdapter,
         repositoryMetricsService,
-        componentLookupHelper);
+        componentLookupHelper,
+        () -> mapper,
+        null);
   }
 
   @Test
@@ -331,12 +351,74 @@ class RepositoryInternalResourceTest
 
   @Test
   void getSigningPassphraseReturnsNotFoundWhenRepositoryUnknown() {
-    when(authorizingRepositoryManager.getRepositoryWithAdmin("unknown-repo")).thenReturn(Optional.empty());
+    when(authorizingRepositoryManager.getRepositoryWithAdminEdit("unknown-repo")).thenReturn(Optional.empty());
 
     WebApplicationMessageException exception =
         assertThrows(WebApplicationMessageException.class, () -> underTest.getSigningPassphrase("unknown-repo"));
 
     assertThat(exception.getResponse().getStatus(), is(404));
+  }
+
+  @Test
+  void getSigningPassphraseReturnsNotFoundWhenUserLacksEditPermission() {
+    // EDIT-gated lookup returns empty for a read-only admin (CWE-522). Endpoint must 404, not leak the secret.
+    when(authorizingRepositoryManager.getRepositoryWithAdminEdit("apt-repo")).thenReturn(Optional.empty());
+
+    WebApplicationMessageException exception =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.getSigningPassphrase("apt-repo"));
+
+    assertThat(exception.getResponse().getStatus(), is(404));
+  }
+
+  @Test
+  void getSigningPassphraseReturnsAptPassphraseWhenUserHasEditPermission() {
+    Repository repository = mockSigningRepository("apt-repo", "apt", "aptSigning", "apt-secret");
+    when(authorizingRepositoryManager.getRepositoryWithAdminEdit("apt-repo")).thenReturn(Optional.of(repository));
+
+    Map<String, String> result = underTest.getSigningPassphrase("apt-repo");
+
+    assertThat(result.get("passphrase"), is("apt-secret"));
+  }
+
+  @Test
+  void getSigningPassphraseReturnsYumPassphraseWhenUserHasEditPermission() {
+    Repository repository = mockSigningRepository("yum-repo", "yum", "yumSigning", "yum-secret");
+    when(authorizingRepositoryManager.getRepositoryWithAdminEdit("yum-repo")).thenReturn(Optional.of(repository));
+
+    Map<String, String> result = underTest.getSigningPassphrase("yum-repo");
+
+    assertThat(result.get("passphrase"), is("yum-secret"));
+  }
+
+  @Test
+  void getSigningPassphraseReturnsTerraformPassphraseWhenUserHasEditPermission() {
+    Repository repository =
+        mockSigningRepository("terraform-repo", "terraform", "terraformSigning", "terraform-secret");
+    when(authorizingRepositoryManager.getRepositoryWithAdminEdit("terraform-repo")).thenReturn(Optional.of(repository));
+
+    Map<String, String> result = underTest.getSigningPassphrase("terraform-repo");
+
+    assertThat(result.get("passphrase"), is("terraform-secret"));
+  }
+
+  @Test
+  void getSigningPassphraseReturnsAlpinePassphraseWhenUserHasEditPermission() {
+    Repository repository = mockSigningRepository("alpine-repo", "alpine", "alpineSigning", "alpine-secret");
+    when(authorizingRepositoryManager.getRepositoryWithAdminEdit("alpine-repo")).thenReturn(Optional.of(repository));
+
+    Map<String, String> result = underTest.getSigningPassphrase("alpine-repo");
+
+    assertThat(result.get("passphrase"), is("alpine-secret"));
+  }
+
+  @Test
+  void getSigningPassphraseReturnsEmptyForNonSigningFormat() {
+    Repository repository = mockSigningRepository("maven-repo", "maven2", "aptSigning", "unused");
+    when(authorizingRepositoryManager.getRepositoryWithAdminEdit("maven-repo")).thenReturn(Optional.of(repository));
+
+    Map<String, String> result = underTest.getSigningPassphrase("maven-repo");
+
+    assertThat(result.isEmpty(), is(true));
   }
 
   @Test
@@ -504,7 +586,9 @@ class RepositoryInternalResourceTest
         convertersByFormat,
         defaultAdapter,
         null,
-        componentLookupHelper);
+        componentLookupHelper,
+        () -> mapper,
+        null);
     Format maven2 = new Format("maven2")
     {
     };
@@ -519,6 +603,72 @@ class RepositoryInternalResourceTest
     assertThat(details.get(0).getSize(), is(nullValue()));
     assertThat(details.get(0).getComponentCount(), is(nullValue()));
     assertThat(details.get(0).getAssetCount(), is(nullValue()));
+  }
+
+  @Test
+  void shouldExposeGlobalDistributionInDetailsFromStorageConfig() {
+    // The Repository CDN Status card (inside GlobalDistributionPage) reads
+    // storage.globalDistribution off the /details endpoint so it can render the CDN column
+    // and drive bulk enable/disable without a second per-repo GET on page load.
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository cdnOn = mockRepositoryWithStorage("maven-releases", maven2, hostedType,
+        "http://localhost:8081/repository/maven-releases/",
+        Map.of("blobStoreName", "default", "globalDistribution", true));
+    Repository cdnOff = mockRepositoryWithStorage("maven-alt", maven2, hostedType,
+        "http://localhost:8081/repository/maven-alt/",
+        Map.of("blobStoreName", "default", "globalDistribution", false));
+    Repository cdnMissing = mockRepositoryWithStorage("maven-snapshots", maven2, hostedType,
+        "http://localhost:8081/repository/maven-snapshots/",
+        Map.of("blobStoreName", "default"));
+
+    List<Repository> repositories = List.of(cdnOn, cdnOff, cdnMissing);
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermission(cdnOn, READ)).thenReturn(true);
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermission(cdnOff, READ)).thenReturn(true);
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermission(cdnMissing, READ)).thenReturn(true);
+    when(repositoryManager.browse()).thenReturn(repositories);
+
+    List<RepositoryDetailXO> details = underTest.getRepositoryDetails();
+
+    RepositoryDetailXO onRow = details.stream()
+        .filter(r -> "maven-releases".equals(r.getName()))
+        .findFirst()
+        .orElseThrow();
+    RepositoryDetailXO offRow = details.stream()
+        .filter(r -> "maven-alt".equals(r.getName()))
+        .findFirst()
+        .orElseThrow();
+    RepositoryDetailXO missingRow = details.stream()
+        .filter(r -> "maven-snapshots".equals(r.getName()))
+        .findFirst()
+        .orElseThrow();
+
+    assertThat(onRow.getGlobalDistribution(), is(true));
+    assertThat(offRow.getGlobalDistribution(), is(false));
+    // Repos that never had the field written stay null; the frontend treats null as "off".
+    assertThat(missingRow.getGlobalDistribution(), is(nullValue()));
+    // blobStoreName still flows through as before.
+    assertThat(onRow.getBlobStoreName(), is("default"));
+  }
+
+  private static Repository mockRepositoryWithStorage(
+      final String name,
+      final Format format,
+      final Type type,
+      final String url,
+      final Map<String, Object> storageAttrs)
+  {
+    Repository repository = mock(Repository.class);
+    lenient().when(repository.getName()).thenReturn(name);
+    lenient().when(repository.getFormat()).thenReturn(format);
+    lenient().when(repository.getType()).thenReturn(type);
+    lenient().when(repository.getUrl()).thenReturn(url);
+    ConfigurationData configuration = new ConfigurationData();
+    configuration.setAttributes(Map.of("storage", storageAttrs));
+    configuration.setOnline(true);
+    lenient().when(repository.getConfiguration()).thenReturn(configuration);
+    return repository;
   }
 
   private static Repository mockRepository(
@@ -554,6 +704,176 @@ class RepositoryInternalResourceTest
     facets.forEach((clazz, facet) -> lenient().when(repository.facet(clazz)).thenAnswer(invocation -> facet));
     configuration.setOnline(online);
     return repository;
+  }
+
+  private static Repository mockSigningRepository(
+      final String name,
+      final String formatValue,
+      final String signingAttributeKey,
+      final String passphrase)
+  {
+    Repository repository = mock(Repository.class);
+    lenient().when(repository.getName()).thenReturn(name);
+    lenient().when(repository.getFormat()).thenReturn(new Format(formatValue)
+    {
+    });
+    ConfigurationData configuration = new ConfigurationData();
+    configuration.setAttributes(Map.of(signingAttributeKey, Map.of("passphrase", passphrase)));
+    lenient().when(repository.getConfiguration()).thenReturn(configuration);
+    return repository;
+  }
+
+  @Test
+  void getRepositoryAddsPlaceholderForStoredPassword() throws Exception {
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository repository = mockRepository("proxy-repo", maven2, proxyType,
+        "http://localhost:8081/repository/proxy-repo/", true, Map.of());
+    ConfigurationData config = new ConfigurationData();
+    config.setAttributes(Map.of("httpclient", Map.of("authentication", Map.of("password", "_stored_id"))));
+    when(repository.getConfiguration()).thenReturn(config);
+
+    SimpleApiProxyRepository dto = new SimpleApiProxyRepository(
+        "proxy-repo", "maven2", "http://localhost:8081/repository/proxy-repo/", true,
+        new StorageAttributes("default", true, true),
+        null,
+        new ProxyAttributes("https://remote.example.com", 1440, 1440, false),
+        new NegativeCacheAttributes(true, 1440),
+        new HttpClientAttributes(false, true, null,
+            new HttpClientConnectionAuthenticationAttributes("username", "u", null, null, null, null)),
+        null, null);
+
+    when(authorizingRepositoryManager.getRepositoryWithAdmin("proxy-repo")).thenReturn(Optional.of(repository));
+    when(defaultAdapter.adaptDecorated(repository)).thenReturn(dto);
+
+    JsonNode result = underTest.getRepository("proxy-repo");
+
+    assertThat(result.at("/httpClient/authentication/password").asText(), is(ProxySecretPlaceholders.PLACEHOLDER));
+    assertThat(result.at("/httpClient/authentication/username").asText(), is("u"));
+    // Document WRITE_ONLY: the DTO tree alone has no password key
+    JsonNode dtoTree = mapper.copy()
+        .setFilterProvider(new SimpleFilterProvider().setFailOnUnknownId(false))
+        .valueToTree(dto);
+    assertThat(dtoTree.has("httpClient"), is(true));
+    JsonNode auth = dtoTree.path("httpClient").path("authentication");
+    assertThat(auth.isMissingNode() || !auth.has("password"), is(true));
+  }
+
+  @Test
+  void getRepositoryDoesNotAddPlaceholderWhenNoSecretStored() throws Exception {
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository repository = mockRepository("proxy-repo", maven2, proxyType,
+        "http://localhost:8081/repository/proxy-repo/", true, Map.of());
+    ConfigurationData config = new ConfigurationData();
+    config.setAttributes(Map.of("httpclient", Map.of("authentication", Map.of("type", "username", "username", "u"))));
+    when(repository.getConfiguration()).thenReturn(config);
+
+    SimpleApiProxyRepository dto = new SimpleApiProxyRepository(
+        "proxy-repo", "maven2", "http://localhost:8081/repository/proxy-repo/", true,
+        new StorageAttributes("default", true, true),
+        null,
+        new ProxyAttributes("https://remote.example.com", 1440, 1440, false),
+        new NegativeCacheAttributes(true, 1440),
+        new HttpClientAttributes(false, true, null,
+            new HttpClientConnectionAuthenticationAttributes("username", "u", null, null, null, null)),
+        null, null);
+
+    when(authorizingRepositoryManager.getRepositoryWithAdmin("proxy-repo")).thenReturn(Optional.of(repository));
+    when(defaultAdapter.adaptDecorated(repository)).thenReturn(dto);
+
+    JsonNode result = underTest.getRepository("proxy-repo");
+
+    assertThat(result.at("/httpClient/authentication/password").isMissingNode(), is(true));
+    assertThat(result.at("/httpClient/authentication/username").asText(), is("u"));
+  }
+
+  @Test
+  void getRepositoryAddsPlaceholderForStoredBearerToken() throws Exception {
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository repository = mockRepository("proxy-repo", maven2, proxyType,
+        "http://localhost:8081/repository/proxy-repo/", true, Map.of());
+    ConfigurationData config = new ConfigurationData();
+    config.setAttributes(Map.of("httpclient", Map.of("authentication", Map.of("bearerTokenId", "_stored_token"))));
+    when(repository.getConfiguration()).thenReturn(config);
+
+    SimpleApiProxyRepository dto = new SimpleApiProxyRepository(
+        "proxy-repo", "maven2", "http://localhost:8081/repository/proxy-repo/", true,
+        new StorageAttributes("default", true, true),
+        null,
+        new ProxyAttributes("https://remote.example.com", 1440, 1440, false),
+        new NegativeCacheAttributes(true, 1440),
+        new HttpClientAttributes(false, true, null,
+            new HttpClientConnectionAuthenticationAttributes("bearer", null, null, null, null, null)),
+        null, null);
+
+    when(authorizingRepositoryManager.getRepositoryWithAdmin("proxy-repo")).thenReturn(Optional.of(repository));
+    when(defaultAdapter.adaptDecorated(repository)).thenReturn(dto);
+
+    JsonNode result = underTest.getRepository("proxy-repo");
+
+    assertThat(result.at("/httpClient/authentication/bearerToken").asText(), is(ProxySecretPlaceholders.PLACEHOLDER));
+  }
+
+  @Test
+  void getRepositoryKeepsEditionFilteredStorageFieldsHidden() throws Exception {
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository repository = mockRepository("proxy-repo", maven2, proxyType,
+        "http://localhost:8081/repository/proxy-repo/", true, Map.of());
+    ConfigurationData config = new ConfigurationData();
+    config.setAttributes(Map.of());
+    when(repository.getConfiguration()).thenReturn(config);
+
+    SimpleApiProxyRepository dto = new SimpleApiProxyRepository(
+        "proxy-repo", "maven2", "http://localhost:8081/repository/proxy-repo/", true,
+        new StorageAttributes("default", true, true),
+        null,
+        new ProxyAttributes("https://remote.example.com", 1440, 1440, false),
+        new NegativeCacheAttributes(true, 1440),
+        new HttpClientAttributes(false, true, null, null),
+        null, null);
+
+    when(authorizingRepositoryManager.getRepositoryWithAdmin("proxy-repo")).thenReturn(Optional.of(repository));
+    when(defaultAdapter.adaptDecorated(repository)).thenReturn(dto);
+
+    // With filter: globalDistribution is hidden
+    List<PropertyFilter> filters = List.of(new HideGlobalDistributionFilter());
+    RepositoryInternalResource filteredResource = new RepositoryInternalResource(
+        formats, repositoryManager, repositoryPermissionChecker, proxyType, recipes,
+        authorizingRepositoryManager, convertersByFormat, defaultAdapter,
+        repositoryMetricsService, componentLookupHelper, () -> mapper, filters);
+
+    JsonNode filteredResult = filteredResource.getRepository("proxy-repo");
+
+    assertThat(filteredResult.at("/storage/globalDistribution").isMissingNode(), is(true));
+
+    // Without filter: globalDistribution is present
+    JsonNode unfilteredResult = underTest.getRepository("proxy-repo");
+    assertThat(unfilteredResult.at("/storage/globalDistribution").asBoolean(), is(true));
+  }
+
+  // Registered under the same id as the real edition filter so @JsonFilter(EditionVisibility.NAME) resolves to it
+  @Qualifier(EditionVisibility.NAME)
+  private static class HideGlobalDistributionFilter
+      extends SimpleBeanPropertyFilter
+  {
+    @Override
+    public void serializeAsField(
+        final Object pojo,
+        final JsonGenerator gen,
+        final SerializerProvider provider,
+        final PropertyWriter writer) throws Exception
+    {
+      if (!"globalDistribution".equals(writer.getName())) {
+        super.serializeAsField(pojo, gen, provider, writer);
+      }
+    }
   }
 
   private static Facet mockHttpFacet(final String description, final String reason) {

@@ -12,13 +12,14 @@
  */
 package org.sonatype.nexus.coreui.internal.wonderland;
 
-import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
-import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
+import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistribution;
+import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistributionType;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,22 +40,20 @@ class StatusResourceTest
   @Mock
   private ApplicationVersion applicationVersion;
 
-  @Mock
-  private NexusEditionSelector nexusEditionSelector;
-
-  @Mock
-  private NexusEdition nexusEdition;
-
   private StatusResource underTest;
+
+  @AfterEach
+  void tearDown() {
+    NexusDistribution.clearTestOverride();
+  }
 
   @Test
   void getReturnsVersionAndEdition() {
     when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
     when(applicationVersion.getEdition()).thenReturn("PRO");
-    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
-    when(nexusEdition.getId()).thenReturn("nexus-professional-edition");
+    NexusDistribution.setTestOverride(NexusDistributionType.SELF_HOSTED);
 
-    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
+    underTest = new StatusResource(applicationVersion);
     StatusXO result = underTest.get();
 
     assertThat(result, is(notNullValue()));
@@ -69,10 +68,9 @@ class StatusResourceTest
   void getReturnsProPlusEditionUnchanged() {
     when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
     when(applicationVersion.getEdition()).thenReturn("PROPLUS");
-    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
-    when(nexusEdition.getId()).thenReturn("nexus-professional-plus-edition");
+    NexusDistribution.setTestOverride(NexusDistributionType.SELF_HOSTED);
 
-    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
+    underTest = new StatusResource(applicationVersion);
     StatusXO result = underTest.get();
 
     assertThat(result.getEdition(), is("PROPLUS"));
@@ -84,10 +82,9 @@ class StatusResourceTest
   void getReturnsEnterpriseEditionUnchanged() {
     when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
     when(applicationVersion.getEdition()).thenReturn("ENTERPRISE");
-    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
-    when(nexusEdition.getId()).thenReturn("nexus-enterprise-edition");
+    NexusDistribution.setTestOverride(NexusDistributionType.SELF_HOSTED);
 
-    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
+    underTest = new StatusResource(applicationVersion);
     StatusXO result = underTest.get();
 
     assertThat(result.getEdition(), is("ENTERPRISE"));
@@ -99,10 +96,9 @@ class StatusResourceTest
   void getReturnsOssEdition() {
     when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
     when(applicationVersion.getEdition()).thenReturn("OSS");
-    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
-    when(nexusEdition.getId()).thenReturn("nexus-core-edition");
+    NexusDistribution.setTestOverride(NexusDistributionType.SELF_HOSTED);
 
-    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
+    underTest = new StatusResource(applicationVersion);
     StatusXO result = underTest.get();
 
     assertThat(result, is(notNullValue()));
@@ -112,13 +108,14 @@ class StatusResourceTest
   }
 
   @Test
-  void getReturnsIsCloudTrueForCloudEdition() {
+  void getReturnsIsCloudTrueForCloudDistribution() {
     when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
+    // On cloud the reported edition is the resolved licensed tier (e.g. Pro); isCloud comes from the
+    // distribution, not the edition id (NEXUS-54766 / NEXUS-54772).
     when(applicationVersion.getEdition()).thenReturn("PRO");
-    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
-    when(nexusEdition.getId()).thenReturn("nexus-cloud-edition");
+    NexusDistribution.setTestOverride(NexusDistributionType.CLOUD);
 
-    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
+    underTest = new StatusResource(applicationVersion);
     StatusXO result = underTest.get();
 
     assertThat(result, is(notNullValue()));
@@ -131,10 +128,9 @@ class StatusResourceTest
   void getHandlesNullValues() {
     when(applicationVersion.getVersion()).thenReturn(null);
     when(applicationVersion.getEdition()).thenReturn(null);
-    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
-    when(nexusEdition.getId()).thenReturn("nexus-professional-edition");
+    NexusDistribution.setTestOverride(NexusDistributionType.SELF_HOSTED);
 
-    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
+    underTest = new StatusResource(applicationVersion);
     StatusXO result = underTest.get();
 
     assertThat(result, is(notNullValue()));

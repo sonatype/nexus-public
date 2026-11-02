@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -19,7 +20,6 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 
-import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -63,7 +63,7 @@ public class Maven2MavenPathParserMxTest
 
   @Parameters
   public static List<String[]> parameters() {
-    final List<String[]> result = Lists.newArrayList();
+    final List<String[]> result = new ArrayList<>();
     for (String g : GROUP_IDS) {
       for (String a : ARTIFACT_IDS) {
         for (String[] v : VERSIONS) {

@@ -11,11 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { Flex } from '@radix-ui/themes';
+import { Badge, Flex } from '@radix-ui/themes';
 import { ExternalLink, LucideIcon } from 'lucide-react';
 import { useSref, useIsActive } from '@uirouter/react';
 import { Tooltip } from '../Tooltip/TooltipContainerContext';
 import { useContextAwareRouteName } from './useContextAwareRouteName';
+import { formatBadgeCount } from './formatBadgeCount';
 
 export interface NavItemProps {
   /** Route name for navigation */
@@ -34,6 +35,12 @@ export interface NavItemProps {
   href?: string;
   /** Whether this is an external link */
   isExternal?: boolean;
+  /** Optional count badge. Hidden for null, undefined and 0; shown as "99+" above 99. */
+  badge?: number | null;
+  /** Accessible label for the badge, from the count. Defaults to the bare count. */
+  badgeLabel?: (count: number) => string;
+  /** Usage analytics id, rendered as data-analytics-id on the link. */
+  analyticsId?: string;
 }
 
 /**
@@ -49,6 +56,9 @@ export function NavItem({
   isCollapsed,
   href: directHref,
   isExternal,
+  badge,
+  badgeLabel: getBadgeLabel,
+  analyticsId,
 }: NavItemProps) {
   // Defensive check: ensure name is always a valid string for useSref
   if (!name) {
@@ -68,6 +78,9 @@ export function NavItem({
   // Use direct href for external links, otherwise use router-generated href
   const finalHref = directHref || sref.href;
 
+  const showBadge = typeof badge === 'number' && badge > 0;
+  const badgeLabel = showBadge ? (getBadgeLabel ? getBadgeLabel(badge) : `${badge}`) : undefined;
+
   const content = (
     <a
       href={finalHref}
@@ -75,13 +88,21 @@ export function NavItem({
       target={isExternal ? '_blank' : undefined}
       rel={isExternal ? 'noopener noreferrer' : undefined}
       className={`guide-nav-item ${isActive ? 'guide-nav-item--active' : ''}`}
+      data-analytics-id={analyticsId}
+      aria-label={showBadge ? `${text}, ${badgeLabel}` : isCollapsed ? text : undefined}
     >
       <Flex align="center" justify={isCollapsed ? 'center' : 'start'} gap="3" px="3" py="2">
         <span className="guide-nav-item__icon">
           {Icon && <Icon size={18} />}
+          {isCollapsed && showBadge && <span aria-hidden="true" className="guide-nav-item__badge-dot" />}
         </span>
         {!isCollapsed && (
           <span className="guide-nav-item__text">{text}</span>
+        )}
+        {!isCollapsed && showBadge && (
+          <Badge size="1" color="red" variant="solid" radius="full" className="guide-nav-item__badge">
+            {formatBadgeCount(badge as number)}
+          </Badge>
         )}
         {isExternal && !isCollapsed && (
           <ExternalLink size={18} className="guide-nav-item__external" />

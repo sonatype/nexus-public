@@ -13,6 +13,7 @@
 
 package org.sonatype.nexus.repository.rest.internal.resources;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,7 +37,6 @@ import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.validation.Validate;
 
-import com.google.common.collect.Lists;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +93,7 @@ public class RepositoryProprietaryContentResource
   @POST
   @Validate
   public void set(@NotNull @Valid final ProprietaryContentRequest request) {
-    List<String> failed = Lists.newArrayList();
+    List<String> failed = new ArrayList<>();
 
     request.getProprietary()
         .stream()

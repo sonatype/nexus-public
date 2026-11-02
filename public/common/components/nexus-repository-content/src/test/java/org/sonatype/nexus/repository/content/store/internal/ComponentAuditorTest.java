@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEve
 import org.sonatype.nexus.repository.content.event.component.ComponentEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentRestoredEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentsPurgedAuditEvent;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
@@ -267,6 +268,31 @@ public class ComponentAuditorTest
     assertThat(attributes.get("namespace"), is(COMPONENT_NAMESPACE));
     assertThat(attributes.get("version"), is(COMPONENT_VERSION));
     assertThat(attributes.get("kind"), is(COMPONENT_KIND));
+  }
+
+  @Test
+  public void testOnComponentRestoredEvent_auditsAsRestored() {
+    // A restore (un-trash) must audit under the dedicated "restored" type, not the raw lowercased class name
+    // ("componentrestoredevent"). ComponentRestoredEvent is handled by the generic on(ComponentEvent) path
+    // (NEXUS-55233).
+    ComponentData componentData = createComponentData(COMPONENT_NAME, COMPONENT_NAMESPACE, COMPONENT_VERSION,
+        COMPONENT_KIND);
+    ComponentRestoredEvent event = new ComponentRestoredEvent(componentData);
+    setRepositorySupplier(event, () -> Optional.of(repository));
+
+    ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
+
+    try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
+      mockedStatic.when(EventHelper::isReplicating).thenReturn(false);
+      underTest.on((ComponentEvent) event);
+    }
+
+    verify(auditRecorder).record(captor.capture());
+
+    AuditData auditData = captor.getValue();
+    assertThat(auditData.getDomain(), is("repository.component"));
+    assertThat(auditData.getType(), is("restored"));
+    assertThat(auditData.getContext(), is(COMPONENT_NAME));
   }
 
   @Test

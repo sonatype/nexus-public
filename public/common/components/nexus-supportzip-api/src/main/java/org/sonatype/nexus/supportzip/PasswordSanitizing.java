@@ -23,10 +23,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.google.common.collect.ImmutableList;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 
 /**
  * Should be used to hide sensitive data like password in the {@link Map}.
@@ -38,7 +40,8 @@ public class PasswordSanitizing<T extends Map<String, ?>>
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  public static final List<String> SENSITIVE_FIELD_NAMES = ImmutableList.of(
+  // Not List.of: contains(null) throws NPE on JDK immutable lists, Guava returned false (public API).
+  public static final List<String> SENSITIVE_FIELD_NAMES = unmodifiableList(asList(
       "applicationPassword",
       "password",
       "systemPassword",
@@ -57,7 +60,7 @@ public class PasswordSanitizing<T extends Map<String, ?>>
       "destinationInstancePassword",
       "NEXUS_DATASTORE_NEXUS_PASSWORD",
       "NEXUS_SECURITY_INITIAL_PASSWORD",
-      "nexus.datastore.nexus.password");
+      "nexus.datastore.nexus.password"));
 
   public static final String REPLACEMENT = "**REDACTED**";
 

@@ -22,7 +22,7 @@ import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
-import org.sonatype.nexus.repository.content.store.SoftDeleteSchemaState;
+import org.sonatype.nexus.repository.content.store.TrashSchemaState;
 import org.sonatype.nexus.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +41,7 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    */
   private DatabaseCheck databaseCheck;
 
-  private SoftDeleteSchemaState softDeleteSchemaState;
+  private TrashSchemaState trashSchemaState;
 
   @Autowired
   public BrowseNodeStore(
@@ -59,16 +59,22 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   }
 
   @Autowired(required = false)
-  public void setSoftDeleteSchemaState(final SoftDeleteSchemaState softDeleteSchemaState) {
-    this.softDeleteSchemaState = softDeleteSchemaState;
+  public void setTrashSchemaState(final TrashSchemaState trashSchemaState) {
+    this.trashSchemaState = trashSchemaState;
   }
 
   private boolean isPostgresql() {
     return databaseCheck != null && databaseCheck.isPostgresql();
   }
 
-  protected boolean softDeleteAvailable() {
-    return softDeleteSchemaState != null && softDeleteSchemaState.isSoftDeleteAvailable();
+  /**
+   * Whether the {@code deleted_on IS NULL} read filter should be applied in {@code getByDisplayPath}. Gates on Trash
+   * schema presence, not the feature flag (NEXUS-55410): once content has been Trashed, turning the flag off must not
+   * resurrect it in the browse tree, so the filter persists as long as the columns exist -- matching how the
+   * asset/component content stores gate the same predicate.
+   */
+  protected boolean trashAvailable() {
+    return trashSchemaState != null && trashSchemaState.isSchemaReached();
   }
 
   /**
@@ -89,7 +95,7 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().getByDisplayPath(repositoryId, displayPath, limit, filter, filterParams, softDeleteAvailable());
+    return dao().getByDisplayPath(repositoryId, displayPath, limit, filter, filterParams, trashAvailable());
   }
 
   /**

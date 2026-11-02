@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.extdirect.model;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
+
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.UnauthenticatedException;
 import org.apache.shiro.subject.Subject;
@@ -43,7 +44,7 @@ public class ErrorResponse
   }
 
   public ErrorResponse(final String message) {
-    super(false, Lists.newArrayList());
+    super(false, new ArrayList<>());
     this.message = requireNonNull(message);
   }
 

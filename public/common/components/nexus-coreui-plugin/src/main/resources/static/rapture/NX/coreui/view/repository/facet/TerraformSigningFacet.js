@@ -40,8 +40,7 @@ Ext.define('NX.coreui.view.repository.facet.TerraformSigningFacet', {
             name: 'attributes.terraformSigning.keypair',
             fieldLabel: NX.I18n.get('Repository_Facet_TerraformSigningFacet_Keypair_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_TerraformSigningFacet_Keypair_HelpText'),
-            allowBlank: false,
-            grow: true
+            allowBlank: false
           },
           {
             xtype:'nx-password',

@@ -32,7 +32,7 @@ public interface SearchIndexFacet
   /**
    * Deletes all search index entries for the {@link Repository} this facet is attached to.
    * Unlike the facet lifecycle {@code delete()}, this can be called independently
-   * without triggering a state transition (e.g., during soft-delete).
+   * without triggering a state transition (e.g., during trash).
    */
   default void deleteIndex() {
     // no-op by default

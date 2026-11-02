@@ -27,7 +27,7 @@
        AND c.kind = 'maven-plugin'
        AND c.namespace = #{namespace}
        AND a.path LIKE '%.jar'
-       <if test="softDeleteAvailable">
+       <if test="trashAvailable">
          AND a.deleted_on IS NULL
          AND c.deleted_on IS NULL
        </if>

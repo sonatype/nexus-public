@@ -75,7 +75,7 @@ public class ComponentStore<T extends ComponentDAO>
 
   private static final int ASSET_BROWSE_LIMIT = 1000;
 
-  private SoftDeleteSchemaState softDeleteSchemaState;
+  private TrashSchemaState trashSchemaState;
 
   /**
    * Caps how many unresolved assets are named in the warning logged by {@link #resolveAssetComponents}.
@@ -95,12 +95,15 @@ public class ComponentStore<T extends ComponentDAO>
 
   /** Optional so unit tests that construct the store directly return {@code false} (pre-migration). */
   @Autowired(required = false)
-  public void setSoftDeleteSchemaState(final SoftDeleteSchemaState softDeleteSchemaState) {
-    this.softDeleteSchemaState = softDeleteSchemaState;
+  public void setTrashSchemaState(final TrashSchemaState trashSchemaState) {
+    this.trashSchemaState = trashSchemaState;
   }
 
-  protected boolean softDeleteAvailable() {
-    return softDeleteSchemaState != null && softDeleteSchemaState.isSoftDeleteAvailable();
+  protected boolean trashAvailable() {
+    // Read/insert filtering keys on schema presence, NOT the feature flag: turning Trash off must not resurrect
+    // already-Trashed content, so the deleted_on IS NULL filter persists as long as the columns exist
+    // (NEXUS-55233). The flag still gates delete-routing (see ContentDeletionService) and Trash UI/REST.
+    return trashSchemaState != null && trashSchemaState.isSchemaReached();
   }
 
   /**
@@ -119,7 +122,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().countComponents(repositoryId, kind, filter, filterParams, softDeleteAvailable());
+    return dao().countComponents(repositoryId, kind, filter, filterParams, trashAvailable());
   }
 
   /**
@@ -138,7 +141,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().countComponentsWithAssetsBlobs(repositoryId, kind, filter, filterParams, softDeleteAvailable());
+    return dao().countComponentsWithAssetsBlobs(repositoryId, kind, filter, filterParams, trashAvailable());
   }
 
   /**
@@ -148,7 +151,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public int countUnnormalized() {
-    return dao().countUnnormalized(softDeleteAvailable());
+    return dao().countUnnormalized(trashAvailable());
   }
 
   /**
@@ -173,7 +176,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final Map<String, Object> filterParams)
   {
     return dao().browseComponents(repositoryId, limit, continuationToken, kind, filter,
-        filterParams, softDeleteAvailable());
+        filterParams, trashAvailable());
   }
 
   @Transactional
@@ -186,7 +189,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final Map<String, Object> filterParams)
   {
     return dao().browseComponentsEager(repositoryIds, limit, continuationToken, kind, filter,
-        filterParams, softDeleteAvailable());
+        filterParams, trashAvailable());
   }
 
   /**
@@ -202,7 +205,7 @@ public class ComponentStore<T extends ComponentDAO>
       final int limit,
       @Nullable final String continuationToken)
   {
-    return dao().browseUnnormalized(limit, continuationToken, softDeleteAvailable());
+    return dao().browseUnnormalized(limit, continuationToken, trashAvailable());
   }
 
   /**
@@ -220,7 +223,7 @@ public class ComponentStore<T extends ComponentDAO>
       final int limit,
       @Nullable final String continuationToken)
   {
-    return dao().browseComponentsInRepositories(repositoryIds, limit, continuationToken, softDeleteAvailable());
+    return dao().browseComponentsInRepositories(repositoryIds, limit, continuationToken, trashAvailable());
   }
 
   /**
@@ -241,7 +244,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final String continuationToken)
   {
     return dao().browseComponentsBySet(repositoryId,
-        componentSet.namespace(), componentSet.name(), limit, continuationToken, softDeleteAvailable());
+        componentSet.namespace(), componentSet.name(), limit, continuationToken, trashAvailable());
   }
 
   /**
@@ -282,7 +285,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Collection<String> browseNamespaces(final int repositoryId) {
-    return dao().browseNamespaces(repositoryId, softDeleteAvailable());
+    return dao().browseNamespaces(repositoryId, trashAvailable());
   }
 
   /**
@@ -294,7 +297,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Collection<String> browseNames(final int repositoryId, final String namespace) {
-    return dao().browseNames(repositoryId, namespace, softDeleteAvailable());
+    return dao().browseNames(repositoryId, namespace, trashAvailable());
   }
 
   /**
@@ -310,7 +313,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public boolean existsByName(final int repositoryId, final String namespace, final String name) {
-    return dao().existsByName(repositoryId, namespace, name, softDeleteAvailable());
+    return dao().existsByName(repositoryId, namespace, name, trashAvailable());
   }
 
   /**
@@ -329,7 +332,7 @@ public class ComponentStore<T extends ComponentDAO>
       @Param("limit") final int limit,
       @Nullable @Param("continuationToken") final String continuationToken)
   {
-    return dao().browseSets(repositoryId, limit, continuationToken, softDeleteAvailable());
+    return dao().browseSets(repositoryId, limit, continuationToken, trashAvailable());
   }
 
   /**
@@ -346,7 +349,7 @@ public class ComponentStore<T extends ComponentDAO>
       final int limit,
       @Nullable final String continuationToken)
   {
-    return dao().browseComponentsWithAssets(repositoryId, limit, continuationToken, softDeleteAvailable());
+    return dao().browseComponentsWithAssets(repositoryId, limit, continuationToken, trashAvailable());
   }
 
   /**
@@ -361,7 +364,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Collection<String> browseVersions(final int repositoryId, final String namespace, final String name) {
-    return dao().browseVersions(repositoryId, namespace, name, softDeleteAvailable());
+    return dao().browseVersions(repositoryId, namespace, name, trashAvailable());
   }
 
   @Transactional
@@ -370,7 +373,7 @@ public class ComponentStore<T extends ComponentDAO>
       final String name,
       final Set<Integer> repositoryIds)
   {
-    return dao().browseVersionsByRepoIds(namespace, name, repositoryIds, softDeleteAvailable());
+    return dao().browseVersionsByRepoIds(namespace, name, repositoryIds, trashAvailable());
   }
 
   /**
@@ -380,7 +383,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public void createComponent(final ComponentData component) {
-    dao().createComponent(component, clustered, softDeleteAvailable());
+    dao().createComponent(component, clustered, trashAvailable());
 
     postCommitEvent(() -> new ComponentCreatedEvent(component));
   }
@@ -393,7 +396,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Optional<Component> readComponent(final int componentId) {
-    return dao().readComponent(componentId, softDeleteAvailable());
+    return dao().readComponent(componentId, trashAvailable());
   }
 
   /**
@@ -412,7 +415,7 @@ public class ComponentStore<T extends ComponentDAO>
       final String name,
       final String version)
   {
-    return dao().readCoordinate(repositoryId, namespace, name, version, softDeleteAvailable());
+    return dao().readCoordinate(repositoryId, namespace, name, version, trashAvailable());
   }
 
   /**
@@ -431,7 +434,7 @@ public class ComponentStore<T extends ComponentDAO>
       final String version,
       final Set<Integer> repositoryIds)
   {
-    return dao().readCoordinateInRepoIds(namespace, name, version, repositoryIds, softDeleteAvailable());
+    return dao().readCoordinateInRepoIds(namespace, name, version, repositoryIds, trashAvailable());
   }
 
   /**
@@ -484,7 +487,7 @@ public class ComponentStore<T extends ComponentDAO>
       final @Nullable Object value)
   {
     // reload latest attributes, apply change, then update database if necessary
-    dao().readComponentAttributes(component, softDeleteAvailable()).ifPresent(attributes -> {
+    dao().readComponentAttributes(component, trashAvailable()).ifPresent(attributes -> {
       ((ComponentData) component).setAttributes(attributes);
 
       if (applyAttributeChange(attributes, change, key, value)) {
@@ -528,7 +531,7 @@ public class ComponentStore<T extends ComponentDAO>
       final String name,
       final String version)
   {
-    return dao().readCoordinate(repositoryId, namespace, name, version, softDeleteAvailable())
+    return dao().readCoordinate(repositoryId, namespace, name, version, trashAvailable())
         .map(this::deleteComponent)
         .orElse(false);
   }
@@ -565,7 +568,7 @@ public class ComponentStore<T extends ComponentDAO>
     int purged = 0;
     while (true) {
       int[] componentIds =
-          dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize(), softDeleteAvailable());
+          dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize(), trashAvailable());
       if (componentIds.length == 0) {
         break; // nothing left to purge
       }
@@ -655,36 +658,42 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
-   * Soft-deletes a component by setting deletion metadata.
+   * Trashs a component by setting deletion metadata.
    * Fires {@link ComponentDeletedEvent} to trigger search purge.
    *
-   * @param component the component to soft-delete
+   * @param component the component to trash
    * @param deletedBy the user who performed the deletion
    */
   @Transactional
-  public void softDeleteComponent(
+  public void trashComponent(
       final Component component,
       final String deletedBy)
   {
     int componentId = InternalIds.internalComponentId(component);
-    dao().softDeleteComponent(componentId, deletedBy);
+    dao().trashComponent(componentId, deletedBy);
     postCommitEvent(() -> new ComponentDeletedEvent(component));
   }
 
   /**
-   * Restores a soft-deleted component by clearing deletion metadata.
+   * Restores a trashed component by clearing deletion metadata.
    *
    * @param component the component to restore
    */
   @Transactional
-  public void undoSoftDeleteComponent(final Component component) {
+  public int undoTrashComponent(final Component component) {
     int componentId = InternalIds.internalComponentId(component);
-    dao().undoSoftDeleteComponent(componentId);
-    postCommitEvent(() -> new ComponentRestoredEvent(component));
+    int restored = dao().undoTrashComponent(componentId);
+    // Only fire the restore event when a row was actually cleared. On a lost restore/purge race the component
+    // was already purged (0 rows), so firing ComponentRestoredEvent -- and its webhook/audit/metadata side
+    // effects -- for a now-nonexistent component would be misleading (NEXUS-55233).
+    if (restored > 0) {
+      postCommitEvent(() -> new ComponentRestoredEvent(component));
+    }
+    return restored;
   }
 
   /**
-   * Browse soft-deleted components, optionally filtered by repository.
+   * Browse trashed components, optionally filtered by repository.
    */
   @Transactional
   public Continuation<ComponentData> browseDeletedComponents(
@@ -696,7 +705,7 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
-   * Count soft-deleted components, optionally filtered by repository.
+   * Count trashed components, optionally filtered by repository.
    */
   @Transactional
   public int countDeletedComponents(@Nullable final Integer repositoryId) {
@@ -704,7 +713,7 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
-   * Reads a soft-deleted component by its internal id.
+   * Reads a trashed component by its internal id.
    */
   @Transactional
   public Optional<ComponentData> readDeletedComponent(final int componentId) {
@@ -712,8 +721,8 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
-   * Returns one drain batch (up to {@code deleteBatchSize}) of soft-deleted component ids older than
-   * {@code olderThan}, oldest-id first. {@code ComponentSoftDeletedEntityService.purgeExpired} loops
+   * Returns one drain batch (up to {@code deleteBatchSize}) of trashed component ids older than
+   * {@code olderThan}, oldest-id first. {@code ComponentTrashedEntityService.purgeExpired} loops
    * over this, cleaning the {@code {format}_component_tag} junction (no FK cascade on
    * {@code component_id}) and then deleting each batch via {@link #purgeDeletedComponentsByIds}.
    */
@@ -727,7 +736,7 @@ public class ComponentStore<T extends ComponentDAO>
    * in a single transaction. Used by the expire task's bounded drain loop; ids should already be a
    * single batch ({@code <= deleteBatchSize}).
    * <p>
-   * Only components still soft-deleted ({@code deleted_on IS NOT NULL}) are removed, so a component
+   * Only components still trashed ({@code deleted_on IS NOT NULL}) are removed, so a component
    * restored between the drain's id selection and this delete is left intact rather than being
    * permanently destroyed by the racing purge (NEXUS-49147). The returned count therefore reflects
    * the rows actually purged, which may be fewer than {@code componentIds.length}.
@@ -741,9 +750,9 @@ public class ComponentStore<T extends ComponentDAO>
     }
     if ("H2".equals(thisSession().sqlDialect())) {
       // workaround lack of primitive array support in H2
-      return dao().purgeSelectedSoftDeletedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
+      return dao().purgeSelectedTrashedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
     }
-    return dao().purgeSelectedSoftDeletedComponents(componentIds);
+    return dao().purgeSelectedTrashedComponents(componentIds);
   }
 
   /**

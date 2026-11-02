@@ -41,4 +41,5 @@ export const FORMAT_LABELS: Record<string, string> = {
   swift: 'Swift',
   pub: 'Pub (Dart)',
   ansiblegalaxy: 'Ansible Galaxy',
+  openvsx: 'Open VSX',
 };

@@ -1,0 +1,235 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Merged from self-hosted's GlobalHeaderRadix.scss and cloud's Globalheader.scss (NEXUS-54869).
+// Both distributions render this same header and, per the verified fact in GlobalHeader.jsx's
+// header comment, both can render real ExtJS content elsewhere in the page — so the
+// ExtJS/legacy-widget overrides below (originally believed self-hosted-only because the file
+// lived in coreui-plugin) apply to both, and are kept unconditionally rather than gated on
+// useIsCloud().
+
+// BEM modifiers — preserve inline-style output that previously lived in GlobalHeaderRadix.jsx.
+// Tokens (var(--gray-6), var(--space-3)) match the prior inline values exactly so AC#3
+// ("render identically") holds; do not retune to var(--color-border) — see NEXUS-51836.
+.nxrm-global-header-radix__sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--gray-6);
+  // --color-panel-solid, not --color-surface: surface is a translucent overlay
+  // (rgba(255,255,255,0.85) light / rgba(0,0,0,0.25) dark) and the 25%-opacity
+  // black leaks the page ground through in dark mode, painting the banner gray.
+  background-color: var(--color-panel-solid);
+}
+
+.nxrm-global-header-radix__bar {
+  width: 100%;
+}
+
+.nxrm-global-header-radix__row {
+  width: 100%;
+}
+
+.nxrm-global-header-radix__side {
+  flex-shrink: 0;
+}
+
+.nxrm-global-header-radix__search {
+  flex: 1 1 0;
+  max-width: 600px;
+  // NEXUS-55145: no min-width floor - the 200px floor pinned the row's min-content
+  // width and prevented reflow. The row can now shrink; search collapses with it.
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+// NEXUS-55145: below md, search moves to its own full-width row beneath the controls.
+.nxrm-global-header-radix__search--own-row {
+  max-width: none;
+  width: 100%;
+  justify-content: stretch;
+}
+
+.nxrm-global-header-radix__logo {
+  height: 32px;
+  display: block;
+}
+
+.nxrm-global-header-radix__clickable {
+  cursor: pointer;
+
+  &--disabled {
+    cursor: not-allowed;
+  }
+}
+
+.nxrm-global-header {
+  .nx-text-link, .nx-text-input__box {
+    font-size: 14px;
+  }
+
+  .nxrm-global-header-profile-menu-user-icon.nx-icon {
+    margin-right: 8px;
+  }
+
+  .nx-icon-dropdown__toggle.open.nx-btn.nx-btn--icon-only {
+    background-image: none;
+    background-color: var(--nx-swatch-green-30);
+  }
+
+  // override max-height for help-menu so we can show all the items, it's just barely
+  // too much for the default max-height of 328px
+  .nxrm-global-header-help-menu {
+    .nx-dropdown-menu {
+      max-height: 500px;
+    }
+  }
+  // needed so that menu items render above ExtJs components
+  .nx-dropdown-menu {
+    // needs to be one above the extjs x-mask which is z-index 100
+    z-index: 101;
+  }
+
+  .nx-navigation-dropdown .nx-dropdown-menu {
+    .nx-dropdown-link,
+    .nx-dropdown-button {
+      font-size: 14px;
+      &:hover {
+        background-color: var(--nx-swatch-indigo-90);
+      }
+      &:active {
+        background-color: var(--nx-swatch-indigo-97);
+      }
+    }
+  }
+}
+
+.nxrm-global-header-radix.nx-global-header-2 {
+  grid-area: header !important;  // Force into grid
+  z-index: 100;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible; // Changed from hidden to allow autocomplete dropdown to show
+  box-sizing: border-box;
+  background-color: var(--color-panel-solid);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  // No custom padding - child Flex uses Radix px="4" for horizontal padding
+  padding-left: 0;
+  padding-right: 0;
+
+  // Force ALL RSC buttons (NxButton) to use theme colors
+  .nx-btn {
+    color: var(--color-text) !important;
+
+    &.nx-btn--icon-only {
+      color: var(--color-text) !important;
+    }
+
+    .nx-icon {
+      color: var(--color-text) !important;
+    }
+
+    svg {
+      color: var(--color-text) !important;
+    }
+  }
+
+  // Force NxFontAwesomeIcon to use theme colors
+  .nx-icon {
+    color: var(--color-text) !important;
+  }
+
+  // Force dropdown toggles
+  .nx-icon-dropdown__toggle {
+    color: var(--color-text) !important;
+
+    .nx-icon {
+      color: var(--color-text) !important;
+    }
+  }
+
+  // Force navigation dropdown (Help menu, Profile menu)
+  .nx-navigation-dropdown__toggle {
+    color: var(--color-text) !important;
+
+    .nx-icon {
+      color: var(--color-text) !important;
+    }
+  }
+
+  // SystemStatus bell icon
+  .fa-layers {
+    color: var(--color-text) !important;
+
+    .nx-icon {
+      color: var(--color-text) !important;
+    }
+  }
+
+  // Radix IconButton
+  .rt-IconButton {
+    color: var(--color-text) !important;
+  }
+
+  // Radix Button
+  .rt-Button {
+    color: var(--color-text) !important;
+  }
+
+  // Links
+  a {
+    color: var(--color-text) !important;
+  }
+
+  [data-theme="dark"] & {
+    background-color: var(--color-panel-solid);
+    border-bottom-color: var(--color-border);
+  }
+}
+
+// UI Switch Popover - ensure it floats above all content
+// This targets the Radix Popover.Content which renders via portal
+.rt-PopoverContent {
+  background-color: var(--color-panel-solid) !important;
+  z-index: 14999 !important;
+  border: 1px solid var(--gray-6) !important;
+  box-shadow: var(--shadow-5) !important;
+}
+
+// All Radix Dialog/AlertDialog content — ensure it floats above all content
+// Targets the actual Radix Themes class used by both Dialog and AlertDialog
+.rt-BaseDialogContent {
+  background-color: var(--color-panel-solid) !important;
+  z-index: 14999 !important;
+  border: 1px solid var(--gray-6) !important;
+  box-shadow: var(--shadow-5) !important;
+}
+
+// Dialog overlay (backdrop) - ensure it dims content behind
+.rt-BaseDialogOverlay {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  z-index: 14998 !important;
+}
+
+// Radix popper portal wrapper - must exceed the dialog overlay (14998) so that
+// Select/Tooltip/DropdownMenu dropdowns opened inside a dialog are not blocked
+// by the overlay's pointer-events.
+[data-radix-popper-content-wrapper] {
+  z-index: 15000 !important;
+}

@@ -27,7 +27,6 @@ import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeApplication;
 import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeApplicationRequest;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -88,7 +87,7 @@ public class ApplicationPrivilegeDescriptor
       @Value(REACT_PRIVILEGES_NAMED_VALUE) final boolean isReactPrivileges)
   {
     super(TYPE);
-    this.formFields = ImmutableList.of(
+    this.formFields = List.of(
         new StringTextFormField(
             P_DOMAIN,
             messages.domain(),

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen} from '@testing-library/react';
+import {render, screen, fireEvent} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
@@ -41,11 +41,11 @@ const {EDITOR} = UIStrings.REPOSITORIES;
 describe('GenericProxyConfiguration', () => {
   const mockSend = jest.fn();
 
-  const createParentMachine = (preserveEncodedCharacters = false) => [
+  const createParentMachine = (preserveEncodedCharacters = false, format = 'maven2') => [
     {
       context: {
         data: {
-          format: 'maven2',
+          format,
           type: 'proxy',
           replication: {preemptivePullEnabled: false},
           proxy: {
@@ -107,5 +107,33 @@ describe('GenericProxyConfiguration', () => {
       name: 'proxy.preserveEncodedCharacters',
       value: true
     });
+  });
+
+  it('renders the Auto-block HTTP Status Codes field when format is swift', () => {
+    render(<GenericProxyConfiguration parentMachine={createParentMachine(false, 'swift')} />);
+
+    expect(screen.getByText(EDITOR.AUTO_BLOCK_STATUS_CODES_LABEL)).toBeInTheDocument();
+  });
+
+  it('dispatches UPDATE with a parsed integer array when Auto-block HTTP Status Codes is edited for swift', () => {
+    render(<GenericProxyConfiguration parentMachine={createParentMachine(false, 'swift')} />);
+
+    const label = screen.getByText(EDITOR.AUTO_BLOCK_STATUS_CODES_LABEL);
+    const formGroup = label.closest('.nx-form-group');
+    const input = formGroup.querySelector('input');
+
+    fireEvent.change(input, {target: {value: '500, 502, 429'}});
+
+    expect(mockSend).toHaveBeenCalledWith({
+      type: 'UPDATE',
+      name: 'httpClient.autoBlockStatusCodes',
+      value: [500, 502, 429]
+    });
+  });
+
+  it('does not render the Auto-block HTTP Status Codes field for non-swift formats', () => {
+    render(<GenericProxyConfiguration parentMachine={createParentMachine(false, 'maven2')} />);
+
+    expect(screen.queryByText(EDITOR.AUTO_BLOCK_STATUS_CODES_LABEL)).not.toBeInTheDocument();
   });
 });

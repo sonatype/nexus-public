@@ -301,6 +301,24 @@ public class ApiKeyV2DAOTest
         contains(token(entity1)));
   }
 
+  @Test
+  public void testBrowseByUserAndDomains() {
+    withDao(dao -> dao.save(anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL)));
+    withDao(dao -> dao.save(anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, A_PRINCIPAL, ANOTHER_REALM,
+        OffsetDateTime.now())));
+    withDao(dao -> dao.save(anApiKeyEntity(API_KEY3, "unrelated domain", A_PRINCIPAL)));
+    withDao(dao -> dao.save(anApiKeyEntity(API_KEY4, DOMAIN, ANOTHER_PRINCIPAL)));
+
+    Collection<ApiKeyInternal> found =
+        callDao(dao -> dao.browseByUserAndDomains(Arrays.asList(DOMAIN, ANOTHER_DOMAIN), A_PRINCIPAL));
+
+    assertThat(found, hasSize(2));
+    assertThat(found.stream().map(ApiKeyInternal::getDomain).collect(Collectors.toList()),
+        containsInAnyOrder(DOMAIN, ANOTHER_DOMAIN));
+    assertThat(found.stream().map(ApiKeyInternal::getPrimaryPrincipal).collect(Collectors.toSet()),
+        contains(A_PRINCIPAL));
+  }
+
   private ApiKeyV2Data anApiKeyEntity(
       final char[] apiKey,
       final String domain,

@@ -50,6 +50,7 @@ export default function SettingsHubClassicPage() {
         <DirectoryList.DirectoryListItem text="Content Selectors" description="Define content filtering expressions" routeName={ADMIN.REPOSITORY.SELECTORS.LIST} />
         <DirectoryList.DirectoryListItem text="Data Store" description="Configure repository metadata database" routeName={ADMIN.REPOSITORY.DATASTORE.ROOT} />
         <DirectoryList.DirectoryListItem text="Proprietary" description="Manage proprietary component settings" routeName={ADMIN.REPOSITORY.PROPRIETARY.ROOT} />
+        <DirectoryList.DirectoryListItem text="Global Distribution" description="Distribute repository content globally" routeName={ADMIN.REPOSITORY.GLOBAL_DISTRIBUTION.ROOT} />
       </DirectoryList>
 
       <h3 style={sectionHeadingStyle}>System</h3>

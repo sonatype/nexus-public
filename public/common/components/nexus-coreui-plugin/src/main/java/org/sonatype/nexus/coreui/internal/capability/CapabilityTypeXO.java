@@ -29,6 +29,8 @@ public class CapabilityTypeXO
 
   private List<FormFieldXO> formFields;
 
+  private boolean requiresSettingsUpdate;
+
   public String getId() {
     return id;
   }
@@ -61,6 +63,14 @@ public class CapabilityTypeXO
     this.formFields = formFields;
   }
 
+  public boolean isRequiresSettingsUpdate() {
+    return requiresSettingsUpdate;
+  }
+
+  public void setRequiresSettingsUpdate(final boolean requiresSettingsUpdate) {
+    this.requiresSettingsUpdate = requiresSettingsUpdate;
+  }
+
   @Override
   public String toString() {
     return "CapabilityTypeXO(" +
@@ -68,6 +78,7 @@ public class CapabilityTypeXO
         ", name:" + name +
         ", about:" + about +
         ", formFields:" + formFields +
+        ", requiresSettingsUpdate:" + requiresSettingsUpdate +
         ")";
   }
 }

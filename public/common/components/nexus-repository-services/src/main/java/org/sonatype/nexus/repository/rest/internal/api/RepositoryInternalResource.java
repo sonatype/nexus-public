@@ -23,6 +23,12 @@ import java.util.Collection;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ser.PropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -93,6 +99,19 @@ public class RepositoryInternalResource
   static final String ALL_FORMATS = "*";
 
   /*
+   * Maps a signing-capable format to the attributes section that holds its GPG passphrase. Used by
+   * the signing-passphrase endpoint to refill the admin edit form without exposing the secret via
+   * the public API. A masked format (its REST adapter returns a null passphrase on read) MUST have an
+   * entry here, or an EDIT admin editing it in the Preview UI saves a null passphrase back and wipes
+   * the stored secret (the CWE-522 read-mask fix must not cause data loss).
+   */
+  private static final Map<String, String> SIGNING_ATTRIBUTES_BY_FORMAT = Map.of(
+      "apt", "aptSigning",
+      "yum", "yumSigning",
+      "terraform", "terraformSigning",
+      "alpine", "alpineSigning");
+
+  /*
    * Defense-in-depth for the client-supplied `facets` query param (see parseFacets). Three layers
    * constrain what a caller can reference: (1) this package allow-list rejects names outside the
    * Nexus namespaces; (2) resolution goes through GlobalComponentLookupHelper.type(), which only
@@ -129,6 +148,12 @@ public class RepositoryInternalResource
 
   private final GlobalComponentLookupHelper componentLookupHelper;
 
+  private final jakarta.inject.Provider<ObjectMapper> objectMapperProvider;
+
+  private final List<PropertyFilter> propertyFilters;
+
+  private volatile ObjectMapper treeMapper;
+
   @Autowired
   public RepositoryInternalResource(
       final List<Format> formats,
@@ -140,7 +165,9 @@ public class RepositoryInternalResource
       final List<ApiRepositoryAdapter> convertersByFormatList,
       @Qualifier("default") final ApiRepositoryAdapter defaultAdapter,
       @Nullable final RepositoryMetricsService repositoryMetricsService,
-      final GlobalComponentLookupHelper componentLookupHelper)
+      final GlobalComponentLookupHelper componentLookupHelper,
+      @Qualifier("siesta") final jakarta.inject.Provider<ObjectMapper> objectMapperProvider,
+      @Nullable final List<PropertyFilter> propertyFilters)
   {
     this.formats = requireNonNull(formats);
     this.repositoryManager = requireNonNull(repositoryManager);
@@ -152,6 +179,26 @@ public class RepositoryInternalResource
     this.defaultAdapter = requireNonNull(defaultAdapter);
     this.repositoryMetricsService = Optional.ofNullable(repositoryMetricsService);
     this.componentLookupHelper = requireNonNull(componentLookupHelper);
+    this.objectMapperProvider = requireNonNull(objectMapperProvider);
+    this.propertyFilters = propertyFilters;
+  }
+
+  private ObjectMapper treeMapper() {
+    ObjectMapper result = treeMapper;
+    if (result == null) {
+      synchronized (this) {
+        result = treeMapper;
+        if (result == null) {
+          List<PropertyFilter> filters = propertyFilters != null ? propertyFilters : Collections.emptyList();
+          result = objectMapperProvider.get()
+              .copy()
+              .setFilterProvider(
+                  new SimpleFilterProvider(QualifierUtil.buildQualifierBeanMap(filters)).setFailOnUnknownId(false));
+          treeMapper = result;
+        }
+      }
+    }
+    return result;
   }
 
   @GET
@@ -268,35 +315,35 @@ public class RepositoryInternalResource
   @GET
   @Path("/repository/{repositoryName}")
   @RequiresAuthentication
-  public AbstractApiRepository getRepository(@PathParam("repositoryName") final String repositoryName) {
-    return authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
-        .map(repository -> convertersByFormat.getOrDefault(repository.getFormat().getValue(), defaultAdapter)
-            .adaptDecorated(repository))
+  public JsonNode getRepository(@PathParam("repositoryName") final String repositoryName) {
+    Repository repository = authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
         .orElseThrow(() -> new WebApplicationMessageException(NOT_FOUND, "\"Repository not found\"", APPLICATION_JSON));
+    AbstractApiRepository dto = convertersByFormat.getOrDefault(repository.getFormat().getValue(), defaultAdapter)
+        .adaptDecorated(repository);
+    ObjectNode json = treeMapper().valueToTree(dto);
+    ProxySecretPlaceholders.maskInto(json, repository.getConfiguration().getAttributes());
+    return json;
   }
 
   /**
-   * Returns the signing passphrase for a repository (admin-only, internal endpoint).
+   * Returns the signing passphrase for a repository (requires repository-admin EDIT, internal endpoint).
    * Used by the admin UI to populate password fields on edit without exposing secrets via public API.
+   * Gated on EDIT rather than READ so read-only repository admins cannot read back the secret (CWE-522).
    */
   @GET
   @Path("/repository/{repositoryName}/signing-passphrase")
   @RequiresAuthentication
   public Map<String, String> getSigningPassphrase(@PathParam("repositoryName") final String repositoryName) {
-    Repository repository = authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
+    // Uniform 404 (not 403) for missing repo or insufficient privileges, so admins cannot probe repo existence.
+    Repository repository = authorizingRepositoryManager.getRepositoryWithAdminEdit(repositoryName)
         .orElseThrow(() -> new WebApplicationMessageException(NOT_FOUND, "\"Repository not found\"", APPLICATION_JSON));
     String format = repository.getFormat().getValue();
     Map<String, String> result = new HashMap<>();
 
-    if ("apt".equals(format)) {
-      NestedAttributesMap attrs = repository.getConfiguration().attributes("aptSigning");
-      String passphrase = attrs.get("passphrase", String.class);
-      result.put("passphrase", passphrase);
-    }
-    else if ("yum".equals(format)) {
-      NestedAttributesMap attrs = repository.getConfiguration().attributes("yumSigning");
-      String passphrase = attrs.get("passphrase", String.class);
-      result.put("passphrase", passphrase);
+    String signingAttributes = SIGNING_ATTRIBUTES_BY_FORMAT.get(format);
+    if (signingAttributes != null) {
+      NestedAttributesMap attrs = repository.getConfiguration().attributes(signingAttributes);
+      result.put("passphrase", attrs.get("passphrase", String.class));
     }
 
     return result;
@@ -547,10 +594,9 @@ public class RepositoryInternalResource
     }
 
     // Set blob store name from storage configuration
-    String blobStoreName = repository.getConfiguration()
-        .attributes("storage")
-        .get("blobStoreName", String.class);
-    detailXO.setBlobStoreName(blobStoreName);
+    NestedAttributesMap storage = repository.getConfiguration().attributes("storage");
+    detailXO.setBlobStoreName(storage.get("blobStoreName", String.class));
+    detailXO.setGlobalDistribution(storage.get("globalDistribution", Boolean.class));
 
     return detailXO;
   }

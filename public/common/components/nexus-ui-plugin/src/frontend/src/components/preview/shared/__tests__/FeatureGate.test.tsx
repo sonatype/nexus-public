@@ -41,6 +41,9 @@ afterEach(() => {
   window.location = originalLocation;
 });
 
+// Synthetic key absent from the flags map; the gate treats it the same as a disabled flag.
+const DISABLED_FEATURE_KEY = 'test.disabled.feature';
+
 describe('FeatureGate', () => {
   describe('with an enabled feature key', () => {
     it('renders children', () => {
@@ -65,13 +68,10 @@ describe('FeatureGate', () => {
   });
 
   describe('with a disabled feature key', () => {
-    // Needs a flag that is genuinely still disabled. This fixture has already been moved
-    // twice — security.anonymous (NEXUS-51085), security.oauth2 (NEXUS-54266) — and
-    // security.sslcertificates is now enabled too (NEXUS-54265). system.upgrade is the last
-    // Coming Soon flag; whoever enables it will need a test-only flag instead.
+    // No real flag is disabled anymore; this uses DISABLED_FEATURE_KEY.
     it('renders SettingsNotAvailablePage instead of children', () => {
       render(
-        <FeatureGate featureKey="system.upgrade" featureName="Upgrade">
+        <FeatureGate featureKey={DISABLED_FEATURE_KEY} featureName="Upgrade">
           <div data-testid="child-content">Child content</div>
         </FeatureGate>
       );
@@ -82,7 +82,7 @@ describe('FeatureGate', () => {
 
     it('passes featureName to SettingsNotAvailablePage', () => {
       render(
-        <FeatureGate featureKey="system.upgrade" featureName="Upgrade">
+        <FeatureGate featureKey={DISABLED_FEATURE_KEY} featureName="Upgrade">
           <div>Child content</div>
         </FeatureGate>
       );
@@ -111,7 +111,7 @@ describe('withFeatureGate', () => {
 
   describe('with a disabled feature key', () => {
     it('renders SettingsNotAvailablePage with the correct featureName', () => {
-      const GatedPage = withFeatureGate(SamplePage, 'system.upgrade', 'Upgrade');
+      const GatedPage = withFeatureGate(SamplePage, DISABLED_FEATURE_KEY, 'Upgrade');
       render(<GatedPage />);
 
       expect(screen.queryByTestId('sample-page')).not.toBeInTheDocument();

@@ -161,7 +161,7 @@ public class RoleAssignabilityChecker
    * Returns the ids of the given added privileges that the caller may not grant. The privileges are read in a single
    * batch to avoid the N+1 read pattern that {@code readPrivileges(Set)} was introduced to eliminate (NEXUS-52583).
    */
-  private Set<String> findUngrantablePrivileges(final Set<String> addedPrivileges) {
+  public Set<String> findUngrantablePrivileges(final Set<String> addedPrivileges) {
     if (addedPrivileges.isEmpty()) {
       return Collections.emptySet();
     }

@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.97.2-02</version>
+  <version>3.98.0-07</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.97.2-02</nexus.version>
+    <nexus.version>3.98.0-07</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <spring-boot.version>4.1.0</spring-boot.version>
@@ -185,12 +185,12 @@
     <reactor-core.version>3.8.7</reactor-core.version>
 
     <!--
-    Pin zstd-jni above the version pulled transitively by jetty-compression-zstandard.
-    Jetty 12.1.12 pulls zstd-jni:1.5.7-11, which has security vulnerabilities.
-    1.5.7-14 is the patched version.
-    Remove this pin once Jetty ships a patched version.
+    Pin zstd-jni above vulnerable versions requested by transitive dependencies.
+    1.5.7-25 is clear of sonatype-2026-010031, sonatype-2026-010032 and sonatype-2026-010033
+    (1.5.7-17 and 1.5.7-18 are affected; 1.5.7-17 was the version clear of sonatype-2026-008259).
+    Remove this pin once all transitive dependencies require 1.5.7-25 or later.
     -->
-    <zstd-jni.version>1.5.7-14</zstd-jni.version>
+    <zstd-jni.version>1.5.7-25</zstd-jni.version>
 
     <!--
     Shared AWS SDK v2 version, consumed by the public and private common buildsupport BOMs.
@@ -300,7 +300,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.97.2-02</version>
+          <version>3.98.0-07</version>
           <executions>
             <execution>
               <goals>

@@ -390,6 +390,71 @@ describe('HttpClientFacet', () => {
     });
   });
 
+  describe('configured (stored) secrets', () => {
+    const placeholder = '#~NXRM~PLACEHOLDER~PASSWORD~#';
+
+    it('shows the stored-password placeholder as a masked, non-empty value in edit mode', () => {
+      const { container } = renderFacet({
+        isEdit: true,
+        hadAuthOnLoad: true,
+        originalRemoteUrl: defaultFormData.proxy?.remoteUrl,
+        formData: {
+          ...defaultFormData,
+          httpClient: {
+            ...defaultFormData.httpClient,
+            authentication: { type: 'username', username: 'u', password: placeholder },
+          },
+        },
+      });
+
+      const input = container.querySelector('input[name="httpClient-password"]') as HTMLInputElement;
+      expect(input).not.toBeNull();
+      expect(input.type).toBe('password');
+      expect(input.value).toBe(placeholder);
+    });
+
+    it('keeps the stored placeholder when the remote URL is unchanged', () => {
+      const onNestedChange = jest.fn();
+      renderFacet({
+        isEdit: true,
+        hadAuthOnLoad: true,
+        originalRemoteUrl: defaultFormData.proxy?.remoteUrl,
+        onNestedChange,
+        formData: {
+          ...defaultFormData,
+          httpClient: {
+            ...defaultFormData.httpClient,
+            authentication: { type: 'username', username: 'u', password: placeholder },
+          },
+        },
+      });
+
+      expect(onNestedChange).not.toHaveBeenCalled();
+    });
+
+    it('clears the stored credentials when the remote URL changes', () => {
+      const onNestedChange = jest.fn();
+      renderFacet({
+        isEdit: true,
+        hadAuthOnLoad: true,
+        originalRemoteUrl: 'https://repo1.maven.org/maven2/',
+        onNestedChange,
+        formData: {
+          ...defaultFormData,
+          proxy: { ...defaultFormData.proxy!, remoteUrl: 'https://other.example.com/maven2/' },
+          httpClient: {
+            ...defaultFormData.httpClient,
+            authentication: { type: 'username', username: 'u', password: placeholder },
+          },
+        },
+      });
+
+      expect(onNestedChange).toHaveBeenCalledWith('httpClient', {
+        authentication: expect.objectContaining({ username: '', password: '' }),
+      });
+    });
+  });
+
   // The Authentication Type select is a Radix Select, whose options are not rendered into
   // jsdom, so the type-change behavior is exercised through the exported pure handler factory.
   describe('auth type handler', () => {

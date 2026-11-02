@@ -22,8 +22,6 @@ import org.sonatype.nexus.scheduling.TaskExport.TaskInfoData;
 import org.sonatype.nexus.scheduling.schedule.Daily;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
-
-import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +56,7 @@ public class TaskExportTest
   public void testExportImportToJson() throws Exception {
     Date date = new Date();
     Schedule daily = new Daily(date);
-    List<TaskInfo> tasks = ImmutableList.of(
+    List<TaskInfo> tasks = List.of(
         createTask("task1", daily),
         createTask("task2", daily));
 

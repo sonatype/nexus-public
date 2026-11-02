@@ -73,9 +73,23 @@ describe('getHeritageEquivalent', () => {
       .toBe('browse/browse:my-repo?tab=info');
   });
 
+  it('invokes function heritage for a repo with a node path', () => {
+    expect(getHeritageEquivalent('preview/browse/my-repo/com/foo'))
+      .toBe('browse/browse:my-repo:com%2Ffoo');
+  });
+
+  it('handles URL-encoded entity names', () => {
+    expect(getHeritageEquivalent('preview/admin/repository/repositories/Maven%20Central'))
+      .toBe('admin/repository/repositories:Maven%20Central');
+  });
+
   it('maps sub-path via startsWith — appends to heritage', () => {
     expect(getHeritageEquivalent('preview/admin/repository/blobstores/default'))
       .toBe('admin/repository/blobstores/default');
+  });
+
+  it('maps browse/malwarerisk page route', () => {
+    expect(getHeritageEquivalent('preview/browse/malwarerisk')).toBe('browse/malwarerisk');
   });
 
   it('preserves query string on page-level route', () => {
@@ -117,6 +131,7 @@ describe('getHeritageEquivalent', () => {
     expect(getHeritageEquivalent('preview/admin/iq/hosted-repos-eval?configured=true'))
       .toBe('admin/iq/sonatype-lifecycle/hosted-repos-eval?configured=true');
   });
+
 });
 
 describe('heritageToPreviewPath', () => {
@@ -152,16 +167,12 @@ describe('heritageToPreviewPath', () => {
     expect(heritageToPreviewPath('browse/search/generic')).toBe('preview/browse/search');
   });
 
-  // NOTE: This nexus-ui-plugin implementation maps 'browse/malwarerisk' to
-  // 'preview/browse/malicious-packages' (the renamed preview route). The
-  // nexus-coreui-plugin copy of this utility keeps the legacy 'malwarerisk'
-  // segment. Both mappings are intentionally correct for their own module.
-  it('maps browse/malwarerisk to preview malicious-packages', () => {
-    expect(heritageToPreviewPath('browse/malwarerisk')).toBe('preview/browse/malicious-packages');
+  it('maps browse/malwarerisk (exact) to preview browse malwarerisk', () => {
+    expect(heritageToPreviewPath('browse/malwarerisk')).toBe('preview/browse/malwarerisk');
   });
 
-  it('maps browse/malwarerisk sub-path to preview malicious-packages', () => {
-    expect(heritageToPreviewPath('browse/malwarerisk/deep')).toBe('preview/browse/malicious-packages');
+  it('maps browse/malwarerisk sub-path to preview browse malwarerisk', () => {
+    expect(heritageToPreviewPath('browse/malwarerisk/deep')).toBe('preview/browse/malwarerisk');
   });
 
   it('maps admin/hub to preview/settings', () => {
@@ -211,9 +222,19 @@ describe('heritageToPreviewPath', () => {
     expect(heritageToPreviewPath('user/other')).toBe('preview/user/other');
   });
 
+  it('maps admin/repository/cleanuppolicies (exact)', () => {
+    expect(heritageToPreviewPath('admin/repository/cleanuppolicies'))
+      .toBe('preview/admin/repository/cleanup-policies');
+  });
+
   it('maps admin/repository/cleanuppolicies sub-path', () => {
     expect(heritageToPreviewPath('admin/repository/cleanuppolicies/my-policy'))
       .toBe('preview/admin/repository/cleanup-policies/my-policy');
+  });
+
+  it('maps admin/repository/routingrules (exact)', () => {
+    expect(heritageToPreviewPath('admin/repository/routingrules'))
+      .toBe('preview/admin/repository/routing-rules');
   });
 
   it('maps admin/repository/routingrules sub-path', () => {
@@ -221,9 +242,14 @@ describe('heritageToPreviewPath', () => {
       .toBe('preview/admin/repository/routing-rules/my-rule');
   });
 
-  it('maps admin/security/usertoken', () => {
+  it('maps admin/security/usertoken (exact)', () => {
     expect(heritageToPreviewPath('admin/security/usertoken'))
       .toBe('preview/admin/security/user-tokens');
+  });
+
+  it('maps admin/security/usertoken sub-path', () => {
+    expect(heritageToPreviewPath('admin/security/usertoken/sub'))
+      .toBe('preview/admin/security/user-tokens/sub');
   });
 
   it('maps admin/support/status sub-path', () => {

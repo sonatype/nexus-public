@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.component.ComponentPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentRestoredEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentsPurgedAuditEvent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
@@ -60,6 +61,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -131,6 +133,18 @@ public abstract class ComponentStoreTestSupport
     verify(eventManager, times(3)).post(any(ComponentPrePurgeEvent.class));
     verify(eventManager, times(3)).post(any(ComponentPurgedEvent.class));
     verifyNoMoreInteractions(eventManager);
+  }
+
+  protected void testUndoTrashComponent_liveComponent_returnsZeroAndFiresNoRestoredEvent() {
+    // NEXUS-55233: undoTrashComponent only clears rows whose deleted_on IS NOT NULL. A never-trashed (live)
+    // component -- the shape a lost restore/purge race leaves behind once the purge won -- updates 0 rows, so the
+    // guarded restore must return 0 and must NOT post a ComponentRestoredEvent for a row it never actually restored.
+    FluentComponent live = getComponents().get(0);
+
+    int restored = underTest.undoTrashComponent(live);
+
+    assertThat("Live (never-trashed) component clears no rows", restored, is(0));
+    verify(eventManager, never()).post(any(ComponentRestoredEvent.class));
   }
 
   /**

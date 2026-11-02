@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +35,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -79,9 +80,9 @@ public class RemoveSnapshotsTaskTest
   public void testGroupMembersProcessed() throws Exception {
     Repository repo1 = mockRepo();
     Repository repo2 = mockRepo();
-    Repository repoGroup = mockGroup(newArrayList(repo1, repo2));
+    Repository repoGroup = mockGroup(new ArrayList<>(Arrays.asList(repo1, repo2)));
 
-    when(repositoryManager.browse()).thenReturn(newArrayList(repoGroup));
+    when(repositoryManager.browse()).thenReturn(new ArrayList<>(Arrays.asList(repoGroup)));
 
     taskUnderTest.execute();
 
@@ -97,10 +98,10 @@ public class RemoveSnapshotsTaskTest
     Repository repo1 = mockRepo();
     Repository repo2 = mockRepo();
 
-    Repository group2 = mockGroup(newArrayList(repo2));
-    Repository group1 = mockGroup(newArrayList(repo1, group2));
+    Repository group2 = mockGroup(new ArrayList<>(Arrays.asList(repo2)));
+    Repository group1 = mockGroup(new ArrayList<>(Arrays.asList(repo1, group2)));
 
-    when(repositoryManager.browse()).thenReturn(newArrayList(group1));
+    when(repositoryManager.browse()).thenReturn(new ArrayList<>(Arrays.asList(group1)));
 
     taskUnderTest.execute();
 
@@ -116,10 +117,10 @@ public class RemoveSnapshotsTaskTest
     Repository repo1 = mockRepo();
     Repository repo2 = mockRepo();
 
-    Repository group1 = mockGroup(newArrayList(repo1));
-    Repository group2 = mockGroup(newArrayList(repo1, repo2));
+    Repository group1 = mockGroup(new ArrayList<>(Arrays.asList(repo1)));
+    Repository group2 = mockGroup(new ArrayList<>(Arrays.asList(repo1, repo2)));
 
-    when(repositoryManager.browse()).thenReturn(newArrayList(group1, group2, repo1, repo2));
+    when(repositoryManager.browse()).thenReturn(new ArrayList<>(Arrays.asList(group1, group2, repo1, repo2)));
 
     taskUnderTest.execute();
 
@@ -134,11 +135,11 @@ public class RemoveSnapshotsTaskTest
     Repository repo1 = mockRepo();
     Repository repo2 = mockRepo();
 
-    Repository group2 = mockGroup(newArrayList(repo1, repo2));
-    Repository group1 = mockGroup(newArrayList(repo1, group2));
-    Repository group3 = mockGroup(newArrayList(group1, group2, repo1, repo2));
+    Repository group2 = mockGroup(new ArrayList<>(Arrays.asList(repo1, repo2)));
+    Repository group1 = mockGroup(new ArrayList<>(Arrays.asList(repo1, group2)));
+    Repository group3 = mockGroup(new ArrayList<>(Arrays.asList(group1, group2, repo1, repo2)));
 
-    when(repositoryManager.browse()).thenReturn(newArrayList(group1, group2, group3, repo1, repo2));
+    when(repositoryManager.browse()).thenReturn(new ArrayList<>(Arrays.asList(group1, group2, group3, repo1, repo2)));
 
     taskUnderTest.execute();
 

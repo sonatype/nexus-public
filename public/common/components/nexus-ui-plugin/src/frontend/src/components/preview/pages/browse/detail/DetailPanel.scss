@@ -41,6 +41,14 @@
     word-break: break-all;
     overflow-wrap: anywhere;
     line-height: 1.3;
+    // Let the title shrink so the right-aligned action row keeps its space on a narrow panel.
+    min-width: 0;
+    flex: 1;
+  }
+
+  // Right-aligned action row in the detail header (Research in Guide, Download, Delete).
+  &__header-actions {
+    flex-shrink: 0;
   }
 
   &__content {

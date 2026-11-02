@@ -16,6 +16,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -45,7 +47,6 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.testcommon.event.SimpleEventManager;
 import org.sonatype.nexus.thread.DatabaseStatusDelayedExecutor;
 
-import com.google.common.collect.Lists;
 import jakarta.inject.Provider;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
@@ -104,9 +105,11 @@ public class DatastoreQuartzSchedulerSPITest
 
   private DatastoreQuartzSchedulerSPI underTest;
 
+  private NodeAccess nodeAccess;
+
   @BeforeEach
   void beforeEach() throws Exception {
-    NodeAccess nodeAccess = mock(NodeAccess.class);
+    nodeAccess = mock(NodeAccess.class);
     when(nodeAccess.getId()).thenReturn("test");
     Provider<JobStore> provider = mock(Provider.class);
     when(provider.get()).thenReturn(jobStore);
@@ -296,9 +299,9 @@ public class DatastoreQuartzSchedulerSPITest
       lenient().when(mockScheduler.rescheduleJob(any(TriggerKey.class), eq(exceptionResult.getLeft())))
           .thenThrow(new SchedulerException("THIS IS A TEST EXCEPTION"));
 
-      underTest.recoverJob(goodResult.getLeft(), goodResult.getRight());
-      underTest.recoverJob(exceptionResult.getLeft(), exceptionResult.getRight());
-      underTest.recoverJob(anotherGoodResult.getLeft(), anotherGoodResult.getRight());
+      underTest.recoverJob(goodResult.getLeft(), goodResult.getRight(), Map.of());
+      underTest.recoverJob(exceptionResult.getLeft(), exceptionResult.getRight(), Map.of());
+      underTest.recoverJob(anotherGoodResult.getLeft(), anotherGoodResult.getRight(), Map.of());
 
       verify(mockScheduler, times(3)).scheduleJob(any(Trigger.class));
     }
@@ -355,7 +358,7 @@ public class DatastoreQuartzSchedulerSPITest
     try {
       BulkReadScheduler mockScheduler = mock(BulkReadScheduler.class);
       underTest.setScheduler(mockScheduler);
-      underTest.recoverJob(trigger, jobDetail);
+      underTest.recoverJob(trigger, jobDetail, Map.of());
       verify(mockScheduler, times(invocationCount)).scheduleJob(any(Trigger.class));
       reset(mockScheduler);
     }
@@ -422,6 +425,87 @@ public class DatastoreQuartzSchedulerSPITest
         null,
         null,
         null);
+  }
+
+  // NEXUS-54368: a restarting node must not flip a task another node is executing
+  @Test
+  void clusteredJobExecutingOnAnotherNodeIsNotModified() throws SchedulerException {
+    interruptStateTestHelper(
+        false,
+        DateTime.parse("2002-01-01").toDate(),
+        TaskState.OK,
+        DateTime.parse("2001-01-01").toDate(),
+        null,
+        true,
+        "another-node");
+  }
+
+  // with no executing record the legacy behaviour applies unchanged
+  @Test
+  void clusteredJobWithNoExecutingRecordIsSetToInterrupted() throws SchedulerException {
+    interruptStateTestHelper(
+        true,
+        DateTime.parse("2002-01-01").toDate(),
+        TaskState.OK,
+        DateTime.parse("2001-01-01").toDate(),
+        null,
+        true,
+        null);
+  }
+
+  // a standalone node's id is persistent, so its own stale record must still count as interrupted
+  @Test
+  void standaloneJobWithStaleExecutingRecordIsStillSetToInterrupted() throws SchedulerException {
+    interruptStateTestHelper(
+        true,
+        DateTime.parse("2002-01-01").toDate(),
+        TaskState.OK,
+        DateTime.parse("2001-01-01").toDate(),
+        null,
+        false,
+        "test");
+  }
+
+  // a stored INTERRUPTED outlives the interruption, so recovery must also check liveness
+  @Test
+  void clusteredJobExecutingOnAnotherNodeIsNotRecovered() throws SchedulerException {
+    assertRecoveryOfInterruptedJob(Map.of(new JobKey("testJobKeyName", "testJobKeyGroup"), "another-node"), 0);
+  }
+
+  @Test
+  void interruptedJobNotExecutingAnywhereIsRecovered() throws SchedulerException {
+    assertRecoveryOfInterruptedJob(Map.of(), 1);
+  }
+
+  private void assertRecoveryOfInterruptedJob(
+      final Map<JobKey, String> executing,
+      final int expectedScheduleJobCalls) throws SchedulerException
+  {
+    JobKey jobKey = new JobKey("testJobKeyName", "testJobKeyGroup");
+    lenient().when(nodeAccess.isClustered()).thenReturn(true);
+
+    JobDataMap jobDataMap = new JobDataMap();
+    jobDataMap.put(TaskConfiguration.LAST_RUN_STATE_END_STATE, TaskState.INTERRUPTED.name());
+
+    Trigger trigger = mock(Trigger.class);
+    lenient().when(trigger.getJobDataMap()).thenReturn(jobDataMap);
+    lenient().when(trigger.getKey()).thenReturn(new TriggerKey("testJobKeyName", "testJobKeyGroup"));
+
+    JobDetail jobDetail = mock(JobDetail.class);
+    lenient().when(jobDetail.getKey()).thenReturn(jobKey);
+    lenient().when(jobDetail.getJobDataMap()).thenReturn(jobDataMap);
+    lenient().when(jobDetail.requestsRecovery()).thenReturn(true);
+
+    BulkReadScheduler oldScheduler = underTest.getScheduler();
+    try {
+      BulkReadScheduler mockScheduler = mock(BulkReadScheduler.class);
+      underTest.setScheduler(mockScheduler);
+      underTest.recoverJob(trigger, jobDetail, executing);
+      verify(mockScheduler, times(expectedScheduleJobCalls)).scheduleJob(any(Trigger.class));
+    }
+    finally {
+      underTest.setScheduler(oldScheduler);
+    }
   }
 
   @Test
@@ -728,8 +812,21 @@ public class DatastoreQuartzSchedulerSPITest
       final Date lastTriggerDate,
       final TaskState endState,
       final Date lastRunDate,
-      Date shutdownDate) throws SchedulerException
+      final Date shutdownDate) throws SchedulerException
   {
+    interruptStateTestHelper(shouldBeInterrupted, lastTriggerDate, endState, lastRunDate, shutdownDate, false, null);
+  }
+
+  void interruptStateTestHelper(
+      final boolean shouldBeInterrupted,
+      final Date lastTriggerDate,
+      final TaskState endState,
+      final Date lastRunDate,
+      Date shutdownDate,
+      final boolean clustered,
+      final String executingInstanceId) throws SchedulerException
+  {
+    lenient().when(nodeAccess.isClustered()).thenReturn(clustered);
 
     Date defaultShutdownDate = DateTime.parse("2003-01-01T00:00").toDate();
 
@@ -739,7 +836,8 @@ public class DatastoreQuartzSchedulerSPITest
 
     JobKey jobKey = new JobKey("testJobKeyName", "testJobKeyGroup");
     Trigger trigger = mock(Trigger.class);
-    when(trigger.getPreviousFireTime()).thenReturn(lastTriggerDate);
+    // lenient: a job executing elsewhere returns before any trigger is examined
+    lenient().when(trigger.getPreviousFireTime()).thenReturn(lastTriggerDate);
 
     JobDataMap jobDataMap = new JobDataMap();
     if (endState != null) {
@@ -753,12 +851,14 @@ public class DatastoreQuartzSchedulerSPITest
     lenient().when(jobDetail.getJobDataMap()).thenReturn(jobDataMap);
 
     BulkReadScheduler mockScheduler = mock(BulkReadScheduler.class);
-    lenient().when(mockScheduler.getTriggersOfJob(jobKey)).thenAnswer(invocation -> Lists.newArrayList(trigger));
+    lenient().when(mockScheduler.getTriggersOfJob(jobKey))
+        .thenAnswer(invocation -> new ArrayList<>(Arrays.asList(trigger)));
 
     BulkReadScheduler oldScheduler = underTest.getScheduler();
     try {
       underTest.setScheduler(mockScheduler);
-      underTest.updateLastRunStateInfo(jobDetail, Optional.of(shutdownDate));
+      underTest.updateLastRunStateInfo(jobDetail, Optional.of(shutdownDate),
+          executingInstanceId == null ? Map.of() : Map.of(jobKey, executingInstanceId));
     }
     finally {
       underTest.setScheduler(oldScheduler);

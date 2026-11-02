@@ -25,6 +25,14 @@ public interface SecretsService
   String SECRETS_MIGRATION_VERSION = "2.2";
 
   /**
+   * Whether the value has the secret ID reference format (e.g. "_123"), as opposed to a plaintext or legacy encrypted
+   * value. Checks the format only, not that the secret exists; use {@link #exists(String)} for that.
+   */
+  static boolean hasSecretIdFormat(@Nullable final String value) {
+    return value != null && value.length() > 1 && value.charAt(0) == '_' && Character.isDigit(value.charAt(1));
+  }
+
+  /**
    * Encrypts the token using the current key and stores it in the DB.
    * <p>
    * Callers are responsible for removing the secrets (use {@link SecretsService#remove(Secret)} for this).

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.content.maven.internal.recipe;
 
+import java.util.List;
+
 import jakarta.inject.Provider;
 
 import org.sonatype.nexus.content.maven.MavenArchetypeCatalogFacet;
@@ -38,7 +40,6 @@ import org.sonatype.nexus.repository.view.handlers.HandlerContributor;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Rule;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -149,7 +150,7 @@ public abstract class MavenRecipeTestSupport
   protected <T extends MavenRecipeSupport> void mockHandlers(T underTest) {
     underTest.setBrowseUnsupportedHandler(browseUnsupportedHandler);
     when(browseUnsupportedHandler.getRoute()).thenReturn(
-        new Route(mock(Matcher.class), ImmutableList.of(securityHandler, browseUnsupportedHandler)));
+        new Route(mock(Matcher.class), List.of(securityHandler, browseUnsupportedHandler)));
     underTest.setContentHeadersHandler(contentHeadersHandler);
     underTest.setPartialFetchHandler(partialFetchHandler);
     underTest.setTimingHandler(timingHandler);

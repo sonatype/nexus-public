@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.search.sql.query.security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +24,7 @@ import java.util.Set;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
@@ -36,26 +36,34 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
 import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
-import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
-import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static com.google.common.collect.Iterables.get;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -63,10 +71,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.sql.query.syntax.Operand.IN;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@MockitoSettings(strictness = Strictness.WARN)
+@ExtendWith(MockitoExtension.class)
 public class SqlSearchPermissionBuilderTest
 {
   private static final String REPO1 = "repo1";
@@ -75,11 +82,13 @@ public class SqlSearchPermissionBuilderTest
 
   private static final String REPO3 = "repo3";
 
+  private static final String GROUP = "group";
+
   private static final String RAW = "raw";
 
   public static final String CONTENT_SELECTOR_FILTER_FORMAT = "contentSelectorFilterFormat";
 
-  public static final Map<String, String> CONTENT_SELECTOR_PARAMS = ImmutableMap.of("key1", "value1");
+  public static final Map<String, String> CONTENT_SELECTOR_PARAMS = Map.of("key1", "value1");
 
   @Mock
   private RepositoryManager repositoryManager;
@@ -97,7 +106,7 @@ public class SqlSearchPermissionBuilderTest
 
   private SqlSearchPermissionBuilder underTest;
 
-  @Before
+  @BeforeEach
   public void setup() {
     contentSelectorsCondition = mock(Expression.class);
     // when(conditionBuilderMapping.getConditionBuilder(any())).thenReturn(conditionBuilder);
@@ -108,17 +117,17 @@ public class SqlSearchPermissionBuilderTest
         contentSelectorFilterGenerator);
   }
 
-  @Test(expected = SqlSearchPermissionException.class)
+  @Test
   public void throwExceptionWhenSpecifiedRepositoryIsNotPermitted() {
     Set<String> repositories = of(REPO1, REPO2);
     mockRepositoryManager(repositories);
 
-    underTest.build(searchRequest(repositories));
+    assertThrows(SqlSearchPermissionException.class, () -> underTest.build(searchRequest(repositories)));
   }
 
-  @Test(expected = UnknownRepositoriesException.class)
+  @Test
   public void throwExceptionWhenUnknownRepositoriesSpecified() {
-    underTest.build(searchRequest(of(REPO1, REPO2)));
+    assertThrows(UnknownRepositoriesException.class, () -> underTest.build(searchRequest(of(REPO1, REPO2))));
   }
 
   @Test
@@ -168,7 +177,7 @@ public class SqlSearchPermissionBuilderTest
     Optional<Expression> result = underTest.build(searchRequest(repositories));
 
     assertQueryCondition(result, contentSelectorsCondition);
-    verify(contentSelectorFilterGenerator).createFilter(any(), eq(Collections.singleton(REPO1)));
+    verify(contentSelectorFilterGenerator).createFilter(any(), eq(Set.of(REPO1)));
   }
 
   @Test
@@ -182,14 +191,14 @@ public class SqlSearchPermissionBuilderTest
     assertQueryCondition(result,
         or(new SqlPredicate(Operand.IN, SearchField.REPOSITORY_NAME, new ExactTerm(REPO2)), contentSelectorsCondition));
 
-    verify(contentSelectorFilterGenerator).createFilter(any(), eq(Collections.singleton(REPO1)));
+    verify(contentSelectorFilterGenerator).createFilter(any(), eq(Set.of(REPO1)));
   }
 
-  @Test(expected = SqlSearchPermissionException.class)
+  @Test
   public void throwExceptionWhenNoRepositoryPermittedForFormat() {
     mockRepositoryManager(of(REPO1, REPO2));
 
-    underTest.build(searchRequest());
+    assertThrows(SqlSearchPermissionException.class, () -> underTest.build(searchRequest()));
   }
 
   @Test
@@ -201,8 +210,8 @@ public class SqlSearchPermissionBuilderTest
     Optional<Expression> result = underTest.build(searchRequest());
 
     assertQueryCondition(result, or(contentSelectorsCondition, contentSelectorsCondition));
-    verify(contentSelectorFilterGenerator).createFilter(any(), eq(Collections.singleton(REPO1)));
-    verify(contentSelectorFilterGenerator).createFilter(any(), eq(Collections.singleton(REPO2)));
+    verify(contentSelectorFilterGenerator).createFilter(any(), eq(Set.of(REPO1)));
+    verify(contentSelectorFilterGenerator).createFilter(any(), eq(Set.of(REPO2)));
   }
 
   @Test
@@ -218,6 +227,19 @@ public class SqlSearchPermissionBuilderTest
 
     verify(securityHelper, times(repositoryNames.size())).anyPermitted(any(RepositoryViewPermission.class),
         any(RepositoryViewPermission.class));
+    verify(selectorManager, never()).browseActive(any(), any());
+    verify(contentSelectorFilterGenerator, never()).createFilter(any(), any());
+  }
+
+  @Test
+  public void shouldNotThrowWhenAuthorizationIsFalseAndNoRepositoryIsPermitted() {
+    Set<String> repositoryNames = of(REPO1, REPO2);
+    mockRepositoryManager(repositoryNames);
+
+    Optional<Expression> result =
+        underTest.build(SearchRequest.builder().repositories(repositoryNames).disableAuthorization().build());
+
+    assertFalse(result.isPresent());
     verify(selectorManager, never()).browseActive(any(), any());
     verify(contentSelectorFilterGenerator, never()).createFilter(any(), any());
   }
@@ -254,22 +276,85 @@ public class SqlSearchPermissionBuilderTest
         TermCollection.create(new ExactTerm("repo1"), new ExactTerm("repo2"), new ExactTerm("repo3")))));
   }
 
-  @Test(expected = ValidationErrorsException.class)
+  @Test
   public void shouldThrowExceptionForLeadingWildcard() {
     Set<String> repositories = of("maven-re*", "maven-s*", "*maven");
     mockRepositoryManager(repositories);
     mockBrowsableRepositories(repositories);
 
-    underTest.build(searchRequest(repositories));
+    assertThrows(ValidationErrorsException.class, () -> underTest.build(searchRequest(repositories)));
   }
 
-  @Test(expected = ValidationErrorsException.class)
+  @Test
   public void shouldThrowExceptionForShortTrailingWildcard() {
     Set<String> repositories = of("maven-re*", "maven-s*", "1.*");
     mockRepositoryManager(repositories);
     mockBrowsableRepositories(repositories);
 
-    underTest.build(searchRequest(repositories));
+    assertThrows(ValidationErrorsException.class, () -> underTest.build(searchRequest(repositories)));
+  }
+
+  @Test
+  public void addFiltersWhenSpecifiedRepositoryIsReadableThroughContainingGroup() {
+    mockRepositoryManager(of(REPO1, GROUP));
+    when(repositoryManager.findContainingGroups(REPO1)).thenReturn(of(GROUP));
+    mockReadableRepositories(of(GROUP));
+
+    Optional<Expression> result = underTest.build(searchRequest(REPO1));
+
+    assertQueryCondition(result, new SqlPredicate(Operand.IN, SearchField.REPOSITORY_NAME, new ExactTerm(REPO1)));
+  }
+
+  @Test
+  public void addFiltersWhenSpecifiedRepositoryIsReadableThroughNestedGroup() {
+    String outerGroup = "outer-group";
+    mockRepositoryManager(of(REPO1, GROUP, outerGroup));
+    when(repositoryManager.findContainingGroups(REPO1)).thenReturn(of(GROUP, outerGroup));
+    mockReadableRepositories(of(outerGroup));
+
+    Optional<Expression> result = underTest.build(searchRequest(REPO1));
+
+    assertQueryCondition(result, new SqlPredicate(Operand.IN, SearchField.REPOSITORY_NAME, new ExactTerm(REPO1)));
+  }
+
+  @Test
+  public void throwExceptionWhenContainingGroupIsNotPermitted() {
+    mockRepositoryManager(of(REPO1, GROUP));
+    when(repositoryManager.findContainingGroups(REPO1)).thenReturn(of(GROUP));
+
+    assertThrows(SqlSearchPermissionException.class, () -> underTest.build(searchRequest(REPO1)));
+  }
+
+  @Test
+  public void shouldOnlyGrantMembersOfPermittedGroupWhenRequestContainsNoRepositories() {
+    mockRepositoryManager(Arrays.asList(REPO1, REPO2, GROUP));
+    Repository member = repositoryManager.get(REPO1);
+    GroupFacet groupFacet = mock(GroupFacet.class);
+    when(groupFacet.leafMembers()).thenReturn(List.of(member));
+    when(repositoryManager.get(GROUP).optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
+    when(repositoryManager.findContainingGroups(REPO1)).thenReturn(of(GROUP));
+    mockReadableRepositories(of(GROUP));
+
+    Optional<Expression> result = underTest.build(searchRequest());
+
+    assertQueryCondition(result, new SqlPredicate(Operand.IN, SearchField.REPOSITORY_NAME, new ExactTerm(REPO1)));
+    assertThat(result.get().toString(), not(containsString(REPO2)));
+    verify(contentSelectorFilterGenerator, never()).createFilter(any(), argThat(names -> names.contains(REPO2)));
+  }
+
+  @Test
+  public void addFiltersWhenContainingGroupHasContentSelectors() {
+    mockRepositoryManager(of(REPO1, GROUP));
+    when(repositoryManager.findContainingGroups(REPO1)).thenReturn(of(GROUP));
+    SelectorConfiguration selector = mock(SelectorConfiguration.class);
+    when(selectorManager.browseActive(of(REPO1, GROUP), Set.of(RAW)))
+        .thenReturn(List.of(selector));
+    when(contentSelectorFilterGenerator.createFilter(selector, Set.of(REPO1)))
+        .thenReturn(Optional.of(contentSelectorsCondition));
+
+    Optional<Expression> result = underTest.build(searchRequest(REPO1));
+
+    assertQueryCondition(result, contentSelectorsCondition);
   }
 
   private void assertQueryCondition(final Optional<Expression> expression, final Expression expected) {
@@ -279,7 +364,7 @@ public class SqlSearchPermissionBuilderTest
 
   private void mockBrowsableRepositories(final Collection<String> browsableRepos) {
     browsableRepos.forEach(repository -> {
-      when(securityHelper.anyPermitted(new RepositoryViewPermission(RAW, repository, BreadActions.BROWSE),
+      lenient().when(securityHelper.anyPermitted(new RepositoryViewPermission(RAW, repository, BreadActions.BROWSE),
           new RepositoryViewPermission(RAW, repository, BreadActions.READ))).thenReturn(true);
     });
   }
@@ -288,7 +373,7 @@ public class SqlSearchPermissionBuilderTest
     readableRepos.forEach(repository -> {
       when(securityHelper.anyPermitted(new RepositoryViewPermission(RAW, repository, BreadActions.BROWSE),
           new RepositoryViewPermission(RAW, repository, BreadActions.READ))).thenReturn(true);
-      when(securityHelper.anyPermitted(new RepositoryViewPermission(RAW, repository, BreadActions.BROWSE)))
+      lenient().when(securityHelper.anyPermitted(new RepositoryViewPermission(RAW, repository, BreadActions.BROWSE)))
           .thenReturn(false);
     });
   }
@@ -296,11 +381,11 @@ public class SqlSearchPermissionBuilderTest
   private void mockContentSelectorConfigurations(final Set<String> selectorRepositories) {
     selectorRepositories.forEach(repository -> {
       SelectorConfiguration selector = mock(SelectorConfiguration.class);
-      when(selectorManager.browseActive(Collections.singleton(repository), Collections.singleton(RAW)))
-          .thenReturn(Collections.singletonList(selector));
+      lenient().when(selectorManager.browseActive(Set.of(repository), Set.of(RAW)))
+          .thenReturn(List.of(selector));
 
       Optional<Expression> contentSelectorFilter = Optional.of(contentSelectorsCondition);
-      when(contentSelectorFilterGenerator.createFilter(selector, Collections.singleton(repository)))
+      lenient().when(contentSelectorFilterGenerator.createFilter(selector, Set.of(repository)))
           .thenReturn(contentSelectorFilter);
     });
   }
@@ -317,10 +402,10 @@ public class SqlSearchPermissionBuilderTest
     repositoryNames.forEach(name -> {
       Repository repository = mockRepository(name);
       repositories.add(repository);
-      when(repositoryManager.get(name)).thenReturn(repository);
+      lenient().when(repositoryManager.get(name)).thenReturn(repository);
     });
 
-    when(repositoryManager.browse()).thenReturn(repositories);
+    lenient().when(repositoryManager.browse()).thenReturn(repositories);
   }
 
   private static Repository mockRepository(final String name) {
@@ -329,8 +414,8 @@ public class SqlSearchPermissionBuilderTest
     when(repository.getName()).thenReturn(name);
 
     Format format = mock(Format.class);
-    when(format.getValue()).thenReturn(RAW);
-    when(repository.getFormat()).thenReturn(format);
+    lenient().when(format.getValue()).thenReturn(RAW);
+    lenient().when(repository.getFormat()).thenReturn(format);
 
     return repository;
   }

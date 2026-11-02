@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.group;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -27,8 +28,6 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -69,7 +68,7 @@ public class GroupHandler
   @VisibleForTesting
   public static class DispatchedRepositories
   {
-    private final Set<String> dispatched = Sets.newLinkedHashSet();
+    private final Set<String> dispatched = new LinkedHashSet<>();
 
     public void add(final Repository repository) {
       dispatched.add(repository.getName());
@@ -238,7 +237,7 @@ public class GroupHandler
       @Nonnull final DispatchedRepositories dispatched,
       final boolean isParentStale) throws Exception
   {
-    final LinkedHashMap<Repository, Response> responses = Maps.newLinkedHashMap();
+    final LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();
 
     for (Repository member : members) {
       log.trace("Trying member: {}", member);

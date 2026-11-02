@@ -353,12 +353,12 @@ public class MavenContentFacetImpl
   @Override
   public boolean delete(final MavenPath mavenPath) {
     log.trace("DELETE {} : {}", getRepository().getName(), mavenPath);
-    // Route client-protocol deletes through the soft-delete decision. When eligible (soft-delete
-    // enabled + hosted + format allow-listed) the asset is soft-deleted (recoverable from Trash) and
-    // the component cascade + metadata rebuild are handled by the soft-delete hooks — so we must NOT
+    // Route client-protocol deletes through the trash decision. When eligible (trash
+    // enabled + hosted + format allow-listed) the asset is trashed (recoverable from Trash) and
+    // the component cascade + metadata rebuild are handled by the trash hooks — so we must NOT
     // run the hard maybeDeleteComponent cleanup below. Otherwise fall back to the original hard delete.
     Optional<FluentAsset> asset = findAsset(assetPath(mavenPath));
-    if (asset.isPresent() && contentDeletionService.softDeleteAssetIfEligible(getRepository(), asset.get())) {
+    if (asset.isPresent() && contentDeletionService.trashAssetIfEligible(getRepository(), asset.get())) {
       return true;
     }
     boolean assetIsDeleted = deleteAsset(mavenPath);
@@ -498,15 +498,11 @@ public class MavenContentFacetImpl
     requireNonNull(baseVersion);
 
     List<String[]> metadataCoordinatesToDelete = new ArrayList<>();
-    ImmutableMap<String, Object> gabvQueryParameters =
-        ImmutableMap.of("groupId", groupId, "artifactId", artifactId, "baseVersion", baseVersion);
-    boolean gNonEmpty = components().byFilter("namespace = #{filterParams.groupId}", gabvQueryParameters).count() > 0;
-    boolean gaNonEmpty = gNonEmpty && components()
-        .byFilter("namespace = #{filterParams.groupId} AND name = #{filterParams.artifactId}", gabvQueryParameters)
-        .count() > 0;
-    boolean gabvNonEmpty = gaNonEmpty && components().byFilter(
-        "namespace = #{filterParams.groupId} AND name = #{filterParams.artifactId} AND base_version = #{filterParams.baseVersion}",
-        gabvQueryParameters).count() > 0;
+    Maven2ComponentStore componentStore = (Maven2ComponentStore) stores().componentStore;
+    boolean gNonEmpty = componentStore.existsInNamespace(contentRepositoryId(), groupId);
+    boolean gaNonEmpty = gNonEmpty && components().existsByName(groupId, artifactId);
+    boolean gabvNonEmpty =
+        gaNonEmpty && componentStore.existsInGabv(contentRepositoryId(), groupId, artifactId, baseVersion);
 
     if (gabvNonEmpty) {
       flagForMetadataRebuild(groupId, artifactId, baseVersion);

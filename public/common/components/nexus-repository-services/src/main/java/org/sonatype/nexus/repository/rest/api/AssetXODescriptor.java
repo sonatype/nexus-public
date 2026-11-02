@@ -31,6 +31,17 @@ public interface AssetXODescriptor
 {
   Set<String> listExposedAttributeKeys();
 
+  /**
+   * Whether the UI should restrict format attributes to {@link #listExposedAttributeKeys()}.
+   *
+   * Defaults to {@code false} so the UI shows every stored format attribute, matching the behaviour of formats that
+   * have no descriptor at all. The allow-list returned by {@link #listExposedAttributeKeys()} remains authoritative
+   * for the REST API regardless of this value.
+   */
+  default boolean filterUiAttributes() {
+    return false;
+  }
+
   default Object transformAttributeValue(final String key, final Object value) {
     return value;
   }

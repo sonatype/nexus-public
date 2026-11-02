@@ -24,7 +24,7 @@ import {
   ScheduleData,
   FormField,
   DEFAULT_TASK_FORM_DATA,
-  isValidCronExpression,
+  validateCronExpression,
   isValidEmail,
 } from './types';
 import {
@@ -238,8 +238,11 @@ export function validateTask(
   if (data.schedule === 'advanced') {
     if (!data.cronExpression?.trim()) {
       errors.cronExpression = 'Cron expression is required';
-    } else if (!isValidCronExpression(data.cronExpression)) {
-      errors.cronExpression = 'Invalid cron expression format (expected 5-7 parts)';
+    } else {
+      const cronResult = validateCronExpression(data.cronExpression);
+      if (!cronResult.valid) {
+        errors.cronExpression = cronResult.reason || 'Invalid cron expression';
+      }
     }
   }
 

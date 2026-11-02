@@ -31,7 +31,6 @@ import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleData;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,7 +71,7 @@ public class ConfigurationExportTest
     RoutingRule rule1 = createRoutingRule("RULE_1");
     RoutingRule rule2 = createRoutingRule("RULE_2");
     RoutingRule rule3 = createRoutingRule("RULE_3");
-    List<RoutingRule> routingRules = ImmutableList.of(rule1, rule2, rule3);
+    List<RoutingRule> routingRules = List.of(rule1, rule2, rule3);
 
     RoutingRuleStore routingRuleStore = mock(RoutingRuleStore.class);
     when(routingRuleStore.list()).thenReturn(routingRules);
@@ -80,7 +79,7 @@ public class ConfigurationExportTest
     Configuration hostedConfig = generateConfigData("hosted-repo", "hosted", rule1.id());
     Configuration proxyConfig = generateConfigData("proxy-repo", "proxy", rule2.id());
     Configuration groupConfig = generateConfigData("group-repo", "group", null);
-    List<Configuration> configurations = ImmutableList.of(hostedConfig, proxyConfig, groupConfig);
+    List<Configuration> configurations = List.of(hostedConfig, proxyConfig, groupConfig);
 
     ConfigurationStore configurationStore = mock(ConfigurationStore.class);
     when(configurationStore.list()).thenReturn(configurations);
@@ -177,7 +176,7 @@ public class ConfigurationExportTest
     routingRule.setId(new EntityUUID());
     routingRule.setName(name);
     routingRule.description("Description");
-    routingRule.matchers(ImmutableList.of("matcher_1", "matcher_2"));
+    routingRule.matchers(List.of("matcher_1", "matcher_2"));
     routingRule.mode(RoutingMode.ALLOW);
 
     return routingRule;

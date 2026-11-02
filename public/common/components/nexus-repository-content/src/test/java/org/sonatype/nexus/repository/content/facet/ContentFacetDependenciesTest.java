@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.facet;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.app.trash.TrashIndexRecorder;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.move.RepositoryMoveService;
@@ -58,12 +59,15 @@ public class ContentFacetDependenciesTest
   @Mock
   private RepositoryMoveService moveService;
 
+  @Mock
+  private TrashIndexRecorder trashIndexRecorder;
+
   @Test
   public void testConstructorWithAllDependencies() {
     ContentFacetDependencies underTest = new ContentFacetDependencies(
         blobStoreManager, dataSessionSupplier, constraintViolationFactory,
         clientInfoProvider, nodeAccess, assetBlobValidators, blobMetadataStorage,
-        versionNormalizerService, moveService);
+        versionNormalizerService, moveService, trashIndexRecorder);
 
     assertThat(underTest.getBlobStoreManager(), is(blobStoreManager));
     assertThat(underTest.getDataSessionSupplier(), is(dataSessionSupplier));
@@ -75,6 +79,8 @@ public class ContentFacetDependenciesTest
     assertThat(underTest.getVersionNormalizerService(), is(versionNormalizerService));
     assertThat(underTest.getMoveService().isPresent(), is(true));
     assertThat(underTest.getMoveService().get(), is(moveService));
+    assertThat(underTest.getTrashIndexRecorder().isPresent(), is(true));
+    assertThat(underTest.getTrashIndexRecorder().get(), is(trashIndexRecorder));
   }
 
   @Test
@@ -82,8 +88,18 @@ public class ContentFacetDependenciesTest
     ContentFacetDependencies underTest = new ContentFacetDependencies(
         blobStoreManager, dataSessionSupplier, constraintViolationFactory,
         clientInfoProvider, nodeAccess, assetBlobValidators, blobMetadataStorage,
-        versionNormalizerService, null);
+        versionNormalizerService, null, trashIndexRecorder);
 
     assertThat(underTest.getMoveService().isPresent(), is(false));
+  }
+
+  @Test
+  public void testConstructorWithNullTrashIndexRecorder() {
+    ContentFacetDependencies underTest = new ContentFacetDependencies(
+        blobStoreManager, dataSessionSupplier, constraintViolationFactory,
+        clientInfoProvider, nodeAccess, assetBlobValidators, blobMetadataStorage,
+        versionNormalizerService, moveService, null);
+
+    assertThat(underTest.getTrashIndexRecorder().isPresent(), is(false));
   }
 }

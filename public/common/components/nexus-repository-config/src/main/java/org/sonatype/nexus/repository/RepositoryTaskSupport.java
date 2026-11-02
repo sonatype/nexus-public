@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -25,9 +27,7 @@ import org.sonatype.nexus.scheduling.TaskInterruptedException;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -80,7 +80,7 @@ public abstract class RepositoryTaskSupport
 
   @Override
   protected Object execute() throws Exception {
-    processedRepositories = Sets.newHashSet();
+    processedRepositories = new HashSet<>();
     MultipleFailures failures = new MultipleFailures();
     for (Repository repository : findRepositories()) {
       if (isCanceled()) {
@@ -142,7 +142,7 @@ public abstract class RepositoryTaskSupport
         throw new TaskInterruptedException(String.format("Repository '%s' was not found.", repositoryName), true);
       }
       checkState(appliesTo(repository));
-      return ImmutableList.of(repository);
+      return List.of(repository);
     }
   }
 

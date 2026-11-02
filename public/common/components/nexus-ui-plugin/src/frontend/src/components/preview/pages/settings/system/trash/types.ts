@@ -12,7 +12,7 @@
  */
 
 /**
- * Types for the Trash / soft-delete feature (NEXUS-51733).
+ * Types for the Trash / trash feature (NEXUS-51733).
  *
  * Only 'repository', 'component' and 'asset' are active in this release; 'blob-store', 'tag' and 'user'
  * were descoped. The union deliberately still lists them: useTrashApi's VALID_ENTITY_TYPES relabels any
@@ -52,7 +52,7 @@ export interface DeletedItem {
   repository?: string;
   /** Repository format (N/A for users, blob stores, tags) */
   format?: string;
-  /** ISO timestamp of soft-deletion */
+  /** ISO timestamp of trashing */
   deletedOn: string;
   /** User ID or system:<task-name> that performed deletion (raw login principal; authoritative identity) */
   deletedBy: string;
@@ -68,11 +68,11 @@ export interface DeletedItem {
   componentCoordinates?: string;
   /** When the retention window expires and auto-purge kicks in */
   retentionExpiresOn: string;
-  /** Group repositories this repository was a member of before soft-deletion (repositories only) */
+  /** Group repositories this repository was a member of before trashing (repositories only) */
   containingGroups?: string[];
   /**
    * Assets only: whether the asset's parent component is also currently in Trash.
-   * true  → restoring this asset also restores its (soft-deleted) parent component;
+   * true  → restoring this asset also restores its (trashed) parent component;
    * false → parent component is live, so restore adds the asset back to an existing component
    *         (which may have changed since deletion). undefined for non-asset entries.
    */
@@ -101,8 +101,8 @@ export const DEFAULT_FILTER_STATE: DeletedItemsFilterState = {
 };
 
 /**
- * Fallback value used only when the server-provided `softDeleteRetentionDays` state key is unavailable.
- * The actual retention period is configured server-side via `nexus.softDelete.retentionDays`.
+ * Fallback value used only when the server-provided `trashRetentionDays` state key is unavailable.
+ * The actual retention period is configured server-side via `nexus.trash.retentionDays`.
  */
 export const DEFAULT_RETENTION_DAYS = 30;
 

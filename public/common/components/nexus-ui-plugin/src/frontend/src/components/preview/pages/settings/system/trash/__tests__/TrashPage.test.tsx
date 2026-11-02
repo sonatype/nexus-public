@@ -518,11 +518,21 @@ describe('TrashPage', () => {
       expect(mockUseDeletedItems).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'maven' }));
     });
 
-    it('does not send q when query is shorter than the minimum length', () => {
+    it('sends q for a single-character query after debounce', () => {
       setupApiMocks();
       render(<TrashPage />, { wrapper: Wrapper });
 
       fireEvent.change(screen.getByTestId('search-input'), { target: { value: 'm' } });
+      act(() => { jest.advanceTimersByTime(300); });
+
+      expect(mockUseDeletedItems).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'm' }));
+    });
+
+    it('does not send q for a whitespace-only query', () => {
+      setupApiMocks();
+      render(<TrashPage />, { wrapper: Wrapper });
+
+      fireEvent.change(screen.getByTestId('search-input'), { target: { value: '   ' } });
       act(() => { jest.advanceTimersByTime(300); });
 
       expect(mockUseDeletedItems).toHaveBeenLastCalledWith(expect.objectContaining({ q: undefined }));

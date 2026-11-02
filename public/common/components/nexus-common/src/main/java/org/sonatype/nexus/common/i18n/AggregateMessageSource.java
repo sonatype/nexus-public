@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.common.i18n;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -30,7 +30,7 @@ public class AggregateMessageSource
 {
   private static final Logger log = LoggerFactory.getLogger(AggregateMessageSource.class);
 
-  private final List<MessageSource> sources = Lists.newArrayList();
+  private final List<MessageSource> sources = new ArrayList<>();
 
   public AggregateMessageSource(final List<MessageSource> sources) {
     requireNonNull(sources);

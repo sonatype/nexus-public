@@ -71,9 +71,28 @@ public class BulkReadSchedulerImpl
       "SELECT TRIGGER_NAME, TRIGGER_GROUP, CRON_EXPRESSION, TIME_ZONE_ID " +
           "FROM QRTZ_CRON_TRIGGERS WHERE SCHED_NAME = ? AND TRIGGER_GROUP = ?";
 
+  /*
+   * Drops records whose owning instance stopped checking in, or has no state row at all, both of which
+   * Quartz also treats as failed. Liveness predicate: last_checkin + interval + grace >= now.
+   */
+  private static final String SQL_SELECT_EXECUTING_FIRED_TRIGGERS =
+      "SELECT ft.JOB_NAME, ft.JOB_GROUP, ft.INSTANCE_NAME " +
+          "FROM QRTZ_FIRED_TRIGGERS ft " +
+          "JOIN QRTZ_SCHEDULER_STATE ss " +
+          "ON ss.SCHED_NAME = ft.SCHED_NAME AND ss.INSTANCE_NAME = ft.INSTANCE_NAME " +
+          "WHERE ft.SCHED_NAME = ? AND ft.JOB_GROUP = ? AND ft.STATE = 'EXECUTING' " +
+          "AND ss.LAST_CHECKIN_TIME + ss.CHECKIN_INTERVAL + ? >= ?";
+
   private static final String SQL_SELECT_SIMPLE_TRIGGERS =
       "SELECT TRIGGER_NAME, TRIGGER_GROUP, REPEAT_COUNT, REPEAT_INTERVAL, TIMES_TRIGGERED " +
           "FROM QRTZ_SIMPLE_TRIGGERS WHERE SCHED_NAME = ? AND TRIGGER_GROUP = ?";
+
+  /**
+   * The grace Quartz itself allows before declaring an instance failed: an unnamed literal in
+   * {@code JobStoreSupport.calcFailedIfAfter} (2.3.2 line 3464). Duplicated because Quartz exposes no
+   * accessor for it; re-check on a Quartz upgrade.
+   */
+  private static final long CLUSTER_CHECKIN_GRACE_MILLIS = 7500L;
 
   private final Scheduler delegate;
 
@@ -136,8 +155,43 @@ public class BulkReadSchedulerImpl
   }
 
   @Override
+  public Map<JobKey, String> getExecutingInstanceIdsForGroup(final String groupName) throws SchedulerException {
+    return executeWithConnection(conn -> {
+      Map<JobKey, String> executing = fetchExecutingInstanceIds(conn, groupName);
+      log.debug("Fetched {} executing jobs for group '{}'", executing.size(), groupName);
+      return executing;
+    });
+  }
+
+  @Override
   public Scheduler getDelegate() {
     return delegate;
+  }
+
+  /**
+   * Fetches the instance executing each in-flight job of a group in a single query.
+   */
+  private Map<JobKey, String> fetchExecutingInstanceIds(
+      final Connection conn,
+      final String groupName) throws SQLException
+  {
+    Map<JobKey, String> executing = new HashMap<>();
+
+    try (PreparedStatement ps = conn.prepareStatement(SQL_SELECT_EXECUTING_FIRED_TRIGGERS)) {
+      ps.setString(1, schedulerName);
+      ps.setString(2, groupName);
+      ps.setLong(3, CLUSTER_CHECKIN_GRACE_MILLIS);
+      // Compared against our own clock, as Quartz's own failed-instance detection does
+      ps.setLong(4, System.currentTimeMillis());
+
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          executing.put(new JobKey(rs.getString("JOB_NAME"), rs.getString("JOB_GROUP")),
+              rs.getString("INSTANCE_NAME"));
+        }
+      }
+    }
+    return executing;
   }
 
   /**

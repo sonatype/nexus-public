@@ -12,12 +12,8 @@
  */
 package org.sonatype.nexus.quartz.internal.upgrades;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.nexus.node.datastore.NodeHeartbeat;
 import org.sonatype.nexus.node.datastore.NodeHeartbeatManager;
 import org.sonatype.nexus.quartz.SleeperTask;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
@@ -33,7 +29,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -144,16 +139,9 @@ class QuartzJobKeyUnificationTaskTimeoutTest
   }
 
   private void configureOldNodesRunning() {
-    Map<String, Object> systemInfo1 = new HashMap<>();
-    systemInfo1.put("nexus-status", Map.of("version", "3.93.0-SNAPSHOT", "buildRevision", "abc123"));
-    NodeHeartbeat currentNode = mock(NodeHeartbeat.class);
-    when(currentNode.systemInfo()).thenReturn(systemInfo1);
-
-    Map<String, Object> systemInfo2 = new HashMap<>();
-    systemInfo2.put("nexus-status", Map.of("version", "3.88.0", "buildRevision", "old456"));
-    NodeHeartbeat oldNode = mock(NodeHeartbeat.class);
-    when(oldNode.systemInfo()).thenReturn(systemInfo2);
-
-    when(heartbeatManager.getActiveNodeHeartbeatData()).thenReturn(List.of(currentNode, oldNode));
+    // hasVersionSkew() is a default method on the mocked NodeHeartbeatManager interface, so Mockito won't
+    // execute its real body from stubbed getActiveNodeHeartbeatData() data - stub the outcome directly instead.
+    // The skew-detection algorithm itself is covered by NodeHeartbeatManagerTest.
+    when(heartbeatManager.hasVersionSkew()).thenReturn(true);
   }
 }

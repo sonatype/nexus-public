@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +26,6 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.content.AttributeChangeSet.AttributeChange;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -103,7 +104,7 @@ public class AttributesHelper
   @SuppressWarnings("unchecked")
   private static Object append(final Object list, final Object value) {
     if (list == null) {
-      return newArrayList(value);
+      return new ArrayList<>(Arrays.asList(value));
     }
     checkArgument(list instanceof List<?>, "Cannot append to non-list attribute");
     ((List<Object>) list).add(value);
@@ -118,7 +119,7 @@ public class AttributesHelper
   @SuppressWarnings("unchecked")
   private static Object prepend(final Object list, final Object value) {
     if (list == null) {
-      return newArrayList(value);
+      return new ArrayList<>(Arrays.asList(value));
     }
     checkArgument(list instanceof List<?>, "Cannot prepend to non-list attribute");
     ((List<Object>) list).add(0, value);

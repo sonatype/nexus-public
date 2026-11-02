@@ -20,8 +20,56 @@ import { RepositoryForm } from '../RepositoryForm';
 import { useRepositoryForm } from '../useRepositoryForm';
 import { ToastProvider } from '../../../../../shared/Toast';
 
+/*
+ * Radix Select (the Firewall tab's protection-level dropdown, FIRE-958) relies on
+ * pointer-capture and scroll APIs that jsdom does not implement.
+ */
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = jest.fn(() => false);
+  Element.prototype.setPointerCapture = jest.fn();
+  Element.prototype.releasePointerCapture = jest.fn();
+  Element.prototype.scrollIntoView = jest.fn();
+});
+
 // Mock the hook (Layer 2) - component only consumes hook output
 jest.mock('../useRepositoryForm');
+
+// RepositoryFirewallConfigTab (rendered for real, not mocked, by the Firewall/Health Check
+// tabs) reads the repository config through restClient.get/put. Mock those so the Firewall
+// tab's own dirty/save/cancel wiring can be exercised without a real backend.
+const mockRestGet = jest.fn();
+const mockRestPut = jest.fn();
+jest.mock('../../../../../../../interface/api', () => {
+  const actual = jest.requireActual<typeof import('../../../../../../../interface/api')>('../../../../../../../interface/api');
+  return {
+    ...actual,
+    restClient: {
+      ...actual.restClient,
+      get: (...args: unknown[]) => mockRestGet(...args),
+      put: (...args: unknown[]) => mockRestPut(...args),
+    },
+  };
+});
+
+function mockFirewallTypedRepoLookup(format: string, mode: 'DISABLED' | 'AUDIT' | 'QUARANTINE' | 'PCCS' = 'DISABLED') {
+  mockRestGet.mockImplementation((url: string) => {
+    if (typeof url !== 'string') return Promise.resolve(null);
+    if (url.includes('/healthcheck')) return Promise.resolve([]);
+    if (url.endsWith('firewall/format-capabilities')) {
+      return Promise.resolve([{ format: 'npm', pccsModeSupported: true }, { format: 'pypi', pccsModeSupported: true }]);
+    }
+    if (url.match(/\/internal\/ui\/repositories\/repository\/[^/]+$/)) {
+      return Promise.resolve({ name: 'r', online: true, format, type: 'proxy', firewall: { mode } });
+    }
+    if (url.match(/\/v1\/repositories\/[^/]+\/[^/]+\/[^/]+$/)) {
+      return Promise.resolve({ name: 'r', online: true, firewall: { mode } });
+    }
+    if (url.match(/\/v1\/repositories\/[^/]+$/)) {
+      return Promise.resolve({ format, type: 'proxy' });
+    }
+    return Promise.resolve(null);
+  });
+}
 
 // Mock the useAuditLogApi hook
 jest.mock('../../../../../../../utils/audit/useAuditLogApi', () => ({
@@ -38,6 +86,8 @@ jest.mock('../../../../../../../interface/ExtJS', () => {
     // (NEXUS-54212); delegate to the getter so tests keep driving behavior via checkPermission.
     usePermission: jest.fn((getValue: () => boolean) => getValue()),
     useUser: jest.fn(() => ({ id: 'admin' })),
+    useState: jest.fn((getValue: () => unknown) => getValue()),
+    isEnterpriseEdition: jest.fn(() => false),
     state: jest.fn().mockReturnValue({
       getValue: jest.fn().mockImplementation((key: string) => {
         if (key === 'previewAuditEnabled') return false;
@@ -887,6 +937,158 @@ describe('RepositoryForm', () => {
     });
   });
 
+  // FIRE-958: the Firewall tab's protection-level control used to commit on click, bypassing
+  // this form's Save Changes / Cancel entirely. These tests exercise the fix at the
+  // RepositoryForm level — the Firewall tab plugs into the page-level toolbar the same way the
+  // Evaluation tab already does (onDirtyChange / onSaveRef / onCancelRef).
+  describe('Firewall tab Save/Cancel wiring (FIRE-958)', () => {
+    const npmEditFormData = {
+      name: 'npm-proxy-test', type: 'proxy', format: 'npm',
+      recipe: 'npm-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://registry.npmjs.org/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+    };
+    const npmProxyRecipe = { format: 'npm', type: 'proxy', name: 'npm-proxy' };
+    const npmRepository = { name: 'npm-proxy-test', type: 'proxy', format: 'npm' } as any;
+
+    const renderNpmEdit = () => {
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: npmRepository,
+        activeTab: 'firewall',
+        hasFirewallLicense: true,
+        formData: npmEditFormData as any,
+        pristineData: npmRepository,
+        form: createMockForm(npmEditFormData),
+      }));
+
+      return renderWithTheme(
+        <RepositoryForm
+          repository={npmRepository}
+          recipe={npmProxyRecipe}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+    };
+
+    async function openProtectionLevelSelect() {
+      const trigger = await screen.findByTestId('protection-level-select');
+      await userEvent.click(trigger);
+      return screen.getByRole('listbox');
+    }
+
+    it('commits the pending protection level when Save Changes is clicked', async () => {
+      mockFirewallTypedRepoLookup('npm', 'DISABLED');
+      renderNpmEdit();
+
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: /^Audit Only/ }));
+
+      const saveButton = await screen.findByRole('button', { name: /save changes/i });
+      expect(mockRestPut).not.toHaveBeenCalled();
+
+      await userEvent.click(saveButton);
+
+      await waitFor(() =>
+        expect(mockRestPut).toHaveBeenCalledWith(
+          expect.stringMatching(/\/v1\/repositories\/[^/]+\/[^/]+\/[^/]+$/),
+          expect.objectContaining({ firewall: { mode: 'AUDIT' } })
+        )
+      );
+    });
+
+    it('discards the pending protection level when Cancel is clicked, without committing or calling onSave', async () => {
+      mockFirewallTypedRepoLookup('npm', 'AUDIT');
+      renderNpmEdit();
+
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: /^PCCS/ }));
+      expect(screen.getByTestId('protection-level-select')).toHaveTextContent('PCCS');
+
+      const cancelButton = await screen.findByRole('button', { name: /cancel/i });
+      await userEvent.click(cancelButton);
+
+      // SettingsForm gates Cancel behind its own "Unsaved Changes" discard-confirmation dialog
+      // whenever the form isn't pristine — confirm through it before onCancel actually fires.
+      await userEvent.click(await screen.findByRole('button', { name: 'Leave' }));
+
+      expect(mockRestPut).not.toHaveBeenCalled();
+      await waitFor(() => expect(screen.getByTestId('protection-level-select')).toHaveTextContent('Audit'));
+      expect(mockOnCancel).toHaveBeenCalledTimes(1);
+    });
+
+    it('blocks Browse Repository with the unsaved-changes tooltip while a protection level is pending', async () => {
+      mockFirewallTypedRepoLookup('npm', 'DISABLED');
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: npmRepository,
+        activeTab: 'firewall',
+        hasFirewallLicense: true,
+        formData: npmEditFormData as any,
+        pristineData: npmRepository,
+        form: createMockForm(npmEditFormData),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={npmRepository}
+          recipe={npmProxyRecipe}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onBrowseRepository={jest.fn()}
+        />
+      );
+
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: /^Audit Only/ }));
+
+      const browseButton = await screen.findByRole('button', { name: /browse repository/i });
+      expect(browseButton).toBeDisabled();
+      expect(browseButton.getAttribute('title')).toMatch(/unsaved changes/i);
+    });
+
+    it('does not wire onDirtyChange/onSaveRef into the Health Check tab mount of the same component (dual-mount hazard)', async () => {
+      // RepositoryFirewallConfigTab is mounted twice from RepositoryForm — once for the
+      // Firewall tab (showHealthCheck=false, receives the save/cancel refs) and once for the
+      // Health Check tab (showFirewall=false). Render with the Health Check tab active: that
+      // mount has no protection-level selector at all, so it can never go dirty on its own, and
+      // the page-level toolbar must fall back to the plain form machine (form.isPristine) —
+      // not a stray firewall dirty flag — while this tab is active.
+      mockFirewallTypedRepoLookup('npm', 'DISABLED');
+      const hookReturn = createMockHookReturn({
+        isCreate: false,
+        repository: npmRepository,
+        activeTab: 'health-check',
+        hasFirewallLicense: true,
+        formData: npmEditFormData as any,
+        pristineData: npmRepository,
+        form: createMockForm(npmEditFormData),
+      });
+      mockUseRepositoryForm.mockReturnValue(hookReturn);
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={npmRepository}
+          recipe={npmProxyRecipe}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      await waitFor(() => expect(screen.getByText('Repository Health Check')).toBeInTheDocument());
+      expect(screen.queryByTestId('protection-level-select')).not.toBeInTheDocument();
+
+      // form.isPristine is true (default mock), so the page-level Save Changes button must
+      // reflect the plain form machine's pristine state, not report dirty.
+      const saveButton = await screen.findByRole('button', { name: /save changes/i });
+      expect(saveButton).toBeDisabled();
+    });
+  });
+
   describe('advanceOnly wizard mode (NEXUS-51923)', () => {
     const VALID_PROXY_DATA = {
       name: 'test-proxy',
@@ -1624,6 +1826,252 @@ describe('RepositoryForm', () => {
       });
 
       expect(screen.queryByLabelText(/use pre-emptive authentication/i)).not.toBeInTheDocument();
+    });
+  });
+
+  // Toggle label must state the online/offline action, not "System Status".
+  describe('online/offline toggle button label', () => {
+    const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+    const TOGGLE_ONLINE_TESTID = 'form-toggle-online';
+    const LABEL_TAKE_OFFLINE = 'Take Offline';
+    const LABEL_BRING_ONLINE = 'Bring Online';
+    const OLD_ONLINE_LABEL = 'Disable System Status';
+    const OLD_OFFLINE_LABEL = 'Enable System Status';
+
+    const EDIT_FORM_DATA = {
+      name: 'maven-central', type: 'proxy', format: 'maven2',
+      recipe: 'maven2-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+    };
+
+    function renderToggle(savedOnline: boolean) {
+      // Restore edit permission; earlier suites leave checkPermission stubbed to false.
+      ExtJS.checkPermission.mockReturnValue(true);
+      ExtJS.usePermission.mockImplementation((getValue: () => boolean) => getValue());
+
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        pristineData: { online: savedOnline } as any,
+        formData: EDIT_FORM_DATA as any,
+        form: createMockForm(EDIT_FORM_DATA),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onToggleOnline={jest.fn()}
+        />
+      );
+    }
+
+    it('labels the toggle "Take Offline" when the saved repository is online', async () => {
+      renderToggle(true);
+
+      const toggle = await screen.findByTestId(TOGGLE_ONLINE_TESTID);
+      expect(toggle).toHaveTextContent(LABEL_TAKE_OFFLINE);
+      expect(toggle).not.toHaveTextContent(OLD_ONLINE_LABEL);
+    });
+
+    it('labels the toggle "Bring Online" when the saved repository is offline', async () => {
+      renderToggle(false);
+
+      const toggle = await screen.findByTestId(TOGGLE_ONLINE_TESTID);
+      expect(toggle).toHaveTextContent(LABEL_BRING_ONLINE);
+      expect(toggle).not.toHaveTextContent(OLD_OFFLINE_LABEL);
+    });
+  });
+
+  describe('XET confirm dialog (HuggingFace proxy edit mode)', () => {
+    const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+
+    const HF_PROXY_RECIPE = { format: 'huggingface', type: 'proxy', name: 'huggingface-proxy' };
+    const HF_PROXY_REPOSITORY = {
+      name: 'hf-proxy',
+      type: 'proxy',
+      format: 'huggingface',
+      recipe: 'huggingface-proxy',
+      online: true,
+      url: 'http://localhost:8081/repository/hf-proxy/',
+      status: { online: true },
+      attributes: {},
+    };
+
+    beforeEach(() => {
+      ExtJS.checkPermission.mockImplementation(
+        (perm: string) => perm === 'nexus:repository-admin:huggingface:hf-proxy:edit'
+      );
+    });
+
+    function renderHFEditForm(xetEnabled: boolean, pristineXetEnabled: boolean) {
+      const mockForm = createMockForm({ name: 'hf-proxy', type: 'proxy', format: 'huggingface' });
+      mockForm.isPristine = false;
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        form: mockForm,
+        isCreate: false,
+        repository: HF_PROXY_REPOSITORY as any,
+        formData: { name: 'hf-proxy', type: 'proxy', format: 'huggingface', recipe: 'huggingface-proxy', online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          xet: { enabled: xetEnabled } } as any,
+        pristineData: { name: 'hf-proxy', type: 'proxy', format: 'huggingface', recipe: 'huggingface-proxy', online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          xet: { enabled: pristineXetEnabled } } as any,
+      }));
+      renderWithTheme(
+        <RepositoryForm
+          recipe={HF_PROXY_RECIPE}
+          isCreate={false}
+          repository={HF_PROXY_REPOSITORY as any}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+      return mockForm;
+    }
+
+    it('shows XET confirm dialog when XET is newly enabled on save in edit mode', async () => {
+      renderHFEditForm(true, false);
+
+      const saveBtn = await screen.findByTestId('form-submit');
+      await userEvent.click(saveBtn);
+
+      expect(screen.getByText(/Enable XET and disable Firewall\?/i)).toBeInTheDocument();
+    });
+
+    it('submits without dialog when XET was already enabled in pristine data', async () => {
+      const mockForm = renderHFEditForm(true, true);
+
+      const saveBtn = await screen.findByTestId('form-submit');
+      await userEvent.click(saveBtn);
+
+      expect(screen.queryByText(/Enable XET and disable Firewall\?/i)).not.toBeInTheDocument();
+      expect(mockForm.send).toHaveBeenCalledWith('SUBMIT');
+    });
+
+    it('proceeds with save when confirm button is clicked in the dialog', async () => {
+      const mockForm = renderHFEditForm(true, false);
+
+      const saveBtn = await screen.findByTestId('form-submit');
+      await userEvent.click(saveBtn);
+      expect(screen.getByText(/Enable XET and disable Firewall\?/i)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /Disable Firewall and enable XET/i }));
+      expect(mockForm.send).toHaveBeenCalledWith('SUBMIT');
+    });
+  });
+
+  // NEXUS-54933: turning XET off on Settings and then staging a Firewall level must save both
+  // from the Firewall tab's Save Changes, not just the firewall level.
+  describe('Firewall tab Save with pending Settings edits (HuggingFace proxy)', () => {
+    const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+
+    const HF_PROXY_RECIPE = { format: 'huggingface', type: 'proxy', name: 'huggingface-proxy' };
+    const HF_PROXY_REPOSITORY = { name: 'hf-proxy', type: 'proxy', format: 'huggingface' } as any;
+    const hfFormData = (xetEnabled: boolean) => ({
+      name: 'hf-proxy', type: 'proxy', format: 'huggingface', recipe: 'huggingface-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://huggingface.co', contentMaxAge: 1440, metadataMaxAge: 1440 },
+      xet: { enabled: xetEnabled },
+    });
+
+    beforeEach(() => {
+      ExtJS.checkPermission.mockReturnValue(true);
+    });
+
+    function renderHFFirewallTab({ hasValidationErrors = false } = {}) {
+      const mockForm = createMockForm(hfFormData(false));
+      mockForm.isPristine = false;
+      mockForm.hasValidationErrors = hasValidationErrors;
+      const setActiveTab = jest.fn();
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        form: mockForm,
+        isCreate: false,
+        repository: HF_PROXY_REPOSITORY,
+        activeTab: 'firewall',
+        setActiveTab,
+        hasFirewallLicense: true,
+        formData: hfFormData(false) as any,
+        pristineData: hfFormData(true) as any,
+      }));
+      renderWithTheme(
+        <RepositoryForm
+          recipe={HF_PROXY_RECIPE}
+          isCreate={false}
+          repository={HF_PROXY_REPOSITORY}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+      return { mockForm, setActiveTab };
+    }
+
+    async function selectLevel(name: string | RegExp) {
+      await userEvent.click(await screen.findByTestId('protection-level-select'));
+      const optionName = typeof name === 'string' ? new RegExp(`^${name}`) : name;
+      await userEvent.click(screen.getByRole('option', { name: optionName }));
+    }
+
+    it('commits the firewall level and then submits the Settings form', async () => {
+      mockFirewallTypedRepoLookup('huggingface', 'DISABLED');
+      mockRestPut.mockResolvedValue(undefined);
+      const { mockForm } = renderHFFirewallTab();
+
+      await selectLevel(/^Audit Only/);
+      await userEvent.click(await screen.findByRole('button', { name: /save changes/i }));
+
+      await waitFor(() =>
+        expect(mockRestPut).toHaveBeenCalledWith(
+          expect.stringMatching(/\/v1\/repositories\/huggingface\/proxy\/hf-proxy$/),
+          expect.objectContaining({ firewall: { mode: 'AUDIT' }, xet: expect.objectContaining({ enabled: false }) })
+        )
+      );
+      await waitFor(() => expect(mockForm.send).toHaveBeenCalledWith('SUBMIT'));
+    });
+
+    it('submits the Settings form after the Quarantine confirmation is accepted, not before', async () => {
+      mockFirewallTypedRepoLookup('huggingface', 'DISABLED');
+      mockRestPut.mockResolvedValue(undefined);
+      const { mockForm } = renderHFFirewallTab();
+
+      await selectLevel(/^Quarantine/);
+      await userEvent.click(await screen.findByRole('button', { name: /save changes/i }));
+
+      expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+      expect(mockForm.send).not.toHaveBeenCalledWith('SUBMIT');
+
+      await userEvent.click(screen.getByTestId('firewall-quarantine-confirm-confirm'));
+
+      await waitFor(() => expect(mockForm.send).toHaveBeenCalledWith('SUBMIT'));
+    });
+
+    it('does not submit the Settings form when the firewall commit fails', async () => {
+      mockFirewallTypedRepoLookup('huggingface', 'DISABLED');
+      mockRestPut.mockRejectedValue(new Error('boom'));
+      const { mockForm } = renderHFFirewallTab();
+
+      await selectLevel(/^Audit Only/);
+      await userEvent.click(await screen.findByRole('button', { name: /save changes/i }));
+
+      await waitFor(() => expect(mockRestPut).toHaveBeenCalled());
+      expect(mockForm.send).not.toHaveBeenCalledWith('SUBMIT');
+    });
+
+    it('switches to Settings without committing the firewall level when the Settings form is invalid', async () => {
+      mockFirewallTypedRepoLookup('huggingface', 'DISABLED');
+      const { mockForm, setActiveTab } = renderHFFirewallTab({ hasValidationErrors: true });
+
+      await selectLevel(/^Audit Only/);
+      await userEvent.click(await screen.findByRole('button', { name: /save changes/i }));
+
+      expect(setActiveTab).toHaveBeenCalledWith('settings');
+      expect(mockForm.send).toHaveBeenCalledWith('SUBMIT');
+      expect(mockRestPut).not.toHaveBeenCalled();
     });
   });
 });

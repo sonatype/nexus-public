@@ -209,9 +209,6 @@ public class BlobStoreCredentialEncryptionMigrationStep_2_160Test
   public void testDescriptorWithNoSensitiveFieldsLeavesLegacyCiphertextUntouched() throws Exception {
     // A blob store type that declares no sensitive fields is excluded from this sweep entirely, even
     // when its configuration holds a credential in some other (non-SecretsService) ciphertext format.
-    // GCS is the live example: it stores legacy EncryptDecryptService ciphertext and deliberately does
-    // not declare auth_account_key as sensitive, so this step must never re-encrypt it. Arming GCS and
-    // migrating its legacy values is owned by NEXUS-54379.
     BlobStoreDescriptor googleDescriptor = mock(BlobStoreDescriptor.class, "google");
     when(googleDescriptor.getSensitiveConfigurationFields()).thenReturn(Collections.emptyList());
 

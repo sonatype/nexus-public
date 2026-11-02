@@ -11,13 +11,22 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, fireEvent, waitFor} from '@testing-library/react';
+import {act, render, screen, fireEvent, waitFor} from '@testing-library/react';
 import Axios from 'axios';
 import SearchRadix from '../SearchRadix';
 import {useCurrentStateAndParams, useRouter} from '@uirouter/react';
 import useIsVisible from '../../../../../router/useIsVisible';
+import {useIsCloud} from '../../hooks';
 
 jest.mock('axios');
+
+// Source: '../hooks' (1 up from SearchRadix/). From __tests__/ needs 2 ups.
+// Spread the real barrel: the component also pulls `useDebouncedWithDiscard` and
+// `debouncedValueOf` from here, and a bare object would stub those out too.
+jest.mock('../../hooks', () => ({
+  ...jest.requireActual('../../hooks'),
+  useIsCloud: jest.fn(),
+}));
 
 jest.mock('@uirouter/react', () => ({
   useCurrentStateAndParams: jest.fn(),
@@ -44,9 +53,9 @@ jest.mock('../../Badges', () => ({
 
 jest.mock('@radix-ui/themes', () => ({
   TextField: {
-    Root: ({children, placeholder, value, onChange, onKeyDown, onFocus}) => (
+    Root: ({children, placeholder, value, onChange, onKeyDown, onFocus, ...rest}) => (
       <div>
-        <input placeholder={placeholder} value={value} onChange={onChange} onKeyDown={onKeyDown} onFocus={onFocus} />
+        <input placeholder={placeholder} value={value} onChange={onChange} onKeyDown={onKeyDown} onFocus={onFocus} {...rest} />
         {children}
       </div>
     ),
@@ -60,6 +69,12 @@ const ROUTES = {
   previewSearchComponent: 'preview.browse.search.component',
 };
 
+/**
+ * The debounce window this component is expected to honour. Asserted as a value rather than
+ * imported so the tests pin the intended behaviour, not whatever the module happens to declare.
+ */
+const DEBOUNCE_MS = 200;
+
 const mockGo = jest.fn();
 
 function makeRouter() {
@@ -71,10 +86,11 @@ function makeRouter() {
   };
 }
 
-function setupMocks({isVisible = true, stateName = 'some.state'} = {}) {
+function setupMocks({isVisible = true, stateName = 'some.state', isCloud = false} = {}) {
   useCurrentStateAndParams.mockReturnValue({state: {name: stateName}});
   useRouter.mockReturnValue(makeRouter());
   useIsVisible.mockReturnValue(isVisible);
+  useIsCloud.mockReturnValue(isCloud);
 }
 
 describe('SearchRadix', () => {
@@ -100,6 +116,13 @@ describe('SearchRadix', () => {
       render(<SearchRadix isPreviewUI routes={ROUTES} />);
       expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
     });
+
+    it('shouldRenderPlaceholderWithoutMentioningCves', () => {
+      render(<SearchRadix isPreviewUI routes={ROUTES} />);
+      expect(
+        screen.getByPlaceholderText('Search by name, group, or version')
+      ).toBeInTheDocument();
+    });
   });
 
   describe('input behaviour', () => {
@@ -113,7 +136,9 @@ describe('SearchRadix', () => {
     it('does not fetch suggestions for queries shorter than 2 chars', () => {
       render(<SearchRadix isPreviewUI routes={ROUTES} />);
       fireEvent.change(screen.getByPlaceholderText(/search/i), {target: {value: 'r'}});
-      jest.runAllTimers();
+      act(() => {
+        jest.runAllTimers();
+      });
       expect(Axios.get).not.toHaveBeenCalled();
     });
 
@@ -123,15 +148,76 @@ describe('SearchRadix', () => {
       });
       render(<SearchRadix isPreviewUI routes={ROUTES} />);
       fireEvent.change(screen.getByPlaceholderText(/search/i), {target: {value: 're'}});
-      jest.runAllTimers();
+      act(() => {
+        jest.runAllTimers();
+      });
       await waitFor(() => expect(Axios.get).toHaveBeenCalled());
     });
 
     it('does not fetch in default (non-preview) UI mode', () => {
       render(<SearchRadix isPreviewUI={false} routes={ROUTES} />);
       fireEvent.change(screen.getByPlaceholderText(/search/i), {target: {value: 'react'}});
-      jest.runAllTimers();
+      act(() => {
+        jest.runAllTimers();
+      });
       expect(Axios.get).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Default UI navigation (bug rhv)', () => {
+    it('navigates via router on Enter with query (not hardcoded hash)', () => {
+      render(<SearchRadix isPreviewUI={false} routes={ROUTES} />);
+
+      const input = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(input, {target: {value: 'logback'}});
+      fireEvent.keyDown(input, {key: 'Enter'});
+
+      expect(mockGo).toHaveBeenCalledWith(
+        ROUTES.searchGeneric,
+        {keyword: '=keyword=logback'}
+      );
+    });
+
+    it('navigates via router on Enter with empty query (keyword null)', () => {
+      render(<SearchRadix isPreviewUI={false} routes={ROUTES} />);
+
+      const input = screen.getByPlaceholderText(/search/i);
+      fireEvent.keyDown(input, {key: 'Enter'});
+
+      expect(mockGo).toHaveBeenCalledWith(
+        ROUTES.searchGeneric,
+        {keyword: null}
+      );
+    });
+
+    it('does not set window.location.hash directly', () => {
+      const originalHash = window.location.hash;
+      render(<SearchRadix isPreviewUI={false} routes={ROUTES} />);
+
+      const input = screen.getByPlaceholderText(/search/i);
+      fireEvent.keyDown(input, {key: 'Enter'});
+
+      expect(window.location.hash).toBe(originalHash);
+    });
+  });
+
+  describe('data-analytics-id (per-distribution)', () => {
+    it('uses the self-hosted analytics id when not on cloud', () => {
+      setupMocks({isCloud: false});
+      render(<SearchRadix isPreviewUI routes={ROUTES} />);
+      expect(screen.getByPlaceholderText(/search/i)).toHaveAttribute(
+        'data-analytics-id',
+        'nxrm-header-search'
+      );
+    });
+
+    it('uses the cloud analytics id when on cloud', () => {
+      setupMocks({isCloud: true});
+      render(<SearchRadix isPreviewUI routes={ROUTES} />);
+      expect(screen.getByPlaceholderText(/search/i)).toHaveAttribute(
+        'data-analytics-id',
+        'nxrm-global-header-search-input'
+      );
     });
   });
 
@@ -209,7 +295,9 @@ describe('SearchRadix', () => {
       render(<SearchRadix isPreviewUI routes={ROUTES} />);
       const input = screen.getByPlaceholderText(/search/i);
       fireEvent.change(input, {target: {value: 'react'}});
-      jest.runAllTimers();
+      act(() => {
+        jest.runAllTimers();
+      });
       await waitFor(() => screen.getByText(/press enter to search/i));
       return input;
     }
@@ -252,6 +340,16 @@ describe('SearchRadix', () => {
       await openSuggestions();
       expect(screen.getAllByText('18.0.0').length).toBeGreaterThan(0);
     });
+
+    it('collapses immediately when the query is deleted below the minimum length', async () => {
+      const input = await openSuggestions();
+
+      fireEvent.change(input, {target: {value: 'r'}});
+
+      // No timer advance: shortening the query must close the dropdown at once rather than
+      // leaving stale suggestions visible for another debounce interval.
+      expect(screen.queryByRole('option')).toBeNull();
+    });
   });
 
   describe('keyboard navigation in suggestions', () => {
@@ -265,7 +363,9 @@ describe('SearchRadix', () => {
       render(<SearchRadix isPreviewUI routes={ROUTES} />);
       const input = screen.getByPlaceholderText(/search/i);
       fireEvent.change(input, {target: {value: 'al'}});
-      jest.runAllTimers();
+      act(() => {
+        jest.runAllTimers();
+      });
       await waitFor(() => screen.getAllByRole('option'));
       return input;
     }
@@ -303,6 +403,148 @@ describe('SearchRadix', () => {
     });
   });
 
+  describe('re-entering a query whose suggestions were discarded', () => {
+    const suggestions = [
+      {name: 'react', group: 'facebook', format: 'npm', version: '18.0.0', repository: 'npm-proxy'},
+      {name: 'react-dom', group: 'react', format: 'npm', version: '18.0.0', repository: 'npm-proxy'},
+    ];
+
+    async function openSuggestions() {
+      render(<SearchRadix isPreviewUI routes={ROUTES} />);
+      const input = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(input, {target: {value: 'react'}});
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_MS);
+      });
+      await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(2));
+      expect(Axios.get).toHaveBeenCalledTimes(1);
+      return input;
+    }
+
+    beforeEach(() => {
+      Axios.get.mockResolvedValue({data: suggestions});
+    });
+
+    it('fetches again when the same query is re-entered after dropping below the minimum length', async () => {
+      const input = await openSuggestions();
+
+      // Below the minimum: the list collapses at once, and nothing is requested for the short query.
+      fireEvent.change(input, {target: {value: 'r'}});
+      expect(screen.queryByRole('option')).toBeNull();
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_MS / 2);
+      });
+      expect(Axios.get).toHaveBeenCalledTimes(1);
+
+      // Back to the query that was already searched, inside the same debounce window. The debounced
+      // value settles on what it last published, so this is the case a plain value debounce swallows.
+      fireEvent.change(input, {target: {value: 'react'}});
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_MS);
+      });
+
+      expect(Axios.get).toHaveBeenCalledTimes(2);
+      expect(Axios.get).toHaveBeenLastCalledWith(
+        '/service/rest/v1/search/suggest',
+        expect.objectContaining({params: expect.objectContaining({q: 'react'})}),
+      );
+      await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(2));
+    });
+
+    it('fetches again when the same query is retyped right after picking a suggestion', async () => {
+      const input = await openSuggestions();
+
+      // Picking a suggestion empties the field, which discards the suggestions through the same
+      // below-minimum path.
+      fireEvent.mouseDown(screen.getAllByRole('option')[0]);
+      expect(input.value).toBe('');
+      expect(screen.queryByRole('option')).toBeNull();
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_MS / 2);
+      });
+      expect(Axios.get).toHaveBeenCalledTimes(1);
+
+      fireEvent.change(input, {target: {value: 'react'}});
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_MS);
+      });
+
+      expect(Axios.get).toHaveBeenCalledTimes(2);
+      await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(2));
+    });
+  });
+
+  describe('suggestion responses that land after the query was discarded', () => {
+    const suggestions = [
+      {name: 'react', group: 'facebook', format: 'npm', version: '18.0.0', repository: 'npm-proxy'},
+      {name: 'react-dom', group: 'react', format: 'npm', version: '18.0.0', repository: 'npm-proxy'},
+    ];
+
+    function deferred() {
+      let resolve;
+      const promise = new Promise((res) => {
+        resolve = res;
+      });
+      return {promise, resolve};
+    }
+
+    it('ignores a response that lands after the field was cleared', async () => {
+      const request = deferred();
+      Axios.get.mockReturnValue(request.promise);
+
+      render(<SearchRadix isPreviewUI routes={ROUTES} />);
+      const input = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(input, {target: {value: 'react'}});
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_MS);
+      });
+      expect(Axios.get).toHaveBeenCalledTimes(1);
+
+      // Clear the field while the suggest request is still running.
+      fireEvent.change(input, {target: {value: ''}});
+      await act(async () => {});
+      expect(screen.queryByRole('option')).toBeNull();
+
+      // The abandoned request answers late; it must not reopen the dropdown over an empty input.
+      await act(async () => {
+        request.resolve({data: suggestions});
+      });
+
+      expect(screen.queryByRole('option')).toBeNull();
+    });
+
+    it('ignores a response that lands after a suggestion was picked', async () => {
+      const pending = deferred();
+      Axios.get.mockResolvedValueOnce({data: suggestions}).mockReturnValue(pending.promise);
+
+      render(<SearchRadix isPreviewUI routes={ROUTES} />);
+      const input = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(input, {target: {value: 'react'}});
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_MS);
+      });
+      await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(2));
+
+      // Extend the query so a second request is in flight while the list is still open.
+      fireEvent.change(input, {target: {value: 'react-dom'}});
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_MS);
+      });
+      expect(Axios.get).toHaveBeenCalledTimes(2);
+
+      // Picking a suggestion empties the field and discards the list.
+      fireEvent.mouseDown(screen.getAllByRole('option')[0]);
+      expect(input.value).toBe('');
+      expect(screen.queryByRole('option')).toBeNull();
+
+      await act(async () => {
+        pending.resolve({data: suggestions});
+      });
+
+      expect(screen.queryByRole('option')).toBeNull();
+    });
+  });
+
   describe('focus behaviour', () => {
     it('re-shows suggestions on focus when suggestions already exist', async () => {
       const suggestions = [{name: 'lib', group: 'g', format: 'npm', version: '1.0', repository: 'r'}];
@@ -310,7 +552,9 @@ describe('SearchRadix', () => {
       render(<SearchRadix isPreviewUI routes={ROUTES} />);
       const input = screen.getByPlaceholderText(/search/i);
       fireEvent.change(input, {target: {value: 'li'}});
-      jest.runAllTimers();
+      act(() => {
+        jest.runAllTimers();
+      });
       await waitFor(() => screen.getAllByRole('option'));
       fireEvent.mouseDown(document.body);
       fireEvent.focus(input);
@@ -325,7 +569,9 @@ describe('SearchRadix', () => {
       render(<SearchRadix isPreviewUI routes={ROUTES} />);
       const input = screen.getByPlaceholderText(/search/i);
       fireEvent.change(input, {target: {value: 'pk'}});
-      jest.runAllTimers();
+      act(() => {
+        jest.runAllTimers();
+      });
       await waitFor(() => screen.getAllByRole('option'));
       fireEvent.mouseDown(screen.getAllByRole('option')[0]);
       await waitFor(() =>

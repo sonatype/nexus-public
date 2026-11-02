@@ -37,7 +37,7 @@
   <select id="findGavsWithSnaphots" resultType="org.sonatype.nexus.content.maven.store.GAV">
     SELECT namespace as "group", name, base_version, COUNT(*) AS count FROM maven2_component
     WHERE repository_id = #{repositoryId} AND base_version LIKE '%-SNAPSHOT'
-      <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+      <if test="trashAvailable">AND deleted_on IS NULL</if>
     GROUP BY namespace, name, base_version
     HAVING COUNT(*) &gt; #{minimumRetained};
   </select>
@@ -75,7 +75,7 @@
       AND (c.base_version = #{baseVersion} OR
            c.base_version = #{releaseVersion})
       AND c.base_version LIKE '%-SNAPSHOT'
-      <if test="softDeleteAvailable">
+      <if test="trashAvailable">
         AND c.deleted_on IS NULL
         AND (a.asset_id IS NULL OR a.deleted_on IS NULL)
       </if>
@@ -90,7 +90,7 @@
   AND snapshots.base_version LIKE '%-SNAPSHOT'
   AND snapshots.last_updated &lt;= (CURRENT_TIMESTAMP - CAST(#{gracePeriod} AS INT) * INTERVAL '1' DAY)
   AND releases.base_version = REPLACE(snapshots.base_version, '-SNAPSHOT', '')
-  <if test="softDeleteAvailable">
+  <if test="trashAvailable">
     AND snapshots.deleted_on IS NULL
     AND releases.deleted_on IS NULL
   </if>;
@@ -103,7 +103,7 @@
            LEFT JOIN maven2_asset_blob ON maven2_asset.asset_blob_id = maven2_asset_blob.asset_blob_id
     WHERE maven2_component.repository_id = #{repositoryId}
       AND maven2_component.base_version LIKE '%-SNAPSHOT'
-      <if test="softDeleteAvailable">
+      <if test="trashAvailable">
         AND maven2_component.deleted_on IS NULL
         AND maven2_asset.deleted_on IS NULL
       </if>
@@ -119,7 +119,30 @@
      WHERE namespace = #{namespace}
        AND name = #{name}
        AND repository_id = #{repositoryId}
-       <if test="softDeleteAvailable">AND deleted_on IS NULL</if>;
+       <if test="trashAvailable">AND deleted_on IS NULL</if>;
+  </select>
+
+  <!-- Existence probe for the group (namespace-only) level. (repository_id,
+       namespace) is a genuine prefix of uk_maven2_component_coordinate, so this short-circuits on the
+       first matching row instead of counting every component under the groupId. -->
+  <select id="existsInNamespace" resultType="boolean">
+    SELECT EXISTS (
+      SELECT 1 FROM maven2_component WHERE repository_id = #{repositoryId} AND namespace = #{namespace}
+      <if test="trashAvailable">AND deleted_on IS NULL</if>
+    );
+  </select>
+
+  <!-- Existence probe for the group-artifact-baseVersion level. base_version has
+       only a single-column index (idx_maven2_component_base_version), not a composite covering
+       (repository_id, namespace, name, base_version), so this scan is tighter than the namespace-wide
+       count it replaces but is not guaranteed O(1) the way existsInNamespace/existsByName are. -->
+  <select id="existsInGabv" resultType="boolean">
+    SELECT EXISTS (
+      SELECT 1 FROM maven2_component
+       WHERE repository_id = #{repositoryId} AND namespace = #{namespace} AND name = #{name}
+         AND base_version = #{baseVersion}
+      <if test="trashAvailable">AND deleted_on IS NULL</if>
+    );
   </select>
 
 </mapper>

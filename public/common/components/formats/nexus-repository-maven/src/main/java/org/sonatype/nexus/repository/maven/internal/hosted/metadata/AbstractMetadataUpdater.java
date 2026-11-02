@@ -28,8 +28,6 @@ import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metada
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Snapshot;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.SnapshotVersion;
 import org.apache.maven.artifact.repository.metadata.Versioning;
@@ -190,7 +188,7 @@ public abstract class AbstractMetadataUpdater
       final Optional<Metadata> oldMetadata = safeRead(mavenPath);
       if (oldMetadata.isPresent()) {
         final Metadata updated = repositoryMetadataMerger.merge(
-            ImmutableList.of(
+            List.of(
                 new Envelope(repository.getName() + ":" + mavenPath.getPath(), oldMetadata.get()),
                 new Envelope("new:" + mavenPath.getPath(), toMetadata(metadata))));
         writeIfChanged(mavenPath, oldMetadata.get(), updated);
@@ -280,7 +278,7 @@ public abstract class AbstractMetadataUpdater
       snapshot.setBuildNumber(maven2Metadata.getSnapshots().getSnapshotBuildNumber());
       versioning.setSnapshot(snapshot);
 
-      final List<SnapshotVersion> snapshotVersions = Lists.newArrayList();
+      final List<SnapshotVersion> snapshotVersions = new ArrayList<>();
       for (Snapshot snap : maven2Metadata.getSnapshots().getSnapshots()) {
         final SnapshotVersion snapshotVersion = new SnapshotVersion();
         snapshotVersion.setExtension(snap.getExtension());

@@ -14,9 +14,9 @@ package org.sonatype.nexus.capability;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
 
 /**
  * Helper to build {@link CapabilityReferenceFilter}.
@@ -135,7 +135,7 @@ public class CapabilityReferenceFilterBuilder
     }
 
     @Override
-    public boolean apply(final CapabilityReference input) {
+    public boolean test(final CapabilityReference input) {
       if (input == null) {
         return false;
       }

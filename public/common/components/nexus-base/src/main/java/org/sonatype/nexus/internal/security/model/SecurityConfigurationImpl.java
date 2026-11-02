@@ -38,12 +38,13 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.shiro.util.CollectionUtils;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
@@ -91,7 +92,7 @@ public class SecurityConfigurationImpl
   // PRIVILEGES
   @Override
   public List<CPrivilege> getPrivileges() {
-    return ImmutableList.copyOf(privilegeStore.browse());
+    return toImmutableList(privilegeStore.browse());
   }
 
   @Override
@@ -177,7 +178,7 @@ public class SecurityConfigurationImpl
   // ROLES
   @Override
   public List<CRole> getRoles() {
-    return ImmutableList.copyOf(roleStore.browse());
+    return toImmutableList(roleStore.browse());
   }
 
   @Override
@@ -192,10 +193,10 @@ public class SecurityConfigurationImpl
     requireNonNull(ids);
 
     if (ids.isEmpty()) {
-      return ImmutableList.of();
+      return Collections.emptyList();
     }
 
-    return ImmutableList.copyOf(roleStore.readByIds(ids));
+    return toImmutableList(roleStore.readByIds(ids));
   }
 
   @Override
@@ -236,7 +237,7 @@ public class SecurityConfigurationImpl
   // USERS
   @Override
   public List<CUser> getUsers() {
-    return ImmutableList.copyOf(userStore.browse());
+    return toImmutableList(userStore.browse());
   }
 
   @Override
@@ -326,7 +327,7 @@ public class SecurityConfigurationImpl
   // USER-ROLE MAPPINGS
   @Override
   public List<CUserRoleMapping> getUserRoleMappings() {
-    return ImmutableList.copyOf(userRoleMappingStore.browse());
+    return toImmutableList(userRoleMappingStore.browse());
   }
 
   @Override

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.config;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -19,8 +21,6 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * Repository configuration.
@@ -30,8 +30,8 @@ import static com.google.common.collect.Lists.newArrayList;
 public interface Configuration
     extends Cloneable
 {
-  List<String> SENSITIVE_FIELD_NAMES = newArrayList("applicationPassword", "password",
-      "systemPassword", "secret", "yumSigning", "aptSigning");
+  List<String> SENSITIVE_FIELD_NAMES = new ArrayList<>(Arrays.asList("applicationPassword", "password",
+      "systemPassword", "secret", "yumSigning", "aptSigning"));
 
   static void addSensitiveFieldName(String sensitiveFieldName) {
     SENSITIVE_FIELD_NAMES.add(sensitiveFieldName);

@@ -20,9 +20,10 @@ import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
@@ -41,7 +42,8 @@ import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG
  */
 public class AptFacetHelper
 {
-  public static final List<HashAlgorithm> hashAlgorithms = ImmutableList.of(MD5, SHA1, SHA256);
+  // Not List.of: contains(null) throws NPE on JDK immutable lists, Guava returned false (public API).
+  public static final List<HashAlgorithm> hashAlgorithms = unmodifiableList(asList(MD5, SHA1, SHA256));
 
   private static final String RELEASE_PATH = "dists/%s/%s";
 
@@ -68,13 +70,13 @@ public class AptFacetHelper
    */
   public static List<ContentSpecifier> getReleaseIndexSpecifiers(boolean isFlat, final String dist) {
     if (isFlat) {
-      return ImmutableList.of(
+      return List.of(
           new ContentSpecifier(RELEASE, SnapshotItem.Role.RELEASE_INDEX),
           new ContentSpecifier(RELEASE_GPG, SnapshotItem.Role.RELEASE_SIG),
           new ContentSpecifier(INRELEASE, SnapshotItem.Role.RELEASE_INLINE_INDEX));
     }
     else {
-      return ImmutableList.of(
+      return List.of(
           new ContentSpecifier(String.format(RELEASE_PATH, dist, RELEASE), SnapshotItem.Role.RELEASE_INDEX),
           new ContentSpecifier(String.format(RELEASE_PATH, dist, RELEASE_GPG), SnapshotItem.Role.RELEASE_SIG),
           new ContentSpecifier(String.format(RELEASE_PATH, dist, INRELEASE), SnapshotItem.Role.RELEASE_INLINE_INDEX));
@@ -97,7 +99,7 @@ public class AptFacetHelper
       final String arch)
   {
     if (isFlat) {
-      return ImmutableList.of(
+      return List.of(
           new ContentSpecifier(PACKAGES, SnapshotItem.Role.PACKAGE_INDEX_RAW),
           new ContentSpecifier(PACKAGES_GZ, SnapshotItem.Role.PACKAGE_INDEX_GZ),
           new ContentSpecifier(PACKAGES_BZ2, SnapshotItem.Role.PACKAGE_INDEX_BZ2),
@@ -105,7 +107,7 @@ public class AptFacetHelper
     }
     else {
       // Store metadata for non-flat repos (needed for by-hash generation)
-      return ImmutableList.of(
+      return List.of(
           new ContentSpecifier(String.format(PACKAGE_PATH, dist, component, arch, PACKAGES),
               SnapshotItem.Role.PACKAGE_INDEX_RAW, component, arch),
           new ContentSpecifier(String.format(PACKAGE_PATH, dist, component, arch, PACKAGES_GZ),

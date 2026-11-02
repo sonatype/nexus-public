@@ -38,12 +38,11 @@ import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import org.apache.shiro.util.CollectionUtils;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 import static org.sonatype.nexus.security.config.SecuritySourceUtil.isCaseInsensitiveSource;
 
 /**
@@ -63,16 +62,16 @@ public class MemorySecurityConfiguration
   private final ConcurrentMap<String, Set<String>> privilegeToRoles;
 
   public MemorySecurityConfiguration() {
-    users = Maps.newConcurrentMap();
-    roles = Maps.newConcurrentMap();
-    privileges = Maps.newConcurrentMap();
-    userRoleMappings = Maps.newConcurrentMap();
-    privilegeToRoles = Maps.newConcurrentMap();
+    users = new ConcurrentHashMap<>();
+    roles = new ConcurrentHashMap<>();
+    privileges = new ConcurrentHashMap<>();
+    userRoleMappings = new ConcurrentHashMap<>();
+    privilegeToRoles = new ConcurrentHashMap<>();
   }
 
   @Override
   public List<CUser> getUsers() {
-    return ImmutableList.copyOf(users.values());
+    return toImmutableList(users.values());
   }
 
   @Override
@@ -159,7 +158,7 @@ public class MemorySecurityConfiguration
 
   @Override
   public List<CUserRoleMapping> getUserRoleMappings() {
-    return ImmutableList.copyOf(userRoleMappings.values());
+    return toImmutableList(userRoleMappings.values());
   }
 
   @Override
@@ -212,7 +211,7 @@ public class MemorySecurityConfiguration
 
   @Override
   public List<CPrivilege> getPrivileges() {
-    return ImmutableList.copyOf(privileges.values());
+    return toImmutableList(privileges.values());
   }
 
   @Override
@@ -297,7 +296,7 @@ public class MemorySecurityConfiguration
 
   @Override
   public List<CRole> getRoles() {
-    return ImmutableList.copyOf(roles.values());
+    return toImmutableList(roles.values());
   }
 
   @Override
@@ -311,13 +310,13 @@ public class MemorySecurityConfiguration
     requireNonNull(ids);
 
     if (ids.isEmpty()) {
-      return ImmutableList.of();
+      return Collections.emptyList();
     }
 
     return ids.stream()
         .map(roles::get)
-        .filter(java.util.Objects::nonNull)
-        .collect(ImmutableList.toImmutableList());
+        .filter(Objects::nonNull)
+        .toList();
   }
 
   @Override

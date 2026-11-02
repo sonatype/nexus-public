@@ -64,14 +64,16 @@ public class WebSecurityConfiguration
   }
 
   @Bean
-  public SessionStorageEvaluator sessionStorageEvaluator() {
-    return new NexusSessionStorageEvaluator();
+  public SessionStorageEvaluator sessionStorageEvaluator(
+      @Value("${nexus.session.enabled:true}") final boolean sessionsEnabled)
+  {
+    return new NexusSessionStorageEvaluator(sessionsEnabled);
   }
 
   @Bean
-  public SubjectDAO subjectDAO() {
+  public SubjectDAO subjectDAO(final SessionStorageEvaluator sessionStorageEvaluator) {
     NexusSubjectDAO subjectDAO = new NexusSubjectDAO();
-    subjectDAO.setSessionStorageEvaluator(sessionStorageEvaluator());
+    subjectDAO.setSessionStorageEvaluator(sessionStorageEvaluator);
     return subjectDAO;
   }
 
@@ -115,6 +117,7 @@ public class WebSecurityConfiguration
       final Provider<EventManager> eventManager,
       final Provider<CacheHelper> cacheHelper,
       final NexusWebSessionManager webSessionManager,
+      final SubjectDAO subjectDAO,
       @Value("${nexus.shiro.cache.defaultTimeToLive:2m}") final Provider<Time> defaultTimeToLive)
   {
     webSessionManager.setSessionDAO(sessionDAO());
@@ -126,7 +129,7 @@ public class WebSecurityConfiguration
     // webSessionManager.setSessionIdCookie(sessionCookieTemplate());
 
     NexusWebSecurityManager securityManager = new NexusWebSecurityManager(eventManager, cacheHelper, defaultTimeToLive);
-    securityManager.setSubjectDAO(subjectDAO());
+    securityManager.setSubjectDAO(subjectDAO);
     securityManager.setSubjectFactory(new DefaultWebSubjectFactory());
 
     securityManager.setAuthenticator(authenticator());

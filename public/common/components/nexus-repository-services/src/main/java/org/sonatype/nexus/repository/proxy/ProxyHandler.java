@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreWarmingUpException;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.io.CooperationException;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
@@ -61,12 +62,27 @@ public class ProxyHandler
     implements Handler
 {
   private static final String TELEMETRY_READONLY_MODE =
-      "Nexus Repository is now in read-only mode because Baseline Telemetry data could not be uploaded within the grace period. Check your network configuration and verify that the server can reach the telemetry service. If the problem persists, contact Sonatype Support. To retry the upload now, run the Upload Retry task.";
+      "Nexus Repository is now in read-only mode because base telemetry (https://links.sonatype.com/products/nxrm3/nexus-telemetry) data could not be uploaded within the grace period. Check your network configuration and verify that the server can reach the telemetry service. If the problem persists, contact Sonatype Support. To retry the upload now, run the Upload Retry task.";
+
+  // Community Edition is not entitled to Support, so it is pointed to community resources instead
+  private static final String COMMUNITY_TELEMETRY_READONLY_MODE =
+      "Nexus Repository is now in read-only mode because base telemetry (https://links.sonatype.com/products/nxrm3/nexus-telemetry) data could not be uploaded within the grace period. Check your network configuration and verify that the server can reach the telemetry service. If the problem persists, visit the Sonatype Community (https://links.sonatype.com/products/nexus/community-chat) or contact us (https://links.sonatype.com/contact-sales). To retry the upload now, run the Upload Retry task.";
 
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  @Autowired
   private NodeAccess nodeAccess;
+
+  private ApplicationVersion applicationVersion;
+
+  @Autowired
+  protected void configureNodeAccess(final NodeAccess nodeAccess) {
+    this.nodeAccess = nodeAccess;
+  }
+
+  @Autowired
+  protected void configureApplicationVersion(final ApplicationVersion applicationVersion) {
+    this.applicationVersion = applicationVersion;
+  }
 
   @Nonnull
   @Override
@@ -186,12 +202,15 @@ public class ProxyHandler
   }
 
   private Response buildTelemetryBlockingResponse(final Context context) {
-    log.warn(TELEMETRY_READONLY_MODE);
+    String message = applicationVersion != null && applicationVersion.isCommunityEdition()
+        ? COMMUNITY_TELEMETRY_READONLY_MODE
+        : TELEMETRY_READONLY_MODE;
+    log.warn(message);
     if ("nuget".equals(context.getRepository().getFormat().getValue())) {
-      return HttpResponses.conflict(TELEMETRY_READONLY_MODE);
+      return HttpResponses.conflict(message);
     }
     else {
-      return HttpResponses.forbidden(TELEMETRY_READONLY_MODE);
+      return HttpResponses.forbidden(message);
     }
   }
 

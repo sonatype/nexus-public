@@ -15,10 +15,10 @@ package org.sonatype.nexus.repository.manager;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteContext;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteSchemaVersions;
-import org.sonatype.nexus.common.app.softdelete.SoftDeletedEntityService;
+import org.sonatype.nexus.common.app.trash.TrashContext;
+import org.sonatype.nexus.common.app.trash.TrashFormatGate;
+import org.sonatype.nexus.common.app.trash.TrashSchemaVersions;
+import org.sonatype.nexus.common.app.trash.TrashedEntityService;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
@@ -37,17 +37,17 @@ import static java.util.Objects.requireNonNull;
  * Single decision point for user-requested repository deletion.
  *
  * <p>
- * Centralizes the soft-delete-vs-hard-delete decision <em>and</em> the per-repository
+ * Centralizes the trash-vs-hard-delete decision <em>and</em> the per-repository
  * {@code DELETE} authorization so that every human-facing caller — the REST API, the ExtDirect UI,
  * and the cloud UI — gets identical behavior. Previously each transport re-implemented the decision
- * inline, which (a) risked drift when the rule changed and (b) let the soft-delete branch bypass the
+ * inline, which (a) risked drift when the rule changed and (b) let the trash branch bypass the
  * per-repository delete permission that the hard-delete path enforces (NEXUS-49147 / NEXUS-51733).
  * </p>
  *
  * <p>
  * System- and policy-driven deletions (cleanup policies, scheduled tasks, proxy cache expiry) must
  * continue to call {@link RepositoryManager#delete(String)} directly and are intentionally NOT routed
- * through here: only human-initiated deletes are eligible for soft-delete.
+ * through here: only human-initiated deletes are eligible for trash.
  * </p>
  */
 @Component
@@ -58,12 +58,12 @@ public class RepositoryDeletionService
   private final SecurityHelper securityHelper;
 
   /**
-   * The repository {@link SoftDeletedEntityService}, or {@code null} when the soft-delete plugin is
+   * The repository {@link TrashedEntityService}, or {@code null} when the trash plugin is
    * not present (e.g. OSS builds). When {@code null}, deletion always falls back to hard-delete.
    */
-  private final SoftDeletedEntityService repositorySoftDeleteService;
+  private final TrashedEntityService repositoryTrashService;
 
-  private final SoftDeleteFormatGate softDeleteFormatGate;
+  private final TrashFormatGate trashFormatGate;
 
   private final DatabaseCheck databaseCheck;
 
@@ -71,27 +71,27 @@ public class RepositoryDeletionService
   public RepositoryDeletionService(
       final RepositoryManager repositoryManager,
       final SecurityHelper securityHelper,
-      final List<SoftDeletedEntityService> softDeletedEntityServices,
-      final SoftDeleteFormatGate softDeleteFormatGate,
+      final List<TrashedEntityService> trashedEntityServices,
+      final TrashFormatGate trashFormatGate,
       final DatabaseCheck databaseCheck)
   {
     this.repositoryManager = requireNonNull(repositoryManager);
     this.securityHelper = requireNonNull(securityHelper);
-    this.repositorySoftDeleteService = requireNonNull(softDeletedEntityServices).stream()
+    this.repositoryTrashService = requireNonNull(trashedEntityServices).stream()
         .filter(service -> "repository".equals(service.getEntityType()))
         .findFirst()
         .orElse(null);
-    this.softDeleteFormatGate = requireNonNull(softDeleteFormatGate);
+    this.trashFormatGate = requireNonNull(trashFormatGate);
     this.databaseCheck = requireNonNull(databaseCheck);
   }
 
   /**
-   * Delete a repository as requested by a user, applying the configured policy: soft-delete when the
+   * Delete a repository as requested by a user, applying the configured policy: trash when the
    * feature is enabled and the repository is hosted, otherwise hard-delete.
    *
    * <p>
    * The per-repository {@code DELETE} permission is enforced once here, regardless of which path is
-   * taken, so soft-delete and hard-delete can never diverge on authorization.
+   * taken, so trash and hard-delete can never diverge on authorization.
    * </p>
    *
    * @param name the repository name
@@ -111,8 +111,8 @@ public class RepositoryDeletionService
     securityHelper.ensurePermitted(new RepositoryAdminPermission(
         repository.getFormat().getValue(), name, Collections.singletonList(BreadActions.DELETE)));
 
-    if (shouldSoftDelete(repository)) {
-      repositorySoftDeleteService.softDelete(name, SoftDeleteContext.of(currentPrincipal()));
+    if (shouldMoveToTrash(repository)) {
+      repositoryTrashService.trash(name, TrashContext.of(currentPrincipal()));
     }
     else {
       repositoryManager.delete(name);
@@ -124,15 +124,15 @@ public class RepositoryDeletionService
     return subject != null && subject.getPrincipal() != null ? subject.getPrincipal().toString() : "system";
   }
 
-  private boolean shouldSoftDelete(final Repository repository) {
+  private boolean shouldMoveToTrash(final Repository repository) {
     // Require the repository deleted_on column to actually exist (schema >= 2.171), not just the flag: under
     // ZDU a new-version node can run with the flag on before the deferred migration adds the column, and the
-    // repository soft-delete write has no missing-column fallback (unlike the reads). Hard-delete until it exists.
-    return softDeleteFormatGate.isEnabled()
-        && databaseCheck.isAtLeast(SoftDeleteSchemaVersions.REPOSITORY)
-        && repositorySoftDeleteService != null
+    // repository trash write has no missing-column fallback (unlike the reads). Hard-delete until it exists.
+    return trashFormatGate.isEnabled()
+        && databaseCheck.isAtLeast(TrashSchemaVersions.REPOSITORY)
+        && repositoryTrashService != null
         && repository != null
         && HostedType.NAME.equals(repository.getType().getValue())
-        && softDeleteFormatGate.isEnabledForFormat(repository.getFormat().getValue());
+        && trashFormatGate.isEnabledForFormat(repository.getFormat().getValue());
   }
 }

@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,9 +40,6 @@ import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -142,7 +141,7 @@ public class RaptureWebResourceBundle
 
   @Override
   public List<WebResource> getResources() {
-    return ImmutableList.of(
+    return List.of(
         index_html(),
         bootstrap_js(),
         baseapp_css(),
@@ -346,7 +345,7 @@ public class RaptureWebResourceBundle
    * Returns the initial state for the application.
    */
   private Map<String, Object> getState() {
-    return stateComponentProvider.get().getState(Maps.<String, String>newHashMap());
+    return stateComponentProvider.get().getState(new HashMap<>());
   }
 
   /**
@@ -354,7 +353,7 @@ public class RaptureWebResourceBundle
    */
   @VisibleForTesting
   List<String> getExtJsPluginConfigs() {
-    List<String> classNames = Lists.newArrayList();
+    List<String> classNames = new ArrayList<>();
     for (org.sonatype.nexus.rapture.UiPluginDescriptor descriptor : extJsPluginDescriptors) {
       String className = descriptor.getConfigClassName();
       if (className != null) {
@@ -369,7 +368,7 @@ public class RaptureWebResourceBundle
    */
   @VisibleForTesting
   List<String> getExtJsNamespaces() {
-    List<String> namespaces = Lists.newArrayList();
+    List<String> namespaces = new ArrayList<>();
     for (org.sonatype.nexus.rapture.UiPluginDescriptor descriptor : extJsPluginDescriptors) {
       String ns = descriptor.getNamespace();
       if (ns != null) {
@@ -417,7 +416,7 @@ public class RaptureWebResourceBundle
    */
   @VisibleForTesting
   List<URI> getStyles() {
-    List<URI> styles = Lists.newArrayList();
+    List<URI> styles = new ArrayList<>();
     styles.add(uri(mode("resources/loading-{mode}.css")));
     styles.add(uri(mode("resources/baseapp.css")));
 
@@ -435,7 +434,7 @@ public class RaptureWebResourceBundle
   }
 
   private List<URI> getExtJsStyles() {
-    List<URI> styles = Lists.newArrayList();
+    List<URI> styles = new ArrayList<>();
     for (org.sonatype.nexus.rapture.UiPluginDescriptor descriptor : extJsPluginDescriptors) {
       if (descriptor.hasStyle()) {
         String path = String.format("resources/%s-{mode}.css", descriptor.getPluginId());
@@ -452,7 +451,7 @@ public class RaptureWebResourceBundle
   List<URI> getScripts() {
     boolean debug = isDebug();
 
-    List<URI> scripts = Lists.newArrayList();
+    List<URI> scripts = new ArrayList<>();
 
     scripts.add(uri(mode("baseapp-{mode}.js")));
     scripts.add(uri(mode("extdirect-{mode}.js")));
@@ -482,7 +481,7 @@ public class RaptureWebResourceBundle
   }
 
   private List<URI> getExtJsScripts() {
-    List<URI> scripts = Lists.newArrayList();
+    List<URI> scripts = new ArrayList<>();
     for (org.sonatype.nexus.rapture.UiPluginDescriptor descriptor : extJsPluginDescriptors) {
       if (descriptor.hasScript()) {
         String path = String.format("%s-prod.js", descriptor.getPluginId());

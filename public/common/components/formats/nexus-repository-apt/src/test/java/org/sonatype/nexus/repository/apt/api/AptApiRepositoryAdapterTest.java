@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.apt.api;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -33,7 +34,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -134,7 +134,7 @@ public class AptApiRepositoryAdapterTest
     when(configuration.isOnline()).thenReturn(true);
     when(configuration.getRepositoryName()).thenReturn(repositoryName);
     when(configuration.attributes(not(startsWith("apt"))))
-        .thenReturn(new NestedAttributesMap("dummy", newHashMap()));
+        .thenReturn(new NestedAttributesMap("dummy", new HashMap<>()));
     return configuration;
   }
 
@@ -148,16 +148,16 @@ public class AptApiRepositoryAdapterTest
     Repository repository = new RepositoryImpl(mock(EventManager.class), type, new AptFormat());
 
     Configuration configuration = config("my-repo");
-    Map<String, Object> attributes = newHashMap();
+    Map<String, Object> attributes = new HashMap<>();
 
-    Map<String, Object> apt = newHashMap();
+    Map<String, Object> apt = new HashMap<>();
     apt.put("distribution", distribution);
     apt.put("flat", flat);
     attributes.put("apt", apt);
     NestedAttributesMap aptNested = new NestedAttributesMap("apt", apt);
     when(configuration.attributes("apt")).thenReturn(aptNested);
 
-    Map<String, Object> aptSigning = newHashMap();
+    Map<String, Object> aptSigning = new HashMap<>();
     aptSigning.put("keypair", keypair);
     aptSigning.put("passphrase", passphrase);
     attributes.put("aptSigning", aptSigning);

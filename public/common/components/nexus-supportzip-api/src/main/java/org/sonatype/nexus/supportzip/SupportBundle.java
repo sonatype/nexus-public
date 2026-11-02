@@ -13,9 +13,8 @@
 package org.sonatype.nexus.supportzip;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.collect.Lists;
 
 import static java.util.Objects.requireNonNull;
 
@@ -106,7 +105,7 @@ public class SupportBundle
     void cleanup() throws Exception;
   }
 
-  private final List<ContentSource> sources = Lists.newArrayList();
+  private final List<ContentSource> sources = new ArrayList<>();
 
   /**
    * Returns all configured content sources.

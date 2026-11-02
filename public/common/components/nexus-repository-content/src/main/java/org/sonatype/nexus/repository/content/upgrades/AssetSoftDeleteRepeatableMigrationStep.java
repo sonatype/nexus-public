@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Creates the soft-delete {@code deleted_on} indexes on every {@code {format}_asset} table (NEXUS-54973).
+ * Creates the trash {@code deleted_on} indexes on every {@code {format}_asset} table (NEXUS-54973).
  * The columns themselves are added by the versioned {@link SoftDeleteColumnsMigrationStep_2_172}; this step
  * only builds the indexes, which are performance-only (their absence never breaks a query).
  *
@@ -78,17 +78,17 @@ public class AssetSoftDeleteRepeatableMigrationStep
   public void migrate(final Connection connection) throws Exception {
     List<String> assetTables = findAssetTables(connection);
     if (assetTables.isEmpty()) {
-      log.info("No asset tables found, skipping soft-delete index creation");
+      log.info("No asset tables found, skipping trash index creation");
       return;
     }
 
-    log.info("Ensuring soft-delete indexes on {} asset tables", assetTables.size());
+    log.info("Ensuring trash indexes on {} asset tables", assetTables.size());
     for (String tableName : assetTables) {
       // The indexes reference deleted_on, which the versioned SoftDeleteColumnsMigrationStep_2_172 adds. Flyway
       // runs that versioned step before this repeatable one, so the column normally exists here; guard defensively
       // and skip (rather than fail the migration) if a table somehow predates the column.
       if (!columnExists(connection, tableName, "deleted_on")) {
-        log.warn("Skipping soft-delete indexes on {}: deleted_on column not present yet", tableName);
+        log.warn("Skipping trash indexes on {}: deleted_on column not present yet", tableName);
         continue;
       }
       createPartialIndex(connection, tableName);

@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.upgrades;
 import java.sql.Connection;
 import java.util.Optional;
 
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteSchemaVersions;
+import org.sonatype.nexus.common.app.trash.TrashSchemaVersions;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -23,8 +23,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
- * Adds soft-delete columns ({@code deleted_on}, {@code deleted_by}) on the {@code repository} table
- * and the partial index for querying of soft-deleted repositories.
+ * Adds trash columns ({@code deleted_on}, {@code deleted_by}) on the {@code repository} table
+ * and the partial index for querying of trashed repositories.
  */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -33,7 +33,7 @@ public class ConfigurationSoftDeleteMigrationStep_2_171
 {
   private static final String TABLE_NAME = "repository";
 
-  public static final String VERSION = SoftDeleteSchemaVersions.REPOSITORY;
+  public static final String VERSION = TrashSchemaVersions.REPOSITORY;
 
   @Override
   public Optional<String> version() {

@@ -77,6 +77,13 @@ export default function AdminRepositoriesDirectoryPage() {
               routeName={ADMIN.REPOSITORY.ROUTINGRULES.LIST}
               params={{ itemId: null }}
           />
+
+          <DirectoryList.DirectoryListItem
+              data-analytics-id="nxrm-admin-repository-directory-global-distribution-lnk"
+              text="Global Distribution"
+              description="Distribute repository content globally"
+              routeName={ADMIN.REPOSITORY.GLOBAL_DISTRIBUTION.ROOT}
+          />
         </DirectoryList>
       </DirectoryPage>);
 }

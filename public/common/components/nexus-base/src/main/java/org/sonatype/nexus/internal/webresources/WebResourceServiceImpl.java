@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.webresources;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,7 +23,6 @@ import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
 import org.sonatype.nexus.webresources.WebResourceService;
 
-import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +46,7 @@ public class WebResourceServiceImpl
       final List<WebResourceBundle> bundles,
       final List<WebResource> resources)
   {
-    this.resourcePaths = Maps.newHashMap();
+    this.resourcePaths = new HashMap<>();
 
     bundles.stream()
         .map(WebResourceBundle::getResources)

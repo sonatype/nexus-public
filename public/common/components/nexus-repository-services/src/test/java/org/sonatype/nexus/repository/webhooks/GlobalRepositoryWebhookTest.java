@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.webhooks;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -20,12 +23,12 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryEvent;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
+import org.sonatype.nexus.repository.manager.RepositoryTrashRestoredEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.webhooks.GlobalRepositoryWebhook.RepositoryWebhookPayload;
 import org.sonatype.nexus.webhooks.WebhookRequestSendEvent;
 
-import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -33,7 +36,9 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.hamcrest.Matchers.equalTo;
@@ -61,6 +66,9 @@ public class GlobalRepositoryWebhookTest
   @Mock
   private RepositoryDeletedEvent repositoryDeletedEvent;
 
+  @Mock
+  private RepositoryTrashRestoredEvent repositoryTrashRestoredEvent;
+
   private GlobalRepositoryWebhook globalRepositoryWebhook;
 
   @Before
@@ -68,8 +76,8 @@ public class GlobalRepositoryWebhookTest
     globalRepositoryWebhook = new GlobalRepositoryWebhook(nodeAccess, initiatorProvider);
     globalRepositoryWebhook.setEventManager(eventManager);
 
-    for (RepositoryEvent repositoryEvent : Lists
-        .newArrayList(repositoryCreatedEvent, repositoryDeletedEvent, repositoryUpdatedEvent)) {
+    for (RepositoryEvent repositoryEvent : new ArrayList<>(Arrays.asList(repositoryCreatedEvent, repositoryDeletedEvent,
+        repositoryUpdatedEvent, repositoryTrashRestoredEvent))) {
       Repository repository = mock(Repository.class);
       when(repository.getName()).thenReturn("name");
       when(repository.getFormat()).thenReturn(new TestFormat());
@@ -107,6 +115,20 @@ public class GlobalRepositoryWebhookTest
   public void queuesRepositoryDeletedEvents() {
     globalRepositoryWebhook.on(repositoryDeletedEvent);
     testRepositoryEvent("DELETED");
+  }
+
+  @Test
+  public void queuesRepositoryTrashRestoredEvents() {
+    globalRepositoryWebhook.on(repositoryTrashRestoredEvent);
+    testRepositoryEvent("RESTORED");
+  }
+
+  @Test
+  public void trashRestoredEventDoesNotAlsoQueueCreated() {
+    // RepositoryTrashRestoredEvent is a RepositoryCreatedEvent subclass, so the created-event handler also receives
+    // it; it must skip to avoid a spurious CREATED alongside the RESTORED (NEXUS-55410).
+    globalRepositoryWebhook.on((RepositoryCreatedEvent) repositoryTrashRestoredEvent);
+    verify(eventManager, never()).post(any());
   }
 
   private void testRepositoryEvent(String action) {

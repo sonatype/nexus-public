@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
@@ -65,10 +65,11 @@ jest.mock('../../../../../shared/form', () => ({
       {error && <span role="alert">{error}</span>}
     </div>
   ),
-  SettingsCheckbox: ({ name, label, checked, onChange, disabled }) => (
+  SettingsCheckbox: ({ name, label, checked, onChange, disabled, badge }) => (
     <div>
       <label htmlFor={name}>{label}</label>
       <input id={name} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} disabled={disabled} />
+      {badge}
     </div>
   ),
   SettingsTransferList: () => <div data-testid="transfer-list" />,
@@ -80,14 +81,23 @@ jest.mock('../../../../../shared', () => ({
   useToast: () => ({ success: jest.fn(), error: jest.fn() }),
   PageHeader: ({ breadcrumbs, children }) => (
     <div data-testid="page-header">
-      {breadcrumbs?.map((b, i) => (
+      {breadcrumbs?.map((b) => (
         b.onClick
-          ? <button key={i} onClick={b.onClick}>{b.label}</button>
-          : <span key={i}>{b.label}</span>
+          ? <button key={b.label} onClick={b.onClick}>{b.label}</button>
+          : <span key={b.label}>{b.label}</span>
       ))}
       {children}
     </div>
   ),
+}));
+
+jest.mock('../../../../../shared/hooks/useLicenseLevel', () => ({
+  useLicenseLevel: jest.fn(() => false), // Default to non-enterprise
+  LicenseLevel: {
+    PRO: 'nexus-professional-edition',
+    PRO_PLUS: 'nexus-professional-plus-edition',
+    ENTERPRISE: 'nexus-enterprise-edition',
+  },
 }));
 
 jest.mock('../useBlobStores', () => ({
@@ -286,6 +296,58 @@ describe('BlobStoreWizardCreate', () => {
     });
   });
 
+  describe('S3 Pre-Signed URL in wizard step 1', () => {
+    async function goToS3BasicConfigStep() {
+      render(<BlobStoreWizardCreate onBack={jest.fn()} />);
+      await userEvent.click(screen.getByText('S3'));
+      await userEvent.click(screen.getByRole('button', { name: /Continue/i }));
+    }
+
+    afterEach(() => {
+      const { ExtJS } = require('../../../../../../../interface/ExtJS');
+      ExtJS.isLicensedEdition = () => false;
+    });
+
+    it('shows Pre-Signed URL disabled with a Pro pill on Community Edition', async () => {
+      await goToS3BasicConfigStep();
+
+      expect(screen.getByLabelText('Pre-Signed URL')).toBeDisabled();
+      expect(screen.getByTestId('edition-pill-pro')).toHaveTextContent('Pro');
+    });
+
+    it('enables Pre-Signed URL without a pill on a licensed edition', async () => {
+      const { ExtJS } = require('../../../../../../../interface/ExtJS');
+      ExtJS.isLicensedEdition = () => true;
+
+      await goToS3BasicConfigStep();
+
+      expect(screen.getByLabelText('Pre-Signed URL')).toBeEnabled();
+      expect(screen.queryByTestId('edition-pill-pro')).not.toBeInTheDocument();
+    });
+
+    it('shows the Pro license callout between Prefix and Pre-Signed URL on Community Edition', async () => {
+      await goToS3BasicConfigStep();
+
+      const callout = screen.getByTestId('license-callout-presigned-url');
+      expect(callout).toHaveTextContent('Pre-Signed URL requires a Pro license.');
+      expect(
+        screen.getByLabelText('Prefix').compareDocumentPosition(callout) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+      expect(
+        callout.compareDocumentPosition(screen.getByLabelText('Pre-Signed URL')) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    });
+
+    it('shows no license callout on a licensed edition', async () => {
+      const { ExtJS } = require('../../../../../../../interface/ExtJS');
+      ExtJS.isLicensedEdition = () => true;
+
+      await goToS3BasicConfigStep();
+
+      expect(screen.queryByTestId('license-callout-presigned-url')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Azure account/container name validation in wizard step 1', () => {
     async function goToAzureBasicConfigStep() {
       render(<BlobStoreWizardCreate onBack={jest.fn()} />);
@@ -346,6 +408,49 @@ describe('BlobStoreWizardCreate', () => {
 
       screen.getByRole('button', { name: 'Blob Stores' }).click();
       expect(mockOnBack).toHaveBeenCalled();
+    });
+  });
+
+  describe('Global Distribution step visibility', () => {
+    it('excludes Global Distribution step before a type is selected', () => {
+      render(<BlobStoreWizardCreate onBack={jest.fn()} />);
+
+      const steps = screen.getByTestId('blob-store-wizard-steps');
+      expect(steps).toHaveTextContent('Select Type');
+      expect(steps).toHaveTextContent('Basic Config');
+      expect(steps).toHaveTextContent('Credentials');
+      expect(steps).toHaveTextContent('Advanced');
+      expect(steps).not.toHaveTextContent('Global Distribution');
+    });
+
+    it('includes Global Distribution step when the S3 type is selected', async () => {
+      render(<BlobStoreWizardCreate onBack={jest.fn()} />);
+
+      await userEvent.click(screen.getByText('S3'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('blob-store-wizard-steps')).toHaveTextContent('Global Distribution');
+      });
+
+      const steps = screen.getByTestId('blob-store-wizard-steps');
+      expect(steps).toHaveTextContent('Select Type');
+      expect(steps).toHaveTextContent('Basic Config');
+      expect(steps).toHaveTextContent('Credentials');
+      expect(steps).toHaveTextContent('Advanced');
+    });
+
+    it('excludes Global Distribution step for non-S3 types', async () => {
+      render(<BlobStoreWizardCreate onBack={jest.fn()} />);
+
+      // Select File blob store type - should NOT show Global Distribution step
+      await userEvent.click(screen.getByText('File'));
+
+      const steps = screen.getByTestId('blob-store-wizard-steps');
+      expect(steps).toHaveTextContent('Select Type');
+      expect(steps).toHaveTextContent('Basic Config');
+      expect(steps).not.toHaveTextContent('Global Distribution');
+      expect(steps).toHaveTextContent('Credentials');
+      expect(steps).toHaveTextContent('Advanced');
     });
   });
 });

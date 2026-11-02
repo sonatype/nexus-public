@@ -80,6 +80,7 @@ export function createRoleDetailEditMachine(options: RoleDetailEditMachineOption
   return createMachine<RoleDetailEditContext, RoleDetailEditEvent>(
     {
       id: 'roleDetailEdit',
+      predictableActionArguments: true,
       initial: 'viewing',
       context: {
         committed: initial,

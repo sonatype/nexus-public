@@ -269,9 +269,19 @@ Ext.define('NX.coreui.controller.Capabilities', {
    * @param {NX.coreui.model.Capability} model capability model
    */
   showSettings: function(model) {
-    this.getSettingsTab().loadRecord(model);
+    var me = this,
+        capabilityTypeStore = me.getStore('CapabilityType'),
+        capabilityTypeModel = capabilityTypeStore.getById(model.get('typeId')),
+        canEnable;
+
+    me.getSettingsTab().loadRecord(model);
     if (NX.Permissions.check('nexus:capabilities:update')) {
-      this.getEnableButton().setDisabled(model.get('enabled'));
+      // Enabling a security-sensitive capability activates its realm, so the Enable button additionally
+      // requires nexus:settings:update (CVE-2026-14645 / NEXUS-54726). Disable is de-escalation and stays
+      // on nexus:capabilities:update only.
+      canEnable = !(capabilityTypeModel && capabilityTypeModel.get('requiresSettingsUpdate'))
+          || NX.Permissions.check('nexus:settings:update');
+      this.getEnableButton().setDisabled(model.get('enabled') || !canEnable);
       this.getDisableButton().setDisabled(!model.get('enabled'));
     }
   },
@@ -323,11 +333,27 @@ Ext.define('NX.coreui.controller.Capabilities', {
    */
   showAddPanel: function(list, td, cellIndex, model) {
     var me = this,
-        panel;
+        panel,
+        editableCondition;
+
+    // Security-sensitive capability types (those that activate/configure a realm) additionally require
+    // nexus:settings:update, so the create form is rendered but disabled when the user lacks that permission
+    // (CVE-2026-14645 / NEXUS-54726).
+    if (model.get('requiresSettingsUpdate')) {
+      editableCondition = NX.Conditions.and(
+          NX.Conditions.isPermitted('nexus:capabilities:create'),
+          NX.Conditions.isPermitted('nexus:settings:update')
+      );
+    }
+    else {
+      editableCondition = NX.Conditions.isPermitted('nexus:capabilities:create');
+    }
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(2, NX.I18n.format('Capabilities_Create_Title', model.get('name')));
-    me.loadCreateWizard(2, panel = Ext.create('widget.nx-coreui-capability-add'));
+    me.loadCreateWizard(2, panel = Ext.create('widget.nx-coreui-capability-add', {
+      settingsFormEditableCondition: editableCondition
+    }));
     var m = me.getCapabilityModel().create({ typeId: model.getId(), enabled: true });
     panel.down('nx-settingsform').loadRecord(m);
   },

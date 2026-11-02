@@ -30,8 +30,6 @@ import org.sonatype.nexus.security.privilege.ApplicationPermission;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
-
-import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.subject.Subject;
@@ -298,9 +296,9 @@ public class RepositoryPermissionCheckerTest
   private void setUpSelectorPermission(final boolean hasPermission) {
     Permission[] permissions = new Permission[]{
         new RepositoryContentSelectorPermission(SELECTOR_NAME, REPOSITORY_FORMAT, REPOSITORY_NAME,
-            ImmutableList.of(BROWSE)),
+            List.of(BROWSE)),
         new RepositoryContentSelectorPermission(SELECTOR_NAME, REPOSITORY_FORMAT, REPOSITORY_NAME,
-            ImmutableList.of(READ))};
+            List.of(READ))};
     when(securityHelper
         .anyPermitted(subject, permissions))
             .thenReturn(hasPermission);

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.view;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +24,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.recipe.RouterBuilder;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,7 +180,7 @@ public class Router
     // only)?
     // TODO: Consider a set of default handlers, as here we have timingHandler on each route?
 
-    private List<Route> routes = Lists.newArrayList();
+    private List<Route> routes = new ArrayList<>();
 
     private DefaultRoute defaultRoute;
 

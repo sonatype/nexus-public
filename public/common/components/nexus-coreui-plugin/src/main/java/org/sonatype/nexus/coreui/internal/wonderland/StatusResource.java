@@ -18,7 +18,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
+import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistribution;
+import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistributionType;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.rest.Resource;
 
@@ -43,19 +44,16 @@ public class StatusResource
 
   public static final String RESOURCE_URI = "/wonderland/status";
 
-  private static final String CLOUD_EDITION_ID = "nexus-cloud-edition";
-
   private final ApplicationVersion applicationVersion;
 
-  private final NexusEditionSelector nexusEditionSelector;
+  // The distribution is fixed for the JVM's lifetime (it is a classpath property), so resolve it once at
+  // construction rather than on every request to this UI-polled status endpoint (matches DockerConnectorFacetImpl).
+  private final boolean isCloud;
 
   @Autowired
-  public StatusResource(
-      final ApplicationVersion applicationVersion,
-      final NexusEditionSelector nexusEditionSelector)
-  {
+  public StatusResource(final ApplicationVersion applicationVersion) {
     this.applicationVersion = requireNonNull(applicationVersion);
-    this.nexusEditionSelector = requireNonNull(nexusEditionSelector);
+    this.isCloud = NexusDistributionType.CLOUD == NexusDistribution.detect(getClass().getClassLoader());
   }
 
   @GET
@@ -69,7 +67,9 @@ public class StatusResource
     // strict equality and does not yet recognize "PROPLUS"/"ENTERPRISE"; that recognition is owned by a
     // separate frontend effort and must land before Pro+/Enterprise are shipped.
     result.setEdition(applicationVersion.getEdition());
-    result.setIsCloud(CLOUD_EDITION_ID.equals(nexusEditionSelector.getCurrent().getId()));
+    // Cloud is a distribution, not an edition/tier, so detect it from packaging rather than the edition id
+    // (which now resolves to the tenant's licensed tier: Pro, Pro+ or Enterprise) — NEXUS-54766 / NEXUS-54772.
+    result.setIsCloud(isCloud);
     return result;
   }
 }

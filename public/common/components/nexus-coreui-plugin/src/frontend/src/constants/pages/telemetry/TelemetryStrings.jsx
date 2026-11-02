@@ -16,8 +16,24 @@ const HELPER_LINK = {
   HREF: 'https://links.sonatype.com/products/nxrm3/nexus-telemetry',
 }
 
+// Community Edition users are not entitled to Support, so they are pointed to community resources instead
+const COMMUNITY_LINKS = [
+  {
+    TEXT: 'Sonatype Community',
+    HREF: 'https://links.sonatype.com/products/nexus/community-chat',
+    ANALYTICS_ID: 'nxrm-telemetry-community-link',
+  },
+  {
+    TEXT: 'contact us',
+    HREF: 'https://links.sonatype.com/contact-sales',
+    ANALYTICS_ID: 'nxrm-telemetry-contact-us-link',
+  },
+]
+
 const SHARED = {
   GENERAL_RECOMMENDATION: 'Check your network configuration and verify that the server can reach the telemetry service. If the problem persists, contact Sonatype Support.',
+  COMMUNITY_GENERAL_RECOMMENDATION: 'Check your network configuration and verify that the server can reach the telemetry service. If the problem persists, visit the Sonatype Community or contact us.',
+  COMMUNITY_LINKS,
   RETRY_RECOMMENDATION: 'To retry the upload now, run the Upload Retry task.',
   RETRY_LINK: 'Go to Tasks.',
   HELPER_LINK,

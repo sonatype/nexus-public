@@ -71,7 +71,7 @@ export function SettingsPasswordInput({
           {required && <span className="settings-password-input__required">*</span>}
         </label>
       )}
-      {helpText && !error && (
+      {helpText && (
         <Text as="p" size="1" id={helpId} className="settings-password-input__help">
           {helpText}
         </Text>
@@ -136,7 +136,7 @@ SettingsPasswordInput.propTypes = {
   placeholder: PropTypes.string,
   /** Help text displayed between label and input */
   helpText: PropTypes.string,
-  /** Error message displayed below input (replaces help text when present) */
+  /** Error message displayed below input */
   error: PropTypes.string,
   /** Mark field as required */
   required: PropTypes.bool,

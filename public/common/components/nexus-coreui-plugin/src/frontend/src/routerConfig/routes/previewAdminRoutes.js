@@ -34,7 +34,6 @@ import React from 'react';
 import {UIView} from '@uirouter/react';
 import {
   Permissions,
-  withFeatureGate,
   withCloudExcluded,
   SettingsPageLayoutRadix,
   SettingsHubPage,
@@ -44,47 +43,44 @@ import {
   SonatypeInternalTestSearchFw,
   SonatypeInternalTestSearchHc,
   MalwareDashboardScenarioPage,
-  // Raw (ungated) page components from preview. These get wrapped with
-  // withFeatureGate below so each section shows ComingSoonPage in
-  // production when its feature flag is off.
-  RepositoriesPage as RepositoriesPageRaw,
-  BlobStoresPage as BlobStoresPageRaw,
-  ContentSelectorsPage as ContentSelectorsPageRaw,
-  CleanupPoliciesPage as CleanupPoliciesPageRaw,
-  RoutingRulesPage as RoutingRulesPageRaw,
-  DataStorePage as DataStorePageRaw,
-  ProprietaryPage as ProprietaryPageRaw,
-  PrivilegesPage as PrivilegesPageRaw,
-  RolesPage as RolesPageRaw,
-  UsersPage as UsersPageRaw,
-  AnonymousPage as AnonymousPageRaw,
-  CrowdPage as CrowdPageRaw,
-  LdapPage as LdapPageRaw,
-  OAuth2Page as OAuth2PageRaw,
-  RealmsPage as RealmsPageRaw,
-  SamlPage as SamlPageRaw,
-  SslCertificatesPage as SslCertificatesPageRaw,
-  UserTokensPage as UserTokensPageRaw,
+  RepositoriesPage,
+  BlobStoresPage,
+  ContentSelectorsPage,
+  CleanupPoliciesPage,
+  RoutingRulesPage,
+  DataStorePage,
+  ProprietaryPage,
+  GlobalDistributionPage,
+  PrivilegesPage,
+  RolesPage,
+  UsersPage,
+  AnonymousPage,
+  CrowdPage,
+  LdapPage,
+  OAuth2Page,
+  RealmsPage,
+  SamlPage,
+  SslCertificatesPage,
+  UserTokensPage,
   ServiceAccountTokensPage,
+  // Raw (ungated) components still wrapped by withCloudExcluded below.
   LogsPage as LogsPageRaw,
   LoggingConfigPage as LoggingConfigPageRaw,
-  SystemInfoPage as SystemInfoPageRaw,
-  MetricHealthPage as MetricHealthPageRaw,
-  RecoveryModePage as RecoveryModePageRaw,
-  SupportRequestPage as SupportRequestPageRaw,
-  SupportZipPage as SupportZipPageRaw,
-  TasksPage as TasksPageRaw,
-  CapabilitiesPage as CapabilitiesPageRaw,
+  SystemInfoPage,
+  MetricHealthPage,
+  RecoveryModePage,
+  SupportRequestPage,
+  SupportZipPage,
+  TasksPage,
+  CapabilitiesPage,
   PreviewUiSettingsPage,
-  EmailPage as EmailPageRaw,
+  EmailPage,
   HttpPage as HttpPageRaw,
   LicensingPage as LicensingPageRaw,
-  NodesPage as NodesPageRaw,
-  UpgradePage as UpgradePageRaw,
+  NodesPage,
+  UpgradePage,
   UsagePage,
-  UserAccountPage as UserAccountPageRaw,
-  IqServerOverviewPage,
-  IqServerConnectedPage as IqServerConnectedPageImpl,
+  IqServerPage,
   HostedRepoEvaluationSetupPage,
   PRO_AND_COMMUNITY_EDITIONS,
   PRO_FAMILY_EDITIONS,
@@ -93,10 +89,6 @@ import {lazyLoad} from './lazyLoad';
 
 const IpAllowListPage = lazyLoad(() => import('@sonatype/nexus-ui-plugin').then(m => ({ default: m.IpAllowList })));
 // ui-plugin already exports these as React.lazy(); wrapping with lazyLoad() would double-wrap them.
-// Two distinct wrapper functions force React to unmount→remount when transitioning
-// between iqConnected and iqConnection (same underlying component, different element type).
-const IqServerConnectedPage = (props) => React.createElement(IqServerConnectedPageImpl, props);
-const IqServerConnectionPage = (props) => React.createElement(IqServerConnectedPageImpl, props);
 
 // Sonatype-internal scenario route wraps MalwareDashboardScenarioPage with
 // a transition-param unwrapper. The named export from ui-plugin is the
@@ -151,65 +143,18 @@ const sonatypeInternalRoutes = [
 ];
 
 // =============================================================================
-// FEATURE-GATED PAGES
-// Each gated page wraps the ui-plugin export with ComingSoonPage in
-// production. Raw (ungated) components are imported above as <Name>Raw.
+// CLOUD-EXCLUDED PAGES
+// A few pages are self-hosted only and render an exclusion notice on Cloud
+// deployments. Every other preview page uses its ui-plugin export directly.
 // =============================================================================
 
-// Repository - Gated (Coming Soon in production, WIP accessible in dev only)
-const RepositoriesPage = withFeatureGate(RepositoriesPageRaw, 'repository.repositories', 'Repositories');
-const BlobStoresPage = withFeatureGate(BlobStoresPageRaw, 'repository.blobstores', 'Blob Stores');
-const ContentSelectorsPage = withFeatureGate(ContentSelectorsPageRaw, 'repository.selectors', 'Content Selectors');
-const CleanupPoliciesPage = withFeatureGate(CleanupPoliciesPageRaw, 'repository.cleanuppolicies', 'Cleanup Policies');
-const RoutingRulesPage = withFeatureGate(RoutingRulesPageRaw, 'repository.routingrules', 'Routing Rules');
-const DataStorePage = withFeatureGate(DataStorePageRaw, 'repository.datastore', 'Data Store');
-const ProprietaryPage = withFeatureGate(ProprietaryPageRaw, 'repository.proprietary', 'Proprietary');
+// Support - Logs and Logging Configuration are self-hosted only
+const LogsPage = withCloudExcluded(LogsPageRaw, 'Logs');
+const LoggingConfigPage = withCloudExcluded(LoggingConfigPageRaw, 'Logging Configuration');
 
-// Security - Gated
-const PrivilegesPage = withFeatureGate(PrivilegesPageRaw, 'security.privileges', 'Privileges');
-const RolesPage = withFeatureGate(RolesPageRaw, 'security.roles', 'Roles');
-const UsersPage = withFeatureGate(UsersPageRaw, 'security.users', 'Users');
-const AnonymousPage = withFeatureGate(AnonymousPageRaw, 'security.anonymous', 'Anonymous Access');
-const CrowdPage = withFeatureGate(CrowdPageRaw, 'security.crowd', 'Atlassian Crowd');
-const LdapPage = withFeatureGate(LdapPageRaw, 'security.ldap', 'LDAP');
-const OAuth2Page = withFeatureGate(OAuth2PageRaw, 'security.oauth2', 'OAuth 2.0');
-const RealmsPage = withFeatureGate(RealmsPageRaw, 'security.realms', 'Realms');
-const SamlPage = withFeatureGate(SamlPageRaw, 'security.saml', 'SAML');
-const SslCertificatesPage = withFeatureGate(SslCertificatesPageRaw, 'security.sslcertificates', 'SSL Certificates');
-const UserTokensPage = withFeatureGate(UserTokensPageRaw, 'security.usertokens', 'User Tokens');
-
-// Support - Gated (Logs and Logging Configuration are self-hosted only)
-const LogsPage = withCloudExcluded(
-  withFeatureGate(LogsPageRaw, 'support.logs', 'Logs'),
-  'Logs',
-);
-const LoggingConfigPage = withCloudExcluded(
-  withFeatureGate(LoggingConfigPageRaw, 'support.logging', 'Logging Configuration'),
-  'Logging Configuration',
-);
-const SystemInfoPage = withFeatureGate(SystemInfoPageRaw, 'support.systeminfo', 'System Information');
-const MetricHealthPage = withFeatureGate(MetricHealthPageRaw, 'support.metrics', 'Metric Health');
-const RecoveryModePage = RecoveryModePageRaw;
-const SupportRequestPage = withFeatureGate(SupportRequestPageRaw, 'support.supportrequest', 'Support Request');
-const SupportZipPage = withFeatureGate(SupportZipPageRaw, 'support.supportzip', 'Support ZIP');
-
-// System - Gated
-const TasksPage = withFeatureGate(TasksPageRaw, 'system.tasks', 'Tasks');
-const CapabilitiesPage = withFeatureGate(CapabilitiesPageRaw, 'system.capabilities', 'Capabilities');
-const EmailPage = withFeatureGate(EmailPageRaw, 'system.emailserver', 'Email Server');
-const HttpPage = withCloudExcluded(
-  withFeatureGate(HttpPageRaw, 'system.http', 'HTTP'),
-  'HTTP',
-);
-const LicensingPage = withCloudExcluded(
-  withFeatureGate(LicensingPageRaw, 'system.licensing', 'Licensing'),
-  'Licensing',
-);
-const NodesPage = withFeatureGate(NodesPageRaw, 'system.nodes', 'Nodes');
-const UpgradePage = withFeatureGate(UpgradePageRaw, 'system.upgrade', 'Upgrade');
-
-// User Account
-const UserAccountPage = withFeatureGate(UserAccountPageRaw, 'useraccount', 'User Account');
+// System - HTTP and Licensing are self-hosted only
+const HttpPage = withCloudExcluded(HttpPageRaw, 'HTTP');
+const LicensingPage = withCloudExcluded(LicensingPageRaw, 'Licensing');
 
 // =============================================================================
 // ROUTE DEFINITIONS
@@ -517,6 +462,22 @@ export const previewAdminRoutes = [
       title: 'Proprietary Repositories',
       visibilityRequirements: {
         requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
+  },
+  {
+    // Visible on every edition: the page locks its controls without an Enterprise license.
+    name: 'preview.admin.repository.globaldistribution',
+    url: '/global-distribution',
+    component: GlobalDistributionPage,
+    data: {
+      title: 'Global Distribution',
+      visibilityRequirements: {
+        requiresAnyPermission: [
+          Permissions.SETTINGS.READ,
+          Permissions.REPOSITORY_ADMIN.READ,
+          Permissions.BLOB_STORES.READ,
+        ],
       },
     },
   },
@@ -1174,12 +1135,16 @@ export const previewAdminRoutes = [
   // =============================================================================
   // IQ SERVER (top-level admin route, not nested under system)
   // =============================================================================
-  // Root /iq entry — disconnected entry point (overview).
-  // Fetches current IQ config; redirects to iqConnected when already enabled.
+  // Single tabbed page (NEXUS-55151) — Overview + Connection Settings tabs.
+  // ?tab= param selects the active tab; when absent, the page defaults based on
+  // the persisted IQ Server enabled state.
   {
     name: 'preview.admin.iq',
-    url: '/iq-overview',
-    component: IqServerOverviewPage,
+    url: '/iq?tab',
+    component: IqServerPage,
+    params: {
+      tab: { value: null, type: 'string', dynamic: true },
+    },
     data: {
       title: 'IQ Server',
       visibilityRequirements: {
@@ -1188,32 +1153,21 @@ export const previewAdminRoutes = [
     },
   },
 
-  // IQ Server connected view with Lifecycle + Firewall cards.
-  // Redirects to iqOverview if IQ is disabled after load.
+  // Legacy routes — preserve bookmarks by redirecting into the new tabbed page.
   {
     name: 'preview.admin.iqConnected',
     url: '/iq/connected',
-    component: IqServerConnectedPage,
-    data: {
-      title: 'IQ Server',
-      visibilityRequirements: {
-        requiresPermission: 'nexus:settings:read',
-      },
-    },
+    redirectTo: { state: 'preview.admin.iq', params: { tab: 'overview' } },
   },
-
-  // Connection settings route — distinct lazy-load wrapper so
-  // React unmounts/remounts on every transition, keeping loadData() fresh.
   {
     name: 'preview.admin.iqConnection',
     url: '/iq/connection',
-    component: IqServerConnectionPage,
-    data: {
-      title: 'IQ Server Connection Settings',
-      visibilityRequirements: {
-        requiresPermission: 'nexus:settings:read',
-      },
-    },
+    redirectTo: { state: 'preview.admin.iq', params: { tab: 'connection-settings' } },
+  },
+  {
+    name: 'preview.admin.iqOverview',
+    url: '/iq-overview',
+    redirectTo: 'preview.admin.iq',
   },
 
   // Screen 3 — Hosted Repository Evaluation workflow (Repositories + Settings tabs).

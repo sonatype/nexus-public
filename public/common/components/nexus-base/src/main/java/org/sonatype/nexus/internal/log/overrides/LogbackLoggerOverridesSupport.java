@@ -16,6 +16,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.xml.XMLConstants;
@@ -31,7 +32,6 @@ import org.sonatype.nexus.internal.log.LogbackLevels;
 import org.sonatype.nexus.internal.log.LoggerOverrides;
 
 import ch.qos.logback.classic.LoggerContext;
-import com.google.common.collect.Maps;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -89,7 +89,7 @@ public abstract class LogbackLoggerOverridesSupport
    * Read logger levels from logback.xml formatted include file.
    */
   protected Map<String, LoggerLevel> readFromFile() throws Exception {
-    final Map<String, LoggerLevel> result = Maps.newHashMap();
+    final Map<String, LoggerLevel> result = new HashMap<>();
 
     SAXParserFactory parserFactory = SafeXml.newSaxParserFactory();
     parserFactory.setValidating(false);

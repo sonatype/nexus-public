@@ -1111,7 +1111,7 @@ public abstract class ComponentDAOTestSupport
     assertThat(component.entityVersion(), is(expectedEntityVersion));
   }
 
-  protected void testPurgeSelectedSoftDeletedComponentsRespectsRestoreGuard() {
+  protected void testPurgeSelectedTrashedComponentsRespectsRestoreGuard() {
     ComponentData stillDeleted = generateComponent(repositoryId, "ns-guard", "still-deleted", "1.0.0");
     ComponentData restored = generateComponent(repositoryId, "ns-guard", "restored", "2.0.0");
 
@@ -1120,13 +1120,13 @@ public abstract class ComponentDAOTestSupport
       dao.createComponent(stillDeleted, entityVersionEnabled);
       dao.createComponent(restored, entityVersionEnabled);
 
-      // both components are soft-deleted (sitting in the Trash)
-      dao.softDeleteComponent(stillDeleted.componentId, "admin");
-      dao.softDeleteComponent(restored.componentId, "admin");
+      // both components are trashed (sitting in the Trash)
+      dao.trashComponent(stillDeleted.componentId, "admin");
+      dao.trashComponent(restored.componentId, "admin");
 
       // simulate a concurrent restore of one component that lands between the drain's id selection
       // and the DELETE — deleted_on is cleared, so the component is live again
-      dao.undoSoftDeleteComponent(restored.componentId);
+      dao.undoTrashComponent(restored.componentId);
       session.getTransaction().commit();
     }
 
@@ -1135,14 +1135,14 @@ public abstract class ComponentDAOTestSupport
 
       int[] componentIds = new int[]{stillDeleted.componentId, restored.componentId};
       if ("H2".equals(session.sqlDialect())) {
-        dao.purgeSelectedSoftDeletedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
+        dao.purgeSelectedTrashedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
       }
       else {
-        dao.purgeSelectedSoftDeletedComponents(componentIds);
+        dao.purgeSelectedTrashedComponents(componentIds);
       }
       session.getTransaction().commit();
 
-      // the component that stayed soft-deleted is permanently purged
+      // the component that stayed trashed is permanently purged
       assertFalse(dao.readDeletedComponent(stillDeleted.componentId).isPresent());
       assertFalse(dao.readComponent(stillDeleted.componentId, true).isPresent());
 

@@ -11,6 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+import { stripJavaExceptionPrefix } from '../../../../../../interface/api/error-handler';
 import { IqServerConfiguration, IqValidationErrors, PASSWORD_PLACEHOLDER } from './types';
 
 /** validateIqConfig doesn't read `properties`, so it accepts either the wire shape
@@ -179,7 +180,19 @@ function humanizeIqError(raw: string): string {
   if (/403|forbidden/i.test(text)) {
     return 'The IQ Server user does not have permission to read policy data.';
   }
-  return text;
+  // No pattern matched: still peel any leaked Java exception FQCN so the fallthrough reads as the message.
+  return stripJavaExceptionPrefix(text);
+}
+
+/**
+ * True when a verify-connection failure reason points at an untrusted server
+ * certificate. Matches the same substrings humanizeIqError rewrites for SSL
+ * copy, so a field-level "add the cert to the truststore" hint can be shown
+ * next to the View Certificate button when this pattern trips.
+ */
+export function isUntrustedCertificateError(reason?: string | null): boolean {
+  if (!reason) return false;
+  return /SSLHandshake|PKIX|certificate|unable to find valid certification path/i.test(reason);
 }
 
 /**

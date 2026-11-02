@@ -13,12 +13,14 @@
 
 /**
  * Firewall config tab for Edit repository form – proxy repos only.
- * Same 3-button treatment as Malware Defense: None | Audit | Quarantine with outline on selected.
- * Includes Repository Health Check section (enable/disable).
+ * Protection level (None | Audit | Quarantine | PCCS) is a dropdown; selecting an item only
+ * stages a pending change, which the parent form's Save Changes / Cancel buttons commit or
+ * discard (FIRE-958) via onSaveRef / onCancelRef.
+ * Includes Repository Health Check section (enable/disable) — that section stays immediate-apply.
  */
-import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Flex, Text, Card, Button, Separator } from '@radix-ui/themes';
-import { Shield, ShieldCheck, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Box, Flex, Text, Card, Button, Separator, Callout } from '@radix-ui/themes';
+import { ShieldCheck, ExternalLink, AlertCircle } from 'lucide-react';
 import {
   useFirewallEnable,
   fetchIqAuditStatus,
@@ -26,11 +28,13 @@ import {
   type IqAuditStatus,
 } from '../../../../shared/security/useFirewallEnable';
 import { ProtectionLevelSelector, type ProtectionLevel } from './ProtectionLevelSelector';
+import { ConfirmDialog } from '../../../../shared/form/ConfirmDialog';
 import { useRepositoriesApi } from './useRepositoriesApi';
 import { restClient, ENDPOINTS } from '../../../../../../interface/api';
 import { useToast } from '../../../../shared';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import Permissions from '../../../../../../constants/Permissions';
+import UIStrings from '../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 export interface RepositoryFirewallConfigTabProps {
   repositoryName: string;
@@ -48,6 +52,28 @@ export interface RepositoryFirewallConfigTabProps {
    * (matching the pre-PCCS behaviour). Future callers should always pass this through.
    */
   format?: string;
+  /**
+   * When rendered inside the Repository edit form, the parent form's top-level Save Changes /
+   * Cancel buttons drive the pending protection-level change instead of the selector committing
+   * it directly on select (FIRE-958). Mirrors the RepositoryEvaluationTab contract. Only pass
+   * these from the mount that actually shows the selector (showFirewall=true) — this component
+   * is also mounted with showFirewall=false for the Health Check tab, and that sibling mount
+   * must not receive them or it will falsely report a dirty firewall selection.
+   */
+  onDirtyChange?: (dirty: boolean) => void;
+  onSavingChange?: (saving: boolean) => void;
+  /**
+   * The exposed save handler accepts an optional `onCommitted` callback, invoked only once the
+   * pending level has actually been applied (after any None/Quarantine confirmation), or right
+   * away when nothing is pending. The parent uses it to save its own pending edits afterwards.
+   */
+  onSaveRef?: React.MutableRefObject<((onCommitted?: () => void) => Promise<void>) | null>;
+  onCancelRef?: React.MutableRefObject<(() => void) | null>;
+  /**
+   * When true (XET is enabled for this HuggingFace repository), Firewall must remain disabled.
+   * Shows a warning and disables the protection-level selector.
+   */
+  xetEnabled?: boolean;
 }
 
 interface HealthCheckStatus {
@@ -72,14 +98,31 @@ export function RepositoryFirewallConfigTab({
   showFirewall = true,
   showHealthCheck = true,
   format,
+  onDirtyChange,
+  onSavingChange,
+  onSaveRef,
+  onCancelRef,
+  xetEnabled,
 }: RepositoryFirewallConfigTabProps): JSX.Element {
   const [status, setStatus] = useState<IqAuditStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
+  // True only when fetchIqAuditStatus actually failed (not when it was skipped because
+  // hasFirewallLicense is false). Distinguishes "we don't know the real mode" from "there is no
+  // mode" so the selector doesn't silently present None as a confirmed value when it's really
+  // just the fallback for a status we couldn't load.
+  const [statusError, setStatusError] = useState(false);
   const [healthCheck, setHealthCheck] = useState<HealthCheckStatus | null>(null);
   const [healthCheckLoading, setHealthCheckLoading] = useState(true);
   const [pccsSupported, setPccsSupported] = useState(false);
+  // Selection made in the dropdown but not yet committed — null means "no pending change,
+  // display the server-reported mode". Selecting a level only sets this; it does not call the
+  // server (FIRE-958). Save Changes commits it (see handleSave below); Cancel discards it.
+  const [pendingLevel, setPendingLevel] = useState<ProtectionLevel | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<'none' | 'quarantine' | null>(null);
+  // onCommitted callback passed to handleSave, held while a confirmation dialog is open.
+  const afterCommitRef = useRef<(() => void) | null>(null);
   const { enableAudit, enableQuarantine, enablePccs, disable, loading, error } =
-    useFirewallEnable(repositoryName);
+    useFirewallEnable(repositoryName, xetEnabled);
   const { enableHealthCheck, disableHealthCheck } = useRepositoriesApi();
   const toast = useToast();
 
@@ -105,15 +148,20 @@ export function RepositoryFirewallConfigTab({
   const fetchStatus = useCallback(async () => {
     if (!hasFirewallLicense) {
       setStatus(null);
+      setStatusError(false);
       setLoadingStatus(false);
       return;
     }
     setLoadingStatus(true);
     try {
+      // fetchIqAuditStatus catches its own errors and resolves null rather than rejecting, so
+      // a null result (not a thrown exception) is the real failure signal here.
       const data = await fetchIqAuditStatus(repositoryName);
       setStatus(data);
+      setStatusError(data === null);
     } catch {
       setStatus(null);
+      setStatusError(true);
     } finally {
       setLoadingStatus(false);
     }
@@ -188,28 +236,120 @@ export function RepositoryFirewallConfigTab({
               ? 'audit'
               : 'none';
 
-  const handleProtectionChange = async (level: ProtectionLevel) => {
-    // Optimistically update the local status so the selector reflects the chosen button
-    // before the next fetch round-trips. The server-side mode is the source of truth on
-    // subsequent reads.
-    const applyOptimistic = (mode: 'DISABLED' | 'AUDIT' | 'QUARANTINE' | 'PCCS') => {
-      setStatus((prev) => ({
-        repositoryName: prev?.repositoryName ?? repositoryName,
-        enabled: mode !== 'DISABLED',
-        enabledQuarantine: mode === 'QUARANTINE' || mode === 'PCCS',
-        mode,
-      }));
-      onEnableSuccess?.();
-    };
-    try {
-      if (level === 'none') await disable(() => applyOptimistic('DISABLED'));
-      else if (level === 'audit') await enableAudit(() => applyOptimistic('AUDIT'));
-      else if (level === 'quarantine') await enableQuarantine(() => applyOptimistic('QUARANTINE'));
-      else await enablePccs(() => applyOptimistic('PCCS'));
-    } catch {
-      // Error shown inline via useFirewallEnable error state
+  // Displayed value: a pending (unsaved) selection takes precedence over the server-reported
+  // mode. The selector's onChange only reaches here — it never calls the server directly
+  // (FIRE-958: the previous button group committed on click, bypassing Save/Cancel).
+  // When XET is enabled (possibly as an unsaved edit on the Settings tab), Firewall is forced off
+  // — saving XET sends firewall.mode=DISABLED — so show None rather than the stale server mode.
+  const displayedLevel = xetEnabled ? 'none' : (pendingLevel ?? protectionLevel);
+  // Guard against the dual-mount hazard documented on onDirtyChange above: the selector (and its
+  // dirty state) only exists when showFirewall is true, so a caller that mistakenly wires
+  // onDirtyChange/onSaveRef into the showFirewall=false (Health Check) mount can't falsely report
+  // a dirty firewall selection.
+  const isDirty =
+    showFirewall && !xetEnabled && pendingLevel !== null && pendingLevel !== protectionLevel;
+
+  // A level staged before XET was turned on can no longer be applied; drop it.
+  useEffect(() => {
+    if (xetEnabled) setPendingLevel(null);
+  }, [xetEnabled]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    onSavingChange?.(loading);
+  }, [loading, onSavingChange]);
+
+  // Resolves true when the level was applied, false when the server call failed.
+  const commitLevel = useCallback(
+    async (level: ProtectionLevel): Promise<boolean> => {
+      // Optimistically update the local status so the selector reflects the committed level
+      // before the next fetch round-trips. The server-side mode is the source of truth on
+      // subsequent reads.
+      const applyOptimistic = (mode: 'DISABLED' | 'AUDIT' | 'QUARANTINE' | 'PCCS') => {
+        setStatus((prev) => ({
+          repositoryName: prev?.repositoryName ?? repositoryName,
+          enabled: mode !== 'DISABLED',
+          enabledQuarantine: mode === 'QUARANTINE' || mode === 'PCCS',
+          mode,
+        }));
+        onEnableSuccess?.();
+      };
+      try {
+        if (level === 'none') await disable(() => applyOptimistic('DISABLED'));
+        else if (level === 'audit') await enableAudit(() => applyOptimistic('AUDIT'));
+        else if (level === 'quarantine') await enableQuarantine(() => applyOptimistic('QUARANTINE'));
+        else await enablePccs(() => applyOptimistic('PCCS'));
+        setPendingLevel(null);
+        return true;
+      } catch {
+        // Error shown inline via useFirewallEnable error state. Leave pendingLevel set so
+        // Save Changes can be retried without the user having to re-select the level.
+        return false;
+      }
+    },
+    [disable, enableAudit, enableQuarantine, enablePccs, repositoryName, onEnableSuccess],
+  );
+
+  // Selecting a level in the dropdown only records the pending choice; it never commits.
+  const handleSelectorChange = useCallback((level: ProtectionLevel) => {
+    setPendingLevel(level);
+  }, []);
+
+  // Exposed to the parent form's Save Changes button via onSaveRef. Going to None or
+  // Quarantine prompts for confirmation first (a single misclick must not change enforcement);
+  // Audit and PCCS commit immediately since neither disables nor newly blocks traffic.
+  // onCommitted runs only after the level is actually applied, so a cancelled confirmation or a
+  // failed commit never lets the parent go on to save its own edits.
+  const handleSave = useCallback(async (onCommitted?: () => void) => {
+    if (pendingLevel === null || pendingLevel === protectionLevel) {
+      onCommitted?.();
+      return;
     }
-  };
+    if (pendingLevel === 'none' || pendingLevel === 'quarantine') {
+      afterCommitRef.current = onCommitted ?? null;
+      setConfirmDialog(pendingLevel);
+      return;
+    }
+    if (await commitLevel(pendingLevel)) onCommitted?.();
+  }, [pendingLevel, protectionLevel, commitLevel]);
+
+  // Exposed to the parent form's Cancel button via onCancelRef. Pure discard — no server call.
+  const handleCancel = useCallback(() => {
+    setPendingLevel(null);
+  }, []);
+
+  // Runs before the dialog's onOpenChange(false), so the callback is captured before it is cleared.
+  const handleConfirmedCommit = useCallback(() => {
+    const onCommitted = afterCommitRef.current;
+    afterCommitRef.current = null;
+    if (pendingLevel) {
+      void commitLevel(pendingLevel).then((committed) => {
+        if (committed) onCommitted?.();
+      });
+    }
+  }, [pendingLevel, commitLevel]);
+
+  const handleConfirmOpenChange = useCallback((dialog: 'none' | 'quarantine', open: boolean) => {
+    if (!open) afterCommitRef.current = null;
+    setConfirmDialog(open ? dialog : null);
+  }, []);
+
+  useEffect(() => {
+    if (onSaveRef) onSaveRef.current = handleSave;
+    return () => {
+      if (onSaveRef && onSaveRef.current === handleSave) onSaveRef.current = null;
+    };
+  }, [handleSave, onSaveRef]);
+
+  useEffect(() => {
+    if (onCancelRef) onCancelRef.current = handleCancel;
+    return () => {
+      if (onCancelRef && onCancelRef.current === handleCancel) onCancelRef.current = null;
+    };
+  }, [handleCancel, onCancelRef]);
 
   const handleEnableHealthCheck = async () => {
     try {
@@ -248,17 +388,15 @@ export function RepositoryFirewallConfigTab({
       {showFirewall && (
         <Card size="2">
           <Flex direction="column" gap="4">
-            <Flex align="center" gap="3">
-              <Shield size={24} color="var(--orange-9)" aria-hidden />
-              <Box>
-                <Text size="4" weight="bold" as="div" mb="1">
-                  Repository Firewall
-                </Text>
-                <Text size="2" color="gray" as="div">
-                  Protect this proxy repository by enabling Firewall to audit or block policy violations and malware.
-                </Text>
-              </Box>
-            </Flex>
+            <Box>
+              <Text size="4" weight="bold" as="div" mb="1">
+                Sonatype Repository Firewall
+              </Text>
+              <Text size="2" color="gray" as="div">
+                Audit and automatically quarantine components with policy violations before they reach your developers
+                and builds.
+              </Text>
+            </Box>
 
             {error && (
               <Text size="2" color="red">
@@ -266,22 +404,42 @@ export function RepositoryFirewallConfigTab({
               </Text>
             )}
 
+            {hasFirewallLicense && xetEnabled && (
+              <Callout.Root color="yellow" mb="3">
+                <Callout.Icon>
+                  <AlertCircle size={16} />
+                </Callout.Icon>
+                <Callout.Text>
+                  {UIStrings.HUGGINGFACE.FIREWALL_STEP_XET_DISABLED_WARNING}
+                </Callout.Text>
+              </Callout.Root>
+            )}
+
             {hasFirewallLicense ? (
               canEditFirewall && (
                 <Box>
-                  <Text size="2" weight="medium" mb="2" as="p">
+                  {statusError && (
+                    <Text size="2" color="red" as="div" mb="2">
+                      Could not load the current Firewall mode. Showing None, which may not reflect
+                      the actual setting — refresh before making a change.
+                    </Text>
+                  )}
+                  <Text size="2" weight="medium" mb="2" as="p" id="protection-level-label">
                     Protection level
                   </Text>
                   <ProtectionLevelSelector
-                    value={protectionLevel}
-                    onChange={handleProtectionChange}
-                    disabled={loading}
+                    value={displayedLevel}
+                    onChange={handleSelectorChange}
+                    disabled={loading || statusError || xetEnabled}
                     size="2"
                     pccsSupported={pccsSupported}
+                    aria-labelledby="protection-level-label"
                   />
-                  <Text size="1" color="gray" mt="2">
-                    Audit trail: Configuration change history will be available in a future release.
-                  </Text>
+                  {isDirty && (
+                    <Text size="1" color="orange" mt="2" as="div">
+                      Unsaved change — click Save Changes to apply, or Cancel to discard.
+                    </Text>
+                  )}
                 </Box>
               )
             ) : (
@@ -391,6 +549,32 @@ export function RepositoryFirewallConfigTab({
           </Flex>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={confirmDialog === 'none'}
+        onOpenChange={(open) => handleConfirmOpenChange('none', open)}
+        title="Disable Firewall Protection"
+        message="This will disable Firewall on this repository. Malicious components may enter unchecked once you save. This takes effect only after you click Save Changes."
+        confirmLabel="Disable on Save"
+        cancelLabel="Keep Current Selection"
+        variant="warning"
+        onConfirm={handleConfirmedCommit}
+        loading={loading}
+        testId="firewall-disable-confirm"
+      />
+
+      <ConfirmDialog
+        open={confirmDialog === 'quarantine'}
+        onOpenChange={(open) => handleConfirmOpenChange('quarantine', open)}
+        title="Enable Quarantine Mode"
+        message="Quarantine mode will block policy-violating and malicious components from this proxy once you save. This takes effect only after you click Save Changes."
+        confirmLabel="Enable on Save"
+        cancelLabel="Keep Current Selection"
+        variant="warning"
+        onConfirm={handleConfirmedCommit}
+        loading={loading}
+        testId="firewall-quarantine-confirm"
+      />
     </Box>
   );
 }

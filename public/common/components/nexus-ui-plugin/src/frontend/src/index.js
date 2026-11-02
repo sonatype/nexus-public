@@ -27,6 +27,11 @@ export { DeleteConfirmationModal } from './components/preview/shared/modals/Dele
 export { default as ExtJS } from './interface/ExtJS';
 export { useIsLicensedEdition } from './components/preview/shared/hooks/useIsLicensedEdition';
 export { useEditionId } from './components/preview/shared/hooks/useEditionId';
+export { useFirewallSecurityPagesTier, useFirewallSecurityPagesState } from './components/preview/shared/useFirewallSecurityPagesTier';
+export { useFirewallSecurityPagesVisible } from './components/preview/shared/useFirewallSecurityPagesVisible';
+export { FIREWALL_SECURITY_PERMISSIONS, FIREWALL_SECURITY_PERMISSION_LIST } from './components/preview/shared/firewallSecurityPermissions';
+export { useQuarantineBadgeCount } from './components/preview/shared/useQuarantineBadgeCount';
+export { useHasUser } from './components/preview/shared/hooks/useHasUser';
 export {
   EDITION_ID_STATE_KEY,
   EDITION_CORE,
@@ -174,6 +179,11 @@ export {
   PreviewUIContext,
   SessionExpiryModal,
   useSessionExpiry,
+  ServerRestartModal,
+  useServerRestart,
+  ServerDisconnectedModal,
+  useServerDisconnected,
+  ServerLifecycleModals,
   useUnreadStatusFailure,
   resetUnreadStatusFailure,
   STATUS_BELL_ACK_STORAGE_KEY,
@@ -189,6 +199,8 @@ export {
   CommunityUTMparams,
   IssueTrackerUTMparams,
   SupportUTMparams,
+  LoginAndUserMenu,
+  GlobalHeader,
 } from './components/preview/shared';
 
 // Preview UI: REST API Utilities
@@ -280,6 +292,7 @@ export const CleanupPoliciesPage    = React.lazy(() => import('./components/prev
 export const RoutingRulesPage       = React.lazy(() => import('./components/preview/pages/settings/repository/routing/RoutingRulesPage'));
 export const DataStorePage          = React.lazy(() => import('./components/preview/pages/settings/repository/datastore/DataStorePage'));
 export const ProprietaryPage        = React.lazy(() => import('./components/preview/pages/settings/repository/proprietary/ProprietaryPage'));
+export const GlobalDistributionPage = React.lazy(() => import('./components/preview/pages/settings/repository/globaldistribution/GlobalDistributionPage'));
 
 // Settings — Security
 export const PrivilegesPage      = React.lazy(() => import('./components/preview/pages/settings/security/privileges/PrivilegesPage'));
@@ -316,8 +329,7 @@ export const NodesPage              = React.lazy(() => import('./components/prev
 export const UpgradePage            = React.lazy(() => import('./components/preview/pages/settings/system/upgrade/UpgradePage'));
 export const UsagePage              = React.lazy(() => import('./components/preview/pages/settings/system/usage/UsagePage'));
 export const TrashPage              = React.lazy(() => import('./components/preview/pages/settings/system/trash/TrashPage'));
-export const IqServerOverviewPage   = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/IqServerOverviewPage'));
-export const IqServerConnectedPage  = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/IqServerConnectedPage'));
+export const IqServerPage           = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/IqServerPage'));
 export const HostedRepoEvaluationSetupPage = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/HostedRepoEvaluationSetupPage'));
 
 // Settings — User account (shared by admin settings and user menu routes)
@@ -431,6 +443,18 @@ export { TablePagination } from './components/preview/shared/TablePagination/Tab
 // Search filters + repositories hook — used by coreui's LeftNavigationMenuRadix.
 export { FORMATS } from './components/preview/pages/search/unified/searchFilters';
 export { useRepositories } from './components/preview/pages/search/unified/useRepositories';
+
+// Security section pages (MOCK placeholders; gated by Firewall Security pages tier) and their nav section.
+const lazySecurityPage = (name) =>
+  React.lazy(() =>
+    import('./components/preview/pages/security/FirewallSecuritySectionPage').then((m) => ({ default: m[name] }))
+  );
+export const FirewallSecurityMalwarePage = lazySecurityPage('FirewallSecurityMalwarePage');
+export const FirewallSecurityWaiversPage = lazySecurityPage('FirewallSecurityWaiversPage');
+export const FirewallSecurityQuarantinePage = lazySecurityPage('FirewallSecurityQuarantinePage');
+export const FirewallSecurityPoliciesPage = lazySecurityPage('FirewallSecurityPoliciesPage');
+export const FirewallSecurityEvaluationsPage = lazySecurityPage('FirewallSecurityEvaluationsPage');
+export { SecurityNavSection } from './components/preview/pages/security/SecurityNavSection';
 
 // MissingRoutePage — used by coreui's routerConfig + lazyLoad fallback.
 export { MissingRoutePage } from './components/preview/pages/MissingRoutePage';

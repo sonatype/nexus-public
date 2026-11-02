@@ -480,6 +480,79 @@ describe('CapabilitiesPage', () => {
     );
   });
 
+  // CVE-2026-14645 / NEXUS-54726: creating a security-sensitive capability type (one whose type
+  // carries requiresSettingsUpdate) additionally requires nexus:settings:update. The create wizard
+  // shows an explanatory warning and blocks submission when the user lacks that permission.
+  describe('settings:update gating for sensitive types (NEXUS-54726)', () => {
+    const sensitiveType = {
+      id: 'rutauth',
+      name: 'Rut Auth',
+      about: 'Rut Auth',
+      requiresSettingsUpdate: true,
+      formFields: [],
+    };
+
+    const enterCreateWithType = (types: any[]) => {
+      mockRouteName = 'preview.admin.system.capabilities.createWithType';
+      mockRouteParams = { typeId: 'rutauth' };
+      mockedUseCapabilitiesApi.mockReturnValue({
+        loading: false,
+        error: null,
+        setError: mockSetError,
+        fetchCapabilities: jest.fn().mockResolvedValue([]),
+        fetchCapabilityTypes: mockFetchCapabilityTypes.mockResolvedValue(types),
+        fetchCapability: mockFetchCapability,
+        createCapability: mockCreateCapability.mockResolvedValue({}),
+        updateCapability: mockUpdateCapability,
+        deleteCapability: mockDeleteCapability,
+        enableCapability: mockEnableCapability,
+        disableCapability: mockDisableCapability,
+      });
+    };
+
+    it('shows the settings:update warning for a sensitive type without the permission', async () => {
+      global.NX.Permissions.check.mockImplementation((permission: string) => permission !== 'nexus:settings:update');
+      enterCreateWithType([sensitiveType]);
+
+      render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+      expect(await screen.findByTestId('capability-settings-permission-warning')).toBeInTheDocument();
+    });
+
+    it('does not submit the create form for a sensitive type without the permission', async () => {
+      global.NX.Permissions.check.mockImplementation((permission: string) => permission !== 'nexus:settings:update');
+      enterCreateWithType([sensitiveType]);
+
+      render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+      await screen.findByTestId('capability-settings-permission-warning');
+      fireEvent.click(screen.getByTestId('wizard-complete'));
+
+      expect(mockCreateCapability).not.toHaveBeenCalled();
+    });
+
+    it('does not show the warning for a sensitive type when the user has settings:update', async () => {
+      global.NX.Permissions.check.mockReturnValue(true);
+      enterCreateWithType([sensitiveType]);
+
+      render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+      // Wait for the config step to render (form present), then assert no warning.
+      await screen.findByTestId('capability-form');
+      expect(screen.queryByTestId('capability-settings-permission-warning')).not.toBeInTheDocument();
+    });
+
+    it('does not show the warning for a non-sensitive type without settings:update', async () => {
+      global.NX.Permissions.check.mockImplementation((permission: string) => permission !== 'nexus:settings:update');
+      enterCreateWithType([{ id: 'rutauth', name: 'Not Sensitive', about: '', requiresSettingsUpdate: false, formFields: [] }]);
+
+      render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+      await screen.findByTestId('capability-form');
+      expect(screen.queryByTestId('capability-settings-permission-warning')).not.toBeInTheDocument();
+    });
+  });
+
   describe('breadcrumb navigation', () => {
     it('renders breadcrumbs for list view', () => {
       render(<CapabilitiesPage />, { wrapper: TestWrapper });

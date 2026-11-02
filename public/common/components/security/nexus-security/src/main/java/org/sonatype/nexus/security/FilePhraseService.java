@@ -14,13 +14,13 @@ package org.sonatype.nexus.security;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.AbstractPhraseService;
 import org.sonatype.nexus.crypto.PhraseService;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 
@@ -46,16 +46,12 @@ public class FilePhraseService
   @Autowired
   public FilePhraseService(@Value("${nexus.security.masterPhraseFile:#{null}}") @Nullable final File masterPhraseFile) {
     super(masterPhraseFile != null);
-    this.masterPhraseSupplier = Suppliers.memoize(new Supplier<String>()
-    {
-      @Override
-      public String get() {
-        try {
-          return asCharSource(masterPhraseFile, UTF_8).read().trim();
-        }
-        catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
+    this.masterPhraseSupplier = Suppliers.memoize(() -> {
+      try {
+        return asCharSource(masterPhraseFile, UTF_8).read().trim();
+      }
+      catch (IOException e) {
+        throw Throwables.propagate(e);
       }
     });
   }

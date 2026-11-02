@@ -16,9 +16,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteContext;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
-import org.sonatype.nexus.common.app.softdelete.SoftDeletedEntityService;
+import org.sonatype.nexus.common.app.trash.TrashContext;
+import org.sonatype.nexus.common.app.trash.TrashFormatGate;
+import org.sonatype.nexus.common.app.trash.TrashedEntityService;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.InternalIds;
-import org.sonatype.nexus.repository.content.store.SoftDeleteSchemaState;
+import org.sonatype.nexus.repository.content.store.TrashSchemaState;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.security.SecurityHelper;
 
@@ -63,13 +63,13 @@ class ContentDeletionServiceTest
   private SecurityHelper securityHelper;
 
   @Mock
-  private SoftDeletedEntityService componentSoftDeleteService;
+  private TrashedEntityService componentTrashService;
 
   @Mock
-  private SoftDeletedEntityService assetSoftDeleteService;
+  private TrashedEntityService assetTrashService;
 
   @Mock
-  private SoftDeleteSchemaState softDeleteSchemaState;
+  private TrashSchemaState trashSchemaState;
 
   @Mock
   private Repository repository;
@@ -97,34 +97,34 @@ class ContentDeletionServiceTest
     lenient().when(format.getValue()).thenReturn("maven2");
     lenient().when(securityHelper.subject()).thenReturn(subject);
     lenient().when(subject.getPrincipal()).thenReturn("admin");
-    lenient().when(componentSoftDeleteService.getEntityType()).thenReturn("component");
-    lenient().when(assetSoftDeleteService.getEntityType()).thenReturn("asset");
+    lenient().when(componentTrashService.getEntityType()).thenReturn("component");
+    lenient().when(assetTrashService.getEntityType()).thenReturn("asset");
   }
 
   private ContentDeletionService service(
-      final boolean softDeleteEnabled,
-      final List<SoftDeletedEntityService> services)
+      final boolean trashEnabled,
+      final List<TrashedEntityService> services)
   {
-    // Allowlist the setUp format (maven2) so "flag on" exercises the soft-delete path under the
+    // Allowlist the setUp format (maven2) so "flag on" exercises the trash path under the
     // fail-closed gate (an empty allowlist would hard-delete everything).
-    return service(softDeleteEnabled, "maven2", services);
+    return service(trashEnabled, "maven2", services);
   }
 
   private ContentDeletionService service(
-      final boolean softDeleteEnabled,
+      final boolean trashEnabled,
       final String formatsAllowlist,
-      final List<SoftDeletedEntityService> services)
+      final List<TrashedEntityService> services)
   {
     // Columns are assumed present in these tests, so schema-availability tracks the flag.
-    lenient().when(softDeleteSchemaState.isSoftDeleteAvailable()).thenReturn(softDeleteEnabled);
+    lenient().when(trashSchemaState.isTrashAvailable()).thenReturn(trashEnabled);
     return new ContentDeletionService(maintenanceService, securityHelper, services,
-        new SoftDeleteFormatGate(softDeleteEnabled, formatsAllowlist), softDeleteSchemaState);
+        new TrashFormatGate(trashEnabled, formatsAllowlist), trashSchemaState);
   }
 
   // ---- component ----
 
   @Test
-  void hostedComponentWithFlagOnIsSoftDeleted() {
+  void hostedComponentWithFlagOnIsTrashed() {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(maintenanceService.canDeleteComponent(repository, component)).thenReturn(true);
     EntityId externalId = mock(EntityId.class);
@@ -135,31 +135,31 @@ class ContentDeletionServiceTest
       ids.when(() -> InternalIds.internalComponentId(component)).thenReturn(5);
       ids.when(() -> InternalIds.toExternalId(5)).thenReturn(externalId);
 
-      result = service(true, List.of(componentSoftDeleteService)).deleteComponent(repository, component);
+      result = service(true, List.of(componentTrashService)).deleteComponent(repository, component);
     }
 
     assertTrue(result.isEmpty());
-    verify(componentSoftDeleteService)
-        .softDelete(eq(ContentDeletionService.encodeIdentifier(REPO, "abc")), any(SoftDeleteContext.class));
+    verify(componentTrashService)
+        .trash(eq(ContentDeletionService.encodeIdentifier(REPO, "abc")), any(TrashContext.class));
     verify(maintenanceService, never()).deleteComponent(repository, component);
   }
 
   @Test
   void hostedComponentWithFlagOffIsHardDeleted() {
-    service(false, List.of(componentSoftDeleteService)).deleteComponent(repository, component);
+    service(false, List.of(componentTrashService)).deleteComponent(repository, component);
 
     verify(maintenanceService).deleteComponent(repository, component);
-    verify(componentSoftDeleteService, never()).softDelete(any(), any());
+    verify(componentTrashService, never()).trash(any(), any());
   }
 
   @Test
   void proxyComponentWithFlagOnIsHardDeleted() {
     when(type.getValue()).thenReturn("proxy");
 
-    service(true, List.of(componentSoftDeleteService)).deleteComponent(repository, component);
+    service(true, List.of(componentTrashService)).deleteComponent(repository, component);
 
     verify(maintenanceService).deleteComponent(repository, component);
-    verify(componentSoftDeleteService, never()).softDelete(any(), any());
+    verify(componentTrashService, never()).trash(any(), any());
   }
 
   @Test
@@ -174,29 +174,29 @@ class ContentDeletionServiceTest
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(format.getValue()).thenReturn("npm");
 
-    // Soft-delete enabled, but only maven2 is allow-listed -> an npm repo hard-deletes (phased rollout).
-    service(true, "maven2", List.of(componentSoftDeleteService)).deleteComponent(repository, component);
+    // Trash enabled, but only maven2 is allow-listed -> an npm repo hard-deletes (phased rollout).
+    service(true, "maven2", List.of(componentTrashService)).deleteComponent(repository, component);
 
     verify(maintenanceService).deleteComponent(repository, component);
-    verify(componentSoftDeleteService, never()).softDelete(any(), any());
+    verify(componentTrashService, never()).trash(any(), any());
   }
 
   @Test
   void hostedComponentWithFlagOnButSchemaNotMigratedIsHardDeleted() {
     // ZDU window: flag on and format allow-listed, but the deleted_on columns don't exist yet.
-    // Must fall back to hard-delete rather than attempt a soft-delete write that would fail.
-    when(softDeleteSchemaState.isSoftDeleteAvailable()).thenReturn(false);
+    // Must fall back to hard-delete rather than attempt a trash write that would fail.
+    when(trashSchemaState.isTrashAvailable()).thenReturn(false);
     ContentDeletionService svc = new ContentDeletionService(maintenanceService, securityHelper,
-        List.of(componentSoftDeleteService), new SoftDeleteFormatGate(true, "maven2"), softDeleteSchemaState);
+        List.of(componentTrashService), new TrashFormatGate(true, "maven2"), trashSchemaState);
 
     svc.deleteComponent(repository, component);
 
     verify(maintenanceService).deleteComponent(repository, component);
-    verify(componentSoftDeleteService, never()).softDelete(any(), any());
+    verify(componentTrashService, never()).trash(any(), any());
   }
 
   @Test
-  void hostedComponentWithFlagOnAndFormatAllowlistedIsSoftDeleted() {
+  void hostedComponentWithFlagOnAndFormatAllowlistedIsTrashed() {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(format.getValue()).thenReturn("maven2");
     when(maintenanceService.canDeleteComponent(repository, component)).thenReturn(true);
@@ -207,30 +207,30 @@ class ContentDeletionServiceTest
       ids.when(() -> InternalIds.internalComponentId(component)).thenReturn(5);
       ids.when(() -> InternalIds.toExternalId(5)).thenReturn(externalId);
 
-      service(true, "npm,maven2", List.of(componentSoftDeleteService)).deleteComponent(repository, component);
+      service(true, "npm,maven2", List.of(componentTrashService)).deleteComponent(repository, component);
     }
 
-    verify(componentSoftDeleteService)
-        .softDelete(eq(ContentDeletionService.encodeIdentifier(REPO, "abc")), any(SoftDeleteContext.class));
+    verify(componentTrashService)
+        .trash(eq(ContentDeletionService.encodeIdentifier(REPO, "abc")), any(TrashContext.class));
     verify(maintenanceService, never()).deleteComponent(repository, component);
   }
 
   @Test
-  void componentSoftDeleteEnforcesDeletePermission() {
+  void componentTrashEnforcesDeletePermission() {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(maintenanceService.canDeleteComponent(repository, component)).thenReturn(false);
 
     assertThrows(AuthorizationException.class,
-        () -> service(true, List.of(componentSoftDeleteService)).deleteComponent(repository, component));
+        () -> service(true, List.of(componentTrashService)).deleteComponent(repository, component));
 
-    verify(componentSoftDeleteService, never()).softDelete(any(), any());
+    verify(componentTrashService, never()).trash(any(), any());
     verify(maintenanceService, never()).deleteComponent(repository, component);
   }
 
   // ---- asset ----
 
   @Test
-  void hostedAssetWithFlagOnIsSoftDeleted() {
+  void hostedAssetWithFlagOnIsTrashed() {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(maintenanceService.canDeleteAsset(repository, asset)).thenReturn(true);
     EntityId externalId = mock(EntityId.class);
@@ -241,39 +241,39 @@ class ContentDeletionServiceTest
       ids.when(() -> InternalIds.internalAssetId(asset)).thenReturn(7);
       ids.when(() -> InternalIds.toExternalId(7)).thenReturn(externalId);
 
-      result = service(true, List.of(assetSoftDeleteService)).deleteAsset(repository, asset);
+      result = service(true, List.of(assetTrashService)).deleteAsset(repository, asset);
     }
 
     assertTrue(result.isEmpty());
-    verify(assetSoftDeleteService)
-        .softDelete(eq(ContentDeletionService.encodeIdentifier(REPO, "def")), any(SoftDeleteContext.class));
+    verify(assetTrashService)
+        .trash(eq(ContentDeletionService.encodeIdentifier(REPO, "def")), any(TrashContext.class));
     verify(maintenanceService, never()).deleteAsset(repository, asset);
   }
 
   @Test
   void assetWithFlagOffIsHardDeleted() {
-    service(false, List.of(assetSoftDeleteService)).deleteAsset(repository, asset);
+    service(false, List.of(assetTrashService)).deleteAsset(repository, asset);
 
     verify(maintenanceService).deleteAsset(repository, asset);
-    verify(assetSoftDeleteService, never()).softDelete(any(), any());
+    verify(assetTrashService, never()).trash(any(), any());
   }
 
   @Test
-  void assetSoftDeleteEnforcesDeletePermission() {
+  void assetTrashEnforcesDeletePermission() {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(maintenanceService.canDeleteAsset(repository, asset)).thenReturn(false);
 
     assertThrows(AuthorizationException.class,
-        () -> service(true, List.of(assetSoftDeleteService)).deleteAsset(repository, asset));
+        () -> service(true, List.of(assetTrashService)).deleteAsset(repository, asset));
 
-    verify(assetSoftDeleteService, never()).softDelete(any(), any());
+    verify(assetTrashService, never()).trash(any(), any());
     verify(maintenanceService, never()).deleteAsset(repository, asset);
   }
 
-  // ---- client-protocol entry points (softDelete*IfEligible) ----
+  // ---- client-protocol entry points (trash*IfEligible) ----
 
   @Test
-  void softDeleteAssetIfEligible_softDeletesAndReturnsTrueWhenEligible() {
+  void trashAssetIfEligible_trashsAndReturnsTrueWhenEligible() {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(maintenanceService.canDeleteAsset(repository, asset)).thenReturn(true);
     EntityId externalId = mock(EntityId.class);
@@ -284,60 +284,60 @@ class ContentDeletionServiceTest
       ids.when(() -> InternalIds.internalAssetId(asset)).thenReturn(7);
       ids.when(() -> InternalIds.toExternalId(7)).thenReturn(externalId);
 
-      result = service(true, List.of(assetSoftDeleteService)).softDeleteAssetIfEligible(repository, asset);
+      result = service(true, List.of(assetTrashService)).trashAssetIfEligible(repository, asset);
     }
 
     assertTrue(result);
-    verify(assetSoftDeleteService)
-        .softDelete(eq(ContentDeletionService.encodeIdentifier(REPO, "def")), any(SoftDeleteContext.class));
+    verify(assetTrashService)
+        .trash(eq(ContentDeletionService.encodeIdentifier(REPO, "def")), any(TrashContext.class));
     // must NOT hard-delete: the caller falls back to its own hard delete only when this returns false
     verify(maintenanceService, never()).deleteAsset(repository, asset);
   }
 
   @Test
-  void softDeleteAssetIfEligible_returnsFalseAndDoesNothingWhenFlagOff() {
-    boolean result = service(false, List.of(assetSoftDeleteService)).softDeleteAssetIfEligible(repository, asset);
+  void trashAssetIfEligible_returnsFalseAndDoesNothingWhenFlagOff() {
+    boolean result = service(false, List.of(assetTrashService)).trashAssetIfEligible(repository, asset);
 
     assertFalse(result);
-    verify(assetSoftDeleteService, never()).softDelete(any(), any());
+    verify(assetTrashService, never()).trash(any(), any());
     verify(maintenanceService, never()).deleteAsset(repository, asset);
   }
 
   @Test
-  void softDeleteAssetIfEligible_returnsFalseWhenProxy() {
+  void trashAssetIfEligible_returnsFalseWhenProxy() {
     when(type.getValue()).thenReturn("proxy");
 
-    boolean result = service(true, List.of(assetSoftDeleteService)).softDeleteAssetIfEligible(repository, asset);
+    boolean result = service(true, List.of(assetTrashService)).trashAssetIfEligible(repository, asset);
 
     assertFalse(result);
-    verify(assetSoftDeleteService, never()).softDelete(any(), any());
+    verify(assetTrashService, never()).trash(any(), any());
   }
 
   @Test
-  void softDeleteAssetIfEligible_returnsFalseWhenFormatNotAllowlisted() {
+  void trashAssetIfEligible_returnsFalseWhenFormatNotAllowlisted() {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(format.getValue()).thenReturn("npm");
 
     boolean result =
-        service(true, "maven2", List.of(assetSoftDeleteService)).softDeleteAssetIfEligible(repository, asset);
+        service(true, "maven2", List.of(assetTrashService)).trashAssetIfEligible(repository, asset);
 
     assertFalse(result);
-    verify(assetSoftDeleteService, never()).softDelete(any(), any());
+    verify(assetTrashService, never()).trash(any(), any());
   }
 
   @Test
-  void softDeleteAssetIfEligible_enforcesDeletePermission() {
+  void trashAssetIfEligible_enforcesDeletePermission() {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(maintenanceService.canDeleteAsset(repository, asset)).thenReturn(false);
 
     assertThrows(AuthorizationException.class,
-        () -> service(true, List.of(assetSoftDeleteService)).softDeleteAssetIfEligible(repository, asset));
+        () -> service(true, List.of(assetTrashService)).trashAssetIfEligible(repository, asset));
 
-    verify(assetSoftDeleteService, never()).softDelete(any(), any());
+    verify(assetTrashService, never()).trash(any(), any());
   }
 
   @Test
-  void softDeleteComponentIfEligible_softDeletesAndReturnsTrueWhenEligible() {
+  void trashComponentIfEligible_trashsAndReturnsTrueWhenEligible() {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(maintenanceService.canDeleteComponent(repository, component)).thenReturn(true);
     EntityId externalId = mock(EntityId.class);
@@ -348,22 +348,22 @@ class ContentDeletionServiceTest
       ids.when(() -> InternalIds.internalComponentId(component)).thenReturn(5);
       ids.when(() -> InternalIds.toExternalId(5)).thenReturn(externalId);
 
-      result = service(true, List.of(componentSoftDeleteService)).softDeleteComponentIfEligible(repository, component);
+      result = service(true, List.of(componentTrashService)).trashComponentIfEligible(repository, component);
     }
 
     assertTrue(result);
-    verify(componentSoftDeleteService)
-        .softDelete(eq(ContentDeletionService.encodeIdentifier(REPO, "abc")), any(SoftDeleteContext.class));
+    verify(componentTrashService)
+        .trash(eq(ContentDeletionService.encodeIdentifier(REPO, "abc")), any(TrashContext.class));
     verify(maintenanceService, never()).deleteComponent(repository, component);
   }
 
   @Test
-  void softDeleteComponentIfEligible_returnsFalseWhenFlagOff() {
+  void trashComponentIfEligible_returnsFalseWhenFlagOff() {
     boolean result =
-        service(false, List.of(componentSoftDeleteService)).softDeleteComponentIfEligible(repository, component);
+        service(false, List.of(componentTrashService)).trashComponentIfEligible(repository, component);
 
     assertFalse(result);
-    verify(componentSoftDeleteService, never()).softDelete(any(), any());
+    verify(componentTrashService, never()).trash(any(), any());
     verify(maintenanceService, never()).deleteComponent(repository, component);
   }
 }

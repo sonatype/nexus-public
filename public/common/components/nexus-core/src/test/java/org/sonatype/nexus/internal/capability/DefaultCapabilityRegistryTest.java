@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Predicate;
 
 import jakarta.validation.ValidationException;
 import jakarta.validation.Validator;
@@ -47,7 +48,6 @@ import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemData;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import jakarta.inject.Provider;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
@@ -77,6 +77,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.capability.CapabilityIdentity.capabilityIdentity;
+import static org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.capabilities;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -295,6 +296,37 @@ public class DefaultCapabilityRegistryTest
     assertThat(references, hasSize(2));
   }
 
+  /**
+   * Get only the capabilities accepted by a {@link Predicate} filter.
+   *
+   * @throws Exception unexpected
+   */
+  @Test
+  public void getWithFilter() throws Exception {
+    final CapabilityReference first = underTest.add(CAPABILITY_TYPE, true, null, null);
+    underTest.add(CAPABILITY_TYPE, true, null, null);
+
+    final Predicate<CapabilityReference> onlyFirst = ref -> ref.context().id().equals(first.context().id());
+    final Collection<? extends CapabilityReference> references = underTest.get(onlyFirst);
+
+    assertThat(references, hasSize(1));
+    assertThat(references.iterator().next().context().id(), is(first.context().id()));
+  }
+
+  /**
+   * Get capabilities using the {@code capabilities()} reference filter.
+   *
+   * @throws Exception unexpected
+   */
+  @Test
+  public void getWithReferenceFilter() throws Exception {
+    underTest.add(CAPABILITY_TYPE, true, null, null);
+    underTest.add(CAPABILITY_TYPE, true, null, null);
+
+    assertThat(underTest.get(capabilities().withType(CAPABILITY_TYPE).includeNotExposed()), hasSize(2));
+    assertThat(underTest.get(capabilities().withType(capabilityType("other")).includeNotExposed()), hasSize(0));
+  }
+
   private interface ValidatorProvider
       extends Provider<Validator>
   {
@@ -308,7 +340,7 @@ public class DefaultCapabilityRegistryTest
    */
   @Test
   public void load() throws Exception {
-    final Map<String, String> oldProps = Maps.newHashMap();
+    final Map<String, String> oldProps = new HashMap<>();
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
 
@@ -340,7 +372,7 @@ public class DefaultCapabilityRegistryTest
    */
   @Test
   public void loadWhenVersionChanged() throws Exception {
-    final Map<String, String> oldProps = Maps.newHashMap();
+    final Map<String, String> oldProps = new HashMap<>();
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
 
@@ -356,7 +388,7 @@ public class DefaultCapabilityRegistryTest
     when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
     when(descriptor.version()).thenReturn(1);
 
-    final Map<String, String> newProps = Maps.newHashMap();
+    final Map<String, String> newProps = new HashMap<>();
     oldProps.put("p1", "v1-converted");
     oldProps.put("p3", "v3");
 
@@ -382,7 +414,7 @@ public class DefaultCapabilityRegistryTest
    */
   @Test
   public void loadWhenVersionChangedAndConversionFails() throws Exception {
-    final Map<String, String> oldProps = Maps.newHashMap();
+    final Map<String, String> oldProps = new HashMap<>();
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
 
@@ -455,7 +487,7 @@ public class DefaultCapabilityRegistryTest
    */
   @Test
   public void loadWithEncryptedProperty() throws Exception {
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = new HashMap<>();
     String encryptedValue = secretsService.encryptMaven("", "bar".toCharArray(), "").getId();
     properties.put("foo", encryptedValue);
 
@@ -511,7 +543,7 @@ public class DefaultCapabilityRegistryTest
    */
   @Test
   public void loadWhenPropertiesAreInvalid() throws Exception {
-    final Map<String, String> oldProps = Maps.newHashMap();
+    final Map<String, String> oldProps = new HashMap<>();
     oldProps.put("bad", "data");
     final CapabilityStorageItem item = new CapabilityStorageItemData();
     item.setVersion(0);
@@ -547,7 +579,7 @@ public class DefaultCapabilityRegistryTest
    */
   @Test
   public void loadWhenCapabilityIsNotUnique() throws Exception {
-    final Map<String, String> oldProps = Maps.newHashMap();
+    final Map<String, String> oldProps = new HashMap<>();
     oldProps.put("duplicate", "data");
 
     final CapabilityStorageItem item = new CapabilityStorageItemData();
@@ -587,7 +619,7 @@ public class DefaultCapabilityRegistryTest
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
         new PasswordFormField("password", "password", "Sensitive field", FormField.MANDATORY)));
 
-    final Map<String, String> oldProps = Maps.newHashMap();
+    final Map<String, String> oldProps = new HashMap<>();
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
     oldProps.put("password", secretsService.encryptMaven("", "admin123".toCharArray(), "").getId());
@@ -628,7 +660,7 @@ public class DefaultCapabilityRegistryTest
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
         new PasswordFormField("password", "password", "Sensitive field", FormField.MANDATORY)));
 
-    final Map<String, String> props = Maps.newHashMap();
+    final Map<String, String> props = new HashMap<>();
     props.put("p1", "v1");
     props.put("password", secretsService.encryptMaven("", "admin123".toCharArray(), "").getId());
 
@@ -656,7 +688,7 @@ public class DefaultCapabilityRegistryTest
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
         new PasswordFormField("password", "password", "Sensitive field", FormField.MANDATORY)));
 
-    final Map<String, String> props = Maps.newHashMap();
+    final Map<String, String> props = new HashMap<>();
     props.put("p1", "v1");
     props.put("password", secretsService.encryptMaven("", "admin123".toCharArray(), "").getId());
 
@@ -728,7 +760,7 @@ public class DefaultCapabilityRegistryTest
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
         new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
 
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = new HashMap<>();
     properties.put("foo", secretValue);
 
     return underTest.add(CAPABILITY_TYPE, true, null, properties);
@@ -742,7 +774,7 @@ public class DefaultCapabilityRegistryTest
         new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
 
     // When the value matches the secret ID pattern (_\\d+) and exists in store, it is treated as encrypted
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = new HashMap<>();
     properties.put("foo", "_123");
 
     underTest.add(CAPABILITY_TYPE, true, null, properties);
@@ -764,7 +796,7 @@ public class DefaultCapabilityRegistryTest
     // Override the global exists() mock so that "_999" is NOT found in the store
     doReturn(false).when(secretsService).exists("_999");
 
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = new HashMap<>();
     properties.put("foo", "_999");
 
     underTest.add(CAPABILITY_TYPE, true, null, properties);
@@ -781,7 +813,7 @@ public class DefaultCapabilityRegistryTest
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
         new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
 
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = new HashMap<>();
     properties.put("foo", "mypassword");
 
     underTest.add(CAPABILITY_TYPE, true, null, properties);
@@ -799,7 +831,7 @@ public class DefaultCapabilityRegistryTest
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
         new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
 
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = new HashMap<>();
     properties.put("foo", "_notanumber");
 
     underTest.add(CAPABILITY_TYPE, true, null, properties);
@@ -824,7 +856,7 @@ public class DefaultCapabilityRegistryTest
     assertThat(originalSecretId, is("0"));
 
     // Update with the same encrypted secret ID (simulating UI returning the secret ID unchanged)
-    Map<String, String> updateProps = Maps.newHashMap();
+    Map<String, String> updateProps = new HashMap<>();
     updateProps.put("foo", originalSecretId);
 
     underTest.update(reference.context().id(), true, null, updateProps);
@@ -853,7 +885,7 @@ public class DefaultCapabilityRegistryTest
     assertThat(originalSecretId, is("0"));
 
     // Update with a new secret value
-    Map<String, String> updateProps = Maps.newHashMap();
+    Map<String, String> updateProps = new HashMap<>();
     updateProps.put("foo", "new-secret");
 
     underTest.update(reference.context().id(), true, null, updateProps);
@@ -880,7 +912,7 @@ public class DefaultCapabilityRegistryTest
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
         new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
 
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = new HashMap<>();
     properties.put("foo", "my-secret");
 
     // Create with empty old properties (simulated by passing empty map in encryptValuesIfNeeded)
@@ -907,7 +939,7 @@ public class DefaultCapabilityRegistryTest
     verify(capabilityStorage).add(csiRec.capture());
 
     // Update with null value for the encrypted field
-    Map<String, String> updateProps = Maps.newHashMap();
+    Map<String, String> updateProps = new HashMap<>();
     updateProps.put("foo", null);
 
     underTest.update(reference.context().id(), true, null, updateProps);
@@ -932,7 +964,7 @@ public class DefaultCapabilityRegistryTest
         new PasswordFormField("password1", "password1", "First password", FormField.OPTIONAL),
         new PasswordFormField("password2", "password2", "Second password", FormField.OPTIONAL)));
 
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = new HashMap<>();
     properties.put("password1", "secret1");
     properties.put("password2", "secret2");
 
@@ -945,7 +977,7 @@ public class DefaultCapabilityRegistryTest
     String secret2Id = initial.getProperties().get("password2");
 
     // Update: keep password1 the same, change password2
-    Map<String, String> updateProps = Maps.newHashMap();
+    Map<String, String> updateProps = new HashMap<>();
     updateProps.put("password1", secret1Id); // Reuse existing
     updateProps.put("password2", "new-secret2"); // Change value
 
@@ -1044,7 +1076,7 @@ public class DefaultCapabilityRegistryTest
     existingItem.setVersion(0);
     existingItem.setType(CAPABILITY_TYPE.toString());
     existingItem.setEnabled(true);
-    existingItem.setProperties(Maps.newHashMap());
+    existingItem.setProperties(new HashMap<>());
     CapabilityIdentity existingId = capabilityIdentity("existing-capability");
 
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(existingId, existingItem));
@@ -1056,7 +1088,7 @@ public class DefaultCapabilityRegistryTest
     newItem.setVersion(0);
     newItem.setType(CAPABILITY_TYPE.toString());
     newItem.setEnabled(true);
-    newItem.setProperties(Maps.newHashMap());
+    newItem.setProperties(new HashMap<>());
     CapabilityIdentity newId = capabilityIdentity("new-capability");
 
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(existingId, existingItem, newId, newItem));
@@ -1076,14 +1108,14 @@ public class DefaultCapabilityRegistryTest
     item1.setVersion(0);
     item1.setType(CAPABILITY_TYPE.toString());
     item1.setEnabled(true);
-    item1.setProperties(Maps.newHashMap());
+    item1.setProperties(new HashMap<>());
     CapabilityIdentity id1 = capabilityIdentity("capability-1");
 
     CapabilityStorageItem item2 = new CapabilityStorageItemData();
     item2.setVersion(0);
     item2.setType(CAPABILITY_TYPE.toString());
     item2.setEnabled(true);
-    item2.setProperties(Maps.newHashMap());
+    item2.setProperties(new HashMap<>());
     CapabilityIdentity id2 = capabilityIdentity("capability-2");
 
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(id1, item1, id2, item2));

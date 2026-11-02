@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.SCRIPTS_ALLOW_EXECUTION_NAMED_VALUE;
 import org.springframework.stereotype.Component;
 
 /**
@@ -61,24 +62,29 @@ public class ScriptServiceImpl
 
   private final boolean allowOnlyGroovy;
 
+  private final boolean allowExecution;
+
   @Autowired
   public ScriptServiceImpl(
       final ScriptEngineManager engineManager,
       final GlobalComponentLookupHelper lookupHelper,
       final List<ScriptApi> scriptApis,
       final ScriptCleanupHandler scriptCleanupHandler,
-      @Value("${nexus.scripts.groovyOnly:true}") final boolean allowOnlyGroovy)
+      @Value("${nexus.scripts.groovyOnly:true}") final boolean allowOnlyGroovy,
+      @Value(SCRIPTS_ALLOW_EXECUTION_NAMED_VALUE) final boolean allowExecution)
   {
     this.engineManager = requireNonNull(engineManager);
     this.lookupHelper = requireNonNull(lookupHelper);
     this.scriptApis = requireNonNull(scriptApis);
     this.scriptCleanupHandler = requireNonNull(scriptCleanupHandler);
     this.allowOnlyGroovy = allowOnlyGroovy;
+    this.allowExecution = allowExecution;
   }
 
   @Override
   @Nonnull
   public ScriptEngine engineForLanguage(final String language) {
+    checkState(allowExecution, "Script execution is disabled");
     validateLanguage(language);
 
     log.trace("Resolving engine for language: {}", language);

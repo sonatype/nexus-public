@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -20,7 +21,6 @@ import org.sonatype.nexus.security.config.CUserRoleMapping;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import static com.google.common.collect.Sets.newHashSet;
 import static org.sonatype.nexus.common.text.Strings2.lower;
 import static org.sonatype.nexus.security.config.SecuritySourceUtil.isCaseInsensitiveSource;
 
@@ -51,7 +51,7 @@ public class CUserRoleMappingData
       CUserRoleMappingData copy = (CUserRoleMappingData) super.clone();
 
       if (this.roles != null) {
-        copy.roles = newHashSet(this.roles);
+        copy.roles = new HashSet<>(this.roles);
       }
 
       return copy;
@@ -64,7 +64,7 @@ public class CUserRoleMappingData
   @Override
   public Set<String> getRoles() {
     if (this.roles == null) {
-      this.roles = newHashSet();
+      this.roles = new HashSet<>();
     }
     return this.roles;
   }

@@ -20,7 +20,6 @@ import React, { useEffect } from 'react';
 import { ExtJS } from '../../../interface/ExtJS';
 import LoginPageStrings from '../../../constants/LoginPageStrings';
 import { RouteNames } from '../../../constants/RouteNames';
-import FormUtils from '../../../interface/FormUtils';
 import LoginFormMachine from './LocalLoginMachine';
 import { resolveDefaultLandingRoute, isClassicLandingHash, PREVIEW_WELCOME_ROUTE, USER_REQUESTED_LEGACY_KEY } from '../../../utils/loginUtils';
 
@@ -97,10 +96,8 @@ export default function LocalLogin({ primaryButton, onError }) {
     }
   });
 
-  const formProps = FormUtils.formProps(current, send);
-
   const { saveError: serverError, saveErrorData, saveErrors = {}, validationErrors = {}, rateLimitWarning, retryAfterSeconds } = current.context;
-  const isLoading = current.matches('saving');
+  const isLoading = current.matches('authenticating');
   const hasAuthError = Boolean(saveErrors.username && saveErrors.password);
 
   // Check for validation errors (empty fields) or server errors (wrong credentials)
@@ -113,11 +110,11 @@ export default function LocalLogin({ primaryButton, onError }) {
     if (serverError || rateLimitWarning) {
       send({ type: 'CLEAR_SAVE_ERROR' });
     }
-    FormUtils.handleUpdate(fieldName, send)(value);
+    send({ type: 'UPDATE', name: fieldName, value });
   };
 
   const handleSubmit = () => {
-    formProps.onSubmit();
+    send({ type: 'SUBMIT' });
   };
 
   useEffect(() => {

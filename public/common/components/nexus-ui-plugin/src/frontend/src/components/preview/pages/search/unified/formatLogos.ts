@@ -27,6 +27,7 @@ import huggingface from '../../../../../art/logos/formats/huggingface.png';
 import maven from '../../../../../art/logos/formats/maven.png';
 import npm from '../../../../../art/logos/formats/npm.png';
 import nuget from '../../../../../art/logos/formats/nuget.png';
+import openvsx from '../../../../../art/logos/formats/openvsx.png';
 import p2 from '../../../../../art/logos/formats/p2.png';
 import pypi from '../../../../../art/logos/formats/pypi.png';
 import r from '../../../../../art/logos/formats/r.png';
@@ -55,6 +56,7 @@ const FORMAT_LOGO_MAP: Record<string, string> = {
   npm,
   nuget,
   oci: docker,
+  openvsx,
   p2,
   pypi,
   r,

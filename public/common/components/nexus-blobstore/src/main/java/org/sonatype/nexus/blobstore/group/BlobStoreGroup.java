@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -58,7 +59,6 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.stateguard.Transitions;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.hash.HashCode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,7 +142,7 @@ public class BlobStoreGroup
   @Override
   public void init(final BlobStoreConfiguration configuration) {
     this.blobStoreConfiguration = configuration;
-    this.members = Suppliers.memoize(new MembersSupplier());
+    this.members = Suppliers.memoize(new MembersSupplier()::get);
     String fillPolicyName = BlobStoreGroupConfigurationHelper.fillPolicyName(configuration);
     if (fillPolicyProviders.containsKey(fillPolicyName)) {
       this.fillPolicy = fillPolicyProviders.get(fillPolicyName).get();

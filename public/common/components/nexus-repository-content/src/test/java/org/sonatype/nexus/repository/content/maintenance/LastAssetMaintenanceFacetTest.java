@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 
@@ -69,6 +70,9 @@ public class LastAssetMaintenanceFacetTest
   @Mock
   private ComponentStore<?> componentStore;
 
+  @Mock
+  private AssetStore<?> assetStore;
+
   private LastAssetMaintenanceFacet underTest;
 
   @Before
@@ -79,6 +83,7 @@ public class LastAssetMaintenanceFacetTest
 
     FormatStoreManager formatStoreManager = mock(FormatStoreManager.class);
     when(formatStoreManager.componentStore(any())).thenReturn(componentStore);
+    when(formatStoreManager.assetStore(any())).thenReturn(assetStore);
     ContentFacetStores stores = new ContentFacetStores(blobStoreManager, "default", formatStoreManager, "nexus");
     when(contentFacet.stores()).thenReturn(stores);
 
@@ -189,10 +194,10 @@ public class LastAssetMaintenanceFacetTest
   }
 
   @Test
-  public void cascadeSoftDeleteToComponent_cascadesOnlyForLastAsset() {
-    // The component is soft-deleted only along with its last asset (mirrors deleteAsset).
+  public void cascadeTrashToComponent_cascadesOnlyForLastAsset() {
+    // The component is trashed only along with its last asset (mirrors deleteAsset).
     Asset asset = mock(Asset.class);
-    assertThat(underTest.cascadeSoftDeleteToComponent(asset, false), is(false));
-    assertThat(underTest.cascadeSoftDeleteToComponent(asset, true), is(true));
+    assertThat(underTest.cascadeTrashToComponent(asset, false), is(false));
+    assertThat(underTest.cascadeTrashToComponent(asset, true), is(true));
   }
 }

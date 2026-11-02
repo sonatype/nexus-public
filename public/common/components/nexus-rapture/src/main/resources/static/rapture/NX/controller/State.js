@@ -81,6 +81,13 @@ Ext.define('NX.controller.State', {
         }
       }
     });
+
+    // Preview UI Retry button (React modal) reconnects the ExtJS poll via a window event.
+    NX.global.addEventListener('nexus:server-reconnect-requested', function () {
+      if (me.statusProvider) {
+        me.statusProvider.connect();
+      }
+    });
   },
 
   /**
@@ -362,7 +369,12 @@ Ext.define('NX.controller.State', {
     // re-enable the UI we are now connected again
     if (me.disconnectedTimes > 0) {
       me.disconnectedTimes = 0;
+      // NX.Messages bridges to the React toast under Preview UI, so show it in both UIs.
       NX.Messages.success(NX.I18n.get('State_Reconnected_Message'));
+      if (Ext.String.startsWith(NX.global.location.hash, '#preview')) {
+        // Also close the React disconnect modal; a no-op when no modal is open.
+        NX.global.dispatchEvent(new NX.global.CustomEvent('nexus:server-reconnected'));
+      }
     }
 
     NX.State.setValue('receiving', true);
@@ -416,32 +428,43 @@ Ext.define('NX.controller.State', {
         NX.State.setValue('receiving', false);
 
         if (me.disconnectedTimes <= me.maxDisconnectWarnings) {
+          // Shown in both UIs: NX.Messages bridges to the React toast, and no modal shows yet.
           NX.Messages.warning(NX.I18n.get('State_Disconnected_Message'));
         }
 
         // Give up after a few attempts and disable the UI
         if (me.disconnectedTimes > me.maxDisconnectWarnings) {
-          NX.Messages.error(NX.I18n.get('State_Disconnected_Message'));
+          var isPreviewUI = Ext.String.startsWith(NX.global.location.hash, '#preview');
+
+          // Preview UI shows the modernized React modal instead of the ExtJS error toast.
+          if (!isPreviewUI) {
+            NX.Messages.error(NX.I18n.get('State_Disconnected_Message'));
+          }
 
           // Stop polling
           me.statusProvider.disconnect();
 
-          // FIXME: i18n
-          // Show the UI with a modal dialog error
-          NX.Dialogs.showError(
-              'Server disconnected',
-              'There is a problem communicating with the server',
-              {
-                buttonText: {
-                  ok: 'Retry'
-                },
+          // Preview UI shows the modernized React modal; classic keeps the ExtJS dialog.
+          if (isPreviewUI) {
+            NX.global.dispatchEvent(new NX.global.CustomEvent('nexus:server-disconnected'));
+          }
+          else {
+            // FIXME: i18n - show the UI with a modal dialog error
+            NX.Dialogs.showError(
+                'Server disconnected',
+                'There is a problem communicating with the server',
+                {
+                  buttonText: {
+                    ok: 'Retry'
+                  },
 
-                fn: function () {
-                  // retry after the dialog is dismissed
-                  me.statusProvider.connect();
+                  fn: function () {
+                    // retry after the dialog is dismissed
+                    me.statusProvider.connect();
+                  }
                 }
-              }
-          );
+            );
+          }
         }
       }
     }
@@ -499,6 +522,11 @@ Ext.define('NX.controller.State', {
 
   reloadWhenServerIdChanged: function (serverId, oldServerId) {
     if (oldServerId && (serverId !== oldServerId) && !Ext.String.startsWith(serverId, 'ignore')) {
+      // Preview UI dispatches to the React shell (event matches NEXUS_SERVER_RESTARTED_EVENT); classic keeps the ExtJS dialog.
+      if (Ext.String.startsWith(NX.global.location.hash, '#preview')) {
+        NX.global.dispatchEvent(new NX.global.CustomEvent('nexus:server-restarted'));
+        return true;
+      }
       // FIXME: i18n
       NX.Dialogs.showInfo(
           'Server restarted',

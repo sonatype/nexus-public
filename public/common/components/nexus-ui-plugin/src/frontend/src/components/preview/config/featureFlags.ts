@@ -34,20 +34,29 @@
  */
 
 /**
+ * Detect if the UI is served from localhost (127.0.0.1 included).
+ * Unlike isDevelopmentMode, this cannot be switched on from a production URL.
+ */
+export function isLocalhost(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+/**
  * Detect if we're in development mode
  * Development = localhost OR ?debug in URL
  */
 export function isDevelopmentMode(): boolean {
   if (typeof window === 'undefined') return false;
   
-  const hostname = window.location.hostname;
   const search = window.location.search;
   
   // localhost or ?debug param (Nexus QA/ops convention) — intentional trade-off, WIP pages are not harmful to view.
-  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
   const hasDebugParam = new URLSearchParams(search).has('debug');
   
-  return isLocalhost || hasDebugParam;
+  return isLocalhost() || hasDebugParam;
 }
 
 /**
@@ -74,6 +83,7 @@ export const PREVIEW_FEATURE_FLAGS = {
   'repository.routingrules': true,
   'repository.datastore': true,
   'repository.proprietary': true,
+  'repository.globaldistribution': true,
 
   // =============================================================================
   // SECURITY SECTION
@@ -109,7 +119,6 @@ export const PREVIEW_FEATURE_FLAGS = {
   'system.http': true,
   'system.licensing': true,
   'system.nodes': true,
-  'system.upgrade': false,       // Coming Soon
   'system.api': true,             // Sprint 12 - ENABLED
   'system.trash': true,  // NEXUS-51733 - Trash / Logical Deletion Recovery
 

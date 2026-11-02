@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuditRetentionSettings
 {
-  public static final int DEFAULT_RETENTION_DAYS = 90;
+  public static final int DEFAULT_RETENTION_DAYS = 30;
 
   private final int maxRetentionDays;
 

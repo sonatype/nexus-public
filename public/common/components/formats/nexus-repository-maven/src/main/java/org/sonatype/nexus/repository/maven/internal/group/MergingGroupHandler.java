@@ -44,7 +44,6 @@ import org.sonatype.nexus.transaction.RetryDeniedException;
 import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Predicates.or;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -61,7 +60,7 @@ public class MergingGroupHandler
     extends GroupHandler
 {
   private static final Predicate<Repository> PROXY_OR_GROUP =
-      or(new HasFacet(ProxyFacet.class), new HasFacet(GroupFacet.class));
+      new HasFacet(ProxyFacet.class).or(new HasFacet(GroupFacet.class));
 
   private Cooperation2 metadataCooperation;
 

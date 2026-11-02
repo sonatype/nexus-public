@@ -21,7 +21,8 @@ import {
   NxFormGroup,
   NxFormSelect,
   NxInfoAlert,
-  NxTextInput
+  NxTextInput,
+  NxWarningAlert
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
@@ -35,6 +36,7 @@ export default function FirewallConfiguration({parentMachine}) {
   const format = currentParent.context.data?.format;
   const repositoryType = currentParent.context.data?.type;
   const firewallMode = currentParent.context.data?.firewall?.mode;
+  const isXetEnabled = currentParent.context?.data?.xet?.enabled ?? false;
   const [pccsFormats, setPccsFormats] = useState(['npm', 'pypi']);
 
   useEffect(() => {
@@ -60,6 +62,9 @@ export default function FirewallConfiguration({parentMachine}) {
       <h2 className="nx-h2">{FIREWALL.CAPTION}</h2>
 
       <NxFieldset label={FIREWALL.LABEL} sublabel={FIREWALL.SUBLABEL}>
+        {isXetEnabled && (
+          <NxWarningAlert>{FIREWALL.XET_DISABLED_WARNING}</NxWarningAlert>
+        )}
         <NxFormGroup
           label={FIREWALL.MODE_LABEL}
           className="nxrm-form-group-firewall-mode"
@@ -67,12 +72,13 @@ export default function FirewallConfiguration({parentMachine}) {
           <NxFormSelect
             {...FormUtils.selectProps('firewall.mode', currentParent)}
             onChange={FormUtils.handleUpdate('firewall.mode', sendParent)}
+            disabled={isXetEnabled}
           >
             <option value="DISABLED">{FIREWALL.MODE_DISABLED}</option>
-            <option value="AUDIT">{FIREWALL.MODE_AUDIT}</option>
-            <option value="QUARANTINE">{FIREWALL.MODE_QUARANTINE}</option>
+            <option value="AUDIT" disabled={isXetEnabled}>{FIREWALL.MODE_AUDIT}</option>
+            <option value="QUARANTINE" disabled={isXetEnabled}>{FIREWALL.MODE_QUARANTINE}</option>
             {isPccsValidFormat && (
-              <option value="PCCS">{FIREWALL.MODE_PCCS}</option>
+              <option value="PCCS" disabled={isXetEnabled}>{FIREWALL.MODE_PCCS}</option>
             )}
           </NxFormSelect>
         </NxFormGroup>

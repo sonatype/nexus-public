@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -25,7 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -57,7 +58,7 @@ public class ComponentXODeserializerTest
   @Before
   public void setup() {
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    underTest = new ComponentXODeserializer(componentXOFactory, objectMapper, newHashSet(foo, bar));
+    underTest = new ComponentXODeserializer(componentXOFactory, objectMapper, new HashSet<>(Arrays.asList(foo, bar)));
   }
 
   @Test

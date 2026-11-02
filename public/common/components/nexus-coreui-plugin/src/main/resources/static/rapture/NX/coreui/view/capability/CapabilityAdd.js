@@ -29,6 +29,14 @@ Ext.define('NX.coreui.view.capability.CapabilityAdd', {
   ],
 
   /**
+   * @cfg {Object} settingsFormEditableCondition
+   * Optional condition controlling form editability. Set by the controller so that security-sensitive
+   * capability types (those that activate/configure a realm) additionally require nexus:settings:update
+   * (CVE-2026-14645 / NEXUS-54726). Defaults to the plain nexus:capabilities:create condition.
+   */
+  settingsFormEditableCondition: undefined,
+
+  /**
    * @override
    */
   initComponent: function () {
@@ -36,7 +44,8 @@ Ext.define('NX.coreui.view.capability.CapabilityAdd', {
 
     me.settingsForm = {
       xtype: 'nx-coreui-capability-settings-form',
-      editableCondition: NX.Conditions.isPermitted('nexus:capabilities:create'),
+      editableCondition: me.settingsFormEditableCondition
+          || NX.Conditions.isPermitted('nexus:capabilities:create'),
       editableMarker: NX.I18n.get('Capability_CapabilitySettingsForm_Update_Error'),
 
       buttons: [

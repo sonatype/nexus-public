@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.datastore.mybatis;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.sonatype.nexus.datastore.api.DataAccess;
@@ -22,7 +24,6 @@ import org.sonatype.nexus.transaction.TransactionSupport;
 import org.apache.ibatis.session.SqlSession;
 
 import static java.util.Objects.requireNonNull;
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * MyBatis {@link DataSession}.
@@ -105,7 +106,7 @@ public final class MyBatisDataSession
       return hook;
     }
     else if (hooks instanceof Runnable) {
-      return newArrayList(hooks, hook);
+      return new ArrayList<>(Arrays.asList(hooks, hook));
     }
     else {
       ((List<Runnable>) hooks).add(hook);

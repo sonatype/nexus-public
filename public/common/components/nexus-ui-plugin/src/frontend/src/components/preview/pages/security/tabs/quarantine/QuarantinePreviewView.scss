@@ -1,0 +1,39 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved.
+ */
+
+// Nexus-wide styles (App.scss `a:not([class*="x-"])` reset to color:inherit, and the global `p` margin) would
+// otherwise change how Radix callouts, links and link-buttons render here. Scoped to this view only.
+.firewall-security-preview {
+  .rt-CalloutRoot {
+    align-items: center;
+  }
+
+  .rt-CalloutText {
+    margin: 0;
+  }
+
+  a.rt-Link {
+    &,
+    &:hover,
+    &:focus,
+    &:active,
+    &:visited {
+      color: var(--blue-11) !important;
+      text-decoration: underline !important;
+    }
+  }
+
+  a.rt-Button {
+    &,
+    &:hover,
+    &:focus,
+    &:active,
+    &:visited {
+      color: var(--accent-contrast) !important;
+      text-decoration: none !important;
+    }
+  }
+}

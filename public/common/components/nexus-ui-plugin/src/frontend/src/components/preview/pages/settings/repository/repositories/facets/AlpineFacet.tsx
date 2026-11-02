@@ -15,12 +15,17 @@ import React from 'react';
 
 import {
   SettingsFormSection,
-  SettingsTextInput,
+  SettingsTextArea,
   SettingsPasswordInput,
 } from '../../../../../shared/form';
 
-import { RepositoryFormData, RepositoryFormErrors } from '../types';
+import { RepositoryFormData } from '../types';
 import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
+import { type FacetErrors, resolveError } from './resolveError';
+
+// PKCS#8, as the help text instructs; RsaUtils also accepts PKCS#1.
+const KEYPAIR_PLACEHOLDER =
+  '-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----';
 
 interface AlpineFacetProps {
   formData: RepositoryFormData;
@@ -28,51 +33,43 @@ interface AlpineFacetProps {
     key: K,
     updates: Partial<RepositoryFormData[K]>
   ) => void;
-  errors?: RepositoryFormErrors;
-  repoType: 'hosted' | 'proxy' | 'group';
+  errors?: FacetErrors;
 }
 
 /**
- * AlpineFacet - Alpine Linux package repository configuration
+ * AlpineFacet - RSA signing keypair and passphrase, on all three repository types.
  *
- * Fields:
- * - RSA Signing keypair and passphrase (hosted and group)
+ * Strings and the required-on-every-type rule mirror Classic's AlpineSigningFacet; the REST
+ * model is looser for hosted (@Valid only), so relax this only together with Classic.
  */
-export function AlpineFacet({
-  formData,
-  onNestedChange,
-  errors,
-  repoType,
-}: AlpineFacetProps) {
-  // Show signing for hosted and group repositories
-  const showSigning = repoType === 'hosted' || repoType === 'group';
+export function AlpineFacet({ formData, onNestedChange, errors }: AlpineFacetProps) {
 
   return (
-    <>
-      {showSigning && (
-        <SettingsFormSection
-          title={UIStrings.ALPINE.SIGNING.title}
-          description={UIStrings.ALPINE.SIGNING.description}
-        >
-          <SettingsTextInput
-            name="alpine-keypair"
-            label={UIStrings.ALPINE.SIGNING.KEYPAIR.label}
-            value={formData.alpineSigning?.keypair || ''}
-            onChange={(value) => onNestedChange('alpineSigning', { keypair: value })}
-            helpText={UIStrings.ALPINE.SIGNING.KEYPAIR.helpText}
-            required
-          />
+    <SettingsFormSection
+      title={UIStrings.ALPINE.SIGNING.title}
+      description={UIStrings.ALPINE.SIGNING.description}
+    >
+      <SettingsTextArea
+        name="alpine-keypair"
+        label={UIStrings.ALPINE.SIGNING.KEYPAIR.label}
+        value={formData.alpineSigning?.keypair || ''}
+        onChange={(value: string) => onNestedChange('alpineSigning', { keypair: value })}
+        helpText={UIStrings.ALPINE.SIGNING.KEYPAIR.helpText}
+        placeholder={KEYPAIR_PLACEHOLDER}
+        error={resolveError(errors, 'alpineSigning.keypair', (e) => e.alpineSigning?.keypair) || ''}
+        rows={8}
+        monospace
+        required
+      />
 
-          <SettingsPasswordInput
-            name="alpine-passphrase"
-            label={UIStrings.ALPINE.SIGNING.PASSPHRASE.label}
-            value={formData.alpineSigning?.passphrase || ''}
-            onChange={(value) => onNestedChange('alpineSigning', { passphrase: value })}
-            helpText={UIStrings.ALPINE.SIGNING.PASSPHRASE.helpText}
-          />
-        </SettingsFormSection>
-      )}
-    </>
+      <SettingsPasswordInput
+        name="alpine-passphrase"
+        label={UIStrings.ALPINE.SIGNING.PASSPHRASE.label}
+        value={formData.alpineSigning?.passphrase || ''}
+        onChange={(value: string) => onNestedChange('alpineSigning', { passphrase: value })}
+        helpText={UIStrings.ALPINE.SIGNING.PASSPHRASE.helpText}
+      />
+    </SettingsFormSection>
   );
 }
 

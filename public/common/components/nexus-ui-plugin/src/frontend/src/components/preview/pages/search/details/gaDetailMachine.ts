@@ -195,6 +195,7 @@ export function createGaDetailMachine(
   return createMachine<GaDetailMachineContext, GaDetailMachineEvent>(
     {
       id: `ga-detail-${gaId}`,
+      predictableActionArguments: true,
       type: 'parallel',
       context: {
         gaId,

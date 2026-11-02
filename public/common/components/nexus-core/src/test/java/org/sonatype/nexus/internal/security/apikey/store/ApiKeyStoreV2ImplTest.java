@@ -459,6 +459,45 @@ public class ApiKeyStoreV2ImplTest
     assertFalse(underTest.getApiKey(NUGET, new SimplePrincipalCollection(BOB, "rut")).isPresent());
   }
 
+  /*
+   * A user token reset locates a multi-realm (e.g. RUT) key by username plus realm inclusion, because a
+   * single-realm PrincipalCollection never equals the stored one, and deletes it with the principals it was stored
+   * with. A key of the same user in an unrelated realm is left alone.
+   */
+  @Test
+  public void testDeleteApiKey_multiRealmRowIsRemovedByUsernameAndRealmInclusion() {
+    SimplePrincipalCollection multiRealm = new SimplePrincipalCollection(BOB, "rut");
+    multiRealm.add(BOB, "ldap");
+    underTest.persistApiKey(NPM, multiRealm, KEY, OffsetDateTime.now());
+    underTest.persistApiKey(NPM, new SimplePrincipalCollection(BOB, "saml"), KEY2, OffsetDateTime.now());
+
+    // the strict delete the admin reset used to rely on removes nothing
+    assertThat(underTest.deleteApiKey(NPM, new SimplePrincipalCollection(BOB, "ldap")), is(0));
+
+    List<PrincipalCollection> matches = underTest.browseByUserAndDomains(List.of(NPM), BOB)
+        .stream()
+        .map(ApiKeyInternal::getPrincipals)
+        .filter(principals -> principals.getRealmNames().contains("ldap"))
+        .toList();
+    assertThat(matches.size(), is(1));
+
+    assertThat(underTest.deleteApiKey(NPM, matches.get(0)), is(1));
+
+    assertFalse(underTest.getApiKey(NPM, multiRealm).isPresent());
+    assertTrue(underTest.getApiKey(NPM, new SimplePrincipalCollection(BOB, "saml")).isPresent());
+  }
+
+  @Test
+  public void testBrowseByUserAndDomains_returnsOnlyTheUsersKeysInTheGivenDomains() {
+    underTest.persistApiKey(NPM, PRINCIPALS, KEY, OffsetDateTime.now());
+    underTest.persistApiKey(NUGET, PRINCIPALS, KEY2, OffsetDateTime.now());
+    underTest.persistApiKey("other", PRINCIPALS, "zyxwvutsrqponm".toCharArray(), OffsetDateTime.now());
+    underTest.persistApiKey(NPM, PRINCIPALS2, "nmlkjihgfedcba".toCharArray(), OffsetDateTime.now());
+
+    assertThat(underTest.browseByUserAndDomains(List.of(NPM, NUGET), BOB).size(), is(2));
+    assertThat(underTest.browseByUserAndDomains(List.of(), BOB).size(), is(0));
+  }
+
   @Test
   public void testGetApiKey_anonymousPrincipalsStillMatch() {
     underTest.persistApiKey(NUGET, new AnonymousPrincipalCollection(BOB, "anon"), KEY, OffsetDateTime.now());

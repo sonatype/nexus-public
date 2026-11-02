@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.common.template;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import com.google.common.collect.Maps;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
@@ -49,7 +49,7 @@ public class TemplateParametersTest
 
   @Test
   public void setAll() {
-    Map<String, Object> other = Maps.newHashMap();
+    Map<String, Object> other = new HashMap<>();
     other.put("a", "1");
     other.put("b", 2);
 

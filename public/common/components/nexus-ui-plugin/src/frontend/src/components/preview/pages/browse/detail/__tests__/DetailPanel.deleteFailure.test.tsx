@@ -55,7 +55,9 @@ const mockToast = {
   info: jest.fn(),
 };
 
+// Keep the real DeleteConfirmationModal so the typed-confirmation gate runs in this wiring test.
 jest.mock('../../../../shared', () => ({
+  ...jest.requireActual('../../../../shared'),
   useToast: () => mockToast,
   DeepResearchLink: ({ href }: { href: string }) => <a href={href}>Deep Research</a>,
   EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
@@ -171,6 +173,8 @@ async function confirmDelete(): Promise<number> {
 
   await userEvent.click(screen.getByRole('button', { name: /delete asset/i }));
   const requestsBeforeDelete = requested.length;
+  // The confirmation modal requires typing the item name before the Delete button enables.
+  await userEvent.type(screen.getByLabelText('Acknowledgement'), DOOMED.text);
   await userEvent.click(screen.getByRole('button', { name: /^Delete$/i }));
   return requestsBeforeDelete;
 }

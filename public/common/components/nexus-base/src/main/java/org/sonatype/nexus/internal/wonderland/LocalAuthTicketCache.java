@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.wonderland;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,7 +24,6 @@ import org.sonatype.nexus.common.concurrent.Mutex;
 import org.sonatype.nexus.wonderland.AuthTicketCache;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public class LocalAuthTicketCache
 
   private final Mutex lock = new Mutex();
 
-  private final Map<UserAuthToken, Long> tokens = Maps.newHashMap();
+  private final Map<UserAuthToken, Long> tokens = new HashMap<>();
 
   private final Duration expireAfter;
 

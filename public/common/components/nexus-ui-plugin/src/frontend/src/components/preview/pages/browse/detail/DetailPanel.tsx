@@ -40,7 +40,6 @@ import {
 
 import { ExtJS } from '../../../../../interface/ExtJS';
 import Permissions from '../../../../../constants/Permissions';
-import { DeleteDialog } from '../actions/DeleteDialog';
 import { deleteComponent, deleteAsset, deleteFolder, fetchBrowseNodes, fetchComponentTags } from '../browse.api';
 import type { DeleteItemInfo } from '../actions/actions.types';
 import type { BrowseNode } from '../tree/browse-tree.types';
@@ -48,6 +47,7 @@ import {
   formatFileSize,
   formatDate,
   getAssetDownloadUrl,
+  getFullAssetUrl,
   isAssetCached,
   getLastDownloadedDisplay,
   sanitizeRegistryUrl,
@@ -61,7 +61,7 @@ import type {
 import { useComponentIntelligence } from '../../search/details/useComponentIntelligence';
 import { buildIntelligenceRows, renderIntelligenceValue } from '../../search/details/intelligenceRows';
 import { LifecycleIframe, useLifecycleEntitlement } from './LifecycleIframe';
-import { DeepResearchLink, useToast } from '../../../shared';
+import { DeepResearchLink, DeleteConfirmationModal, useToast } from '../../../shared';
 import { useIsLicensedEdition } from '../../../shared/hooks';
 import {
   formatAttributeValue,
@@ -78,6 +78,20 @@ const STRINGS = {
   emptyDescription: 'Select An Item In The Tree To View Its Details.',
   loading: 'Loading details...',
   error: 'Error loading details',
+
+  /** Shared detail-action labels/tooltips (AC3/AC4, NEXUS-54502). */
+  actions: {
+    researchInGuide: 'Research in Guide',
+    researchInGuideTooltip: 'Research this component in Sonatype Guide',
+    download: 'Download',
+    downloadTooltip: 'Download this asset',
+    deleteTooltip: 'Delete this item',
+    copyUrl: 'Copy URL',
+    copyUrlTooltip: 'Copy the full asset URL to the clipboard',
+    copyPathTooltip: 'Copy the path to the clipboard',
+    copied: 'Copied!',
+    deleteRepositoryLabel: 'Repository:',
+  },
 
   component: {
     title: 'Component',
@@ -143,19 +157,38 @@ function DetailRow({ label, value, className = '', isPath = false }: DetailRowPr
 }
 
 /**
- * Path row with copy button — same affordance as GA Dependencies card.
+ * Path row with copy button, same affordance as the GA Dependencies card.
+ *
+ * The row always displays the (relative) path. What the button copies depends on `copyUrl`: when a
+ * full resolvable asset URL is supplied, the button copies that and is labeled "Copy URL" so the
+ * clipboard value opens in a browser or CLI; otherwise (e.g. a folder, which has no resolvable asset
+ * URL) it falls back to copying the displayed path.
  */
-function PathRowWithCopy({ label, value }: { label: string; value: string | null | undefined }): JSX.Element {
+function PathRowWithCopy({
+  label,
+  value,
+  copyUrl,
+}: {
+  label: string;
+  value: string | null | undefined;
+  copyUrl?: string | null;
+}): JSX.Element {
   const [copied, setCopied] = useState(false);
   const pathValue = value || '';
+  // Prefer the full URL for the clipboard; fall back to the displayed path when none is provided.
+  const textToCopy = copyUrl || pathValue;
+  const isUrlCopy = Boolean(copyUrl);
 
   const handleCopy = useCallback(() => {
-    if (pathValue) {
-      navigator.clipboard.writeText(pathValue);
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [pathValue]);
+  }, [textToCopy]);
+
+  const buttonLabel = isUrlCopy ? STRINGS.actions.copyUrl : 'Path';
+  const tooltip = isUrlCopy ? STRINGS.actions.copyUrlTooltip : STRINGS.actions.copyPathTooltip;
 
   return (
     <Box className="detail-panel__row detail-panel__row--path" py="2">
@@ -184,11 +217,11 @@ function PathRowWithCopy({ label, value }: { label: string; value: string | null
           >
             {pathValue || '-'}
           </Code>
-          {pathValue && (
-            <Tooltip content={copied ? 'Copied!' : 'Copy path'}>
+          {textToCopy && (
+            <Tooltip content={copied ? STRINGS.actions.copied : tooltip}>
               <Button variant="soft" color="blue" size="2" onClick={handleCopy}>
                 {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? 'Copied!' : 'Path'}
+                {copied ? STRINGS.actions.copied : buttonLabel}
               </Button>
             </Tooltip>
           )}
@@ -317,6 +350,81 @@ function FacetSection({
 }
 
 /**
+ * Right-aligned row of detail actions rendered in each variant's header (Research in Guide,
+ * Download, Delete). Each action is an independent, optional child so a given variant renders only
+ * the ones that apply, and the shape stays easy to extend. Keeping the actions in the header (rather
+ * than a footer below the content) means large tiles no longer push them off the bottom.
+ */
+function DetailHeaderActions({ children }: { children: React.ReactNode }): JSX.Element {
+  return (
+    <Flex gap="2" align="center" justify="end" wrap="wrap" className="detail-panel__header-actions">
+      {children}
+    </Flex>
+  );
+}
+
+/**
+ * "Research in Guide" action button linking to the Sonatype Guide component page. Rendered as an
+ * anchor so it is a real link (new tab, noopener). The Guide URL uses `maven` (not `maven2`) and
+ * encodes the group:name coordinate for maven, matching the existing Guide deep-link shape.
+ */
+function ResearchInGuideButton({
+  format,
+  group,
+  name,
+  version,
+  referrer,
+}: {
+  format: string;
+  group: string | null | undefined;
+  name: string;
+  version: string;
+  referrer: string;
+}): JSX.Element {
+  const guideFormat = format === 'maven2' ? 'maven' : format;
+  const componentPath =
+    format === 'maven2' && group
+      ? `${encodeURIComponent(group)}%3A${encodeURIComponent(name)}`
+      : encodeURIComponent(name);
+  const href = `https://guide.sonatype.com/component/${guideFormat}/${componentPath}/${encodeURIComponent(version)}?referrer=${referrer}`;
+
+  return (
+    <Tooltip content={STRINGS.actions.researchInGuideTooltip}>
+      <Button variant="soft" size="2" asChild>
+        <a href={href} target="_blank" rel="noopener noreferrer">
+          <ExternalLink size={14} />
+          {STRINGS.actions.researchInGuide}
+        </a>
+      </Button>
+    </Tooltip>
+  );
+}
+
+/** Download action button (asset only), with tooltip. */
+function DownloadButton({ onClick }: { onClick: () => void }): JSX.Element {
+  return (
+    <Tooltip content={STRINGS.actions.downloadTooltip}>
+      <Button variant="soft" size="2" onClick={onClick}>
+        <Download size={14} />
+        {STRINGS.actions.download}
+      </Button>
+    </Tooltip>
+  );
+}
+
+/** Delete action button, with tooltip. `label` differs per item type (Delete Asset/Component/etc.). */
+function DeleteButton({ label, onClick }: { label: string; onClick: () => void }): JSX.Element {
+  return (
+    <Tooltip content={STRINGS.actions.deleteTooltip}>
+      <Button variant="outline" color="red" size="2" onClick={onClick}>
+        <Trash2 size={14} />
+        {label}
+      </Button>
+    </Tooltip>
+  );
+}
+
+/**
  * Props for DetailPanel component.
  */
 export interface DetailPanelProps {
@@ -348,10 +456,10 @@ export interface DetailPanelProps {
   activeTab?: string;
   /** Callback when tab changes (for URL updates) */
   onTabChange?: (tab: string) => void;
-  /** When true, deletes are recoverable soft-deletes (moved to Trash); drives the confirm copy and
-   *  success toast. Set by the parent only for hosted repositories with soft-delete enabled. */
-  softDelete?: boolean;
-  /** Optional retention window (days) surfaced in the soft-delete confirm copy. */
+  /** When true, deletes are recoverable trashs (moved to Trash); drives the confirm copy and
+   *  success toast. Set by the parent only for hosted repositories with trash enabled. */
+  trash?: boolean;
+  /** Optional retention window (days) surfaced in the trash confirm copy. */
   retentionDays?: number;
 }
 
@@ -428,7 +536,7 @@ export function DetailPanel({
   canDelete = false,
   activeTab = 'summary',
   onTabChange,
-  softDelete = false,
+  trash = false,
   retentionDays,
 }: DetailPanelProps): JSX.Element {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -547,7 +655,7 @@ export function DetailPanel({
       await Promise.race([deletePromise, timeoutPromise]);
 
       setDeleteDialogOpen(false);
-      toast.success(softDelete ? 'Item moved to Trash' : 'Item deleted successfully');
+      toast.success(trash ? 'Item moved to Trash' : 'Item deleted successfully');
       if (onDeleted) {
         onDeleted();
       }
@@ -574,7 +682,7 @@ export function DetailPanel({
     toast,
     node,
     deleteAsFolder,
-    softDelete,
+    trash,
   ]);
 
   /**
@@ -661,6 +769,9 @@ export function DetailPanel({
     );
   }
 
+  // Resolve the delete target once so the confirmation modal keys its token/copy off the item.
+  const deleteItemInfo = getDeleteItemInfo();
+
   // Render based on node type
   return (
     <Box className="detail-panel" p="4" pt="0">
@@ -717,16 +828,28 @@ export function DetailPanel({
         />
       )}
 
-      {/* Delete Dialog */}
-      <DeleteDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        item={getDeleteItemInfo()}
-        onConfirm={handleDeleteConfirm}
-        isDeleting={isDeleting}
-        softDelete={softDelete}
-        retentionDays={retentionDays}
-      />
+      {/* Delete confirmation — requires typing/pasting the specific item name (case-sensitive) so a
+          destructive delete cannot be confirmed by a reflexive click. The acknowledgement token IS
+          the item name, making the confirmation string specific to the item being deleted. */}
+      {deleteItemInfo && (
+        <DeleteConfirmationModal
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={handleDeleteConfirm}
+          entityName={deleteItemInfo.name}
+          entityType={deleteItemInfo.type}
+          requiredConfirmationText={deleteItemInfo.name}
+          loading={isDeleting}
+          trash={trash}
+          retentionDays={retentionDays}
+        >
+          {deleteItemInfo.repositoryName && (
+            <Text size="1" color="gray">
+              {STRINGS.actions.deleteRepositoryLabel} {deleteItemInfo.repositoryName}
+            </Text>
+          )}
+        </DeleteConfirmationModal>
+      )}
     </Box>
   );
 }
@@ -756,11 +879,31 @@ function PackageRootDetails({
   onDeleteMetadataClick,
   onDeleteFolderClick,
 }: PackageRootDetailsProps): JSX.Element {
+  // Full, resolvable URL for the Copy URL action on the metadata asset.
+  const fullAssetUrl = getFullAssetUrl(repositoryName, assetData?.downloadUrl, assetData?.path || assetData?.name);
+
   return (
     <Card>
-      <Box p="3" className="detail-panel__header">
+      {/* Header — title plus the two right-aligned delete actions (metadata vs entire package). */}
+      <Flex p="3" className="detail-panel__header" align="start" justify="between" gap="3" wrap="wrap">
         <Heading size="5">{node.text}</Heading>
-      </Box>
+        {canDelete && (
+          <DetailHeaderActions>
+            <Tooltip content={STRINGS.actions.deleteTooltip}>
+              <Button variant="outline" color="orange" size="2" onClick={onDeleteMetadataClick}>
+                <Trash2 size={14} />
+                Delete Metadata Only
+              </Button>
+            </Tooltip>
+            <Tooltip content={STRINGS.actions.deleteTooltip}>
+              <Button variant="outline" color="red" size="2" onClick={onDeleteFolderClick}>
+                <Trash2 size={14} />
+                Delete Entire Package
+              </Button>
+            </Tooltip>
+          </DetailHeaderActions>
+        )}
+      </Flex>
 
       <Separator size="4" />
 
@@ -770,7 +913,7 @@ function PackageRootDetails({
         <DetailRow label="Content Type" value={assetData?.contentType} />
         <DetailRow label="Size" value={formatFileSize(assetData?.size)} />
         <DetailRow label="Last Updated" value={formatDate(assetData?.blobUpdated)} />
-        <PathRowWithCopy label="Path" value={assetData?.path || assetData?.name} />
+        <PathRowWithCopy label="Path" value={assetData?.path || assetData?.name} copyUrl={fullAssetUrl} />
       </Box>
 
       <Separator size="4" />
@@ -782,36 +925,10 @@ function PackageRootDetails({
           </Callout.Icon>
           <Callout.Text>
             This node represents both a package folder (containing version subfolders) and
-            a metadata asset. Choose which to delete below.
+            a metadata asset. Choose which to delete from the actions above.
           </Callout.Text>
         </Callout.Root>
       </Box>
-
-      {canDelete && (
-        <>
-          <Separator size="4" />
-          <Flex p="3" gap="2" justify="end">
-            <Button
-              variant="outline"
-              color="orange"
-              size="2"
-              onClick={onDeleteMetadataClick}
-            >
-              <Trash2 size={14} />
-              Delete Metadata Only
-            </Button>
-            <Button
-              variant="outline"
-              color="red"
-              size="2"
-              onClick={onDeleteFolderClick}
-            >
-              <Trash2 size={14} />
-              Delete Entire Package
-            </Button>
-          </Flex>
-        </>
-      )}
     </Card>
   );
 }
@@ -1012,12 +1129,30 @@ function ComponentDetails({
     componentData?.version,
   );
 
+  const guideName = componentData?.name || node.text;
+
   return (
     <Card>
-      {/* Header — size="5" (one level down from page size="6") */}
-      <Box p="3" className="detail-panel__header">
+      {/* Header — title plus right-aligned actions (Research in Guide + Delete). Research in Guide is
+          gated only on having a version; Delete alone is gated on canDelete, so a read-only user can
+          still research but not delete. */}
+      <Flex p="3" className="detail-panel__header" align="start" justify="between" gap="3" wrap="wrap">
         <Heading size="5">{node.text}</Heading>
-      </Box>
+        <DetailHeaderActions>
+          {componentData?.version && componentData.format && (
+            <ResearchInGuideButton
+              format={componentData.format}
+              group={componentData.group}
+              name={guideName}
+              version={componentData.version}
+              referrer="browse-tree-component"
+            />
+          )}
+          {canDelete && (
+            <DeleteButton label={STRINGS.component.deleteButton} onClick={onDeleteClick} />
+          )}
+        </DetailHeaderActions>
+      </Flex>
 
       <Separator size="4" />
 
@@ -1070,38 +1205,6 @@ function ComponentDetails({
         </>
       )}
 
-      {/* Actions */}
-      {canDelete && (
-        <>
-          <Separator size="4" />
-          <Flex p="3" gap="2" justify="end">
-            {componentData?.version && (
-              <Button
-                variant="soft"
-                size="2"
-                onClick={() => {
-                  const format = componentData.format;
-                  const name = componentData.name;
-                  const guideUrl = `https://guide.sonatype.com/component/${format}/${encodeURIComponent(name)}/${encodeURIComponent(componentData.version)}?referrer=browse-tree-component`;
-                  window.open(guideUrl, '_blank', 'noopener,noreferrer');
-                }}
-              >
-                <ExternalLink size={14} />
-                Research in Guide
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              color="red"
-              size="2"
-              onClick={onDeleteClick}
-            >
-              <Trash2 size={14} />
-              {STRINGS.component.deleteButton}
-            </Button>
-          </Flex>
-        </>
-      )}
     </Card>
   );
 }
@@ -1316,12 +1419,28 @@ function AssetDetails({
     assetData,
   );
 
+  // Full, resolvable URL for the Copy URL action (server downloadUrl or a built fallback, resolved against the current page).
+  const fullAssetUrl = getFullAssetUrl(repositoryName, assetData?.downloadUrl, assetData?.path || assetData?.name);
+
   return (
     <Card>
-      {/* Header — size="5" (one level down from page size="6") */}
-      <Box p="3" className="detail-panel__header">
+      {/* Header — title plus right-aligned actions (Research in Guide + Download + Delete). */}
+      <Flex p="3" className="detail-panel__header" align="start" justify="between" gap="3" wrap="wrap">
         <Heading size="5" className="detail-panel__header-title">{node.text}</Heading>
-      </Box>
+        <DetailHeaderActions>
+          {componentData?.version && (
+            <ResearchInGuideButton
+              format={assetData?.format || componentData.format}
+              group={componentData.group}
+              name={componentData.name}
+              version={componentData.version}
+              referrer="repo-browse-asset"
+            />
+          )}
+          <DownloadButton onClick={onDownloadClick} />
+          {canDelete && <DeleteButton label={STRINGS.asset.deleteButton} onClick={onDeleteClick} />}
+        </DetailHeaderActions>
+      </Flex>
 
       {/* Tabs - controlled by URL when onTabChange is provided */}
       <Tabs.Root value={selectedTab} onValueChange={onTabChange}>
@@ -1345,7 +1464,11 @@ function AssetDetails({
                 <DetailRow label="Version" value={componentData.version} />
               </>
             )}
-            <PathRowWithCopy label={STRINGS.asset.path} value={assetData?.path || assetData?.name} />
+            <PathRowWithCopy
+              label={STRINGS.asset.path}
+              value={assetData?.path || assetData?.name}
+              copyUrl={fullAssetUrl}
+            />
             <DetailRow label={STRINGS.asset.contentType} value={assetData?.contentType} />
             <DetailRow label={STRINGS.asset.size} value={formatFileSize(assetData?.size)} />
             {/* Three separate populated dates (Classic parity, NEXUS-54501) */}
@@ -1524,44 +1647,6 @@ function AssetDetails({
           </Tabs.Content>
         )}
       </Tabs.Root>
-
-      {/* Actions */}
-      <Separator size="4" />
-      <Flex p="3" gap="2" justify="end">
-        {componentData?.version && (
-          <Button
-            variant="soft"
-            size="2"
-            asChild
-          >
-            <a
-              href={(() => {
-                const format = assetData?.format === 'maven2' ? 'maven' : assetData?.format || componentData.format;
-                const componentPath =
-                  assetData?.format === 'maven2' && componentData?.group
-                    ? `${encodeURIComponent(componentData.group)}%3A${encodeURIComponent(componentData.name)}`
-                    : encodeURIComponent(componentData.name);
-                return `https://guide.sonatype.com/component/${format}/${componentPath}/${encodeURIComponent(componentData.version)}?referrer=repo-browse-asset`;
-              })()}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ExternalLink size={14} />
-              Research in Guide
-            </a>
-          </Button>
-        )}
-        <Button variant="soft" size="2" onClick={onDownloadClick}>
-          <Download size={14} />
-          {STRINGS.asset.downloadButton}
-        </Button>
-        {canDelete && (
-          <Button variant="outline" color="red" size="2" onClick={onDeleteClick}>
-            <Trash2 size={14} />
-            {STRINGS.asset.deleteButton}
-          </Button>
-        )}
-      </Flex>
     </Card>
   );
 }
@@ -1613,10 +1698,15 @@ function FolderDetails({
 
   return (
     <Card>
-      {/* Header — size="5" (one level down from page size="6") */}
-      <Box p="3" className="detail-panel__header">
+      {/* Header — title plus right-aligned Delete Folder action. */}
+      <Flex p="3" className="detail-panel__header" align="start" justify="between" gap="3" wrap="wrap">
         <Heading size="5">{node.text}</Heading>
-      </Box>
+        {canDelete && (
+          <DetailHeaderActions>
+            <DeleteButton label={STRINGS.folder.deleteButton} onClick={onDeleteClick} />
+          </DetailHeaderActions>
+        )}
+      </Flex>
 
       <Separator size="4" />
 
@@ -1644,20 +1734,9 @@ function FolderDetails({
         <>
           <Separator size="4" />
           <Box p="3">
-            <Text size="1" color="gray" mb="2">
+            <Text size="1" color="gray">
               {STRINGS.folder.deleteWarning}
             </Text>
-            <Flex gap="2" justify="end">
-              <Button
-                variant="outline"
-                color="red"
-                size="2"
-                onClick={onDeleteClick}
-              >
-                <Trash2 size={14} />
-                {STRINGS.folder.deleteButton}
-              </Button>
-            </Flex>
           </Box>
         </>
       )}

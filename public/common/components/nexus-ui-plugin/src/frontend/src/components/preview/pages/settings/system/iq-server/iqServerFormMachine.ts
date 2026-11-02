@@ -11,10 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { assign } from 'xstate';
 import Axios from 'axios';
-import { createFormMachine, type FormContext, type ValidationErrors } from '../../../../../../interface/form';
-import { validateIqConfig } from './iqServerUtils';
 import { parsePropertiesString, serializeProperties } from './propertyList';
 import { IqServerConfiguration, IqServerFormData, DEFAULT_IQ_CONFIGURATION } from './types';
 
@@ -52,13 +49,21 @@ export function toUpdatePayload(data: IqServerFormData): IqServerConfiguration {
 export async function fetchIqSettings(): Promise<IqServerFormData> {
   try {
     const response = await Axios.get(IQ_API);
-    const data = { ...DEFAULT_IQ_CONFIGURATION, ...response.data };
-    // GET /v1/iq returns an all-null XO while IQ has never been configured, and spreading that
-    // over the defaults replaces the '' default with null. The API rejects a null/blank
-    // authenticationType (@NotNull on IqConnectionXo), and the dialog's dropdown already
-    // displays USER for an absent value, so normalize here instead of shipping a value the
-    // form never shows. Previously this only fired when a username was present, which is
-    // never true on a first-time setup.
+    // GET /v1/iq returns an all-null XO while IQ has never been configured. A plain spread
+    // would let those nulls overwrite the '' string defaults (url, username, password,
+    // properties), and the form then calls string methods like url.trim() on null and
+    // crashes. Drop null/undefined before spreading so the defaults stand for any field the
+    // server left empty. timeoutSeconds is legitimately nullable ("use the global timeout"),
+    // but its default is null too, so dropping it here is a no-op.
+    const raw = (response.data ?? {}) as Record<string, unknown>;
+    const cleaned = Object.fromEntries(
+      Object.entries(raw).filter(([, value]) => value !== null && value !== undefined),
+    );
+    const data = { ...DEFAULT_IQ_CONFIGURATION, ...cleaned };
+    // The API rejects a null/blank authenticationType (@NotNull on IqConnectionXo), and the
+    // dropdown already displays USER for an absent value, so normalize a still-blank value
+    // here instead of shipping one the form never shows. Previously this only fired when a
+    // username was present, which is never true on a first-time setup.
     if (!data.authenticationType) data.authenticationType = 'USER';
     return toFormData(data);
   } catch (err: any) {
@@ -82,49 +87,4 @@ export async function putIqSettings(config: IqServerConfiguration): Promise<IqSe
  */
 export async function disableIqServer(): Promise<void> {
   await Axios.post(`${IQ_API}/disable`);
-}
-
-export async function saveIqSettings(formData: IqServerFormData): Promise<IqServerFormData> {
-  const payload = toUpdatePayload(formData);
-  await Axios.put(IQ_API, payload);
-  const response = await Axios.get(IQ_API);
-  const serverData = response.data || {};
-  // These four fields are not returned by GET — preserve from payload so save doesn't silently discard them.
-  const data: IqServerConfiguration = {
-    ...DEFAULT_IQ_CONFIGURATION,
-    authenticationType: payload.authenticationType,
-    useTrustStoreForUrl: payload.useTrustStoreForUrl,
-    timeoutSeconds: payload.timeoutSeconds,
-    properties: payload.properties,
-    ...serverData,
-  };
-  if (!data.authenticationType) data.authenticationType = 'USER';
-  // Keep caller's properties array (stable row ids) to avoid row remounts/focus loss after save.
-  return { ...toFormData(data), properties: formData.properties, propertiesDroppedLineCount: 0 };
-}
-
-export function createIqServerFormMachine() {
-  return createFormMachine<IqServerFormData>({
-    id: 'iq-server-form',
-    stayEditableAfterSave: true,
-    context: { data: { ...DEFAULT_IQ_FORM_DATA } },
-    on: {
-      CLEAR_SAVE_ERROR: { actions: 'clearSaveError' },
-    },
-    actions: {
-      validate: assign((ctx: FormContext<IqServerFormData>) => ({
-        validationErrors: validateIqConfig(ctx.data, ctx.pristineData) as ValidationErrors,
-      })),
-      // Apply the merged re-GET result as new data + pristine (factory default discards it).
-      onSaveSuccess: assign((_ctx, event: unknown) => {
-        const saved = (event as { data?: IqServerFormData })?.data as IqServerFormData;
-        return { data: saved, pristineData: saved, isPristine: true, touched: {} };
-      }),
-    },
-    services: {
-      load: async () => ({ data: await fetchIqSettings() }),
-      // Base save (used by machine tests). Hook overrides to add toast + capabilities refresh.
-      save: async (ctx: FormContext<IqServerFormData>) => saveIqSettings(ctx.data),
-    },
-  });
 }

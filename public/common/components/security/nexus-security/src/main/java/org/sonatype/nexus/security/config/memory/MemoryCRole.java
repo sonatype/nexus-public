@@ -17,8 +17,6 @@ import java.util.Set;
 
 import org.sonatype.nexus.security.config.CRole;
 
-import com.google.common.collect.Sets;
-
 /**
  * An implementation of {@link CRole} suitable for an in-memory backing store.
  *
@@ -69,7 +67,7 @@ public class MemoryCRole
   @Override
   public Set<String> getPrivileges() {
     if (this.privileges == null) {
-      this.privileges = Sets.newHashSet();
+      this.privileges = new HashSet<>();
     }
 
     return this.privileges;
@@ -78,7 +76,7 @@ public class MemoryCRole
   @Override
   public Set<String> getRoles() {
     if (this.roles == null) {
-      this.roles = Sets.newHashSet();
+      this.roles = new HashSet<>();
     }
 
     return this.roles;
@@ -180,11 +178,11 @@ public class MemoryCRole
       MemoryCRole copy = (MemoryCRole) super.clone();
 
       if (this.privileges != null) {
-        copy.privileges = Sets.newHashSet(this.privileges);
+        copy.privileges = new HashSet<>(this.privileges);
       }
 
       if (this.roles != null) {
-        copy.roles = Sets.newHashSet(this.roles);
+        copy.roles = new HashSet<>(this.roles);
       }
 
       return copy;

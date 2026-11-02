@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import jakarta.inject.Provider;
 import jakarta.validation.ValidationException;
 
@@ -31,7 +32,6 @@ import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
-import com.google.common.base.Predicate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

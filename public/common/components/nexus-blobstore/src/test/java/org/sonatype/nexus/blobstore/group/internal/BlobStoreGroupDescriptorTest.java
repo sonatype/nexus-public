@@ -82,7 +82,7 @@ public class BlobStoreGroupDescriptorTest
         blobStoreUtil,
         provider,
         quotaService,
-        List.of(new RoundRobinFillPolicy(), new WriteToFirstMemberFillPolicy()));
+        List.of(new RoundRobinFillPolicy(quotaService, false), new WriteToFirstMemberFillPolicy()));
 
     blobStores = new HashMap<>();
 

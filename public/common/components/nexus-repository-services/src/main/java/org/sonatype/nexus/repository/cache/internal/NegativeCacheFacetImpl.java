@@ -39,6 +39,7 @@ import org.sonatype.nexus.repository.view.Status;
 import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -48,8 +49,12 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 /**
  * Default {@link NegativeCacheFacet} implementation.
  *
+ * Primary so formats can provide a subclass (for example one with a format-specific cache key) without making
+ * unqualified {@code NegativeCacheFacet} injection ambiguous.
+ *
  * @since 3.0
  */
+@Primary
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class NegativeCacheFacetImpl

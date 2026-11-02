@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.capability;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 import jakarta.validation.ValidationException;
@@ -65,8 +67,6 @@ import org.sonatype.nexus.security.UserIdHelper;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
@@ -235,7 +235,7 @@ public class DefaultCapabilityRegistry
     try {
       lock.lock();
 
-      final Map<String, String> props = properties == null ? Maps.<String, String>newHashMap() : properties;
+      final Map<String, String> props = properties == null ? new HashMap<>() : properties;
 
       validatorProvider.get().validate(type);
 
@@ -330,7 +330,7 @@ public class DefaultCapabilityRegistry
     try {
       lock.lock();
 
-      final Map<String, String> props = properties == null ? Maps.<String, String>newHashMap() : properties;
+      final Map<String, String> props = properties == null ? new HashMap<>() : properties;
 
       reference = require(id);
 
@@ -872,7 +872,7 @@ public class DefaultCapabilityRegistry
       return props;
     }
 
-    Map<String, String> encrypted = Maps.newHashMap(props);
+    Map<String, String> encrypted = new HashMap<>(props);
     List<FormField> formFields = descriptor.formFields();
 
     if (formFields != null) {
@@ -881,7 +881,7 @@ public class DefaultCapabilityRegistry
           String value = encrypted.get(formField.getId());
           if (value != null) {
             Secret oldSecret = secretsService.from(value);
-            if (shouldMigrate.apply(oldSecret)) {
+            if (shouldMigrate.test(oldSecret)) {
               encrypted.put(formField.getId(),
                   secretsService.encryptMaven("capabilities", oldSecret.decrypt(), UserIdHelper.get()).getId());
             }
@@ -925,7 +925,7 @@ public class DefaultCapabilityRegistry
       return props;
     }
 
-    Map<String, String> encrypted = Maps.newHashMap(props);
+    Map<String, String> encrypted = new HashMap<>(props);
     List<FormField> formFields = descriptor.formFields();
 
     if (formFields != null) {
@@ -1002,7 +1002,7 @@ public class DefaultCapabilityRegistry
     if (props == null || props.isEmpty()) {
       return props;
     }
-    Map<String, String> decrypted = Maps.newHashMap(props);
+    Map<String, String> decrypted = new HashMap<>(props);
     List<FormField> formFields = descriptor.formFields();
     if (formFields != null) {
       for (FormField formField : formFields) {

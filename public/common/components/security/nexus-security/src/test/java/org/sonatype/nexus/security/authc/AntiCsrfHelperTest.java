@@ -94,6 +94,84 @@ class AntiCsrfHelperTest
   }
 
   /*
+   * A CORS preflight must be allowed even from a cross-site origin. It carries no credentials and no
+   * body, and the browser discards its response body, so there is nothing to forge or to read back.
+   * Blocking it rejects the preflight with a 401 before any downstream handler runs, and since a failed
+   * preflight stops the browser from sending the real request at all, the client sees only an unexplained
+   * CORS error. Reproduced with VS Code derivatives, whose renderer origin is vscode-file://vscode-app
+   * and which therefore send Sec-Fetch-Site: cross-site on every gallery call.
+   *
+   * No subject is set up here on purpose: OPTIONS is answered as a safe method before authentication is
+   * consulted, so stubbing one would go unused.
+   */
+  @Test
+  void testIsAccessAllowed_CrossSitePreflightAllowed() {
+    // Deliberately stubbed leniently: OPTIONS is recognized as safe before isCrossSiteRequest is ever
+    // consulted, so the header is not read at all. That short-circuit is the behaviour under test — the
+    // preflight is allowed regardless of origin, not merely allowed for this one header value.
+    lenient().when(httpServletRequest.getHeader(HttpHeaders.SEC_FETCH_SITE)).thenReturn("cross-site");
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.OPTIONS);
+
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+  }
+
+  /*
+   * The preflight exemption must not widen to state-changing methods on UI paths: a cross-site POST
+   * outside /repository is the exact case the Sec-Fetch-Site check exists for, and stays blocked.
+   * setup() stubs the URI as /somepath, so this exercises the non-repository branch.
+   */
+  @Test
+  void testIsAccessAllowed_CrossSitePostStillBlocked() {
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    when(httpServletRequest.getHeader(HttpHeaders.SEC_FETCH_SITE)).thenReturn("cross-site");
+
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
+  }
+
+  /*
+   * Repository content is a machine-facing API and is exempt from the Sec-Fetch-Site check.
+   * The exemption is safe because the anti-CSRF token check still applies for session-authenticated
+   * requests (see testIsAccessAllowed_RepositoryPathStillRequiresTokenWhenSessionAuthenticated).
+   * Token- and basic-authenticated repository calls are unaffected either way; they do not rely on a
+   * session, so CSRF does not apply to them. The only thing the Sec-Fetch-Site check blocked here was
+   * the legitimate client: VS Code derivatives render the gallery from origin vscode-file://vscode-app,
+   * making every gallery call cross-site by construction.
+   */
+  @Test
+  void testIsAccessAllowed_CrossSitePostAllowedForRepositoryPath() {
+    when(httpServletRequest.getRequestURI()).thenReturn("/repository/openvsx-proxy/vscode/gallery/extensionquery");
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    lenient().when(httpServletRequest.getHeader(HttpHeaders.SEC_FETCH_SITE)).thenReturn("cross-site");
+
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+  }
+
+  /*
+   * The exemption is anchored, so a path that merely contains or resembles the prefix is not covered.
+   */
+  @Test
+  void testIsAccessAllowed_CrossSitePostBlockedForRepositoryLookalikePath() {
+    when(httpServletRequest.getRequestURI()).thenReturn("/service/rest/repository/attack");
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    when(httpServletRequest.getHeader(HttpHeaders.SEC_FETCH_SITE)).thenReturn("cross-site");
+
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
+  }
+
+  /*
+   * A session-authenticated POST to a repository path still requires a valid anti-CSRF token: the
+   * exemption removes only the Sec-Fetch-Site short-circuit, not the token check itself.
+   */
+  @Test
+  void testIsAccessAllowed_RepositoryPathStillRequiresTokenWhenSessionAuthenticated() {
+    setupBrowserSubject();
+    when(httpServletRequest.getRequestURI()).thenReturn("/repository/openvsx-proxy/vscode/gallery/extensionquery");
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
+  }
+
+  /*
    * Test that the filter blocks requests with 'unsafe' HTTP methods without a token
    */
   @Test
@@ -241,6 +319,10 @@ class AntiCsrfHelperTest
 
     verify(httpServletRequest).getMethod();
     verify(httpServletRequest, times(2)).getHeader(HttpHeaders.SEC_FETCH_SITE);
+    // The repository-path exemption is consulted before the cross-site check. reset() above cleared the
+    // URI stub, so this returns null and the request is treated as non-repository — which is what keeps
+    // the assertion above at false.
+    verify(httpServletRequest).getRequestURI();
     verifyNoMoreInteractions(httpServletRequest);
   }
 

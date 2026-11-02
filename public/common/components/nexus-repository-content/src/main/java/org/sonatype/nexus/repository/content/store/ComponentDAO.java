@@ -47,15 +47,15 @@ public interface ComponentDAO
 
   /**
    * MyBatis parameter name used by every read query to gate the {@code deleted_on IS NULL}
-   * predicate. When the schema has not yet been migrated to the soft-delete columns the store
+   * predicate. When the schema has not yet been migrated to the trash columns the store
    * layer passes {@code false}, so the predicate is omitted (it would crash) and the query
-   * still returns the correct logical result (pre-migration no row is soft-deleted).
+   * still returns the correct logical result (pre-migration no row is trashed).
    *
    * <p>
    * See {@code SoftDeleteColumnsMigrationStep_2_172} and
-   * {@link org.sonatype.nexus.repository.content.store.ComponentStore#softDeleteAvailable()}.
+   * {@link org.sonatype.nexus.repository.content.store.ComponentStore#trashAvailable()}.
    */
-  String SOFT_DELETE_AVAILABLE = "softDeleteAvailable";
+  String TRASH_AVAILABLE = "trashAvailable";
 
   /**
    * Count all components in the given repository.
@@ -64,8 +64,8 @@ public interface ComponentDAO
    * @param kind optional kind of components to count
    * @param filter optional filter to apply
    * @param filterParams parameter map for the optional filter
-   * @param softDeleteAvailable whether the {@code deleted_on} column exists; see
-   *          {@link #SOFT_DELETE_AVAILABLE}
+   * @param trashAvailable whether the {@code deleted_on} column exists; see
+   *          {@link #TRASH_AVAILABLE}
    * @return count of components in the repository
    */
   int countComponents(
@@ -73,7 +73,7 @@ public interface ComponentDAO
       @Nullable @Param("kind") String kind,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Count all Nuget components with an associated blob_id in the given repository.
@@ -83,12 +83,12 @@ public interface ComponentDAO
       @Nullable @Param("kind") String kind,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Count all components without normalized_version.
    */
-  int countUnnormalized(@Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+  int countUnnormalized(@Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse all components in the given repository in a paged fashion.
@@ -109,7 +109,7 @@ public interface ComponentDAO
       @Nullable @Param("kind") String kind,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   Continuation<ComponentData> browseComponentsEager(
       @Param("repositoryIds") Set<Integer> repositoryIds,
@@ -118,7 +118,7 @@ public interface ComponentDAO
       @Nullable @Param("kind") String kind,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse all components without normalized_version
@@ -131,7 +131,7 @@ public interface ComponentDAO
   Continuation<ComponentData> browseUnnormalized(
       @Param("limit") int limit,
       @Nullable @Param("continuationToken") String continuationToken,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse all components in the given repository ids in a paged fashion.
@@ -140,7 +140,7 @@ public interface ComponentDAO
       @Param("repositoryIds") Set<Integer> repositoryIds,
       @Param("limit") int limit,
       @Nullable @Param("continuationToken") String continuationToken,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse all components that have at least one associated asset in the given repository.
@@ -149,7 +149,7 @@ public interface ComponentDAO
       @Param("repositoryId") int repositoryId,
       @Param("limit") int limit,
       @Nullable @Param("continuationToken") String continuationToken,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse all components in the given repository, namespace and name, in a paged fashion.
@@ -160,7 +160,7 @@ public interface ComponentDAO
       @Param("name") String name,
       @Param("limit") int limit,
       @Nullable @Param("continuationToken") String continuationToken,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Select components using the provided query generator and parameters.
@@ -192,7 +192,7 @@ public interface ComponentDAO
    */
   Collection<String> browseNamespaces(
       @Param("repositoryId") int repositoryId,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse the names of all components under a namespace in the given repository.
@@ -200,7 +200,7 @@ public interface ComponentDAO
   Collection<String> browseNames(
       @Param("repositoryId") int repositoryId,
       @Param("namespace") String namespace,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Check whether a component with the given namespace and name exists in the repository.
@@ -212,7 +212,7 @@ public interface ComponentDAO
       @Param("repositoryId") int repositoryId,
       @Param("namespace") String namespace,
       @Param("name") String name,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse all component sets (distinct namespace+name) in the given repository.
@@ -221,7 +221,7 @@ public interface ComponentDAO
       @Param("repositoryId") int repositoryId,
       @Param("limit") int limit,
       @Nullable @Param("continuationToken") String continuationToken,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse the versions of a component with the given namespace and name in the given repository.
@@ -230,7 +230,7 @@ public interface ComponentDAO
       @Param("repositoryId") int repositoryId,
       @Param("namespace") String namespace,
       @Param("name") String name,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse the versions of a component across the given set of repositories.
@@ -239,7 +239,7 @@ public interface ComponentDAO
       @Param("namespace") String namespace,
       @Param("name") String name,
       @Param("repositoryIds") Set<Integer> repositoryIds,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Creates the given component in the content data store.
@@ -259,14 +259,14 @@ public interface ComponentDAO
    *
    * @param component the component to create
    * @param entityVersionEnabled whether to version this component
-   * @param softDeleteAvailable whether the {@code deleted_on}/{@code deleted_by} columns exist (see
-   *          {@link #SOFT_DELETE_AVAILABLE}); when {@code false} those columns are omitted from the write so it
+   * @param trashAvailable whether the {@code deleted_on}/{@code deleted_by} columns exist (see
+   *          {@link #TRASH_AVAILABLE}); when {@code false} those columns are omitted from the write so it
    *          stays valid against a pre-migration schema during a zero-downtime upgrade
    */
   void createComponent(
       @Param("component") ComponentData component,
       @Param("entityVersionEnabled") boolean entityVersionEnabled,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Retrieves a component from the content data store.
@@ -276,12 +276,12 @@ public interface ComponentDAO
    */
   Optional<Component> readComponent(
       @Param("componentId") int componentId,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
-   * Backward-compatible overload retained so callers that predate soft-delete keep compiling and behave as
-   * before. Delegates with {@code softDeleteAvailable=false}, which omits the {@code deleted_on IS NULL}
-   * predicate -- the pre-soft-delete behavior, and safe when the column is not present.
+   * Backward-compatible overload retained so callers that predate trash keep compiling and behave as
+   * before. Delegates with {@code trashAvailable=false}, which omits the {@code deleted_on IS NULL}
+   * predicate -- the pre-trash behavior, and safe when the column is not present.
    */
   default Optional<Component> readComponent(final int componentId) {
     return readComponent(componentId, false);
@@ -295,7 +295,7 @@ public interface ComponentDAO
       @Param("namespace") String namespace,
       @Param("name") String name,
       @Param("version") String version,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Retrieves a component located at the given coordinate in within the given repository ids.
@@ -305,7 +305,7 @@ public interface ComponentDAO
       @Param("name") String name,
       @Param("version") String version,
       @Param("repositoryIds") Set<Integer> repositoryIds,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Updates the kind of the given component in the content data store.
@@ -334,7 +334,7 @@ public interface ComponentDAO
    */
   Optional<NestedAttributesMap> readComponentAttributes(
       @Param("component") Component component,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Updates the attributes of the given component in the content data store.
@@ -376,7 +376,7 @@ public interface ComponentDAO
       @Param("repositoryId") int repositoryId,
       @Param("daysAgo") int daysAgo,
       @Param("limit") int limit,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Purges the selected components along with their assets.
@@ -401,55 +401,58 @@ public interface ComponentDAO
   int purgeSelectedComponents(@Param("componentIds") Integer[] componentIds);
 
   /**
-   * Purges the selected components (and their assets) but only those still soft-deleted
+   * Purges the selected components (and their assets) but only those still trashed
    * ({@code deleted_on IS NOT NULL}). The predicate makes both DELETEs no-ops if a concurrent
    * restore clears {@code deleted_on} between the caller's id selection and this delete, preventing
    * a just-restored live component from being permanently destroyed by a racing purge. The unguarded
    * {@link #purgeSelectedComponents(int[])} remains for the GC cleanup path, which purges
-   * non-soft-deleted components (NEXUS-49147 / NEXUS-51733).
+   * non-trashed components (NEXUS-49147 / NEXUS-51733).
    * <P/>
    * This version of the method is for databases that support primitive arrays.
    *
    * @param componentIds the components to purge
    * @return the number of purged components
    */
-  int purgeSelectedSoftDeletedComponents(@Param("componentIds") int[] componentIds);
+  int purgeSelectedTrashedComponents(@Param("componentIds") int[] componentIds);
 
   /**
-   * Guarded purge variant that only removes components still soft-deleted ({@code deleted_on IS NOT
-   * NULL}). See {@link #purgeSelectedSoftDeletedComponents(int[])}.
+   * Guarded purge variant that only removes components still trashed ({@code deleted_on IS NOT
+   * NULL}). See {@link #purgeSelectedTrashedComponents(int[])}.
    * <P/>
    * This version of the method is for databases that don't yet support primitive arrays.
    *
    * @param componentIds the components to purge
    * @return the number of purged components
    */
-  int purgeSelectedSoftDeletedComponents(@Param("componentIds") Integer[] componentIds);
+  int purgeSelectedTrashedComponents(@Param("componentIds") Integer[] componentIds);
 
   /**
-   * Marks a component as soft-deleted.
+   * Marks a component as trashed.
    *
    * @param componentId the internal id of the component
    * @param deletedBy the user who performed the deletion
    */
-  void softDeleteComponent(
+  void trashComponent(
       @Param("componentId") int componentId,
       @Param("deletedBy") String deletedBy);
 
   /**
-   * Restores a soft-deleted component by clearing the deletion metadata.
+   * Restores a trashed component by clearing the deletion metadata.
    *
    * @param componentId the internal id of the component
+   * @return the number of rows updated: {@code 1} on success, {@code 0} if the component was purged (or already
+   *         restored) between selection and this call -- lets callers detect a lost restore/purge race
+   *         (NEXUS-55233) rather than reporting a no-op restore as success
    */
-  void undoSoftDeleteComponent(@Param("componentId") int componentId);
+  int undoTrashComponent(@Param("componentId") int componentId);
 
   /**
-   * Browse soft-deleted components, optionally filtered by repository.
+   * Browse trashed components, optionally filtered by repository.
    *
    * @param repositoryId optional repository to filter by
    * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
-   * @return collection of soft-deleted components
+   * @return collection of trashed components
    */
   Continuation<ComponentData> browseDeletedComponents(
       @Nullable @Param("repositoryId") Integer repositoryId,
@@ -457,28 +460,28 @@ public interface ComponentDAO
       @Nullable @Param("continuationToken") String continuationToken);
 
   /**
-   * Count soft-deleted components, optionally filtered by repository.
+   * Count trashed components, optionally filtered by repository.
    *
    * @param repositoryId optional repository to filter by
-   * @return count of soft-deleted components
+   * @return count of trashed components
    */
   int countDeletedComponents(@Nullable @Param("repositoryId") Integer repositoryId);
 
   /**
-   * Reads a soft-deleted component by its internal id.
+   * Reads a trashed component by its internal id.
    *
    * @param componentId the internal id of the component
-   * @return the soft-deleted component if found
+   * @return the trashed component if found
    */
   Optional<ComponentData> readDeletedComponent(@Param("componentId") int componentId);
 
   /**
-   * Returns up to {@code limit} internal ids of components soft-deleted before the given timestamp,
+   * Returns up to {@code limit} internal ids of components trashed before the given timestamp,
    * ordered by id. The expire task purges these in bounded batches, cleaning the junction-table rows
    * that have no FK cascade on {@code component_id} (notably {@code {format}_component_tag}) before
    * deleting each batch via {@link #purgeSelectedComponents}. (NEXUS-49147 / NEXUS-51733)
    *
-   * @param olderThan select components soft-deleted before this time
+   * @param olderThan select components trashed before this time
    * @param limit maximum number of ids to return (one drain batch)
    * @return list of internal component ids
    */

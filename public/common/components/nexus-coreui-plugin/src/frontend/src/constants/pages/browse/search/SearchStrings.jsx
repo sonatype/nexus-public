@@ -214,6 +214,20 @@ export default {
         }
       }
     },
+    OPENVSX: {
+      MENU: {
+        text: 'Open VSX',
+        description: 'Search for extensions in Open VSX repositories',
+        icon: faSearch
+      },
+      CRITERIA: {
+        GROUP: 'Open VSX Repositories',
+        FIELD_LABEL: {
+          PUBLISHER: 'Publisher',
+          TARGET_PLATFORM: 'Target Platform',
+        }
+      }
+    },
     P2: {
       MENU: {
         text: 'P2',

@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.common.collect;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
@@ -110,7 +110,7 @@ public class NestedAttributesMap
    * Create new backing for new children attributes backing.
    */
   protected Map<String, Object> newChildBacking() {
-    return Maps.newHashMap();
+    return new HashMap<>();
   }
 
   /**

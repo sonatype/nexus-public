@@ -13,6 +13,7 @@
 package org.sonatype.nexus.formfields;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,6 @@ import org.sonatype.nexus.common.i18n.I18N;
 import org.sonatype.nexus.common.i18n.MessageBundle;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
@@ -193,7 +193,7 @@ public class RepositoryCombobox
    */
   @Override
   public Map<String, String> getStoreFilters() {
-    Map<String, String> storeFilters = Maps.newHashMap();
+    Map<String, String> storeFilters = new HashMap<>();
     StringBuilder types = new StringBuilder();
     if (includingTypes != null) {
       for (String type : includingTypes) {
@@ -271,7 +271,7 @@ public class RepositoryCombobox
   public RepositoryCombobox withListener(final String eventName, final String listenerName) {
     Map<String, String> declaredListeners = getAttributes().containsKey(ATTRIBUTE_LISTENERS)
         ? (Map<String, String>) getAttributes().get(ATTRIBUTE_LISTENERS)
-        : Maps.newHashMap();
+        : new HashMap<>();
 
     declaredListeners.put(eventName, listenerName);
     getAttributes().put(ATTRIBUTE_LISTENERS, declaredListeners);

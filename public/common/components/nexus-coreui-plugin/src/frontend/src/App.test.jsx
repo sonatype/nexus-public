@@ -90,6 +90,18 @@ jest.mock('./hooks/useRedirectOnLogout', () => ({
 // dialog wiring, so the double subscribes to the same shared dialog store via
 // setDialogSetter and renders inline. Inline mount/unmount is synchronous, so
 // there is no portal teardown to race.
+//
+// Visibility is driven by ONE external store shared across every mounted
+// instance, not by a per-instance useState setter. The dialog singleton in
+// unsavedChangesDialog.js is single-subscriber: it keeps exactly one setVisible
+// reference. Under CI load more than one App tree can briefly coexist (see the
+// note on assertRendersGlobalHeader below), so several mock instances race to
+// register their own setter. When handleCancel's setVisible(false) then landed
+// on an instance other than the one rendering the visible <h2>, the heading
+// lingered and the removal assertion timed out (NEXUS-54163: cancel-button
+// failure, "found <h2>Unsaved Changes</h2>"). Backing every instance with a
+// single stable store setter removes the stale-setter race, and an
+// active-instance guard keeps leaked trees from rendering a duplicate heading.
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   const actual = jest.requireActual('@sonatype/nexus-ui-plugin');
   const React = require('react');
@@ -97,13 +109,61 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
     '@sonatype/nexus-ui-plugin/src/frontend/src/router/unsavedChangesDialog'
   );
 
-  function MockUnsavedChangesModal() {
-    const [visible, setVisible] = React.useState(false);
-    React.useEffect(() => {
-      dialog.setDialogSetter(setVisible);
-    }, []);
+  // Shared, instance-independent visibility store. `setVisible` is stable, so it
+  // does not matter which mock instance last registered it with the dialog
+  // singleton -- show/hide always flip this one boolean and notify all
+  // subscribers. `activeId` names the most-recently-mounted instance; only that
+  // instance renders, so a leaked prior tree cannot produce a second heading
+  // (which would break the singular queryByRole selectors).
+  let visible = false;
+  let activeId = 0;
+  let nextId = 1;
+  const listeners = new Set();
+  const notify = () => listeners.forEach((l) => l());
+  const store = {
+    setVisible(next) {
+      visible = Boolean(next);
+      notify();
+    },
+    setActive(id) {
+      activeId = id;
+      notify();
+    },
+    subscribe(l) {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    }
+  };
+  dialog.setDialogSetter(store.setVisible);
 
-    if (!visible) {
+  function MockUnsavedChangesModal() {
+    const idRef = React.useRef(0);
+    if (idRef.current === 0) {
+      idRef.current = nextId++;
+    }
+    const id = idRef.current;
+
+    // useLayoutEffect (not useEffect) so registration happens synchronously
+    // during commit -- a router transition can call showUnsavedChangesModal in
+    // the same act() flush as the mount, mirroring PreviewUnsavedDialog.
+    React.useLayoutEffect(() => {
+      dialog.setDialogSetter(store.setVisible);
+      store.setActive(id);
+      return () => {
+        // Only relinquish "active" if we still hold it; a newer instance that
+        // already took over must not be cleared by an older tree's teardown.
+        if (activeId === id) {
+          store.setActive(0);
+        }
+      };
+    }, [id]);
+
+    const isVisible = React.useSyncExternalStore(
+      store.subscribe,
+      () => visible && activeId === id
+    );
+
+    if (!isVisible) {
       return null;
     }
 
@@ -120,6 +180,12 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     __esModule: true,
     ...actual,
+    // App.jsx schedules a 15s REST-fallback timer when this file imports it. On slow CI the
+    // file outlives it, and the fallback calls bootstrapAndRender(), mounting a second app
+    // tree whose UnsavedChangesModal replaces the test's setter in the shared dialog store
+    // (NEXUS-54163). A promise that never settles keeps both .then and .catch from running,
+    // so that second render can never happen. waitForExtJs is already stubbed in setup.js.
+    bootstrapFromREST: () => new Promise(() => {}),
     UnsavedChangesModal: MockUnsavedChangesModal
   };
 });
@@ -539,10 +605,10 @@ describe('App', () => {
       expect(historySpy).toHaveBeenCalledWith({}, '', '');
     });
 
-    // TODO(NEXUS-54163): entire suite disabled — the cancel- AND continue-button teardown
-    // assertions are both flaky on CI (Radix dialog teardown race). Re-enable the whole
-    // block once the teardown race is deterministically fixed.
-    describe.skip('Unsaved Changes Dialog', () => {
+    // NOTE: This suite used to fail intermittently on CI (NEXUS-54163). The cause was not
+    // modal teardown but a second app tree mounted by App.jsx's 15s REST fallback; see the
+    // bootstrapFromREST stub in the nexus-ui-plugin mock above.
+    describe('Unsaved Changes Dialog', () => {
       // UnsavedChangesModal is mocked at the top of this file with a portal-free
       // double, so these assertions exercise the App <-> router <-> dialog
       // wiring deterministically -- there is no NxModal portal teardown to race.
@@ -593,7 +659,11 @@ describe('App', () => {
           fireEvent.click(selectors.cancelButton());
         });
 
-        await waitFor(() => expect(selectors.modalTitle()).not.toBeInTheDocument());
+        // Wait for modal removal to avoid timing assumptions in CI environments
+        // where React state updates may be deferred under load
+        await waitFor(() => {
+          expect(selectors.modalTitle()).not.toBeInTheDocument();
+        });
         expect(selectors.modalContent()).not.toBeInTheDocument();
         expect(selectors.cancelButton()).not.toBeInTheDocument();
       });
@@ -615,7 +685,11 @@ describe('App', () => {
           fireEvent.click(selectors.continueButton());
         });
 
-        await waitFor(() => expect(selectors.modalTitle()).not.toBeInTheDocument());
+        // Wait for modal removal to avoid timing assumptions in CI environments
+        // where React state updates may be deferred under load
+        await waitFor(() => {
+          expect(selectors.modalTitle()).not.toBeInTheDocument();
+        });
         expect(selectors.modalContent()).not.toBeInTheDocument();
         expect(selectors.continueButton()).not.toBeInTheDocument();
       });
@@ -658,27 +732,18 @@ describe('App', () => {
   }
 
   async function assertRendersPageContents() {
-    const mains = await screen.findAllByRole('main');
-    expect(mains.length).toBeGreaterThanOrEqual(1);
-    expect(mains[0]).toBeVisible();
+    const main = await screen.findByRole('main');
+    expect(main).toBeVisible();
   }
 
   async function assertRendersGlobalHeader() {
-    // findAllByTestId rather than findByTestId: the Radix-based global header
-    // rolled out on main alongside the legacy header, and on CI both can end
-    // up in the rendered tree at once through this describe block's sequential
-    // renders. findByTestId throws on multiple matches; the assertion intent
-    // is "the standard layout renders A global header", so asserting the first
-    // visible match preserves the contract without a false failure.
-    const headers = await screen.findAllByTestId('global-header');
-    expect(headers.length).toBeGreaterThanOrEqual(1);
-    expect(headers[0]).toBeVisible();
+    const header = await screen.findByTestId('global-header');
+    expect(header).toBeVisible();
   }
 
   async function assertRendersLeftNav() {
-    const navs = await screen.findAllByRole('navigation');
-    expect(navs.length).toBeGreaterThanOrEqual(1);
-    expect(navs[0]).toBeVisible();
+    const nav = await screen.findByRole('navigation');
+    expect(nav).toBeVisible();
   }
 
   async function assertLoginLayoutRenders() {

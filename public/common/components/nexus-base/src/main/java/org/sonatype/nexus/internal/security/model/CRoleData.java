@@ -12,12 +12,11 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.sonatype.nexus.common.entity.HasStringId;
 import org.sonatype.nexus.security.config.CRole;
-
-import com.google.common.collect.Sets;
 
 /**
  * {@link CRole} data.
@@ -69,7 +68,7 @@ public class CRoleData
   @Override
   public Set<String> getPrivileges() {
     if (this.privileges == null) {
-      this.privileges = Sets.newHashSet();
+      this.privileges = new HashSet<>();
     }
 
     return this.privileges;
@@ -78,7 +77,7 @@ public class CRoleData
   @Override
   public Set<String> getRoles() {
     if (this.roles == null) {
-      this.roles = Sets.newHashSet();
+      this.roles = new HashSet<>();
     }
 
     return this.roles;
@@ -145,11 +144,11 @@ public class CRoleData
       CRoleData copy = (CRoleData) super.clone();
 
       if (this.privileges != null) {
-        copy.privileges = Sets.newHashSet(this.privileges);
+        copy.privileges = new HashSet<>(this.privileges);
       }
 
       if (this.roles != null) {
-        copy.roles = Sets.newHashSet(this.roles);
+        copy.roles = new HashSet<>(this.roles);
       }
 
       return copy;

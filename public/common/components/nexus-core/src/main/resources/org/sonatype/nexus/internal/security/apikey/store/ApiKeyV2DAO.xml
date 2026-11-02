@@ -170,6 +170,17 @@
     OFFSET #{skip};
   </select>
 
+  <select id="browseByUserAndDomains" resultMap="ApiKeyV2DataResultMap">
+    SELECT *
+      FROM api_key_v2
+     WHERE username = #{username}
+       AND domain IN
+        <foreach collection="domains" item="domain" open="(" separator="," close=")">
+          #{domain}
+        </foreach>
+  ORDER BY domain, created;
+  </select>
+
   <select id="countFiltered" resultType="java.lang.Integer">
     SELECT count(*)
       FROM api_key_v2

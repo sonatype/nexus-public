@@ -686,7 +686,10 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     if (componentInfo) {
       componentModel = componentInfo.componentModel;
       componentId = componentModel.get('name') + '/' + componentModel.get('version');
-      NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), Ext.htmlEncode(NX.I18n.format('ComponentDetails_Delete_Body', componentId)), function() {
+      var componentDeleteBody = me.trashAwareDeleteText(Ext.htmlEncode(componentId),
+          Ext.htmlEncode(NX.I18n.format('ComponentDetails_Delete_Body', componentId)),
+          'ComponentDetails_Delete_Trash_Text', 'ComponentDetails_Delete_Trash_Text_NoRetention');
+      NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), componentDeleteBody, function() {
         NX.direct.coreui_Component.deleteComponent(JSON.stringify(componentModel.getData()), function(response) {
           if (Ext.isObject(response) && response.success && Ext.isArray(response.data)) {
             me.removeNodeFromTree(selectedNode);
@@ -715,7 +718,10 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
     if (componentAssetInfo) {
       var asset = componentAssetInfo.assetModel;
-      NX.Dialogs.askConfirmation(NX.I18n.get('AssetInfo_Delete_Title'), Ext.htmlEncode(asset.get('name')), function () {
+      var encodedAssetName = Ext.htmlEncode(asset.get('name'));
+      var assetDeleteBody = me.trashAwareDeleteText(encodedAssetName, encodedAssetName,
+          'AssetInfo_Delete_Trash_Text', 'AssetInfo_Delete_Trash_Text_NoRetention');
+      NX.Dialogs.askConfirmation(NX.I18n.get('AssetInfo_Delete_Title'), assetDeleteBody, function () {
         NX.direct.coreui_Component.deleteAsset(asset.getId(), asset.get('repositoryName'), function (response) {
           if (Ext.isObject(response) && response.success) {
             var selectedRecord = treePanel.getSelectionModel().getSelection()[0];
@@ -738,34 +744,54 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
    * @private
    * Show the folder-delete confirmation, then invoke the callback on confirm.
    *
-   * When soft-delete is active for the current (hosted) repository the copy reflects that the folder's
+   * When trash is active for the current (hosted) repository the copy reflects that the folder's
    * contents are moved to Trash and can be restored for the retention window; otherwise the permanent
-   * hard-delete warning is shown. Soft-delete is hosted-only server-side and the enabled flag is only
+   * hard-delete warning is shown. Trash is hosted-only server-side and the enabled flag is only
    * contributed to state in Pro/Cloud editions, so a truthy flag here already implies an eligible edition.
    */
-  askFolderDeleteConfirmation: function(folderName, onConfirm) {
+  /**
+   * @private
+   * Whether Trash is active for the current (hosted, eligible-format) repository. Trash is hosted-only server-side
+   * and its enabled flag is only contributed to state in Pro/Cloud editions, so a truthy flag here already implies
+   * an eligible edition (NEXUS-55233).
+   */
+  isTrashActiveForCurrentRepository: function() {
     var me = this,
         repository = me.getCurrentRepository(),
         repoData = repository ? repository.getData() : null,
         isHosted = !!repoData && repoData.type === 'hosted',
-        softDeleteEnabled = NX.State.getValue('nexus.softDelete.enabled', false) === true,
-        softDeleteFormats = NX.State.getValue('softDeleteFormats', []),
+        trashEnabled = NX.State.getValue('nexus.trash.enabled', false) === true,
+        trashFormats = NX.State.getValue('trashFormats', []),
         repoFormat = repoData ? repoData.format : null,
-        formatEligible = Ext.isArray(softDeleteFormats)
-            && (softDeleteFormats.indexOf('*') !== -1
-                || (!!repoFormat && softDeleteFormats.indexOf(String(repoFormat).toLowerCase()) !== -1)),
-        encodedName = Ext.htmlEncode(folderName),
-        text;
+        formatEligible = Ext.isArray(trashFormats)
+            && (trashFormats.indexOf('*') !== -1
+                || (!!repoFormat && trashFormats.indexOf(String(repoFormat).toLowerCase()) !== -1));
 
-    if (softDeleteEnabled && isHosted && formatEligible) {
-      var retentionDays = NX.State.getValue('softDeleteRetentionDays');
-      text = (typeof retentionDays === 'number')
-          ? NX.I18n.format('FolderInfo_Delete_SoftDelete_Text', encodedName, retentionDays)
-          : NX.I18n.format('FolderInfo_Delete_SoftDelete_Text_NoRetention', encodedName);
+    return trashEnabled && isHosted && formatEligible;
+  },
+
+  /**
+   * @private
+   * Build a delete-confirmation body. When Trash is active for the current repository the copy states the item is
+   * moved to Trash and can be restored for the retention window; otherwise the supplied permanent-delete copy is
+   * used. {@code encodedName} is inserted as {0} (and the retention days as {1}) in the trash templates, matching
+   * the folder path so component, asset and folder deletes communicate recoverability consistently (NEXUS-55233).
+   */
+  trashAwareDeleteText: function(encodedName, plainText, trashTextKey, trashNoRetentionKey) {
+    if (!this.isTrashActiveForCurrentRepository()) {
+      return plainText;
     }
-    else {
-      text = NX.I18n.format('FolderInfo_Delete_Text', encodedName);
-    }
+    var retentionDays = NX.State.getValue('trashRetentionDays');
+    return (typeof retentionDays === 'number')
+        ? NX.I18n.format(trashTextKey, encodedName, retentionDays)
+        : NX.I18n.format(trashNoRetentionKey, encodedName);
+  },
+
+  askFolderDeleteConfirmation: function(folderName, onConfirm) {
+    var me = this,
+        encodedName = Ext.htmlEncode(folderName),
+        text = me.trashAwareDeleteText(encodedName, NX.I18n.format('FolderInfo_Delete_Text', encodedName),
+            'FolderInfo_Delete_Trash_Text', 'FolderInfo_Delete_Trash_Text_NoRetention');
 
     NX.Dialogs.askConfirmation(NX.I18n.get('FolderInfo_Delete_Title'), text, onConfirm);
   },

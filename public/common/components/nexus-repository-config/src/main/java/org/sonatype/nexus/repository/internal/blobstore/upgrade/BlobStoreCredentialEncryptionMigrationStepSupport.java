@@ -158,8 +158,8 @@ public abstract class BlobStoreCredentialEncryptionMigrationStepSupport
       }
       String value = (String) valueObj;
 
-      // Skip if already a secret ID reference (starts with _ followed by a digit)
-      if (isSecretIdReference(value)) {
+      // Skip if already a secret ID reference
+      if (SecretsService.hasSecretIdFormat(value)) {
         log.debug("Blob store '{}' attribute '{}/{}' already encrypted; skipping",
             configName, typeKey, sensitiveAttrKey);
         continue;
@@ -238,12 +238,5 @@ public abstract class BlobStoreCredentialEncryptionMigrationStepSupport
     }
 
     return encryptedCount;
-  }
-
-  /**
-   * Returns true if the value appears to be a secret ID reference (starts with {@code _} followed by a digit).
-   */
-  private boolean isSecretIdReference(final String value) {
-    return value != null && value.startsWith("_") && value.length() > 1 && Character.isDigit(value.charAt(1));
   }
 }

@@ -426,6 +426,7 @@ export function createUploadFormMachine(init: UploadFormMachineInit) {
   return createMachine<UploadFormMachineContext, UploadFormEvent>(
     {
       id: 'upload-form',
+      predictableActionArguments: true,
       initial: 'editing',
       context: {
         formData: initialFormData,

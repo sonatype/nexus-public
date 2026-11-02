@@ -17,8 +17,6 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.collect.ImmutableList;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -47,7 +45,7 @@ public class MimeRule
     requireNonNull(mimetypes, "mimetypes");
     checkArgument(!mimetypes.isEmpty(), "mimetypes");
     this.override = override;
-    this.mimetypes = ImmutableList.copyOf(mimetypes);
+    this.mimetypes = List.copyOf(mimetypes);
   }
 
   /**

@@ -58,13 +58,13 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static java.util.Objects.requireNonNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.status;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static jakarta.ws.rs.core.Response.Status.PAYMENT_REQUIRED;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -143,8 +143,8 @@ public abstract class S3BlobStoreApiResource
       @Valid final S3BlobStoreApiModel request,
       @PathParam("name") final String blobStoreName) throws Exception
   {
-    s3BlobStoreApiUpdateValidation.validateUpdateRequest(request, blobStoreName);
     maybeFetchSecrets(request, blobStoreName);
+    s3BlobStoreApiUpdateValidation.validateUpdateRequest(request, blobStoreName);
 
     try {
       final BlobStoreConfiguration blobStoreConfiguration =
@@ -224,12 +224,11 @@ public abstract class S3BlobStoreApiResource
   }
 
   private static boolean hasCloudFrontPemPlaceholder(final S3BlobStoreApiModel request) {
-    return Optional.ofNullable(request.getGlobalDistribution())
-        .filter(S3BlobStoreApiCloudFront.class::isInstance)
-        .map(S3BlobStoreApiCloudFront.class::cast)
-        .map(S3BlobStoreApiCloudFront::privateKey)
-        .map(PasswordPlaceholder::is)
-        .orElse(false);
+    if (request.getGlobalDistribution() instanceof S3BlobStoreApiCloudFront cloudFront) {
+      String privateKey = cloudFront.privateKey();
+      return privateKey == null || PasswordPlaceholder.is(privateKey);
+    }
+    return false;
   }
 
   @GET

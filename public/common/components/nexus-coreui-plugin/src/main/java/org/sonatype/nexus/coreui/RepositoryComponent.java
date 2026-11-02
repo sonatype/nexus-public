@@ -157,7 +157,7 @@ public class RepositoryComponent
   @RequiresAuthentication
   @Validate
   public void remove(@NotEmpty final String name) throws Exception {
-    // The soft-delete-vs-hard-delete decision (and the per-repository DELETE authorization) is owned
+    // The trash-vs-hard-delete decision (and the per-repository DELETE authorization) is owned
     // by RepositoryDeletionService so every transport behaves identically (NEXUS-51733).
     repositoryDeletionService.delete(name);
   }

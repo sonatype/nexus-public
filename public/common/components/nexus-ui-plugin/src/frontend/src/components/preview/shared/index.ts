@@ -107,6 +107,7 @@ export {
   hasUnsavedChanges,
   useIsCloud,
   useIsLicensedEdition,
+  useIsEnterpriseEdition,
   useHasFirewallLicense,
   useUnreadStatusFailure,
   resetUnreadStatusFailure,
@@ -122,6 +123,13 @@ export type {
   RepositoryMetrics,
   UseRepositoryMetricsResult,
 } from './hooks';
+
+export { useFirewallSecurityPagesTier, useFirewallSecurityPagesState } from './useFirewallSecurityPagesTier';
+export type { FirewallSecurityPagesTier, FirewallSecurityPagesState } from './useFirewallSecurityPagesTier';
+export { useFirewallSecurityPagesVisible } from './useFirewallSecurityPagesVisible';
+export { FIREWALL_SECURITY_PERMISSIONS, FIREWALL_SECURITY_PERMISSION_LIST } from './firewallSecurityPermissions';
+export type { FirewallSecurityTabId } from './firewallSecurityPermissions';
+export { useQuarantineBadgeCount } from './useQuarantineBadgeCount';
 
 // Toast - Viewport-fixed notification system (available but not yet in use)
 // Keeping for future implementation - requires app-level provider
@@ -207,6 +215,25 @@ export {
   type UseSessionExpiryReturn,
 } from './SessionExpiry';
 
+// ServerRestart - Server restart handling (Preview UI modernized modal)
+export {
+  ServerRestartModal,
+  type ServerRestartModalProps,
+  useServerRestart,
+  type UseServerRestartResult,
+} from './ServerRestart';
+
+// ServerDisconnected - Server disconnect handling (Preview UI modernized modal)
+export {
+  ServerDisconnectedModal,
+  type ServerDisconnectedModalProps,
+  useServerDisconnected,
+  type UseServerDisconnectedResult,
+} from './ServerDisconnected';
+
+// ServerLifecycleModals - coordinates the restart + disconnect modals (restart wins)
+export { ServerLifecycleModals } from './ServerLifecycleModals';
+
 // ErrorBoundary - Isolate crash-prone widgets so rest of page stays visible
 export { ErrorBoundary, type ErrorBoundaryProps } from './ErrorBoundary';
 
@@ -275,5 +302,9 @@ export {
   IssueTrackerUTMparams,
   SupportUTMparams,
 } from './HelpMenu';
+
+export { LoginAndUserMenu } from './LoginAndUserMenu';
+
+export { GlobalHeader } from './GlobalHeader';
 
 // Edition name mapping moved to interface/editionUtils in NEXUS-54782 (edition identifier -> display name).

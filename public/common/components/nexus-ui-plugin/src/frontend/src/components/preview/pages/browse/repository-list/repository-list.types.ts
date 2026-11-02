@@ -148,6 +148,8 @@ export interface RepositoryListState {
   readonly firewallStatus: Record<string, FirewallStatus>;
   /** Whether the firewall summary API call has completed */
   readonly firewallLoaded: boolean;
+  /** Whether the summary loaded successfully, so a missing repository really means firewall is off */
+  readonly firewallSummaryReady: boolean;
   /** Health check loading error */
   readonly healthCheckError?: string;
   /** Firewall status loading error */

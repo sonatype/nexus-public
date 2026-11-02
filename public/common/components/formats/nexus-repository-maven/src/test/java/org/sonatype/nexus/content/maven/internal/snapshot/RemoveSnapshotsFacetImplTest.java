@@ -15,6 +15,7 @@ package org.sonatype.nexus.content.maven.internal.snapshot;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,6 @@ import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsConfig;
 import org.sonatype.nexus.repository.types.GroupType;
 
-import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -285,7 +285,7 @@ public class RemoveSnapshotsFacetImplTest
       final String group,
       final String name)
   {
-    NestedAttributesMap attributes = new NestedAttributesMap(P_ATTRIBUTES, Maps.<String, Object>newHashMap());
+    NestedAttributesMap attributes = new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>());
     attributes.child(NAME).set(P_BASE_VERSION, baseVersion);
     Maven2ComponentData component = new Maven2ComponentData();
     component.setComponentId(1);

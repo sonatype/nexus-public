@@ -177,7 +177,7 @@ describe('SettingsSelect', () => {
     expect(screen.getByText('This is help text')).toBeInTheDocument();
   });
 
-  it('renders error message and hides help text', () => {
+  it('renders error message alongside help text', () => {
     render(
       <SettingsSelect 
         {...defaultProps} 
@@ -187,7 +187,7 @@ describe('SettingsSelect', () => {
     );
     
     expect(screen.getByText('This is required')).toBeInTheDocument();
-    expect(screen.queryByText('Help text')).not.toBeInTheDocument();
+    expect(screen.getByText('Help text')).toBeInTheDocument();
   });
 
   it('sets aria-invalid when error is present', () => {

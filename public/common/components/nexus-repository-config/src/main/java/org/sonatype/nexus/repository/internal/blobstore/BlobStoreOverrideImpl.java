@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.crypto.secrets.SecretsService.hasSecretIdFormat;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 
 /**
@@ -254,7 +255,7 @@ public class BlobStoreOverrideImpl
   {
     // Case A: override supplied its own _<id>. Validate that it's a legitimate blobstore secret
     // before accepting it to prevent secret injection attacks.
-    if (isSecretIdReference(newValue)) {
+    if (hasSecretIdFormat(newValue)) {
       if (newValue.equals(currentValue)) {
         return false;
       }
@@ -266,7 +267,7 @@ public class BlobStoreOverrideImpl
             newValue, config.getName(), field);
         return false;
       }
-      if (currentValue instanceof String && isSecretIdReference((String) currentValue)) {
+      if (currentValue instanceof String && hasSecretIdFormat((String) currentValue)) {
         superseded.add(secretsService.from((String) currentValue));
       }
       section.put(field, newValue);
@@ -275,7 +276,7 @@ public class BlobStoreOverrideImpl
 
     // Case B: override supplied plaintext, current is an existing _<id>. Decrypt the current
     // value and compare to detect a true credential change vs. an idempotent restart.
-    if (currentValue instanceof String && isSecretIdReference((String) currentValue)) {
+    if (currentValue instanceof String && hasSecretIdFormat((String) currentValue)) {
       String currentSecretId = (String) currentValue;
       try {
         char[] currentDecrypted = secretsService.from(currentSecretId).decrypt();
@@ -378,10 +379,6 @@ public class BlobStoreOverrideImpl
     }
     List<String> fields = descriptor.getSensitiveConfigurationFields();
     return fields == null ? Collections.emptyList() : fields;
-  }
-
-  private static boolean isSecretIdReference(final String value) {
-    return value != null && value.startsWith("_") && value.length() > 1 && Character.isDigit(value.charAt(1));
   }
 
   /**

@@ -20,7 +20,8 @@ import javax.annotation.concurrent.Immutable;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 
-import com.google.common.collect.ImmutableList;
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
@@ -43,9 +44,11 @@ public class MavenPath
 
     /**
      * {@link HashAlgorithm}s corresponding to {@link HashType}s.
+     * <p>
+     * Not {@code List.of}: contains(null) throws NPE on JDK immutable lists, Guava returned false (public API).
      */
-    public static final List<HashAlgorithm> ALGORITHMS = ImmutableList
-        .of(SHA1.getHashAlgorithm(), MD5.getHashAlgorithm(), SHA256.getHashAlgorithm(), SHA512.getHashAlgorithm());
+    public static final List<HashAlgorithm> ALGORITHMS = unmodifiableList(asList(
+        SHA1.getHashAlgorithm(), MD5.getHashAlgorithm(), SHA256.getHashAlgorithm(), SHA512.getHashAlgorithm()));
 
     private final String ext;
 

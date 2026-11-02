@@ -23,7 +23,6 @@ import org.sonatype.nexus.upgrade.plan.DependencySource.DependsOnAware;
 import org.sonatype.nexus.upgrade.plan.DependencySource.UnresolvedDependencyAware;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import org.codehaus.plexus.util.dag.CycleDetectedException;
@@ -91,7 +90,7 @@ public class DependencyResolver<T extends DependencySource<T>>
     final Multimap<T, T> dependsOn;
 
     Resolution(final List<T> ordered, final Multimap<T, T> dependsOn) {
-      this.ordered = ImmutableList.copyOf(ordered);
+      this.ordered = List.copyOf(ordered);
       this.dependsOn = ImmutableMultimap.copyOf(dependsOn);
     }
 
@@ -201,7 +200,7 @@ public class DependencyResolver<T extends DependencySource<T>>
     private final transient List<?> cycle;
 
     CyclicDependencyException(final List<?> cycle) {
-      this.cycle = ImmutableList.copyOf(cycle);
+      this.cycle = List.copyOf(cycle);
     }
 
     @Override

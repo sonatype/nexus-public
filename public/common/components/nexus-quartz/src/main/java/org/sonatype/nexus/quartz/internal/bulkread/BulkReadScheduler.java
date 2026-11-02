@@ -48,6 +48,18 @@ public interface BulkReadScheduler
   Map<TriggerKey, Trigger> getTriggersForGroup(String groupName) throws SchedulerException;
 
   /**
+   * Retrieves the live scheduler instance executing each job in a group, using a single query.
+   * <p>
+   * Jobs merely acquired are omitted, as are records left behind by an instance that is no longer
+   * checking in. In a cluster the result describes work genuinely in flight on any node.
+   *
+   * @param groupName the job group name
+   * @return map of job keys to the id of the live scheduler instance executing them
+   * @throws SchedulerException if there is an error retrieving the executing jobs
+   */
+  Map<JobKey, String> getExecutingInstanceIdsForGroup(String groupName) throws SchedulerException;
+
+  /**
    * Returns the underlying delegate Scheduler.
    *
    * @return the delegate Scheduler

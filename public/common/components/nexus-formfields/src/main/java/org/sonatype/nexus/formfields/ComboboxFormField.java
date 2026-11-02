@@ -12,9 +12,8 @@
  */
 package org.sonatype.nexus.formfields;
 
+import java.util.HashMap;
 import java.util.Map;
-
-import com.google.common.collect.Maps;
 
 import static java.util.Objects.requireNonNull;
 
@@ -43,7 +42,7 @@ public class ComboboxFormField<V>
       final V initialValue)
   {
     super(id, label, helpText, required, initialValue);
-    this.storeFilters = Maps.newHashMap();
+    this.storeFilters = new HashMap<>();
   }
 
   public ComboboxFormField(

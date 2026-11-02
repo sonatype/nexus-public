@@ -13,6 +13,8 @@
 package org.sonatype.nexus.api.rest.selfhosted.security.anonymous;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.sonatype.nexus.api.rest.selfhosted.security.anonymous.model.AnonymousAccessSettingsXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -24,7 +26,6 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +68,7 @@ class AnonymousAccessApiResourceTest
 
     Realm realm = mock(Realm.class);
     lenient().when(realm.getName()).thenReturn(AnonymousConfiguration.DEFAULT_REALM_NAME);
-    lenient().when(realmSecurityManager.getRealms()).thenReturn(Lists.newArrayList(realm));
+    lenient().when(realmSecurityManager.getRealms()).thenReturn(new ArrayList<>(Arrays.asList(realm)));
 
     underTest = new AnonymousAccessApiResource(anonymousManager, realmSecurityManager);
   }

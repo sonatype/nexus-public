@@ -12,12 +12,11 @@
  */
 package org.sonatype.nexus.rapture.internal.settings;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.rapture.settings.RaptureSettings;
-
-import com.google.common.collect.Maps;
 
 import static java.util.Objects.requireNonNull;
 
@@ -45,7 +44,7 @@ public class SettingsCapabilityConfiguration
   public static final String TITLE = "title";
 
   public SettingsCapabilityConfiguration() {
-    this(Maps.<String, String>newHashMap());
+    this(new HashMap<>());
   }
 
   public SettingsCapabilityConfiguration(final Map<String, String> properties) {
@@ -62,7 +61,7 @@ public class SettingsCapabilityConfiguration
   }
 
   public Map<String, String> asMap() {
-    final Map<String, String> props = Maps.newHashMap();
+    final Map<String, String> props = new HashMap<>();
     props.put(DEBUG_ALLOWED, Boolean.toString(isDebugAllowed()));
     props.put(STATUS_INTERVAL_AUTHENTICATED, Integer.toString(getStatusIntervalAuthenticated()));
     props.put(STATUS_INTERVAL_ANONYMOUS, Integer.toString(getStatusIntervalAnonymous()));

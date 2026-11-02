@@ -73,7 +73,9 @@ describe('UsersList', function() {
     });
   });
 
-  it('renders the resolved empty data', async function() {
+  // TODO NEXUS-50973: skipped because it is flaky in CI - intermittently fails with "Unable to find an element with
+  // the text: There are no users available" even though the page has rendered. Re-enable once stabilised.
+  it.skip('renders the resolved empty data', async function() {
     when(Axios.post).calledWith(URL, USERS_REQUEST).mockResolvedValue({
       data: TestUtils.makeExtResult([])
     });

@@ -63,19 +63,19 @@ public interface RepositoryManager
   void delete(String name) throws Exception;
 
   /**
-   * Soft-delete a repository: stop it, untrack it, and mark the configuration as deleted.
+   * Trash a repository: stop it, untrack it, and mark the configuration as deleted.
    * The configuration remains in the database and can be restored within the retention period.
    */
-  void softDelete(String name, String deletedBy) throws Exception;
+  void trash(String name, String deletedBy) throws Exception;
 
   /**
-   * Restore a previously soft-deleted repository: re-instantiate, track, start,
-   * and clear the soft-delete markers from the configuration.
+   * Restore a previously trashed repository: re-instantiate, track, start,
+   * and clear the trash markers from the configuration.
    */
-  Repository restoreFromSoftDelete(String name) throws Exception;
+  Repository restoreFromTrash(String name) throws Exception;
 
   /**
-   * Hard-delete a soft-deleted repository: run full content cleanup (facet deletion),
+   * Hard-delete a trashed repository: run full content cleanup (facet deletion),
    * remove secrets, and permanently delete the configuration.
    */
   void hardDelete(String name) throws Exception;

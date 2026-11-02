@@ -14,6 +14,7 @@ package org.sonatype.nexus.coreui.internal.capability;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityContext;
@@ -22,6 +23,7 @@ import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
+import org.sonatype.nexus.capability.CapabilitySecurityPermissionHelper;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.internal.scheduling.SchedulerCapabilityDescriptor;
 import org.sonatype.nexus.repository.capability.StorageSettingsCapabilityDescriptor;
@@ -29,7 +31,6 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
-import com.google.common.base.Predicate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,11 +63,15 @@ class CapabilityComponentDeletionTest
   @Mock
   private CapabilityRegistry capabilityRegistry;
 
+  @Mock
+  private CapabilitySecurityPermissionHelper capabilitySecurityPermissionHelper;
+
   private CapabilityComponent underTest;
 
   @BeforeEach
   void setup() {
-    underTest = new CapabilityComponent(capabilityDescriptorRegistry, capabilityRegistry);
+    underTest =
+        new CapabilityComponent(capabilityDescriptorRegistry, capabilityRegistry, capabilitySecurityPermissionHelper);
   }
 
   @Test

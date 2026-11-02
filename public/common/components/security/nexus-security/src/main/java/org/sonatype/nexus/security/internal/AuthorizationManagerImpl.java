@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,8 +44,6 @@ import org.sonatype.nexus.security.role.RoleCreatedEvent;
 import org.sonatype.nexus.security.role.RoleDeletedEvent;
 import org.sonatype.nexus.security.role.RoleUpdatedEvent;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
@@ -107,8 +106,8 @@ public class AuthorizationManagerImpl
     target.setSource(DEFAULT_USER_SOURCE);
     target.setDescription(source.getDescription());
     target.setReadOnly(source.isReadOnly());
-    target.setPrivileges(Sets.newHashSet(source.getPrivileges()));
-    target.setRoles(Sets.newHashSet(source.getRoles()));
+    target.setPrivileges(new HashSet<>(source.getPrivileges()));
+    target.setRoles(new HashSet<>(source.getRoles()));
     return target;
   }
 
@@ -121,17 +120,17 @@ public class AuthorizationManagerImpl
     target.setReadOnly(source.isReadOnly());
 
     if (source.getPrivileges() != null) {
-      target.setPrivileges(Sets.newHashSet(source.getPrivileges()));
+      target.setPrivileges(new HashSet<>(source.getPrivileges()));
     }
     else {
-      target.setPrivileges(Sets.<String>newHashSet());
+      target.setPrivileges(new HashSet<>());
     }
 
     if (source.getRoles() != null) {
-      target.setRoles(Sets.newHashSet(source.getRoles()));
+      target.setRoles(new HashSet<>(source.getRoles()));
     }
     else {
-      target.setRoles(Sets.<String>newHashSet());
+      target.setRoles(new HashSet<>());
     }
 
     return target;
@@ -146,7 +145,7 @@ public class AuthorizationManagerImpl
     target.setReadOnly(source.isReadOnly());
     target.setType(source.getType());
     if (source.getProperties() != null) {
-      target.setProperties(Maps.newHashMap(source.getProperties()));
+      target.setProperties(new HashMap<>(source.getProperties()));
     }
 
     return target;
@@ -160,7 +159,7 @@ public class AuthorizationManagerImpl
     target.setDescription(source.getDescription());
     target.setReadOnly(source.isReadOnly());
     target.setType(source.getType());
-    target.setProperties(Maps.newHashMap(source.getProperties()));
+    target.setProperties(new HashMap<>(source.getProperties()));
 
     // expose permission string representation
     PrivilegeDescriptor descriptor = descriptor(source.getType());

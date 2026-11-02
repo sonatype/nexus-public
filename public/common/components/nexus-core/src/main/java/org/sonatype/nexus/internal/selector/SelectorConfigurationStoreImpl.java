@@ -25,9 +25,8 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.common.collect.ImmutableList;
-
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -58,7 +57,7 @@ public class SelectorConfigurationStoreImpl
   @Transactional
   @Override
   public List<SelectorConfiguration> browse() {
-    return ImmutableList.copyOf(dao().browse());
+    return toImmutableList(dao().browse());
   }
 
   @Override

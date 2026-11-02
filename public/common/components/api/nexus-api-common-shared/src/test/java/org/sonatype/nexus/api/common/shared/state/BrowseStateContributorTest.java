@@ -14,6 +14,7 @@ package org.sonatype.nexus.api.common.shared.state;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +26,6 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
 
-import com.google.common.collect.Sets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -83,7 +83,7 @@ public class BrowseStateContributorTest
     Map<String, Object> state = underTest.getState();
 
     assertThat(state.size(), is(2));
-    assertThat(state.get("rebuildingRepositories"), is(Sets.newHashSet("repo1", "repo2", "repo3")));
+    assertThat(state.get("rebuildingRepositories"), is(new HashSet<>(Arrays.asList("repo1", "repo2", "repo3"))));
     assertThat(state.get("browseTreeMaxNodes"), is(10));
   }
 

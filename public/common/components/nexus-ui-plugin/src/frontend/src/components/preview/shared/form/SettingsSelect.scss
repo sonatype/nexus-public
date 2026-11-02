@@ -80,6 +80,12 @@
     cursor: pointer;
   }
 
+  &__item-content {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+  }
+
   &--error &__trigger {
     border-color: var(--color-error, #dc2626);
 

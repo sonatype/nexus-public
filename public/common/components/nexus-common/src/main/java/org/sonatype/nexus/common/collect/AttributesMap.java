@@ -18,6 +18,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -28,7 +29,6 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -55,7 +55,7 @@ public class AttributesMap
   }
 
   public AttributesMap() {
-    this(Maps.<String, Object>newHashMap());
+    this(new HashMap<>());
   }
 
   /**

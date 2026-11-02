@@ -19,9 +19,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.sift.AppenderTracker;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
@@ -50,7 +50,7 @@ public class SeparateTaskLogTaskLoggerTest
 
   private SeparateTaskLogTaskLogger underTest;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     super.setUp();
     TaskLogInfo taskLogInfo = createTaskLogInfo();
@@ -69,7 +69,7 @@ public class SeparateTaskLogTaskLoggerTest
     assertThat(MDC.get(LOGBACK_TASK_DISCRIMINATOR_ID).matches("typeId-\\d{17}\\b"), is(true));
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     underTest.finish();
   }
@@ -412,7 +412,20 @@ public class SeparateTaskLogTaskLoggerTest
     assertThat(appender, notNullValue());
   }
 
+  @Test
+  public void longTypeIdProducesValidDiscriminator() {
+    new SeparateTaskLogTaskLogger(mockLogger, createTaskLogInfo("hosted.repository.evaluation.descope.pending.index"));
+
+    String discriminator = MDC.get(LOGBACK_TASK_DISCRIMINATOR_ID);
+    assertThat(discriminator.length() <= 64, is(true));
+    assertThat(discriminator.matches("hosted\\.repository.*-\\d{17}"), is(true));
+  }
+
   private TaskLogInfo createTaskLogInfo() {
+    return createTaskLogInfo("typeId");
+  }
+
+  private TaskLogInfo createTaskLogInfo(final String typeId) {
     return new TaskLogInfo()
     {
       @Override
@@ -422,7 +435,7 @@ public class SeparateTaskLogTaskLoggerTest
 
       @Override
       public String getTypeId() {
-        return "typeId";
+        return typeId;
       }
 
       @Override

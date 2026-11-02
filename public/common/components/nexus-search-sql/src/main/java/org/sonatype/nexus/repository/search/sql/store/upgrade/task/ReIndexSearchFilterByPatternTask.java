@@ -12,22 +12,26 @@
  */
 package org.sonatype.nexus.repository.search.sql.store.upgrade.task;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.sql.index.SqlSearchIndexService;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +58,11 @@ public class ReIndexSearchFilterByPatternTask
 {
   public static final String TYPE_ID = "reindex.search.records.filtered.by.pattern";
 
-  public static final String FILTER_CONDITION_FIELD_ID = "filterCondition";
+  public static final String NAMESPACE_LIKE_FIELD_ID = "componentLike";
+
+  public static final String NAME_LIKE_FIELD_ID = "nameLike";
+
+  public static final String VERSION_LIKE_FIELD_ID = "versionLike";
 
   private static final int DEFAULT_BATCH_SIZE = 500;
 
@@ -77,13 +85,24 @@ public class ReIndexSearchFilterByPatternTask
 
   @Override
   protected Object execute() throws Exception {
-    String filterCondition = getFilterCondition();
-    if (filterCondition == null || filterCondition.isBlank()) {
+    Filter filter;
+    if (Strings2.notBlank(getConfiguration().getString("filterCondition"))) {
+      // An earlier version of the task used a free-formt filterCondition field
+      // ReIndexSearchRecordsWithUnderscoreMigrationStep_2_105 may have queued the task for some customers
+      // This Filter replicates the original intended behaviour
+      filter = new Filter("namespace LIKE #{filterParams.namespace} OR version LIKE #{filterParams.version}",
+          Map.of("namespace", "%\\_%", "version", "%\\_%"));
+    }
+    else {
+      filter = getFilterCondition();
+    }
+
+    if (filter.params().isEmpty()) {
       log.warn("No filter condition provided, skipping re-index task");
       return null;
     }
 
-    log.info("Starting re-index task with filter condition: {}", filterCondition);
+    log.info("Starting re-index task with filter: {}", filter);
 
     long totalProcessed = 0;
     Stopwatch totalStopwatch = Stopwatch.createStarted();
@@ -91,7 +110,7 @@ public class ReIndexSearchFilterByPatternTask
     for (Repository repository : repositoryManager.browse()) {
       checkCancellation();
 
-      long processed = processRepository(repository, filterCondition);
+      long processed = processRepository(repository, filter);
       totalProcessed += processed;
     }
 
@@ -99,10 +118,13 @@ public class ReIndexSearchFilterByPatternTask
     return totalProcessed;
   }
 
-  private long processRepository(final Repository repository, final String filterCondition) {
+  private long processRepository(
+      final Repository repository,
+      final Filter filter)
+  {
     try {
-      FluentComponents fluentComponents = repository.facet(ContentFacet.class).components();
-      FluentQuery<FluentComponent> filteredQuery = fluentComponents.byFilter(filterCondition, Collections.emptyMap());
+      FluentQuery<FluentComponent> filteredQuery =
+          repository.facet(ContentFacet.class).components().byFilter(filter.condition(), filter.params());
 
       return reindexFilteredComponents(repository, filteredQuery);
     }
@@ -153,16 +175,53 @@ public class ReIndexSearchFilterByPatternTask
     return processed;
   }
 
-  private String getFilterCondition() {
-    return getConfiguration().getString(FILTER_CONDITION_FIELD_ID);
+  private Filter getFilterCondition() {
+    StringJoiner joiner = new StringJoiner(" OR ");
+    Map<String, Object> parameters = new HashMap<>();
+
+    Optional.ofNullable(namespaceLikeField())
+        .filter(Strings2::notBlank)
+        .ifPresent(namespace -> {
+          joiner.add("namespace LIKE #{filterParams.namespace}");
+          parameters.put("namespace", '%' + namespace + "%");
+        });
+
+    Optional.ofNullable(nameLikeField())
+        .filter(Strings2::notBlank)
+        .ifPresent(name -> {
+          joiner.add("name LIKE #{filterParams.name}");
+          parameters.put("name", '%' + name + "%");
+        });
+
+    Optional.ofNullable(versionLikeField())
+        .filter(Strings2::notBlank)
+        .ifPresent(version -> {
+          joiner.add("version LIKE #{filterParams.version}");
+          parameters.put("version", '%' + version + "%");
+        });
+
+    return new Filter(joiner.toString(), parameters);
+  }
+
+  private String namespaceLikeField() {
+    return getConfiguration().getString(NAMESPACE_LIKE_FIELD_ID);
+  }
+
+  private String nameLikeField() {
+    return getConfiguration().getString(NAME_LIKE_FIELD_ID);
+  }
+
+  private String versionLikeField() {
+    return getConfiguration().getString(VERSION_LIKE_FIELD_ID);
   }
 
   @Override
   public String getMessage() {
-    String filterCondition = getFilterCondition();
-    if (filterCondition != null && !filterCondition.isBlank()) {
-      return "Re-indexing search records matching filter: " + filterCondition;
-    }
-    return "Re-indexing search records by pattern";
+    return "Re-indexing search records by patterns";
+  }
+
+  @VisibleForTesting
+  static record Filter(String condition, Map<String, Object> params)
+  {
   }
 }

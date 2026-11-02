@@ -13,11 +13,12 @@
 import React from 'react';
 import {Link} from '@radix-ui/themes';
 import { ExternalLink } from 'lucide-react';
-import { ExtJS, SystemAlert, useIsPreviewUI } from '@sonatype/nexus-ui-plugin';
+import { EDITION_COMMUNITY, ExtJS, resolveEditionId, SystemAlert, useIsPreviewUI } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../constants/UIStrings';
 
 const CLASSIC_TASKS_PATH = '#admin/system/tasks';
 const PREVIEW_TASKS_PATH = '#preview/admin/system/tasks';
+const DEFAULT_LINK_ANALYTICS_ID = 'nxrm-telemetry-message-link';
 
 /**
  * Renders text with markdown-style bold (**text**) as React elements.
@@ -32,22 +33,24 @@ function renderBoldText(text: string): React.ReactNode {
 interface HelperLink {
   TEXT: string;
   HREF: string;
+  ANALYTICS_ID?: string;
 }
 
 /**
- * Replaces all occurrences of the helper link text within the message with a
+ * Replaces all occurrences of each helper link text within the message with a
  * clickable external Link. Falls back to plain (bold-rendered) text when no
- * helper link is configured or the link text is not present in the message.
+ * helper links are configured or the link texts are not present in the message.
  * Note: split() is intentionally used to replace ALL occurrences, not just the first.
  */
-function messageWithLink(messageText: string, helperLink: HelperLink | undefined): React.ReactNode {
+function messageWithLinks(messageText: string, helperLinks: HelperLink[]): React.ReactNode {
+  const [helperLink, ...remainingLinks] = helperLinks;
   if (!helperLink) {
     return renderBoldText(messageText);
   }
 
   const linkText = helperLink.TEXT;
   if (!messageText.includes(linkText)) {
-    return renderBoldText(messageText);
+    return messageWithLinks(messageText, remainingLinks);
   }
 
   const parts = messageText.split(linkText);
@@ -59,7 +62,7 @@ function messageWithLink(messageText: string, helperLink: HelperLink | undefined
           href={helperLink.HREF}
           target="_blank"
           rel="noopener noreferrer"
-          data-analytics-id="nxrm-telemetry-message-link"
+          data-analytics-id={helperLink.ANALYTICS_ID ?? DEFAULT_LINK_ANALYTICS_ID}
         >
           {linkText}
           <ExternalLink size={12} aria-hidden="true" />
@@ -67,7 +70,7 @@ function messageWithLink(messageText: string, helperLink: HelperLink | undefined
       );
     }
     if (part) {
-      acc.push(<React.Fragment key={`text-${index}`}>{renderBoldText(part)}</React.Fragment>);
+      acc.push(<React.Fragment key={`text-${index}`}>{messageWithLinks(part, remainingLinks)}</React.Fragment>);
     }
     return acc;
   }, []);
@@ -101,6 +104,11 @@ export default function TelemetryWarningBanner(): React.ReactElement | null {
   const isReadOnly = telemetryHealth?.readOnly ?? false;
   const showWarning = telemetryHealth?.showWarning ?? false;
 
+  // Community Edition is not entitled to Support, so it gets a different recommendation
+  const isCommunityEdition = ExtJS.useState(
+    () => resolveEditionId(ExtJS.state()) === EDITION_COMMUNITY
+  );
+
   // "Go to Tasks" always opens the Tasks list, in the UI the user is currently in
   const isPreviewUI = useIsPreviewUI();
 
@@ -119,7 +127,9 @@ export default function TelemetryWarningBanner(): React.ReactElement | null {
   const messageText = content.MESSAGE
     .replace('{failedReportDays}', String(telemetryHealth?.failedReportDays ?? 0))
     .replace('{remainingGracePeriodDays}', String(telemetryHealth?.remainingGracePeriodDays ?? 0));
-  const generalRecommendation = content.GENERAL_RECOMMENDATION;
+  const generalRecommendation = isCommunityEdition
+    ? messageWithLinks(content.COMMUNITY_GENERAL_RECOMMENDATION, content.COMMUNITY_LINKS)
+    : content.GENERAL_RECOMMENDATION;
   const retryRecommendation = content.RETRY_RECOMMENDATION;
   const retryLink = content.RETRY_LINK;
   const helperLink = content.HELPER_LINK;
@@ -129,7 +139,7 @@ export default function TelemetryWarningBanner(): React.ReactElement | null {
 
   const message = (
     <>
-      {messageWithLink(messageText, helperLink)}{' '}
+      {messageWithLinks(messageText, helperLink ? [helperLink] : [])}{' '}
       {generalRecommendation}{' '}
       {retryRecommendation}{' '}
       <Link

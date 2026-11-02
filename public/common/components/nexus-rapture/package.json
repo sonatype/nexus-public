@@ -17,7 +17,7 @@
     "@fortawesome/react-fontawesome": "0.1.4",
     "@sonatype/react-shared-components": "14.0.3",
     "@xstate/inspect": "0.4.1",
-    "axios": "1.17.0",
+    "axios": "1.20.0",
     "core-js": "3.48.0",
     "luxon": "1.28.1",
     "react": "19.1.0",
@@ -25,8 +25,8 @@
     "xstate": "4.38.3"
   },
   "devDependencies": {
-    "@rspack/cli": "^1.2.7",
-    "@rspack/core": "^1.2.7",
+    "@rspack/cli": "1.7.12",
+    "@rspack/core": "1.7.12",
     "@swc/helpers": "^0.5.15",
     "npm-run-all": "4.1.5",
     "sass": "1.38.0",

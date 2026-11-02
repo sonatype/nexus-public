@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +24,6 @@ import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.security.UserIdHelper;
 
-import com.google.common.collect.Maps;
 import jakarta.inject.Provider;
 import org.junit.After;
 import org.junit.Before;
@@ -126,8 +126,8 @@ public abstract class BlobStoreOverrideImplTestSupport
   }
 
   protected BlobStoreConfiguration createConfig(final String name, final String type) {
-    Map<String, Map<String, Object>> attributes = Maps.newHashMap();
-    attributes.put(toConfigKey(type), Maps.newHashMap());
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put(toConfigKey(type), new HashMap<>());
     BlobStoreConfigurationData config = new BlobStoreConfigurationData();
     config.setName(name);
     config.setType(type);

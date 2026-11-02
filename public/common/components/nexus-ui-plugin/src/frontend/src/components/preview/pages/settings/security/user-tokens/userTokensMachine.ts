@@ -73,6 +73,7 @@ export function createUserTokensMachine() {
   return createMachine<UserTokensMachineContext, UserTokensEvent>(
     {
       id: 'user-tokens-form',
+      predictableActionArguments: true,
       initial: 'loading',
       context: {
         data: DEFAULT_USER_TOKEN_SETTINGS,

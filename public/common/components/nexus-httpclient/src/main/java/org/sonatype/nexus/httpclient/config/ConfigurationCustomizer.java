@@ -29,7 +29,6 @@ import org.sonatype.nexus.httpclient.internal.NexusHttpRoutePlanner;
 import org.sonatype.nexus.httpclient.internal.NonProxyHostsMatcher;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -243,13 +242,13 @@ public class ConfigurationCustomizer
 
     if (authentication instanceof UsernameAuthenticationConfiguration) {
       UsernameAuthenticationConfiguration auth = (UsernameAuthenticationConfiguration) authentication;
-      authSchemes = ImmutableList.of(DIGEST, BASIC);
+      authSchemes = List.of(DIGEST, BASIC);
       credentials = new UsernamePasswordCredentials(auth.getUsername(),
           ofNullable(auth.getPassword()).map(Secret::decrypt).map(String::new).orElse(null));
     }
     else if (authentication instanceof NtlmAuthenticationConfiguration) {
       NtlmAuthenticationConfiguration auth = (NtlmAuthenticationConfiguration) authentication;
-      authSchemes = ImmutableList.of(NTLM, DIGEST, BASIC);
+      authSchemes = List.of(NTLM, DIGEST, BASIC);
       credentials = new NTCredentials(auth.getUsername(),
           ofNullable(auth.getPassword()).map(Secret::decrypt).map(String::new).orElse(null), auth.getHost(),
           auth.getDomain());

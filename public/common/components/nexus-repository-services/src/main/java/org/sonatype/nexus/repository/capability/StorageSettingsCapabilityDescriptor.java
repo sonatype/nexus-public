@@ -25,8 +25,6 @@ import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 
-import com.google.common.collect.ImmutableList;
-
 import static org.sonatype.nexus.capability.Tag.categoryTag;
 import static org.sonatype.nexus.capability.Tag.tags;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
@@ -68,7 +66,7 @@ public class StorageSettingsCapabilityDescriptor
   private final List<FormField> formFields;
 
   public StorageSettingsCapabilityDescriptor() {
-    this.formFields = ImmutableList.of(
+    this.formFields = List.of(
         new NumberTextFormField(
             StorageSettingsCapabilityConfiguration.LAST_DOWNLOADED_INTERVAL,
             messages.assetLabel(),

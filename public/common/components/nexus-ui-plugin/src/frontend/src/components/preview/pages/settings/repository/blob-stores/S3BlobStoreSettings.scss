@@ -57,5 +57,22 @@
     flex-shrink: 0;
     margin-top: 28px; // Align with form fields
   }
-}
 
+  &__private-key-notice {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    background: var(--color-bg-secondary, #f8f9fa);
+    border-radius: var(--border-radius-md, 6px);
+
+    .dark-mode & {
+      background: var(--color-bg-tertiary-dark, #35363a);
+    }
+
+    // Ensure button takes its natural width while alert fills container
+    > :last-child {
+      align-self: flex-start;
+    }
+  }
+}

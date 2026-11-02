@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.onboarding.capability;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
-
-import com.google.common.collect.Maps;
 
 import static java.util.Objects.requireNonNull;
 
@@ -60,7 +59,7 @@ public class OnboardingCapabilityConfiguration
   }
 
   public Map<String, String> asMap() {
-    final Map<String, String> properties = Maps.newHashMap();
+    final Map<String, String> properties = new HashMap<>();
     properties.put(REGISTRATION_STARTED, String.valueOf(registrationStarted));
     properties.put(REGISTRATION_COMPLETED, String.valueOf(registrationCompleted));
     return properties;

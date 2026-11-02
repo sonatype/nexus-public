@@ -14,6 +14,7 @@ package org.sonatype.nexus.security.role;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.security.AbstractSecurityTest;
@@ -29,7 +30,6 @@ import org.sonatype.nexus.security.user.MockUserManager;
 import org.sonatype.nexus.security.user.NoOpEventManager;
 import org.sonatype.nexus.security.user.UserManager;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
@@ -85,7 +85,7 @@ public class ExternalRoleMappedTest
 
     // add MockRealm to config
     RealmManager realmManager = lookup(RealmManager.class);
-    realmManager.setConfiguredRealmIds(ImmutableList.of("Mock", AuthorizingRealmImpl.NAME));
+    realmManager.setConfiguredRealmIds(List.of("Mock", AuthorizingRealmImpl.NAME));
 
     // jcohen has the role mockrole1, there is also test role with the same ID, which means jcohen automaticly has
     // this test role

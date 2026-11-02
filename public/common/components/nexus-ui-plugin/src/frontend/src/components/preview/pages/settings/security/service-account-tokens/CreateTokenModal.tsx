@@ -138,7 +138,6 @@ export function CreateTokenModal({ open, onClose, onCreate, roles, rolesError = 
             placeholder={LABELS.NAME_PLACEHOLDER}
             helpText={LABELS.NAME_HELP}
             maxLength={128}
-            alwaysShowHelpText
             required
             data-testid="sat-create-name"
           />

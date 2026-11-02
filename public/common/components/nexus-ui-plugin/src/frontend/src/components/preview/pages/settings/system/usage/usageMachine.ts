@@ -36,6 +36,7 @@ export function createUsageMachine() {
   return createMachine<UsageContext, UsageEvent>(
     {
       id: 'usage',
+      predictableActionArguments: true,
       initial: 'loading',
       context: { metrics: [], loadError: null, isPermissionError: false },
       states: {

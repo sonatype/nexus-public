@@ -60,6 +60,7 @@ export function createUsageChartMachine() {
   return createMachine<UsageChartContext, UsageChartEvent>(
     {
       id: 'usageChart',
+      predictableActionArguments: true,
       initial: 'loading',
       context: {
         combinedData: [],

@@ -49,7 +49,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
-import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.BlobStoreSupport;
 import org.sonatype.nexus.blobstore.BlobSupport;
 import org.sonatype.nexus.blobstore.DateBasedHelper.DateInterval;
@@ -194,8 +193,6 @@ public class FileBlobStore
 
   private boolean supportsAtomicMove;
 
-  private final BlobStoreReconciliationLogger reconciliationLogger;
-
   private final long pruneEmptyDirectoryAge;
 
   private final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
@@ -213,7 +210,6 @@ public class FileBlobStore
       @Qualifier(FileBlobStore.TYPE) final BlobStoreMetricsService<FileBlobStore> metricsService,
       final NodeAccess nodeAccess,
       final DryRunPrefix dryRunPrefix,
-      final BlobStoreReconciliationLogger reconciliationLogger,
       @Value("${nexus.blobstore.prune.empty.directory.age.ms:86400000}") final long pruneEmptyDirectoryAge,
       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
       final FileBlobDeletionIndex blobDeletionIndex)
@@ -226,7 +222,6 @@ public class FileBlobStore
     this.nodeAccess = requireNonNull(nodeAccess);
     this.supportsHardLinkCopy = true;
     this.supportsAtomicMove = true;
-    this.reconciliationLogger = requireNonNull(reconciliationLogger);
     this.pruneEmptyDirectoryAge = pruneEmptyDirectoryAge;
     this.blobStoreQuotaUsageChecker = requireNonNull(blobStoreQuotaUsageChecker);
     this.blobDeletionIndex = requireNonNull(blobDeletionIndex);
@@ -243,14 +238,13 @@ public class FileBlobStore
       final BlobStoreConfiguration configuration,
       final NodeAccess nodeAccess,
       final DryRunPrefix dryRunPrefix,
-      final BlobStoreReconciliationLogger reconciliationLogger,
       final long pruneEmptyDirectoryAge,
       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
       final FileBlobDeletionIndex blobDeletionIndex)
 
   {
     this(blobIdLocationResolver, fileOperations, directories, directoryHelper, metricsService, nodeAccess, dryRunPrefix,
-        reconciliationLogger, pruneEmptyDirectoryAge, blobStoreQuotaUsageChecker, blobDeletionIndex);
+        pruneEmptyDirectoryAge, blobStoreQuotaUsageChecker, blobDeletionIndex);
     this.contentDir = requireNonNull(contentDir);
     this.blobStoreConfiguration = requireNonNull(configuration);
   }
@@ -426,9 +420,7 @@ public class FileBlobStore
   private Blob create(final Map<String, String> headers, final BlobIngester ingester, final BlobId blobId) {
     for (int retries = 0; retries <= MAX_COLLISION_RETRIES; retries++) {
       try {
-        Blob blob = tryCreate(headers, ingester, blobId);
-        reconciliationLogger.logBlobCreated(reconciliationLogDir, blob.getId());
-        return blob;
+        return tryCreate(headers, ingester, blobId);
       }
       catch (BlobCollisionException e) { // NOSONAR
         log.warn("BlobId collision: {} already exists{}", e.getBlobId(),
@@ -810,9 +802,7 @@ public class FileBlobStore
       Path content = blobDir.resolve(CONTENT_PREFIX);
       directoryHelper.mkdir(content);
       this.contentDir = content;
-      Path reconciliationLogDir = blobDir.resolve("reconciliation");
-      directoryHelper.mkdir(reconciliationLogDir);
-      this.reconciliationLogDir = reconciliationLogDir;
+      this.reconciliationLogDir = blobDir.resolve("reconciliation");
 
       setConfiguredBlobStorePath(getRelativeBlobDir());
     }

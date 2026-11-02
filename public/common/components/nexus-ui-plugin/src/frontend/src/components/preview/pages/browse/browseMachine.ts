@@ -79,6 +79,7 @@ export function createBrowseMachine(initialRepo?: string) {
   return createMachine<BrowseMachineContext, BrowseMachineEvent>(
     {
       id: 'browse',
+      predictableActionArguments: true,
       initial: initialRepo ? 'treeView' : 'repoList',
       context: {
         selectedRepository: initialRepo || null,

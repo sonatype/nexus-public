@@ -31,6 +31,7 @@ export default createMachine(
   {
     id: 'SslCertificateDetailsModalMachine',
     initial: 'loading',
+    predictableActionArguments: true,
 
     states: {
       loading: {

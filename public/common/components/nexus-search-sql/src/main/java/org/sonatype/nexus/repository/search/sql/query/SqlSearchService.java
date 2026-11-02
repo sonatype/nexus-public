@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.search.sql.query;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,9 +52,8 @@ import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ForbiddenException;
+import org.apache.shiro.authz.UnauthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -243,7 +243,7 @@ public class SqlSearchService
     }
     catch (SqlSearchPermissionException e) {
       log.debug("Search skipped due to permission condition: {}", e.getMessage(), e);
-      throw new ForbiddenException("User lacks permission to specified repository", e);
+      throw new UnauthorizedException("User lacks permission to specified repository", e);
 
     }
     catch (UnknownRepositoriesException e) {
@@ -264,7 +264,7 @@ public class SqlSearchService
     }
     catch (SqlSearchPermissionException e) {
       log.debug("Search skipped due to permission condition: {}", e.getMessage(), e);
-      throw new ForbiddenException("User lacks permission to specified repository", e);
+      throw new UnauthorizedException("User lacks permission to specified repository", e);
 
     }
     catch (UnknownRepositoriesException e) {
@@ -427,7 +427,7 @@ public class SqlSearchService
         componentIdsByFormat.get(searchResult.format()).add(searchResult.componentId());
       }
       else {
-        List<Integer> componentIds = Lists.newArrayList(searchResult.componentId());
+        List<Integer> componentIds = new ArrayList<>(Arrays.asList(searchResult.componentId()));
         componentIdsByFormat.put(searchResult.format(), componentIds);
       }
     }

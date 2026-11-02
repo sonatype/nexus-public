@@ -19,6 +19,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -239,7 +240,7 @@ public class ExtDirectServlet
             if (reader instanceof RequestBoundReader) {
               ServletRequest request = ((RequestBoundReader) reader).getRequest();
               Map<String, String[]> parameterMap = request.getParameterMap();
-              Map<String, String> parameters = Maps.newHashMap();
+              Map<String, String> parameters = new HashMap<>();
               if (parameterMap != null) {
                 parameters = Maps.transformEntries(parameterMap,
                     (key, values) -> values == null || values.length == 0 ? null : values[0]);

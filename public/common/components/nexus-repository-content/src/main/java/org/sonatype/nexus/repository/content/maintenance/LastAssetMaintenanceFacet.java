@@ -49,7 +49,7 @@ public class LastAssetMaintenanceFacet
   }
 
   @Override
-  public boolean cascadeSoftDeleteToComponent(final Asset asset, final boolean lastRemainingAsset) {
+  public boolean cascadeTrashToComponent(final Asset asset, final boolean lastRemainingAsset) {
     // Delete the component only along with its last asset (see deleteAsset).
     return lastRemainingAsset;
   }

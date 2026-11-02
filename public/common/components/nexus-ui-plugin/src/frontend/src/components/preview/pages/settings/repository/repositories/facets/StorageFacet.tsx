@@ -18,13 +18,19 @@ import {
   SettingsSelect,
   SettingsCheckbox,
 } from '../../../../../shared/form';
+import { useIsEnterpriseEdition } from '../../../../../shared/hooks';
+import { ExtJS } from '../../../../../../../interface/ExtJS';
+import { Permissions } from '../../../../../../../constants/Permissions';
 
 import {
   RepositoryFormData,
   RepositoryFormErrors,
   BlobStore,
+  StorageConfig,
 } from '../types';
 import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
+import { getCdnDefaultForNewRepositories } from '../repositoryFormMachine';
+import { RepositoryGlobalDistribution, type RepositoryGlobalDistributionMode } from './RepositoryGlobalDistribution';
 
 interface StorageFacetProps {
   formData: RepositoryFormData;
@@ -51,8 +57,51 @@ export function StorageFacet({
   isCloud = false,
   blobStores,
 }: StorageFacetProps) {
+  const isEnterprise = useIsEnterpriseEdition();
+  const hasGlobalDistribution = formData.storage?.globalDistribution !== undefined;
+  const blobStoreName = formData.storage?.blobStoreName || '';
+  const selectedBlobStore = blobStores.find((store) => store.name === blobStoreName);
+
+  const isCdnBlobStore = (name?: string) =>
+    Boolean(blobStores.find((store) => store.name === name)?.globalDistributionEnabled);
+
+  // Cloud provisions a blob store per repository at save time, so there is none to inspect here.
+  const globalDistributionAvailable = isCloud || isCdnBlobStore(blobStoreName);
+
+  let globalDistributionMode: RepositoryGlobalDistributionMode | undefined;
+  if (!isEnterprise) {
+    globalDistributionMode = 'unlicensed';
+  } else if (hasGlobalDistribution) {
+    if (isCloud) {
+      globalDistributionMode = 'available';
+    } else if (blobStoreName) {
+      // A blob store missing from the list (e.g. the list failed to load) can't be checked, so
+      // nothing is shown rather than a false "not enabled" state.
+      if (selectedBlobStore) {
+        globalDistributionMode = globalDistributionAvailable ? 'available' : 'blobStoreOff';
+      }
+    } else if (blobStores.length > 0) {
+      globalDistributionMode = 'blobStoreOff';
+    }
+  }
+
+  const hasUser = ExtJS.useUser() ?? false;
+  const canReadBlobStores = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.BLOB_STORES.READ), [hasUser]);
+  // Only S3 blob stores can serve Global Distribution, so only they get a Configure Blob Store link.
+  const isS3BlobStore = selectedBlobStore?.type?.toLowerCase() === 's3';
+  const blobStoreHref =
+    !isCloud && canReadBlobStores && isS3BlobStore
+      ? `#preview/admin/repository/blobstores/s3/${encodeURIComponent(blobStoreName)}`
+      : undefined;
+
+  // Re-seeds from the CDN default when a different blob store is picked, clearing it when the new
+  // blob store cannot serve global distribution. Without an Enterprise license the value is left as is.
   const handleBlobStoreChange = (value: string) => {
-    onNestedChange('storage', { blobStoreName: value });
+    const updates: Partial<StorageConfig> = { blobStoreName: value };
+    if (isEnterprise && hasGlobalDistribution) {
+      updates.globalDistribution = isCdnBlobStore(value) && getCdnDefaultForNewRepositories();
+    }
+    onNestedChange('storage', updates);
   };
 
   const handleContentValidationChange = (checked: boolean) => {
@@ -62,6 +111,27 @@ export function StorageFacet({
   const handleGlobalDistributionChange = (checked: boolean) => {
     onNestedChange('storage', { globalDistribution: checked });
   };
+
+  // Clears a value the selected blob store cannot serve, for the loads that bypass
+  // handleBlobStoreChange. Without an Enterprise license the value is left as is.
+  React.useEffect(() => {
+    if (
+      isEnterprise &&
+      hasGlobalDistribution &&
+      blobStores.length > 0 &&
+      !globalDistributionAvailable &&
+      formData.storage?.globalDistribution
+    ) {
+      onNestedChange('storage', { globalDistribution: false });
+    }
+  }, [
+    isEnterprise,
+    hasGlobalDistribution,
+    blobStores.length,
+    globalDistributionAvailable,
+    formData.storage?.globalDistribution,
+    onNestedChange,
+  ]);
 
   const blobStoreOptions = blobStores.map((store) => ({
     value: store.name,
@@ -87,6 +157,17 @@ export function StorageFacet({
         />
       )}
 
+      {globalDistributionMode && (
+        <RepositoryGlobalDistribution
+          mode={globalDistributionMode}
+          checked={formData.storage?.globalDistribution}
+          onChange={handleGlobalDistributionChange}
+          blobStoreName={isCloud ? undefined : blobStoreName || undefined}
+          blobStoreHref={blobStoreHref}
+          isS3BlobStore={isS3BlobStore}
+        />
+      )}
+
       <SettingsCheckbox
         name="storage-strictContentTypeValidation"
         label={UIStrings.STORAGE.STRICT_CONTENT_VALIDATION.label}
@@ -94,16 +175,6 @@ export function StorageFacet({
         onChange={handleContentValidationChange}
         description={UIStrings.STORAGE.STRICT_CONTENT_VALIDATION.description}
       />
-
-      {formData.storage?.globalDistribution !== undefined && (
-        <SettingsCheckbox
-          name="global-distribution"
-          label={UIStrings.STORAGE.GLOBAL_DISTRIBUTION.label}
-          checked={formData.storage?.globalDistribution}
-          onChange={handleGlobalDistributionChange}
-          description={UIStrings.STORAGE.GLOBAL_DISTRIBUTION.description}
-        />
-      )}
     </SettingsFormSection>
   );
 }

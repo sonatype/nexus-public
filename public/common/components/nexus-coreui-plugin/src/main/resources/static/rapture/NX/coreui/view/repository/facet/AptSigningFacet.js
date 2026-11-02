@@ -48,8 +48,7 @@ Ext.define('NX.coreui.view.repository.facet.AptSigningFacet', {
             name: 'attributes.aptSigning.keypair',
             fieldLabel: NX.I18n.get('Repository_Facet_AptSigningFacet_Keypair_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_AptSigningFacet_Keypair_HelpText'),
-            allowBlank: me.allowBlank,
-            grow: true
+            allowBlank: me.allowBlank
           },
           {
             xtype:'nx-password',

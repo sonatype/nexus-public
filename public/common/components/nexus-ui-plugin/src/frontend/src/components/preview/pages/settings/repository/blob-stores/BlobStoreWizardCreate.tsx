@@ -17,6 +17,7 @@ import { WizardForm } from '../../../../shared/form';
 import { BlobStoreTypeSelector, type BlobStoreTypeId } from './BlobStoreTypeSelector';
 import { BlobStoreWizardStepBasic } from './BlobStoreWizardStepBasic';
 import { BlobStoreWizardStepCredentials } from './BlobStoreWizardStepCredentials';
+import { BlobStoreWizardStepGlobalDistribution } from './BlobStoreWizardStepGlobalDistribution';
 import { BlobStoreWizardStepAdvanced } from './BlobStoreWizardStepAdvanced';
 import { useBlobStore, useBlobStoreTypes } from './useBlobStores';
 import { clearDirtyState, useToast, PageHeader } from '../../../../shared';
@@ -25,7 +26,15 @@ import { BLOB_STORE_TYPE_IDS } from './blobStoreFormMachine';
 
 const BASE_PATH = 'preview/admin/repository/blobstores';
 
-const WIZARD_STEPS = [
+const WIZARD_STEPS_WITH_GLOBAL_DISTRIBUTION = [
+  { id: 'type', label: 'Select Type' },
+  { id: 'basic', label: 'Basic Config' },
+  { id: 'globalDistribution', label: 'Global Distribution' },
+  { id: 'credentials', label: 'Credentials' },
+  { id: 'advanced', label: 'Advanced' },
+];
+
+const WIZARD_STEPS_WITHOUT_GLOBAL_DISTRIBUTION = [
   { id: 'type', label: 'Select Type' },
   { id: 'basic', label: 'Basic Config' },
   { id: 'credentials', label: 'Credentials' },
@@ -90,6 +99,22 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
   const toast = useToast();
   const { save } = useBlobStore(undefined, selectedType || undefined);
   const { types, quotaTypes, loading: typesLoading } = useBlobStoreTypes();
+  const isS3 = selectedType?.toLowerCase() === BLOB_STORE_TYPE_IDS.S3;
+
+  // Step indexes
+  const typeStepIndex = 0;
+  const basicStepIndex = typeStepIndex + 1;
+  const showGlobalDistributionStep = isS3;
+  const globalDistributionStepIndex = showGlobalDistributionStep ? (basicStepIndex + 1) : -1;
+  const credentialsStepIndex = (showGlobalDistributionStep ? globalDistributionStepIndex : basicStepIndex) + 1;
+  const advancedStepIndex = credentialsStepIndex + 1;
+
+  // Use appropriate wizard steps based on blob store type
+  const wizardSteps = useMemo(() => {
+    return showGlobalDistributionStep
+      ? WIZARD_STEPS_WITH_GLOBAL_DISTRIBUTION
+      : WIZARD_STEPS_WITHOUT_GLOBAL_DISTRIBUTION;
+  }, [showGlobalDistributionStep]);
 
   const updateField = useCallback((field: string, value: unknown) => {
     touchedFields.current.add(field);
@@ -271,25 +296,26 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
 
   // Surface Advanced step validation errors so user sees what to fix when button is disabled
   useEffect(() => {
-    if (step === 3) {
+    if (step === advancedStepIndex) {
       const err = validateStep3Pure(formData);
       setValidationErrors((prev) => ({ ...prev, ...err }));
     }
   }, [step, formData, validateStep3Pure]);
 
   const canAdvance = useMemo(() => {
-    if (step === 0) return selectedType != null;
-    if (step === 1) return Object.keys(validateStep1Pure(formData, selectedType)).length === 0;
-    if (step === 2) return true;
-    if (step === 3) return Object.keys(validateStep3Pure(formData)).length === 0;
+    if (step === typeStepIndex) return selectedType != null;
+    if (step === basicStepIndex) return Object.keys(validateStep1Pure(formData, selectedType)).length === 0;
+    if (step === globalDistributionStepIndex) return true;
+    if (step === credentialsStepIndex) return true;
+    if (step === advancedStepIndex) return Object.keys(validateStep3Pure(formData)).length === 0;
     return true;
   }, [step, formData, selectedType, validateStep1Pure, validateStep3Pure]);
 
   const handleStepChange = useCallback(
     (newStep: number) => {
       if (newStep > step) {
-        if (step === 1 && !runValidateStep1()) return;
-        if (step === 3 && !runValidateStep3()) return;
+        if (step === basicStepIndex && !runValidateStep1()) return;
+        if (step === advancedStepIndex && !runValidateStep3()) return;
       }
       setStep(newStep);
     },
@@ -306,6 +332,11 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
     if (!payload.type) {
       toast.error('Blob store type is required');
       return;
+    }
+
+    // Remove globalDistribution if it's empty or has no type selected
+    if (!payload.globalDistribution?.type) {
+      delete payload.globalDistribution;
     }
 
     try {
@@ -341,13 +372,13 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
 
   const stepContent = (
     <>
-      {step === 0 && (
+      {step === typeStepIndex && (
         <BlobStoreTypeSelector
           selectedType={selectedType}
           onSelect={handleTypeSelect}
         />
       )}
-      {step === 1 && selectedType && (
+      {step === basicStepIndex && selectedType && (
         <BlobStoreWizardStepBasic
           data={formData}
           selectedType={selectedType}
@@ -356,14 +387,20 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
           validationErrors={validationErrors}
         />
       )}
-      {step === 2 && selectedType && (
+      {step === globalDistributionStepIndex && selectedType && (
+        <BlobStoreWizardStepGlobalDistribution
+          data={formData}
+          onChange={updateNested}
+        />
+      )}
+      {step === credentialsStepIndex && selectedType && (
         <BlobStoreWizardStepCredentials
           data={formData}
           selectedType={selectedType}
           onChange={updateNested}
         />
       )}
-      {step === 3 && selectedType && (
+      {step === advancedStepIndex && selectedType && (
         <BlobStoreWizardStepAdvanced
           data={formData}
           selectedType={selectedType}
@@ -386,7 +423,7 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
         ]}
       />
       <WizardForm
-        steps={WIZARD_STEPS}
+        steps={wizardSteps}
         currentStep={step}
         onStepChange={handleStepChange}
         onComplete={handleComplete}

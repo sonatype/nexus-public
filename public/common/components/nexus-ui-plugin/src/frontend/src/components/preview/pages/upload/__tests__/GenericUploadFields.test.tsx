@@ -170,6 +170,46 @@ describe('UploadField', () => {
     });
   });
 
+  describe('Directory field copy', () => {
+    const RECONCILED_DIRECTORY_HELP = 'Destination for uploaded files (e.g. /path/to/files/)';
+    const RECONCILED_DIRECTORY_PLACEHOLDER = '/path/to/files/';
+    const directoryField = { name: 'directory', type: 'STRING', displayName: 'Directory', optional: false };
+
+    it('uses reconciled directory help text when the API omits it', () => {
+      renderWithTheme(
+        <UploadField field={directoryField} value="" onChange={mockOnChange} />
+      );
+
+      expect(screen.getByText(RECONCILED_DIRECTORY_HELP)).toBeInTheDocument();
+    });
+
+    it('uses reconciled directory placeholder', () => {
+      renderWithTheme(
+        <UploadField field={directoryField} value="" onChange={mockOnChange} />
+      );
+
+      expect(screen.getByTestId('input-directory')).toHaveAttribute(
+        'placeholder',
+        RECONCILED_DIRECTORY_PLACEHOLDER
+      );
+    });
+
+    it('prefers backend-supplied directory help text over the reconciled fallback', () => {
+      const backendHelp = 'Backend directory guidance';
+
+      renderWithTheme(
+        <UploadField
+          field={{ ...directoryField, helpText: backendHelp }}
+          value=""
+          onChange={mockOnChange}
+        />
+      );
+
+      expect(screen.getByText(backendHelp)).toBeInTheDocument();
+      expect(screen.queryByText(RECONCILED_DIRECTORY_HELP)).not.toBeInTheDocument();
+    });
+  });
+
   describe('SELECT type', () => {
     it('renders select with label', () => {
       renderWithTheme(

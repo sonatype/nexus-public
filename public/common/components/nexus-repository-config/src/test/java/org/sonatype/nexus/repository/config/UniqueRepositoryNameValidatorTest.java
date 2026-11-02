@@ -60,11 +60,11 @@ public class UniqueRepositoryNameValidatorTest
   }
 
   /*
-   * Name is invalid when a soft-deleted repository exists whose name matches ignoring case, because
-   * repository names are unique case-insensitively and the soft-deleted repository could still be restored.
+   * Name is invalid when a trashed repository exists whose name matches ignoring case, because
+   * repository names are unique case-insensitively and the trashed repository could still be restored.
    */
   @Test
-  public void testInvalidWhenSoftDeletedRepositoryExistsIgnoringCase() {
+  public void testInvalidWhenTrashedRepositoryExistsIgnoringCase() {
     when(repositoryManager.exists("Foo")).thenReturn(false);
     when(configurationStore.existsDeletedByNameCaseInsensitive("Foo")).thenReturn(true);
     when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(violationBuilder);
@@ -73,10 +73,10 @@ public class UniqueRepositoryNameValidatorTest
   }
 
   /*
-   * Name is valid when neither a live repository nor a soft-deleted repository (ignoring case) exists.
+   * Name is valid when neither a live repository nor a trashed repository (ignoring case) exists.
    */
   @Test
-  public void testValidWhenNoLiveOrSoftDeletedRepositoryExists() {
+  public void testValidWhenNoLiveOrTrashedRepositoryExists() {
     when(repositoryManager.exists("Foo")).thenReturn(false);
     when(configurationStore.existsDeletedByNameCaseInsensitive("Foo")).thenReturn(false);
 

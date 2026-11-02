@@ -25,9 +25,9 @@ import org.springframework.stereotype.Component;
  * Disabled placeholder (NEXUS-54969).
  *
  * <p>
- * This step originally added the soft-delete columns ({@code deleted_on}, {@code deleted_by}) and a partial
+ * This step originally added the trash columns ({@code deleted_on}, {@code deleted_by}) and a partial
  * index to the {@code repository} table (Logical Deletion Recovery, NEXUS-49147/NEXUS-51733). It is now a
- * no-op so the columns are not added: soft-delete is disabled at the store layer, and running the live
+ * no-op so the columns are not added: trash is disabled at the store layer, and running the live
  * {@code ALTER TABLE} was part of the class of change that caused the "cached plan must not change result
  * type" (SQLState 0A000) failures during rollout.
  * </p>
@@ -36,7 +36,7 @@ import org.springframework.stereotype.Component;
  * Safe for both database states. On a database where this step already ran, the columns remain (unused,
  * all-NULL). On a database where it never ran, the columns stay absent and
  * {@code ConfigurationStoreImpl} transparently falls back to its unfiltered repository reads (it catches
- * the "column deleted_on does not exist" error, see {@code SoftDeleteMigrationHelper}). The class stays
+ * the "column deleted_on does not exist" error, see {@code TrashMigrationHelper}). The class stays
  * registered and keeps {@code version() = 2.168} so Flyway still matches any recorded history row;
  * re-enabling is a revert of this change.
  * </p>

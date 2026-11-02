@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.capability.condition.internal;
 
+import java.util.HashMap;
+
 import org.sonatype.nexus.capability.CapabilityContext;
 import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.capability.CapabilityIdentity;
@@ -19,7 +21,6 @@ import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.condition.EventManagerTestSupport;
 
-import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -75,9 +76,9 @@ public class PassivateCapabilityDuringUpdateConditionTest
   @Test
   public void passivateDuringUpdate() {
     underTest.handle(new CapabilityEvent.BeforeUpdate(
-        reference, Maps.<String, String>newHashMap(), Maps.<String, String>newHashMap()));
+        reference, new HashMap<>(), new HashMap<>()));
     underTest.handle(new CapabilityEvent.AfterUpdate(
-        reference, Maps.<String, String>newHashMap(), Maps.<String, String>newHashMap()));
+        reference, new HashMap<>(), new HashMap<>()));
 
     verifyEventManagerEvents(unsatisfied(underTest), satisfied(underTest));
   }

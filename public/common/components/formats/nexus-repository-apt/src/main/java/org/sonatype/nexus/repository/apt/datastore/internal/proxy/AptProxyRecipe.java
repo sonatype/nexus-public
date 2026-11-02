@@ -69,99 +69,128 @@ public class AptProxyRecipe
 {
   public static final String NAME = "apt-proxy";
 
-  @Autowired
-  Provider<AptSecurityFacet> securityFacet;
+  private final Provider<AptSecurityFacet> securityFacet;
+
+  private final Provider<ConfigurableViewFacet> viewFacet;
+
+  private final Provider<HttpClientFacet> httpClientFacet;
+
+  private final Provider<NegativeCacheFacet> negativeCacheFacet;
+
+  private final Provider<AptProxyFacet> proxyFacet;
+
+  private final Provider<AptProxySnapshotFacet> proxySnapshotFacet;
+
+  private final Provider<PurgeUnusedFacet> purgeUnusedFacet;
+
+  private final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet;
+
+  private final Provider<AptContentFacet> aptContentFacet;
+
+  private final Provider<SearchFacet> searchFacet;
+
+  private final Provider<BrowseFacet> browseFacet;
+
+  private final Provider<AptKeyValueFacet> keyValueFacet;
+
+  private final Provider<AptProxyMetadataFacet> proxyMetadataFacet;
+
+  private final Provider<AptSigningFacet> signingFacet;
+
+  private final Provider<AptMetadataRebuildSchedulerFacet> aptMetadataRebuildSchedulerFacet;
+
+  private final ExceptionHandler exceptionHandler;
+
+  private final TimingHandler timingHandler;
+
+  private final SecurityHandler securityHandler;
+
+  private final NegativeCacheHandler negativeCacheHandler;
+
+  private final PartialFetchHandler partialFetchHandler;
+
+  private final ProxyHandler proxyHandler;
+
+  private final ConditionalRequestHandler conditionalRequestHandler;
+
+  private final ContentHeadersHandler contentHeadersHandler;
+
+  private final AptSnapshotHandler snapshotHandler;
+
+  private final AptDistributionValidationHandler distributionValidationHandler;
+
+  private final AptProxyMetadataHandler proxyMetadataHandler;
+
+  private final LastDownloadedHandler lastDownloadedHandler;
+
+  private final RoutingRuleHandler routingRuleHandler;
+
+  private final HandlerContributor handlerContributor;
 
   @Autowired
-  Provider<ConfigurableViewFacet> viewFacet;
-
-  @Autowired
-  Provider<HttpClientFacet> httpClientFacet;
-
-  @Autowired
-  Provider<NegativeCacheFacet> negativeCacheFacet;
-
-  @Autowired
-  Provider<AptProxyFacet> proxyFacet;
-
-  @Autowired
-  Provider<AptProxySnapshotFacet> proxySnapshotFacet;
-
-  @Autowired
-  Provider<PurgeUnusedFacet> purgeUnusedFacet;
-
-  @Qualifier(AptFormat.NAME)
-  @Autowired
-  Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet;
-
-  @Autowired
-  Provider<AptContentFacet> aptContentFacet;
-
-  @Autowired
-  Provider<SearchFacet> searchFacet;
-
-  @Autowired
-  Provider<BrowseFacet> browseFacet;
-
-  @Qualifier(AptFormat.NAME)
-  @Autowired
-  Provider<AptKeyValueFacet> keyValueFacet;
-
-  @Qualifier(AptFormat.NAME + "-proxy")
-  @Autowired
-  Provider<AptProxyMetadataFacet> proxyMetadataFacet;
-
-  @Autowired
-  Provider<AptSigningFacet> signingFacet;
-
-  @Autowired
-  Provider<AptMetadataRebuildSchedulerFacet> aptMetadataRebuildSchedulerFacet;
-
-  @Autowired
-  ExceptionHandler exceptionHandler;
-
-  @Autowired
-  TimingHandler timingHandler;
-
-  @Autowired
-  SecurityHandler securityHandler;
-
-  @Autowired
-  NegativeCacheHandler negativeCacheHandler;
-
-  @Autowired
-  PartialFetchHandler partialFetchHandler;
-
-  @Autowired
-  ProxyHandler proxyHandler;
-
-  @Autowired
-  ConditionalRequestHandler conditionalRequestHandler;
-
-  @Autowired
-  ContentHeadersHandler contentHeadersHandler;
-
-  @Autowired
-  AptSnapshotHandler snapshotHandler;
-
-  @Autowired
-  AptDistributionValidationHandler distributionValidationHandler;
-
-  @Autowired
-  AptProxyMetadataHandler proxyMetadataHandler;
-
-  @Autowired
-  LastDownloadedHandler lastDownloadedHandler;
-
-  @Autowired
-  RoutingRuleHandler routingRuleHandler;
-
-  @Autowired
-  HandlerContributor handlerContributor;
-
-  @Autowired
-  public AptProxyRecipe(@Qualifier(ProxyType.NAME) final Type type, @Qualifier(AptFormat.NAME) final Format format) {
+  public AptProxyRecipe(
+      @Qualifier(ProxyType.NAME) final Type type,
+      @Qualifier(AptFormat.NAME) final Format format,
+      final Provider<AptSecurityFacet> securityFacet,
+      final Provider<ConfigurableViewFacet> viewFacet,
+      final Provider<HttpClientFacet> httpClientFacet,
+      final Provider<NegativeCacheFacet> negativeCacheFacet,
+      final Provider<AptProxyFacet> proxyFacet,
+      final Provider<AptProxySnapshotFacet> proxySnapshotFacet,
+      final Provider<PurgeUnusedFacet> purgeUnusedFacet,
+      @Qualifier(AptFormat.NAME) final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet,
+      final Provider<AptContentFacet> aptContentFacet,
+      final Provider<SearchFacet> searchFacet,
+      final Provider<BrowseFacet> browseFacet,
+      @Qualifier(AptFormat.NAME) final Provider<AptKeyValueFacet> keyValueFacet,
+      @Qualifier(AptFormat.NAME + "-proxy") final Provider<AptProxyMetadataFacet> proxyMetadataFacet,
+      final Provider<AptSigningFacet> signingFacet,
+      final Provider<AptMetadataRebuildSchedulerFacet> aptMetadataRebuildSchedulerFacet,
+      final ExceptionHandler exceptionHandler,
+      final TimingHandler timingHandler,
+      final SecurityHandler securityHandler,
+      final NegativeCacheHandler negativeCacheHandler,
+      final PartialFetchHandler partialFetchHandler,
+      final ProxyHandler proxyHandler,
+      final ConditionalRequestHandler conditionalRequestHandler,
+      final ContentHeadersHandler contentHeadersHandler,
+      final AptSnapshotHandler snapshotHandler,
+      final AptDistributionValidationHandler distributionValidationHandler,
+      final AptProxyMetadataHandler proxyMetadataHandler,
+      final LastDownloadedHandler lastDownloadedHandler,
+      final RoutingRuleHandler routingRuleHandler,
+      final HandlerContributor handlerContributor)
+  {
     super(type, format);
+    this.securityFacet = securityFacet;
+    this.viewFacet = viewFacet;
+    this.httpClientFacet = httpClientFacet;
+    this.negativeCacheFacet = negativeCacheFacet;
+    this.proxyFacet = proxyFacet;
+    this.proxySnapshotFacet = proxySnapshotFacet;
+    this.purgeUnusedFacet = purgeUnusedFacet;
+    this.lastAssetMaintenanceFacet = lastAssetMaintenanceFacet;
+    this.aptContentFacet = aptContentFacet;
+    this.searchFacet = searchFacet;
+    this.browseFacet = browseFacet;
+    this.keyValueFacet = keyValueFacet;
+    this.proxyMetadataFacet = proxyMetadataFacet;
+    this.signingFacet = signingFacet;
+    this.aptMetadataRebuildSchedulerFacet = aptMetadataRebuildSchedulerFacet;
+    this.exceptionHandler = exceptionHandler;
+    this.timingHandler = timingHandler;
+    this.securityHandler = securityHandler;
+    this.negativeCacheHandler = negativeCacheHandler;
+    this.partialFetchHandler = partialFetchHandler;
+    this.proxyHandler = proxyHandler;
+    this.conditionalRequestHandler = conditionalRequestHandler;
+    this.contentHeadersHandler = contentHeadersHandler;
+    this.snapshotHandler = snapshotHandler;
+    this.distributionValidationHandler = distributionValidationHandler;
+    this.proxyMetadataHandler = proxyMetadataHandler;
+    this.lastDownloadedHandler = lastDownloadedHandler;
+    this.routingRuleHandler = routingRuleHandler;
+    this.handlerContributor = handlerContributor;
   }
 
   @Override

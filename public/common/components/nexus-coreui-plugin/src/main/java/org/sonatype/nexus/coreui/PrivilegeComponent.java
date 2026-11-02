@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.collect.Maps;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.AuthorizationException;
@@ -49,6 +48,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.groups.Default;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -295,7 +295,7 @@ public class PrivilegeComponent
         .withDescription(input.getDescription() != null ? input.getDescription() : input.getId())
         .withType(input.getType())
         .withReadOnly(input.isReadOnly())
-        .withProperties(Maps.newHashMap(input.getProperties()))
+        .withProperties(new HashMap<>(input.getProperties()))
         .withPermission(permission);
   }
 
@@ -309,7 +309,7 @@ public class PrivilegeComponent
     privilege.setName(input.getName());
     privilege.setDescription(input.getDescription());
     privilege.setType(input.getType());
-    privilege.setProperties(Maps.newHashMap(input.getProperties()));
+    privilege.setProperties(new HashMap<>(input.getProperties()));
     return privilege;
   }
 

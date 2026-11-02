@@ -12,30 +12,35 @@
  */
 package org.sonatype.nexus.mime.internal;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.sonatype.nexus.mime.MimeRule;
 import org.sonatype.nexus.mime.MimeRulesSource;
 
-import com.google.common.collect.Lists;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link DefaultMimeSupport}.
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class DefaultMimeSupportTest
 {
   private DefaultMimeSupport underTest = new DefaultMimeSupport();
@@ -71,13 +76,7 @@ public class DefaultMimeSupportTest
    */
   @Test
   public void testGuessfakeMimeRulesSourceMimeTypeFromPath() {
-    MimeRulesSource source = new MimeRulesSource()
-    {
-      @Override
-      public MimeRule getRuleForName(String path) {
-        return new MimeRule(false, "foo/bar");
-      }
-    };
+    MimeRulesSource source = path -> new MimeRule(false, "foo/bar");
     assertThat(underTest.guessMimeTypeFromPath("/some/path/artifact.pom", source), equalTo("foo/bar"));
   }
 
@@ -90,7 +89,7 @@ public class DefaultMimeSupportTest
   public void useNexusMimeTypes() {
     this.underTest = new DefaultMimeSupport(mimeTypes);
     when(mimeTypes.getMimeRuleForExtension("test")).thenReturn(mimeType);
-    when(mimeType.getMimetypes()).thenReturn(Lists.newArrayList("fake/mimetype"));
+    when(mimeType.getMimetypes()).thenReturn(List.of("fake/mimetype"));
 
     assertThat(underTest.guessMimeTypeFromPath("foo.test"), is("fake/mimetype"));
   }
@@ -107,7 +106,7 @@ public class DefaultMimeSupportTest
     this.underTest = new DefaultMimeSupport(mimeTypes);
 
     when(mimeTypes.getMimeRuleForExtension("zip")).thenReturn(mimeType);
-    when(mimeType.getMimetypes()).thenReturn(Lists.newArrayList("fake/mimetype"));
+    when(mimeType.getMimetypes()).thenReturn(List.of("fake/mimetype"));
 
     final List<String> mimeTypes = underTest.guessMimeTypesListFromPath("foo.zip");
     assertThat(mimeTypes, contains("fake/mimetype", "application/zip", "application/x-zip-compressed"));
@@ -121,7 +120,7 @@ public class DefaultMimeSupportTest
 
     when(mimeTypes.getMimeRuleForExtension("zip")).thenReturn(mimeType);
     when(mimeType.isOverride()).thenReturn(true);
-    when(mimeType.getMimetypes()).thenReturn(Lists.newArrayList("fake/mimetype"));
+    when(mimeType.getMimetypes()).thenReturn(List.of("fake/mimetype"));
 
     assertThat(underTest.guessMimeTypeFromPath("foo.zip"), is("fake/mimetype"));
   }
@@ -138,5 +137,27 @@ public class DefaultMimeSupportTest
     assertFileMimeType(new File("src/test/resources/mime/file.zip"), "application/zip");
     assertFileMimeType(new File("src/test/resources/mime/empty.zip"), "application/zip");
     assertFileMimeType(new File("src/test/resources/mime/file.jar"), "application/java-archive");
+  }
+
+  /**
+   * NuGet packages are OPC (Open Packaging Conventions) zips whose first entry is {@code [Content_Types].xml}, which
+   * Tika would otherwise report as its internal {@code application/x-tika-ooxml} type.
+   */
+  @Test
+  public void opcPackageIsDetectedAsZip() throws Exception {
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
+      zip.putNextEntry(new ZipEntry("[Content_Types].xml"));
+      zip.write("<Types/>".getBytes(UTF_8));
+      zip.closeEntry();
+      zip.putNextEntry(new ZipEntry("example.nuspec"));
+      zip.write("<package/>".getBytes(UTF_8));
+      zip.closeEntry();
+    }
+
+    try (InputStream is = new ByteArrayInputStream(bytes.toByteArray())) {
+      assertThat(underTest.detectMimeTypes(is, "example.1.0.0.nupkg"),
+          containsInAnyOrder("application/zip", "application/x-zip-compressed"));
+    }
   }
 }

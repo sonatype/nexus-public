@@ -31,6 +31,12 @@ class UnversionedComponentStoreTest
 
   @Override
   @DatabaseTest
+  protected void testUndoTrashComponent_liveComponent_returnsZeroAndFiresNoRestoredEvent() {
+    super.testUndoTrashComponent_liveComponent_returnsZeroAndFiresNoRestoredEvent();
+  }
+
+  @Override
+  @DatabaseTest
   protected void testPurge_byComponent() {
     super.testPurge_byComponent();
   }

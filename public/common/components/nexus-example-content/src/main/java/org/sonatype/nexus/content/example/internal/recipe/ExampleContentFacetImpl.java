@@ -13,6 +13,7 @@
 package org.sonatype.nexus.content.example.internal.recipe;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -24,8 +25,6 @@ import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
-
-import com.google.common.collect.ImmutableList;
 
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -45,7 +44,7 @@ public class ExampleContentFacetImpl
     extends ContentFacetSupport
     implements ExampleContentFacet
 {
-  private static final Iterable<HashAlgorithm> HASHING = ImmutableList.of(SHA256);
+  private static final Iterable<HashAlgorithm> HASHING = List.of(SHA256);
 
   @Autowired
   public ExampleContentFacetImpl(

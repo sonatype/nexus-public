@@ -16,6 +16,7 @@ import { API_INTERNAL_UI, ENDPOINTS, restClient } from '../../../../../../interf
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { createFormMachine, type FormContext, type ValidationErrors } from '../../../../../../interface/form';
 import UIStrings from '../../../../../../constants/UIStrings';
+import RepositoriesStrings from '../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 import {
   Repository,
@@ -97,11 +98,47 @@ function looksLikeRegexPattern(entry: string): boolean {
 }
 
 /**
+ * Reads the current Global Distribution default from rapture state. Published by
+ * CdnFeatureFlagStateContributor (Java) on Enterprise editions. Absent — and therefore
+ * {@code false} — on non-Enterprise editions. Called at form-init time (create) and when the
+ * API omits the field on load (edit). NEXUS-54396.
+ */
+export function getCdnDefaultForNewRepositories(): boolean {
+  return Boolean(ExtJS.state()?.getValue('cdnDefaultForNewRepositories', false));
+}
+
+/**
+ * True when the form may carry {@code storage.globalDistribution}.
+ */
+function isGlobalDistributionAvailable(): boolean {
+  return ExtJS.isEnterpriseEdition();
+}
+
+/**
  * Reported when a submitted URL cannot be parsed at all, as distinct from parsing
  * cleanly but carrying a scheme we do not accept. Exported so tests assert against
  * this value rather than a copied literal.
  */
 export const INVALID_URL_FORMAT_MESSAGE = 'Invalid URL format';
+
+/**
+ * Swift proxy repositories may only proxy the GitHub root URL. The Swift format's fetch
+ * path is hardcoded to github.com, so any other remote produces a repository that cannot
+ * serve packages. This restriction is interim and will be revisited if non-GitHub hosts
+ * become supported.
+ *
+ * Accepts exactly 'https://github.com/' or 'https://github.com' -- compared character for
+ * character, so every case variation, subpath, port, or lookalike host is rejected. Mirrors
+ * the Classic UI's SwiftProxy.js validator and the server's SwiftGitHubRemoteUrlValidator, so
+ * all three surfaces agree.
+ */
+const SWIFT_ALLOWED_REMOTE_URLS = ['https://github.com/', 'https://github.com'];
+
+function validateSwiftRemoteUrl(remoteUrl: string): string | undefined {
+  return SWIFT_ALLOWED_REMOTE_URLS.includes(remoteUrl)
+    ? undefined
+    : RepositoriesStrings.SWIFT.REMOTE_URL_VALIDATION_ERROR;
+}
 
 /**
  * Reject any URL whose scheme is not http/https, for parity with the server's `@Url`
@@ -168,10 +205,21 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
   if (data.type === 'proxy') {
     if (!data.proxy?.remoteUrl?.trim()) {
       errors['proxy.remoteUrl'] = 'Remote URL is required';
+    } else if (data.format === 'swift') {
+      // Branches instead of also running validateHttpUrl below, since
+      // validateSwiftRemoteUrl already requires an exact https://github.com(/) match,
+      // making the generic scheme check redundant for this format. Checked ahead of
+      // the generic URL/scheme check so the Swift-specific message is the one surfaced,
+      // matching the other three enforcement surfaces (Classic UI, older React admin
+      // form, server).
+      const swiftError = validateSwiftRemoteUrl(data.proxy.remoteUrl);
+      if (swiftError) {
+        errors['proxy.remoteUrl'] = swiftError;
+      }
     } else {
-      // NEXUS-54771: a bare `new URL()` parses any scheme, so oci:// / oci+http:// /
-      // ftp:// / file:// used to pass client-side for every proxy format and were only
-      // caught by the server's @Url constraint.
+      // A bare `new URL()` parses any scheme, so oci:// / oci+http:// / ftp:// / file://
+      // used to pass client-side for every proxy format and were only caught by the
+      // server's @Url constraint.
       const remoteUrlError = validateHttpUrl(data.proxy.remoteUrl, UIStrings.ERROR.URL_ERROR);
       if (remoteUrlError) {
         errors['proxy.remoteUrl'] = remoteUrlError;
@@ -228,6 +276,20 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
         }
       }
     }
+
+    // Swift-only: auto-block status codes must each be a whole number in [100, 599].
+    // ProxyFacet no longer silently drops non-numeric tokens (they surface as NaN), so
+    // this is what actually catches them.
+    if (data.format === 'swift') {
+      const autoBlockStatusCodes = data.httpClient?.autoBlockStatusCodes;
+      if (Array.isArray(autoBlockStatusCodes) && autoBlockStatusCodes.length > 0) {
+        if (!autoBlockStatusCodes.every((code) => Number.isInteger(code) && code >= 100 && code <= 599)) {
+          errors['httpClient.autoBlockStatusCodes'] = RepositoriesStrings.PROXY.AUTO_BLOCK_STATUS_CODES.validationError;
+        } else if (new Set(autoBlockStatusCodes).size !== autoBlockStatusCodes.length) {
+          errors['httpClient.autoBlockStatusCodes'] = RepositoriesStrings.PROXY.AUTO_BLOCK_STATUS_CODES.duplicateError;
+        }
+      }
+    }
   }
 
   // Group-specific validation
@@ -244,9 +306,12 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
     }
   }
 
-  if (data.format === 'alpine' && data.type === 'group') {
+  // Required on every type, and worded, to match Classic's AlpineSigningFacet (allowBlank:
+  // false on all three recipes). REST is looser for hosted — @Valid only — so this is a
+  // deliberate UI-parity choice; relax it only together with Classic.
+  if (data.format === 'alpine') {
     if (!data.alpineSigning?.keypair?.trim()) {
-      errors['alpineSigning.keypair'] = 'RSA signing key is required for Alpine group repositories';
+      errors['alpineSigning.keypair'] = 'This field is required';
     }
   }
 
@@ -430,7 +495,7 @@ function buildFormDataFromRepository(repo: Repository): RepositoryFormData {
       strictContentTypeValidation: storageConfig?.strictContentTypeValidation ?? true,
       globalDistribution:
         storageConfig?.globalDistribution ??
-        (ExtJS.state()?.getValue('hasEnterprise', false) ? false : undefined),
+        (isGlobalDistributionAvailable() ? getCdnDefaultForNewRepositories() : undefined),
       writePolicy: storageConfig?.writePolicy as 'ALLOW' | 'ALLOW_ONCE' | 'DENY' | undefined,
     },
     proxy: getConfig('proxy'),
@@ -471,6 +536,12 @@ function buildFormDataFromRepository(repo: Repository): RepositoryFormData {
     // upgrade). New repositories get xet.enabled=true seeded in
     // buildDefaultFormData.
     xet: getConfig('xet'),
+    // NEXUS-55104: pluck the persisted cargo block through so CargoFacet
+    // reflects the saved requireAuthentication value on edit. Without this,
+    // formData.cargo is always undefined for an existing repository and the
+    // checkbox renders unchecked regardless of what is actually stored —
+    // saving then overwrites the real value with false.
+    cargo: getConfig('cargo'),
   };
 }
 
@@ -509,6 +580,25 @@ function buildDefaultFormData(format: string, type: RepositoryType): RepositoryF
       nugetVersion: 'V3',
       symbolServerUrl: '',
       allowAnonymousSymbolAccess: true,
+    };
+  }
+
+  // Cargo defaults (all three types). Seeding it here means the create payload
+  // always carries an explicit `cargo` block, so the value the administrator saw
+  // in the form is the value persisted, rather than relying on a server-side
+  // fallback. On Repo Cloud the server overrides this to true (NEXUS-47331) and
+  // CargoFacet hides the control.
+  //
+  // The default itself differs by type to match the backend converters:
+  // CargoProxyRepositoryApiRequestToConfigurationConverter and the group equivalent
+  // default to false when the field is omitted (NEXUS-44559), but
+  // CargoHostedRepositoryApiRequestToConfigurationConverter defaults to true
+  // (preserving hosted's legacy hardcoded auth-required posture, NEXUS-55006).
+  // Seeding false unconditionally would silently flip that hosted default the
+  // moment a repo is created through this UI instead of Classic UI / raw REST.
+  if (format === 'cargo') {
+    baseValues.cargo = {
+      requireAuthentication: type === 'hosted',
     };
   }
 
@@ -577,8 +667,8 @@ function buildDefaultFormData(format: string, type: RepositoryType): RepositoryF
   // Seeded only for editions whose API exposes the field, so the create payload
   // never sends `globalDistribution` to an API that strips it. Applied after the
   // type defaults, whose own `storage` object replaces `baseValues.storage`.
-  if (ExtJS.state()?.getValue('hasEnterprise', false)) {
-    values.storage = { ...values.storage, globalDistribution: false };
+  if (isGlobalDistributionAvailable()) {
+    values.storage = { ...values.storage, globalDistribution: getCdnDefaultForNewRepositories() };
   }
 
   return values;
@@ -713,6 +803,16 @@ export function createRepositoryFormMachine(options: RepositoryFormMachineOption
             };
           }
         }
+        if (currentData.format === 'cargo') {
+          // Keep in step with the cargo branch of buildDefaultFormData: the default differs by
+          // type (hosted defaults to true, proxy/group default to false) to match the backend
+          // converters. Without this, TYPE_CHANGE into cargo-hosted would leave data.cargo at
+          // whatever the previous type held (or undefined), instead of seeding true the way a
+          // fresh cargo-hosted create does.
+          formatDefaults.cargo = {
+            requireAuthentication: newType === 'hosted',
+          };
+        }
         // npm proxy has no format-specific defaults post-migration STL-381 (NpmConfig was removed).
 
         // Build new data: type defaults + format defaults + preserved common fields + explicit overrides
@@ -732,6 +832,17 @@ export function createRepositoryFormMachine(options: RepositoryFormMachineOption
         return {
           data: newData,
           touched: { ...context.touched, type: true },
+        };
+      }),
+      // Re-sync saved online state after the toolbar toggle's out-of-band GET-then-PUT (safe: toggle only fires while pristine).
+      syncSavedOnline: assign((context: any, event: any) => {
+        const nextOnline = event.online as boolean;
+        return {
+          data: { ...context.data, online: nextOnline },
+          pristineData: { ...context.pristineData, online: nextOnline },
+          repository: context.repository
+            ? { ...context.repository, online: nextOnline }
+            : context.repository,
         };
       }),
     },
@@ -870,6 +981,10 @@ export function createRepositoryFormMachine(options: RepositoryFormMachineOption
           actions: ['changeType', 'validate', 'computePristine'],
         },
       ],
+      // Fired by the ViewModel when the saved online prop changes under the form (toolbar toggle).
+      SYNC_SAVED_ONLINE: {
+        actions: ['syncSavedOnline', 'validate', 'computePristine'],
+      },
     },
     // Repository type variant sub-states within the editing state.
     // Each sub-state declares metadata about which fields are visible and required

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.rapture.internal.settings;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +30,6 @@ import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.rapture.settings.RaptureSettings;
 
-import com.google.common.collect.Lists;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -102,7 +103,7 @@ public class SettingsCapabilityDescriptor
   private final List<FormField> formFields;
 
   public SettingsCapabilityDescriptor() {
-    formFields = Lists.<FormField>newArrayList(
+    formFields = new ArrayList<>(Arrays.asList(
         new StringTextFormField(
             SettingsCapabilityConfiguration.TITLE,
             messages.titleLabel(),
@@ -139,7 +140,7 @@ public class SettingsCapabilityDescriptor
             messages.longRequestTimeoutLabel(),
             messages.longRequestTimeoutHelp(),
             FormField.MANDATORY).withInitialValue(RaptureSettings.DEFAULT_LONG_REQUEST_TIMEOUT)
-                .withMinimumValue(RaptureSettings.DEFAULT_LONG_REQUEST_TIMEOUT));
+                .withMinimumValue(RaptureSettings.DEFAULT_LONG_REQUEST_TIMEOUT)));
   }
 
   @Override

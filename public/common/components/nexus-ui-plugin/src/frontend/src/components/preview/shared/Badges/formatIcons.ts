@@ -58,6 +58,7 @@ import {
   FolderSync,
 } from 'lucide-react';
 import ansibleGalaxyLogo from '../../../../art/logos/formats/ansible-galaxy.png';
+import openvsxLogo from '../../../../art/logos/formats/openvsx.png';
 
 /**
  * Type alias for icon component props.
@@ -111,10 +112,13 @@ export const FORMAT_SVGS: Record<string, IconComponent> = {
 
 /**
  * Local image assets for repository formats.
- * Currently only ansiblegalaxy uses a local PNG; all other formats use SVGs or lucide fallbacks.
+ *
+ * Used for formats with no brand icon in the simple-icons set, where a local PNG stands in rather than
+ * falling through to the generic package icon.
  */
 export const FORMAT_IMAGES: Record<string, string> = {
   ansiblegalaxy: ansibleGalaxyLogo,
+  openvsx: openvsxLogo,
 };
 
 /**
@@ -149,6 +153,8 @@ export const FORMAT_ICONS: Record<string, IconComponent> = {
   swift: Code,
   pub: Package,
   ansiblegalaxy: Boxes,
+  // An editor extension is code, and Code is already imported for swift.
+  openvsx: Code,
 };
 
 /**

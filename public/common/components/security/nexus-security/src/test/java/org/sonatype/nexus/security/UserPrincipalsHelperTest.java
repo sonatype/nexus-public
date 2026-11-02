@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security;
 
+import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
@@ -20,7 +21,6 @@ import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
@@ -70,7 +70,7 @@ public class UserPrincipalsHelperTest
     when(userManagerBeta.getAuthenticationRealmName()).thenReturn(BETA_REALM);
     when(userManagerBeta.listUserIds()).thenReturn(ImmutableSet.of("NoUser"));
 
-    underTest = new UserPrincipalsHelper(ImmutableList.of(userManagerAlpha, userManagerBeta));
+    underTest = new UserPrincipalsHelper(List.of(userManagerAlpha, userManagerBeta));
   }
 
   @Test

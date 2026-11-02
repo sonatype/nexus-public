@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -36,8 +37,6 @@ import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -179,7 +178,7 @@ public class ExternalMetadataTask
         .map(String::trim)
         .orElse(null);
     if (Strings2.isBlank(format) || format.equals("*")) {
-      return Predicates.alwaysTrue();
+      return repository -> true;
     }
     return repository -> repository.getFormat().getValue().equals(format);
   }

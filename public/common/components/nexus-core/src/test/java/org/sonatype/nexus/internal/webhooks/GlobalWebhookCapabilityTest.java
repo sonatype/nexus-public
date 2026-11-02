@@ -21,6 +21,7 @@ import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.CapabilityConditions;
 import org.sonatype.nexus.capability.condition.Conditions;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.webhooks.WebhookService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -63,6 +64,9 @@ public class GlobalWebhookCapabilityTest
   @Mock
   private SecretsService secretsService;
 
+  @Mock
+  private WebhookService webhookService;
+
   private GlobalWebhookCapability underTest;
 
   @Before
@@ -70,7 +74,7 @@ public class GlobalWebhookCapabilityTest
     when(conditions.capabilities()).thenReturn(capabilityConditions);
     when(capabilityConditions.passivateCapabilityDuringUpdate()).thenReturn(passivateCondition);
 
-    underTest = new GlobalWebhookCapability();
+    underTest = new GlobalWebhookCapability(webhookService);
     underTest.installConditionComponents(conditions);
   }
 

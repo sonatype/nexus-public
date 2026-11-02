@@ -14,6 +14,7 @@ package org.sonatype.nexus.security.role;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.security.AbstractSecurityTest;
@@ -30,7 +31,6 @@ import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.junit.jupiter.api.Test;
@@ -105,7 +105,7 @@ class EmptyRoleTest
     SecuritySystem securitySystem = this.lookup(SecuritySystem.class);
 
     RealmManager realmManager = lookup(RealmManager.class);
-    realmManager.setConfiguredRealmIds(ImmutableList.of(AuthenticatingRealmImpl.NAME, AuthorizingRealmImpl.NAME));
+    realmManager.setConfiguredRealmIds(List.of(AuthenticatingRealmImpl.NAME, AuthorizingRealmImpl.NAME));
 
     AuthorizationManager authManager = securitySystem.getAuthorizationManager("default");
 

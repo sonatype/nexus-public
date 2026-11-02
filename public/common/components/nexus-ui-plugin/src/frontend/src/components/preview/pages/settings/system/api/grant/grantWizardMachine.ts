@@ -74,6 +74,7 @@ export function createGrantWizardMachine() {
   return createMachine<GrantWizardContext, GrantWizardEvent>(
     {
       id: 'grant-wizard',
+      predictableActionArguments: true,
       initial: 'step1',
       context: initialGrantWizardContext(),
       states: {

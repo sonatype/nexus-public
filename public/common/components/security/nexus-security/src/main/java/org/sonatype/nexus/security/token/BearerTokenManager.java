@@ -14,6 +14,8 @@ package org.sonatype.nexus.security.token;
 
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.security.SecurityHelper;
@@ -29,6 +31,10 @@ import static java.util.Objects.requireNonNull;
 /**
  * Allows the logic for managing bearer tokens to be shared between formats and it is intended that this will be
  * subclassed and a format-specific concrete implementation provided.
+ * <p>
+ * The format name passed to the constructor is the API-Key domain the tokens are stored under. When adding a
+ * subclass, also add its domain to {@code ResettableFormatTokenDomain} (nexus-usertoken-plugin), otherwise a user
+ * token reset will leave the tokens of the new format in place.
  *
  * @since 3.6
  */
@@ -42,7 +48,6 @@ public abstract class BearerTokenManager
 
   private final String format;
 
-  @Autowired(required = false)
   protected BearerTokenEchoResolver echoResolver;
 
   @Autowired
@@ -54,6 +59,11 @@ public abstract class BearerTokenManager
     this.apiKeyService = requireNonNull(apiKeyService);
     this.securityHelper = requireNonNull(securityHelper);
     this.format = requireNonNull(format);
+  }
+
+  @Autowired(required = false)
+  public void setEchoResolver(@Nullable final BearerTokenEchoResolver echoResolver) {
+    this.echoResolver = echoResolver;
   }
 
   /**

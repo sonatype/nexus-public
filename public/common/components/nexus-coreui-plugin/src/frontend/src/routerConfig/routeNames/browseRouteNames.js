@@ -69,6 +69,7 @@ export default {
     MAVEN: 'browse.search.maven',
     NPM: 'browse.search.npm',
     NUGET: 'browse.search.nuget',
+    OPENVSX: 'browse.search.openvsx',
     P2: 'browse.search.p2',
     PYPI: 'browse.search.pypi',
     PUB: 'browse.search.pub',

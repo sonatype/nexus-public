@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetRestoredEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
@@ -63,6 +64,7 @@ public class RepositoryAssetWebhook
     CREATED,
     UPDATED,
     DELETED,
+    RESTORED,
     PURGED
   }
 
@@ -82,6 +84,12 @@ public class RepositoryAssetWebhook
   @AllowConcurrentEvents
   public void on(final AssetDeletedEvent event) {
     maybeQueue(event, EventAction.DELETED);
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void on(final AssetRestoredEvent event) {
+    maybeQueue(event, EventAction.RESTORED);
   }
 
   @Subscribe

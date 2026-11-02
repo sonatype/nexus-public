@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.atlas.customizers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,7 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.singleton;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -69,8 +69,8 @@ public class JmxCustomizerTest
     when(compositeData.getCompositeType()).thenReturn(mock(CompositeType.class));
     when(compositeData.getCompositeType().keySet()).thenReturn(singleton("key"));
     when(compositeData.get("key")).thenReturn("value");
-    doReturn(singleton(newArrayList("key1", "key1a"))).when(tabularData).keySet();
-    when(tabularData.get(newArrayList("key1", "key1a").toArray())).thenReturn(compositeData);
+    doReturn(singleton(new ArrayList<>(Arrays.asList("key1", "key1a")))).when(tabularData).keySet();
+    when(tabularData.get(new ArrayList<>(Arrays.asList("key1", "key1a")).toArray())).thenReturn(compositeData);
     Object result = underTest.render(tabularData);
     assertThat(result, instanceOf(List.class));
     assertThat((List<?>) result, hasSize(1));

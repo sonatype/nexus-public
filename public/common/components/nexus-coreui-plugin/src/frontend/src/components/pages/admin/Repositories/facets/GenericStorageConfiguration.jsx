@@ -37,11 +37,52 @@ export default function GenericStorageConfiguration({parentMachine}) {
 
   const {name} = currentParent.context.pristineData;
   const isEdit = !!name;
-  const hasEnterprise = ExtJS.state()?.getValue('hasEnterprise', false);
+  const hasEnterprise = ExtJS.isEnterpriseEdition();
+
+  // A repository can only be globally distributed when its blob store has CloudFront or S3
+  // Transfer Acceleration configured.
+  const {storage} = currentParent.context.data;
+  const globalDistributionAvailable = Boolean(
+    blobStores?.find((blobStore) => blobStore.name === storage?.blobStoreName)
+      ?.globalDistributionEnabled
+  );
+  const showGlobalDistribution = hasEnterprise && globalDistributionAvailable;
+
+  // NEXUS-54396: on create, seed storage.globalDistribution from the CDN default published by
+  // CdnFeatureFlagStateContributor. Only fires when Enterprise and the feature flag are on AND
+  // the parent has no explicit value (undefined) — so edit-mode loads and TYPE_CHANGE
+  // preservations are untouched.
+  const currentGlobalDistribution = storage?.globalDistribution;
+  useEffect(() => {
+    if (!hasEnterprise) {
+      return;
+    }
+    if (currentGlobalDistribution !== undefined) {
+      return;
+    }
+    const cdnDefault = Boolean(
+      ExtJS.state()?.getValue('cdnDefaultForNewRepositories', false)
+    );
+    sendParent({
+      type: 'UPDATE',
+      name: 'storage.globalDistribution',
+      value: cdnDefault
+    });
+    // Mount-only — the effect owns the initial seed. Subsequent user toggles flow through the
+    // NxCheckbox onChange handler. Do NOT include currentGlobalDistribution in deps; that would
+    // re-fire after our own dispatch and thrash.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadBlobStores();
   }, [format, type]);
+
+  useEffect(() => {
+    if (blobStores?.length && !globalDistributionAvailable && storage?.globalDistribution) {
+      FormUtils.handleUpdate('storage.globalDistribution', sendParent)(false);
+    }
+  }, [blobStores, globalDistributionAvailable]);
 
   useEffect(() => {
     sendParent({
@@ -84,7 +125,7 @@ export default function GenericStorageConfiguration({parentMachine}) {
           </NxFieldset>
         )}
 
-        {hasEnterprise && (
+        {showGlobalDistribution && (
           <NxFieldset
             label={EDITOR.GLOBAL_DISTRIBUTION_LABEL}
             className="nxrm-form-group-global-distribution"

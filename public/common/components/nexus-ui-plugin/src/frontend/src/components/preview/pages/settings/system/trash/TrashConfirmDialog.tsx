@@ -139,9 +139,9 @@ export function TrashConfirmDialog({
   const n = items.length;
   const isRestore = action === 'restore';
 
-  // Repository-specific notes. Purging a repository cascades to its still-soft-deleted content in Trash.
+  // Repository-specific notes. Purging a repository cascades to its still-trashed content in Trash.
   // On restore, a repository must be manually re-added to any groups it was a member of before deletion —
-  // shown only for repositories that were actually grouped (captured at soft-delete time).
+  // shown only for repositories that were actually grouped (captured at trash time).
   const hasRepository = items.some((item) => item.entityType === 'repository');
   // Asset restore warnings, driven per-item by parentComponentInTrash from the browse payload:
   //  - parent in Trash  -> restoring the asset also restores its component; separately-deleted

@@ -12,15 +12,16 @@
  */
 package org.sonatype.nexus.security.authc;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.datastore.api.DataAccessException;
 import org.sonatype.nexus.security.realm.MockRealmA;
 import org.sonatype.nexus.security.realm.MockRealmB;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.IncorrectCredentialsException;
@@ -74,7 +75,7 @@ public class FirstSuccessfulModularRealAuthenticatorTest
       securityUtils.when(SecurityUtils::getSubject).thenReturn(subject);
 
       firstSuccessfulModularRealmAuthenticator
-          .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernamePasswordToken);
+          .doMultiRealmAuthentication(new ArrayList<>(Arrays.asList(realmOne, realmTwo)), usernamePasswordToken);
     }
     catch (NexusAuthenticationException e) {
       assertThat(e.getAuthenticationFailureReasons(), containsInAnyOrder(
@@ -104,7 +105,7 @@ public class FirstSuccessfulModularRealAuthenticatorTest
       when(realmTwo.getAuthenticationInfo(usernamePasswordToken)).thenThrow(new UnknownAccountException());
 
       firstSuccessfulModularRealmAuthenticator
-          .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernamePasswordToken);
+          .doMultiRealmAuthentication(new ArrayList<>(Arrays.asList(realmOne, realmTwo)), usernamePasswordToken);
     }
     catch (NexusAuthenticationException e) {
       assertThat(e.getAuthenticationFailureReasons(), containsInAnyOrder(
@@ -123,7 +124,7 @@ public class FirstSuccessfulModularRealAuthenticatorTest
     when(realmOne.supports(usernamePasswordToken)).thenReturn(true);
     when(realmTwo.supports(usernamePasswordToken)).thenReturn(true);
 
-    SimpleAccount simpleAccount = new SimpleAccount(ImmutableList.of("simple"), usernamePasswordToken, "realmName");
+    SimpleAccount simpleAccount = new SimpleAccount(List.of("simple"), usernamePasswordToken, "realmName");
     when(realmOne.getAuthenticationInfo(usernamePasswordToken)).thenThrow(new IncorrectCredentialsException());
     when(realmTwo.getAuthenticationInfo(usernamePasswordToken)).thenReturn(simpleAccount);
 
@@ -136,7 +137,7 @@ public class FirstSuccessfulModularRealAuthenticatorTest
     try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
       securityUtils.when(SecurityUtils::getSubject).thenReturn(subject);
       firstSuccessfulModularRealmAuthenticator
-          .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernamePasswordToken);
+          .doMultiRealmAuthentication(new ArrayList<>(Arrays.asList(realmOne, realmTwo)), usernamePasswordToken);
     }
   }
 
@@ -155,8 +156,8 @@ public class FirstSuccessfulModularRealAuthenticatorTest
     when(realmTwo.supports(usernameRealmA)).thenReturn(true);
     when(realmTwo.supports(usernameRealmB)).thenReturn(true);
 
-    SimpleAccount simpleAccountA = new SimpleAccount(ImmutableList.of("simple"), usernameRealmA, "MockRealmA");
-    SimpleAccount simpleAccountB = new SimpleAccount(ImmutableList.of("simple"), usernameRealmB, "MockRealmB");
+    SimpleAccount simpleAccountA = new SimpleAccount(List.of("simple"), usernameRealmA, "MockRealmA");
+    SimpleAccount simpleAccountB = new SimpleAccount(List.of("simple"), usernameRealmB, "MockRealmB");
 
     when(realmOne.getAuthenticationInfo(usernameRealmA)).thenReturn(simpleAccountA);
     when(realmOne.getAuthenticationInfo(usernameRealmB)).thenReturn(simpleAccountB);
@@ -176,7 +177,7 @@ public class FirstSuccessfulModularRealAuthenticatorTest
     try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
       securityUtils.when(SecurityUtils::getSubject).thenReturn(subject);
       AuthenticationInfo authenticationInfo = firstSuccessfulModularRealmAuthenticator
-          .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernameRealmB);
+          .doMultiRealmAuthentication(new ArrayList<>(Arrays.asList(realmOne, realmTwo)), usernameRealmB);
       Set<String> realmNames = authenticationInfo.getPrincipals().getRealmNames();
       assertThat(realmNames, contains("MockRealmB"));
     }
@@ -203,7 +204,7 @@ public class FirstSuccessfulModularRealAuthenticatorTest
 
       try {
         firstSuccessfulModularRealmAuthenticator
-            .doMultiRealmAuthentication(Lists.newArrayList(realm), usernamePasswordToken);
+            .doMultiRealmAuthentication(new ArrayList<>(Arrays.asList(realm)), usernamePasswordToken);
         fail("Expected DataAccessException to be thrown");
       }
       catch (DataAccessException e) {

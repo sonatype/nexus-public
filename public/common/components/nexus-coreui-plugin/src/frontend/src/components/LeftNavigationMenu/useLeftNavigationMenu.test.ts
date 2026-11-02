@@ -17,6 +17,8 @@ let transitionHookCallback: ((transition: { to: () => { name?: string } }) => vo
 const mockSetFormats = jest.fn();
 const mockUseRepositories = jest.fn();
 const mockUseIsPreviewUI = jest.fn(() => true);
+const mockUseFirewallSecurityPagesVisible = jest.fn();
+const mockUseQuarantineBadgeCount = jest.fn();
 const mockIsSonatypeDevMode = jest.fn(() => false);
 const mockIsLicensedEdition = jest.fn(() => true);
 const mockUseDefaultAdminRouteName = jest.fn<string | null, []>(() => 'admin.system.api');
@@ -41,6 +43,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   useRepositories: (...args: unknown[]) => mockUseRepositories(...args),
   useIsPreviewUI: (...args: unknown[]) => mockUseIsPreviewUI(...args),
+  useFirewallSecurityPagesVisible: (...args: unknown[]) => mockUseFirewallSecurityPagesVisible(...args),
+  useQuarantineBadgeCount: (...args: unknown[]) => mockUseQuarantineBadgeCount(...args),
   isSonatypeDevMode: (...args: unknown[]) => mockIsSonatypeDevMode(...args),
   useSideNavbarOpenState: (...args: unknown[]) => mockUseSideNavbarOpenState(...args),
   useIsLicensedEdition: (...args: unknown[]) => mockIsLicensedEdition(...args),
@@ -201,6 +205,8 @@ describe('useLeftNavigationMenu', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseIsPreviewUI.mockReturnValue(true);
+    mockUseFirewallSecurityPagesVisible.mockReturnValue(false);
+    mockUseQuarantineBadgeCount.mockReturnValue(null);
     mockIsSonatypeDevMode.mockReturnValue(false);
     mockIsLicensedEdition.mockReturnValue(true);
     mockUseDefaultAdminRouteName.mockReturnValue('admin.system.api');
@@ -268,5 +274,39 @@ describe('useLeftNavigationMenu', () => {
 
     expect(result.current.adminInitialRouteName).toBeNull();
     expect(result.current.isSettingsVisible).toBe(false);
+  });
+
+  it('hides the Security section when the Firewall Security pages are not visible', () => {
+    mockUseFirewallSecurityPagesVisible.mockReturnValue(false);
+    const { result } = renderHook(() => useLeftNavigationMenu());
+    expect(result.current.isSecuritySectionVisible).toBe(false);
+  });
+
+  it('shows the Security section in Preview UI when the Firewall Security pages are visible', () => {
+    mockUseFirewallSecurityPagesVisible.mockReturnValue(true);
+    const { result } = renderHook(() => useLeftNavigationMenu());
+    expect(result.current.isSecuritySectionVisible).toBe(true);
+    expect(mockUseQuarantineBadgeCount).toHaveBeenLastCalledWith(true);
+  });
+
+  it('hides the Security section in Classic UI even when the Firewall Security pages are visible', () => {
+    mockUseIsPreviewUI.mockReturnValue(false);
+    mockUseFirewallSecurityPagesVisible.mockReturnValue(true);
+    const { result } = renderHook(() => useLeftNavigationMenu());
+    expect(result.current.isSecuritySectionVisible).toBe(false);
+    expect(mockUseQuarantineBadgeCount).toHaveBeenLastCalledWith(false);
+  });
+
+  it('exposes the quarantine badge count as securityBadgeCount', () => {
+    mockUseFirewallSecurityPagesVisible.mockReturnValue(true);
+    mockUseQuarantineBadgeCount.mockReturnValue(4);
+    const { result } = renderHook(() => useLeftNavigationMenu());
+    expect(result.current.securityBadgeCount).toBe(4);
+  });
+
+  it('exposes a null securityBadgeCount when there is no count', () => {
+    mockUseQuarantineBadgeCount.mockReturnValue(null);
+    const { result } = renderHook(() => useLeftNavigationMenu());
+    expect(result.current.securityBadgeCount).toBeNull();
   });
 });

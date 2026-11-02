@@ -97,6 +97,20 @@ export interface S3BlobStoreConfig {
   preSignedUrlEnabled?: boolean;
 }
 
+export interface S3CloudFrontConfig {
+  type: 'CLOUDFRONT';
+  distributionUrl: string;
+  keyId: string;
+  privateKey?: string; // Write-only field
+  privateKeyPassword?: string; // Write-only field
+}
+
+export interface S3TransferAccelerationConfig {
+  type: 'TRANSFER_ACCELERATION';
+}
+
+export type S3GlobalDistributionConfig = S3CloudFrontConfig | S3TransferAccelerationConfig;
+
 // Azure Blob Store specific types
 export interface AzureAuthConfig {
   authenticationMethod: 'ENVIRONMENTVARIABLE' | 'MANAGEDIDENTITY' | 'ACCOUNTKEY';
@@ -141,6 +155,7 @@ export interface BlobStoreFormData {
   // Type-specific configurations
   path?: string; // File
   bucketConfiguration?: S3BlobStoreConfig | AzureBlobStoreConfig | GoogleBlobStoreConfig;
+  globalDistribution?: S3GlobalDistributionConfig; // S3 Enterprise feature
   members?: string[]; // Group
   fillPolicy?: string; // Group
 }

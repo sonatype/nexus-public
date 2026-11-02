@@ -37,6 +37,7 @@ import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -185,7 +186,8 @@ public class BlobStoreComponent
         repositoryManager.browse());
     return store.list()
         .stream()
-        .map(config -> new BlobStoreXO().withName(config.getName()))
+        .map(config -> new BlobStoreXO().withName(config.getName())
+            .withGlobalDistributionEnabled(S3BlobStoreConfigurationHelper.isGlobalDistributionEnabled(config)))
         .collect(Collectors.toList()); // NOSONAR
   }
 

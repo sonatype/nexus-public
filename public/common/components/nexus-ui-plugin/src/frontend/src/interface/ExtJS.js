@@ -353,13 +353,25 @@ export default class ExtJS {
    * @deprecated In React code, use `useIsLicensedEdition()` instead — this reads state reactively, which matters for
    * Test Hub edition simulation. This method remains the intentional bridge for non-React (classic ExtJS) callers and
    * is not going away.
-   * @returns {boolean} true if the edition is any Pro-family tier (Pro, Pro+, Enterprise, or Cloud).
-   * Compares against the stable {@code editionId} state key so all Pro-family editionIds are recognised
-   * (Cloud reports 'PRO' as short name but resolves to a distinct editionId). Falls back to the short-name
-   * mapping when the backend has not published editionId, matching {@link meetsEditionRequirement}.
+   * @returns {boolean} true if the edition is any Pro-family tier (Pro, Pro+ or Enterprise); a cloud deployment
+   * reports its licensed tier's editionId, so it is recognised the same way as self-hosted.
+   * Compares against the stable {@code editionId} state key so all Pro-family editionIds are recognised.
+   * Falls back to the short-name mapping when the backend has not published editionId, matching
+   * {@link meetsEditionRequirement}.
    */
   static isLicensedEdition() {
     return PRO_FAMILY_EDITIONS.includes(resolveEditionId(ExtJS.state()));
+  }
+
+  /**
+   * @deprecated In React code, use `useIsEnterpriseEdition()` instead — this reads state reactively, which matters for
+   * Test Hub edition simulation. This method remains the intentional bridge for non-React (classic ExtJS) callers.
+   * @returns {boolean} true if the running edition id is `nexus-enterprise-edition`. Reads the `editionId` state key
+   * this is the tier-accurate check, unlike `getEdition()` whose short name still collapses
+   * Pro/Pro+/Enterprise to 'PRO'.
+   */
+  static isEnterpriseEdition() {
+    return ExtJS.state()?.getValue('editionId') === 'nexus-enterprise-edition';
   }
 
   /**

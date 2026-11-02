@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { Box, Flex, Text, Tabs } from '@radix-ui/themes';
 import {
   Loader2,
@@ -38,6 +38,7 @@ import {
   SettingsCheckbox,
   SettingsButton,
 } from '../../../../shared/form';
+import { ConfirmDialog } from '../../../../shared/form/ConfirmDialog';
 
 import { isFirewallSupportedFormat } from '../../../../../../utils/firewallFormats';
 import { isHostedRepoEvaluationSupportedFormat } from '../../../../../../utils/hostedRepoEvaluationFormats';
@@ -63,6 +64,7 @@ import { AlpineFacet } from './facets/AlpineFacet';
 import { YumFacet } from './facets/YumFacet';
 import { TerraformFacet } from './facets/TerraformFacet';
 import { NugetFacet } from './facets/NugetFacet';
+import { CargoFacet } from './facets/CargoFacet';
 import { HuggingFaceFacet } from './facets/HuggingFaceFacet';
 import { PyPiFacet } from './facets/PyPiFacet';
 import { RawFacet } from './facets/RawFacet';
@@ -75,8 +77,11 @@ import { RepositoryEvaluationTab } from './RepositoryEvaluationTab';
 import { isEvaluationFeatureEnabled } from './useRepoEvaluationOverride';
 import { RepositorySettingsUsageTab } from './RepositorySettingsUsageTab';
 import type { RepositoryUsageKind } from './repositoryUsageMachine';
+import UIStrings from '../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 import './RepositoryForm.scss';
+
+const FORM_STRINGS = UIStrings.REPOSITORY_FORM;
 
 function toRepositoryUsageKind(type: string): RepositoryUsageKind {
   if (type === 'group' || type === 'proxy' || type === 'hosted') return type;
@@ -152,7 +157,78 @@ export function RepositoryForm({
   const [evalSaving, setEvalSaving] = useState(false);
   const evalSaveRef = useRef<(() => Promise<void>) | null>(null);
   const evalCancelRef = useRef<(() => void) | null>(null);
-  const isEvalTabActive = showEvaluationTab && activeTab === 'evaluation';
+
+  // Firewall tab plugs into the same toolbar (FIRE-958): selecting a protection level only
+  // stages a pending change, and Save Changes / Cancel commit or discard it via these refs.
+  const [firewallDirty, setFirewallDirty] = useState(false);
+  const [firewallSaving, setFirewallSaving] = useState(false);
+  const firewallSaveRef = useRef<((onCommitted?: () => void) => Promise<void>) | null>(null);
+  const firewallCancelRef = useRef<(() => void) | null>(null);
+
+  const [xetConfirmOpen, setXetConfirmOpen] = useState(false);
+
+  const handleSubmit = useCallback(() => {
+    const xetBeingEnabled =
+      !isCreate &&
+      recipe.format === 'huggingface' &&
+      recipe.type === 'proxy' &&
+      formData.xet?.enabled === true &&
+      pristineData?.xet?.enabled !== true;
+    if (xetBeingEnabled) {
+      setXetConfirmOpen(true);
+    } else {
+      form.send('SUBMIT');
+    }
+  }, [isCreate, recipe.format, recipe.type, formData.xet?.enabled, pristineData?.xet?.enabled, form]);
+
+  // Save Changes on the Firewall tab also saves pending edits from the Settings tab (e.g. turning
+  // XET off). The firewall level is committed first, and the main form is submitted only once it
+  // has been applied, so a cancelled confirmation or failed commit leaves both changes pending.
+  // Committing first also means the form's save (which navigates away) runs last.
+  const handleFirewallTabSave = () => {
+    if (form.isPristine) {
+      firewallSaveRef.current?.();
+      return;
+    }
+    if (form.hasValidationErrors) {
+      // Surface the Settings-tab errors instead of committing only half of the change.
+      setActiveTab('settings');
+      form.send('SUBMIT');
+      return;
+    }
+    firewallSaveRef.current?.(handleSubmit);
+  };
+
+  // Lookup of per-tab dirty/saving state + save/cancel handlers for tabs that plug into the
+  // page-level toolbar instead of the form machine's own SUBMIT/pristine. Keyed by activeTab
+  // value; only populated for tabs that are actually rendered for this repository (mirrors the
+  // Tabs.Content gating below) so a stale activeTab value can never activate a hidden tab's
+  // save/cancel handlers. Tabs not present here (e.g. Settings) go through the normal form
+  // machine path.
+  const showFirewallTab = recipe.type === 'proxy' && isFirewallSupportedFormat(recipe.format);
+  const tabControls: Record<
+    string,
+    { dirty: boolean; saving: boolean; onSave: () => void; onCancel: () => void }
+  > = {
+    ...(showEvaluationTab && {
+      evaluation: {
+        dirty: evalDirty,
+        saving: evalSaving || !!form.isSaving,
+        // With no staged evaluation change, Save Changes saves the pending Settings-tab edits.
+        onSave: () => { if (evalDirty) evalSaveRef.current?.(); else handleSubmit(); },
+        onCancel: () => { evalCancelRef.current?.(); },
+      },
+    }),
+    ...(showFirewallTab && {
+      firewall: {
+        dirty: firewallDirty,
+        saving: firewallSaving || !!form.isSaving,
+        onSave: handleFirewallTabSave,
+        onCancel: () => { firewallCancelRef.current?.(); },
+      },
+    }),
+  };
+  const activeTabControls = tabControls[activeTab as string];
 
   // Determine which facets to show based on repository type
   const showProxyFacets = recipe.type === 'proxy';
@@ -210,7 +286,7 @@ export function RepositoryForm({
     return (
       <Flex align="center" justify="center" className="repository-form__loading">
         <Loader2 size={24} className="repository-form__spinner" />
-        <Text size="2">Loading form data...</Text>
+        <Text size="2">{FORM_STRINGS.loading}</Text>
       </Flex>
     );
   }
@@ -219,21 +295,21 @@ export function RepositoryForm({
   const formContent = (
     <Box>
       {/* Repository Info Section */}
-        <SettingsFormSection title="Repository Settings">
+        <SettingsFormSection title={FORM_STRINGS.SETTINGS.sectionTitle}>
           <SettingsTextInput
             {...form.field('name')}
-            label="Name"
+            label={FORM_STRINGS.SETTINGS.nameLabel}
             disabled={!isCreate}
             required
-            helpText={isCreate ? 'A unique identifier for this repository' : 'Repository name cannot be changed'}
+            helpText={isCreate ? FORM_STRINGS.SETTINGS.nameHelpCreate : FORM_STRINGS.SETTINGS.nameHelpEdit}
           />
 
           <SettingsCheckbox
             name="repo-online"
-            label="Online"
+            label={FORM_STRINGS.SETTINGS.onlineLabel}
             checked={formData.online ?? true}
             onChange={(checked) => handleChange({ online: checked })}
-            description="Allow clients to access this repository"
+            description={FORM_STRINGS.SETTINGS.onlineDescription}
           />
         </SettingsFormSection>
 
@@ -281,7 +357,6 @@ export function RepositoryForm({
             formData={formData}
             onNestedChange={handleNestedChange}
             errors={errors}
-            repoType={recipe.type}
           />
         )}
 
@@ -308,6 +383,17 @@ export function RepositoryForm({
             formData={formData}
             onNestedChange={handleNestedChange}
             errors={errors}
+          />
+        )}
+
+        {/* Cargo: applies to all three types — the backend supports
+            cargo.requireAuthentication for proxy/group (NEXUS-44559) and hosted
+            (NEXUS-55006), so there is no type gate here. */}
+        {recipe.format === 'cargo' && (
+          <CargoFacet
+            formData={formData}
+            onNestedChange={handleNestedChange}
+            isCloud={isCloud}
           />
         )}
 
@@ -416,7 +502,7 @@ export function RepositoryForm({
             onChange={handleChange}
             onNestedChange={handleNestedChange}
             errors={errors}
-            showPreemptiveAuth={recipe.format === 'maven2' || recipe.format === 'pypi' || recipe.format === 'terraform' || recipe.format === 'conda'}
+            showPreemptiveAuth={recipe.format === 'maven2' || recipe.format === 'pypi' || recipe.format === 'terraform' || recipe.format === 'conda' || recipe.format === 'openvsx'}
             originalRemoteUrl={pristineData?.proxy?.remoteUrl}
             isEdit={!isCreate}
             hadAuthOnLoad={!!pristineData?.httpClient?.authentication?.type}
@@ -434,44 +520,44 @@ export function RepositoryForm({
         <Tabs.Root value={activeTab} onValueChange={setActiveTab as (v: string) => void} className="repository-form__tabs">
           <Tabs.List>
             <Tabs.Trigger value="summary">
-              <FileText size={16} /> Summary
+              <FileText size={16} /> {FORM_STRINGS.TABS.summary}
             </Tabs.Trigger>
             <Tabs.Trigger value="settings">
-              <SettingsIcon size={16} /> Settings
+              <SettingsIcon size={16} /> {FORM_STRINGS.TABS.settings}
             </Tabs.Trigger>
             <Tabs.Trigger value="usage">
-              <Activity size={16} /> Usage
+              <Activity size={16} /> {FORM_STRINGS.TABS.usage}
             </Tabs.Trigger>
             {recipe.type === 'proxy' && (
               <>
                 {isFirewallSupportedFormat(recipe.format) && (
                   <Tabs.Trigger value="firewall">
-                    <Shield size={16} /> Firewall
+                    <Shield size={16} /> {FORM_STRINGS.TABS.firewall}
                   </Tabs.Trigger>
                 )}
                 <Tabs.Trigger value="health-check">
-                  <ShieldCheck size={16} /> Health Check
+                  <ShieldCheck size={16} /> {FORM_STRINGS.TABS.healthCheck}
                 </Tabs.Trigger>
               </>
             )}
             {auditEnabled && hasAuditRead && (
               <Tabs.Trigger value="audit">
-                <ScrollText size={16} /> Audit
+                <ScrollText size={16} /> {FORM_STRINGS.TABS.audit}
               </Tabs.Trigger>
             )}
             {showEvaluationTab && (
               <Tabs.Trigger value="evaluation">
-                <ShieldQuestion size={16} /> Evaluation
+                <ShieldQuestion size={16} /> {FORM_STRINGS.TABS.evaluation}
               </Tabs.Trigger>
             )}
             {hasTasksOrCapabilitiesRead && (
               <Tabs.Trigger value="tasks-capabilities">
-                <ListChecks size={16} /> Tasks &amp; Capabilities
+                <ListChecks size={16} /> {FORM_STRINGS.TABS.tasksCapabilities}
               </Tabs.Trigger>
             )}
             {hasAccessSecurityRead && (
               <Tabs.Trigger value="access-security">
-                <Lock size={16} /> Access &amp; Security
+                <Lock size={16} /> {FORM_STRINGS.TABS.accessSecurity}
               </Tabs.Trigger>
             )}
           </Tabs.List>
@@ -506,6 +592,11 @@ export function RepositoryForm({
                       hasFirewallLicense={hasFirewallLicense}
                       showHealthCheck={false}
                       format={recipe.format}
+                      onDirtyChange={setFirewallDirty}
+                      onSavingChange={setFirewallSaving}
+                      onSaveRef={firewallSaveRef}
+                      onCancelRef={firewallCancelRef}
+                      xetEnabled={formData.xet?.enabled}
                     />
                   </Tabs.Content>
                 )}
@@ -592,19 +683,19 @@ export function RepositoryForm({
   // follows the PUT. Block the toggle while the form is dirty rather than
   // silently destroying user input — the user can save (or discard) first
   // and then toggle.
-  const toggleOnlineBlockedByDirtyForm = !form.isPristine || (isEvalTabActive && evalDirty);
+  const toggleOnlineBlockedByDirtyForm = !form.isPristine || (activeTabControls?.dirty ?? false);
   const toggleOnlineDisabled = actionsDisabled || toggleOnlineBlockedByDirtyForm;
   const toggleOnlineTitle = toggleOnlineBlockedByDirtyForm
-    ? 'Save or discard your unsaved changes before toggling system status'
+    ? FORM_STRINGS.TOOLTIPS.toggleBlockedByDirty
     : isOnlineSaved
-      ? 'Take this repository offline'
-      : 'Bring this repository online';
+      ? FORM_STRINGS.TOOLTIPS.takeOffline
+      : FORM_STRINGS.TOOLTIPS.bringOnline;
   // Browse Repository navigates away from the edit page; unsaved edits would
   // be silently lost. Block navigation while the form is dirty for the same
   // reason we block the toggle above.
   const browseRepositoryDisabled = actionsDisabled || toggleOnlineBlockedByDirtyForm;
   const browseRepositoryTitle = toggleOnlineBlockedByDirtyForm
-    ? 'Save or discard your unsaved changes before browsing the repository'
+    ? FORM_STRINGS.TOOLTIPS.browseBlockedByDirty
     : undefined;
 
   return (
@@ -613,16 +704,20 @@ export function RepositoryForm({
         onSubmit={
           !canEdit
             ? undefined
-            : isEvalTabActive
-              ? () => { evalSaveRef.current?.(); }
-              : () => form.send('SUBMIT')
+            : activeTabControls
+              ? activeTabControls.onSave
+              : handleSubmit
         }
-        onCancel={isEvalTabActive ? () => { evalCancelRef.current?.(); onCancel?.(); } : onCancel}
-        loading={isEvalTabActive ? evalSaving || loading : form.isSaving || loading}
-        pristine={isEvalTabActive ? !evalDirty : form.isPristine}
+        onCancel={
+          activeTabControls
+            ? () => { activeTabControls.onCancel(); onCancel?.(); }
+            : onCancel
+        }
+        loading={activeTabControls ? activeTabControls.saving || loading : form.isSaving || loading}
+        pristine={activeTabControls ? !activeTabControls.dirty && form.isPristine : form.isPristine}
         error={error || form.saveError || undefined}
-        submitLabel={isCreate ? 'Create Repository' : 'Save Changes'}
-        cancelLabel="Cancel"
+        submitLabel={isCreate ? FORM_STRINGS.BUTTONS.createRepository : FORM_STRINGS.BUTTONS.saveChanges}
+        cancelLabel={FORM_STRINGS.BUTTONS.cancel}
         testId="repository-form"
         submitAnalyticsId={isCreate ? 'nxrm-repository-create' : 'nxrm-repository-save'}
         cancelAnalyticsId="nxrm-repository-cancel"
@@ -639,7 +734,7 @@ export function RepositoryForm({
                   data-analytics-id="nxrm-repository-browse"
                   title={browseRepositoryTitle}
                 >
-                  Browse Repository
+                  {FORM_STRINGS.BUTTONS.browseRepository}
                 </SettingsButton>
               )}
               {showRebuildIndex && (
@@ -651,7 +746,7 @@ export function RepositoryForm({
                   testId="form-rebuild-index"
                   data-analytics-id="nxrm-repository-rebuild-index"
                 >
-                  Rebuild Index
+                  {FORM_STRINGS.BUTTONS.rebuildIndex}
                 </SettingsButton>
               )}
               {showInvalidateCache && (
@@ -663,7 +758,7 @@ export function RepositoryForm({
                   testId="form-invalidate-cache"
                   data-analytics-id="nxrm-repository-invalidate-cache"
                 >
-                  Invalidate Cache
+                  {FORM_STRINGS.BUTTONS.invalidateCache}
                 </SettingsButton>
               )}
               {showToggleOnline && (
@@ -676,7 +771,7 @@ export function RepositoryForm({
                   data-analytics-id="nxrm-repository-toggle-online"
                   title={toggleOnlineTitle}
                 >
-                  {isOnlineSaved ? 'Disable System Status' : 'Enable System Status'}
+                  {isOnlineSaved ? FORM_STRINGS.BUTTONS.takeOffline : FORM_STRINGS.BUTTONS.bringOnline}
                 </SettingsButton>
               )}
               {showDelete && (
@@ -688,7 +783,7 @@ export function RepositoryForm({
                   testId="form-delete"
                   data-analytics-id="nxrm-repository-delete"
                 >
-                  Delete
+                  {FORM_STRINGS.BUTTONS.delete}
                 </SettingsButton>
               )}
             </Flex>
@@ -697,6 +792,18 @@ export function RepositoryForm({
       >
         {formBody}
       </SettingsForm>
+
+      <ConfirmDialog
+        open={xetConfirmOpen}
+        onOpenChange={setXetConfirmOpen}
+        title={UIStrings.HUGGINGFACE.XET_CONFIRM_TITLE}
+        message={UIStrings.HUGGINGFACE.XET_CONFIRM_MESSAGE}
+        confirmLabel={UIStrings.HUGGINGFACE.XET_CONFIRM_LABEL}
+        cancelLabel="Cancel"
+        variant="confirm"
+        onConfirm={() => form.send('SUBMIT')}
+        testId="xet-firewall-confirm"
+      />
     </Box>
   );
 }

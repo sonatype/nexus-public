@@ -46,6 +46,7 @@ export function createRoleModalContentMachine(options: RoleModalContentMachineOp
   return createMachine<RoleModalContentContext, RoleModalContentEvent>(
     {
       id: 'roleModalContent',
+      predictableActionArguments: true,
       initial: 'loading',
       context: {
         roleName,

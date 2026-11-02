@@ -131,6 +131,22 @@ describe('searchMachine', () => {
       { format: 'swift', filterId: 'scope', expectedApiParam: 'swift.scope' },
       // Terraform provider maps to 'terraform.provider'
       { format: 'terraform', filterId: 'provider', expectedApiParam: 'terraform.provider' },
+      // Terraform terraformName maps to 'terraform.name', NOT 'terraform.terraformName' (NEXUS-55107)
+      { format: 'terraform', filterId: 'terraformName', expectedApiParam: 'terraform.name' },
+      // Docker os / architecture / labels / author (NEXUS-55107) — id matches unprefixed API leaf
+      { format: 'docker', filterId: 'os', expectedApiParam: 'docker.os' },
+      { format: 'docker', filterId: 'architecture', expectedApiParam: 'docker.architecture' },
+      // Conan nested-path filter ids are camelCased so the dots in the API param
+      // don't leak into the filter id (NEXUS-55107).  settings.* ids drop the
+      // 'settings' prefix — the file's dominant convention is bare format-scoped
+      // ids, and the api param retains the full 'conan.settings.…' path.
+      { format: 'conan', filterId: 'baseVersionStrict', expectedApiParam: 'conan.baseVersion.strict' },
+      { format: 'conan', filterId: 'revisionLatest', expectedApiParam: 'conan.revision.latest' },
+      { format: 'conan', filterId: 'arch', expectedApiParam: 'conan.settings.arch' },
+      { format: 'conan', filterId: 'os', expectedApiParam: 'conan.settings.os' },
+      { format: 'conan', filterId: 'compiler', expectedApiParam: 'conan.settings.compiler' },
+      { format: 'conan', filterId: 'compilerVersion', expectedApiParam: 'conan.settings.compiler.version' },
+      { format: 'conan', filterId: 'compilerRuntime', expectedApiParam: 'conan.settings.compiler.runtime' },
       // Generic filters always map to unprefixed API params on every format
       { format: 'maven', filterId: 'group', expectedApiParam: 'group' },
       { format: 'maven', filterId: 'name', expectedApiParam: 'name' },
@@ -183,7 +199,7 @@ describe('searchMachine', () => {
 
   describe('format classification', () => {
     const EXPECTED_SIMPLE = ['all', 'alpine', 'apt', 'cargo', 'cocoapods', 'conda', 'go', 'helm', 'huggingface', 'pub', 'r', 'raw'];
-    const EXPECTED_CUSTOM = ['ansiblegalaxy', 'composer', 'conan', 'docker', 'gitlfs', 'maven', 'npm', 'nuget', 'oci', 'p2', 'pypi', 'rubygems', 'swift', 'terraform', 'yum'];
+    const EXPECTED_CUSTOM = ['ansiblegalaxy', 'composer', 'conan', 'docker', 'gitlfs', 'maven', 'npm', 'nuget', 'oci', 'openvsx', 'p2', 'pypi', 'rubygems', 'swift', 'terraform', 'yum'];
 
     it.each(EXPECTED_SIMPLE)('format %s is classified as simple (only generic baseline)', (format) => {
       expect(SIMPLE_FORMATS).toContain(format);
@@ -193,8 +209,8 @@ describe('searchMachine', () => {
       expect(FORMATS_WITH_CUSTOM_FILTERS).toContain(format);
     });
 
-    it('covers all 27 formats', () => {
-      expect(ALL_FORMATS).toHaveLength(27); // 27 formats (26 specific + 'all')
+    it('covers all 28 formats', () => {
+      expect(ALL_FORMATS).toHaveLength(28); // 28 formats (27 specific + 'all')
     });
   });
 
@@ -227,13 +243,14 @@ describe('searchMachine', () => {
       service.stop();
     });
 
-    it('Docker declares generics plus layerId, contentDigest', () => {
+    it('Docker declares generics plus layerId, contentDigest, os, architecture, labels, author', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'docker' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
         'group', 'name', 'version', 'layerId', 'contentDigest',
+        'os', 'architecture', 'labels', 'author',
       ]);
 
       service.stop();
@@ -263,13 +280,16 @@ describe('searchMachine', () => {
       service.stop();
     });
 
-    it('Conan declares generics plus baseVersion, channel, revision, packageId, packageRevision', () => {
+    it('Conan declares generics plus base/settings/revision fields (NEXUS-55107)', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'conan' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'group', 'name', 'version', 'baseVersion', 'channel', 'revision', 'packageId', 'packageRevision',
+        'group', 'name', 'version',
+        'baseVersion', 'baseVersionStrict', 'channel', 'revision', 'revisionLatest',
+        'packageId', 'packageRevision',
+        'arch', 'os', 'compiler', 'compilerVersion', 'compilerRuntime',
       ]);
 
       service.stop();
@@ -306,6 +326,18 @@ describe('searchMachine', () => {
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
         'group', 'name', 'version', 'description', 'platform', 'summary',
+      ]);
+
+      service.stop();
+    });
+
+    it('Terraform declares generics plus provider, namespace, terraformName (NEXUS-55107)', () => {
+      const service = startMachine();
+      service.send({ type: 'SELECT_FORMAT', format: 'terraform' });
+      const meta = getActiveFormatMeta(service.getSnapshot());
+
+      expect(meta!.customFilters.map((f) => f.id)).toEqual([
+        'group', 'name', 'version', 'provider', 'namespace', 'terraformName',
       ]);
 
       service.stop();

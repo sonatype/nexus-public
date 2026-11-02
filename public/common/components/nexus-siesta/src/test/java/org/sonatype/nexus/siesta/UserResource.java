@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.siesta;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import jakarta.ws.rs.Consumes;
@@ -24,8 +26,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 
 import org.sonatype.nexus.rest.Resource;
-
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,9 +43,9 @@ public class UserResource
   @GET
   @Produces({APPLICATION_XML, APPLICATION_JSON})
   public List<UserXO> get() {
-    return Lists.newArrayList(
+    return new ArrayList<>(Arrays.asList(
         new UserXO().withName("foo"),
-        new UserXO().withName("bar"));
+        new UserXO().withName("bar")));
   }
 
   @GET

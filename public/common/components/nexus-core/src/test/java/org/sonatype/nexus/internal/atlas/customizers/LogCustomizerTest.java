@@ -20,12 +20,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
-import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
-import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
+import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistribution;
+import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistributionType;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,31 +55,35 @@ class LogCustomizerTest
   @Mock
   private ApplicationDirectories mockApplicationDirectories;
 
-  @Mock
-  private NexusEditionSelector mockNexusEditionSelector;
-
-  @Mock
-  private NexusEdition mockNexusEdition;
-
   private LogCustomizer underTest;
 
   @BeforeEach
   void setup() {
     lenient().when(mockApplicationDirectories.getWorkDirectory()).thenReturn(temporaryWorkDirectory);
-    lenient().when(mockNexusEditionSelector.getCurrent()).thenReturn(mockNexusEdition);
-    lenient().when(mockNexusEdition.getId()).thenReturn("nexus-professional-edition");
-    underTest = new LogCustomizer(mockLogManager, mockApplicationDirectories, mockNexusEditionSelector);
+    // Default to self-hosted; the cloud-skip test overrides this.
+    NexusDistribution.setTestOverride(NexusDistributionType.SELF_HOSTED);
+    underTest = new LogCustomizer(mockLogManager, mockApplicationDirectories);
+  }
+
+  @AfterEach
+  void tearDown() {
+    NexusDistribution.clearTestOverride();
   }
 
   @Test
-  void customizeIsSkippedOnCloudEdition() {
-    when(mockNexusEdition.getId()).thenReturn("nexus-cloud-edition");
+  void customizeIsSkippedOnCloudDistribution() {
+    // Cloud is now detected from the distribution, not the edition id (NEXUS-54766 / NEXUS-54772).
+    // LogCustomizer resolves the distribution once in its constructor (the classpath is fixed for the
+    // JVM's lifetime), so rebuild it under the cloud override rather than relying on the self-hosted
+    // instance the @BeforeEach constructed.
+    NexusDistribution.setTestOverride(NexusDistributionType.CLOUD);
+    underTest = new LogCustomizer(mockLogManager, mockApplicationDirectories);
 
     SupportBundle supportBundle = new SupportBundle();
     underTest.customize(supportBundle);
 
     assertThat(supportBundle.getSources(), empty());
-    // Cloud edition never reads logs; make sure we never touched the log manager.
+    // Cloud distribution never reads logs; make sure we never touched the log manager.
     verifyNoInteractions(mockLogManager);
   }
 

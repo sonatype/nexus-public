@@ -33,7 +33,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorFactory;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
-import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
+import org.hibernate.validator.constraintvalidation.spi.DefaultConstraintValidatorFactory;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -122,6 +122,8 @@ public class ValidationExtension
   {
     private Map<Class<?>, ConstraintValidator> validators;
 
+    private final ConstraintValidatorFactory fallback = new DefaultConstraintValidatorFactory();
+
     TestConstraintValidatorFactory(final Collection<ConstraintValidator> validators) {
       this.validators = validators.stream()
           .collect(Collectors.toMap(Object::getClass, Function.identity()));
@@ -134,7 +136,7 @@ public class ValidationExtension
       if (validator != null) {
         return (T) validator;
       }
-      return NewInstance.action(key, "ConstraintValidator").run();
+      return fallback.getInstance(key);
     }
 
     @Override

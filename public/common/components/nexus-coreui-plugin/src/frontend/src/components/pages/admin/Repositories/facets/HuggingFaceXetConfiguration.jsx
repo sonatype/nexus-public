@@ -13,11 +13,13 @@
 import React from 'react';
 
 import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
-import {NxFieldset, NxCheckbox} from '@sonatype/react-shared-components';
+import {NxFieldset, NxCheckbox, NxWarningAlert} from '@sonatype/react-shared-components';
 
 import FeatureFlags from '../../../../../constants/FeatureFlags';
+import UIStrings from '../../../../../constants/UIStrings';
 
 const {HUGGING_FACE_XET_ENABLED} = FeatureFlags;
+const {HUGGING_FACE_XET} = UIStrings.REPOSITORIES.EDITOR;
 
 /**
  * HuggingFace proxy repository per-repo XET/LFS transfer-protocol toggle.
@@ -31,8 +33,11 @@ const {HUGGING_FACE_XET_ENABLED} = FeatureFlags;
  *     responses omit the field entirely. formData.xet is undefined and the checkbox
  *     renders UNCHECKED, preserving legacy LFS behavior for repos upgraded across the
  *     feature boundary.
- *   - New repositories are seeded with {@code xet.enabled=true} in the huggingface_proxy
- *     entry of RepositoryFormConfig so the checkbox renders CHECKED at create time.
+ *   - New repositories are seeded with {@code xet.enabled=false} in the huggingface_proxy
+ *     entry of RepositoryFormConfig so the checkbox renders UNCHECKED at create time.
+ *
+ * When XET is enabled, Firewall is automatically set to DISABLED because XET and
+ * Firewall cannot operate concurrently on the same repository.
  */
 export default function HuggingFaceXetConfiguration({parentMachine}) {
   const xetGloballyEnabled = ExtJS.useState(() => ExtJS.state().getValue(HUGGING_FACE_XET_ENABLED));
@@ -44,18 +49,26 @@ export default function HuggingFaceXetConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
   // Default UNCHECKED when the attribute is absent (pre-feature repository on
-  // upgrade). Create mode gets xet.enabled=true seeded via defaultValues.
+  // upgrade). Create mode gets xet.enabled=false seeded via defaultValues.
   const isXetEnabled = currentParent.context?.data?.xet?.enabled ?? false;
+
+  function handleXetChange(value) {
+    sendParent({type: 'UPDATE', name: 'xet.enabled', value});
+    if (value) {
+      sendParent({type: 'UPDATE', name: 'firewall.mode', value: 'DISABLED'});
+    }
+  }
 
   return (
     <NxFieldset label="Transfer Protocol">
       <NxCheckbox
         {...FormUtils.checkboxProps('xet.enabled', currentParent)}
         isChecked={isXetEnabled}
-        onChange={FormUtils.handleUpdate('xet.enabled', sendParent)}
+        onChange={handleXetChange}
       >
         Enable XET
       </NxCheckbox>
+      <NxWarningAlert>{HUGGING_FACE_XET.XET_DISABLES_FIREWALL_WARNING}</NxWarningAlert>
     </NxFieldset>
   );
 }

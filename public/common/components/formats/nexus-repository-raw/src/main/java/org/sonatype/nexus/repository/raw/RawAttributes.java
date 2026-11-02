@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.sonatype.nexus.swagger.DistributionVisibility;
 import org.sonatype.nexus.swagger.EditionVisibility;
+import org.sonatype.nexus.swagger.FeatureFlagVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
@@ -24,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.RAW_QUERYPARAMS_FORWARDING_ENABLED;
 
 @JsonFilter(EditionVisibility.NAME)
 public class RawAttributes
@@ -36,11 +39,13 @@ public class RawAttributes
   @Schema(description = "Whether to forward query parameters to the upstream repository",
       example = "true")
   @JsonInclude(Include.NON_NULL)
+  @FeatureFlagVisibility(value = RAW_QUERYPARAMS_FORWARDING_ENABLED, note = "Feature flagged")
   private final Boolean forwardQueryParameters;
 
   @Schema(description = "List of query parameter names to exclude from forwarding (case-insensitive)",
       example = "[\"apiKey\", \"token\"]")
   @JsonInclude(Include.NON_EMPTY)
+  @FeatureFlagVisibility(value = RAW_QUERYPARAMS_FORWARDING_ENABLED, note = "Feature flagged")
   private final List<String> excludedQueryParameters;
 
   @JsonCreator

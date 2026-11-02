@@ -38,7 +38,7 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.sonatype.nexus.testdb.DatabaseTest;
 
-import static com.google.common.collect.ImmutableList.of;
+import static java.util.List.of;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;

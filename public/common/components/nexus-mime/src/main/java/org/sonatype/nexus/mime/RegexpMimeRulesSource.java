@@ -16,8 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Maps;
-
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -28,7 +26,7 @@ import static java.util.Objects.requireNonNull;
 public class RegexpMimeRulesSource
     implements MimeRulesSource
 {
-  private final LinkedHashMap<Pattern, MimeRule> rules = Maps.newLinkedHashMap();
+  private final LinkedHashMap<Pattern, MimeRule> rules = new LinkedHashMap<>();
 
   public void addRule(final String pattern, final String mimeType) {
     addRule(Pattern.compile(pattern), mimeType);

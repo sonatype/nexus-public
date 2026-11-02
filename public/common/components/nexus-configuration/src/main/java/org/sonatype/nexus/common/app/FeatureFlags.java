@@ -43,6 +43,13 @@ public class FeatureFlags
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
 
   /*
+   * Enables the Open VSX (.vsix) repository format. Unless this is true, the Open VSX proxy recipe is
+   * not registered, so Open VSX repositories cannot be created or served. An opt-in while the format
+   * is pre-GA. Available values: true, false. Default value: false (NEXUS-53052, NEXUS-54176)
+   */
+  public static final String OPENVSX_FORMAT_ENABLED = "nexus.format.openvsx.enabled";
+
+  /*
    * Kill switch for the OCI (Open Container Initiative) repository format. When false, the OCI
    * hosted/proxy/group recipes are not registered, so OCI repositories cannot be created or served.
    * Intended as a field-rollback escape hatch. Available values: true, false. Default value: true.
@@ -170,6 +177,15 @@ public class FeatureFlags
 
   public static final String AUDIT_EVENTS_CLEANUP_TASK_ENABLED_NAMED_VALUE =
       "${" + AUDIT_EVENTS_CLEANUP_TASK_ENABLED + ":true}";
+
+  /**
+   * Firewall Security pages (Quarantine, Waivers, Evaluations, Policy, Malware findings).
+   * Available values: true, false. Default value: false.
+   */
+  public static final String FIREWALL_SECURITY_PAGES_ENABLED = "nexus.firewall.security.pages.enabled";
+
+  public static final String FIREWALL_SECURITY_PAGES_ENABLED_NAMED_VALUE =
+      "${" + FIREWALL_SECURITY_PAGES_ENABLED + ":false}";
 
   public static final String FIREWALL_ONBOARDING_ENABLED = "nexus.firewall.onboarding.enabled";
 
@@ -308,6 +324,9 @@ public class FeatureFlags
 
   public static final String NEXUS_SECURITY_OAUTH2_ENABLED = "nexus.security.oauth2.enabled";
 
+  /* on/off switch for the OIDC token feature; off by default while under development */
+  public static final String NEXUS_OIDC_TOKEN_ENABLED = "nexus.oidc.token.enabled";
+
   public static final String NEXUS_SECURITY_FIPS_ENABLED = "nexus.security.fips.enabled";
 
   public static final String NEXUS_SECURITY_FIPS_ENABLED_NAMED_VALUE = "${nexus.security.fips.enabled:false}";
@@ -389,14 +408,6 @@ public class FeatureFlags
 
   public static final String REACT_CAPABILITIES_NAMED_VALUE = "${nexus.react.capabilities.enabled:true}";
 
-  /*
-   * Gates the new React onboarding wizard. When enabled, the ExtJS onboarding wizard defers so the React wizard can
-   * take over. Available values: true, false. Default value: true
-   */
-  public static final String REACT_ONBOARDING_ENABLED = "nexus.react.onboarding.enabled";
-
-  public static final String REACT_ONBOARDING_ENABLED_NAMED_VALUE = "${nexus.react.onboarding.enabled:true}";
-
   /* Enable principal permissions cache. Default value: true */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE =
       "${nexus.security.principal.permissions.cache.enabled:true}";
@@ -413,11 +424,11 @@ public class FeatureFlags
   public static final String PREVIEW_UI_LOGGEDIN_ENABLED_NAMED_VALUE =
       "${nexus.preview.ui.loggedin.enabled:true}";
 
-  /* Default to Preview UI for all users. Available values: true, false. Default value: false */
+  /* Default to Preview UI for all users. Available values: true, false. Default value: true */
   public static final String PREVIEW_UI_DEFAULT_ENABLED = "nexus.preview.ui.default.enabled";
 
   public static final String PREVIEW_UI_DEFAULT_ENABLED_NAMED_VALUE =
-      "${nexus.preview.ui.default.enabled:false}";
+      "${nexus.preview.ui.default.enabled:true}";
 
   /* Disable Legacy UI (ExtJS) for all users. Available values: true, false. Default value: false */
   public static final String PREVIEW_UI_LEGACY_DISABLED = "nexus.preview.ui.legacy.disabled";
@@ -539,33 +550,35 @@ public class FeatureFlags
   public static final String FIREWALL_REPOSITORY_SERVICE_ENABLED = "nexus.firewall.repository.service.enabled";
 
   /**
-   * Logical deletion (soft-delete) and recovery support (NEXUS-49147).
-   * When enabled, delete operations mark entities as soft-deleted instead of permanently removing them,
+   * Logical deletion (trash) and recovery support (NEXUS-49147).
+   * When enabled, delete operations mark entities as trashed instead of permanently removing them,
    * allowing recovery within a configurable retention period.
    */
-  public static final String SOFT_DELETE_ENABLED = "nexus.softDelete.enabled";
+  public static final String TRASH_ENABLED = "nexus.trash.enabled";
 
-  public static final String SOFT_DELETE_ENABLED_NAMED_VALUE = "${nexus.softDelete.enabled:false}";
+  public static final String TRASH_ENABLED_NAMED_VALUE = "${nexus.trash.enabled:false}";
 
   /**
-   * Number of days to retain soft-deleted entities before permanent purge.
+   * Number of days to retain trashed entities before permanent purge. Defaults to 30 and is clamped to the
+   * supported range of 1-30 days on both self-hosted and cloud; values outside that range are adjusted to the nearest
+   * bound (see {@code TrashRetention}).
    */
-  public static final String SOFT_DELETE_RETENTION_DAYS = "nexus.softDelete.retentionDays";
+  public static final String TRASH_RETENTION_DAYS = "nexus.trash.retentionDays";
 
-  public static final String SOFT_DELETE_RETENTION_DAYS_NAMED_VALUE = "${nexus.softDelete.retentionDays:30}";
+  public static final String TRASH_RETENTION_DAYS_NAMED_VALUE = "${nexus.trash.retentionDays:30}";
 
   /**
-   * Comma-separated allowlist of repository formats for which soft-delete is active. Enables a phased,
-   * format-by-format rollout: the soft-delete schema columns are added to every format up front (they
-   * are inert/nullable), but a delete only becomes a recoverable soft-delete when {@link #SOFT_DELETE_ENABLED}
+   * Comma-separated allowlist of repository formats for which trash is active. Enables a phased,
+   * format-by-format rollout: the trash schema columns are added to every format up front (they
+   * are inert/nullable), but a delete only becomes a recoverable trash when {@link #TRASH_ENABLED}
    * is on AND the repository's format is in this list. Fail-closed: empty/unset means <em>no</em> format
-   * is soft-deleted (everything hard-deletes), even when the flag is on. The single-entry wildcard
+   * is trashed (everything hard-deletes), even when the flag is on. The single-entry wildcard
    * {@code *} enables all formats. Formats not listed hard-delete exactly as before, so their
    * format-specific metadata handlers are not required until they are added here.
    */
-  public static final String SOFT_DELETE_FORMATS = "nexus.softDelete.formats";
+  public static final String TRASH_FORMATS = "nexus.trash.formats";
 
-  public static final String SOFT_DELETE_FORMATS_NAMED_VALUE = "${nexus.softDelete.formats:}";
+  public static final String TRASH_FORMATS_NAMED_VALUE = "${nexus.trash.formats:}";
 
   /*
    * FIRE-105 / NEXUS-52802 — PyPI PCCS throughput perf fixes (template content cache, Guava HTML escaper,
@@ -649,4 +662,9 @@ public class FeatureFlags
   public static final String S3_COMPACT_WORKER_POOL_SIZE = "nexus.s3.compact.workerPoolSize";
 
   public static final String S3_COMPACT_WORKER_POOL_SIZE_NAMED_VALUE = "${nexus.s3.compact.workerPoolSize:8}";
+
+  /* Allow scripts to be run (REST and script task). Available values: true, false. Default value: false */
+  public static final String SCRIPTS_ALLOW_EXECUTION = "nexus.scripts.allowExecution";
+
+  public static final String SCRIPTS_ALLOW_EXECUTION_NAMED_VALUE = "${nexus.scripts.allowExecution:false}";
 }

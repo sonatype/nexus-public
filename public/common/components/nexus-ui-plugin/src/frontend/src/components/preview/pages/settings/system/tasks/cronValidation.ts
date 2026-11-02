@@ -57,6 +57,11 @@ const isDayOfWeek = (token: string): boolean => {
   return token.split(/[,-]/).every((name) => DOW_NAMES.includes(name.toUpperCase()));
 };
 
+// Quartz accepts "*/N" in every field, but the server's schedule factory only accepts it for seconds,
+// minutes and hours; day-of-month, month and day-of-week need a numeric start such as "1/N".
+const hasWildcardStep = (token: string): boolean =>
+  token.split(',').some((part) => part.startsWith('*/'));
+
 const isDayOfMonth = (token: string): boolean => {
   if (token === 'L' || token === 'LW') return true;
   if (/^\d+W$/.test(token)) return true;
@@ -86,6 +91,18 @@ export function validateCronExpression(input: string): CronValidationResult {
   }
   if (!NUMERIC_RANGE(0, 23)(hour)) {
     return { valid: false, reason: 'Hours must be between 0 and 23' };
+  }
+  if (hasWildcardStep(dom)) {
+    return {
+      valid: false,
+      reason: 'Day of month does not support "*/N"; use "1/N" instead (for example "1/2" for every second day)',
+    };
+  }
+  if (hasWildcardStep(month)) {
+    return { valid: false, reason: 'Month does not support "*/N"; use "1/N" instead' };
+  }
+  if (hasWildcardStep(dow)) {
+    return { valid: false, reason: 'Day of week does not support "*/N"; use "1/N" instead' };
   }
   if (!isDayOfMonth(dom)) {
     return { valid: false, reason: 'Day of month must be between 1 and 31' };

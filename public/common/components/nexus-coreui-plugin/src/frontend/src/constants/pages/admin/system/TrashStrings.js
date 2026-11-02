@@ -20,7 +20,7 @@ export default {
   TRASH: {
     MENU: {
       text: 'Trash',
-      description: 'Restore or permanently delete soft-deleted items',
+      description: 'Restore or permanently delete trashed items',
       icon: faTrash
     }
   }

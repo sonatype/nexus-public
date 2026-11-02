@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.common.collect;
 
-import com.google.common.collect.Maps;
+import java.util.HashMap;
+
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
@@ -24,7 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class ImmutableNestedAttributesMapTest
 {
-  private ImmutableNestedAttributesMap map = new ImmutableNestedAttributesMap(null, "key", Maps.newHashMap());
+  private ImmutableNestedAttributesMap map = new ImmutableNestedAttributesMap(null, "key", new HashMap<>());
 
   @Test(expected = UnsupportedOperationException.class)
   public void classKeysUnsettable() {

@@ -102,6 +102,20 @@ public interface ApiKeyLowLevelService
   }
 
   /**
+   * Browse the tokens of a user across several domains.
+   *
+   * @param domains the domains to search
+   * @param username the user name (primary principal) the tokens belong to
+   * @return every token of the user in any of the domains, whatever its realms
+   */
+  default Collection<ApiKey> browseByUserAndDomains(final Collection<String> domains, final String username) {
+    // Default implementation: one query per domain
+    return domains.stream()
+        .flatMap(domain -> browseFiltered(domain, null, username, 0, Integer.MAX_VALUE).stream())
+        .toList();
+  }
+
+  /**
    * Count tokens in the domain matching the filters.
    *
    * @param domain the domain

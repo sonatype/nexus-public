@@ -20,6 +20,7 @@ import * as dialog from './unsavedChangesDialog';
 
 describe('promptUnsavedChangesForNavigation', () => {
   afterEach(() => {
+    dialog.resetDialogState();
     delete window.showPreviewUnsavedDialog;
     jest.restoreAllMocks();
   });

@@ -15,10 +15,10 @@ package org.sonatype.nexus.repository.manager;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteContext;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteSchemaVersions;
-import org.sonatype.nexus.common.app.softdelete.SoftDeletedEntityService;
+import org.sonatype.nexus.common.app.trash.TrashContext;
+import org.sonatype.nexus.common.app.trash.TrashFormatGate;
+import org.sonatype.nexus.common.app.trash.TrashSchemaVersions;
+import org.sonatype.nexus.common.app.trash.TrashedEntityService;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -56,7 +56,7 @@ public class RepositoryDeletionServiceTest
   private SecurityHelper securityHelper;
 
   @Mock
-  private SoftDeletedEntityService repositorySoftDeleteService;
+  private TrashedEntityService repositoryTrashService;
 
   @Mock
   private DatabaseCheck databaseCheck;
@@ -81,38 +81,38 @@ public class RepositoryDeletionServiceTest
     when(repository.getType()).thenReturn(type);
     when(securityHelper.subject()).thenReturn(subject);
     when(subject.getPrincipal()).thenReturn("admin");
-    when(repositorySoftDeleteService.getEntityType()).thenReturn("repository");
+    when(repositoryTrashService.getEntityType()).thenReturn("repository");
   }
 
   private RepositoryDeletionService service(
-      final boolean softDeleteEnabled,
-      final List<SoftDeletedEntityService> services)
+      final boolean trashEnabled,
+      final List<TrashedEntityService> services)
   {
-    // Allowlist the setUp format (maven2) so "flag on" exercises the soft-delete path under the
+    // Allowlist the setUp format (maven2) so "flag on" exercises the trash path under the
     // fail-closed gate (an empty allowlist would hard-delete everything).
-    return service(softDeleteEnabled, "maven2", services);
+    return service(trashEnabled, "maven2", services);
   }
 
   private RepositoryDeletionService service(
-      final boolean softDeleteEnabled,
+      final boolean trashEnabled,
       final String formatsAllowlist,
-      final List<SoftDeletedEntityService> services)
+      final List<TrashedEntityService> services)
   {
     // Columns are assumed present in these tests, so schema-availability does not gate the flag path.
-    when(databaseCheck.isAtLeast(SoftDeleteSchemaVersions.REPOSITORY)).thenReturn(true);
+    when(databaseCheck.isAtLeast(TrashSchemaVersions.REPOSITORY)).thenReturn(true);
     RepositoryDeletionService svc = new RepositoryDeletionService(repositoryManager, securityHelper, services,
-        new SoftDeleteFormatGate(softDeleteEnabled, formatsAllowlist), databaseCheck);
+        new TrashFormatGate(trashEnabled, formatsAllowlist), databaseCheck);
     return svc;
   }
 
   @Test
-  public void hostedRepoWithFlagOnIsSoftDeleted() throws Exception {
+  public void hostedRepoWithFlagOnIsTrashed() throws Exception {
     when(type.getValue()).thenReturn(HostedType.NAME);
 
-    service(true, List.of(repositorySoftDeleteService)).delete(REPO);
+    service(true, List.of(repositoryTrashService)).delete(REPO);
 
     verify(securityHelper).ensurePermitted(any(RepositoryAdminPermission.class));
-    verify(repositorySoftDeleteService).softDelete(eq(REPO), any(SoftDeleteContext.class));
+    verify(repositoryTrashService).trash(eq(REPO), any(TrashContext.class));
     verify(repositoryManager, never()).delete(REPO);
   }
 
@@ -120,21 +120,21 @@ public class RepositoryDeletionServiceTest
   public void hostedRepoWithFlagOffIsHardDeleted() throws Exception {
     when(type.getValue()).thenReturn(HostedType.NAME);
 
-    service(false, List.of(repositorySoftDeleteService)).delete(REPO);
+    service(false, List.of(repositoryTrashService)).delete(REPO);
 
     verify(securityHelper).ensurePermitted(any(RepositoryAdminPermission.class));
     verify(repositoryManager).delete(REPO);
-    verify(repositorySoftDeleteService, never()).softDelete(any(), any());
+    verify(repositoryTrashService, never()).trash(any(), any());
   }
 
   @Test
   public void proxyRepoWithFlagOnIsHardDeleted() throws Exception {
     when(type.getValue()).thenReturn("proxy");
 
-    service(true, List.of(repositorySoftDeleteService)).delete(REPO);
+    service(true, List.of(repositoryTrashService)).delete(REPO);
 
     verify(repositoryManager).delete(REPO);
-    verify(repositorySoftDeleteService, never()).softDelete(any(), any());
+    verify(repositoryTrashService, never()).trash(any(), any());
   }
 
   @Test
@@ -151,35 +151,35 @@ public class RepositoryDeletionServiceTest
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(format.getValue()).thenReturn("npm");
 
-    // Soft-delete enabled but only maven2 allow-listed -> an npm repo hard-deletes (phased rollout).
-    service(true, "maven2", List.of(repositorySoftDeleteService)).delete(REPO);
+    // Trash enabled but only maven2 allow-listed -> an npm repo hard-deletes (phased rollout).
+    service(true, "maven2", List.of(repositoryTrashService)).delete(REPO);
 
     verify(repositoryManager).delete(REPO);
-    verify(repositorySoftDeleteService, never()).softDelete(any(), any());
+    verify(repositoryTrashService, never()).trash(any(), any());
   }
 
   @Test
   public void hostedRepoWithFlagOnButSchemaNotMigratedIsHardDeleted() throws Exception {
     // ZDU window: flag on and format allow-listed, but repository.deleted_on doesn't exist yet.
-    // Must hard-delete rather than attempt a soft-delete write that would fail on the missing column.
-    when(databaseCheck.isAtLeast(SoftDeleteSchemaVersions.REPOSITORY)).thenReturn(false);
+    // Must hard-delete rather than attempt a trash write that would fail on the missing column.
+    when(databaseCheck.isAtLeast(TrashSchemaVersions.REPOSITORY)).thenReturn(false);
     RepositoryDeletionService svc = new RepositoryDeletionService(repositoryManager, securityHelper,
-        List.of(repositorySoftDeleteService), new SoftDeleteFormatGate(true, "maven2"), databaseCheck);
+        List.of(repositoryTrashService), new TrashFormatGate(true, "maven2"), databaseCheck);
 
     svc.delete(REPO);
 
     verify(repositoryManager).delete(REPO);
-    verify(repositorySoftDeleteService, never()).softDelete(any(), any());
+    verify(repositoryTrashService, never()).trash(any(), any());
   }
 
   @Test
-  public void hostedRepoWithFlagOnAndFormatAllowlistedIsSoftDeleted() throws Exception {
+  public void hostedRepoWithFlagOnAndFormatAllowlistedIsTrashed() throws Exception {
     when(type.getValue()).thenReturn(HostedType.NAME);
     when(format.getValue()).thenReturn("maven2");
 
-    service(true, "npm,maven2", List.of(repositorySoftDeleteService)).delete(REPO);
+    service(true, "npm,maven2", List.of(repositoryTrashService)).delete(REPO);
 
-    verify(repositorySoftDeleteService).softDelete(eq(REPO), any(SoftDeleteContext.class));
+    verify(repositoryTrashService).trash(eq(REPO), any(TrashContext.class));
     verify(repositoryManager, never()).delete(REPO);
   }
 
@@ -191,13 +191,13 @@ public class RepositoryDeletionServiceTest
         .ensurePermitted(any(RepositoryAdminPermission.class));
 
     try {
-      service(true, List.of(repositorySoftDeleteService)).delete(REPO);
+      service(true, List.of(repositoryTrashService)).delete(REPO);
     }
     catch (AuthorizationException expected) {
       // expected
     }
 
-    verify(repositorySoftDeleteService, never()).softDelete(any(), any());
+    verify(repositoryTrashService, never()).trash(any(), any());
     verify(repositoryManager, never()).delete(REPO);
   }
 
@@ -208,9 +208,9 @@ public class RepositoryDeletionServiceTest
     // A missing repository must fail exactly like a forbidden one (AuthorizationException), so existence
     // isn't observable to a caller lacking DELETE permission (NEXUS-51733).
     assertThrows(AuthorizationException.class,
-        () -> service(true, List.of(repositorySoftDeleteService)).delete("does-not-exist"));
+        () -> service(true, List.of(repositoryTrashService)).delete("does-not-exist"));
 
-    verify(repositorySoftDeleteService, never()).softDelete(any(), any());
+    verify(repositoryTrashService, never()).trash(any(), any());
     verify(repositoryManager, never()).delete("does-not-exist");
   }
 }

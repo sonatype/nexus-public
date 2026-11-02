@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.maven;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -54,10 +55,8 @@ import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
 import org.apache.maven.model.Model;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.util.Objects.requireNonNull;
@@ -97,9 +96,7 @@ public abstract class MavenUploadHandlerSupport
 
   private static final String GROUP_ID_DISPLAY = "Group ID";
 
-  private static final Set<String> ignoredPaths = Sets.newHashSet(
-      "/" + ARCHETYPE_CATALOG_FILENAME,
-      ARCHETYPE_CATALOG_FILENAME);
+  private static final Set<String> ignoredPaths = Set.of("/" + ARCHETYPE_CATALOG_FILENAME, ARCHETYPE_CATALOG_FILENAME);
 
   protected final Maven2MavenPathParser parser;
 
@@ -444,7 +441,7 @@ public abstract class MavenUploadHandlerSupport
   }
 
   private String createBasePath(final String groupId, final String artifactId, final String version) {
-    List<String> parts = newArrayList(groupId.split("\\."));
+    List<String> parts = new ArrayList<>(Arrays.asList(groupId.split("\\.")));
     parts.addAll(Arrays.asList(artifactId, version, artifactId));
     return join("-", join("/", parts), version);
   }
@@ -524,7 +521,7 @@ public abstract class MavenUploadHandlerSupport
   {
     Content content;
 
-    List<String> assetPaths = newArrayList();
+    List<String> assetPaths = new ArrayList<>();
 
     Coordinates coordinates;
 

@@ -15,6 +15,7 @@ package org.sonatype.nexus.logging.task;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
+import org.sonatype.nexus.logging.LogDiscriminators;
 
 import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
@@ -38,7 +39,7 @@ public class ReplicationTaskLogger
     super(log);
 
     this.taskLogInfo = requireNonNull(taskLogInfo);
-    this.repositoryName = taskLogInfo.getString(REPLICATION_DISCRIMINATOR_ID);
+    this.repositoryName = LogDiscriminators.safe(taskLogInfo.getString(REPLICATION_DISCRIMINATOR_ID));
     MDC.put(TASK_LOG_ONLY_MDC, "true");
     MDC.put(REPLICATION_DISCRIMINATOR_ID, repositoryName);
   }

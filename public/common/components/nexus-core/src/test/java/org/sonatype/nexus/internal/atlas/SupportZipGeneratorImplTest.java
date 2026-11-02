@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.atlas;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +29,7 @@ import org.sonatype.nexus.common.log.SupportZipGeneratorRequest;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.io.BufferedWriter;
@@ -194,7 +194,7 @@ public class SupportZipGeneratorImplTest
     req.setAuditLog(true);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer),
+        List.of(mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer),
         ByteSize.bytes(0), ByteSize.bytes(0));
 
     generator.generate(req, "prefix", out);
@@ -233,7 +233,7 @@ public class SupportZipGeneratorImplTest
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer),
+        List.of(mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer),
         ByteSize.bytes(1000), ByteSize.bytes(0));
 
     generator.generate(req, "prefix", out);
@@ -273,7 +273,7 @@ public class SupportZipGeneratorImplTest
     req.setLimitFileSizes(true);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(mockArchivedLogCustomizer, mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer),
+        List.of(mockArchivedLogCustomizer, mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer),
         ByteSize.bytes(0), ByteSize.bytes(2500));
 
     generator.generate(req, "prefix", out);
@@ -297,7 +297,7 @@ public class SupportZipGeneratorImplTest
     req.setJmx(true);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(mockLogCustomizer, mockTaskLogCustomizer, throwExceptionCustomizer),
+        List.of(mockLogCustomizer, mockTaskLogCustomizer, throwExceptionCustomizer),
         ByteSize.bytes(0), ByteSize.bytes(0));
 
     generator.generate(req, "prefix", out);
@@ -328,7 +328,7 @@ public class SupportZipGeneratorImplTest
     req.setLimitFileSizes(true);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(mockArchivedLogCustomizer, throwExceptionInMiddleCustomizer), ByteSize.bytes(1000000),
+        List.of(mockArchivedLogCustomizer, throwExceptionInMiddleCustomizer), ByteSize.bytes(1000000),
         ByteSize.bytes(1000000));
 
     generator.generate(req, "prefix", out);
@@ -358,7 +358,7 @@ public class SupportZipGeneratorImplTest
     req.setLimitFileSizes(true);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(mockSysInfoCustomizer, mockDbInfoCustomizer), ByteSize.bytes(30000), ByteSize.bytes(50000));
+        List.of(mockSysInfoCustomizer, mockDbInfoCustomizer), ByteSize.bytes(30000), ByteSize.bytes(50000));
 
     generator.generate(req, "prefix", out);
     ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
@@ -384,7 +384,7 @@ public class SupportZipGeneratorImplTest
     req.setLimitFileSizes(true);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(mockLogCustomizer), ByteSize.bytes(30000), ByteSize.bytes(50000));
+        List.of(mockLogCustomizer), ByteSize.bytes(30000), ByteSize.bytes(50000));
 
     generator.generate(req, "prefix", out);
     ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
@@ -421,7 +421,7 @@ public class SupportZipGeneratorImplTest
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer,
+        List.of(mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer,
             mockSysInfoCustomizer),
         ByteSize.bytes(30000), ByteSize.bytes(50000));
 
@@ -474,7 +474,7 @@ public class SupportZipGeneratorImplTest
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer,
+        List.of(mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer,
             mockSysInfoCustomizer),
         ByteSize.bytes(30000), ByteSize.bytes(50000));
 
@@ -548,7 +548,7 @@ public class SupportZipGeneratorImplTest
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     // Max file size is 1500 bytes, which is less than 5000 bytes
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(logCustomizer), ByteSize.bytes(1500), ByteSize.bytes(10000));
+        List.of(logCustomizer), ByteSize.bytes(1500), ByteSize.bytes(10000));
 
     generator.generate(req, "prefix", out);
 
@@ -626,7 +626,7 @@ public class SupportZipGeneratorImplTest
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(taskLogCustomizer), ByteSize.bytes(2000), ByteSize.bytes(20000));
+        List.of(taskLogCustomizer), ByteSize.bytes(2000), ByteSize.bytes(20000));
 
     generator.generate(req, "prefix", out);
 
@@ -691,7 +691,7 @@ public class SupportZipGeneratorImplTest
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(auditLogCustomizer), ByteSize.bytes(2500), ByteSize.bytes(20000));
+        List.of(auditLogCustomizer), ByteSize.bytes(2500), ByteSize.bytes(20000));
 
     generator.generate(req, "prefix", out);
 
@@ -778,7 +778,7 @@ public class SupportZipGeneratorImplTest
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(customizer), ByteSize.bytes(500), ByteSize.bytes(20000));
+        List.of(customizer), ByteSize.bytes(500), ByteSize.bytes(20000));
 
     generator.generate(req, "prefix", out);
 
@@ -851,7 +851,7 @@ public class SupportZipGeneratorImplTest
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     // Set max content size to 10 bytes, which is less than truncation marker (17 bytes)
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(customizer), ByteSize.bytes(10), ByteSize.bytes(20000));
+        List.of(customizer), ByteSize.bytes(10), ByteSize.bytes(20000));
 
     generator.generate(req, "prefix", out);
 
@@ -920,7 +920,7 @@ public class SupportZipGeneratorImplTest
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     SupportZipGeneratorImpl generator = new SupportZipGeneratorImpl(downloadService,
-        ImmutableList.of(customizer), ByteSize.bytes(1000), ByteSize.bytes(20000));
+        List.of(customizer), ByteSize.bytes(1000), ByteSize.bytes(20000));
 
     generator.generate(req, "prefix", out);
 

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.97.2-02</version>
+    <version>3.98.0-07</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-testing</artifactId>
@@ -36,6 +36,13 @@
 
   <dependencyManagement>
     <dependencies>
+
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit</artifactId>
+        <version>1.5.1</version>
+        <scope>test</scope>
+      </dependency>
 
       <dependency>
         <groupId>org.reflections</groupId>

@@ -28,8 +28,10 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.content.store.WrappedContent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -45,9 +47,12 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultMaintenanceFacetTest
@@ -70,6 +75,9 @@ public class DefaultMaintenanceFacetTest
   @Mock
   private ComponentStore<?> componentStore;
 
+  @Mock
+  private AssetStore<?> assetStore;
+
   private DefaultMaintenanceFacet underTest;
 
   @Before
@@ -80,6 +88,7 @@ public class DefaultMaintenanceFacetTest
 
     FormatStoreManager formatStoreManager = mock(FormatStoreManager.class);
     when(formatStoreManager.componentStore(any())).thenReturn(componentStore);
+    when(formatStoreManager.assetStore(any())).thenReturn(assetStore);
     ContentFacetStores stores = new ContentFacetStores(blobStoreManager, "default", formatStoreManager, "nexus");
     when(contentFacet.stores()).thenReturn(stores);
 
@@ -162,6 +171,52 @@ public class DefaultMaintenanceFacetTest
     Set<String> deletedPaths = underTest.deleteComponent(component);
 
     assertThat(deletedPaths, is(empty()));
+    verify(fluentComponent).delete();
+  }
+
+  @Test
+  public void deleteComponent_purgesTrashedAssetRowsBeforeDeletingComponent() {
+    Component component = mock(Component.class);
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    when(fluentComponents.with(component)).thenReturn(fluentComponent);
+
+    // Only the live asset is visible through the read-filtered view.
+    FluentAsset visible = mock(FluentAsset.class);
+    when(visible.delete()).thenReturn(true);
+    when(visible.path()).thenReturn("/path/visible.jar");
+    when(fluentComponent.assets()).thenReturn(Collections.singletonList(visible));
+
+    // A Trashed asset still references the component but is hidden from assets(); it must be purged
+    // before the component delete, otherwise the asset->component foreign key would reject it.
+    Asset trashed = mock(Asset.class);
+    doReturn(Collections.singletonList(trashed)).when(assetStore).browseAllComponentAssets(component);
+
+    Set<String> deletedPaths = underTest.deleteComponent(component);
+
+    // Only the visible asset is reported as user-visible deletion; the Trashed row is purged silently.
+    assertThat(deletedPaths, containsInAnyOrder("/path/visible.jar"));
+    verify(assetStore).deleteAsset(trashed);
+    verify(fluentComponent).delete();
+  }
+
+  @Test
+  public void deleteComponent_unwrapsFluentComponentBeforeBrowsingAssets() {
+    // Regression (NEXUS-55410): the REST component-delete route passes a FluentComponent wrapper. The AssetStore
+    // mapper reads #{componentId} off the backing ComponentData, so the wrapper must be unwrapped before
+    // browseAllComponentAssets or the query throws "no getter for property named 'componentId'".
+    Component unwrapped = mock(Component.class);
+    Component wrapper = mock(Component.class, withSettings().extraInterfaces(WrappedContent.class));
+    doReturn(unwrapped).when((WrappedContent<?>) wrapper).unwrap();
+
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    when(fluentComponents.with(wrapper)).thenReturn(fluentComponent);
+    when(fluentComponent.assets()).thenReturn(Collections.emptyList());
+
+    underTest.deleteComponent(wrapper);
+
+    // The with-trash purge must receive the unwrapped ComponentData, never the FluentComponent wrapper.
+    verify(assetStore).browseAllComponentAssets(unwrapped);
+    verify(assetStore, never()).browseAllComponentAssets(wrapper);
     verify(fluentComponent).delete();
   }
 

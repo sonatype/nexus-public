@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.tools.datastore;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -37,8 +38,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.tools.OrphanedBlobFinder;
-
-import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -142,7 +141,7 @@ public class DatastoreOrphanedBlobFinderTest
     setupOrphanedBlob(blobStore, false);
     setupOrphanedBlob(blobStore2, false);
 
-    when(blobStoreManager.browse()).thenReturn(ImmutableList.of(blobStore, blobStore2));
+    when(blobStoreManager.browse()).thenReturn(List.of(blobStore, blobStore2));
 
     underTest.delete();
 

@@ -20,6 +20,7 @@ import { Theme } from '@radix-ui/themes';
 import { DetailPanel, type AssetData, type ComponentData } from '../DetailPanel';
 import type { BrowseNode } from '../../tree/browse-tree.types';
 import { deleteAsset, deleteComponent } from '../../browse.api';
+import { formatDate } from '../detail.utils';
 import ExtJS from '../../../../../../interface/ExtJS';
 
 const mockFetchBrowseNodes = jest.fn();
@@ -40,8 +41,9 @@ const mockToast = {
   info: jest.fn(),
 };
 
-// Mock useToast from shared
+// Mock useToast but keep the real DeleteConfirmationModal so the typed-confirmation gate is tested.
 jest.mock('../../../../shared', () => ({
+  ...jest.requireActual('../../../../shared'),
   useToast: () => mockToast,
   DeepResearchLink: ({ href }: { href: string }) => <a href={href}>Deep Research</a>,
 }));
@@ -57,6 +59,14 @@ jest.mock('../../../search/details/useComponentIntelligence', () => ({
 // Test wrapper with Radix Theme
 const renderWithTheme = (ui: React.ReactElement) => {
   return render(<Theme>{ui}</Theme>);
+};
+
+// Type the required acknowledgement token (the item name) into the delete modal, then click Delete.
+const confirmDeleteByTyping = async (itemName: string) => {
+  const input = screen.getByLabelText('Acknowledgement');
+  await userEvent.type(input, itemName);
+  const confirmButton = screen.getByRole('button', { name: /^Delete$/i });
+  await userEvent.click(confirmButton);
 };
 
 // Mock BrowseNode data
@@ -151,6 +161,26 @@ const setTagEntitlement = ({
     getValue: () => undefined,
     getEdition: () => edition,
   } as unknown as ReturnType<typeof ExtJS.state>);
+};
+
+/**
+ * Installs the NX.util.Url shape the server bootstrap really produces (bootstrap.vm): `relativePath`
+ * is '.', so `urlOf` returns a context-relative `./path`. The page itself is served from the context
+ * path, so relative URLs are resolved against `contextPath` (NEXUS-55899).
+ */
+const installNxUrl = (contextPath: string) => {
+  const relativePath = '.';
+  window.history.pushState({}, '', contextPath);
+  (window as any).NX = {
+    ...(window as any).NX,
+    app: { relativePath },
+    util: {
+      Url: {
+        relativePath,
+        urlOf: (path: string) => `${relativePath}${path.startsWith('/') ? '' : '/'}${path}`,
+      },
+    },
+  };
 };
 
 describe('DetailPanel', () => {
@@ -445,9 +475,8 @@ describe('DetailPanel', () => {
       const deleteButton = screen.getByRole('button', { name: /delete component/i });
       await userEvent.click(deleteButton);
 
-      // Confirm delete
-      const confirmButton = screen.getByRole('button', { name: /^Delete$/i });
-      await userEvent.click(confirmButton);
+      // Confirm delete by typing the component name
+      await confirmDeleteByTyping(mockComponentNode.text);
 
       // Wait for the simulated delete operation
       await waitFor(() => {
@@ -497,8 +526,7 @@ describe('DetailPanel', () => {
 
       const deleteButton = screen.getByRole('button', { name: /delete asset/i });
       await userEvent.click(deleteButton);
-      const confirmButton = screen.getByRole('button', { name: /^Delete$/i });
-      await userEvent.click(confirmButton);
+      await confirmDeleteByTyping(mockAssetNode.text);
 
       await waitFor(() => {
         expect(mockToast.error).toHaveBeenCalledWith(
@@ -536,8 +564,7 @@ describe('DetailPanel', () => {
 
       const deleteButton = screen.getByRole('button', { name: /delete asset/i });
       await userEvent.click(deleteButton);
-      const confirmButton = screen.getByRole('button', { name: /^Delete$/i });
-      await userEvent.click(confirmButton);
+      await confirmDeleteByTyping(mockAssetNode.text);
 
       await waitFor(() => {
         expect(mockToast.success).toHaveBeenCalledWith('Item deleted successfully');
@@ -567,8 +594,7 @@ describe('DetailPanel', () => {
 
       const deleteButton = screen.getByRole('button', { name: /delete asset/i });
       await userEvent.click(deleteButton);
-      const confirmButton = screen.getByRole('button', { name: /^Delete$/i });
-      await userEvent.click(confirmButton);
+      await confirmDeleteByTyping(mockAssetNode.text);
 
       await waitFor(() => {
         expect(deleteAsset).toHaveBeenCalledWith(mockAssetData.id, repositoryName);
@@ -594,8 +620,7 @@ describe('DetailPanel', () => {
 
       const deleteButton = screen.getByRole('button', { name: /delete component/i });
       await userEvent.click(deleteButton);
-      const confirmButton = screen.getByRole('button', { name: /^Delete$/i });
-      await userEvent.click(confirmButton);
+      await confirmDeleteByTyping(mockComponentNode.text);
 
       await waitFor(() => {
         expect(mockToast.error).toHaveBeenCalledWith(
@@ -626,6 +651,130 @@ describe('DetailPanel', () => {
       await userEvent.click(deleteButton);
 
       expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    });
+  });
+
+  describe('delete confirmation requires the item name (AC2)', () => {
+    it('shouldDisableConfirmUntilItemNameIsTyped', async () => {
+      renderWithTheme(
+        <DetailPanel
+          node={mockComponentNode}
+          repositoryName={repositoryName}
+          componentData={mockComponentData}
+          canDelete={true}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /delete component/i }));
+
+      // Confirm is disabled before the acknowledgement token is entered.
+      expect(screen.getByRole('button', { name: /^Delete$/i })).toBeDisabled();
+
+      await userEvent.type(screen.getByLabelText('Acknowledgement'), mockComponentNode.text);
+
+      expect(screen.getByRole('button', { name: /^Delete$/i })).toBeEnabled();
+    });
+
+    it('shouldKeepConfirmDisabledForWrongName', async () => {
+      const onDeleted = jest.fn();
+      renderWithTheme(
+        <DetailPanel
+          node={mockComponentNode}
+          repositoryName={repositoryName}
+          componentData={mockComponentData}
+          canDelete={true}
+          onDeleted={onDeleted}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /delete component/i }));
+      await userEvent.type(screen.getByLabelText('Acknowledgement'), 'not-the-name');
+
+      expect(screen.getByRole('button', { name: /^Delete$/i })).toBeDisabled();
+      expect(onDeleted).not.toHaveBeenCalled();
+    });
+
+    it('shouldShowTheItemSpecificNameInTheConfirmationPrompt', async () => {
+      renderWithTheme(
+        <DetailPanel
+          node={mockAssetNode}
+          repositoryName={repositoryName}
+          assetData={mockAssetData}
+          canDelete={true}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /delete asset/i }));
+
+      // The required token is the asset's own name, not a static string.
+      expect(
+        screen.getByPlaceholderText(`Type "${mockAssetNode.text}" to confirm`),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('detail header actions (AC3/AC4)', () => {
+    it('shouldRenderAssetActionsInTheHeaderBeforeTheTabs', () => {
+      renderWithTheme(
+        <DetailPanel
+          node={mockAssetNode}
+          repositoryName={repositoryName}
+          assetData={mockAssetData}
+          componentData={mockComponentData}
+          canDelete={true}
+        />
+      );
+
+      const download = screen.getByRole('button', { name: /download/i });
+      const tablist = screen.getByRole('tablist');
+      // Header actions render ahead of the tab list in document order.
+      expect(download.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('shouldGiveResearchDownloadAndDeleteAccessibleTooltipLabels', async () => {
+      renderWithTheme(
+        <DetailPanel
+          node={mockAssetNode}
+          repositoryName={repositoryName}
+          assetData={mockAssetData}
+          componentData={mockComponentData}
+          canDelete={true}
+        />
+      );
+
+      // Each action is reachable by its visible label (tooltip wires aria-describedby, not the name).
+      // Research in Guide is an anchor (link role); Download/Delete are buttons.
+      expect(screen.getByRole('link', { name: /research in guide/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /delete asset/i })).toBeInTheDocument();
+    });
+
+    it('shouldShowResearchInGuideForReadOnlyUserWhenCanDeleteIsFalse', () => {
+      renderWithTheme(
+        <DetailPanel
+          node={mockComponentNode}
+          repositoryName={repositoryName}
+          componentData={mockComponentData}
+          canDelete={false}
+        />
+      );
+
+      // Research in Guide is gated on version only, not on delete permission.
+      expect(screen.getByRole('link', { name: /research in guide/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /delete component/i })).not.toBeInTheDocument();
+    });
+
+    it('shouldOmitResearchInGuideWhenComponentHasNoVersion', () => {
+      renderWithTheme(
+        <DetailPanel
+          node={mockComponentNode}
+          repositoryName={repositoryName}
+          componentData={{ ...mockComponentData, version: null }}
+          canDelete={true}
+        />
+      );
+
+      expect(screen.queryByRole('link', { name: /research in guide/i })).not.toBeInTheDocument();
     });
   });
 
@@ -676,9 +825,135 @@ describe('DetailPanel', () => {
       await userEvent.click(downloadButton);
 
       expect(mockWindowOpen).toHaveBeenCalledWith(
-        '/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar',
+        'http://localhost/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar',
         '_blank'
       );
+    });
+  });
+
+  describe('folder-and-asset node (NEXUS-55613)', () => {
+    const PACKAGE_ROOT_NAME = 'core';
+    const PACKAGE_FOLDER_CALLOUT_REGEX = /both a package folder/i;
+    const CHOOSE_WHICH_TO_DELETE_REGEX = /choose which to delete/i;
+    const mockPackageRootNode: BrowseNode = {
+      id: '/@angular/core',
+      text: PACKAGE_ROOT_NAME,
+      type: 'asset',
+      leaf: false,
+      assetId: 'asset-pkg-1',
+    };
+    const mockWindowOpen = jest.fn();
+    const originalWindowOpen = window.open;
+
+    const renderPackageRoot = (canDelete: boolean) =>
+      renderWithTheme(
+        <DetailPanel
+          node={mockPackageRootNode}
+          repositoryName={repositoryName}
+          assetData={mockAssetData}
+          canDelete={canDelete}
+        />
+      );
+
+    beforeEach(() => {
+      window.open = mockWindowOpen;
+      mockWindowOpen.mockClear();
+    });
+
+    afterEach(() => {
+      window.open = originalWindowOpen;
+    });
+
+    it('shouldShowDownloadButtonWithoutDeletePermission', () => {
+      renderPackageRoot(false);
+
+      expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /delete/i })).toBeNull();
+    });
+
+    it('shouldOpenAssetDownloadUrlWhenDownloadClickedOnFolderAndAssetNode', async () => {
+      renderPackageRoot(false);
+
+      await userEvent.click(screen.getByRole('button', { name: /download/i }));
+
+      expect(mockWindowOpen).toHaveBeenCalledWith(mockAssetData.downloadUrl, '_blank');
+    });
+
+    it('shouldFallBackToGeneratedDownloadUrlWhenAssetHasNoDownloadUrl', async () => {
+      const { downloadUrl: _omitted, ...assetDataWithoutDownloadUrl } = mockAssetData;
+      renderWithTheme(
+        <DetailPanel
+          node={mockPackageRootNode}
+          repositoryName={repositoryName}
+          assetData={assetDataWithoutDownloadUrl as typeof mockAssetData}
+          canDelete={false}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /download/i }));
+
+      expect(mockWindowOpen).toHaveBeenCalledWith(
+        'http://localhost/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar',
+        '_blank'
+      );
+    });
+
+    it('shouldNotOpenWindowWhenDownloadClickedBeforeAssetDataLoads', async () => {
+      renderWithTheme(
+        <DetailPanel node={mockPackageRootNode} repositoryName={repositoryName} assetData={null} canDelete={false} />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /download/i }));
+
+      expect(mockWindowOpen).not.toHaveBeenCalled();
+    });
+
+    it('shouldHideExplanationCalloutWhenUserCannotDelete', () => {
+      renderPackageRoot(false);
+
+      expect(screen.queryByText(PACKAGE_FOLDER_CALLOUT_REGEX)).toBeNull();
+      expect(screen.queryByText(CHOOSE_WHICH_TO_DELETE_REGEX)).toBeNull();
+    });
+
+    it('shouldShowExplanationCalloutWhenUserCanDelete', () => {
+      renderPackageRoot(true);
+
+      expect(screen.getByText(PACKAGE_FOLDER_CALLOUT_REGEX)).toBeInTheDocument();
+      expect(screen.getByText(/removes just the metadata asset/i)).toBeInTheDocument();
+      expect(screen.getByText(/removes the package folder and everything in it/i)).toBeInTheDocument();
+      expect(screen.queryByText(CHOOSE_WHICH_TO_DELETE_REGEX)).toBeNull();
+    });
+
+    it('shouldShowDownloadAlongsideBothDeleteButtonsWhenUserCanDelete', () => {
+      renderPackageRoot(true);
+
+      expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /delete metadata only/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /delete entire package/i })).toBeInTheDocument();
+    });
+
+    it('shouldDeleteEntirePackageViaDeleteFolder', async () => {
+      renderPackageRoot(true);
+
+      await userEvent.click(screen.getByRole('button', { name: /delete entire package/i }));
+      await confirmDeleteByTyping(PACKAGE_ROOT_NAME);
+
+      await waitFor(() => {
+        expect(deleteFolder).toHaveBeenCalledWith(mockPackageRootNode.id, repositoryName);
+      });
+      expect(deleteAsset).not.toHaveBeenCalled();
+    });
+
+    it('shouldDeleteMetadataOnlyViaDeleteAsset', async () => {
+      renderPackageRoot(true);
+
+      await userEvent.click(screen.getByRole('button', { name: /delete metadata only/i }));
+      await confirmDeleteByTyping(PACKAGE_ROOT_NAME);
+
+      await waitFor(() => {
+        expect(deleteAsset).toHaveBeenCalledWith(mockAssetData.id, repositoryName);
+      });
+      expect(deleteFolder).not.toHaveBeenCalled();
     });
   });
 
@@ -1248,6 +1523,59 @@ describe('DetailPanel', () => {
     });
   });
 
+  describe('RAW hosted asset Updated row (NEXUS-55180)', () => {
+    const rawAssetData: AssetData = {
+      id: 'raw-asset-1',
+      name: '/sample.txt',
+      format: 'raw',
+      contentType: 'text/plain',
+      size: 1024,
+      repositoryName: 'raw-hosted',
+      blobCreated: '2024-06-15T10:30:00.000Z',
+      blobUpdated: '2024-06-16T14:20:00.000Z',
+      lastDownloaded: null,
+    };
+
+    it('renders blobUpdated as the Updated row value for a RAW hosted asset', () => {
+      renderWithTheme(
+        <DetailPanel
+          node={mockAssetNode}
+          repositoryName="raw-hosted"
+          assetData={rawAssetData}
+          activeTab="summary"
+        />
+      );
+
+      // Assert the row shows the actual formatted blobUpdated value, not merely that it
+      // isn't the dash placeholder. formatDate is the same util the component renders with,
+      // so this stays locale-independent across CI environments.
+      const updatedRow = screen.getByText('Updated').closest('.detail-panel__row');
+      expect(updatedRow).toHaveTextContent(formatDate(rawAssetData.blobUpdated));
+      expect(updatedRow).not.toHaveTextContent(formatDate(rawAssetData.blobCreated));
+    });
+
+    it('shows the dash placeholder in the Updated row when blobUpdated is null', () => {
+      const rawAssetNoBlobUpdated: AssetData = {
+        ...rawAssetData,
+        blobUpdated: null,
+      };
+
+      renderWithTheme(
+        <DetailPanel
+          node={mockAssetNode}
+          repositoryName="raw-hosted"
+          assetData={rawAssetNoBlobUpdated}
+          activeTab="summary"
+        />
+      );
+
+      const updatedRow = screen.getByText('Updated').closest('.detail-panel__row');
+      // The value cell collapses to the dash placeholder; the blobCreated date must not leak in.
+      expect(updatedRow).toHaveTextContent('-');
+      expect(updatedRow).not.toHaveTextContent(formatDate(rawAssetData.blobCreated));
+    });
+  });
+
   describe('attributes accordions default open (Area 5 / NEXUS-54501)', () => {
     const assetWithFacets: AssetData = {
       ...mockAssetData,
@@ -1772,6 +2100,63 @@ describe('DetailPanel', () => {
     });
   });
 
+  describe('context path (NEXUS-55899)', () => {
+    const originalNX = (window as any).NX;
+    const originalWindowOpen = window.open;
+    const mockWindowOpen = jest.fn();
+    const mockClipboard = { writeText: jest.fn() };
+
+    beforeEach(() => {
+      installNxUrl('/nexus/');
+      window.open = mockWindowOpen;
+      mockWindowOpen.mockClear();
+      Object.assign(navigator, { clipboard: mockClipboard });
+      mockClipboard.writeText.mockClear();
+    });
+
+    afterEach(() => {
+      (window as any).NX = originalNX;
+      window.open = originalWindowOpen;
+    });
+
+    // BDD-001, BDD-006, AT-006
+    it('shouldOpenDownloadUnderContextPathWhenAssetHasNoDownloadUrl', async () => {
+      const { downloadUrl: _omitted, ...assetWithoutDownloadUrl } = mockAssetData;
+      renderWithTheme(
+        <DetailPanel
+          node={mockAssetNode}
+          repositoryName={repositoryName}
+          assetData={assetWithoutDownloadUrl as typeof mockAssetData}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /download/i }));
+
+      expect(mockWindowOpen).toHaveBeenCalledWith(
+        `./repository/${repositoryName}${mockAssetData.name}`,
+        '_blank'
+      );
+    });
+
+    // BDD-002, BDD-006, AT-005
+    it('shouldCopyAbsoluteUrlUnderContextPathWhenAssetHasNoDownloadUrl', async () => {
+      const { downloadUrl: _omitted, ...assetWithoutDownloadUrl } = mockAssetData;
+      renderWithTheme(
+        <DetailPanel
+          node={mockAssetNode}
+          repositoryName={repositoryName}
+          assetData={assetWithoutDownloadUrl as typeof mockAssetData}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /copy url/i }));
+
+      expect(mockClipboard.writeText).toHaveBeenCalledWith(
+        `http://localhost/nexus/repository/${repositoryName}${mockAssetData.name}`
+      );
+    });
+  });
+
   describe('PathRowWithCopy component', () => {
     const mockClipboard = {
       writeText: jest.fn(),
@@ -1782,7 +2167,9 @@ describe('DetailPanel', () => {
       mockClipboard.writeText.mockClear();
     });
 
-    it('shows "Path" button label with copy icon', () => {
+    const EXPECTED_FULL_ASSET_URL = mockAssetData.downloadUrl as string;
+
+    it('shouldLabelAssetPathCopyButtonAsCopyUrl', () => {
       renderWithTheme(
         <DetailPanel
           node={mockAssetNode}
@@ -1791,11 +2178,11 @@ describe('DetailPanel', () => {
         />
       );
 
-      // Button should have "Path" label visible
-      expect(screen.getByRole('button', { name: /path/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /copy url/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^path$/i })).not.toBeInTheDocument();
     });
 
-    it('shows "Copy path" tooltip on hover', () => {
+    it('shouldCopyFullResolvableUrlForAssetPath', async () => {
       renderWithTheme(
         <DetailPanel
           node={mockAssetNode}
@@ -1804,28 +2191,31 @@ describe('DetailPanel', () => {
         />
       );
 
-      // The tooltip content "Copy path" should be accessible
-      // Radix tooltips appear on hover, so we check the button exists
-      const pathButton = screen.getByRole('button', { name: /path/i });
-      expect(pathButton).toBeInTheDocument();
+      const copyButton = screen.getByRole('button', { name: /copy url/i });
+      await userEvent.click(copyButton);
+
+      expect(mockClipboard.writeText).toHaveBeenCalledWith(EXPECTED_FULL_ASSET_URL);
     });
 
-    it('copies path to clipboard when button is clicked', async () => {
+    it('shouldBuildFullUrlFromOriginWhenDownloadUrlAbsent', async () => {
+      const { downloadUrl: _omitted, ...assetWithoutDownloadUrl } = mockAssetData;
       renderWithTheme(
         <DetailPanel
           node={mockAssetNode}
           repositoryName={repositoryName}
-          assetData={mockAssetData}
+          assetData={assetWithoutDownloadUrl as typeof mockAssetData}
         />
       );
 
-      const pathButton = screen.getByRole('button', { name: /path/i });
-      await userEvent.click(pathButton);
+      const copyButton = screen.getByRole('button', { name: /copy url/i });
+      await userEvent.click(copyButton);
 
-      expect(mockClipboard.writeText).toHaveBeenCalledWith(mockAssetData.name);
+      expect(mockClipboard.writeText).toHaveBeenCalledWith(
+        `${window.location.origin}/repository/maven-releases${mockAssetData.name}`,
+      );
     });
 
-    it('shows "Copied!" button label with check icon after click', async () => {
+    it('shouldShowCopiedLabelAfterClick', async () => {
       renderWithTheme(
         <DetailPanel
           node={mockAssetNode}
@@ -1834,14 +2224,13 @@ describe('DetailPanel', () => {
         />
       );
 
-      const pathButton = screen.getByRole('button', { name: /path/i });
-      await userEvent.click(pathButton);
+      const copyButton = screen.getByRole('button', { name: /copy url/i });
+      await userEvent.click(copyButton);
 
-      // After click, button should show "Copied!"
       expect(screen.getByRole('button', { name: /copied/i })).toBeInTheDocument();
     });
 
-    it('reverts to "Path" label after 2 seconds', async () => {
+    it('shouldRevertCopyUrlLabelAfterTwoSeconds', async () => {
       jest.useFakeTimers();
 
       renderWithTheme(
@@ -1852,30 +2241,30 @@ describe('DetailPanel', () => {
         />
       );
 
-      const pathButton = screen.getByRole('button', { name: /path/i });
-      await userEvent.click(pathButton);
+      const copyButton = screen.getByRole('button', { name: /copy url/i });
+      await userEvent.click(copyButton);
 
-      // Immediately after click, shows "Copied!"
       expect(screen.getByRole('button', { name: /copied/i })).toBeInTheDocument();
 
-      // Fast-forward 2 seconds
       jest.advanceTimersByTime(2000);
 
-      // After 2 seconds, should revert to "Path"
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /path/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /copy url/i })).toBeInTheDocument();
       });
 
       jest.useRealTimers();
     });
 
-    it('shows copy button for folder path', async () => {
+    it('shouldCopyPathNotUrlForFolder', async () => {
       renderWithTheme(
         <DetailPanel node={mockFolderNode} repositoryName={repositoryName} />
       );
 
-      // Folder details also uses PathRowWithCopy
-      expect(screen.getByRole('button', { name: /path/i })).toBeInTheDocument();
+      const pathButton = screen.getByRole('button', { name: /^path$/i });
+      expect(pathButton).toBeInTheDocument();
+      await userEvent.click(pathButton);
+
+      expect(mockClipboard.writeText).toHaveBeenCalledWith(mockFolderNode.id);
     });
   });
 });

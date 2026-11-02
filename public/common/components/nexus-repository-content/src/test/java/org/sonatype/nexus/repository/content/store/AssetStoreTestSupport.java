@@ -31,6 +31,7 @@ import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.event.asset.AssetRestoredEvent;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
@@ -39,7 +40,6 @@ import org.sonatype.nexus.repository.content.store.example.TestContentRepository
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.collect.ImmutableList;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -55,6 +55,9 @@ import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.content.store.VersionedAssetDAOTest.browseAssets;
 import static org.sonatype.nexus.repository.content.store.VersionedAssetDAOTest.countAssets;
@@ -193,6 +196,20 @@ public abstract class AssetStoreTestSupport
     });
   }
 
+  protected void testUndoTrashAsset_liveAsset_returnsZeroAndFiresNoRestoredEvent() {
+    // NEXUS-55233: undoTrashAsset only clears rows whose deleted_on IS NOT NULL. A never-trashed (live) asset --
+    // the shape a lost restore/purge race leaves behind once the purge won -- updates 0 rows, so the guarded
+    // restore must return 0 and must NOT post an AssetRestoredEvent for a row it never actually restored.
+    AssetData asset = generateAsset(repositoryId, "/live.jar");
+    inTx(() -> {
+      underTest.createAsset(asset);
+      int restored = underTest.undoTrashAsset(asset);
+      assertThat(restored, Matchers.is(0));
+    });
+
+    verify(eventManager, never()).post(any(AssetRestoredEvent.class));
+  }
+
   protected void testBrowseUpdatedAssetsDifferentDates() {
     OffsetDateTime time = OffsetDateTime.now();
     AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
@@ -217,13 +234,13 @@ public abstract class AssetStoreTestSupport
     assetBlob6.setAddedToRepository(time.plusSeconds(5));
 
     inTx(() -> {
-      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null, 2);
+      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, List.of(), null, null, 2);
       assertThat(assets, is(empty()));
 
       assetBlobStore.createAssetBlob(assetBlob1);
       asset1.setAssetBlob(assetBlob1);
       underTest.createAsset(asset1);
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null, 2);
+      assets = underTest.findUpdatedAssets(repositoryId, null, List.of(), null, null, 2);
       assertThat(assets.size(), is(1));
 
       assetBlobStore.createAssetBlob(assetBlob2);
@@ -234,7 +251,7 @@ public abstract class AssetStoreTestSupport
       asset3.setAssetBlob(assetBlob3);
       underTest.createAsset(asset3);
 
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null, 2);
+      assets = underTest.findUpdatedAssets(repositoryId, null, List.of(), null, null, 2);
       assertThat(assets.size(), is(2));
 
       assetBlobStore.createAssetBlob(assetBlob4);
@@ -249,13 +266,13 @@ public abstract class AssetStoreTestSupport
       asset6.setAssetBlob(assetBlob6);
       underTest.createAsset(asset6);
 
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("asset5"), null, null, 100);
+      assets = underTest.findUpdatedAssets(repositoryId, null, List.of("asset5"), null, null, 100);
       assertThat(assets.size(), is(1));
 
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("asset4", "asset5"), null, null, 100);
+      assets = underTest.findUpdatedAssets(repositoryId, null, List.of("asset4", "asset5"), null, null, 100);
       assertThat(assets.size(), is(2));
 
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("/asset.?/a.*.jar"), null, null, 100);
+      assets = underTest.findUpdatedAssets(repositoryId, null, List.of("/asset.?/a.*.jar"), null, null, 100);
       assertThat(assets.size(), is(6));
     });
   }
@@ -289,19 +306,19 @@ public abstract class AssetStoreTestSupport
       assetBlobStore.createAssetBlob(assetBlob2);
       asset2.setAssetBlob(assetBlob2);
       underTest.createAsset(asset2);
-      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null, 2);
+      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, List.of(), null, null, 2);
       assertThat(assets.size(), is(2));
 
       assetBlobStore.createAssetBlob(assetBlob3);
       asset3.setAssetBlob(assetBlob3);
       underTest.createAsset(asset3);
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null, 2);
+      assets = underTest.findUpdatedAssets(repositoryId, null, List.of(), null, null, 2);
       assertThat(assets.size(), is(3));
 
       assetBlobStore.createAssetBlob(assetBlob4);
       asset4.setAssetBlob(assetBlob4);
       underTest.createAsset(asset4);
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null, 2);
+      assets = underTest.findUpdatedAssets(repositoryId, null, List.of(), null, null, 2);
       assertThat(assets.size(), is(4));
     });
   }

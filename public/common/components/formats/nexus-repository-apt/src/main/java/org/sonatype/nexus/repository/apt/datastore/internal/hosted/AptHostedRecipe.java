@@ -62,78 +62,100 @@ public class AptHostedRecipe
 {
   public static final String NAME = "apt-hosted";
 
-  @Autowired
-  Provider<AptSecurityFacet> securityFacet;
+  private final Provider<AptSecurityFacet> securityFacet;
 
-  @Autowired
-  Provider<AptSigningFacet> aptSigningFacet;
+  private final Provider<AptSigningFacet> aptSigningFacet;
 
-  @Autowired
-  Provider<ConfigurableViewFacet> viewFacet;
+  private final Provider<ConfigurableViewFacet> viewFacet;
 
-  @Autowired
-  Provider<AptContentFacet> aptContentFacet;
+  private final Provider<AptContentFacet> aptContentFacet;
 
-  @Autowired
-  Provider<AptHostedFacet> aptHostedFacet;
+  private final Provider<AptHostedFacet> aptHostedFacet;
 
-  @Autowired
-  Provider<BrowseFacet> browseFacet;
+  private final Provider<BrowseFacet> browseFacet;
 
-  @Autowired
-  Provider<AptLastAssetMaintenanceFacet> maintenanceFacet;
+  private final Provider<AptLastAssetMaintenanceFacet> maintenanceFacet;
 
-  @Autowired
-  Provider<AptHostedSnapshotFacet> hostedSnapshotFacet;
+  private final Provider<AptHostedSnapshotFacet> hostedSnapshotFacet;
 
-  @Autowired
-  Provider<AptKeyValueFacet> aptKeyValueFacet;
+  private final Provider<AptKeyValueFacet> aptKeyValueFacet;
 
-  @Autowired
-  Provider<AptHostedMetadataFacet> aptHostedMetadataFacet;
+  private final Provider<AptHostedMetadataFacet> aptHostedMetadataFacet;
 
-  @Autowired
-  Provider<AptMetadataRebuildSchedulerFacet> aptMetadataRebuildSchedulerFacet;
+  private final Provider<AptMetadataRebuildSchedulerFacet> aptMetadataRebuildSchedulerFacet;
 
-  @Autowired
-  TimingHandler timingHandler;
+  private final TimingHandler timingHandler;
 
-  @Autowired
-  SecurityHandler securityHandler;
+  private final SecurityHandler securityHandler;
 
-  @Autowired
-  ExceptionHandler exceptionHandler;
+  private final ExceptionHandler exceptionHandler;
 
-  @Autowired
-  HandlerContributor handlerContributor;
+  private final HandlerContributor handlerContributor;
 
-  @Autowired
-  ConditionalRequestHandler conditionalRequestHandler;
+  private final ConditionalRequestHandler conditionalRequestHandler;
 
-  @Autowired
-  PartialFetchHandler partialFetchHandler;
+  private final PartialFetchHandler partialFetchHandler;
 
-  @Autowired
-  ContentHeadersHandler contentHeadersHandler;
+  private final ContentHeadersHandler contentHeadersHandler;
 
-  @Autowired
-  LastDownloadedHandler lastDownloadedHandler;
+  private final LastDownloadedHandler lastDownloadedHandler;
 
-  @Autowired
-  AptSnapshotHandler snapshotHandler;
+  private final AptSnapshotHandler snapshotHandler;
 
-  @Autowired
-  AptHostedHandler hostedHandler;
+  private final AptHostedHandler hostedHandler;
 
-  @Autowired
-  Provider<SearchFacet> searchFacet;
+  private final Provider<SearchFacet> searchFacet;
 
   @Autowired
   public AptHostedRecipe(
       @Qualifier(HostedType.NAME) final Type type,
-      @Qualifier(AptFormat.NAME) final Format format)
+      @Qualifier(AptFormat.NAME) final Format format,
+      final Provider<AptSecurityFacet> securityFacet,
+      final Provider<AptSigningFacet> aptSigningFacet,
+      final Provider<ConfigurableViewFacet> viewFacet,
+      final Provider<AptContentFacet> aptContentFacet,
+      final Provider<AptHostedFacet> aptHostedFacet,
+      final Provider<BrowseFacet> browseFacet,
+      final Provider<AptLastAssetMaintenanceFacet> maintenanceFacet,
+      final Provider<AptHostedSnapshotFacet> hostedSnapshotFacet,
+      final Provider<AptKeyValueFacet> aptKeyValueFacet,
+      final Provider<AptHostedMetadataFacet> aptHostedMetadataFacet,
+      final Provider<AptMetadataRebuildSchedulerFacet> aptMetadataRebuildSchedulerFacet,
+      final TimingHandler timingHandler,
+      final SecurityHandler securityHandler,
+      final ExceptionHandler exceptionHandler,
+      final HandlerContributor handlerContributor,
+      final ConditionalRequestHandler conditionalRequestHandler,
+      final PartialFetchHandler partialFetchHandler,
+      final ContentHeadersHandler contentHeadersHandler,
+      final LastDownloadedHandler lastDownloadedHandler,
+      final AptSnapshotHandler snapshotHandler,
+      final AptHostedHandler hostedHandler,
+      final Provider<SearchFacet> searchFacet)
   {
     super(type, format);
+    this.securityFacet = securityFacet;
+    this.aptSigningFacet = aptSigningFacet;
+    this.viewFacet = viewFacet;
+    this.aptContentFacet = aptContentFacet;
+    this.aptHostedFacet = aptHostedFacet;
+    this.browseFacet = browseFacet;
+    this.maintenanceFacet = maintenanceFacet;
+    this.hostedSnapshotFacet = hostedSnapshotFacet;
+    this.aptKeyValueFacet = aptKeyValueFacet;
+    this.aptHostedMetadataFacet = aptHostedMetadataFacet;
+    this.aptMetadataRebuildSchedulerFacet = aptMetadataRebuildSchedulerFacet;
+    this.timingHandler = timingHandler;
+    this.securityHandler = securityHandler;
+    this.exceptionHandler = exceptionHandler;
+    this.handlerContributor = handlerContributor;
+    this.conditionalRequestHandler = conditionalRequestHandler;
+    this.partialFetchHandler = partialFetchHandler;
+    this.contentHeadersHandler = contentHeadersHandler;
+    this.lastDownloadedHandler = lastDownloadedHandler;
+    this.snapshotHandler = snapshotHandler;
+    this.hostedHandler = hostedHandler;
+    this.searchFacet = searchFacet;
   }
 
   @Override

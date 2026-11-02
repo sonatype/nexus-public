@@ -72,6 +72,8 @@ public class BlobStoreXO
 
   private boolean inUse;
 
+  private boolean globalDistributionEnabled;
+
   private boolean convertable;
 
   /**
@@ -142,6 +144,10 @@ public class BlobStoreXO
     return convertable;
   }
 
+  public boolean isGlobalDistributionEnabled() {
+    return globalDistributionEnabled;
+  }
+
   public boolean isInUse() {
     return inUse;
   }
@@ -187,6 +193,12 @@ public class BlobStoreXO
   @JsonSetter("groupName")
   public BlobStoreXO withGroupName(final String groupName) {
     this.groupName = groupName;
+    return this;
+  }
+
+  @JsonSetter("globalDistributionEnabled")
+  public BlobStoreXO withGlobalDistributionEnabled(final boolean globalDistributionEnabled) {
+    this.globalDistributionEnabled = globalDistributionEnabled;
     return this;
   }
 

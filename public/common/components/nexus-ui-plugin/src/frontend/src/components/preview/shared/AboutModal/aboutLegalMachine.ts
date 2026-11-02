@@ -57,6 +57,7 @@ export function createAboutLegalMachine() {
   return createMachine<AboutLegalContext, AboutLegalEvent>(
     {
       id: 'aboutLegal',
+      predictableActionArguments: true,
       initial: 'idle',
       context: {
         html: '',

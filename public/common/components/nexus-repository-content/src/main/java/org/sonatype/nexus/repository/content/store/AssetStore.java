@@ -72,7 +72,7 @@ public class AssetStore<T extends AssetDAO>
 
   private GlobalRepositorySettings globalRepositorySettings;
 
-  private SoftDeleteSchemaState softDeleteSchemaState;
+  private TrashSchemaState trashSchemaState;
 
   @Autowired
   public AssetStore(
@@ -85,14 +85,17 @@ public class AssetStore<T extends AssetDAO>
     this.clustered = clustered;
   }
 
-  /** See {@code ComponentStore#setSoftDeleteSchemaState}. */
+  /** See {@code ComponentStore#setTrashSchemaState}. */
   @Autowired(required = false)
-  public void setSoftDeleteSchemaState(final SoftDeleteSchemaState softDeleteSchemaState) {
-    this.softDeleteSchemaState = softDeleteSchemaState;
+  public void setTrashSchemaState(final TrashSchemaState trashSchemaState) {
+    this.trashSchemaState = trashSchemaState;
   }
 
-  protected boolean softDeleteAvailable() {
-    return softDeleteSchemaState != null && softDeleteSchemaState.isSoftDeleteAvailable();
+  protected boolean trashAvailable() {
+    // Read/insert filtering keys on schema presence, NOT the feature flag: turning Trash off must not resurrect
+    // already-Trashed content, so the deleted_on IS NULL filter persists as long as the columns exist
+    // (NEXUS-55233). The flag still gates delete-routing (see ContentDeletionService) and Trash UI/REST.
+    return trashSchemaState != null && trashSchemaState.isSchemaReached();
   }
 
   @Autowired
@@ -116,7 +119,7 @@ public class AssetStore<T extends AssetDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().countAssets(repositoryId, kind, filter, filterParams, softDeleteAvailable());
+    return dao().countAssets(repositoryId, kind, filter, filterParams, trashAvailable());
   }
 
   /**
@@ -142,7 +145,7 @@ public class AssetStore<T extends AssetDAO>
       final int limit)
   {
     return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams,
-        softDeleteAvailable());
+        trashAvailable());
   }
 
   /**
@@ -162,7 +165,7 @@ public class AssetStore<T extends AssetDAO>
       final int limit)
   {
     AssetBlobCreatedContinuationToken token = AssetBlobCreatedContinuationToken.decode(continuationToken);
-    return dao().browseEagerAssetsInRepository(repositoryId, token, limit, null, null, softDeleteAvailable());
+    return dao().browseEagerAssetsInRepository(repositoryId, token, limit, null, null, trashAvailable());
   }
 
   /**
@@ -193,7 +196,7 @@ public class AssetStore<T extends AssetDAO>
       @Nullable final OffsetDateTime olderThan)
   {
     AssetBlobCreatedContinuationToken token = AssetBlobCreatedContinuationToken.decode(continuationToken);
-    return dao().browseEagerAssetsInRepository(repositoryId, token, limit, newerThan, olderThan, softDeleteAvailable());
+    return dao().browseEagerAssetsInRepository(repositoryId, token, limit, newerThan, olderThan, trashAvailable());
   }
 
   /**
@@ -221,7 +224,7 @@ public class AssetStore<T extends AssetDAO>
       final int limit)
   {
     return dao().browseAssetsInRepositories(repositoryIds, continuationToken, kind, filter, filterParams, limit,
-        softDeleteAvailable());
+        trashAvailable());
   }
 
   /**
@@ -232,7 +235,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Collection<Asset> browseComponentAssets(final Component component) {
-    return dao().browseComponentAssets(component, softDeleteAvailable());
+    return dao().browseComponentAssets(component, trashAvailable());
   }
 
   @Transactional
@@ -241,11 +244,11 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Browse all assets associated with a component, including soft-deleted.
+   * Browse all assets associated with a component, including trashed.
    */
   @Transactional
-  public Collection<Asset> browseAllComponentAssetsWithSoftDelete(final Component component) {
-    return dao().browseAllComponentAssetsWithSoftDelete(component);
+  public Collection<Asset> browseAllComponentAssetsWithTrash(final Component component) {
+    return dao().browseAllComponentAssetsWithTrash(component);
   }
 
   /**
@@ -282,7 +285,7 @@ public class AssetStore<T extends AssetDAO>
     // this won't be the case, and we will not need a query to find them all.
     List<AssetInfo> assets =
         dao().findGreaterThanOrEqualToAddedToRepository(repositoryId, addedToRepositoryNormalized, regexList,
-            filter, filterParams, batchSize + 1, softDeleteAvailable());
+            filter, filterParams, batchSize + 1, trashAvailable());
 
     if (assets.size() == batchSize + 1) {
       if (hasMoreResultsWithSameBlobCreated(assets)) {
@@ -296,7 +299,7 @@ public class AssetStore<T extends AssetDAO>
         // paging with a greater than query.
         List<AssetInfo> matchAddedToRepository =
             dao().findAddedToRepositoryWithinRange(repositoryId, startAddedToRepository, endAddedToRepository,
-                regexList, filter, filterParams, LAST_UPDATED_LIMIT, softDeleteAvailable());
+                regexList, filter, filterParams, LAST_UPDATED_LIMIT, trashAvailable());
 
         if (matchAddedToRepository.size() == LAST_UPDATED_LIMIT) {
           log.error(
@@ -335,7 +338,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void createAsset(final AssetData asset) {
-    dao().createAsset(asset, clustered, softDeleteAvailable());
+    dao().createAsset(asset, clustered, trashAvailable());
 
     postCommitEvent(() -> new AssetCreatedEvent(asset));
   }
@@ -348,7 +351,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Optional<Asset> readAsset(final int assetId) {
-    return dao().readAsset(assetId, softDeleteAvailable());
+    return dao().readAsset(assetId, trashAvailable());
   }
 
   /**
@@ -360,7 +363,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Optional<Asset> readPath(final int repositoryId, final String path) {
-    return dao().readPath(repositoryId, path, softDeleteAvailable());
+    return dao().readPath(repositoryId, path, trashAvailable());
   }
 
   /**
@@ -373,7 +376,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Optional<Asset> findByBlobRef(final int repositoryId, final BlobRef blobRef) {
-    return dao().findByBlobRef(repositoryId, blobRef, softDeleteAvailable());
+    return dao().findByBlobRef(repositoryId, blobRef, trashAvailable());
   }
 
   /**
@@ -397,7 +400,7 @@ public class AssetStore<T extends AssetDAO>
     }
 
     return dao().findByComponentIds(componentIds, assetFilter, assetFilterParams, includeNullBlobs,
-        softDeleteAvailable());
+        trashAvailable());
   }
 
   /**
@@ -421,7 +424,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void updateAssetPath(final Asset asset) {
-    String oldPath = dao().readAsset(InternalIds.internalAssetId(asset), softDeleteAvailable())
+    String oldPath = dao().readAsset(InternalIds.internalAssetId(asset), trashAvailable())
         .map(Asset::path)
         .orElse(null);
 
@@ -441,11 +444,11 @@ public class AssetStore<T extends AssetDAO>
       final AttributeChangeSet changeSet)
   {
     // Reload latest attributes, apply change, then update database if necessary. This read must NOT filter out
-    // soft-deleted assets (pass false, not softDeleteAvailable()): unlike normal reads, this is a targeted
+    // trashed assets (pass false, not trashAvailable()): unlike normal reads, this is a targeted
     // update of a specific asset by id, and stash-and-reapply formats (npm custom dist-tags + deprecated, Cargo
-    // registry index line/yanked) write a preservation attribute onto an asset that has just been soft-deleted.
+    // registry index line/yanked) write a preservation attribute onto an asset that has just been trashed.
     // Filtering by deleted_on IS NULL here would make readAssetAttributes return empty and silently drop that
-    // write, losing the stashed metadata on the asset-level soft-delete/restore path (NEXUS-53911/54381/54382).
+    // write, losing the stashed metadata on the asset-level trash/restore path (NEXUS-53911/54381/54382).
     dao().readAssetAttributes(asset, false).ifPresent(attributes -> {
       ((AssetData) asset).setAttributes(attributes);
 
@@ -513,12 +516,12 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Purges (hard-deletes) an asset only if it is still soft-deleted. Used by the manual Trash purge to
+   * Purges (hard-deletes) an asset only if it is still trashed. Used by the manual Trash purge to
    * avoid a read-then-delete race: if the asset is restored between selection and purge, {@code deleted_on}
    * is cleared, the guarded delete removes 0 rows, and the now-live asset is preserved -- no
    * {@link AssetDeletedEvent} (and therefore no blob reclamation) fires for the surviving asset.
    *
-   * @return {@code true} if the asset was purged; {@code false} if it was no longer soft-deleted
+   * @return {@code true} if the asset was purged; {@code false} if it was no longer trashed
    */
   @Transactional
   public boolean purgeDeletedAsset(final Asset asset) {
@@ -546,7 +549,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public boolean deletePath(final int repositoryId, final String path) {
-    return dao().readPath(repositoryId, path, softDeleteAvailable())
+    return dao().readPath(repositoryId, path, trashAvailable())
         .map(this::deleteAsset)
         .orElse(false);
   }
@@ -564,19 +567,23 @@ public class AssetStore<T extends AssetDAO>
       return 0;
     }
 
-    Collection<Asset> assets = dao().readPathsFromRepository(repositoryId, paths, softDeleteAvailable());
+    Collection<Asset> assets = dao().readPathsFromRepository(repositoryId, paths, trashAvailable());
 
     if (assets.isEmpty()) {
       return 0;
     }
 
+    for (Asset asset : assets) {
+      asset.blob(); // force lazy-load blob while the session is open
+    }
     int[] assetIds = assets.stream().mapToInt(InternalIds::internalAssetId).toArray();
+    List<Asset> assetList = new ArrayList<>(assets);
     preCommitEvent(() -> new AssetPrePurgeEvent(repositoryId, assetIds));
-    postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds));
+    postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds, assetList));
 
     int[] componentIds = new int[0];
     if (clustered) {
-      componentIds = Arrays.stream(dao().selectComponentIds(assetIds, softDeleteAvailable())).distinct().toArray();
+      componentIds = Arrays.stream(dao().selectComponentIds(assetIds, trashAvailable())).distinct().toArray();
     }
 
     int count = purgeAssets(assetIds);
@@ -620,18 +627,30 @@ public class AssetStore<T extends AssetDAO>
     int purged = 0;
     while (true) {
       int[] assetIds =
-          dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize(), softDeleteAvailable());
+          dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize(), trashAvailable());
       if (assetIds.length == 0) {
         break; // nothing left to purge
       }
-      purged += purgeAssets(assetIds);
-
+      List<Asset> assetsForAudit = readAssetsForAudit(assetIds);
       preCommitEvent(() -> new AssetPrePurgeEvent(repositoryId, assetIds));
-      postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds));
+      purged += purgeAssets(assetIds);
+      postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds, assetsForAudit));
 
       commitChangesSoFar();
     }
     return purged;
+  }
+
+  private List<Asset> readAssetsForAudit(final int[] assetIds) {
+    List<Asset> assets = new ArrayList<>(assetIds.length);
+    for (int assetId : assetIds) {
+      // trashAvailable() always returns false; hard-purge targets are still readable here
+      dao().readAsset(assetId, trashAvailable()).ifPresent(asset -> {
+        asset.blob(); // force lazy-load blob while the session is open
+        assets.add(asset);
+      });
+    }
+    return assets;
   }
 
   /**
@@ -671,83 +690,96 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Checks for existence of asset in all three: <format>_asset, <format>_asset_blob, <format>_component tables
+   * Checks for existence of asset in all three: <format>_asset, <format>_asset_blob, <format>_component tables.
+   * <p>
+   * Delegates with {@code trashAvailable=false} so the {@code deleted_on IS NULL} predicate is omitted, i.e. a
+   * present-but-trashed asset (its {@code deleted_on} is set) counts as existing. This is the behavior required by
+   * the sole caller, blob-store reconciliation (Data Repair): reconcile must NOT treat a trashed asset as a missing
+   * DB record. Filtering trashed rows out here would, on a Trash-enabled instance, make a trashed asset whose blob
+   * is intact read as absent and be classified BLOB_RECORD_MISSING -> RECREATE_RECORDS, which on execute clears
+   * {@code deleted_on} and silently resurrects (un-trashes) content the user deleted (NEXUS-55233).
    *
    * @param blobRef the blob reference
-   * @return {@code true} if asset exists in all three: <format>_asset, <format>_asset_blob, <format>_component tables
+   * @return {@code true} if a matching asset record exists, including one that is currently trashed
    */
   @Transactional
   public Boolean assetRecordsExist(final BlobRef blobRef, final String path, final String repository) {
-    return dao().assetRecordsExist(blobRef, path, repository, softDeleteAvailable());
+    return dao().assetRecordsExist(blobRef, path, repository, false);
   }
 
   /**
-   * Soft-deletes an asset by marking it with deletion metadata.
+   * Trashs an asset by marking it with deletion metadata.
    */
   @Transactional
-  public void softDeleteAsset(final Asset asset, final String deletedBy) {
+  public void trashAsset(final Asset asset, final String deletedBy) {
     int assetId = InternalIds.internalAssetId(asset);
-    dao().softDeleteAsset(assetId, deletedBy);
+    dao().trashAsset(assetId, deletedBy);
     postCommitEvent(() -> new AssetDeletedEvent(asset));
   }
 
   /**
-   * Restores a soft-deleted asset by clearing deletion metadata.
+   * Restores a trashed asset by clearing deletion metadata.
    */
   @Transactional
-  public void undoSoftDeleteAsset(final Asset asset) {
+  public int undoTrashAsset(final Asset asset) {
     int assetId = InternalIds.internalAssetId(asset);
-    dao().undoSoftDeleteAsset(assetId);
-    postCommitEvent(() -> new AssetRestoredEvent(asset));
+    int restored = dao().undoTrashAsset(assetId);
+    // Only fire the restore event when a row was actually cleared. On a lost restore/purge race the asset was
+    // already purged (0 rows), so firing AssetRestoredEvent -- and its webhook/audit/metadata side effects --
+    // for a now-nonexistent asset would be misleading (NEXUS-55233).
+    if (restored > 0) {
+      postCommitEvent(() -> new AssetRestoredEvent(asset));
+    }
+    return restored;
   }
 
   /**
-   * Cascade soft-deletes all assets belonging to a component.
+   * Cascade trashs all assets belonging to a component.
    */
   @Transactional
-  public void softDeleteComponentAssets(final Component component, final String deletedBy) {
+  public void trashComponentAssets(final Component component, final String deletedBy) {
     int componentId = internalComponentId(component);
-    dao().softDeleteComponentAssets(componentId, deletedBy);
+    dao().trashComponentAssets(componentId, deletedBy);
   }
 
   /**
-   * Re-stamps assets individually soft-deleted during a folder delete, aligning their timestamps
+   * Re-stamps assets individually trashed during a folder delete, aligning their timestamps
    * with the component so they are hidden in Trash. Preserves true pre-existing individual deletes.
    */
   @Transactional
-  public void reSoftDeleteComponentAssets(
+  public void reTrashComponentAssets(
       final Component component,
       final String deletedBy,
       final OffsetDateTime folderDeleteStarted)
   {
     int componentId = internalComponentId(component);
-    dao().reSoftDeleteComponentAssets(componentId, deletedBy, folderDeleteStarted);
+    dao().reTrashComponentAssets(componentId, deletedBy, folderDeleteStarted);
   }
 
   /**
-   * Restores all soft-deleted assets of a component. Under the subsume-all model the component owns every one
-   * of its soft-deleted assets (including any deleted individually before the component), so they are all
+   * Restores all trashed assets of a component. Under the subsume-all model the component owns every one
+   * of its trashed assets (including any deleted individually before the component), so they are all
    * restored together with the component -- no timestamp guard, which would strand the earlier-deleted ones.
    */
   @Transactional
-  public void undoSoftDeleteComponentAssets(final Component component) {
+  public void undoTrashComponentAssets(final Component component) {
     int componentId = internalComponentId(component);
-    dao().undoSoftDeleteComponentAssets(componentId);
+    dao().undoTrashComponentAssets(componentId);
   }
 
   /**
-   * Aligns all soft-deleted assets of a component with the component's own deleted_on (see
-   * {@link AssetDAO#alignSoftDeletedAssetsWithComponent}). Used on the last-asset cascade so a component
+   * Aligns all trashed assets of a component with the component's own deleted_on (see
+   * {@link AssetDAO#alignTrashedAssetsWithComponent}). Used on the last-asset cascade so a component
    * emptied piece-by-piece is treated as one cascade delete and restores as a whole (NEXUS-53984).
    */
   @Transactional
-  public void alignSoftDeletedAssetsWithComponent(final Component component) {
+  public void alignTrashedAssetsWithComponent(final Component component) {
     int componentId = internalComponentId(component);
-    dao().alignSoftDeletedAssetsWithComponent(componentId);
+    dao().alignTrashedAssetsWithComponent(componentId);
   }
 
   /**
-   * Reads a single soft-deleted asset by its internal ID.
+   * Reads a single trashed asset by its internal ID.
    */
   @Transactional
   public Optional<Asset> readDeletedAsset(final int assetId) {
@@ -755,7 +787,7 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Browse soft-deleted assets with optional repository filter.
+   * Browse trashed assets with optional repository filter.
    */
   @Transactional
   public Continuation<Asset> browseDeletedAssets(
@@ -767,9 +799,9 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Browse all soft-deleted assets including cascade-deleted ones (see
+   * Browse all trashed assets including cascade-deleted ones (see
    * {@link AssetDAO#browseAllDeletedAssets}). Used by format GC to protect content still referenced by
-   * soft-deleted (restorable) components.
+   * trashed (restorable) components.
    */
   @Transactional
   public Continuation<Asset> browseAllDeletedAssets(
@@ -777,18 +809,18 @@ public class AssetStore<T extends AssetDAO>
       final int limit,
       @Nullable final String continuationToken)
   {
-    // NEXUS-54969: unlike the other soft-delete store methods (only reached from the soft-delete plugin or
+    // NEXUS-54969: unlike the other trash store methods (only reached from the trash plugin or
     // the flag-gated DeleteFolderServiceImpl branch), this is called by Docker/OCI format GC on EVERY run,
-    // independent of the soft-delete feature flag. With soft-delete disabled the deleted_on column may not
+    // independent of the trash feature flag. With trash disabled the deleted_on column may not
     // exist, so short-circuit here to avoid a "column deleted_on does not exist" failure during GC.
-    if (!softDeleteAvailable()) {
+    if (!trashAvailable()) {
       return emptyContinuation();
     }
     return dao().browseAllDeletedAssets(repositoryId, limit, continuationToken);
   }
 
   /**
-   * Count soft-deleted assets with optional repository filter.
+   * Count trashed assets with optional repository filter.
    */
   @Transactional
   public int countDeletedAssets(@Nullable final Integer repositoryId) {
@@ -796,7 +828,7 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Hard-delete assets that were soft-deleted before the given cutoff.
+   * Hard-delete assets that were trashed before the given cutoff.
    */
   @Transactional
   public int purgeDeletedAssetsBefore(final OffsetDateTime cutoff) {
@@ -814,7 +846,7 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Empty {@link Continuation} returned by the deleted-asset browse methods when soft-delete is disabled
+   * Empty {@link Continuation} returned by the deleted-asset browse methods when trash is disabled
    * (NEXUS-54969), so callers iterate zero results without issuing SQL that references {@code deleted_on}.
    */
   private static Continuation<Asset> emptyContinuation() {

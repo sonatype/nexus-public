@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 
-import com.google.common.collect.Lists;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -43,9 +45,9 @@ public class InitialRealmConfigurationProvider
   @Override
   public RealmConfiguration getObject() {
     RealmConfiguration configuration = store.newEntity();
-    configuration.setRealmNames(Lists.newArrayList(
+    configuration.setRealmNames(new ArrayList<>(Arrays.asList(
         AuthenticatingRealmImpl.NAME,
-        AuthorizingRealmImpl.NAME));
+        AuthorizingRealmImpl.NAME)));
     return configuration;
   }
 

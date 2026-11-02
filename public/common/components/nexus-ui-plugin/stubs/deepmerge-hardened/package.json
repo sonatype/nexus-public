@@ -1,0 +1,7 @@
+{
+  "name": "@sonatype/deepmerge-hardened",
+  "version": "0.0.0",
+  "description": "Hardened drop-in for deepmerge 4.3.1 that swagger-client is redirected to via a Yarn portal: resolution. See README.md.",
+  "license": "MIT",
+  "main": "index.cjs"
+}

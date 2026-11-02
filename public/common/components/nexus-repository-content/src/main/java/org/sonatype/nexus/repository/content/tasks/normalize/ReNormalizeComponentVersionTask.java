@@ -45,7 +45,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.DISABLE_RENORMALIZE_VERSION_TASK;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
@@ -124,10 +124,10 @@ public class ReNormalizeComponentVersionTask
       @Value("${nexus.cleanup.renormalize.component.version.maxWriteRetries:5}") final int maxWriteRetries)
   {
     super(true, concurrencyLimit);
-    this.versionNormalizerService = checkNotNull(versionNormalizerService);
-    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersList));
+    this.versionNormalizerService = requireNonNull(versionNormalizerService);
+    this.globalKeyValueStore = requireNonNull(globalKeyValueStore);
+    this.repositoryManager = requireNonNull(repositoryManager);
+    this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(requireNonNull(formatStoreManagersList));
     this.disableTask = disableTask;
     this.maxWriteRetries = maxWriteRetries;
   }

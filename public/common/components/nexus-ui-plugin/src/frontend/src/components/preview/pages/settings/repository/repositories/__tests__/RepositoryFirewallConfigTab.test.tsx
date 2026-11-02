@@ -17,6 +17,17 @@ import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 
+/*
+ * Radix Select (the protection-level dropdown, FIRE-958) relies on pointer-capture and scroll
+ * APIs that jsdom does not implement. Matches the polyfill in BrowseFilterSidebar.test.tsx.
+ */
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = jest.fn(() => false);
+  Element.prototype.setPointerCapture = jest.fn();
+  Element.prototype.releasePointerCapture = jest.fn();
+  Element.prototype.scrollIntoView = jest.fn();
+});
+
 const mockRestGet = jest.fn();
 const mockRestPut = jest.fn();
 jest.mock('../../../../../../../interface/api', () => {
@@ -81,6 +92,10 @@ function mockTypedRepoLookup(format: string, mode: 'DISABLED' | 'AUDIT' | 'QUARA
         { format: 'pypi', pccsModeSupported: true },
       ]);
     }
+    if (url.match(/\/internal\/ui\/repositories\/repository\/[^/]+$/)) {
+      // internal lookup (setFirewallMode read-modify-write source)
+      return Promise.resolve({ name: 'r', online: true, format, type: 'proxy', firewall: { mode } });
+    }
     if (url.match(/\/v1\/repositories\/[^/]+\/[^/]+\/[^/]+$/)) {
       // typed lookup
       return Promise.resolve({ name: 'r', online: true, firewall: { mode } });
@@ -93,6 +108,15 @@ function mockTypedRepoLookup(format: string, mode: 'DISABLED' | 'AUDIT' | 'QUARA
   });
 }
 
+// Opens the protection-level dropdown (there is exactly one combobox on this component,
+// the Health Check section has no Select) and returns the listbox. Waits for the initial
+// status fetch to settle first — the component shows "Loading Firewall status…" until then.
+async function openProtectionLevelSelect() {
+  const trigger = await screen.findByTestId('protection-level-select');
+  await userEvent.click(trigger);
+  return screen.getByRole('listbox');
+}
+
 describe('RepositoryFirewallConfigTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -100,17 +124,6 @@ describe('RepositoryFirewallConfigTab', () => {
     mockTypedRepoLookup('maven2');
     // Default: user can update health check so pre-existing behavior is exercised.
     mockCheckPermission.mockReturnValue(true);
-  });
-
-  it('renders audit trail placeholder in Firewall card', async () => {
-    renderWithTheme(
-      <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
-    );
-
-    const auditTexts = await waitFor(() =>
-      screen.getAllByText(/Audit trail: Configuration change history will be available in a future release/)
-    );
-    expect(auditTexts).toHaveLength(1);
   });
 
   it('shows Disabled status and Enable button when health check is off', async () => {
@@ -225,7 +238,7 @@ describe('RepositoryFirewallConfigTab', () => {
 
   // -------- PCCS protection-selector tests (STL-381) --------
 
-  it('does NOT render the PCCS button for non-PCCS formats (maven2)', async () => {
+  it('does NOT render the PCCS option for non-PCCS formats (maven2)', async () => {
     mockTypedRepoLookup('maven2');
     renderWithTheme(
       <RepositoryFirewallConfigTab
@@ -235,11 +248,13 @@ describe('RepositoryFirewallConfigTab', () => {
       />
     );
     // Wait for status fetch to settle so the protection selector has rendered.
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Audit' })).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: 'PCCS' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('protection-level-select')).toBeInTheDocument());
+    await openProtectionLevelSelect();
+    expect(screen.getByRole('option', { name: /^Audit Only/ })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /^PCCS/ })).not.toBeInTheDocument();
   });
 
-  it('renders the PCCS button for npm proxies', async () => {
+  it('renders the PCCS option for npm proxies', async () => {
     mockTypedRepoLookup('npm');
     renderWithTheme(
       <RepositoryFirewallConfigTab
@@ -248,10 +263,12 @@ describe('RepositoryFirewallConfigTab', () => {
         format="npm"
       />
     );
-    await waitFor(() => expect(screen.getByRole('button', { name: 'PCCS' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('protection-level-select')).toBeInTheDocument());
+    await openProtectionLevelSelect();
+    expect(screen.getByRole('option', { name: /^PCCS/ })).toBeInTheDocument();
   });
 
-  it('renders the PCCS button for pypi proxies', async () => {
+  it('renders the PCCS option for pypi proxies', async () => {
     mockTypedRepoLookup('pypi');
     renderWithTheme(
       <RepositoryFirewallConfigTab
@@ -260,7 +277,30 @@ describe('RepositoryFirewallConfigTab', () => {
         format="pypi"
       />
     );
-    await waitFor(() => expect(screen.getByRole('button', { name: 'PCCS' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('protection-level-select')).toBeInTheDocument());
+    await openProtectionLevelSelect();
+    expect(screen.getByRole('option', { name: /^PCCS/ })).toBeInTheDocument();
+  });
+
+  it('shows the Classic UI description on every protection level option', async () => {
+    mockTypedRepoLookup('npm');
+    renderWithTheme(
+      <RepositoryFirewallConfigTab repositoryName="npm-proxy" hasFirewallLicense={true} format="npm" />
+    );
+    await waitFor(() => expect(screen.getByTestId('protection-level-select')).toBeInTheDocument());
+    await openProtectionLevelSelect();
+    expect(screen.getByRole('option', { name: 'None – do not use Firewall' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Audit Only - allow components that violate policy' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Quarantine - block components that violate policy' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', {
+        name: 'PCCS - Quarantine, plus metadata filtering to help clients select a policy compliance version',
+      })
+    ).toBeInTheDocument();
   });
 
   it('does NOT render PCCS when format prop is omitted (back-compat with pre-PCCS callers)', async () => {
@@ -268,11 +308,13 @@ describe('RepositoryFirewallConfigTab', () => {
     renderWithTheme(
       <RepositoryFirewallConfigTab repositoryName="npm-proxy" hasFirewallLicense={true} />
     );
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Audit' })).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: 'PCCS' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('protection-level-select')).toBeInTheDocument());
+    await openProtectionLevelSelect();
+    expect(screen.getByRole('option', { name: /^Audit Only/ })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /^PCCS/ })).not.toBeInTheDocument();
   });
 
-  it('reflects an existing PCCS mode by selecting the PCCS button (aria-pressed)', async () => {
+  it('reflects an existing PCCS mode as the selected trigger value', async () => {
     mockTypedRepoLookup('npm', 'PCCS');
     renderWithTheme(
       <RepositoryFirewallConfigTab
@@ -281,8 +323,22 @@ describe('RepositoryFirewallConfigTab', () => {
         format="npm"
       />
     );
-    const pccsBtn = await waitFor(() => screen.getByRole('button', { name: 'PCCS' }));
-    expect(pccsBtn).toHaveAttribute('aria-pressed', 'true');
+    const trigger = await waitFor(() => screen.getByTestId('protection-level-select'));
+    expect(trigger).toHaveTextContent('PCCS');
+  });
+
+  it('shows an error and disables the selector when the firewall mode fails to load, instead of silently presenting None as the real setting', async () => {
+    // fetchIqAuditStatus resolves null (not a thrown rejection) when the basic repository
+    // lookup is missing format/type — simulate that by having every GET resolve null.
+    mockRestGet.mockImplementation(() => Promise.resolve(null));
+
+    renderWithTheme(
+      <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+    );
+
+    const trigger = await screen.findByTestId('protection-level-select');
+    expect(screen.getByText(/Could not load the current Firewall mode/)).toBeInTheDocument();
+    expect(trigger).toHaveAttribute('data-disabled');
   });
 
   it('shows Enabled (green) immediately after clicking Enable, not Analyzing', async () => {
@@ -340,6 +396,78 @@ describe('RepositoryFirewallConfigTab', () => {
     });
   });
 
+  // -------- XET / Firewall interaction --------
+
+  describe('XET disabled firewall', () => {
+    it('shows XET warning when xetEnabled is true', async () => {
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="hf-proxy"
+          hasFirewallLicense={true}
+          xetEnabled={true}
+        />
+      );
+      expect(
+        await screen.findByText(/Firewall is disabled while XET is enabled/i),
+      ).toBeInTheDocument();
+    });
+
+    it('disables the protection-level selector when xetEnabled is true', async () => {
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="hf-proxy"
+          hasFirewallLicense={true}
+          xetEnabled={true}
+        />
+      );
+      const select = await screen.findByTestId('protection-level-select');
+      expect(select).toBeDisabled();
+    });
+
+    it('shows None instead of the saved mode when xetEnabled is true', async () => {
+      mockTypedRepoLookup('huggingface', 'AUDIT');
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="hf-proxy"
+          hasFirewallLicense={true}
+          xetEnabled={true}
+        />
+      );
+      const select = await screen.findByTestId('protection-level-select');
+      expect(select).toHaveTextContent(/none/i);
+      expect(select).not.toHaveTextContent(/audit/i);
+    });
+
+    it('does not show XET warning when xetEnabled is false', async () => {
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="hf-proxy"
+          hasFirewallLicense={true}
+          xetEnabled={false}
+        />
+      );
+      await screen.findByTestId('protection-level-select');
+      expect(
+        screen.queryByText(/Firewall is disabled while XET is enabled/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows XET warning even when user lacks edit permission', async () => {
+      mockCheckPermission.mockImplementation((p) => p !== 'nexus:repository-admin:*:*:edit');
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="hf-proxy"
+          hasFirewallLicense={true}
+          xetEnabled={true}
+        />
+      );
+      expect(
+        await screen.findByText(/Firewall is disabled while XET is enabled/i),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Protection level')).not.toBeInTheDocument();
+    });
+  });
+
   // -------- Protection-level write gating (NEXUS-54212) --------
 
   describe('protection-level gating (NEXUS-54212)', () => {
@@ -348,9 +476,20 @@ describe('RepositoryFirewallConfigTab', () => {
       renderWithTheme(
         <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
       );
-      // The protection selector renders its mode buttons (Audit/Quarantine) once status settles.
-      expect(await screen.findByRole('button', { name: 'Audit' })).toBeInTheDocument();
+      // The protection selector renders as a dropdown once status settles.
+      expect(await screen.findByTestId('protection-level-select')).toBeInTheDocument();
       expect(screen.getByText('Protection level')).toBeInTheDocument();
+    });
+
+    it('exposes an accessible name on the dropdown via aria-labelledby, not just visible text', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      renderWithTheme(
+        <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+      );
+      // A combobox's accessible name can't come from its own content (it shows the selected
+      // value, not a label) — this only passes if aria-labelledby wires it to the "Protection
+      // level" text.
+      expect(await screen.findByRole('combobox', { name: 'Protection level' })).toBeInTheDocument();
     });
 
     it('hides the Protection level selector without repository-admin:edit', async () => {
@@ -361,7 +500,200 @@ describe('RepositoryFirewallConfigTab', () => {
       // Wait for the Health Check card to settle so the Firewall card has finished rendering too.
       await waitFor(() => expect(screen.getByText('Disabled')).toBeInTheDocument());
       expect(screen.queryByText('Protection level')).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Audit' })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('protection-level-select')).not.toBeInTheDocument();
+    });
+
+    // FIRE-958: a repository-view-only (read-only) user has no repository-admin:read, so the
+    // typed GET fetchIqAuditStatus relies on (`/v1/repositories/<format>/<type>/<name>`) 403s and
+    // statusError is always true for them. The selector is already correctly hidden for this user
+    // via canEditFirewall above — the bug was that the "Could not load the current Firewall mode"
+    // banner rendered unconditionally regardless of canEditFirewall, so a read-only user saw a
+    // scary red error about a control they were never shown and can never use.
+    it('does not show the "could not load Firewall mode" error without repository-admin:edit, even if the status fetch fails', async () => {
+      mockCheckPermission.mockImplementation((p) => p !== 'nexus:repository-admin:*:*:edit');
+      mockRestGet.mockImplementation(() => Promise.resolve(null));
+      renderWithTheme(
+        <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+      );
+      await waitFor(() => expect(screen.getByText('Disabled')).toBeInTheDocument());
+      expect(screen.queryByText(/Could not load the current Firewall mode/)).not.toBeInTheDocument();
+      expect(screen.queryByTestId('protection-level-select')).not.toBeInTheDocument();
+    });
+  });
+
+  // -------- Save/Cancel wiring (FIRE-958) --------
+  //
+  // Selecting a protection level must only stage a pending change; it must not call the
+  // server. The server call only happens when the exposed save handler (onSaveRef) is invoked
+  // — mirroring the parent form's Save Changes button — and can be discarded via onCancelRef
+  // (mirroring Cancel). None/Quarantine additionally require confirming a dialog before the
+  // save handler actually commits.
+
+  describe('Save/Cancel wiring (FIRE-958)', () => {
+    it('does not call the server when a protection level is selected — only Save commits it', async () => {
+      renderWithTheme(
+        <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+      );
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: /^Audit Only/ }));
+
+      expect(mockRestPut).not.toHaveBeenCalled();
+      expect(screen.getByTestId('protection-level-select')).toHaveTextContent('Audit');
+      expect(screen.getByText(/Unsaved change/)).toBeInTheDocument();
+    });
+
+    it('reports dirty via onDirtyChange after selecting a different level, and clean again after a successful save', async () => {
+      const onDirtyChange = jest.fn();
+      const saveRef = { current: null as (() => Promise<void>) | null };
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="maven-proxy"
+          hasFirewallLicense={true}
+          onDirtyChange={onDirtyChange}
+          onSaveRef={saveRef}
+        />
+      );
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: /^Audit Only/ }));
+
+      expect(onDirtyChange).toHaveBeenCalledWith(true);
+
+      await waitFor(() => expect(saveRef.current).not.toBeNull());
+      await saveRef.current!();
+
+      await waitFor(() => expect(mockRestPut).toHaveBeenCalled());
+      await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(false));
+    });
+
+    it('commits Audit immediately on save with no confirmation dialog', async () => {
+      const saveRef = { current: null as (() => Promise<void>) | null };
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="maven-proxy"
+          hasFirewallLicense={true}
+          onSaveRef={saveRef}
+        />
+      );
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: /^Audit Only/ }));
+
+      await waitFor(() => expect(saveRef.current).not.toBeNull());
+      await saveRef.current!();
+
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+      await waitFor(() =>
+        expect(mockRestPut).toHaveBeenCalledWith(
+          expect.stringMatching(/\/v1\/repositories\/[^/]+\/[^/]+\/[^/]+$/),
+          expect.objectContaining({ firewall: { mode: 'AUDIT' } })
+        )
+      );
+    });
+
+    it('prompts for confirmation before committing Quarantine, and does not PUT until confirmed', async () => {
+      const saveRef = { current: null as (() => Promise<void>) | null };
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="maven-proxy"
+          hasFirewallLicense={true}
+          onSaveRef={saveRef}
+        />
+      );
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: /^Quarantine/ }));
+
+      await waitFor(() => expect(saveRef.current).not.toBeNull());
+      await saveRef.current!();
+
+      expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+      expect(mockRestPut).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByTestId('firewall-quarantine-confirm-confirm'));
+
+      await waitFor(() =>
+        expect(mockRestPut).toHaveBeenCalledWith(
+          expect.stringMatching(/\/v1\/repositories\/[^/]+\/[^/]+\/[^/]+$/),
+          expect.objectContaining({ firewall: { mode: 'QUARANTINE' } })
+        )
+      );
+    });
+
+    it('prompts for confirmation before committing None, and leaves the pending selection intact if cancelled', async () => {
+      mockTypedRepoLookup('maven2', 'AUDIT');
+      const saveRef = { current: null as (() => Promise<void>) | null };
+      const onDirtyChange = jest.fn();
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="maven-proxy"
+          hasFirewallLicense={true}
+          onSaveRef={saveRef}
+          onDirtyChange={onDirtyChange}
+        />
+      );
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: 'None – do not use Firewall' }));
+
+      await waitFor(() => expect(saveRef.current).not.toBeNull());
+      await saveRef.current!();
+
+      expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByTestId('firewall-disable-confirm-cancel'));
+
+      expect(mockRestPut).not.toHaveBeenCalled();
+      // The pending "None" selection survives a cancelled confirm dialog — the user still has
+      // to explicitly discard via the parent form's Cancel (onCancelRef), not just close the
+      // dialog.
+      expect(screen.getByTestId('protection-level-select')).toHaveTextContent('None');
+    });
+
+    it('discards the pending selection via the exposed cancel handler without calling the server', async () => {
+      mockTypedRepoLookup('maven2', 'AUDIT');
+      const cancelRef = { current: null as (() => void) | null };
+      const onDirtyChange = jest.fn();
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="maven-proxy"
+          hasFirewallLicense={true}
+          onCancelRef={cancelRef}
+          onDirtyChange={onDirtyChange}
+        />
+      );
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: /^Quarantine/ }));
+
+      expect(screen.getByTestId('protection-level-select')).toHaveTextContent('Quarantine');
+      expect(onDirtyChange).toHaveBeenCalledWith(true);
+
+      await waitFor(() => expect(cancelRef.current).not.toBeNull());
+      cancelRef.current!();
+
+      expect(mockRestPut).not.toHaveBeenCalled();
+      await waitFor(() => expect(screen.getByTestId('protection-level-select')).toHaveTextContent('Audit'));
+      expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('is a no-op on save when the selected level matches the already-committed level', async () => {
+      mockTypedRepoLookup('maven2', 'AUDIT');
+      const saveRef = { current: null as (() => Promise<void>) | null };
+      const onDirtyChange = jest.fn();
+      renderWithTheme(
+        <RepositoryFirewallConfigTab
+          repositoryName="maven-proxy"
+          hasFirewallLicense={true}
+          onSaveRef={saveRef}
+          onDirtyChange={onDirtyChange}
+        />
+      );
+      await openProtectionLevelSelect();
+      await userEvent.click(screen.getByRole('option', { name: /^Audit Only/ }));
+
+      expect(onDirtyChange).toHaveBeenCalledWith(false);
+
+      await waitFor(() => expect(saveRef.current).not.toBeNull());
+      await saveRef.current!();
+
+      expect(mockRestPut).not.toHaveBeenCalled();
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     });
   });
 });

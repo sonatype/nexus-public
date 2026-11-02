@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.capability;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
-
-import com.google.common.collect.Sets;
 
 import static java.util.Objects.requireNonNull;
 
@@ -80,7 +80,7 @@ public class Tag
    * Convenience method for creating a set of tags
    */
   public static Set<Tag> tags(final Tag... tags) {
-    return Sets.newHashSet(requireNonNull(tags));
+    return new HashSet<>(Arrays.asList(requireNonNull(tags)));
   }
 
   /**

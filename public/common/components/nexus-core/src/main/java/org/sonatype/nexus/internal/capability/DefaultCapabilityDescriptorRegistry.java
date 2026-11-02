@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.capability;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -21,7 +22,6 @@ import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.DefaultCapabilityDescriptorProvider;
 
-import com.google.common.collect.Lists;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -65,7 +65,7 @@ class DefaultCapabilityDescriptorRegistry
 
   @Override
   public CapabilityDescriptor[] getAll() {
-    final Collection<CapabilityDescriptor> all = Lists.newArrayList();
+    final Collection<CapabilityDescriptor> all = new ArrayList<>();
     all.addAll(defaultCapabilityDescriptorProvider.get());
     all.addAll(dynamicDescriptors);
 

@@ -44,7 +44,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static com.google.common.collect.ImmutableList.copyOf;
+import static java.util.List.of;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -290,7 +290,7 @@ public class GroupFacetImplTest
     GroupFacet groupFacet = mock(GroupFacet.class);
     lenient().when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
     lenient().when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
-    lenient().when(groupFacet.members()).thenReturn(copyOf(repositories));
+    lenient().when(groupFacet.members()).thenReturn(of(repositories));
     return groupRepository;
   }
 }

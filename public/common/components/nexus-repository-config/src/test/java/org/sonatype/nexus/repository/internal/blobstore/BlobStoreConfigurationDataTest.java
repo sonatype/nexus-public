@@ -17,7 +17,9 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import static org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationData.ACCOUNT_KEY;
 import static org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationData.ACCESS_KEY_ID;
+import static org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationData.AUTH_ACCOUNT_KEY;
 import static org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationData.SECRET_ACCESS_KEY;
 import static org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationData.S_3;
 
@@ -37,6 +39,15 @@ public class BlobStoreConfigurationDataTest
   public static final String CRITICAL_ACCESS_KEY_ID = "criticalAccessKeyId";
 
   public static final String CRITICAL_SECRET_ACCESS_KEY = "criticalSecretAccessKey";
+
+  public static final String GOOGLE_CLOUD_STORAGE = "google cloud storage";
+
+  public static final String AZURE_CLOUD_STORAGE = "azure cloud storage";
+
+  public static final String CRITICAL_PRIVATE_KEY = "criticalPrivateKey";
+
+  public static final String CRITICAL_ACCOUNT_KEY =
+      "{\"type\":\"service_account\",\"private_key\":\"" + CRITICAL_PRIVATE_KEY + "\"}";
 
   public void testTestToString_NoCriticalInfoReturned() {
 
@@ -58,5 +69,47 @@ public class BlobStoreConfigurationDataTest
 
     assertFalse(result.contains(ACCESS_KEY_ID));
     assertFalse(result.contains(SECRET_ACCESS_KEY));
+  }
+
+  public void testToString_GoogleCloudAccountKeyRedacted() {
+
+    BlobStoreConfigurationData blobStoreConfigurationData = new BlobStoreConfigurationData();
+    blobStoreConfigurationData.setName(SOLDO_NEXUS_PRO_BLOBSTORE);
+    blobStoreConfigurationData.setType("Google Cloud Storage");
+
+    Map<String, Object> googleCloudStorage = new HashMap<>();
+    googleCloudStorage.put(BUCKET, SOLDO_NEXUS_PRO_HA_BLOBSTORE);
+    googleCloudStorage.put(AUTH_ACCOUNT_KEY, CRITICAL_ACCOUNT_KEY);
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put(GOOGLE_CLOUD_STORAGE, googleCloudStorage);
+
+    blobStoreConfigurationData.setAttributes(attributes);
+    String result = blobStoreConfigurationData.toString();
+
+    assertFalse(result.contains(AUTH_ACCOUNT_KEY));
+    assertFalse(result.contains(CRITICAL_PRIVATE_KEY));
+    assertTrue(result.contains(BUCKET));
+  }
+
+  public void testToString_AzureAccountKeyRedacted() {
+
+    BlobStoreConfigurationData blobStoreConfigurationData = new BlobStoreConfigurationData();
+    blobStoreConfigurationData.setName(SOLDO_NEXUS_PRO_BLOBSTORE);
+    blobStoreConfigurationData.setType("Azure Cloud Storage");
+
+    Map<String, Object> azureCloudStorage = new HashMap<>();
+    azureCloudStorage.put(BUCKET, SOLDO_NEXUS_PRO_HA_BLOBSTORE);
+    azureCloudStorage.put(ACCOUNT_KEY, CRITICAL_PRIVATE_KEY);
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put(AZURE_CLOUD_STORAGE, azureCloudStorage);
+
+    blobStoreConfigurationData.setAttributes(attributes);
+    String result = blobStoreConfigurationData.toString();
+
+    assertFalse(result.contains(ACCOUNT_KEY));
+    assertFalse(result.contains(CRITICAL_PRIVATE_KEY));
+    assertTrue(result.contains(BUCKET));
   }
 }

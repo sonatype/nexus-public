@@ -13,6 +13,9 @@
 
 package org.sonatype.nexus.content.maven.internal.recipe;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -30,7 +33,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static org.mockito.ArgumentMatchers.any;
@@ -104,7 +106,7 @@ public class MavenMaintenanceFacetTest
   @Test
   public void deleteAsset_should_deleteAssociatedComponentIfNoAssetsLeft() {
     when(asset.component()).thenReturn(of(component));
-    when(fluentComponent.assets()).thenReturn(newArrayList(fluentAsset));
+    when(fluentComponent.assets()).thenReturn(new ArrayList<>(Arrays.asList(fluentAsset)));
 
     underTest.deleteAsset(asset);
 
@@ -116,7 +118,7 @@ public class MavenMaintenanceFacetTest
   public void deleteAsset_should_notDeleteAssociatedComponentWhenOtherAssetsArePresent() {
     FluentAsset otherFluentAsset = mock(FluentAsset.class);
     when(asset.component()).thenReturn(of(component));
-    when(fluentComponent.assets()).thenReturn(newArrayList(fluentAsset, otherFluentAsset));
+    when(fluentComponent.assets()).thenReturn(new ArrayList<>(Arrays.asList(fluentAsset, otherFluentAsset)));
 
     underTest.deleteAsset(asset);
 
@@ -131,7 +133,7 @@ public class MavenMaintenanceFacetTest
   public void deleteComponent_should_deleteAllAssociatedAssets() {
     FluentAsset otherFluentAsset = mock(FluentAsset.class);
     when(asset.component()).thenReturn(of(component));
-    when(fluentComponent.assets()).thenReturn(newArrayList(fluentAsset, otherFluentAsset));
+    when(fluentComponent.assets()).thenReturn(new ArrayList<>(Arrays.asList(fluentAsset, otherFluentAsset)));
 
     underTest.deleteComponent(component);
 
@@ -142,7 +144,7 @@ public class MavenMaintenanceFacetTest
 
   @Test
   public void deleteComponent_should_deleteMetadataOrFlagForRebuild() {
-    when(fluentComponent.assets()).thenReturn(newArrayList());
+    when(fluentComponent.assets()).thenReturn(new ArrayList<>());
 
     underTest.deleteComponent(component);
 

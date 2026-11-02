@@ -20,13 +20,14 @@
  * button treatment as Malware Defense with outline on selected.
  */
 import React, { useEffect, useState } from 'react';
-import { Box, Flex, Text, Card, Button, } from '@radix-ui/themes';
-import { ExternalLink } from 'lucide-react';
+import { Box, Flex, Text, Card, Button, Callout } from '@radix-ui/themes';
+import { ExternalLink, AlertCircle } from 'lucide-react';
 import {
   fetchPccsSupportedFormats,
   useFirewallEnable,
 } from '../../../../shared/security/useFirewallEnable';
 import { ConfirmDialog } from '../../../../shared/form/ConfirmDialog';
+import UIStrings from '../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 export type ProtectionLevel = 'none' | 'audit' | 'quarantine' | 'pccs';
 
@@ -48,6 +49,11 @@ export interface RepositoryFirewallStepProps {
   value?: ProtectionLevel;
   /** Deferred mode: when user selects a level */
   onChoice?: (level: ProtectionLevel) => void;
+  /**
+   * When true (XET is enabled for the repository), Firewall must remain disabled.
+   * Shows a warning and disables all protection-level buttons except Skip.
+   */
+  xetEnabled?: boolean;
 }
 
 /**
@@ -64,6 +70,7 @@ export function RepositoryFirewallStep({
   mode = 'immediate',
   value = 'none',
   onChoice,
+  xetEnabled = false,
 }: RepositoryFirewallStepProps): JSX.Element {
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [noneModalOpen, setNoneModalOpen] = useState(false);
@@ -86,6 +93,12 @@ export function RepositoryFirewallStep({
       cancelled = true;
     };
   }, [format]);
+
+  useEffect(() => {
+    if (xetEnabled && isDeferred && value !== 'none') {
+      onChoice?.('none');
+    }
+  }, [xetEnabled, isDeferred, onChoice, value]);
 
   const handleLevelChange = async (level: ProtectionLevel) => {
     if (level === 'none') {
@@ -171,6 +184,16 @@ export function RepositoryFirewallStep({
 
           {hasFirewallLicense ? (
             <Box>
+              {xetEnabled && (
+                <Callout.Root color="yellow" mb="3">
+                  <Callout.Icon>
+                    <AlertCircle size={16} />
+                  </Callout.Icon>
+                  <Callout.Text>
+                    {UIStrings.HUGGINGFACE.FIREWALL_STEP_XET_DISABLED_WARNING}
+                  </Callout.Text>
+                </Callout.Root>
+              )}
               {isDeferred && (
                 <Text size="2" color="gray" mb="2" as="div">
                   {value === 'none'
@@ -200,7 +223,7 @@ export function RepositoryFirewallStep({
                   color="amber"
                   size="3"
                   onClick={() => handleLevelChange('audit')}
-                  disabled={!isDeferred && loading}
+                  disabled={(!isDeferred && loading) || xetEnabled}
                   aria-pressed={isDeferred && value === 'audit'}
                 >
                   Audit
@@ -211,7 +234,7 @@ export function RepositoryFirewallStep({
                   color="green"
                   size="3"
                   onClick={() => handleLevelChange('quarantine')}
-                  disabled={!isDeferred && loading}
+                  disabled={(!isDeferred && loading) || xetEnabled}
                   aria-pressed={isDeferred && value === 'quarantine'}
                 >
                   Quarantine
@@ -223,7 +246,7 @@ export function RepositoryFirewallStep({
                     color="orange"
                     size="3"
                     onClick={() => handleLevelChange('pccs')}
-                    disabled={!isDeferred && loading}
+                    disabled={(!isDeferred && loading) || xetEnabled}
                     aria-pressed={isDeferred && value === 'pccs'}
                   >
                     PCCS

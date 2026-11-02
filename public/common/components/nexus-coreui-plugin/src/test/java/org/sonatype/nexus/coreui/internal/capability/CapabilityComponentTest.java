@@ -14,6 +14,7 @@ package org.sonatype.nexus.coreui.internal.capability;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityContext;
@@ -22,15 +23,19 @@ import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
+import org.sonatype.nexus.capability.CapabilitySecurityPermissionHelper;
 import org.sonatype.nexus.capability.CapabilityType;
+import org.sonatype.nexus.capability.CapabilityTypeExistsValidator;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.internal.scheduling.SchedulerCapabilityDescriptor;
 import org.sonatype.nexus.repository.capability.StorageSettingsCapabilityDescriptor;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension.RegisterValidator;
 
-import com.google.common.base.Predicate;
+import org.apache.shiro.authz.AuthorizationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,10 +51,13 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -61,6 +69,10 @@ import static org.mockito.Mockito.when;
 @WithUser
 class CapabilityComponentTest
 {
+  @RegisterValidator
+  @Mock
+  CapabilityTypeExistsValidator capabilityTypeExistsValidator;
+
   @Mock
   private CapabilityDescriptorRegistry capabilityDescriptorRegistry;
 
@@ -82,6 +94,9 @@ class CapabilityComponentTest
   @Mock
   private CapabilityDescriptor capabilityDescriptor;
 
+  @Mock
+  private CapabilitySecurityPermissionHelper capabilitySecurityPermissionHelper;
+
   @Captor
   private ArgumentCaptor<String> stringArgumentCaptor;
 
@@ -92,7 +107,8 @@ class CapabilityComponentTest
 
   @BeforeEach
   void setup() {
-    underTest = new CapabilityComponent(capabilityDescriptorRegistry, capabilityRegistry);
+    underTest =
+        new CapabilityComponent(capabilityDescriptorRegistry, capabilityRegistry, capabilitySecurityPermissionHelper);
     lenient().when(capabilityContext.properties())
         .thenReturn(
             Map.of("username", "username", "password", "its a secret to everybody"));
@@ -257,5 +273,180 @@ class CapabilityComponentTest
     CapabilityXO result = results.get(0);
     assertThat(result.isSystem(), is(true));
     assertThat(result.getTypeName(), is("Storage Settings"));
+  }
+
+  @Test
+  void createChecksSettingsUpdatePermissionForType() {
+    // create() must gate the requested type through the permission helper (CVE-2026-14645 / NEXUS-54726).
+    when(capabilityTypeExistsValidator.isValid(any(), any())).thenReturn(true);
+    when(capabilityRegistry.add(any(), anyBoolean(), any(), any())).thenReturn(capabilityReference);
+
+    CapabilityXO capabilityXO = new CapabilityXO();
+    capabilityXO.setTypeId("defaultrole");
+    capabilityXO.setEnabled(true);
+
+    underTest.create(capabilityXO);
+
+    verify(capabilitySecurityPermissionHelper)
+        .ensurePermittedForType(CapabilityType.capabilityType("defaultrole"));
+    verify(capabilityRegistry).add(any(), anyBoolean(), any(), any());
+  }
+
+  @Test
+  void createPropagatesAuthorizationExceptionAndDoesNotAdd() {
+    when(capabilityTypeExistsValidator.isValid(any(), any())).thenReturn(true);
+    doThrow(new AuthorizationException("denied"))
+        .when(capabilitySecurityPermissionHelper)
+        .ensurePermittedForType(any());
+
+    CapabilityXO capabilityXO = new CapabilityXO();
+    capabilityXO.setTypeId("defaultrole");
+    capabilityXO.setEnabled(true);
+
+    assertThrows(AuthorizationException.class, () -> underTest.create(capabilityXO));
+    verify(capabilityRegistry, never()).add(any(), anyBoolean(), any(), any());
+  }
+
+  @Test
+  void updateChecksSettingsUpdatePermissionForDescriptor() {
+    // update() must gate the resolved descriptor through the permission helper.
+    CapabilityXO capabilityXO = new CapabilityXO();
+    capabilityXO.setId("mycap");
+    capabilityXO.setProperties(Map.of("username", "username"));
+    capabilityXO.setEnabled(true);
+
+    underTest.update(capabilityXO);
+
+    verify(capabilitySecurityPermissionHelper).ensurePermittedForDescriptor(capabilityDescriptor);
+    verify(capabilityRegistry).update(any(), anyBoolean(), any(), any());
+  }
+
+  @Test
+  void updatePropagatesAuthorizationExceptionAndDoesNotUpdate() {
+    doThrow(new AuthorizationException("denied"))
+        .when(capabilitySecurityPermissionHelper)
+        .ensurePermittedForDescriptor(any());
+
+    CapabilityXO capabilityXO = new CapabilityXO();
+    capabilityXO.setId("mycap");
+    capabilityXO.setProperties(Map.of("username", "username"));
+    capabilityXO.setEnabled(true);
+
+    assertThrows(AuthorizationException.class, () -> underTest.update(capabilityXO));
+    verify(capabilityRegistry, never()).update(any(), anyBoolean(), any(), any());
+  }
+
+  @Test
+  void updateWithUnknownIdDelegatesToRegistryWithoutTouchingPermissionGate() {
+    // An unresolvable id must not NPE on the descriptor lookup. The method exits early and lets the
+    // registry report the missing capability; the permission gate is only reached for a resolved capability,
+    // so it is never in the skipped branch of the null check.
+    when(capabilityRegistry.get(any(CapabilityIdentity.class))).thenReturn(null);
+
+    CapabilityXO capabilityXO = new CapabilityXO();
+    capabilityXO.setId("non-existent-id");
+    capabilityXO.setProperties(Map.of("username", "username"));
+    capabilityXO.setEnabled(true);
+
+    underTest.update(capabilityXO);
+
+    verifyNoInteractions(capabilitySecurityPermissionHelper);
+    verify(capabilityRegistry).update(any(), anyBoolean(), any(), any());
+  }
+
+  @Test
+  @WithUser(permissions = {"nexus:capabilities:create", "nexus:capabilities:update"})
+  void createSensitiveTypeRejectedForSubjectWithoutSettingsUpdate() {
+    // Real subject + real permission helper (no mock): a subject holding only nexus:capabilities:* must be
+    // rejected when creating a security-sensitive type, since it lacks nexus:settings:update
+    // (CVE-2026-14645 / NEXUS-54726).
+    CapabilityComponent component = componentWithRealPermissionHelper();
+    when(capabilityTypeExistsValidator.isValid(any(), any())).thenReturn(true);
+    when(capabilityDescriptor.requiresSettingsUpdatePermission()).thenReturn(true);
+    when(capabilityDescriptorRegistry.get(any(CapabilityType.class))).thenReturn(capabilityDescriptor);
+
+    CapabilityXO capabilityXO = new CapabilityXO();
+    capabilityXO.setTypeId("defaultrole");
+    capabilityXO.setEnabled(true);
+
+    assertThrows(AuthorizationException.class, () -> component.create(capabilityXO));
+    verify(capabilityRegistry, never()).add(any(), anyBoolean(), any(), any());
+  }
+
+  @Test
+  @WithUser(permissions = {"nexus:capabilities:create", "nexus:settings:update"})
+  void createSensitiveTypeAllowedForSubjectWithSettingsUpdate() {
+    // Same real subject + real helper, but now holding nexus:settings:update: creating the sensitive type
+    // succeeds and reaches the registry.
+    CapabilityComponent component = componentWithRealPermissionHelper();
+    when(capabilityTypeExistsValidator.isValid(any(), any())).thenReturn(true);
+    when(capabilityDescriptor.requiresSettingsUpdatePermission()).thenReturn(true);
+    when(capabilityDescriptorRegistry.get(any(CapabilityType.class))).thenReturn(capabilityDescriptor);
+    when(capabilityRegistry.add(any(), anyBoolean(), any(), any())).thenReturn(capabilityReference);
+
+    CapabilityXO capabilityXO = new CapabilityXO();
+    capabilityXO.setTypeId("defaultrole");
+    capabilityXO.setEnabled(true);
+
+    component.create(capabilityXO);
+
+    verify(capabilityRegistry).add(any(), anyBoolean(), any(), any());
+  }
+
+  private CapabilityComponent componentWithRealPermissionHelper() {
+    return new CapabilityComponent(capabilityDescriptorRegistry, capabilityRegistry,
+        new CapabilitySecurityPermissionHelper(new SecurityHelper(), capabilityDescriptorRegistry));
+  }
+
+  @Test
+  void enableChecksSettingsUpdatePermissionForDescriptor() {
+    // Enabling activates the realm, so it is gated; disable is de-escalation and is not.
+    underTest.enable("mycap");
+
+    verify(capabilitySecurityPermissionHelper).ensurePermittedForDescriptor(capabilityDescriptor);
+    verify(capabilityRegistry).enable(any(CapabilityIdentity.class));
+  }
+
+  @Test
+  void enableWithUnknownIdDelegatesToRegistryWithoutTouchingPermissionGate() {
+    // An unresolvable id must not NPE on the descriptor lookup. The method exits early and lets the
+    // registry report the missing capability; the permission gate is only reached for a resolved capability,
+    // so it is never in the skipped branch of the null check.
+    when(capabilityRegistry.get(any(CapabilityIdentity.class))).thenReturn(null);
+
+    underTest.enable("non-existent-id");
+
+    verifyNoInteractions(capabilitySecurityPermissionHelper);
+    verify(capabilityRegistry).enable(any(CapabilityIdentity.class));
+  }
+
+  @Test
+  void enablePropagatesAuthorizationExceptionAndDoesNotEnable() {
+    doThrow(new AuthorizationException("denied"))
+        .when(capabilitySecurityPermissionHelper)
+        .ensurePermittedForDescriptor(any());
+
+    assertThrows(AuthorizationException.class, () -> underTest.enable("mycap"));
+    verify(capabilityRegistry, never()).enable(any());
+  }
+
+  @Test
+  void disableIsNotGatedBySettingsUpdatePermission() {
+    underTest.disable("mycap");
+
+    verifyNoInteractions(capabilitySecurityPermissionHelper);
+    verify(capabilityRegistry).disable(any(CapabilityIdentity.class));
+  }
+
+  @Test
+  void updateNotesIsNotGatedBySettingsUpdatePermission() {
+    CapabilityNotesXO capabilityNotesXO = new CapabilityNotesXO();
+    capabilityNotesXO.setId("mycap");
+    capabilityNotesXO.setNotes("some notes");
+
+    underTest.updateNotes(capabilityNotesXO);
+
+    verifyNoInteractions(capabilitySecurityPermissionHelper);
+    verify(capabilityRegistry).update(any(), anyBoolean(), any(), any());
   }
 }

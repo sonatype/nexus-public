@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
@@ -58,12 +57,17 @@ public class RoundRobinFillPolicy
   @VisibleForTesting
   AtomicInteger sequence = new AtomicInteger();
 
-  @Autowired
-  private BlobStoreQuotaService quotaService;
+  private final BlobStoreQuotaService quotaService;
 
-  @Autowired
-  @Value("${" + BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION + ":false}")
-  boolean skipOnSoftQuotaViolation;
+  private final boolean skipOnSoftQuotaViolation;
+
+  public RoundRobinFillPolicy(
+      final BlobStoreQuotaService quotaService,
+      @Value("${" + BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION + ":false}") final boolean skipOnSoftQuotaViolation)
+  {
+    this.quotaService = quotaService;
+    this.skipOnSoftQuotaViolation = skipOnSoftQuotaViolation;
+  }
 
   @Override
   public String getName() {

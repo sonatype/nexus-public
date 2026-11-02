@@ -82,7 +82,7 @@ export function SettingsSelect({
           {required && <span className="settings-select__required" aria-hidden="true">*</span>}
         </label>
       )}
-      {helpText && !error && (
+      {helpText && (
         <Text as="p" size="1" id={helpId} className="settings-select__help">
           {helpText}
         </Text>
@@ -114,9 +114,17 @@ export function SettingsSelect({
                 key={option.value}
                 value={option.value}
                 disabled={option.disabled}
+                textValue={option.label}
                 className="settings-select__item"
               >
-                {option.label}
+                {option.badge ? (
+                  <span className="settings-select__item-content">
+                    {option.label}
+                    {option.badge}
+                  </span>
+                ) : (
+                  option.label
+                )}
               </Select.Item>
             ))}
           </Select.Content>
@@ -141,12 +149,13 @@ SettingsSelect.propTypes = {
   value: PropTypes.string,
   /** Change handler (receives value) */
   onChange: PropTypes.func,
-  /** Array of options { value, label, disabled? } */
+  /** Array of options { value, label, disabled?, badge? } */
   options: PropTypes.arrayOf(
     PropTypes.shape({
       value: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
       disabled: PropTypes.bool,
+      badge: PropTypes.node,
     })
   ),
   /** Placeholder text for empty selection */

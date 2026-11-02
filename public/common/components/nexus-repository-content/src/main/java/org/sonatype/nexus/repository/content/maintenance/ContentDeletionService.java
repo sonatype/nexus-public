@@ -16,15 +16,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteContext;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteFormatGate;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteIdentifiers;
-import org.sonatype.nexus.common.app.softdelete.SoftDeletedEntityService;
+import org.sonatype.nexus.common.app.trash.TrashContext;
+import org.sonatype.nexus.common.app.trash.TrashFormatGate;
+import org.sonatype.nexus.common.app.trash.TrashIdentifiers;
+import org.sonatype.nexus.common.app.trash.TrashedEntityService;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.InternalIds;
-import org.sonatype.nexus.repository.content.store.SoftDeleteSchemaState;
+import org.sonatype.nexus.repository.content.store.TrashSchemaState;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.security.SecurityHelper;
 
@@ -38,10 +38,10 @@ import static java.util.Objects.requireNonNull;
  * Single decision point for user-requested component and asset deletion.
  *
  * <p>
- * Centralizes the soft-delete-vs-hard-delete decision <em>and</em> the content {@code DELETE}
+ * Centralizes the trash-vs-hard-delete decision <em>and</em> the content {@code DELETE}
  * authorization so the REST API and both UIs behave identically (NEXUS-49147 / NEXUS-51733).
- * Previously each transport re-implemented the decision inline and the soft-delete branch called the
- * soft-delete service directly, bypassing the content-granular delete permission that
+ * Previously each transport re-implemented the decision inline and the trash branch called the
+ * trash service directly, bypassing the content-granular delete permission that
  * {@link MaintenanceService} enforces on the hard-delete path. Routing both paths through here closes
  * that bypass: the soft path performs the same {@code canDelete} check the hard path does.
  * </p>
@@ -50,7 +50,7 @@ import static java.util.Objects.requireNonNull;
  * Only human-facing transports route through this service. System- and policy-driven deletions
  * (cleanup policies, scheduled tasks, format/maintenance code) continue to call
  * {@link MaintenanceService} directly and always hard-delete; only human-initiated deletes are
- * eligible for soft-delete.
+ * eligible for trash.
  * </p>
  */
 @org.springframework.stereotype.Component
@@ -61,82 +61,82 @@ public class ContentDeletionService
   private final SecurityHelper securityHelper;
 
   /**
-   * The component {@link SoftDeletedEntityService}, or {@code null} when the soft-delete plugin is not
+   * The component {@link TrashedEntityService}, or {@code null} when the trash plugin is not
    * present. When {@code null}, deletion always falls back to hard-delete.
    */
-  private final SoftDeletedEntityService componentSoftDeleteService;
+  private final TrashedEntityService componentTrashService;
 
   /**
-   * The asset {@link SoftDeletedEntityService}, or {@code null} when the soft-delete plugin is not
+   * The asset {@link TrashedEntityService}, or {@code null} when the trash plugin is not
    * present. When {@code null}, deletion always falls back to hard-delete.
    */
-  private final SoftDeletedEntityService assetSoftDeleteService;
+  private final TrashedEntityService assetTrashService;
 
-  private final SoftDeleteFormatGate softDeleteFormatGate;
+  private final TrashFormatGate trashFormatGate;
 
-  private final SoftDeleteSchemaState softDeleteSchemaState;
+  private final TrashSchemaState trashSchemaState;
 
   @Autowired
   public ContentDeletionService(
       final MaintenanceService maintenanceService,
       final SecurityHelper securityHelper,
-      final List<SoftDeletedEntityService> softDeletedEntityServices,
-      final SoftDeleteFormatGate softDeleteFormatGate,
-      final SoftDeleteSchemaState softDeleteSchemaState)
+      final List<TrashedEntityService> trashedEntityServices,
+      final TrashFormatGate trashFormatGate,
+      final TrashSchemaState trashSchemaState)
   {
     this.maintenanceService = requireNonNull(maintenanceService);
     this.securityHelper = requireNonNull(securityHelper);
-    this.componentSoftDeleteService = findService(softDeletedEntityServices, "component");
-    this.assetSoftDeleteService = findService(softDeletedEntityServices, "asset");
-    this.softDeleteFormatGate = requireNonNull(softDeleteFormatGate);
-    this.softDeleteSchemaState = requireNonNull(softDeleteSchemaState);
+    this.componentTrashService = findService(trashedEntityServices, "component");
+    this.assetTrashService = findService(trashedEntityServices, "asset");
+    this.trashFormatGate = requireNonNull(trashFormatGate);
+    this.trashSchemaState = requireNonNull(trashSchemaState);
   }
 
   /**
-   * Delete a component as requested by a user: soft-delete when the feature is enabled and the
+   * Delete a component as requested by a user: trash when the feature is enabled and the
    * repository is hosted, otherwise hard-delete. The content {@code DELETE} permission is enforced on
    * both paths.
    *
-   * @return the set of asset paths removed; empty for a soft-delete
+   * @return the set of asset paths removed; empty for a trash
    */
   public Set<String> deleteComponent(final Repository repository, final Component component) {
     requireNonNull(repository);
     requireNonNull(component);
 
-    if (shouldSoftDelete(repository, componentSoftDeleteService)) {
+    if (shouldMoveToTrash(repository, componentTrashService)) {
       if (!maintenanceService.canDeleteComponent(repository, component)) {
         throw new AuthorizationException();
       }
       String externalId = InternalIds.toExternalId(InternalIds.internalComponentId(component)).getValue();
-      componentSoftDeleteService.softDelete(encodeIdentifier(repository.getName(), externalId), softDeleteContext());
+      componentTrashService.trash(encodeIdentifier(repository.getName(), externalId), trashContext());
       return Collections.emptySet();
     }
     return maintenanceService.deleteComponent(repository, component);
   }
 
   /**
-   * Delete an asset as requested by a user: soft-delete when the feature is enabled and the repository
+   * Delete an asset as requested by a user: trash when the feature is enabled and the repository
    * is hosted, otherwise hard-delete. The content {@code DELETE} permission is enforced on both paths.
    *
-   * @return the set of asset paths removed; empty for a soft-delete
+   * @return the set of asset paths removed; empty for a trash
    */
   public Set<String> deleteAsset(final Repository repository, final Asset asset) {
     requireNonNull(repository);
     requireNonNull(asset);
 
-    if (shouldSoftDelete(repository, assetSoftDeleteService)) {
+    if (shouldMoveToTrash(repository, assetTrashService)) {
       if (!maintenanceService.canDeleteAsset(repository, asset)) {
         throw new AuthorizationException();
       }
       String externalId = InternalIds.toExternalId(InternalIds.internalAssetId(asset)).getValue();
-      assetSoftDeleteService.softDelete(encodeIdentifier(repository.getName(), externalId), softDeleteContext());
+      assetTrashService.trash(encodeIdentifier(repository.getName(), externalId), trashContext());
       return Collections.emptySet();
     }
     return maintenanceService.deleteAsset(repository, asset);
   }
 
   /**
-   * Soft-deletes {@code component} <em>only if</em> the repository is eligible (soft-delete enabled,
+   * Trashs {@code component} <em>only if</em> the repository is eligible (trash enabled,
    * hosted, format allow-listed, plugin present), enforcing the content {@code DELETE} permission.
    *
    * <p>
@@ -144,75 +144,75 @@ public class ContentDeletionService
    * {@code nuget delete}, docker/OCI registry {@code DELETE}). Unlike {@link #deleteComponent}, it does
    * <strong>not</strong> perform the hard delete itself: when the repository is not eligible it returns
    * {@code false} so the caller runs its own existing (hard) delete unchanged — guaranteeing zero
-   * behavior change when soft-delete is off.
+   * behavior change when trash is off.
    * </p>
    *
-   * @return {@code true} if the component was soft-deleted (caller should treat the delete as done);
+   * @return {@code true} if the component was trashed (caller should treat the delete as done);
    *         {@code false} if not eligible (caller must perform its normal hard delete)
    */
-  public boolean softDeleteComponentIfEligible(final Repository repository, final Component component) {
+  public boolean trashComponentIfEligible(final Repository repository, final Component component) {
     requireNonNull(repository);
     requireNonNull(component);
 
-    if (!shouldSoftDelete(repository, componentSoftDeleteService)) {
+    if (!shouldMoveToTrash(repository, componentTrashService)) {
       return false;
     }
     if (!maintenanceService.canDeleteComponent(repository, component)) {
       throw new AuthorizationException();
     }
     String externalId = InternalIds.toExternalId(InternalIds.internalComponentId(component)).getValue();
-    componentSoftDeleteService.softDelete(encodeIdentifier(repository.getName(), externalId), softDeleteContext());
+    componentTrashService.trash(encodeIdentifier(repository.getName(), externalId), trashContext());
     return true;
   }
 
   /**
-   * Soft-deletes {@code asset} <em>only if</em> the repository is eligible (soft-delete enabled, hosted,
+   * Trashs {@code asset} <em>only if</em> the repository is eligible (trash enabled, hosted,
    * format allow-listed, plugin present), enforcing the content {@code DELETE} permission.
    *
    * <p>
-   * Companion to {@link #softDeleteComponentIfEligible} for asset-granular client-protocol deletes. When
+   * Companion to {@link #trashComponentIfEligible} for asset-granular client-protocol deletes. When
    * not eligible it returns {@code false} so the caller runs its own existing (hard) delete unchanged.
    * </p>
    *
-   * @return {@code true} if the asset was soft-deleted; {@code false} if not eligible (caller must
+   * @return {@code true} if the asset was trashed; {@code false} if not eligible (caller must
    *         perform its normal hard delete)
    */
-  public boolean softDeleteAssetIfEligible(final Repository repository, final Asset asset) {
+  public boolean trashAssetIfEligible(final Repository repository, final Asset asset) {
     requireNonNull(repository);
     requireNonNull(asset);
 
-    if (!shouldSoftDelete(repository, assetSoftDeleteService)) {
+    if (!shouldMoveToTrash(repository, assetTrashService)) {
       return false;
     }
     if (!maintenanceService.canDeleteAsset(repository, asset)) {
       throw new AuthorizationException();
     }
     String externalId = InternalIds.toExternalId(InternalIds.internalAssetId(asset)).getValue();
-    assetSoftDeleteService.softDelete(encodeIdentifier(repository.getName(), externalId), softDeleteContext());
+    assetTrashService.trash(encodeIdentifier(repository.getName(), externalId), trashContext());
     return true;
   }
 
-  private boolean shouldSoftDelete(final Repository repository, final SoftDeletedEntityService service) {
-    // isSoftDeleteAvailable() requires the flag AND that the deleted_on columns actually exist. Gating on
+  private boolean shouldMoveToTrash(final Repository repository, final TrashedEntityService service) {
+    // isTrashAvailable() requires the flag AND that the deleted_on columns actually exist. Gating on
     // schema (not just the flag) keeps a prematurely-enabled flag safe under ZDU: a new-version node can run
     // with the flag on before the deferred migration adds the columns; hard-delete until they exist rather
-    // than attempting a soft-delete write that would fail on the missing column.
-    return softDeleteSchemaState.isSoftDeleteAvailable()
+    // than attempting a trash write that would fail on the missing column.
+    return trashSchemaState.isTrashAvailable()
         && service != null
         && HostedType.NAME.equals(repository.getType().getValue())
-        && softDeleteFormatGate.isEnabledForFormat(repository.getFormat().getValue());
+        && trashFormatGate.isEnabledForFormat(repository.getFormat().getValue());
   }
 
-  private SoftDeleteContext softDeleteContext() {
+  private TrashContext trashContext() {
     Subject subject = securityHelper.subject();
     String deletedBy = subject != null && subject.getPrincipal() != null
         ? subject.getPrincipal().toString()
         : "system";
-    return SoftDeleteContext.of(deletedBy);
+    return TrashContext.of(deletedBy);
   }
 
-  private static SoftDeletedEntityService findService(
-      final List<SoftDeletedEntityService> services,
+  private static TrashedEntityService findService(
+      final List<TrashedEntityService> services,
       final String entityType)
   {
     return requireNonNull(services).stream()
@@ -222,11 +222,11 @@ public class ContentDeletionService
   }
 
   /**
-   * Encodes the soft-delete identifier as base64-url("repositoryName:externalId"), matching the format
-   * the soft-delete services parse. Delegates to the shared SPI codec so the public and private sides
+   * Encodes the trash identifier as base64-url("repositoryName:externalId"), matching the format
+   * the trash services parse. Delegates to the shared SPI codec so the public and private sides
    * cannot drift (NEXUS-51733).
    */
   static String encodeIdentifier(final String repositoryName, final String externalId) {
-    return SoftDeleteIdentifiers.encode(repositoryName, externalId);
+    return TrashIdentifiers.encode(repositoryName, externalId);
   }
 }

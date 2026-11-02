@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -69,6 +70,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -97,6 +99,12 @@ class RepositoryUiServiceTest
   private static final String REMOTE_URL_CHANGE_ERROR_MESSAGE =
       "Remote URL has changed. " +
           "Authentication credentials have been reset and must be re-entered.";
+
+  private static final String PASSWORD_PLACEHOLDER = "#~NXRM~PLACEHOLDER~PASSWORD~#";
+
+  private static final String PASSPHRASE_KEY = "passphrase";
+
+  private static final String STORED_PASSPHRASE = "_stored_passphrase";
 
   @RegisterValidator
   @Mock
@@ -142,6 +150,9 @@ class RepositoryUiServiceTest
   private org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder;
 
   @Mock
+  private org.sonatype.nexus.repository.security.GroupMemberAuthorizationChecker groupMemberAuthorizationChecker;
+
+  @Mock
   private Format format;
 
   @Mock
@@ -177,7 +188,8 @@ class RepositoryUiServiceTest
 
     underTest = spy(new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager,
         repositoryMetricsService, configurationStore, securityHelper, recipeList, taskScheduler, typeLookup, formats,
-        repositoryPermissionChecker, failedRepositoryTracker, httpAuthenticationSecretEncoder)
+        repositoryPermissionChecker, failedRepositoryTracker, httpAuthenticationSecretEncoder,
+        groupMemberAuthorizationChecker)
     {
       @Override
       RepositoryXO asRepository(final Repository input) {
@@ -236,6 +248,67 @@ class RepositoryUiServiceTest
 
     BadRequestException ex = assertThrows(BadRequestException.class, () -> underTest.create(repositoryXO));
     assertThat(ex.getMessage(), is("Recipe not found: nonexistent-recipe"));
+  }
+
+  @Test
+  void create_rejectsUnauthorizedGroupMembers() throws Exception {
+    // A delegated admin must not add a group member they cannot read/browse via the ExtDirect path (NEXUS-53747).
+    // The message is deliberately generic (no member names) to avoid an information oracle.
+    when(groupMemberAuthorizationChecker.findUnauthorizedNewMembers(any(), any()))
+        .thenReturn(List.of("secret-repo"));
+
+    BadRequestException ex = assertThrows(BadRequestException.class, () -> underTest.create(repositoryXO));
+    assertThat(ex.getMessage(), is("Not authorized to add one or more of the requested member repositories."));
+  }
+
+  @Test
+  void update_rejectsUnauthorizedGroupMembers() throws Exception {
+    when(groupMemberAuthorizationChecker.findUnauthorizedNewMembers(any(), any()))
+        .thenReturn(List.of("secret-repo"));
+
+    BadRequestException ex = assertThrows(BadRequestException.class, () -> underTest.update(repositoryXO));
+    assertThat(ex.getMessage(), is("Not authorized to add one or more of the requested member repositories."));
+  }
+
+  @Test
+  void create_passesRequestedGroupMembersToChecker() throws Exception {
+    // Pins the exact (groupName, memberNames) handed to the checker so a regression in groupMemberNames extraction -
+    // which silently returns emptyList() for unexpected attribute shapes - cannot pass unnoticed (NEXUS-53747).
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    Map<String, Object> group = new HashMap<>();
+    group.put("memberNames", List.of("member-a", "member-b"));
+    attributes.put("group", group);
+    repositoryXO.setAttributes(attributes);
+    when(repositoryManager.newConfiguration()).thenReturn(configuration);
+    when(repositoryManager.create(configuration)).thenReturn(repository);
+    when(groupMemberAuthorizationChecker.findUnauthorizedNewMembers(any(), any())).thenReturn(Collections.emptyList());
+
+    // Negative case: empty result means create completes and persists rather than throwing.
+    underTest.create(repositoryXO);
+
+    ArgumentCaptor<String> nameCaptor = ArgumentCaptor.forClass(String.class);
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<Collection<String>> membersCaptor = ArgumentCaptor.forClass(Collection.class);
+    verify(groupMemberAuthorizationChecker).findUnauthorizedNewMembers(nameCaptor.capture(), membersCaptor.capture());
+    assertThat(nameCaptor.getValue(), is("my-repo"));
+    assertThat(membersCaptor.getValue(), contains("member-a", "member-b"));
+    verify(repositoryManager).create(configuration);
+  }
+
+  @Test
+  void create_nonGroupRepositoryPassesNoMembersToChecker() throws Exception {
+    // The default repositoryXO has no "group" attribute; groupMemberNames must yield an empty collection so the
+    // checker is consulted with nothing to authorize and create proceeds.
+    when(repositoryManager.newConfiguration()).thenReturn(configuration);
+    when(repositoryManager.create(configuration)).thenReturn(repository);
+    when(groupMemberAuthorizationChecker.findUnauthorizedNewMembers(any(), any())).thenReturn(Collections.emptyList());
+
+    underTest.create(repositoryXO);
+
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<Collection<String>> membersCaptor = ArgumentCaptor.forClass(Collection.class);
+    verify(groupMemberAuthorizationChecker).findUnauthorizedNewMembers(any(), membersCaptor.capture());
+    assertThat(membersCaptor.getValue(), is(Collections.emptyList()));
   }
 
   @Test
@@ -362,7 +435,7 @@ class RepositoryUiServiceTest
     RepositoryUiService service = new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager,
         repositoryMetricsService, configurationStore, securityHelper, freshRecipeList, taskScheduler,
         typeLookup, formats, repositoryPermissionChecker, failedRepositoryTracker,
-        httpAuthenticationSecretEncoder);
+        httpAuthenticationSecretEncoder, groupMemberAuthorizationChecker);
     when(repository.getType()).thenReturn(new ProxyType());
     when(configuration.isOnline()).thenReturn(true);
     HttpClientFacet httpClientFacet = mock(HttpClientFacet.class);
@@ -664,6 +737,107 @@ class RepositoryUiServiceTest
   }
 
   @Test
+  void shouldRestoreStoredSigningPassphraseWhenPlaceholderPostedOnUpdate() throws Exception {
+    assertSigningPassphraseRestored("aptSigning");
+    assertSigningPassphraseRestored("yumSigning");
+    assertSigningPassphraseRestored("terraformSigning");
+    assertSigningPassphraseRestored("alpineSigning");
+  }
+
+  @Test
+  void shouldKeepNewSigningPassphraseWhenNotPlaceholderOnUpdate() throws Exception {
+    String newPassphrase = "brand-new-passphrase";
+    repositoryXO = repositoryXO("test", "format", "recipe");
+
+    Map<String, Object> incomingSigning = new HashMap<>();
+    incomingSigning.put(PASSPHRASE_KEY, newPassphrase);
+    Map<String, Map<String, Object>> incomingAttributes = new HashMap<>();
+    incomingAttributes.put("aptSigning", incomingSigning);
+
+    Map<String, Object> storedSigning = new HashMap<>();
+    storedSigning.put(PASSPHRASE_KEY, STORED_PASSPHRASE);
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    storedAttributes.put("aptSigning", storedSigning);
+
+    repositoryXO.setAttributes(incomingAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    underTest.update(repositoryXO);
+
+    assertThat(incomingSigning.get(PASSPHRASE_KEY), is(newPassphrase));
+  }
+
+  @Test
+  void shouldRemoveSigningPassphraseWhenPlaceholderPostedButNoneStored() throws Exception {
+    repositoryXO = repositoryXO("test", "format", "recipe");
+
+    Map<String, Object> incomingSigning = new HashMap<>();
+    incomingSigning.put(PASSPHRASE_KEY, PASSWORD_PLACEHOLDER);
+    Map<String, Map<String, Object>> incomingAttributes = new HashMap<>();
+    incomingAttributes.put("aptSigning", incomingSigning);
+
+    repositoryXO.setAttributes(incomingAttributes);
+    when(configuration.getAttributes()).thenReturn(new HashMap<>());
+
+    underTest.update(repositoryXO);
+
+    assertThat(incomingSigning.containsKey(PASSPHRASE_KEY), is(false));
+  }
+
+  private void assertSigningPassphraseRestored(final String signingKey) throws Exception {
+    repositoryXO = repositoryXO("test", "format", "recipe");
+
+    Map<String, Object> incomingSigning = new HashMap<>();
+    incomingSigning.put(PASSPHRASE_KEY, PASSWORD_PLACEHOLDER);
+    Map<String, Map<String, Object>> incomingAttributes = new HashMap<>();
+    incomingAttributes.put(signingKey, incomingSigning);
+
+    Map<String, Object> storedSigning = new HashMap<>();
+    storedSigning.put(PASSPHRASE_KEY, STORED_PASSPHRASE);
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    storedAttributes.put(signingKey, storedSigning);
+
+    repositoryXO.setAttributes(incomingAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    underTest.update(repositoryXO);
+
+    assertThat(incomingSigning.get(PASSPHRASE_KEY), is(STORED_PASSPHRASE));
+  }
+
+  @Test
+  void shouldMaskSigningPassphraseOnReadForAllSigningFormats() {
+    assertSigningPassphraseMaskedOnRead("aptSigning");
+    assertSigningPassphraseMaskedOnRead("yumSigning");
+    assertSigningPassphraseMaskedOnRead("terraformSigning");
+    assertSigningPassphraseMaskedOnRead("alpineSigning");
+  }
+
+  private void assertSigningPassphraseMaskedOnRead(final String signingKey) {
+    Map<String, Object> storedSigning = new HashMap<>();
+    storedSigning.put(PASSPHRASE_KEY, STORED_PASSPHRASE);
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    storedAttributes.put(signingKey, storedSigning);
+
+    when(configuration.getRecipeName()).thenReturn("testRecipe");
+    when(configuration.getRepositoryName()).thenReturn("signed-repo");
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermissionFor(any(Iterable.class), anyString()))
+        .thenReturn(List.of(configuration));
+
+    List<RepositoryXO> repos = underTest.read();
+
+    Object maskedPassphrase = getSigningPassphraseFromXO(repos.get(0), signingKey);
+    assertThat(maskedPassphrase, is(PASSWORD_PLACEHOLDER));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object getSigningPassphraseFromXO(final RepositoryXO xo, final String signingKey) {
+    Map<String, Object> signing = (Map<String, Object>) xo.getAttributes().get(signingKey);
+    return signing.get(PASSPHRASE_KEY);
+  }
+
+  @Test
   void testReadContainsRepoSize() {
     String repoName = "testRepo";
     String recipeName = "testRecipe";
@@ -842,7 +1016,7 @@ class RepositoryUiServiceTest
     RepositoryUiService serviceWithoutMetrics = spy(new RepositoryUiService(
         repositoryCacheInvalidationService, repositoryManager, null, configurationStore, securityHelper,
         recipeList, taskScheduler, typeLookup, formats, repositoryPermissionChecker, failedRepositoryTracker,
-        httpAuthenticationSecretEncoder));
+        httpAuthenticationSecretEncoder, groupMemberAuthorizationChecker));
     Configuration repo = givenMutableRepoConfiguration(serviceWithoutMetrics, "repoNoMetrics", "rawRecipe", "raw");
     when(repositoryPermissionChecker.userHasRepositoryAdminPermissionFor(any(Iterable.class), anyString()))
         .thenReturn(List.of(repo));
@@ -900,7 +1074,7 @@ class RepositoryUiServiceTest
     RepositoryUiService testService = new RepositoryUiService(repositoryCacheInvalidationService,
         baseRepositoryManager, repositoryMetricsService, configurationStore, securityHelper,
         testRecipeList, taskScheduler, typeLookup, formats, repositoryPermissionChecker,
-        failedRepositoryTracker, httpAuthenticationSecretEncoder);
+        failedRepositoryTracker, httpAuthenticationSecretEncoder, groupMemberAuthorizationChecker);
 
     RepositoryXO result = testService.update(repositoryXO);
 
@@ -1394,7 +1568,7 @@ class RepositoryUiServiceTest
     RepositoryUiService testService = new RepositoryUiService(repositoryCacheInvalidationService,
         baseRepositoryManager, repositoryMetricsService, configurationStore, securityHelper,
         recipeList, taskScheduler, typeLookup, formats, repositoryPermissionChecker,
-        failedRepositoryTracker, httpAuthenticationSecretEncoder);
+        failedRepositoryTracker, httpAuthenticationSecretEncoder, groupMemberAuthorizationChecker);
 
     // Execute: Update the failed repository
     testService.update(repositoryXO);
@@ -1456,7 +1630,7 @@ class RepositoryUiServiceTest
     RepositoryUiService testService = new RepositoryUiService(repositoryCacheInvalidationService,
         baseRepositoryManager, repositoryMetricsService, configurationStore, securityHelper,
         recipeList, taskScheduler, typeLookup, formats, repositoryPermissionChecker,
-        failedRepositoryTracker, httpAuthenticationSecretEncoder);
+        failedRepositoryTracker, httpAuthenticationSecretEncoder, groupMemberAuthorizationChecker);
 
     // Execute: Update the failed repository
     testService.update(repositoryXO);

@@ -16,6 +16,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.app.trash.TrashIndexRecorder;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.move.RepositoryMoveService;
@@ -53,6 +54,8 @@ public class ContentFacetDependencies
 
   private final Optional<RepositoryMoveService> maybeMoveService;
 
+  private final Optional<TrashIndexRecorder> maybeTrashIndexRecorder;
+
   @Autowired
   public ContentFacetDependencies(
       final BlobStoreManager blobStoreManager,
@@ -63,7 +66,8 @@ public class ContentFacetDependencies
       final AssetBlobValidators assetBlobValidators,
       final BlobMetadataStorage blobMetadataStorage,
       final VersionNormalizerService versionNormalizerService,
-      @Nullable final RepositoryMoveService moveService)
+      @Nullable final RepositoryMoveService moveService,
+      @Nullable final TrashIndexRecorder trashIndexRecorder)
   {
     this.blobStoreManager = requireNonNull(blobStoreManager);
     this.dataSessionSupplier = requireNonNull(dataSessionSupplier);
@@ -74,6 +78,7 @@ public class ContentFacetDependencies
     this.blobMetadataStorage = requireNonNull(blobMetadataStorage);
     this.versionNormalizerService = versionNormalizerService;
     this.maybeMoveService = Optional.ofNullable(moveService);
+    this.maybeTrashIndexRecorder = Optional.ofNullable(trashIndexRecorder);
   }
 
   public BlobStoreManager getBlobStoreManager() {
@@ -110,5 +115,9 @@ public class ContentFacetDependencies
 
   public Optional<RepositoryMoveService> getMoveService() {
     return maybeMoveService;
+  }
+
+  public Optional<TrashIndexRecorder> getTrashIndexRecorder() {
+    return maybeTrashIndexRecorder;
   }
 }

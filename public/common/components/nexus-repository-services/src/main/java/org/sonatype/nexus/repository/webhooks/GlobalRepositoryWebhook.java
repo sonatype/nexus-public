@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
+import org.sonatype.nexus.repository.manager.RepositoryTrashRestoredEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 import org.sonatype.nexus.webhooks.GlobalWebhook;
 import org.sonatype.nexus.webhooks.Webhook;
@@ -62,6 +63,12 @@ public class GlobalRepositoryWebhook
   @Subscribe
   @AllowConcurrentEvents
   void on(final RepositoryCreatedEvent event) {
+    // A Trash restore posts a RepositoryTrashRestoredEvent, which is a RepositoryCreatedEvent subclass so the
+    // search-index and other created-event subscribers still run. It is handled by on(RepositoryTrashRestoredEvent)
+    // below and emitted as RESTORED, so skip it here to avoid a spurious CREATED (NEXUS-55410).
+    if (event instanceof RepositoryTrashRestoredEvent) {
+      return;
+    }
     queue(event.getRepository(), EventAction.CREATED);
   }
 
@@ -75,6 +82,14 @@ public class GlobalRepositoryWebhook
   @AllowConcurrentEvents
   void on(final RepositoryDeletedEvent event) {
     queue(event.getRepository(), EventAction.DELETED);
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  void on(final RepositoryTrashRestoredEvent event) {
+    // Fires only for a user-initiated Trash restore (not boot-time restoration or failed-repo retry, which post
+    // RepositoryRestoredEvent). The repository restore from Trash must report RESTORED, not CREATED (NEXUS-55410).
+    queue(event.getRepository(), EventAction.RESTORED);
   }
 
   private void queue(final Repository repository, final EventAction eventAction) {
@@ -92,7 +107,8 @@ public class GlobalRepositoryWebhook
   {
     CREATED,
     UPDATED,
-    DELETED
+    DELETED,
+    RESTORED
   }
 
   public static class RepositoryWebhookPayload

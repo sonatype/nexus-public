@@ -22,6 +22,9 @@ describe('validateCronExpression', () => {
       ['0 0 12 ? * MON-FRI 2026', 'with optional year (seven parts)'],
       ['0 0 12 ? * SUN,MON', 'comma-separated days'],
       ['0 0 12 L * ?', 'last day of month token'],
+      ['0 0 3 1/2 * ?', 'every second day of month with a numeric step start'],
+      ['0 0 3 ? * TUE,THU,SAT', 'every other weekday by name'],
+      ['*/30 */5 */2 * * ?', 'wildcard steps in seconds, minutes and hours'],
     ])('accepts %s (%s)', (expr) => {
       expect(validateCronExpression(expr)).toEqual({ valid: true });
     });
@@ -102,6 +105,27 @@ describe('validateCronExpression', () => {
       expect(validateCronExpression('0 0 12 1 * MON')).toEqual({
         valid: false,
         reason: 'Quartz requires either day-of-month or day-of-week to be "?"',
+      });
+    });
+
+    it('rejects a wildcard step in day-of-month and suggests a numeric start', () => {
+      expect(validateCronExpression('0 0 3 */2 * ?')).toEqual({
+        valid: false,
+        reason: 'Day of month does not support "*/N"; use "1/N" instead (for example "1/2" for every second day)',
+      });
+    });
+
+    it('rejects a wildcard step in month', () => {
+      expect(validateCronExpression('0 0 3 1 */2 ?')).toEqual({
+        valid: false,
+        reason: 'Month does not support "*/N"; use "1/N" instead',
+      });
+    });
+
+    it('rejects a wildcard step in day-of-week', () => {
+      expect(validateCronExpression('0 0 3 ? * */2')).toEqual({
+        valid: false,
+        reason: 'Day of week does not support "*/N"; use "1/N" instead',
       });
     });
 

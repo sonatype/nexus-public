@@ -16,13 +16,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import java.util.ArrayList;
-
 import javax.annotation.Nullable;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.sonatype.nexus.common.app.softdelete.SoftDeleteMigrationHelper;
+import org.sonatype.nexus.common.app.trash.TrashMigrationHelper;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -30,13 +27,14 @@ import org.sonatype.nexus.repository.config.ConfigurationDAO;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -79,8 +77,8 @@ public class ConfigurationStoreImpl
       return listActive();
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
-        log.debug("Soft-delete column 'deleted_on' not yet migrated; falling back to unfiltered browse");
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
+        log.debug("Trash column 'deleted_on' not yet migrated; falling back to unfiltered browse");
         return listAll();
       }
       throw e;
@@ -89,12 +87,12 @@ public class ConfigurationStoreImpl
 
   @Transactional
   protected List<Configuration> listActive() {
-    return ImmutableList.copyOf(dao().browse());
+    return toImmutableList(dao().browse());
   }
 
   @Transactional
   protected List<Configuration> listAll() {
-    return ImmutableList.copyOf(dao().browseAll());
+    return toImmutableList(dao().browseAll());
   }
 
   @Override
@@ -125,7 +123,7 @@ public class ConfigurationStoreImpl
    * Refreshes the in-memory attributes from the persisted row after a create/update. Runs in its own
    * transaction, separate from the write, with a ZDU fallback: the normal read filters on
    * {@code deleted_on} (which may not exist yet during a rolling upgrade); on that specific failure it
-   * retries with a read that ignores soft-delete. Keeping this out of the write transaction is essential
+   * retries with a read that ignores trash. Keeping this out of the write transaction is essential
    * on PostgreSQL, where any failed statement aborts the whole transaction — so a read-back that referenced
    * the not-yet-migrated column would otherwise roll back the create/update itself (NEXUS-51733).
    */
@@ -134,10 +132,10 @@ public class ConfigurationStoreImpl
       doRefreshPersistedAttributes(configuration);
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
         log.debug(
-            "Soft-delete column 'deleted_on' not yet migrated; reading back attributes without soft-delete filter");
-        doRefreshPersistedAttributesIgnoringSoftDelete(configuration);
+            "Trash column 'deleted_on' not yet migrated; reading back attributes without trash filter");
+        doRefreshPersistedAttributesIgnoringTrash(configuration);
       }
       else {
         throw e;
@@ -152,8 +150,8 @@ public class ConfigurationStoreImpl
   }
 
   @Transactional
-  protected void doRefreshPersistedAttributesIgnoringSoftDelete(final Configuration configuration) {
-    dao().readIgnoringSoftDelete(configuration.getRepositoryId())
+  protected void doRefreshPersistedAttributesIgnoringTrash(final Configuration configuration) {
+    dao().readIgnoringTrash(configuration.getRepositoryId())
         .ifPresent(persisted -> configuration.setAttributes(persisted.getAttributes()));
   }
 
@@ -170,10 +168,10 @@ public class ConfigurationStoreImpl
       return doReadByNames(repositoryNames);
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
         log.debug(
-            "Soft-delete column 'deleted_on' not yet migrated; falling back to name-scoped read ignoring soft-delete for readByNames");
-        return doReadByNamesIgnoringSoftDelete(repositoryNames);
+            "Trash column 'deleted_on' not yet migrated; falling back to name-scoped read ignoring trash for readByNames");
+        return doReadByNamesIgnoringTrash(repositoryNames);
       }
       throw e;
     }
@@ -188,10 +186,10 @@ public class ConfigurationStoreImpl
   }
 
   @Transactional
-  protected Collection<Configuration> doReadByNamesIgnoringSoftDelete(final Set<String> repositoryNames) {
+  protected Collection<Configuration> doReadByNamesIgnoringTrash(final Set<String> repositoryNames) {
     return ofNullable(repositoryNames)
         .filter(CollectionUtils::isNotEmpty)
-        .map(names -> dao().readByNamesIgnoringSoftDelete(names))
+        .map(names -> dao().readByNamesIgnoringTrash(names))
         .orElse(emptyList());
   }
 
@@ -201,10 +199,10 @@ public class ConfigurationStoreImpl
       return doReadByName(name);
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
         log.debug(
-            "Soft-delete column 'deleted_on' not yet migrated; falling back to name-scoped read ignoring soft-delete for readByName");
-        return doReadByNameIgnoringSoftDelete(name);
+            "Trash column 'deleted_on' not yet migrated; falling back to name-scoped read ignoring trash for readByName");
+        return doReadByNameIgnoringTrash(name);
       }
       throw e;
     }
@@ -216,8 +214,8 @@ public class ConfigurationStoreImpl
   }
 
   @Transactional
-  protected Optional<Configuration> doReadByNameIgnoringSoftDelete(final String name) {
-    return dao().readByNameIgnoringSoftDelete(name).map(Configuration.class::cast);
+  protected Optional<Configuration> doReadByNameIgnoringTrash(final String name) {
+    return dao().readByNameIgnoringTrash(name).map(Configuration.class::cast);
   }
 
   @Override
@@ -226,9 +224,9 @@ public class ConfigurationStoreImpl
       return doExists(repositoryName);
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
-        log.debug("Soft-delete column 'deleted_on' not yet migrated; falling back to unfiltered existence check");
-        return doExistsIgnoringSoftDelete(repositoryName);
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
+        log.debug("Trash column 'deleted_on' not yet migrated; falling back to unfiltered existence check");
+        return doExistsIgnoringTrash(repositoryName);
       }
       throw e;
     }
@@ -240,8 +238,8 @@ public class ConfigurationStoreImpl
   }
 
   @Transactional
-  protected boolean doExistsIgnoringSoftDelete(final String repositoryName) {
-    return dao().readByNameIgnoringSoftDelete(repositoryName).isPresent();
+  protected boolean doExistsIgnoringTrash(final String repositoryName) {
+    return dao().readByNameIgnoringTrash(repositoryName).isPresent();
   }
 
   @Override
@@ -250,10 +248,10 @@ public class ConfigurationStoreImpl
       return doReadByRecipe(recipeName);
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
         log.debug(
-            "Soft-delete column 'deleted_on' not yet migrated; falling back to recipe-scoped read ignoring soft-delete for readByRecipe");
-        return doReadByRecipeIgnoringSoftDelete(recipeName);
+            "Trash column 'deleted_on' not yet migrated; falling back to recipe-scoped read ignoring trash for readByRecipe");
+        return doReadByRecipeIgnoringTrash(recipeName);
       }
       throw e;
     }
@@ -265,21 +263,21 @@ public class ConfigurationStoreImpl
   }
 
   @Transactional
-  protected Collection<Configuration> doReadByRecipeIgnoringSoftDelete(final String recipeName) {
-    return dao().readByRecipeIgnoringSoftDelete(recipeName);
+  protected Collection<Configuration> doReadByRecipeIgnoringTrash(final String recipeName) {
+    return dao().readByRecipeIgnoringTrash(recipeName);
   }
 
   @Transactional
   @Override
-  public void softDelete(final String repositoryName, final String deletedBy) {
-    dao().softDelete(repositoryName, deletedBy);
-    postCommitEvent(() -> new ConfigurationSoftDeletedEvent(repositoryName));
+  public void trash(final String repositoryName, final String deletedBy) {
+    dao().trash(repositoryName, deletedBy);
+    postCommitEvent(() -> new ConfigurationTrashedEvent(repositoryName));
   }
 
   @Transactional
   @Override
-  public void undoSoftDelete(final String repositoryName) {
-    dao().undoSoftDelete(repositoryName);
+  public void undoTrash(final String repositoryName) {
+    dao().undoTrash(repositoryName);
     postCommitEvent(() -> {
       ConfigurationCreatedEvent event = new ConfigurationCreatedEvent();
       event.setRepositoryName(repositoryName);
@@ -290,7 +288,7 @@ public class ConfigurationStoreImpl
   @Transactional
   @Override
   public List<Configuration> browseDeleted(final int limit, @Nullable final String continuationToken) {
-    return new ArrayList<>(dao().browseDeleted(limit, continuationToken));
+    return toImmutableList(dao().browseDeleted(limit, continuationToken));
   }
 
   @Transactional
@@ -305,8 +303,8 @@ public class ConfigurationStoreImpl
       return doReadDeleted(repositoryName);
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
-        log.debug("Soft-delete column 'deleted_on' not yet migrated; readDeleted returning null");
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
+        log.debug("Trash column 'deleted_on' not yet migrated; readDeleted returning null");
         return null;
       }
       throw e;
@@ -324,9 +322,9 @@ public class ConfigurationStoreImpl
       return doExistsDeletedByNameCaseInsensitive(repositoryName);
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
         log.debug(
-            "Soft-delete column 'deleted_on' not yet migrated; existsDeletedByNameCaseInsensitive returning false");
+            "Trash column 'deleted_on' not yet migrated; existsDeletedByNameCaseInsensitive returning false");
         return false;
       }
       throw e;
@@ -350,9 +348,9 @@ public class ConfigurationStoreImpl
       return doReadDeletedNamesBefore(retentionDays);
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
-        log.debug("Soft-delete column 'deleted_on' not yet migrated; readDeletedNamesBefore returning empty");
-        return List.of();
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
+        log.debug("Trash column 'deleted_on' not yet migrated; readDeletedNamesBefore returning empty");
+        return emptyList();
       }
       throw e;
     }
@@ -369,10 +367,10 @@ public class ConfigurationStoreImpl
       return doCountByBlobStore(blobStoreName);
     }
     catch (Exception e) {
-      if (SoftDeleteMigrationHelper.isMissingDeletedOnColumn(e)) {
+      if (TrashMigrationHelper.isMissingDeletedOnColumn(e)) {
         log.debug(
-            "Soft-delete column 'deleted_on' not yet migrated; falling back to blob-store count ignoring soft-delete");
-        return doCountByBlobStoreIgnoringSoftDelete(blobStoreName);
+            "Trash column 'deleted_on' not yet migrated; falling back to blob-store count ignoring trash");
+        return doCountByBlobStoreIgnoringTrash(blobStoreName);
       }
       throw e;
     }
@@ -384,7 +382,16 @@ public class ConfigurationStoreImpl
   }
 
   @Transactional
-  protected int doCountByBlobStoreIgnoringSoftDelete(final String blobStoreName) {
-    return dao().countByBlobStoreIgnoringSoftDelete(blobStoreName);
+  protected int doCountByBlobStoreIgnoringTrash(final String blobStoreName) {
+    return dao().countByBlobStoreIgnoringTrash(blobStoreName);
+  }
+
+  @Override
+  @Transactional
+  public int countByBlobStoreIncludingTrashed(final String blobStoreName) {
+    // Reuses the no-deleted_on-predicate query, which counts live AND trashed repositories, so a trashed
+    // (restorable) repository still marks its blob store as in-use (NEXUS-55233). No ZDU fallback needed:
+    // the query never references the possibly-not-yet-migrated deleted_on column.
+    return dao().countByBlobStoreIgnoringTrash(blobStoreName);
   }
 }

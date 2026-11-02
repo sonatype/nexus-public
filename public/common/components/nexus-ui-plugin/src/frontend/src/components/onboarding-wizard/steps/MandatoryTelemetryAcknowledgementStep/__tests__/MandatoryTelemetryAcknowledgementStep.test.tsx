@@ -171,12 +171,12 @@ describe('MandatoryTelemetryAcknowledgementStep', () => {
   });
 
   it('shouldWarnWithTheCommunityGracePeriodWhenTheBackendReportsIt', () => {
-    mockTelemetryHealth({ gracePeriodDays: 10 });
+    mockTelemetryHealth({ gracePeriodDays: 30 });
 
     render(<MandatoryTelemetryAcknowledgementStep />);
 
     expect(screen.getByTestId(WARNING_TESTID)).toHaveTextContent(
-      'If telemetry cannot be sent for 10 consecutive days, the instance will enter read-only mode until connectivity is restored or an exemption is approved.'
+      'If telemetry cannot be sent for 30 consecutive days, the instance will enter read-only mode until connectivity is restored or an exemption is approved.'
     );
   });
 
@@ -265,6 +265,22 @@ describe('MandatoryTelemetryAcknowledgementStep', () => {
       expect(status).toHaveTextContent(`Last received: ${LAST_UPLOAD_DATE}`);
       expect(status).toHaveTextContent(
         'Recent telemetry uploads have failed. A 45-day grace period starts today to resolve the Baseline Telemetry issue. Check Repository Health Check again in 24 hours to confirm the status.'
+      );
+    });
+
+    it('shouldReportAnUploadIssueWithTheCommunityGracePeriod', () => {
+      mockTelemetryHealth({
+        gracePeriodDays: 30,
+        lastSuccessfulUpload: LAST_UPLOAD_ISO,
+        showWarning: true,
+      });
+
+      render(<MandatoryTelemetryAcknowledgementStep />);
+
+      const status = screen.getByTestId(STATUS_TESTID);
+      expect(status).toHaveAttribute('data-status', 'uploadIssue');
+      expect(status).toHaveTextContent(
+        'Recent telemetry uploads have failed. A 30-day grace period starts today to resolve the Baseline Telemetry issue. Check Repository Health Check again in 24 hours to confirm the status.'
       );
     });
 

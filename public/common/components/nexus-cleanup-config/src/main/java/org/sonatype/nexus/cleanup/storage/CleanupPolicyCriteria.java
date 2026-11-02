@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.cleanup.storage.config.CleanupPolicyAssetNamePattern;
 import org.sonatype.nexus.common.text.Strings2;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 import static java.lang.String.valueOf;
@@ -83,7 +82,7 @@ public class CleanupPolicyCriteria
   }
 
   public static Map<String, String> toMap(final CleanupPolicyCriteria criteria) {
-    HashMap<String, String> criteriaMap = newHashMap();
+    HashMap<String, String> criteriaMap = new HashMap<>();
 
     if (nonNull(criteria.lastBlobUpdated)) {
       String value = valueOf(criteria.lastBlobUpdated * DAY_IN_SECONDS);

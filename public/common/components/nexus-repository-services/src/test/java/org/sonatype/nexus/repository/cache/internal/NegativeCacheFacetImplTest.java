@@ -136,7 +136,7 @@ public class NegativeCacheFacetImplTest
   }
 
   @Test
-  public void cacheIsDestroyedOnSoftDeletePath() throws Exception {
+  public void cacheIsDestroyedOnTrashPath() throws Exception {
     config.enabled = true;
     underTest.attach(repository);
     underTest.init();

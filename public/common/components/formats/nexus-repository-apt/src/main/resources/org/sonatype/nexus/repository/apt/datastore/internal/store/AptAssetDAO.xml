@@ -27,7 +27,7 @@
     WHERE repository_id = #{repositoryId}
       AND path LIKE #{pathPattern}
       AND component_id IS NULL
-      <if test="softDeleteAvailable">AND deleted_on IS NULL</if>
+      <if test="trashAvailable">AND deleted_on IS NULL</if>
       <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
     ORDER BY asset_id
     LIMIT #{limit}

@@ -277,7 +277,7 @@ describe('UsersPage', () => {
       });
     });
 
-    it('requires typing "Delete" to confirm deletion', async () => {
+    it('requires typing the user ID to confirm deletion, not the generic "Delete" word', async () => {
       render(<UsersPage />, { wrapper: TestWrapper });
 
       await waitFor(() => {
@@ -297,9 +297,33 @@ describe('UsersPage', () => {
       fireEvent.change(confirmInput, { target: { value: 'wronguser' } });
       expect(confirmDeleteButton).toBeDisabled();
 
-      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
+      // The generic acknowledgement word no longer confirms a user deletion.
       fireEvent.change(confirmInput, { target: { value: 'Delete' } });
+      expect(confirmDeleteButton).toBeDisabled();
+
+      // Only the exact user ID confirms.
+      fireEvent.change(confirmInput, { target: { value: 'testuser' } });
       expect(confirmDeleteButton).not.toBeDisabled();
+    });
+
+    it('shows the user ID (not the full name) in the delete description so it matches the token to type', async () => {
+      render(<UsersPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(mockFetchUser).toHaveBeenCalledWith('testuser', 'default');
+      });
+
+      triggerHashChange('#preview/admin/security/users/testuser/default');
+
+      const pageDelete = await screen.findByTestId('page-delete-user');
+      fireEvent.click(pageDelete);
+
+      // Description must reference the typed identifier (user ID), not the display name, to avoid a token mismatch.
+      const dialog = await screen.findByRole('alertdialog');
+      expect(dialog).toHaveTextContent(
+        /All data associated with testuser will be permanently deleted/i,
+      );
+      expect(dialog).not.toHaveTextContent('Test User');
     });
 
     it('deletes user after typing user ID and confirming', async () => {
@@ -315,8 +339,8 @@ describe('UsersPage', () => {
       fireEvent.click(pageDelete);
 
       const confirmInput = await screen.findByRole('textbox');
-      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
-      fireEvent.change(confirmInput, { target: { value: 'Delete' } });
+      // Acknowledgement is the exact user ID, matched case-sensitively.
+      fireEvent.change(confirmInput, { target: { value: 'testuser' } });
 
       const confirmDeleteButton = screen.getByRole('button', { name: /^delete$/i });
       await act(async () => {
@@ -525,14 +549,14 @@ describe('UsersPage', () => {
       fireEvent.click(pageDelete);
 
       const confirmInput = await screen.findByRole('textbox');
-      fireEvent.change(confirmInput, { target: { value: 'Delete' } });
+      fireEvent.change(confirmInput, { target: { value: 'testuser' } });
       const confirmDeleteButton = screen.getByRole('button', { name: /^delete$/i });
 
       await act(async () => {
         fireEvent.click(confirmDeleteButton);
       });
 
-      // Delete promise is still pending — page-level button must be disabled.
+      // Delete promise is still pending, so the page-level button must be disabled.
       expect(screen.getByTestId('page-delete-user')).toBeDisabled();
 
       await act(async () => {
@@ -667,8 +691,8 @@ describe('UsersPage', () => {
 
       // Type user ID and confirm
       const confirmInput = await screen.findByRole('textbox');
-      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
-      fireEvent.change(confirmInput, { target: { value: 'Delete' } });
+      // Acknowledgement is the exact user ID, matched case-sensitively.
+      fireEvent.change(confirmInput, { target: { value: 'testuser' } });
       const confirmDeleteButton = screen.getByRole('button', { name: /^delete$/i });
 
       await act(async () => {

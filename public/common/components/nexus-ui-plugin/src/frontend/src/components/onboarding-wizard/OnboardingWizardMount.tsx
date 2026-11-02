@@ -60,10 +60,6 @@ async function verifyOnboardingComplete(): Promise<void> {
 }
 
 export default function OnboardingWizardMount(): React.ReactElement | null {
-  const featureEnabled = ExtJS.useState(
-    () => ExtJS.state()?.getValue?.('nexus.react.onboarding.enabled', false) ?? false
-  );
-
   const onboardingRequired = ExtJS.useState(
     () => ExtJS.state()?.getValue?.('onboarding.required', false) ?? false
   );
@@ -88,7 +84,7 @@ export default function OnboardingWizardMount(): React.ReactElement | null {
     ExtJS.state()?.setValue?.('onboarding.required', false);
   }, []);
 
-  if (!featureEnabled || !onboardingRequired || !isAdmin) {
+  if (!onboardingRequired || !isAdmin) {
     return null;
   }
 

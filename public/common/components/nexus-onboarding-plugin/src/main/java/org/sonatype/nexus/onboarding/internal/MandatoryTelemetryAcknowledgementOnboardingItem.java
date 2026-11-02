@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistribution;
 import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistributionType;
 import org.sonatype.nexus.common.app.ApplicationVersion;
@@ -24,7 +26,7 @@ import org.sonatype.nexus.onboarding.OnboardingItemPriority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Raises a one-time onboarding card telling administrators that telemetry became mandatory in
@@ -88,10 +90,10 @@ public class MandatoryTelemetryAcknowledgementOnboardingItem
   public MandatoryTelemetryAcknowledgementOnboardingItem(
       final ApplicationVersion applicationVersion,
       final GlobalKeyValueStore globalKeyValueStore,
-      @Autowired(required = false) final TelemetryEnforcement enforcementChecker)
+      @Nullable final TelemetryEnforcement enforcementChecker)
   {
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
+    this.applicationVersion = requireNonNull(applicationVersion);
+    this.globalKeyValueStore = requireNonNull(globalKeyValueStore);
     // Deliberately unchecked: absent on every edition without the opt-out entitlement.
     this.enforcementChecker = enforcementChecker;
   }

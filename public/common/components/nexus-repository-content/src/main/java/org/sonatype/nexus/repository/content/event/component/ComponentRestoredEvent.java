@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.event.component;
 import org.sonatype.nexus.repository.content.Component;
 
 /**
- * Event sent whenever a soft-deleted {@link Component} is restored.
+ * Event sent whenever a trashed {@link Component} is restored.
  *
  * Part of the Logical Deletion Recovery initiative (NEXUS-49147).
  */

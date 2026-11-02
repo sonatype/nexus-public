@@ -42,7 +42,6 @@ import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
 import org.sonatype.nexus.security.user.UserUpdatedEvent;
 
-import com.google.common.collect.Sets;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -334,7 +333,7 @@ public class UserManagerImpl
       // try to update first
       try {
         CUserRoleMapping roleMapping = configuration.readUserRoleMapping(userId, userSource).clone();
-        roleMapping.setRoles(Sets.newHashSet());
+        roleMapping.setRoles(new HashSet<>());
 
         updateRoles(roleMapping, roleIdentifiers);
 

@@ -18,7 +18,7 @@ import java.util.List;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
 
 import static java.util.Objects.requireNonNull;
 
@@ -36,17 +36,17 @@ public class OperationKey
   public OperationKey(final String name, final String[] types) {
     this.name = requireNonNull(name);
     requireNonNull(types);
-    this.types = ImmutableList.copyOf(types);
+    this.types = List.of(types);
   }
 
   public OperationKey(final MBeanOperationInfo info) {
     requireNonNull(info);
     this.name = info.getName();
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
+    List<String> typeList = new ArrayList<>();
     for (MBeanParameterInfo pinfo : info.getSignature()) {
-      builder.add(pinfo.getType());
+      typeList.add(pinfo.getType());
     }
-    this.types = builder.build();
+    this.types = List.copyOf(typeList);
   }
 
   public String getName() {

@@ -152,6 +152,180 @@ describe('InRepositorySearch', () => {
       });
     });
 
+    it('issues a single search for a burst of keystrokes, using the final query', async () => {
+      renderWithTheme(
+        <InRepositorySearch
+          repositoryName={repositoryName}
+          onSelectResult={mockOnSelectResult}
+        />
+      );
+
+      const input = screen.getByRole('combobox');
+      for (const value of ['co', 'com', 'comm', 'commons']) {
+        fireEvent.change(input, { target: { value } });
+        await act(async () => {
+          jest.advanceTimersByTime(100);
+        });
+      }
+
+      expect(mockSearchInRepository).not.toHaveBeenCalled();
+
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(1);
+      expect(mockSearchInRepository).toHaveBeenCalledWith(repositoryName, 'commons', 20);
+    });
+
+    it('closes the dropdown immediately when the query is deleted below the minimum length', async () => {
+      renderWithTheme(
+        <InRepositorySearch
+          repositoryName={repositoryName}
+          onSelectResult={mockOnSelectResult}
+        />
+      );
+
+      const input = screen.getByRole('combobox');
+      fireEvent.change(input, { target: { value: 'commons' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      await waitFor(() => {
+        expect(screen.getByText('org.apache.commons:commons-lang3')).toBeInTheDocument();
+      });
+
+      // No timer advance: shortening the query must close the dropdown at once rather than
+      // leaving stale results visible for another debounce interval.
+      fireEvent.change(input, { target: { value: 'c' } });
+
+      expect(screen.queryByText('org.apache.commons:commons-lang3')).not.toBeInTheDocument();
+      expect(input).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('searches again when the same query is re-entered after dropping below the minimum length', async () => {
+      renderWithTheme(
+        <InRepositorySearch
+          repositoryName={repositoryName}
+          onSelectResult={mockOnSelectResult}
+        />
+      );
+
+      const input = screen.getByRole('combobox');
+      fireEvent.change(input, { target: { value: 'co' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      await waitFor(() => {
+        expect(screen.getByText('org.apache.commons:commons-lang3')).toBeInTheDocument();
+      });
+
+      // Delete below the minimum and retype the same query inside a single debounce window, so
+      // the query alone never leaves 'co'.
+      fireEvent.change(input, { target: { value: 'c' } });
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      await act(async () => {
+        jest.advanceTimersByTime(50);
+      });
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(1);
+
+      fireEvent.change(input, { target: { value: 'co' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+
+      // Returning to a valid query has to show that query's results again. Staying empty because
+      // the debounced value happens to equal the previously published one leaves the user with a
+      // valid query in the field and nothing to select.
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(2);
+      expect(mockSearchInRepository).toHaveBeenLastCalledWith(repositoryName, 'co', 20);
+      await waitFor(() => {
+        expect(screen.getByText('org.apache.commons:commons-lang3')).toBeInTheDocument();
+      });
+      expect(input).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('searches again when the same query is retyped right after clearing', async () => {
+      renderWithTheme(
+        <InRepositorySearch
+          repositoryName={repositoryName}
+          onSelectResult={mockOnSelectResult}
+        />
+      );
+
+      const input = screen.getByRole('combobox');
+      fireEvent.change(input, { target: { value: 'co' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      await waitFor(() => {
+        expect(screen.getByText('org.apache.commons:commons-lang3')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByLabelText('Clear search'));
+
+      // Clearing closes at once, without waiting out the debounce interval.
+      expect(input).toHaveValue('');
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+
+      // Retyping the same query inside the interval, so the query alone is unchanged.
+      await act(async () => {
+        jest.advanceTimersByTime(50);
+      });
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(1);
+      fireEvent.change(input, { target: { value: 'co' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(2);
+      expect(mockSearchInRepository).toHaveBeenLastCalledWith(repositoryName, 'co', 20);
+      await waitFor(() => {
+        expect(screen.getByText('org.apache.commons:commons-lang3')).toBeInTheDocument();
+      });
+      expect(input).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('searches again when the same query is retyped right after picking a result', async () => {
+      renderWithTheme(
+        <InRepositorySearch
+          repositoryName={repositoryName}
+          onSelectResult={mockOnSelectResult}
+        />
+      );
+
+      const input = screen.getByRole('combobox');
+      fireEvent.change(input, { target: { value: 'co' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      await waitFor(() => {
+        expect(screen.getByText('org.apache.commons:commons-lang3')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('org.apache.commons:commons-lang3'));
+
+      // Picking a result empties the field and closes the dropdown at once.
+      expect(input).toHaveValue('');
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+
+      await act(async () => {
+        jest.advanceTimersByTime(50);
+      });
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(1);
+      fireEvent.change(input, { target: { value: 'co' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(2);
+      expect(mockSearchInRepository).toHaveBeenLastCalledWith(repositoryName, 'co', 20);
+      await waitFor(() => {
+        expect(screen.getByText('org.apache.commons:commons-lang3')).toBeInTheDocument();
+      });
+      expect(input).toHaveAttribute('aria-expanded', 'true');
+    });
+
     it('shows "No results" message when search returns empty', async () => {
       mockSearchInRepository.mockResolvedValue([]);
 
@@ -194,6 +368,275 @@ describe('InRepositorySearch', () => {
       await waitFor(() => {
         expect(screen.getByText('Search failed. Please try again.')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('concurrent requests', () => {
+    function deferred() {
+      let resolve;
+      let reject;
+      const promise = new Promise((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    }
+
+    const mavenResults = [
+      {
+        id: 'm1',
+        repository: 'maven-central',
+        format: 'maven2',
+        group: 'org.apache.commons',
+        name: 'commons-lang3',
+        version: '3.12.0',
+      },
+    ];
+
+    const npmResults = [
+      {
+        id: 'n1',
+        repository: 'npm-proxy',
+        format: 'npm',
+        group: 'types',
+        name: 'lodash',
+        version: '4.17.21',
+      },
+    ];
+
+    function renderWithRepository(initialRepository) {
+      const view = renderWithTheme(
+        <InRepositorySearch
+          repositoryName={initialRepository}
+          onSelectResult={mockOnSelectResult}
+        />
+      );
+
+      return {
+        ...view,
+        switchRepository: (nextRepository) =>
+          view.rerender(
+            <Theme>
+              <InRepositorySearch
+                repositoryName={nextRepository}
+                onSelectResult={mockOnSelectResult}
+              />
+            </Theme>
+          ),
+      };
+    }
+
+    // Type a query, let it settle, then switch repositories while the first request
+    // is still in flight. Leaves both requests pending.
+    async function switchWhileInFlight(slow, fast) {
+      mockSearchInRepository.mockImplementation((repo) =>
+        repo === 'maven-central' ? slow.promise : fast.promise
+      );
+
+      const { switchRepository } = renderWithRepository('maven-central');
+
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'commons' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(mockSearchInRepository).toHaveBeenCalledWith('maven-central', 'commons', 20);
+
+      switchRepository('npm-proxy');
+      await act(async () => {});
+      expect(mockSearchInRepository).toHaveBeenCalledWith('npm-proxy', 'commons', 20);
+    }
+
+    it('ignores an out-of-order response from the previously selected repository', async () => {
+      const slowMaven = deferred();
+      const fastNpm = deferred();
+      await switchWhileInFlight(slowMaven, fastNpm);
+
+      // The newly selected repository answers first.
+      await act(async () => {
+        fastNpm.resolve(npmResults);
+      });
+      expect(screen.getByText('types:lodash')).toBeInTheDocument();
+
+      // The abandoned request answers late and must not overwrite current results.
+      await act(async () => {
+        slowMaven.resolve(mavenResults);
+      });
+
+      expect(screen.getByText('types:lodash')).toBeInTheDocument();
+      expect(screen.queryByText('org.apache.commons:commons-lang3')).not.toBeInTheDocument();
+    });
+
+    it('ignores a late failure from the previously selected repository', async () => {
+      const slowMaven = deferred();
+      const fastNpm = deferred();
+      await switchWhileInFlight(slowMaven, fastNpm);
+
+      await act(async () => {
+        fastNpm.resolve(npmResults);
+      });
+      expect(screen.getByText('types:lodash')).toBeInTheDocument();
+
+      await act(async () => {
+        slowMaven.reject(new Error('Network error'));
+      });
+
+      expect(screen.queryByText('Search failed. Please try again.')).not.toBeInTheDocument();
+      expect(screen.getByText('types:lodash')).toBeInTheDocument();
+    });
+
+    it('does not clear the loading state when an abandoned request settles', async () => {
+      const slowMaven = deferred();
+      const slowNpm = deferred();
+      await switchWhileInFlight(slowMaven, slowNpm);
+
+      // npm-proxy is still in flight, so the spinner replaces the clear button.
+      expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument();
+
+      await act(async () => {
+        slowMaven.resolve(mavenResults);
+      });
+
+      // The abandoned request settling must not signal that npm-proxy finished.
+      expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument();
+    });
+
+    it('ignores an obsolete response after the same query is re-entered', async () => {
+      const firstRequest = deferred();
+      const secondRequest = deferred();
+      let calls = 0;
+      mockSearchInRepository.mockImplementation(() =>
+        ++calls === 1 ? firstRequest.promise : secondRequest.promise
+      );
+
+      renderWithRepository('maven-central');
+
+      const input = screen.getByRole('combobox');
+      fireEvent.change(input, { target: { value: 'commons' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(1);
+
+      // Discard the results and return to the same query while the first request is still running,
+      // so re-entry has to issue a second request for a query already in flight.
+      fireEvent.change(input, { target: { value: 'c' } });
+      await act(async () => {
+        jest.advanceTimersByTime(50);
+      });
+      fireEvent.change(input, { target: { value: 'commons' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(2);
+
+      // The re-entered request answers first.
+      await act(async () => {
+        secondRequest.resolve(npmResults);
+      });
+      expect(screen.getByText('types:lodash')).toBeInTheDocument();
+
+      // The superseded request answers late and must not overwrite the current results.
+      await act(async () => {
+        firstRequest.resolve(mavenResults);
+      });
+      expect(screen.getByText('types:lodash')).toBeInTheDocument();
+      expect(screen.queryByText('org.apache.commons:commons-lang3')).not.toBeInTheDocument();
+    });
+
+    it('still searches the newly selected repository and shows its results', async () => {
+      mockSearchInRepository.mockImplementation((repo) =>
+        Promise.resolve(repo === 'maven-central' ? mavenResults : npmResults)
+      );
+
+      const { switchRepository } = renderWithRepository('maven-central');
+
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'commons' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(screen.getByText('org.apache.commons:commons-lang3')).toBeInTheDocument();
+
+      switchRepository('npm-proxy');
+      await act(async () => {});
+
+      expect(mockSearchInRepository).toHaveBeenCalledWith('npm-proxy', 'commons', 20);
+      await waitFor(() => {
+        expect(screen.getByText('types:lodash')).toBeInTheDocument();
+      });
+      expect(screen.queryByText('org.apache.commons:commons-lang3')).not.toBeInTheDocument();
+    });
+
+    it('ignores a response that lands after the query dropped below the minimum length', async () => {
+      const request = deferred();
+      mockSearchInRepository.mockImplementation(() => request.promise);
+
+      renderWithRepository('maven-central');
+
+      const input = screen.getByRole('combobox');
+      fireEvent.change(input, { target: { value: 'commons' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(mockSearchInRepository).toHaveBeenCalledTimes(1);
+
+      // Delete back below the minimum length while the request is still running.
+      fireEvent.change(input, { target: { value: 'c' } });
+      await act(async () => {});
+      expect(input).toHaveAttribute('aria-expanded', 'false');
+
+      // The abandoned request answers late; it must not reopen the dropdown over a query too
+      // short to have asked for it.
+      await act(async () => {
+        request.resolve(mavenResults);
+      });
+
+      expect(input).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByText('org.apache.commons:commons-lang3')).not.toBeInTheDocument();
+    });
+
+    it('ignores a response that lands after the query was cleared', async () => {
+      const request = deferred();
+      mockSearchInRepository.mockImplementation(() => request.promise);
+
+      renderWithRepository('maven-central');
+
+      const input = screen.getByRole('combobox');
+      fireEvent.change(input, { target: { value: 'commons' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+
+      fireEvent.change(input, { target: { value: '' } });
+      await act(async () => {});
+
+      await act(async () => {
+        request.resolve(mavenResults);
+      });
+
+      expect(input).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByText('org.apache.commons:commons-lang3')).not.toBeInTheDocument();
+    });
+
+    it('clears the loading state when the query drops below the minimum length', async () => {
+      const request = deferred();
+      mockSearchInRepository.mockImplementation(() => request.promise);
+
+      renderWithRepository('maven-central');
+
+      const input = screen.getByRole('combobox');
+      fireEvent.change(input, { target: { value: 'commons' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      // The spinner replaces the clear button while the request is in flight.
+      expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument();
+
+      // Collapsing abandons the request, so its `finally` is guarded out and the collapse itself
+      // has to stop the spinner.
+      fireEvent.change(input, { target: { value: 'c' } });
+      await act(async () => {});
+
+      expect(screen.getByLabelText('Clear search')).toBeInTheDocument();
     });
   });
 

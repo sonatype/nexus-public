@@ -13,6 +13,7 @@
 
 package org.sonatype.nexus.repository.rest.internal.api;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import org.sonatype.nexus.common.event.EventManager;
@@ -41,6 +42,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -231,5 +236,41 @@ public class AuthorizingRepositoryManagerTest
     verify(repository).optionalFacet(GroupFacet.class);
     verify(groupFacet).invalidateGroupCaches();
     verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, groupFacet);
+  }
+
+  @Test
+  public void getRepositoryWithAdminEditShouldReturnRepositoryWhenUserHasEditPermission() {
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermission(eq(singletonList(repository)), eq(EDIT)))
+        .thenReturn(singletonList(repository));
+
+    Optional<Repository> result = authorizingRepositoryManager.getRepositoryWithAdminEdit("repository");
+
+    assertTrue(result.isPresent());
+    assertSame(repository, result.get());
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).userHasRepositoryAdminPermission(eq(singletonList(repository)), eq(EDIT));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker);
+  }
+
+  @Test
+  public void getRepositoryWithAdminEditShouldReturnEmptyWhenUserLacksEditPermission() {
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermission(eq(singletonList(repository)), eq(EDIT)))
+        .thenReturn(Collections.<Repository>emptyList());
+
+    Optional<Repository> result = authorizingRepositoryManager.getRepositoryWithAdminEdit("repository");
+
+    assertFalse(result.isPresent());
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).userHasRepositoryAdminPermission(eq(singletonList(repository)), eq(EDIT));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker);
+  }
+
+  @Test
+  public void getRepositoryWithAdminEditShouldReturnEmptyWhenRepositoryAbsent() {
+    Optional<Repository> result = authorizingRepositoryManager.getRepositoryWithAdminEdit("absent");
+
+    assertFalse(result.isPresent());
+    verify(repositoryManager).get(eq("absent"));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker);
   }
 }

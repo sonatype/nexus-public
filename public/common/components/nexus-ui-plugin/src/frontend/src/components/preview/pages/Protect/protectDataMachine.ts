@@ -49,6 +49,7 @@ type ProtectDataEvent =
 export const protectDataMachine = createMachine<ProtectDataContext, ProtectDataEvent>(
   {
     id: 'protectData',
+    predictableActionArguments: true,
     type: 'parallel',
     context: {
       iqCapabilities: null,

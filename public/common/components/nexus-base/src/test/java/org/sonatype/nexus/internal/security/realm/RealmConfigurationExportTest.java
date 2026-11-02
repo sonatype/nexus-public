@@ -14,12 +14,12 @@ package org.sonatype.nexus.internal.security.realm;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +67,7 @@ public class RealmConfigurationExportTest
 
   private RealmConfiguration createRealmConfiguration() {
     RealmConfigurationData configuration = new RealmConfigurationData();
-    configuration.setRealmNames(ImmutableList.of("MockRealmA", "MockRealmB"));
+    configuration.setRealmNames(List.of("MockRealmA", "MockRealmB"));
 
     return configuration;
   }

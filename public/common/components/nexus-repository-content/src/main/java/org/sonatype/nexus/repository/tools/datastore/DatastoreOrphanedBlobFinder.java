@@ -150,7 +150,7 @@ public class DatastoreOrphanedBlobFinder
               handler.accept(id);
             }
             else {
-              log.debug("Blob {} in repository {} not considered orphaned because it is already marked soft-deleted",
+              log.debug("Blob {} in repository {} not considered orphaned because it is already marked trashed",
                   id.asUniqueString(), repositoryName);
             }
           }

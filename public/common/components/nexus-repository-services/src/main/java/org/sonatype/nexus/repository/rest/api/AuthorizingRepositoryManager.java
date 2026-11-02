@@ -46,6 +46,13 @@ public interface AuthorizingRepositoryManager
   Optional<Repository> getRepositoryWithAdmin(String repositoryName);
 
   /**
+   * Returns the repository if the user has administrative edit privileges. Use this instead of
+   * {@link #getRepositoryWithAdmin(String)} when exposing write-scoped configuration such as signing
+   * credentials, so that read-only repository admins cannot read them back.
+   */
+  Optional<Repository> getRepositoryWithAdminEdit(String repositoryName);
+
+  /**
    * Trigger rebuild index task for given repository.
    *
    * @throws RepositoryNotFoundException if repository does not exists

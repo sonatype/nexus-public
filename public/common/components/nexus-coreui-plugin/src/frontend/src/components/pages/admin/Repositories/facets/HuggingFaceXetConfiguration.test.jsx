@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen} from '@testing-library/react';
+import {render, screen, fireEvent} from '@testing-library/react';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import HuggingFaceXetConfiguration from './HuggingFaceXetConfiguration';
@@ -95,5 +95,47 @@ describe('HuggingFaceXetConfiguration', () => {
     render(<HuggingFaceXetConfiguration parentMachine={buildParentMachine({enabled: false})} />);
 
     expect(screen.getByRole('checkbox', {name: /Enable XET/i})).not.toBeChecked();
+  });
+
+  it('always shows the XET disables Firewall warning when feature flag is on', () => {
+    mockFlag(true);
+
+    render(<HuggingFaceXetConfiguration parentMachine={buildParentMachine({enabled: false})} />);
+
+    expect(screen.getByText(/Enabling XET disables Firewall for this repository/i)).toBeInTheDocument();
+  });
+
+  it('dispatches firewall.mode=DISABLED when XET is enabled', () => {
+    mockFlag(true);
+
+    const sendParent = jest.fn();
+    const parentMachine = [
+      {context: {data: {xet: {enabled: false}}, pristineData: {xet: {enabled: false}}}},
+      sendParent
+    ];
+
+    render(<HuggingFaceXetConfiguration parentMachine={parentMachine} />);
+
+    fireEvent.click(screen.getByRole('checkbox', {name: /Enable XET/i}));
+
+    expect(sendParent).toHaveBeenCalledWith({type: 'UPDATE', name: 'xet.enabled', value: true});
+    expect(sendParent).toHaveBeenCalledWith({type: 'UPDATE', name: 'firewall.mode', value: 'DISABLED'});
+  });
+
+  it('does not dispatch firewall.mode update when XET is disabled', () => {
+    mockFlag(true);
+
+    const sendParent = jest.fn();
+    const parentMachine = [
+      {context: {data: {xet: {enabled: true}}, pristineData: {xet: {enabled: true}}}},
+      sendParent
+    ];
+
+    render(<HuggingFaceXetConfiguration parentMachine={parentMachine} />);
+
+    fireEvent.click(screen.getByRole('checkbox', {name: /Enable XET/i}));
+
+    expect(sendParent).toHaveBeenCalledWith({type: 'UPDATE', name: 'xet.enabled', value: false});
+    expect(sendParent).not.toHaveBeenCalledWith(expect.objectContaining({name: 'firewall.mode'}));
   });
 });

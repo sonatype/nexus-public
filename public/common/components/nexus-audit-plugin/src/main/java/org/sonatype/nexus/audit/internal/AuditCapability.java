@@ -70,7 +70,7 @@ public class AuditCapability
     @DefaultMessage("Retention (days)")
     String retentionDaysLabel();
 
-    @DefaultMessage("Number of days audit events are retained before pruning. Default 90; minimum 1; maximum %s.")
+    @DefaultMessage("Number of days audit events are retained before pruning. Default 30; minimum 1; maximum %s.")
     String retentionDaysHelp(int max);
   }
 

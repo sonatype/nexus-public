@@ -23,10 +23,18 @@ export const EDITION_COMMUNITY = 'nexus-community-edition';
 export const EDITION_PRO = 'nexus-professional-edition';
 export const EDITION_PRO_PLUS = 'nexus-professional-plus-edition';
 export const EDITION_ENTERPRISE = 'nexus-enterprise-edition';
-/** Cloud base edition — resolves to the same display name as Pro. */
+/**
+ * @deprecated Retained only so existing importers keep compiling. The backend no longer publishes this
+ * identifier: a cloud deployment reports its licensed edition id. Nothing in this module maps, gates or
+ * detects on it, and it belongs to no edition group, so an edition gate never matches it; use the
+ * standard edition ids for edition checks and the distribution for cloud checks.
+ */
 export const EDITION_CLOUD = 'nexus-cloud-edition';
 
-/** Union of the known editionId values published by the backend. */
+/**
+ * Union of the known editionId values published by the backend, plus the retired {@link EDITION_CLOUD}, which
+ * stays in the type only for backward compatibility.
+ */
 export type EditionId =
   | typeof EDITION_CORE
   | typeof EDITION_COMMUNITY
@@ -43,7 +51,6 @@ export const PRO_FAMILY_EDITIONS: readonly EditionId[] = [
   EDITION_PRO,
   EDITION_PRO_PLUS,
   EDITION_ENTERPRISE,
-  EDITION_CLOUD,
 ];
 
 /**
@@ -106,7 +113,6 @@ const EDITION_DISPLAY_NAMES: Record<string, string> = {
   [EDITION_PRO]: 'Pro',
   [EDITION_PRO_PLUS]: 'Pro+',
   [EDITION_ENTERPRISE]: 'Enterprise',
-  [EDITION_CLOUD]: 'Pro',
 };
 
 /** Default display name used before the backend has published an edition identifier. */
@@ -124,10 +130,28 @@ export function getEditionDisplayName(editionId: string | undefined | null): str
   return EDITION_DISPLAY_NAMES[editionId] ?? editionId;
 }
 
+// Short badge labels for the narrow header; only Community differs from its display name.
+// Header-only (React global header), so NO NX.State.js counterpart to keep in sync.
+const EDITION_SHORT_DISPLAY_NAMES: Record<string, string> = {
+  [EDITION_COMMUNITY]: 'Community',
+};
+
+/**
+ * Compact edition label for the global header badge at the smallest widths. Returns the short
+ * form when one exists, otherwise {@link getEditionDisplayName}, so callers can swap in the
+ * narrow label without special-casing each edition.
+ */
+export function getEditionShortDisplayName(editionId: string | undefined | null): string {
+  if (!editionId) return DEFAULT_EDITION_DISPLAY_NAME;
+  return EDITION_SHORT_DISPLAY_NAMES[editionId] ?? getEditionDisplayName(editionId);
+}
+
 // Logo assets — consolidated here so both self-hosted and cloud reference one copy
 // Pro+ and Enterprise use the Pro logo as a stopgap until design provides new assets
 import headerWordmarkLogo from '../art/logos/logo-header-wordmark.svg';
 import headerWordmarkDarkLogo from '../art/logos/logo-header-wordmark-dark.svg';
+import headerMarkLogo from '../art/logos/logo-header-mark.svg';
+import headerMarkDarkLogo from '../art/logos/logo-header-mark-dark.svg';
 import coreLogo from '../art/logos/logo-core-edition-header.svg';
 import coreDarkLogo from '../art/logos/logo-core-edition-header-dark.svg';
 import ceLogo from '../art/logos/logo-community-edition-header.svg';
@@ -149,6 +173,15 @@ export function getHeaderWordmarkLogo(isDark: boolean): string {
 }
 
 /**
+ * Returns the mark-only Sonatype logo (hexagon, no wordmark text) for the global
+ * header at the smallest widths, where the full wordmark does not fit. The hexagon
+ * is copied from the wordmark asset so the mark matches it.
+ */
+export function getHeaderMarkLogo(isDark: boolean): string {
+  return isDark ? headerMarkDarkLogo : headerMarkLogo;
+}
+
+/**
  * Returns the full edition-branded logo asset URL for a given edition identifier
  * and theme, for surfaces that embed the edition name directly in the graphic.
  * The global header and login surfaces instead use {@link getHeaderWordmarkLogo}
@@ -159,7 +192,6 @@ export function getEditionLogo(editionId: string | undefined | null, isDark: boo
     case EDITION_COMMUNITY:
       return isDark ? ceDarkLogo : ceLogo;
     case EDITION_PRO:
-    case EDITION_CLOUD:
       return isDark ? proDarkLogo : proLogo;
     case EDITION_PRO_PLUS:
       return isDark ? proPlusDarkLogo : proPlusLogo;

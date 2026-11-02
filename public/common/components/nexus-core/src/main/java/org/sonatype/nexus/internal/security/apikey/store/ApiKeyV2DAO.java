@@ -167,6 +167,16 @@ public interface ApiKeyV2DAO
       @Param("limit") int limit);
 
   /**
+   * Find the API Keys of a user in any of the given domains.
+   *
+   * @param domains the domains to search, must not be empty
+   * @param username the user name (primary principal)
+   */
+  Collection<ApiKeyInternal> browseByUserAndDomains(
+      @Param("domains") Collection<String> domains,
+      @Param("username") String username);
+
+  /**
    * Count API Keys matching the filters.
    *
    * @param domain the domain

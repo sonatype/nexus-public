@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +38,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 import static java.util.Objects.requireNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
 import org.springframework.stereotype.Component;
 
@@ -86,7 +87,7 @@ public class SearchResultFilterUtils
       return Optional.empty();
     }
 
-    List<String> keys = newArrayList(identifier.split("\\."));
+    List<String> keys = new ArrayList<>(Arrays.asList(identifier.split("\\.")));
 
     if ("assets".equals(keys.get(0))) {
       keys.remove(0);

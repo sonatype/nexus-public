@@ -43,6 +43,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -177,6 +178,29 @@ class HttpClientFacetImplTest
   @Test
   public void passDefaultConfigurationWhenFormatNotFound() throws Exception {
     assertConfigurationPassedToBlockingClient("unknown", defaultAutoBlockConfiguration);
+  }
+
+  @Test
+  public void passExplicitAutoBlockStatusCodesOverridesFormatDefault() throws Exception {
+    config.autoBlockStatusCodes = List.of(404, 429);
+
+    HttpClientFacetImpl underTest = createFacet(NPM);
+    underTest.doConfigure(configuration);
+
+    AutoBlockConfiguration actual = underTest.httpClient.autoBlockConfiguration;
+    assertThat(actual, is(instanceOf(ConfigurableAutoBlockConfiguration.class)));
+    assertThat(actual.shouldBlock(404), is(true));
+    assertThat(actual.shouldBlock(429), is(true));
+    assertThat(actual.shouldBlock(500), is(false));
+  }
+
+  @Test
+  public void fallsBackToFormatDefaultWhenAutoBlockStatusCodesIsNullOrEmpty() throws Exception {
+    config.autoBlockStatusCodes = null;
+    assertConfigurationPassedToBlockingClient(NPM, npmAutoBlockConfiguration);
+
+    config.autoBlockStatusCodes = List.of();
+    assertConfigurationPassedToBlockingClient(NPM, npmAutoBlockConfiguration);
   }
 
   @Test

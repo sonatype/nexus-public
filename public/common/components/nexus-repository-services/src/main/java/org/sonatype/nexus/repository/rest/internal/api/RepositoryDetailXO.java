@@ -37,6 +37,8 @@ public class RepositoryDetailXO
 
   private String blobStoreName;
 
+  private Boolean globalDistribution;
+
   public RepositoryDetailXO(
       final String name,
       final String type,
@@ -101,5 +103,13 @@ public class RepositoryDetailXO
 
   public void setBlobStoreName(final String blobStoreName) {
     this.blobStoreName = blobStoreName;
+  }
+
+  public Boolean getGlobalDistribution() {
+    return globalDistribution;
+  }
+
+  public void setGlobalDistribution(final Boolean globalDistribution) {
+    this.globalDistribution = globalDistribution;
   }
 }

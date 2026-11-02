@@ -13,10 +13,10 @@
 package org.sonatype.nexus.repository.content.fluent;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 import org.sonatype.nexus.common.entity.Continuation;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ForwardingCollection;
 
 import static com.google.common.collect.Collections2.transform;
@@ -37,7 +37,8 @@ public class FluentContinuation<E, T>
 
   public FluentContinuation(final Continuation<T> continuation, final Function<T, E> toFluent) {
     this.continuation = requireNonNull(continuation);
-    this.fluentCollection = transform(continuation, toFluent);
+    requireNonNull(toFluent);
+    this.fluentCollection = transform(continuation, toFluent::apply);
   }
 
   @Override

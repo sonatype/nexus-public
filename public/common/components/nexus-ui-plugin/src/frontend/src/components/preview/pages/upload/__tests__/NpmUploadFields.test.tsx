@@ -259,7 +259,7 @@ describe('NpmUploadFields', () => {
   });
 
   describe('Help Text', () => {
-    it('displays help text for fields', () => {
+    it('displays backend-supplied help text when the API provides it', () => {
       renderWithTheme(
         <NpmUploadFields
           fieldsByGroup={npmFieldsByGroup}
@@ -269,12 +269,29 @@ describe('NpmUploadFields', () => {
         />
       );
 
-      expect(
-        screen.getByText(/The npm package name/)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/The semver version/)
-      ).toBeInTheDocument();
+      expect(screen.getByText('npm package name')).toBeInTheDocument();
+      expect(screen.getByText('Semver version')).toBeInTheDocument();
+    });
+
+    it('falls back to hardcoded help text when the API omits it', () => {
+      const fieldsWithoutHelp = {
+        'Package Details': [
+          { name: 'name', type: 'STRING', displayName: 'Package Name', optional: false },
+          { name: 'version', type: 'STRING', displayName: 'Version', optional: false },
+        ],
+      };
+
+      renderWithTheme(
+        <NpmUploadFields
+          fieldsByGroup={fieldsWithoutHelp}
+          values={{}}
+          onChange={mockOnChange}
+          errors={{}}
+        />
+      );
+
+      expect(screen.getByText(/The npm package name/)).toBeInTheDocument();
+      expect(screen.getByText(/The semver version/)).toBeInTheDocument();
     });
   });
 });

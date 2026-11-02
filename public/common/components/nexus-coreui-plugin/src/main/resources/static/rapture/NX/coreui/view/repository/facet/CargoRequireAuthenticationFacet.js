@@ -17,7 +17,7 @@
 /*global Ext, NX*/
 
 /**
- * Configuration for availability of Docker V1 api.
+ * Cargo Authentication Requirements facet — controls whether clients must authenticate to access this repository.
  *
  * @since 3.0
  */

@@ -16,7 +16,7 @@ import { Box, Flex, Text, Badge, Tooltip } from '@radix-ui/themes';
 import { ExternalLink, HardDrive } from 'lucide-react';
 import { StatusBadge, FormatBadge } from '../../../../shared';
 import { TypeBadge } from './TypeBadge';
-import { Repository, RepositoryFormData } from './types';
+import { Repository, RepositoryFormData, isRepositoryOnline } from './types';
 import { BlobStoreStorageCard } from './BlobStoreStorageCard';
 import { RepositoryMetricsCard } from './RepositoryMetricsCard';
 import { RepositoryTypeIcon } from './repositoryTypeIcon';
@@ -32,7 +32,7 @@ interface RepositorySummaryProps {
 }
 
 export function RepositorySummary({ repository, formData, onNavigateToTab, isCloud = false }: RepositorySummaryProps) {
-  const isOnline = repository.status?.online ?? repository.online ?? true;
+  const isOnline = isRepositoryOnline(repository);
   const blobStoreName = formData.storage?.blobStoreName || '-';
   const remoteUrl = formData.proxy?.remoteUrl;
   const memberCount = formData.group?.memberNames?.length || 0;

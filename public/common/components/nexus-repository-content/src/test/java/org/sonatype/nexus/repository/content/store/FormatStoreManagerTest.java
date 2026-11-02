@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,7 +66,6 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import jakarta.inject.Provider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -408,7 +409,7 @@ class FormatStoreManagerTest
     componentStore.updateComponentAttributes(component, SET, "test-key", "test-component");
     componentStore.updateComponentKind(component);
 
-    assetStore.deleteAssetsByPaths(repository.repositoryId, Lists.newArrayList(asset.path()));
+    assetStore.deleteAssetsByPaths(repository.repositoryId, new ArrayList<>(Arrays.asList(asset.path())));
 
     componentStore.deleteComponent(component);
     contentRepositoryStore.deleteContentRepository(repository);

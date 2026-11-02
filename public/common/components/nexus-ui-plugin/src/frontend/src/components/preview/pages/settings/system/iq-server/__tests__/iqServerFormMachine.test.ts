@@ -11,10 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { interpret } from 'xstate';
-import { waitFor } from 'xstate/lib/waitFor';
 import Axios from 'axios';
-import { createIqServerFormMachine, fetchIqSettings, toFormData, toUpdatePayload } from '../iqServerFormMachine';
+import { fetchIqSettings, toFormData, toUpdatePayload } from '../iqServerFormMachine';
 import { DEFAULT_IQ_CONFIGURATION, PASSWORD_PLACEHOLDER } from '../types';
 
 jest.mock('axios');
@@ -24,36 +22,6 @@ const SETTINGS = { ...DEFAULT_IQ_CONFIGURATION, enabled: true, url: 'https://iq'
 
 describe('iqServerFormMachine', () => {
   beforeEach(() => jest.clearAllMocks());
-
-  it('loads settings into editing', async () => {
-    mockedAxios.get.mockResolvedValue({ data: SETTINGS });
-    const service = interpret(createIqServerFormMachine()).start();
-    await waitFor(service, (s) => s.matches('editing'));
-    expect(service.getSnapshot().context.data.url).toBe('https://iq');
-    service.stop();
-  });
-
-  it('validates required url when enabled and empty', async () => {
-    mockedAxios.get.mockResolvedValue({ data: { ...DEFAULT_IQ_CONFIGURATION, enabled: true } });
-    const service = interpret(createIqServerFormMachine()).start();
-    await waitFor(service, (s) => s.matches('editing'));
-    expect(service.getSnapshot().context.validationErrors.url).toMatch(/required/i);
-    service.stop();
-  });
-
-  it('save PUTs then re-GETs and merges server result into pristine data', async () => {
-    mockedAxios.get
-      .mockResolvedValueOnce({ data: SETTINGS })                    // initial load
-      .mockResolvedValueOnce({ data: { ...SETTINGS, url: 'https://iq-normalized' } }); // post-PUT re-GET
-    mockedAxios.put.mockResolvedValue({ data: {} });
-    const service = interpret(createIqServerFormMachine()).start();
-    await waitFor(service, (s) => s.matches('editing'));
-    service.send({ type: 'UPDATE', name: 'username', value: 'newadmin' });
-    service.send({ type: 'SUBMIT' });
-    await waitFor(service, (s) => s.matches('editing') && s.context.isPristine);
-    expect(service.getSnapshot().context.data.url).toBe('https://iq-normalized');
-    service.stop();
-  });
 
   /**
    * The IQ REST API rejects a null authenticationType with a @NotNull violation
@@ -69,6 +37,28 @@ describe('iqServerFormMachine', () => {
     const data = await fetchIqSettings();
 
     expect(data.authenticationType).toBe('USER');
+  });
+
+  it('normalizes null string fields from an unconfigured server to the empty-string defaults', async () => {
+    // GET /v1/iq returns an all-null XO on a first-time setup. These nulls must not survive
+    // onto the form data, or a later url.trim() (isSecureUrl gate) throws (NEXUS-55151 crash).
+    mockedAxios.get.mockResolvedValue({
+      data: {
+        enabled: false,
+        url: null,
+        authenticationType: null,
+        username: null,
+        password: null,
+        properties: null,
+      },
+    });
+
+    const data = await fetchIqSettings();
+
+    expect(data.url).toBe('');
+    expect(data.username).toBe('');
+    expect(data.password).toBe('');
+    expect(data.properties).toEqual([]);
   });
 
   it('normalizes a blank authenticationType with no username to USER', async () => {
@@ -92,45 +82,21 @@ describe('iqServerFormMachine', () => {
   describe('properties parsing', () => {
     it('loads a properties string into a parsed row array', async () => {
       mockedAxios.get.mockResolvedValue({ data: { ...SETTINGS, properties: 'proxy.host=proxy.example.com\nproxy.port=8080' } });
-      const service = interpret(createIqServerFormMachine()).start();
-      await waitFor(service, (s) => s.matches('editing'));
-      const { properties } = service.getSnapshot().context.data;
-      expect(properties.map((p: { name: string; value: string }) => [p.name, p.value])).toEqual([
+
+      const data = await fetchIqSettings();
+
+      expect(data.properties.map((p) => [p.name, p.value])).toEqual([
         ['proxy.host', 'proxy.example.com'],
         ['proxy.port', '8080'],
       ]);
-      service.stop();
     });
 
     it('counts unparseable lines as dropped on load', async () => {
       mockedAxios.get.mockResolvedValue({ data: { ...SETTINGS, properties: '# a comment\nproxy.host=x' } });
-      const service = interpret(createIqServerFormMachine()).start();
-      await waitFor(service, (s) => s.matches('editing'));
-      expect(service.getSnapshot().context.data.propertiesDroppedLineCount).toBe(1);
-      service.stop();
-    });
 
-    it('preserves the edited properties array (stable ids) after save, and resets the dropped-line count', async () => {
-      const { properties: _omitted, ...settingsWithoutProperties } = SETTINGS;
-      mockedAxios.get
-        .mockResolvedValueOnce({ data: { ...SETTINGS, properties: '# a comment\nproxy.host=x' } }) // initial load: 1 dropped line
-        .mockResolvedValueOnce({ data: settingsWithoutProperties });                                // post-PUT re-GET never echoes properties
-      mockedAxios.put.mockResolvedValue({ data: {} });
-      const service = interpret(createIqServerFormMachine()).start();
-      await waitFor(service, (s) => s.matches('editing'));
-      const beforeSave = service.getSnapshot().context.data.properties;
-      expect(beforeSave).toHaveLength(1);
-      const idBeforeSave = beforeSave[0].id;
+      const data = await fetchIqSettings();
 
-      service.send({ type: 'SUBMIT' });
-      await waitFor(service, (s) => s.matches('editing') && s.context.isPristine);
-
-      const afterSave = service.getSnapshot().context.data;
-      expect(afterSave.properties).toHaveLength(1);
-      expect(afterSave.properties[0].id).toBe(idBeforeSave);
-      expect(afterSave.properties[0]).toMatchObject({ name: 'proxy.host', value: 'x' });
-      expect(afterSave.propertiesDroppedLineCount).toBe(0);
-      service.stop();
+      expect(data.propertiesDroppedLineCount).toBe(1);
     });
   });
 

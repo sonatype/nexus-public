@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.service;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
@@ -31,7 +33,6 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.task.DeletionProgress;
 import org.sonatype.nexus.repository.types.GroupType;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
@@ -40,7 +41,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
@@ -121,7 +121,7 @@ public class CleanupServiceImplTest
     setupRepository(repository2, POLICY_2_NAME);
     setupRepository(repository3, null);
 
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1, repository2));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1, repository2));
 
     when(cleanupPolicyStorage.get(POLICY_1_NAME)).thenReturn(cleanupPolicy1);
     when(cleanupPolicyStorage.get(POLICY_2_NAME)).thenReturn(cleanupPolicy2);
@@ -130,8 +130,8 @@ public class CleanupServiceImplTest
     when(cleanupPolicy2.getCriteria()).thenReturn(ImmutableMap.of(LAST_DOWNLOADED_KEY, "2"));
 
     when(browseService.browse(cleanupPolicy1, repository1))
-        .thenReturn(ImmutableList.of(component1, component2).stream());
-    when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(ImmutableList.of(component3).stream());
+        .thenReturn(List.of(component1, component2).stream());
+    when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(List.of(component3).stream());
 
     when(cancelledCheck.getAsBoolean()).thenReturn(false);
 
@@ -192,7 +192,7 @@ public class CleanupServiceImplTest
     // Covers CleanupServiceImpl.shouldSkip(): policies with exclusion (retain)
     // criteria must be skipped when the format does not support retain.
     when(cleanupFeatureCheck.isRetainSupported(any())).thenReturn(false);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1));
     when(cleanupPolicy1.getCriteria()).thenReturn(
         ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1", "retain", "3", "sortBy", "version"));
 
@@ -204,7 +204,7 @@ public class CleanupServiceImplTest
 
   @Test
   public void ignoreRepositoryWhenPolicyNameListIsNull() throws Exception {
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository3));
+    when(repositoryManager.browse()).thenReturn(List.of(repository3));
 
     underTest.cleanup(cancelledCheck);
 
@@ -269,7 +269,7 @@ public class CleanupServiceImplTest
   @Test
   public void retryDeletionIfFailure() {
     when(deletionProgress.isFailed()).thenReturn(true).thenReturn(false);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1));
     when(cleanupMethod.run(any(), any(), any())).thenReturn(deletionProgress);
 
     underTest.cleanup(cancelledCheck);
@@ -280,7 +280,7 @@ public class CleanupServiceImplTest
   @Test
   public void retryAttemptsExceeded() {
     when(deletionProgress.isFailed()).thenReturn(true);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
+    when(repositoryManager.browse()).thenReturn(List.of(repository1));
     when(cleanupMethod.run(any(), any(), any())).thenReturn(deletionProgress);
 
     underTest.cleanup(cancelledCheck);
@@ -328,7 +328,7 @@ public class CleanupServiceImplTest
     when(repository.getConfiguration()).thenReturn(repositoryConfig);
 
     ImmutableMap<String, Map<String, Object>> attributes = ImmutableMap
-        .of("cleanup", singletonMap("policyName", policyName != null ? newLinkedHashSet(asList(policyName)) : null));
+        .of("cleanup", singletonMap("policyName", policyName != null ? new LinkedHashSet<>(asList(policyName)) : null));
     when(repositoryConfig.getAttributes()).thenReturn(attributes);
 
     when(repository.getType()).thenReturn(type);
@@ -345,7 +345,7 @@ public class CleanupServiceImplTest
       final String... policyNames)
   {
     Stream<FluentComponent> components =
-        ImmutableList.of(mock(FluentComponent.class), mock(FluentComponent.class)).stream();
+        List.of(mock(FluentComponent.class), mock(FluentComponent.class)).stream();
 
     asList(policyNames).forEach(policyName -> {
       CleanupPolicy cleanupPolicy = mock(CleanupPolicy.class);

@@ -39,9 +39,12 @@ export function SettingsCheckbox({
   disabled = false,
   className = '',
   analyticsId,
+  badge,
+  ariaDescribedBy,
 }) {
   const inputId = `settings-checkbox-${name}`;
   const descriptionId = `settings-checkbox-desc-${name}`;
+  const describedBy = [description ? descriptionId : '', ariaDescribedBy].filter(Boolean).join(' ') || undefined;
 
   const handleChange = (e) => {
     if (onChange) {
@@ -60,7 +63,7 @@ export function SettingsCheckbox({
             checked={checked}
             onChange={handleChange}
             disabled={disabled}
-            aria-describedby={description ? descriptionId : undefined}
+            aria-describedby={describedBy}
             data-testid={`checkbox-${name}`}
             {...(analyticsId ? { 'data-analytics-id': analyticsId } : {})}
             className="settings-checkbox__input"
@@ -68,7 +71,14 @@ export function SettingsCheckbox({
           {checked && <Check size={14} className="settings-checkbox__icon" />}
         </span>
         <span className="settings-checkbox__content">
-          <span className="settings-checkbox__label">{label}</span>
+          {badge ? (
+            <span className="settings-checkbox__label-row">
+              <span className="settings-checkbox__label">{label}</span>
+              {badge}
+            </span>
+          ) : (
+            <span className="settings-checkbox__label">{label}</span>
+          )}
           {description && (
             <Text as="span" size="1" id={descriptionId} className="settings-checkbox__description">
               {description}
@@ -97,6 +107,10 @@ SettingsCheckbox.propTypes = {
   className: PropTypes.string,
   /** Analytics ID for the checkbox input */
   analyticsId: PropTypes.string,
+  /** Optional node rendered next to the label (e.g. an edition pill) */
+  badge: PropTypes.node,
+  /** Id of an element outside the checkbox that also describes it (e.g. why it is disabled) */
+  ariaDescribedBy: PropTypes.string,
 };
 
 export default SettingsCheckbox;

@@ -18,12 +18,12 @@ import { PRO_FAMILY_EDITIONS } from '@sonatype/nexus-ui-plugin';
 import { browseRoutes } from './browseRoutes';
 
 describe('browseRoutes', () => {
-  it('declares a Trash route gated on the soft-delete state flag, licensed editions, and admin permission', () => {
+  it('declares a Trash route gated on the trash state flag, PRO edition, and admin permission', () => {
     const trashRoute = browseRoutes.find(r => r.name === 'browse.trash');
     expect(trashRoute).toBeDefined();
     expect(trashRoute.url).toBe('/trash');
     expect(trashRoute.data.visibilityRequirements.statesEnabled).toEqual(
-      expect.arrayContaining([{ key: 'nexus.softDelete.enabled', defaultValue: false }])
+      expect.arrayContaining([{ key: 'nexus.trash.enabled', defaultValue: false }])
     );
     expect(trashRoute.data.visibilityRequirements.editions).toEqual([...PRO_FAMILY_EDITIONS]);
     expect(trashRoute.data.visibilityRequirements.permissions).toBeDefined();

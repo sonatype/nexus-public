@@ -93,6 +93,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.NugetGroup',
     'repository.recipe.NugetHosted',
     'repository.recipe.NugetProxy',
+    'repository.recipe.OpenVSXProxy',
     'repository.recipe.P2Proxy',
     'repository.recipe.PyPiGroup',
     'repository.recipe.PyPiHosted',

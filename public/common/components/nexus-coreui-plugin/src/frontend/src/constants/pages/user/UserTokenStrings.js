@@ -26,7 +26,7 @@ export default {
     CAPTION: 'Token Information',
     LABELS: {
       NOTE: 'Nexus Repository creates a new user token when a user first accesses that token. ' +
-          'Resetting your user token invalidates the current token. Nexus Repository will create a new user token when you next access that token.',
+          'Resetting your user token invalidates all of your tokens, including your user token and format tokens (npm, Docker, Terraform, etc.). Nexus Repository will create a new user token when you next access it.',
       USER_TOKEN_NOTE: 'User tokens are a combination of a name and password codes.',
       KEEP_SECRET_NOTE: 'Keep these codes secret.',
       USER_TOKEN_NAME_CODE: 'Your user token name code is',

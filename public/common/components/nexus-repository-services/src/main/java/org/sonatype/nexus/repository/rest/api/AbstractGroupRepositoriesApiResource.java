@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.common.app.ApplicationVersion;
@@ -24,10 +26,10 @@ import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
+import org.sonatype.nexus.repository.security.GroupMemberAuthorizationChecker;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
-import com.google.common.collect.Sets;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.ConstraintViolation;
@@ -41,7 +43,6 @@ import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
 /**
@@ -56,11 +57,20 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
 
   private ApplicationVersion applicationVersion;
 
+  private GroupMemberAuthorizationChecker groupMemberAuthorizationChecker;
+
   protected GroupRepositoryApiRequestToConfigurationConverter<T> configurationConverter;
 
   @Autowired
   public void setConstraintViolationFactory(final ConstraintViolationFactory constraintViolationFactory) {
     this.constraintViolationFactory = requireNonNull(constraintViolationFactory);
+  }
+
+  @Autowired
+  public void setGroupMemberAuthorizationChecker(
+      final GroupMemberAuthorizationChecker groupMemberAuthorizationChecker)
+  {
+    this.groupMemberAuthorizationChecker = requireNonNull(groupMemberAuthorizationChecker);
   }
 
   @Autowired
@@ -100,30 +110,65 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
   protected void validateRequest(final T request) {
     super.validateRequest(request);
 
-    String groupFormat = request.getFormat();
-    Set<ConstraintViolation<?>> violations = Sets.newHashSet();
-    GroupAttributes groupAttributes = request.getGroup();
-    if (groupAttributes != null) {
-      Collection<String> memberNames = groupAttributes.getMemberNames();
-      if (memberNames != null) {
-        for (String repositoryName : memberNames) {
-          Repository repository = repositoryManager.get(repositoryName);
-          if (nonNull(repository)) {
-            String memberFormat = repository.getFormat().getValue();
-            if (!memberFormat.equals(groupFormat)) {
-              violations.add(constraintViolationFactory.createViolation("memberNames",
-                  "Member repository format does not match group repository format: " + repositoryName));
-            }
-          }
-          else {
-            violations.add(constraintViolationFactory.createViolation("memberNames",
-                "Member repository does not exist: " + repositoryName));
-          }
-        }
-      }
-    }
+    Set<ConstraintViolation<?>> violations = new HashSet<>();
+    validateMembers(request, violations);
     validateGroupDeploy(request, violations);
     maybePropagate(violations, log);
+  }
+
+  /**
+   * Validates each requested group member: it must exist, match the group's format, and - for members not already
+   * stored on the group - be readable or browsable by the caller. Members already present are grandfathered so that
+   * existing group configurations remain editable. All failures are collected onto {@code memberNames}. The
+   * authorization portion is delegated to {@link GroupMemberAuthorizationChecker}, shared with the UI write paths.
+   */
+  private void validateMembers(final T request, final Set<ConstraintViolation<?>> violations) {
+    GroupAttributes groupAttributes = request.getGroup();
+    if (groupAttributes == null || groupAttributes.getMemberNames() == null) {
+      return;
+    }
+    String groupFormat = request.getFormat();
+    List<String> existingFormatMatchedMembers = new ArrayList<>();
+    for (String memberName : groupAttributes.getMemberNames()) {
+      if (memberExistsWithMatchingFormat(memberName, groupFormat, violations)) {
+        existingFormatMatchedMembers.add(memberName);
+      }
+    }
+    // Grandfathering uses request.getName() to identify the group's already-stored members. On update this is the
+    // request BODY name, not yet checked against the {repositoryName} path param at this point - the match is enforced
+    // later by AbstractRepositoriesApiResource.ensureRepositoryNameMatches, which rejects any mismatch BEFORE the
+    // configuration is persisted. So a body name pointing at a different group cannot persist a grandfathering bypass.
+    // If that ordering is ever changed (name validated after persistence, or an early-return that skips it), this
+    // becomes exploitable - keep the name check ahead of the write.
+    //
+    // A single generic violation rather than one naming each member: distinct per-member authorization messages would
+    // let an unprivileged caller read which repositories they cannot access off the 400 body (information oracle,
+    // NEXUS-53747). Existence and format mismatches above are pre-existing named messages and unchanged.
+    if (!groupMemberAuthorizationChecker.findUnauthorizedNewMembers(request.getName(), existingFormatMatchedMembers)
+        .isEmpty()) {
+      violations.add(memberViolation("Not authorized to add one or more of the requested member repositories."));
+    }
+  }
+
+  private boolean memberExistsWithMatchingFormat(
+      final String memberName,
+      final String groupFormat,
+      final Set<ConstraintViolation<?>> violations)
+  {
+    Repository member = repositoryManager.get(memberName);
+    if (member == null) {
+      violations.add(memberViolation("Member repository does not exist: " + memberName));
+      return false;
+    }
+    if (!member.getFormat().getValue().equals(groupFormat)) {
+      violations.add(memberViolation("Member repository format does not match group repository format: " + memberName));
+      return false;
+    }
+    return true;
+  }
+
+  private ConstraintViolation<?> memberViolation(final String message) {
+    return constraintViolationFactory.createViolation("memberNames", message);
   }
 
   private void validateGroupDeploy(final T request, final Set<ConstraintViolation<?>> violations) {

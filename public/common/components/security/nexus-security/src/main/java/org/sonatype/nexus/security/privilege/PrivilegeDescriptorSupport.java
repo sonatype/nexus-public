@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.privilege;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,7 +31,6 @@ import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
@@ -95,7 +95,7 @@ public abstract class PrivilegeDescriptorSupport<T extends ApiPrivilege, Y exten
    */
   protected List<String> readListProperty(final CPrivilege privilege, final String name, final String defaultValue) {
     String value = readProperty(privilege, name, defaultValue);
-    return Lists.newArrayList(Splitter.on(',').omitEmptyStrings().trimResults().split(value));
+    return new ArrayList<>(Splitter.on(',').omitEmptyStrings().trimResults().splitToList(value));
   }
 
   /**

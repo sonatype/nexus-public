@@ -149,6 +149,21 @@ describe('SettingsCheckbox', () => {
       expect(checkbox).not.toHaveAttribute('aria-describedby');
     });
 
+    it('merges ariaDescribedBy with the description id', () => {
+      render(
+        <SettingsCheckbox {...defaultProps} description="Description text" ariaDescribedBy="extra-message" />
+      );
+      expect(screen.getByRole('checkbox')).toHaveAttribute(
+        'aria-describedby',
+        'settings-checkbox-desc-test-checkbox extra-message'
+      );
+    });
+
+    it('uses ariaDescribedBy alone when there is no description', () => {
+      render(<SettingsCheckbox {...defaultProps} ariaDescribedBy="extra-message" />);
+      expect(screen.getByRole('checkbox')).toHaveAttribute('aria-describedby', 'extra-message');
+    });
+
     it('can be toggled with keyboard', () => {
       const onChange = jest.fn();
       render(<SettingsCheckbox {...defaultProps} onChange={onChange} />);
@@ -159,6 +174,28 @@ describe('SettingsCheckbox', () => {
       fireEvent.click(checkbox);
 
       expect(onChange).toHaveBeenCalled();
+    });
+  });
+
+  describe('badge', () => {
+    it('renders the badge next to the label', () => {
+      render(<SettingsCheckbox {...defaultProps} badge={<span data-testid="checkbox-badge">Pro</span>} />);
+
+      const labelRow = screen.getByText('Test Checkbox').parentElement;
+      expect(labelRow).toHaveClass('settings-checkbox__label-row');
+      expect(labelRow).toContainElement(screen.getByTestId('checkbox-badge'));
+    });
+
+    it('keeps the badge inside the label so it is part of the accessible name', () => {
+      render(<SettingsCheckbox {...defaultProps} badge={<span>Pro</span>} />);
+
+      expect(screen.getByRole('checkbox', { name: /Test Checkbox\s*Pro/ })).toBeInTheDocument();
+    });
+
+    it('renders no label row when no badge is given', () => {
+      const { container } = render(<SettingsCheckbox {...defaultProps} />);
+
+      expect(container.querySelector('.settings-checkbox__label-row')).not.toBeInTheDocument();
     });
   });
 

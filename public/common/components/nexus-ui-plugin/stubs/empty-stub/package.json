@@ -1,0 +1,6 @@
+{
+  "name": "@sonatype/empty-stub",
+  "version": "0.0.0",
+  "description": "Empty stub that unused transitive dependencies are redirected to via Yarn portal: resolutions. See README.md.",
+  "main": "index.js"
+}

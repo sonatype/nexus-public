@@ -158,6 +158,21 @@ describe('SettingsCombobox', () => {
       expect(screen.getByText('Pick a domain')).toBeInTheDocument();
     });
 
+    it('shows help text alongside error when both are present', () => {
+      render(
+        <SettingsCombobox
+          name="domain"
+          label="Domain"
+          options={singleOptions}
+          helpText="Pick a domain"
+          error="Required"
+        />
+      );
+
+      expect(screen.getByText('Pick a domain')).toBeInTheDocument();
+      expect(screen.getByText('Required')).toBeInTheDocument();
+    });
+
     it('blur restores display label not raw value when showLabelForValue is true', async () => {
       // Regression for line 226 fix: blur was restoring setInputValue(value) which showed
       // the raw synthetic value '*-maven2' instead of '(All maven2 Repositories)'.

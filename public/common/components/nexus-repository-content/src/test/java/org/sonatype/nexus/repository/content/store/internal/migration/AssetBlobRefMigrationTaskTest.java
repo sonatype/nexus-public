@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.store.internal.migration;
 
-import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -113,7 +112,7 @@ public class AssetBlobRefMigrationTaskTest
     blobData2.setBlobRef(new BlobRef("default", uuid));
     blobData3.setBlobRef(new BlobRef("default", uuid));
 
-    Collection<AssetBlob> blobs = ImmutableList.of(blobData1, blobData2, blobData3);
+    Collection<AssetBlob> blobs = List.of(blobData1, blobData2, blobData3);
 
     assetBlobRefMigrationTask.updateDuplicatedBlobRef(blobs);
 

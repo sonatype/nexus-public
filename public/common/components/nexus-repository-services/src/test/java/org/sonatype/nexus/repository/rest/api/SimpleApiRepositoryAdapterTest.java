@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,6 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
-import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -455,12 +455,12 @@ public class SimpleApiRepositoryAdapterTest
       requireNonNull(key);
 
       if (attributes == null) {
-        attributes = Maps.newHashMap();
+        attributes = new HashMap<>();
       }
 
       Map<String, Object> map = attributes.get(key);
       if (map == null) {
-        map = Maps.newHashMap();
+        map = new HashMap<>();
         attributes.put(key, map);
       }
 

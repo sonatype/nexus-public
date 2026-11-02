@@ -37,12 +37,12 @@ public class DuplicateDetectionStrategyTestSupport
 
     for (int i = 1; i <= expectedUnique; i++) {
       Record uniqueRecord = buildRecord("group1", "artifact" + i, "1.0", "sources", "jar");
-      assertTrue(strategy.apply(uniqueRecord));
+      assertTrue(strategy.test(uniqueRecord));
     }
 
     for (int i = 0; i < 10; i++) {
       Record duplicateRecord = buildRecord("group1", "artifact" + expectedUnique, "1.0", "sources", "jar");
-      assertFalse(strategy.apply(duplicateRecord));
+      assertFalse(strategy.test(duplicateRecord));
     }
 
     strategy.close();

@@ -19,6 +19,13 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   useIsPreviewUI: jest.requireActual(
     '../../../../../../../../nexus-ui-plugin/src/frontend/src/components/preview/shared/Navigation/useIsPreviewUI'
   ).useIsPreviewUI,
+  // Use the real edition resolution so the banner reads the edition the same way as in production
+  ...(() => {
+    const { EDITION_COMMUNITY, resolveEditionId } = jest.requireActual(
+      '../../../../../../../../nexus-ui-plugin/src/frontend/src/interface/editionUtils'
+    );
+    return { EDITION_COMMUNITY, resolveEditionId };
+  })(),
   SystemAlert: ({tier, title, message, dismissable}: any) => (
     <div
       data-testid="nxrm-system-alert"
@@ -34,6 +41,11 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 
 const HELPER_LINK_TEXT = 'base telemetry';
 const HELPER_LINK_HREF = 'https://links.sonatype.com/products/nxrm3/nexus-telemetry';
+const SUPPORT_TEXT = /contact Sonatype Support/;
+const COMMUNITY_LINK_TEXT = 'Sonatype Community';
+const COMMUNITY_LINK_HREF = 'https://links.sonatype.com/products/nexus/community-chat';
+const CONTACT_US_LINK_TEXT = 'contact us';
+const CONTACT_US_LINK_HREF = 'https://links.sonatype.com/contact-sales';
 
 describe('TelemetryWarningBanner', () => {
   const { ExtJS } = require('@sonatype/nexus-ui-plugin');
@@ -333,6 +345,74 @@ describe('TelemetryWarningBanner', () => {
       const helperLink = screen.getByRole('link', { name: HELPER_LINK_TEXT });
       expect(helperLink).toHaveAttribute('target', '_blank');
       expect(helperLink).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+  });
+
+  describe('support recommendation by edition', () => {
+    const BANNERS = [
+      { banner: 'Warning Banner', health: { showWarning: true } },
+      { banner: 'Read-Only Mode Banner', health: { readOnly: true } },
+    ];
+
+    function renderBanner(health: object, editionId: string) {
+      ExtJS.useUser.mockReturnValue({ administrator: true });
+      ExtJS.state.mockReturnValue({
+        getValue: jest.fn((key: string) => (key === 'editionId' ? editionId : health)),
+      });
+      return render(<TelemetryWarningBanner />);
+    }
+
+    describe.each(BANNERS)('$banner', ({ health }) => {
+      describe('for Community Edition', () => {
+        it('does not tell the user to contact Support', () => {
+          renderBanner(health, 'nexus-community-edition');
+
+          expect(screen.queryByText(SUPPORT_TEXT)).not.toBeInTheDocument();
+        });
+
+        it('links to the Sonatype Community', () => {
+          renderBanner(health, 'nexus-community-edition');
+
+          const link = screen.getByRole('link', { name: COMMUNITY_LINK_TEXT });
+          expect(link).toHaveAttribute('href', COMMUNITY_LINK_HREF);
+          expect(link).toHaveAttribute('target', '_blank');
+          expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+          expect(link).toHaveAttribute('data-analytics-id', 'nxrm-telemetry-community-link');
+        });
+
+        it('links to the contact us page', () => {
+          renderBanner(health, 'nexus-community-edition');
+
+          const link = screen.getByRole('link', { name: CONTACT_US_LINK_TEXT });
+          expect(link).toHaveAttribute('href', CONTACT_US_LINK_HREF);
+          expect(link).toHaveAttribute('target', '_blank');
+          expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+          expect(link).toHaveAttribute('data-analytics-id', 'nxrm-telemetry-contact-us-link');
+        });
+
+        it('keeps the "base telemetry" and "Go to Tasks" links', () => {
+          renderBanner(health, 'nexus-community-edition');
+
+          expect(screen.getAllByRole('link', { name: HELPER_LINK_TEXT })).toHaveLength(1);
+          expect(screen.getByRole('link', { name: /Go to Tasks/ })).toBeInTheDocument();
+        });
+      });
+
+      describe.each([
+        'nexus-professional-edition',
+        'nexus-professional-plus-edition',
+        'nexus-enterprise-edition',
+        'nexus-core-edition',
+        'nexus-cloud-edition',
+      ])('for %s', (editionId) => {
+        it('still tells the user to contact Support, without community links', () => {
+          renderBanner(health, editionId);
+
+          expect(screen.getByText(SUPPORT_TEXT)).toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: COMMUNITY_LINK_TEXT })).not.toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: CONTACT_US_LINK_TEXT })).not.toBeInTheDocument();
+        });
+      });
     });
   });
 });

@@ -29,6 +29,7 @@ import { useRouter } from '@uirouter/react';
 import type { Repository, HealthCheckStatus, FirewallStatus } from './repository-list.types';
 import { HealthCheckCell } from '../../../shared/security/HealthCheckCell';
 import { FirewallCell } from '../../../shared/security/FirewallCell';
+import type { SecurityStatusData } from '../../../shared/security/security.types';
 import {
   SortableTableHeader,
   useToast,
@@ -87,6 +88,12 @@ export interface RepositoryListTableProps {
   firewallStatus?: Record<string, FirewallStatus>;
   /** Whether the firewall summary API has finished loading */
   firewallLoaded?: boolean;
+  /** Whether the firewall summary loaded successfully */
+  firewallSummaryReady?: boolean;
+  /** Per-repository violation counts keyed by repository name */
+  firewallCounts?: Record<string, SecurityStatusData>;
+  /** Repositories whose count request is in flight or queued */
+  firewallCountsLoading?: ReadonlySet<string>;
   /** Show health check column */
   showHealthCheck?: boolean;
   /** Show IQ policy violations column */
@@ -99,6 +106,8 @@ export interface RepositoryListTableProps {
   analyzingRepos?: Set<string>;
   /** Whether user has Firewall license */
   hasFirewallLicense?: boolean;
+  /** Called after a firewall enable succeeds so the parent can refresh status. */
+  onFirewallEnableSuccess?: () => void;
   /** Summary of proxy protection status */
   proxyProtectionSummary?: { totalProxy: number; protectedProxy: number };
   /** Current sort field (for server-side sort) */
@@ -121,12 +130,16 @@ export function RepositoryListTable({
   healthCheck = {},
   firewallStatus = {},
   firewallLoaded = false,
+  firewallSummaryReady = firewallLoaded,
+  firewallCounts = {},
+  firewallCountsLoading,
   showHealthCheck = false,
   showIqPolicyViolations = false,
   hasFilters = false,
   onAnalyze,
   analyzingRepos = new Set(),
   hasFirewallLicense = true,
+  onFirewallEnableSuccess,
   proxyProtectionSummary,
   sortKey = 'name',
   sortDirection = 'asc',
@@ -364,7 +377,11 @@ export function RepositoryListTable({
                     repository={repo}
                     firewallStatus={firewallStatus[repo.name]}
                     firewallLoaded={firewallLoaded}
+                    firewallSummaryReady={firewallSummaryReady}
+                    firewallCounts={firewallCounts[repo.name]}
+                    firewallCountsLoading={firewallCountsLoading?.has(repo.name) ?? false}
                     hasFirewallLicense={hasFirewallLicense}
+                    onEnableSuccess={onFirewallEnableSuccess}
                     proxyProtectionSummary={proxyProtectionSummary}
                   />
                 </Table.Cell>

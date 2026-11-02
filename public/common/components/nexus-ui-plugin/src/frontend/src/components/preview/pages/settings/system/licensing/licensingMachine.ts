@@ -56,6 +56,7 @@ export function createLicensingMachine() {
   return createMachine<LicensingContext, LicensingEvent>(
     {
       id: 'licensing',
+      predictableActionArguments: true,
       initial: 'loading',
       context: { license: {}, loadError: null, activeTab: 'license' },
       states: {

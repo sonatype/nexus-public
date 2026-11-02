@@ -21,15 +21,16 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.requireNonNull;
-import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.FILTER_CONDITION_FIELD_ID;
+import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.NAMESPACE_LIKE_FIELD_ID;
 import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.TYPE_ID;
+import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.VERSION_LIKE_FIELD_ID;
 
 /**
  * Schedules a reindex task which filters components that contains underscores for namespace or version fields.
@@ -48,8 +49,8 @@ public class ReIndexSearchRecordsWithUnderscoreMigrationStep_2_105
 
   @Autowired
   public ReIndexSearchRecordsWithUnderscoreMigrationStep_2_105(
-      TaskScheduler taskScheduler,
-      UpgradeTaskScheduler upgradeTaskScheduler,
+      final TaskScheduler taskScheduler,
+      final UpgradeTaskScheduler upgradeTaskScheduler,
       @Value(FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE) final boolean haEnabled)
   {
     this.haEnabled = haEnabled;
@@ -74,7 +75,8 @@ public class ReIndexSearchRecordsWithUnderscoreMigrationStep_2_105
 
   private void scheduleReindexTaskForRecordsWithUnderscore() {
     TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(TYPE_ID);
-    taskConfiguration.setString(FILTER_CONDITION_FIELD_ID, "namespace LIKE '%\\_%' OR version LIKE '%\\_%'");
+    taskConfiguration.setString(NAMESPACE_LIKE_FIELD_ID, "\\_");
+    taskConfiguration.setString(VERSION_LIKE_FIELD_ID, "\\_");
     upgradeTaskScheduler.schedule(taskConfiguration);
     log.debug("Scheduled reindex with filter task");
   }

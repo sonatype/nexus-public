@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -41,7 +40,7 @@ public class SqlClause
     this.operand = requireNonNull(operand);
     checkArgument(operand == Operand.AND || operand == Operand.OR, "Unexpected operand: " + operand.toString());
     checkArgument(expressions.size() > 1, "Must have at least 2 expressions");
-    this.expressions = ImmutableList.copyOf(requireNonNull(expressions));
+    this.expressions = List.copyOf(requireNonNull(expressions));
   }
 
   /**

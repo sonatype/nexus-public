@@ -24,12 +24,14 @@ export function UploadField({
   onChange,
   error,
   onBlur,
+  placeholder,
 }: {
   field: UploadFieldDefinition;
   value: string | boolean;
   onChange: (value: string | boolean) => void;
   error?: string | null;
   onBlur?: () => void;
+  placeholder?: string;
 }): JSX.Element {
   const commonProps = {
     name: field.name,
@@ -68,6 +70,7 @@ export function UploadField({
       onChange={onChange}
       onBlur={onBlur}
       error={error || ''}
+      placeholder={placeholder}
     />
   );
 }

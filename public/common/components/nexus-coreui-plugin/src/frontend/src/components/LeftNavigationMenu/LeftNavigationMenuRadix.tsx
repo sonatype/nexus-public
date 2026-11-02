@@ -28,7 +28,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useIsActive, useSref } from '@uirouter/react';
-import { NavItemBox, PreviewUIContext, useContextAwareRouteName } from '@sonatype/nexus-ui-plugin';
+import { NavItemBox, PreviewUIContext, SecurityNavSection, useContextAwareRouteName } from '@sonatype/nexus-ui-plugin';
 import { ROUTE_NAMES } from '../../routerConfig/routeNames/routeNames';
 import { useLeftNavigationMenu, useSearchCollapsibleNav } from './useLeftNavigationMenu';
 
@@ -184,8 +184,16 @@ export function SearchCollapsibleNav({ isCollapsed }: SearchCollapsibleNavProps)
  */
 export default function LeftNavigationMenuRadix() {
   const { BROWSE, ADMIN } = ROUTE_NAMES;
-  const { isCollapsed, isPreviewUI, adminInitialRouteName, isSettingsVisible, showTestHub, isLicensedEdition } =
-    useLeftNavigationMenu();
+  const {
+    isCollapsed,
+    isPreviewUI,
+    adminInitialRouteName,
+    isSettingsVisible,
+    showTestHub,
+    isLicensedEdition,
+    isSecuritySectionVisible,
+    securityBadgeCount,
+  } = useLeftNavigationMenu();
 
   const malwareRiskRouteName = isPreviewUI
     ? 'preview.browse.malwarerisk'
@@ -261,6 +269,11 @@ export default function LeftNavigationMenuRadix() {
                 icon={ShieldAlert}
                 isCollapsed={isCollapsed}
               />
+
+              {/* Security: Preview UI only, gated by Firewall security page visibility */}
+              {isSecuritySectionVisible && (
+                <SecurityNavSection isCollapsed={isCollapsed} badgeCount={securityBadgeCount} />
+              )}
 
               {/* API */}
               {isPreviewUI && (

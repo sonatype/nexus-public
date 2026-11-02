@@ -223,6 +223,24 @@ export const adminRoutes = [
     },
   },
 
+  // Global Distribution has no ExtJS view; classic URLs redirect to the preview page. Keep the gate in
+  // sync with previewAdminRoutes.js.
+  {
+    name: ADMIN.REPOSITORY.GLOBAL_DISTRIBUTION.ROOT,
+    url: '/global-distribution',
+    redirectTo: 'preview.admin.repository.globaldistribution',
+    data: {
+      title: ADMIN.REPOSITORY.GLOBAL_DISTRIBUTION.TITLE,
+      visibilityRequirements: {
+        requiresAnyPermission: [
+          Permissions.SETTINGS.READ,
+          Permissions.REPOSITORY_ADMIN.READ,
+          Permissions.BLOB_STORES.READ,
+        ],
+      },
+    },
+  },
+
   // abstract parent selectors state
   {
     name: ADMIN.REPOSITORY.SELECTORS.ROOT,

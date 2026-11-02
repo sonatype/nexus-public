@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.io.CooperationException;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -46,6 +47,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_REMOTE_FETCH_SKIP_MARKER;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_TELEMETRY_BLOCKING_MARKER;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -78,6 +80,9 @@ public class ProxyHandlerTest
 
   @Mock
   private Format format;
+
+  @Mock
+  private ApplicationVersion applicationVersion;
 
   @InjectMocks
   private final ProxyHandler underTest = new ProxyHandler();
@@ -120,6 +125,30 @@ public class ProxyHandlerTest
     when(request.getAction()).thenReturn(HttpMethods.GET);
     when(context.getAttributes()).thenReturn(attributes);
     assertStatusCode(underTest.handle(context), HttpStatus.FORBIDDEN);
+  }
+
+  @Test
+  public void testTelemetryBlockingMarkerRecommendsSupportOutsideCommunityEdition() throws Exception {
+    givenTelemetryBlockingMarkerSet();
+    when(applicationVersion.isCommunityEdition()).thenReturn(false);
+
+    Response response = underTest.handle(context);
+
+    assertStatusCode(response, HttpStatus.FORBIDDEN);
+    assertStatusMessage(response,
+        "Nexus Repository is now in read-only mode because base telemetry (https://links.sonatype.com/products/nxrm3/nexus-telemetry) data could not be uploaded within the grace period. Check your network configuration and verify that the server can reach the telemetry service. If the problem persists, contact Sonatype Support. To retry the upload now, run the Upload Retry task.");
+  }
+
+  @Test
+  public void testTelemetryBlockingMarkerRecommendsCommunityResourcesInCommunityEdition() throws Exception {
+    givenTelemetryBlockingMarkerSet();
+    when(applicationVersion.isCommunityEdition()).thenReturn(true);
+
+    Response response = underTest.handle(context);
+
+    assertStatusCode(response, HttpStatus.FORBIDDEN);
+    assertStatusMessage(response,
+        "Nexus Repository is now in read-only mode because base telemetry (https://links.sonatype.com/products/nxrm3/nexus-telemetry) data could not be uploaded within the grace period. Check your network configuration and verify that the server can reach the telemetry service. If the problem persists, visit the Sonatype Community (https://links.sonatype.com/products/nexus/community-chat) or contact us (https://links.sonatype.com/contact-sales). To retry the upload now, run the Upload Retry task.");
   }
 
   @Test
@@ -245,6 +274,13 @@ public class ProxyHandlerTest
     try (InputStream inputStream = response.getPayload().openInputStream()) {
       assertThat(IOUtils.toString(inputStream, Charset.defaultCharset()), is("body"));
     }
+  }
+
+  private void givenTelemetryBlockingMarkerSet() {
+    AttributesMap attributes = new AttributesMap();
+    attributes.set(PROXY_TELEMETRY_BLOCKING_MARKER, TRUE);
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+    when(context.getAttributes()).thenReturn(attributes);
   }
 
   private void assertStatusCode(final Response response, final int statusCode) {

@@ -16,11 +16,37 @@ import {
   formatDate,
   formatRelativeDate,
   getAssetDownloadUrl,
+  getFullAssetUrl,
   truncateText,
   getFilenameFromPath,
   isAssetCached,
   getLastDownloadedDisplay,
 } from '../detail.utils';
+
+const TEST_REPOSITORY = 'maven-releases';
+const TEST_ASSET_PATH = 'org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar';
+const EXPECTED_ORIGIN = 'http://localhost';
+
+
+/**
+ * Installs the NX.util.Url shape the server bootstrap really produces (bootstrap.vm): `relativePath`
+ * is '.', so `urlOf` returns a context-relative `./path`. The page itself is served from the context
+ * path, so relative URLs are resolved against `contextPath` (NEXUS-55899).
+ */
+const installNxUrl = (contextPath: string) => {
+  const relativePath = '.';
+  window.history.pushState({}, '', contextPath);
+  (window as any).NX = {
+    ...(window as any).NX,
+    app: { relativePath },
+    util: {
+      Url: {
+        relativePath,
+        urlOf: (path: string) => `${relativePath}${path.startsWith('/') ? '' : '/'}${path}`,
+      },
+    },
+  };
+};
 
 describe('detail.utils', () => {
   describe('formatFileSize', () => {
@@ -148,19 +174,82 @@ describe('detail.utils', () => {
     });
   });
 
+  describe('context path (NEXUS-55899)', () => {
+    const originalNX = (window as any).NX;
+
+    afterEach(() => {
+      (window as any).NX = originalNX;
+    });
+
+    // BDD-006, AT-004
+    it('getAssetDownloadUrl returns a context-relative URL', () => {
+      installNxUrl('/nexus/');
+
+      expect(getAssetDownloadUrl('raw-hosted', '/docs/readme.txt'))
+        .toBe('./repository/raw-hosted/docs/readme.txt');
+    });
+
+    // BDD-006, AT-005
+    it('getFullAssetUrl falls back to an absolute URL with the context path', () => {
+      installNxUrl('/nexus/');
+
+      expect(getFullAssetUrl('raw-hosted', null, '/docs/readme.txt'))
+        .toBe('http://localhost/nexus/repository/raw-hosted/docs/readme.txt');
+    });
+
+    // BDD-002, AT-005
+    it('getFullAssetUrl returns an absolute URL for a context-path-relative downloadUrl', () => {
+      installNxUrl('/nexus/');
+
+      expect(getFullAssetUrl('raw-hosted', './repository/raw-hosted/docs/readme.txt', '/docs/readme.txt'))
+        .toBe('http://localhost/nexus/repository/raw-hosted/docs/readme.txt');
+    });
+  });
+
   describe('getAssetDownloadUrl', () => {
     it('generates correct URL without leading slash', () => {
       expect(getAssetDownloadUrl('maven-releases', 'org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar'))
-        .toBe('/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar');
+        .toBe('http://localhost/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar');
     });
 
     it('removes leading slash from path', () => {
       expect(getAssetDownloadUrl('npm-hosted', '/lodash/-/lodash-4.17.21.tgz'))
-        .toBe('/repository/npm-hosted/lodash/-/lodash-4.17.21.tgz');
+        .toBe('http://localhost/repository/npm-hosted/lodash/-/lodash-4.17.21.tgz');
     });
 
     it('handles empty path', () => {
-      expect(getAssetDownloadUrl('raw-hosted', '')).toBe('/repository/raw-hosted/');
+      expect(getAssetDownloadUrl('raw-hosted', '')).toBe('http://localhost/repository/raw-hosted/');
+    });
+  });
+
+  describe('getFullAssetUrl', () => {
+    it('shouldReturnAbsoluteDownloadUrlUnchanged', () => {
+      const absolute = 'https://nexus.example.com/nexus/repository/maven-releases/foo.jar';
+      expect(getFullAssetUrl(TEST_REPOSITORY, absolute, 'foo.jar')).toBe(absolute);
+    });
+
+    it('shouldPrependOriginToOriginRelativeDownloadUrl', () => {
+      expect(getFullAssetUrl(TEST_REPOSITORY, '/repository/maven-releases/foo.jar', 'foo.jar'))
+        .toBe(`${EXPECTED_ORIGIN}/repository/maven-releases/foo.jar`);
+    });
+
+    it('shouldPrefixSlashWhenDownloadUrlHasNoLeadingSlash', () => {
+      expect(getFullAssetUrl(TEST_REPOSITORY, 'repository/maven-releases/foo.jar', 'foo.jar'))
+        .toBe(`${EXPECTED_ORIGIN}/repository/maven-releases/foo.jar`);
+    });
+
+    it('shouldBuildFullUrlFromPathWhenDownloadUrlAbsent', () => {
+      expect(getFullAssetUrl(TEST_REPOSITORY, null, TEST_ASSET_PATH))
+        .toBe(`${EXPECTED_ORIGIN}/repository/${TEST_REPOSITORY}/${TEST_ASSET_PATH}`);
+    });
+
+    it('shouldStripLeadingSlashFromPathFallback', () => {
+      expect(getFullAssetUrl(TEST_REPOSITORY, undefined, '/lodash/-/lodash-4.17.21.tgz'))
+        .toBe(`${EXPECTED_ORIGIN}/repository/${TEST_REPOSITORY}/lodash/-/lodash-4.17.21.tgz`);
+    });
+
+    it('shouldReturnEmptyStringWhenNoUrlOrPath', () => {
+      expect(getFullAssetUrl(TEST_REPOSITORY, null, null)).toBe('');
     });
   });
 

@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 // Mock the shared module before importing SettingsHubPage
@@ -24,11 +24,6 @@ jest.mock('../../../shared', () => ({
       {children}
     </div>
   ),
-}));
-
-// Mock previewFeatureFlags — repositories is enabled, others are disabled
-jest.mock('../../../config/featureFlags', () => ({
-  isFeatureEnabled: (key: string) => key === 'repository.repositories',
 }));
 
 // Mock the settingsConfig to avoid dependency on actual config
@@ -44,14 +39,12 @@ jest.mock('../settingsConfig', () => ({
           path: 'repository/repositories',
           label: 'Repositories',
           description: 'Manage repository configurations',
-          featureKey: 'repository.repositories',
         },
         {
           id: 'blob-stores',
           path: 'repository/blob-stores',
           label: 'Blob Stores',
           description: 'Configure blob storage locations',
-          featureKey: 'repository.blobstores',
           cloudExcluded: true,
         },
       ],
@@ -65,7 +58,6 @@ jest.mock('../settingsConfig', () => ({
           path: 'security/users',
           label: 'Users',
           description: 'Manage user accounts and access',
-          featureKey: 'security.users',
           visibilityRequirements: { requiresPermission: 'nexus:users:read' },
         },
         {
@@ -73,7 +65,6 @@ jest.mock('../settingsConfig', () => ({
           path: 'security/roles',
           label: 'Roles',
           description: 'Configure user roles and permissions',
-          featureKey: 'security.roles',
           visibilityRequirements: { requiresPermission: 'nexus:roles:read' },
         },
         {
@@ -82,7 +73,6 @@ jest.mock('../settingsConfig', () => ({
           label: 'LDAP',
           description: 'Configure LDAP integration',
           searchTerms: ['active directory', 'ad', 'directory service'],
-          featureKey: 'security.ldap',
         },
         {
           id: 'ip-allowlist',
@@ -104,7 +94,6 @@ jest.mock('../settingsConfig', () => ({
           path: 'support/logs',
           label: 'Logs',
           description: 'View application logs',
-          featureKey: 'support.logs',
         },
       ],
     },
@@ -117,7 +106,6 @@ jest.mock('../settingsConfig', () => ({
           path: 'system/tasks',
           label: 'Tasks',
           description: 'Manage scheduled system tasks',
-          featureKey: 'system.tasks',
         },
         {
           id: 'usage',
@@ -643,29 +631,6 @@ describe('SettingsHubPage', () => {
     });
   });
 
-  describe('Preview Mode Callout', () => {
-    it('renders callout explaining preview mode', () => {
-      renderWithTheme(<SettingsHubPage />);
-
-      expect(screen.getByText(/Some settings pages are available in this preview/)).toBeInTheDocument();
-    });
-
-    it('renders Coming Soon badge inside callout text', () => {
-      renderWithTheme(<SettingsHubPage />);
-
-      // The callout contains a Coming Soon badge inline in the text
-      const calloutBadges = screen.getAllByText('Coming Soon');
-      expect(calloutBadges.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('renders callout before settings sections', () => {
-      const { container } = renderWithTheme(<SettingsHubPage />);
-
-      const callout = container.querySelector('[class*="rt-CalloutRoot"]');
-      expect(callout).toBeInTheDocument();
-    });
-  });
-
   describe('Cloud Mode Filtering', () => {
     beforeEach(() => {
       (ExtJS.state as jest.Mock).mockReturnValue({
@@ -792,44 +757,6 @@ describe('SettingsHubPage', () => {
       // Deployment axis stays independent: cloud-only shown, cloud-excluded hidden.
       expect(screen.getByText(CLOUD_ONLY_CARD)).toBeInTheDocument();
       expect(screen.queryByText(CLOUD_EXCLUDED_CARD)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Coming Soon Badge', () => {
-    it('renders badge on cards where feature is disabled', () => {
-      renderWithTheme(<SettingsHubPage />);
-
-      // Users has featureKey 'security.users' which is disabled in mock
-      const usersCard = screen.getByText('Users').closest('a');
-      expect(within(usersCard!).getByText('Coming Soon')).toBeInTheDocument();
-    });
-
-    it('does not render badge on cards where feature is enabled', () => {
-      renderWithTheme(<SettingsHubPage />);
-
-      // Repositories has featureKey 'repository.repositories' which is enabled in mock
-      const repoCard = screen.getByText('Repositories').closest('a');
-      expect(within(repoCard!).queryByText('Coming Soon')).not.toBeInTheDocument();
-    });
-
-    it('renders Coming Soon badges with visible text', () => {
-      renderWithTheme(<SettingsHubPage />);
-
-      // Badges use visible text content for accessibility (no aria-label needed)
-      const badges = screen.getAllByText('Coming Soon');
-      expect(badges.length).toBeGreaterThan(0);
-    });
-
-    it('renders badge after label name', () => {
-      renderWithTheme(<SettingsHubPage />);
-
-      // Find the Users card link and check badge is after label text
-      const usersCard = screen.getByText('Users').closest('a');
-      const labelEl = within(usersCard!).getByText('Users');
-      const badge = within(usersCard!).getByText('Coming Soon');
-
-      // Badge should come after label in DOM order
-      expect(labelEl.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 

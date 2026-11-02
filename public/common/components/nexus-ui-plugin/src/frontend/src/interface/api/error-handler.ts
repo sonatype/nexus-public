@@ -38,14 +38,19 @@ import { ApiError, FieldError, RestErrorResponse } from './types';
 const HELPER_BEAN_PREFIX = 'HelperBean.';
 const ATTRIBUTES_PREFIX = 'attributes.';
 
+const NOTNULL_CONSTRAINT_KEY = 'org.sonatype.nexus.validation.constraint.notnull';
+
 const CONSTRAINT_MESSAGES: Record<string, string> = {
   'org.sonatype.nexus.validation.constraint.name':
     'Only letters, digits, hyphens (-), underscores (_), and dots (.) are allowed and may not start with underscore or dot.',
   'org.sonatype.nexus.validation.constraint.case': 'Case must be the correct value.',
   'org.sonatype.nexus.validation.constraint.portnumber': 'Port number must be within the valid range.',
   'org.sonatype.nexus.validation.constraint.hostname': 'Hostname must be valid.',
-  'org.sonatype.nexus.validation.constraint.notnull': 'Must not be null.',
+  [NOTNULL_CONSTRAINT_KEY]: 'Must not be null.',
 };
+
+// Matches both the Sonatype constraint text and Jakarta's default @NotNull template ("must not be null"), which the v1 REST endpoint emits verbatim; case-insensitive, trailing period optional. (NEXUS-54609)
+const NOTNULL_MESSAGE_PATTERN = /^must not be null\.?$/i;
 
 function resolveConstraintMessage(message: string): string {
   const match = message.match(/^\{([^}]+)\}$/);
@@ -53,6 +58,31 @@ function resolveConstraintMessage(message: string): string {
     return CONSTRAINT_MESSAGES[match[1]] ?? message;
   }
   return message;
+}
+
+// Humanize a bean-property key for validation toasts, e.g. `blobStoreName` -> "Blob store name". (NEXUS-54609)
+function humanizeFieldName(field: string): string {
+  const label = field
+    // last path segment only: `attributes.storage.blobStoreName` -> `blobStoreName`
+    .split('.')
+    .pop()!
+    // split a lowercase/digit followed by an uppercase into two words
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  if (!label) {
+    return field;
+  }
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+// Prefix the field label onto a generic notnull message so the toast is actionable. (NEXUS-54609)
+function contextualizeMessage(resolvedMessage: string, fieldName: string | null): string {
+  if (fieldName && NOTNULL_MESSAGE_PATTERN.test(resolvedMessage.trim())) {
+    return `${humanizeFieldName(fieldName)} must not be null.`;
+  }
+  return resolvedMessage;
 }
 
 // WebApplicationMessageException callers on the backend commonly pass a JSON string
@@ -64,6 +94,28 @@ function unwrapQuotedMessage(message: string | undefined): string | undefined {
     return message.slice(1, -1);
   }
   return message;
+}
+
+// ValidationErrorXO#toString() shape sent as text/plain by WebApplicationMessageException callers.
+const VALIDATION_ERROR_XO = /^ValidationErrorXO\{id='.*', message='([\s\S]*)'\}$/;
+
+// Strips a leaked Java Throwable#toString() FQCN prefix (e.g. "jakarta.validation.ValidationException: ", incl. bare Exception/Error/Throwable) so toasts read as the message; fresh /g literal per call avoids shared lastIndex state and collapses chained causes to the innermost message. (NEXUS-54871)
+export function stripJavaExceptionPrefix(message: string): string;
+export function stripJavaExceptionPrefix(message: string | undefined): string | undefined;
+export function stripJavaExceptionPrefix(message: string | undefined): string | undefined {
+  return message?.replace(/(?:[a-zA-Z_$][\w$]*\.)+[\w$]*(?:Exception|Error|Throwable):\s+/g, '');
+}
+
+// Reads the message from a JSON RestErrorResponse or a text/plain string body (axios leaves a non-JSON body as a string).
+function extractMessage(data: RestErrorResponse | string | undefined): string | undefined {
+  if (typeof data === 'string') {
+    if (!data.trim()) {
+      return undefined;
+    }
+    const match = data.match(VALIDATION_ERROR_XO);
+    return stripJavaExceptionPrefix(match ? match[1] : data);
+  }
+  return stripJavaExceptionPrefix(data?.message);
 }
 
 /**
@@ -103,7 +155,7 @@ export function parseApiError(error: unknown): ApiError {
 /**
  * Parse Axios error response
  */
-function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
+function parseAxiosError(error: AxiosError<RestErrorResponse | string>): ApiError {
   const status = error.response?.status || 0;
   const data = error.response?.data;
 
@@ -147,7 +199,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     case 403:
       return {
         status: 403,
-        message: unwrapQuotedMessage(data?.message) || 'You do not have permission to perform this action. Contact your administrator if you need access.',
+        message: unwrapQuotedMessage(extractMessage(data)) || 'You do not have permission to perform this action. Contact your administrator if you need access.',
         code: 'FORBIDDEN',
         requestId,
         originalError: error,
@@ -156,7 +208,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     case 404:
       return {
         status: 404,
-        message: unwrapQuotedMessage(data?.message) || 'The requested resource was not found.',
+        message: unwrapQuotedMessage(extractMessage(data)) || 'The requested resource was not found.',
         code: 'NOT_FOUND',
         requestId,
         originalError: error,
@@ -165,7 +217,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     case 405:
       return {
         status: 405,
-        message: unwrapQuotedMessage(data?.message) || 'This operation is not supported for the current resource state.',
+        message: unwrapQuotedMessage(extractMessage(data)) || 'This operation is not supported for the current resource state.',
         code: 'METHOD_NOT_ALLOWED',
         requestId,
         originalError: error,
@@ -174,7 +226,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     case 409:
       return {
         status: 409,
-        message: unwrapQuotedMessage(data?.message) || 'This resource already exists or conflicts with another resource.',
+        message: unwrapQuotedMessage(extractMessage(data)) || 'This resource already exists or conflicts with another resource.',
         code: 'CONFLICT',
         requestId,
         originalError: error,
@@ -188,15 +240,10 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     case 503:
     case 504: {
       // Extract backend error message if available (can be string or object with message)
-      let backendMessage: string | undefined;
-      if (typeof data === 'string' && data.trim()) {
-        backendMessage = data;
-      } else if (data?.message) {
-        backendMessage = unwrapQuotedMessage(data.message);
-      }
-      
-      const message = backendMessage 
-        ? backendMessage 
+      const backendMessage = unwrapQuotedMessage(extractMessage(data));
+
+      const message = backendMessage
+        ? backendMessage
         : `Server error (${status}). Please try again later.`;
       
       return {
@@ -211,7 +258,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     default:
       return {
         status,
-        message: unwrapQuotedMessage(data?.message) || 'Unable to complete request. Please try again.',
+        message: unwrapQuotedMessage(extractMessage(data)) || 'Unable to complete request. Please try again.',
         requestId,
         originalError: error,
       };
@@ -223,7 +270,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
  */
 function parseBadRequest(
   httpStatus: number,
-  data: RestErrorResponse | undefined | Array<{ id?: string; message?: string }>,
+  data: RestErrorResponse | string | undefined | Array<{ id?: string; message?: string }>,
   requestId: string | undefined,
   error: AxiosError
 ): ApiError {
@@ -251,7 +298,7 @@ function parseBadRequest(
         if (fieldName?.startsWith(ATTRIBUTES_PREFIX)) {
           fieldName = fieldName.slice(ATTRIBUTES_PREFIX.length);
         }
-        messages.push(resolvedMessage);
+        messages.push(contextualizeMessage(resolvedMessage, fieldName));
         if (fieldName) {
           fieldErrors.push({
             field: fieldName,
@@ -262,20 +309,21 @@ function parseBadRequest(
     }
   }
   // Parse nested errors array (Hibernate Validator format)
-  else if (data?.errors && Array.isArray(data.errors)) {
+  else if (typeof data === 'object' && data?.errors && Array.isArray(data.errors)) {
     for (const err of data.errors) {
       if (err.field || err.id) {
         const resolvedMessage = resolveConstraintMessage(err.message || 'Invalid value');
+        const fieldName = err.field || err.id || 'unknown';
         fieldErrors.push({
-          field: err.field || err.id || 'unknown',
+          field: fieldName,
           message: resolvedMessage,
         });
-        messages.push(resolvedMessage);
+        messages.push(contextualizeMessage(resolvedMessage, fieldName));
       }
     }
   }
   // Try to extract field from message if no explicit errors
-  else if (data?.message) {
+  else if (typeof data === 'object' && data?.message) {
     messages.push(data.message);
     const fieldMatch = data.message.match(/(?:field|property|parameter)\s+['"]?(\w+)['"]?/i);
     if (fieldMatch) {
@@ -285,11 +333,19 @@ function parseBadRequest(
       });
     }
   }
+  // text/plain WebApplicationMessageException body: unwrapped ValidationErrorXO message, else verbatim.
+  else {
+    const extracted = extractMessage(data);
+    if (extracted) {
+      messages.push(extracted);
+    }
+  }
 
   // Build user-friendly message - prefer the actual error messages from API
   let message: string;
   if (messages.length > 0) {
-    message = messages.join('. ');
+    // Join with ". ", collapsing the doubled period when a message already ends in one. (NEXUS-54609)
+    message = messages.join('. ').replace(/\.\.\s/g, '. ');
   } else if (fieldErrors.length > 0) {
     if (fieldErrors.length === 1) {
       message = `Validation error: ${fieldErrors[0].message}`;

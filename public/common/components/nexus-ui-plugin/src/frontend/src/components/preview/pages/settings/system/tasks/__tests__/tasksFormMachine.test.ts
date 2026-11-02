@@ -676,7 +676,22 @@ describe('tasksFormMachine', () => {
       service.send({ type: 'SUBMIT' } as any);
 
       const state = service.getSnapshot();
-      expect(state.context.validationErrors.cronExpression).toContain('Invalid');
+      expect(state.context.validationErrors.cronExpression).toBe('Cron expression must have 6 or 7 parts (got 1)');
+
+      service.stop();
+    });
+
+    it('rejects a wildcard step in day-of-month that the server would refuse', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'SCHEDULE_CHANGE', value: 'advanced' } as any);
+      service.send({ type: 'UPDATE', name: 'cronExpression', value: '0 0 3 */2 * ?' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.matches('editing')).toBe(true);
+      expect(state.context.validationErrors.cronExpression).toContain('use "1/N" instead');
 
       service.stop();
     });

@@ -293,6 +293,34 @@ Ext.define('NX.coreui.controller.Assets', {
   },
 
   /**
+   * @private
+   * Build a delete-confirmation body for a search-result item. When Trash is active for the item's (hosted,
+   * eligible-format) repository the copy states the item is moved to Trash and can be restored for the retention
+   * window; otherwise the supplied permanent-delete copy is used. Mirrors the Browse-tree behavior so component and
+   * asset deletes communicate recoverability consistently (NEXUS-55233).
+   */
+  trashAwareDeleteText: function(repositoryName, encodedName, plainText, trashTextKey, trashNoRetentionKey) {
+    var repositoryStore = this.repositoryStore,
+        repository = repositoryStore ? repositoryStore.getAt(repositoryStore.find('name', repositoryName)) : null,
+        repoData = repository ? repository.getData() : null,
+        isHosted = !!repoData && repoData.type === 'hosted',
+        trashEnabled = NX.State.getValue('nexus.trash.enabled', false) === true,
+        trashFormats = NX.State.getValue('trashFormats', []),
+        repoFormat = repoData ? repoData.format : null,
+        formatEligible = Ext.isArray(trashFormats)
+            && (trashFormats.indexOf('*') !== -1
+                || (!!repoFormat && trashFormats.indexOf(String(repoFormat).toLowerCase()) !== -1));
+
+    if (trashEnabled && isHosted && formatEligible) {
+      var retentionDays = NX.State.getValue('trashRetentionDays');
+      return (typeof retentionDays === 'number')
+          ? NX.I18n.format(trashTextKey, encodedName, retentionDays)
+          : NX.I18n.format(trashNoRetentionKey, encodedName);
+    }
+    return plainText;
+  },
+
+  /**
    * Remove selected component.
    *
    * @private
@@ -306,7 +334,10 @@ Ext.define('NX.coreui.controller.Assets', {
       componentModel = componentDetails.componentModel;
       componentVersion = componentModel.get('version');
       componentId = componentModel.get('name') + '/' + componentVersion;
-      NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), Ext.htmlEncode(componentId), function() {
+      var encodedId = Ext.htmlEncode(componentId),
+          body = me.trashAwareDeleteText(componentModel.get('repositoryName'), encodedId, encodedId,
+              'ComponentDetails_Delete_Trash_Text', 'ComponentDetails_Delete_Trash_Text_NoRetention');
+      NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), body, function() {
         NX.direct.coreui_Component.deleteComponent(JSON.stringify(componentModel.getData()), function(response) {
           if (Ext.isObject(response) && response.success) {
             me.refreshComponentList();
@@ -385,7 +416,10 @@ Ext.define('NX.coreui.controller.Assets', {
 
     if (assetInfo) {
       var asset = assetInfo.assetModel;
-      NX.Dialogs.askConfirmation(NX.I18n.get('AssetInfo_Delete_Title'), Ext.htmlEncode(asset.get('name')), function () {
+      var encodedName = Ext.htmlEncode(asset.get('name')),
+          body = me.trashAwareDeleteText(asset.get('repositoryName'), encodedName, encodedName,
+              'AssetInfo_Delete_Trash_Text', 'AssetInfo_Delete_Trash_Text_NoRetention');
+      NX.Dialogs.askConfirmation(NX.I18n.get('AssetInfo_Delete_Title'), body, function () {
         NX.direct.coreui_Component.deleteAsset(asset.getId(), asset.get('repositoryName'), function (response) {
           if (Ext.isObject(response) && response.success) {
             assetList.getSelectionModel().deselectAll();

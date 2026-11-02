@@ -66,6 +66,7 @@ interface RestCapabilityType {
   id: string;
   name: string;
   about?: string;
+  requiresSettingsUpdate?: boolean;
   formFields?: Array<{
     id: string;
     type: string;
@@ -120,6 +121,7 @@ function restToCapabilityType(rest: RestCapabilityType): CapabilityType {
     id: rest.id,
     name: rest.name,
     about: rest.about,
+    requiresSettingsUpdate: rest.requiresSettingsUpdate ?? false,
     formFields: rest.formFields?.map((field) => ({
       id: field.id,
       type: field.type as any,

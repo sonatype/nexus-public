@@ -31,7 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MetricsInputStream;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
@@ -117,9 +116,6 @@ public class FileBlobStoreConcurrencyIT
   @Mock
   FileOperations fileOperations;
 
-  @Mock
-  private BlobStoreReconciliationLogger reconciliationLogger;
-
   private final DirectoryHelper directoryHelper = new DirectoryHelper();
 
   @Before
@@ -141,7 +137,7 @@ public class FileBlobStoreConcurrencyIT
 
     this.underTest = new FileBlobStore(content, new DefaultBlobIdLocationResolver(),
         new SimpleFileOperations(directoryHelper), applicationDirectories, directoryHelper, metricsStore, config,
-        nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
+        nodeAccess, dryRunPrefix, 0L, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
     underTest.start();
   }
 

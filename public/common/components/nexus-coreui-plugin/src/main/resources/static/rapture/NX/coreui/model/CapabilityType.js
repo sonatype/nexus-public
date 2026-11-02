@@ -27,6 +27,7 @@ Ext.define('NX.coreui.model.CapabilityType', {
     {name: 'id', type: 'string', sortType: 'asUCText'},
     {name: 'name', type: 'string', sortType: 'asUCText'},
     {name: 'about', type: 'string', sortType: 'asUCText'},
-    {name: 'formFields', type: 'auto' /*object*/}
+    {name: 'formFields', type: 'auto' /*object*/},
+    {name: 'requiresSettingsUpdate', type: 'boolean', defaultValue: false}
   ]
 });

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.common.i18n;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -20,8 +21,6 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Lists;
 
 import static java.util.Objects.requireNonNull;
 
@@ -34,7 +33,7 @@ public class ResourceBundleMessageSource
 {
   private static final Logger log = LoggerFactory.getLogger(ResourceBundleMessageSource.class);
 
-  private final List<ResourceBundle> bundles = Lists.newArrayList();
+  private final List<ResourceBundle> bundles = new ArrayList<>();
 
   private final Locale locale;
 

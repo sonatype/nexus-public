@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.jmx;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.management.Descriptor;
@@ -21,7 +22,6 @@ import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanOperationInfo;
 
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,9 +38,9 @@ public class MBeanBuilder
 
   private final String className;
 
-  protected final List<MBeanAttribute> attributes = Lists.newArrayList();
+  protected final List<MBeanAttribute> attributes = new ArrayList<>();
 
-  protected final List<MBeanOperation> operations = Lists.newArrayList();
+  protected final List<MBeanOperation> operations = new ArrayList<>();
 
   private String description;
 
@@ -74,13 +74,13 @@ public class MBeanBuilder
 
   public MBean build() {
     // build attribute-info
-    List<MBeanAttributeInfo> ainfos = Lists.newArrayListWithCapacity(attributes.size());
+    List<MBeanAttributeInfo> ainfos = new ArrayList<>(attributes.size());
     for (MBeanAttribute attribute : attributes) {
       ainfos.add(attribute.getInfo());
     }
 
     // build operation-info
-    List<MBeanOperationInfo> oinfos = Lists.newArrayListWithCapacity(operations.size());
+    List<MBeanOperationInfo> oinfos = new ArrayList<>(operations.size());
     for (MBeanOperation operation : operations) {
       oinfos.add(operation.getInfo());
     }

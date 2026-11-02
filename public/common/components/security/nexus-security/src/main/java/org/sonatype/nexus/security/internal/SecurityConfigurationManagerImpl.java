@@ -48,7 +48,6 @@ import org.sonatype.nexus.security.role.RoleContainsItselfException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -106,7 +105,7 @@ public class SecurityConfigurationManagerImpl
 
   @Override
   public List<CPrivilege> listPrivileges() {
-    List<CPrivilege> privileges = Lists.newArrayList();
+    List<CPrivilege> privileges = new ArrayList<>();
     privileges.addAll(getDefaultConfiguration().getPrivileges());
     privileges.addAll(getMergedConfiguration().getPrivileges());
     return Collections.unmodifiableList(privileges);
@@ -114,7 +113,7 @@ public class SecurityConfigurationManagerImpl
 
   @Override
   public List<CRole> listRoles() {
-    List<CRole> roles = Lists.newArrayList();
+    List<CRole> roles = new ArrayList<>();
     roles.addAll(getDefaultConfiguration().getRoles());
     roles.addAll(getMergedConfiguration().getRoles());
     return Collections.unmodifiableList(roles);
@@ -582,8 +581,8 @@ public class SecurityConfigurationManagerImpl
 
     CRole newRole = newRole();
     newRole.setId(roleA.getId());
-    newRole.setRoles(Sets.newHashSet(roles));
-    newRole.setPrivileges(Sets.newHashSet(privs));
+    newRole.setRoles(new HashSet<>(roles));
+    newRole.setPrivileges(new HashSet<>(privs));
 
     // now for the name and description
     if (!Strings2.isBlank(roleA.getName())) {

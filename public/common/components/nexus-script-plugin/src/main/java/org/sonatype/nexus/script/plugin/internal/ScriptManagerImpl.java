@@ -22,12 +22,11 @@ import org.sonatype.nexus.script.ScriptCreatedEvent;
 import org.sonatype.nexus.script.ScriptDeletedEvent;
 import org.sonatype.nexus.script.ScriptManager;
 import org.sonatype.nexus.script.ScriptUpdatedEvent;
-
-import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Value;
 
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import static org.sonatype.nexus.common.app.FeatureFlags.SCRIPTS_ALLOW_EXECUTION_NAMED_VALUE;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import org.springframework.stereotype.Component;
 
@@ -48,21 +47,25 @@ public class ScriptManagerImpl
 
   private final boolean allowCreation;
 
+  private final boolean allowExecution;
+
   @Autowired
   public ScriptManagerImpl(
       final EventManager eventManager,
       final ScriptStore scriptStore,
-      @Value("${nexus.scripts.allowCreation:false}") final boolean allowCreation)
+      @Value("${nexus.scripts.allowCreation:false}") final boolean allowCreation,
+      @Value(SCRIPTS_ALLOW_EXECUTION_NAMED_VALUE) final boolean allowExecution)
   {
     this.eventManager = requireNonNull(eventManager);
     this.scriptStore = requireNonNull(scriptStore);
     this.allowCreation = requireNonNull(allowCreation);
+    this.allowExecution = allowExecution;
   }
 
   @Override
   @Guarded(by = STARTED)
   public Iterable<Script> browse() {
-    return ImmutableList.copyOf(scriptStore.list());
+    return scriptStore.list();
   }
 
   @Override
@@ -112,7 +115,7 @@ public class ScriptManagerImpl
 
   @Override
   public boolean isEnabled() {
-    return allowCreation;
+    return allowExecution;
   }
 
   private void validateCreationIsAllowed() {

@@ -12,10 +12,13 @@
  */
 package org.sonatype.nexus.coreui;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
@@ -33,7 +36,6 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -99,7 +101,8 @@ class ComponentComponentTest
     // Default pass-through: every collected repository is permitted. Use doAnswer/lenient so stub overrides
     // in individual tests don't re-invoke this lambda with a null argument during Mockito's `when()` recording.
     Mockito.lenient()
-        .doAnswer(inv -> Lists.newArrayList(inv.<Iterable<Repository>>getArgument(0)))
+        .doAnswer(inv -> StreamSupport.stream(inv.<Iterable<Repository>>getArgument(0).spliterator(), false)
+            .collect(Collectors.toCollection(ArrayList::new)))
         .when(repositoryPermissionChecker)
         .userCanBrowseRepositories(ArgumentMatchers.<Iterable<Repository>>any());
   }

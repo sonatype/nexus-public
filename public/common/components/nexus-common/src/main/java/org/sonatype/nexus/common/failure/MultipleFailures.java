@@ -17,7 +17,6 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static java.util.Objects.requireNonNull;
@@ -67,7 +66,7 @@ public class MultipleFailures
     }
 
     public List<Throwable> getFailures() {
-      return ImmutableList.copyOf(failures);
+      return List.copyOf(failures);
     }
 
     @Override

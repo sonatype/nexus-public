@@ -47,9 +47,9 @@ public interface AssetDAO
   String FILTER_PARAMS = "filterParams";
 
   /**
-   * See {@link ComponentDAO#SOFT_DELETE_AVAILABLE}.
+   * See {@link ComponentDAO#TRASH_AVAILABLE}.
    */
-  String SOFT_DELETE_AVAILABLE = ComponentDAO.SOFT_DELETE_AVAILABLE;
+  String TRASH_AVAILABLE = ComponentDAO.TRASH_AVAILABLE;
 
   /**
    * Count all assets in the given repository.
@@ -59,7 +59,7 @@ public interface AssetDAO
       @Nullable @Param("kind") String kind,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse all assets in the given repository in a paged fashion.
@@ -80,12 +80,12 @@ public interface AssetDAO
       @Nullable @Param("kind") String kind,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
-   * Backward-compatible overload retained so callers that predate soft-delete keep compiling and behave as
-   * before. Delegates with {@code softDeleteAvailable=false}, which omits the {@code deleted_on IS NULL}
-   * predicate -- the pre-soft-delete behavior, and safe when the column is not present.
+   * Backward-compatible overload retained so callers that predate trash keep compiling and behave as
+   * before. Delegates with {@code trashAvailable=false}, which omits the {@code deleted_on IS NULL}
+   * predicate -- the pre-trash behavior, and safe when the column is not present.
    */
   default Continuation<Asset> browseAssets(
       final int repositoryId,
@@ -123,7 +123,7 @@ public interface AssetDAO
       @Param("limit") int limit,
       @Nullable @Param("newerThan") OffsetDateTime newerThan,
       @Nullable @Param("olderThan") OffsetDateTime olderThan,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse all assets in the given repositories in a paged fashion. The returned assets will be sorted by asset id in
@@ -145,24 +145,24 @@ public interface AssetDAO
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
       @Param("limit") int limit,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Browse all assets associated with the given logical component.
    */
   Collection<Asset> browseComponentAssets(
       @Param("component") Component component,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
-   * Browse all assets of a component including soft-deleted ones.
+   * Browse all assets of a component including trashed ones.
    */
   Collection<Asset> browseAllComponentAssets(Component component);
 
   /**
-   * Browse all assets associated with a component, including soft-deleted.
+   * Browse all assets associated with a component, including trashed.
    */
-  Collection<Asset> browseAllComponentAssetsWithSoftDelete(Component component);
+  Collection<Asset> browseAllComponentAssetsWithTrash(Component component);
 
   /**
    * Finds assets where lastUpdated is greater than or equal to the given value.
@@ -180,7 +180,7 @@ public interface AssetDAO
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
       @Param("limit") int limit,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Finds all assets where lastUpdated equals the given value.
@@ -200,7 +200,7 @@ public interface AssetDAO
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
       @Param("limit") int limit,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Creates the given asset in the content data store and retrieves the generated assetId.
@@ -220,14 +220,14 @@ public interface AssetDAO
    *
    * @param asset the asset to create
    * @param updateComponentEntityVersion whether to update the component's entity version
-   * @param softDeleteAvailable whether the {@code deleted_on}/{@code deleted_by} columns exist (see
-   *          {@link #SOFT_DELETE_AVAILABLE}); when {@code false} those columns are omitted from the write so it
+   * @param trashAvailable whether the {@code deleted_on}/{@code deleted_by} columns exist (see
+   *          {@link #TRASH_AVAILABLE}); when {@code false} those columns are omitted from the write so it
    *          stays valid against a pre-migration schema during a zero-downtime upgrade
    */
   int createAsset(
       @Param("asset") AssetData asset,
       @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Retrieves an asset from the content data store.
@@ -237,12 +237,12 @@ public interface AssetDAO
    */
   Optional<Asset> readAsset(
       @Param("assetId") int assetId,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
-   * Backward-compatible overload retained so callers that predate soft-delete keep compiling and behave as
-   * before. Delegates with {@code softDeleteAvailable=false}, which omits the {@code deleted_on IS NULL}
-   * predicate -- the pre-soft-delete behavior, and safe when the column is not present.
+   * Backward-compatible overload retained so callers that predate trash keep compiling and behave as
+   * before. Delegates with {@code trashAvailable=false}, which omits the {@code deleted_on IS NULL}
+   * predicate -- the pre-trash behavior, and safe when the column is not present.
    */
   default Optional<Asset> readAsset(final int assetId) {
     return readAsset(assetId, false);
@@ -254,7 +254,7 @@ public interface AssetDAO
   Optional<Asset> readPath(
       @Param("repositoryId") int repositoryId,
       @Param("path") String path,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Retrieves a collection of assets located specific paths in the given repository.
@@ -262,7 +262,7 @@ public interface AssetDAO
   Collection<Asset> readPathsFromRepository(
       @Param("repositoryId") int repositoryId,
       @Param("paths") List<String> paths,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Find an asset based on the blob ref of the associated blob.
@@ -270,7 +270,7 @@ public interface AssetDAO
   Optional<Asset> findByBlobRef(
       @Param("repositoryId") int repositoryId,
       @Param("blobRef") BlobRef blobRef,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Find assets by their component ids.
@@ -290,7 +290,7 @@ public interface AssetDAO
       @Param("assetFilter") final String assetFilter,
       @Param("assetFilterParams") final Map<String, Object> assetFilterParams,
       @Param("includeNullBlobs") boolean includeNullBlobs,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Updates the kind of the given asset in the content data store.
@@ -321,7 +321,7 @@ public interface AssetDAO
    */
   Optional<NestedAttributesMap> readAssetAttributes(
       @Param("asset") Asset asset,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Updates the attributes of the given asset in the content data store.
@@ -365,12 +365,12 @@ public interface AssetDAO
   boolean deleteAsset(Asset asset);
 
   /**
-   * Hard-deletes an asset only if it is still soft-deleted ({@code deleted_on IS NOT NULL}). Used by the
+   * Hard-deletes an asset only if it is still trashed ({@code deleted_on IS NOT NULL}). Used by the
    * manual Trash purge so a restore landing between selection and delete leaves the now-live asset intact
    * (the guarded delete affects 0 rows).
    *
    * @param asset the asset to purge
-   * @return {@code true} if the asset was purged; {@code false} if it was no longer soft-deleted
+   * @return {@code true} if the asset was purged; {@code false} if it was no longer trashed
    */
   boolean purgeDeletedAsset(Asset asset);
 
@@ -396,7 +396,7 @@ public interface AssetDAO
       @Param("repositoryId") int repositoryId,
       @Param("daysAgo") int daysAgo,
       @Param("limit") int limit,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
    * Purges the selected assets.
@@ -472,86 +472,89 @@ public interface AssetDAO
    */
   int[] selectComponentIds(
       @Param("assetIds") int[] assetIds,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 
   /**
-   * Marks a single asset as soft-deleted.
+   * Marks a single asset as trashed.
    *
    * @param assetId the internal id of the asset
    * @param deletedBy the user who performed the deletion
    */
-  void softDeleteAsset(
+  void trashAsset(
       @Param("assetId") int assetId,
       @Param("deletedBy") String deletedBy);
 
   /**
-   * Restores a single soft-deleted asset by clearing deletion metadata.
+   * Restores a single trashed asset by clearing deletion metadata.
    *
    * @param assetId the internal id of the asset
+   * @return the number of rows updated: {@code 1} on success, {@code 0} if the asset was purged (or already
+   *         restored) between selection and this call -- lets callers detect a lost restore/purge race
+   *         (NEXUS-55233) rather than reporting a no-op restore as success
    */
-  void undoSoftDeleteAsset(@Param("assetId") int assetId);
+  int undoTrashAsset(@Param("assetId") int assetId);
 
   /**
-   * Cascade soft-deletes all assets belonging to a component.
+   * Cascade trashs all assets belonging to a component.
    *
-   * @param componentId the internal id of the component whose assets to soft-delete
+   * @param componentId the internal id of the component whose assets to trash
    * @param deletedBy the user who performed the deletion
    */
-  void softDeleteComponentAssets(
+  void trashComponentAssets(
       @Param("componentId") int componentId,
       @Param("deletedBy") String deletedBy);
 
   /**
-   * Re-stamps assets that were individually soft-deleted during a folder delete operation,
+   * Re-stamps assets that were individually trashed during a folder delete operation,
    * aligning their deleted_on with the component's timestamp so they are hidden in Trash.
    * Only affects assets deleted at or after folderDeleteStarted (preserving true individual deletes).
    *
    * @param componentId the internal id of the component
    * @param deletedBy the user who performed the deletion
-   * @param folderDeleteStarted only re-stamp assets soft-deleted at or after this instant
+   * @param folderDeleteStarted only re-stamp assets trashed at or after this instant
    */
-  void reSoftDeleteComponentAssets(
+  void reTrashComponentAssets(
       @Param("componentId") int componentId,
       @Param("deletedBy") String deletedBy,
       @Param("folderDeleteStarted") OffsetDateTime folderDeleteStarted);
 
   /**
-   * Restores (clears {@code deleted_on}/{@code deleted_by} from) <em>all</em> soft-deleted assets of a
-   * component. Under the subsume-all model the component owns every one of its soft-deleted assets, so
+   * Restores (clears {@code deleted_on}/{@code deleted_by} from) <em>all</em> trashed assets of a
+   * component. Under the subsume-all model the component owns every one of its trashed assets, so
    * restoring the component restores them all together -- there is no timestamp guard, which would otherwise
-   * strand an asset soft-deleted before the component in an invisible soft-deleted state.
+   * strand an asset trashed before the component in an invisible trashed state.
    *
    * @param componentId the internal id of the component whose assets to restore
    */
-  void undoSoftDeleteComponentAssets(@Param("componentId") int componentId);
+  void undoTrashComponentAssets(@Param("componentId") int componentId);
 
   /**
-   * Aligns the {@code deleted_on} of every soft-deleted asset of a component with the component's own
+   * Aligns the {@code deleted_on} of every trashed asset of a component with the component's own
    * {@code deleted_on}. Used when the last live asset's deletion cascades the component into Trash: assets
-   * that were soft-deleted individually beforehand predate the component's timestamp, so without this they
+   * that were trashed individually beforehand predate the component's timestamp, so without this they
    * would be left behind on component restore (an empty shell) and shown as separate Trash entries. Aligning
    * them makes the whole component a single cascade group -- hidden together in Trash and restored together
    * (NEXUS-53984).
    *
    * @param componentId the internal id of the component
    */
-  void alignSoftDeletedAssetsWithComponent(@Param("componentId") int componentId);
+  void alignTrashedAssetsWithComponent(@Param("componentId") int componentId);
 
   /**
-   * Reads a single soft-deleted asset by its internal ID.
+   * Reads a single trashed asset by its internal ID.
    *
    * @param assetId the internal id of the asset
-   * @return the soft-deleted asset if found
+   * @return the trashed asset if found
    */
   Optional<Asset> readDeletedAsset(@Param("assetId") int assetId);
 
   /**
-   * Browse soft-deleted assets with optional repository filter.
+   * Browse trashed assets with optional repository filter.
    *
    * @param repositoryId optional repository to filter by
    * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
-   * @return collection of soft-deleted assets
+   * @return collection of trashed assets
    */
   Continuation<Asset> browseDeletedAssets(
       @Nullable @Param("repositoryId") Integer repositoryId,
@@ -559,15 +562,15 @@ public interface AssetDAO
       @Nullable @Param("continuationToken") String continuationToken);
 
   /**
-   * Browse <em>all</em> soft-deleted assets (including those cascade-deleted alongside their component),
+   * Browse <em>all</em> trashed assets (including those cascade-deleted alongside their component),
    * with optional repository filter. Unlike {@link #browseDeletedAssets}, which hides cascade-deleted
    * assets for the Trash UI, this returns every asset with {@code deleted_on IS NOT NULL} so callers such
-   * as format GC can protect blobs/manifests still referenced by soft-deleted (restorable) content.
+   * as format GC can protect blobs/manifests still referenced by trashed (restorable) content.
    *
    * @param repositoryId optional repository to filter by
    * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
-   * @return collection of all soft-deleted assets (including cascade-deleted ones)
+   * @return collection of all trashed assets (including cascade-deleted ones)
    */
   Continuation<Asset> browseAllDeletedAssets(
       @Nullable @Param("repositoryId") Integer repositoryId,
@@ -575,17 +578,17 @@ public interface AssetDAO
       @Nullable @Param("continuationToken") String continuationToken);
 
   /**
-   * Count soft-deleted assets with optional repository filter.
+   * Count trashed assets with optional repository filter.
    *
    * @param repositoryId optional repository to filter by
-   * @return count of soft-deleted assets
+   * @return count of trashed assets
    */
   int countDeletedAssets(@Nullable @Param("repositoryId") Integer repositoryId);
 
   /**
-   * Hard-delete assets that were soft-deleted before the given cutoff.
+   * Hard-delete assets that were trashed before the given cutoff.
    *
-   * @param cutoff purge assets soft-deleted strictly before this instant
+   * @param cutoff purge assets trashed strictly before this instant
    * @param limit maximum number of rows to delete in this batch ({@code <= 0} means no limit)
    * @return the number of assets purged
    */
@@ -605,5 +608,5 @@ public interface AssetDAO
       @Param("blobRef") BlobRef blobRef,
       final @Param("path") String path,
       final @Param("repository") String repository,
-      @Param(SOFT_DELETE_AVAILABLE) boolean softDeleteAvailable);
+      @Param(TRASH_AVAILABLE) boolean trashAvailable);
 }

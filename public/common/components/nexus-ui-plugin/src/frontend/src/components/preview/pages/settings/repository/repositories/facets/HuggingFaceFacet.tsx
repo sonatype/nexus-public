@@ -12,6 +12,8 @@
  */
 
 import React, { useMemo } from 'react';
+import { Callout } from '@radix-ui/themes';
+import { AlertCircle } from 'lucide-react';
 
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
@@ -80,6 +82,14 @@ export function HuggingFaceFacet({ formData, onNestedChange }: HuggingFaceFacetP
         onChange={handleToggle}
         description={UIStrings.HUGGINGFACE.ENABLE_XET.description}
       />
+      <Callout.Root color="yellow" mt="2">
+        <Callout.Icon>
+          <AlertCircle size={16} />
+        </Callout.Icon>
+        <Callout.Text>
+          {UIStrings.HUGGINGFACE.XET_DISABLES_FIREWALL_WARNING}
+        </Callout.Text>
+      </Callout.Root>
     </SettingsFormSection>
   );
 }

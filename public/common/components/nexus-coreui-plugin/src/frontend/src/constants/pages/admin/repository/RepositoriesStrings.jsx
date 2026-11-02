@@ -137,6 +137,12 @@ export default {
       BLOCKING_LABEL: 'Blocking',
       BLOCK_DESCR: 'Block outbound connections to the repository',
       AUTO_BLOCK_DESCR: 'Auto-block outbound connections to the repository if remote peer is detected as unreachable/unresponsive',
+      AUTO_BLOCK_STATUS_CODES_LABEL: 'Auto-block HTTP Status Codes',
+      AUTO_BLOCK_STATUS_CODES_DESCR: 'Comma-separated list of remote HTTP status codes (100-599). Only the codes listed here trigger auto-blocking; any code not listed will not auto-block, e.g. "500, 502, 429". Only applies when auto-block is enabled. Leave blank to use the format default',
+      AUTO_BLOCK_STATUS_CODES_PLACEHOLDER: 'e.g. 500, 502, 429',
+      AUTO_BLOCK_STATUS_CODES_VALIDATION_ERROR: 'Each status code must be a whole number between 100 and 599',
+      AUTO_BLOCK_STATUS_CODES_DUPLICATE_ERROR: 'Status codes must not contain duplicates',
+      SWIFT_REMOTE_URL_VALIDATION_ERROR: 'Remote storage URL for Swift repositories must be https://github.com/',
       MAX_COMP_AGE_LABEL: 'Maximum Component Age',
       MAX_COMP_AGE_SUBLABEL: 'How long (in minutes) to cache artifacts before re-checking the remote repository. Release repositories should use -1',
       MAX_META_AGE_LABEL: 'Maximum Metadata Age',
@@ -283,7 +289,11 @@ export default {
         MODE_PCCS: 'PCCS - Quarantine, plus metadata filtering to help clients select a policy compliant version',
         LAYER_DOWNLOAD_TIMEOUT_LABEL: 'Layer Download Timeout (minutes)',
         LAYER_DOWNLOAD_TIMEOUT_SUBLABEL: 'Maximum time to wait for each container image layer to download during Firewall scanning.',
-        LAYER_DOWNLOAD_TIMEOUT_HELP: 'Default is 10 minutes. Increase this value if your network has slow proxies or antivirus scanning. Minimum: 1 minute, Maximum: 1440 minutes (24 hours).'
+        LAYER_DOWNLOAD_TIMEOUT_HELP: 'Default is 10 minutes. Increase this value if your network has slow proxies or antivirus scanning. Minimum: 1 minute, Maximum: 1440 minutes (24 hours).',
+        XET_DISABLED_WARNING: 'Firewall is disabled while XET is enabled. This applies to all content in the repository, including existing non-XET content. To re-enable Firewall, disable XET first, then configure Firewall manually.'
+      },
+      HUGGING_FACE_XET: {
+        XET_DISABLES_FIREWALL_WARNING: 'Enabling XET disables Firewall for this repository, including existing non-XET content. If XET is disabled later, Firewall must be re-enabled manually.'
       },
       LEARN_MORE: 'Learn more',
       REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',
@@ -435,6 +445,7 @@ export default {
       },
       REMOTE_URL_EXAMPLES: {
         pub: ' (e.g., https://pub.dev)',
+        openvsx: ' (e.g., https://open-vsx.org)',
         docker: ' (e.g., https://registry-1.docker.io)',
         maven2: ' (e.g., https://repo1.maven.org/maven2/)',
         npm: ' (e.g., https://registry.npmjs.org)',

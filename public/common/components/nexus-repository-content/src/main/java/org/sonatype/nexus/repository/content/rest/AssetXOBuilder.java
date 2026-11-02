@@ -112,7 +112,9 @@ public class AssetXOBuilder
         .map(Date::from)
         .orElseGet(() -> Date.from(asset.created().toInstant()));
 
-    // Extract new fields
+    // blobUpdated reflects when the binary last changed. AssetBlob is immutable and a new one is
+    // created only when the content changes, so blobCreated is the stable source (matching
+    // AssetSearchResultImpl.getBinaryUpdated).
     Date blobUpdated = assetBlob.map(AssetBlob::blobCreated)
         .map(OffsetDateTime::toInstant)
         .map(Date::from)

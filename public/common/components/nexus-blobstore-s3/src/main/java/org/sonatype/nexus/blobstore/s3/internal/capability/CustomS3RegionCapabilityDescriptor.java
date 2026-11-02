@@ -27,8 +27,6 @@ import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 
-import com.google.common.collect.ImmutableList;
-
 import static org.sonatype.nexus.capability.Tag.categoryTag;
 import static org.sonatype.nexus.capability.Tag.tags;
 import org.springframework.stereotype.Component;
@@ -64,7 +62,7 @@ public class CustomS3RegionCapabilityDescriptor
   private final List<FormField> formFields;
 
   public CustomS3RegionCapabilityDescriptor() {
-    formFields = ImmutableList.of(
+    formFields = List.of(
         new StringTextFormField(
             CustomS3RegionCapabilityConfiguration.REGIONS,
             messages.regionsLabel(),

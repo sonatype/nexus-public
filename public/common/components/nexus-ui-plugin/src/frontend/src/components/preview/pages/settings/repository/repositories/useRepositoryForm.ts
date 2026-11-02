@@ -304,6 +304,15 @@ export function useRepositoryForm({
     onDirtyChange?.(!form.isPristine);
   }, [form.isPristine, onDirtyChange]);
 
+  // Push the out-of-band toolbar toggle's new online value into the retained machine (useMachine won't remount on the fresh prop).
+  const savedOnline = repository?.online;
+  useEffect(() => {
+    if (isCreate || savedOnline === undefined) return;
+    if (pristineData && pristineData.online !== savedOnline) {
+      form.send({ type: 'SYNC_SAVED_ONLINE', online: savedOnline } as never);
+    }
+  }, [savedOnline, isCreate, pristineData, form]);
+
   // ============================================
   // Return
   // ============================================

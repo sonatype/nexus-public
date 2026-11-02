@@ -13,6 +13,9 @@
 package org.sonatype.nexus.repository.content.event.asset;
 
 import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
@@ -29,13 +32,28 @@ public class AssetPurgedEvent
 {
   private final int[] assetIds;
 
+  @Nullable
+  private final List<Asset> assets;
+
   public AssetPurgedEvent(final int contentRepositoryId, final int[] assetIds) { // NOSONAR
     super(contentRepositoryId);
     this.assetIds = requireNonNull(assetIds);
+    this.assets = null;
+  }
+
+  public AssetPurgedEvent(final int contentRepositoryId, final int[] assetIds, final List<Asset> assets) { // NOSONAR
+    super(contentRepositoryId);
+    this.assetIds = requireNonNull(assetIds);
+    this.assets = requireNonNull(assets);
   }
 
   public int[] getAssetIds() {
     return assetIds; // NOSONAR
+  }
+
+  @Nullable
+  public List<Asset> getAssets() {
+    return assets;
   }
 
   @Override

@@ -13,8 +13,6 @@
 package org.sonatype.nexus.coreui.internal.blobstore;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +35,8 @@ import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -107,7 +105,7 @@ class BlobStoreInternalResourceTest
     when(blobStoreDescriptorProvider.get()).thenReturn(null);
     assertThat(underTest.listBlobStores().isEmpty(), is(true));
 
-    when(blobStoreDescriptorProvider.get()).thenReturn(Collections.emptyMap());
+    when(blobStoreDescriptorProvider.get()).thenReturn(Map.of());
     assertThat(underTest.listBlobStores().isEmpty(), is(true));
   }
 
@@ -126,6 +124,49 @@ class BlobStoreInternalResourceTest
     assertThat(response.getTotalSizeInBytes(), is(100L));
     assertThat(response.getAvailableSpaceInBytes(), is(1000L));
     assertThat(response.isUnavailable(), is(false));
+    assertThat(response.getGlobalDistributionStatus(), is(GlobalDistributionStatus.UNSUPPORTED));
+  }
+
+  @Test
+  void s3BlobStoreWithoutCdnConfigIsNotGlobalDistributionStatus() {
+    addBlobStore("s3-plain", S3_TYPE);
+
+    List<BlobStoreUIResponse> responses = underTest.listBlobStores();
+    assertThat(responses.size(), is(1));
+    assertThat(responses.get(0).getGlobalDistributionStatus(), is(GlobalDistributionStatus.NOT_CONFIGURED));
+  }
+
+  @Test
+  void s3BlobStoreWithCloudFrontIsGlobalDistributionStatus() {
+    addBlobStore("s3-cloudfront", S3_TYPE);
+    findConfig("s3-cloudfront")
+        .attributes("s3")
+        .child("cloudFront")
+        .set("distributionUrl", "https://d123.cloudfront.net/");
+
+    List<BlobStoreUIResponse> responses = underTest.listBlobStores();
+    assertThat(responses.size(), is(1));
+    assertThat(responses.get(0).getGlobalDistributionStatus(), is(GlobalDistributionStatus.CONFIGURED));
+  }
+
+  @Test
+  void s3BlobStoreWithTransferAccelerationIsGlobalDistributionStatus() {
+    addBlobStore("s3-ta", S3_TYPE);
+    findConfig("s3-ta").attributes("s3").set("transferAccelerationEnabled", true);
+
+    List<BlobStoreUIResponse> responses = underTest.listBlobStores();
+    assertThat(responses.size(), is(1));
+    assertThat(responses.get(0).getGlobalDistributionStatus(), is(GlobalDistributionStatus.CONFIGURED));
+  }
+
+  @Test
+  void s3BlobStoreWithTransferAccelerationDisabledIsNotGlobalDistributionStatus() {
+    addBlobStore("s3-ta-off", S3_TYPE);
+    findConfig("s3-ta-off").attributes("s3").set("transferAccelerationEnabled", false);
+
+    List<BlobStoreUIResponse> responses = underTest.listBlobStores();
+    assertThat(responses.size(), is(1));
+    assertThat(responses.get(0).getGlobalDistributionStatus(), is(GlobalDistributionStatus.NOT_CONFIGURED));
   }
 
   @Test
@@ -170,7 +211,7 @@ class BlobStoreInternalResourceTest
   void listNonStartedBlobStore() {
     BlobStore fileBS = addBlobStore("fileStore", FILE_TYPE);
     BlobStore s3BS = addBlobStore("s3BlobStore", S3_TYPE, false);
-    addGroupBlobStore("groupBS", BlobStoreGroup.TYPE, true, Arrays.asList(fileBS, s3BS));
+    addGroupBlobStore("groupBS", BlobStoreGroup.TYPE, true, List.of(fileBS, s3BS));
 
     List<BlobStoreUIResponse> responses = underTest.listBlobStores();
     assertThat(responses.size(), is(3));
@@ -200,6 +241,13 @@ class BlobStoreInternalResourceTest
     assertThat(response3.getTotalSizeInBytes(), is(0L));
     assertThat(response3.getAvailableSpaceInBytes(), is(0L));
     assertThat(response3.isUnavailable(), is(true));
+  }
+
+  private BlobStoreConfiguration findConfig(final String name) {
+    return configurations.stream()
+        .filter(c -> name.equals(c.getName()))
+        .findFirst()
+        .orElseThrow();
   }
 
   private void addDescriptor(final String type, final String typeId) {

@@ -61,6 +61,7 @@ export function createSettingsSelectionModalMachine(options: SettingsSelectionMa
   return createMachine<SettingsSelectionContext, SettingsSelectionEvent>(
     {
       id: 'settingsSelectionModal',
+      predictableActionArguments: true,
       initial: 'closed',
       context: {
         filter: '',

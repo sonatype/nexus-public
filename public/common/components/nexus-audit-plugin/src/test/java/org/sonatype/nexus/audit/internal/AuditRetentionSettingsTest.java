@@ -28,16 +28,16 @@ class AuditRetentionSettingsTest
   private static final int CLOUD_MAX = 1095;
 
   @Test
-  void defaultsTo90() {
+  void defaultsTo30() {
     AuditRetentionSettings settings = new AuditRetentionSettings(DEFAULT_MAX);
-    assertThat(settings.getRetentionDays(), is(90));
+    assertThat(settings.getRetentionDays(), is(30));
   }
 
   @Test
   void setAndGetRetainsValue() {
     AuditRetentionSettings settings = new AuditRetentionSettings(DEFAULT_MAX);
-    settings.setRetentionDays(30);
-    assertThat(settings.getRetentionDays(), is(30));
+    settings.setRetentionDays(60);
+    assertThat(settings.getRetentionDays(), is(60));
   }
 
   @Test

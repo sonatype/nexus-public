@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.httpclient;
 
+import java.util.List;
+
 import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretDeserializer;
@@ -24,7 +26,6 @@ import org.sonatype.nexus.kv.KeyValueStore;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,7 +60,7 @@ public class AuthenticationConfigurationDeserializerTest
   @Before
   public void setUp() {
     objectMapper = new ObjectMapper()
-        .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(ImmutableList.of(Secret.class)))
+        .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(List.of(Secret.class)))
         .registerModule(
             new SimpleModule().addSerializer(
                 Time.class,

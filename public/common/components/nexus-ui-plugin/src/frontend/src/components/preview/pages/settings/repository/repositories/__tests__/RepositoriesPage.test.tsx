@@ -41,6 +41,7 @@ jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     checkPermission: jest.fn().mockReturnValue(true),
     isLicensedEdition: jest.fn().mockReturnValue(false),
+    isEnterpriseEdition: jest.fn().mockReturnValue(false),
     showSuccessMessage: jest.fn(),
     showErrorMessage: jest.fn(),
     state: jest.fn().mockReturnValue({
@@ -350,6 +351,128 @@ describe('RepositoriesPage', () => {
       await waitFor(() => {
         expect(mockApiHook.setError).toHaveBeenCalledWith(errorMessage);
       });
+    });
+  });
+
+  describe('edit header online status (regression NEXUS-55284)', () => {
+    beforeEach(() => {
+      window.location.hash = '#preview/admin/repository/repositories/maven-central';
+    });
+
+    // NEXUS-54212 made fetchRepository read the admin-gated internal endpoint as the
+    // authoritative source; that payload carries the online flag at the top level as
+    // `online` and omits the UI-only `status` object (which is only added best-effort by
+    // enriching from the public v1 endpoint, and can be absent when that 403s). The header
+    // must fall back to the top-level `online` flag so an online repository is not shown as
+    // "Offline" whenever `status` is missing.
+    it('shows Online when status is absent but top-level online is true', async () => {
+      mockApiHook.fetchRepository.mockResolvedValueOnce({
+        name: 'maven-central',
+        type: 'proxy',
+        format: 'maven2',
+        url: 'http://localhost:8081/repository/maven-central/',
+        online: true,
+        // status intentionally omitted — mirrors the admin config payload.
+      });
+
+      renderWithTheme(<RepositoriesPage />);
+
+      await waitFor(() => {
+        expect(mockApiHook.fetchRepository).toHaveBeenCalledWith('maven-central');
+      });
+
+      expect(await screen.findByText(/maven2 • proxy • Online/i)).toBeInTheDocument();
+    });
+
+    it('shows Offline when status is absent and top-level online is false', async () => {
+      mockApiHook.fetchRepository.mockResolvedValueOnce({
+        name: 'maven-central',
+        type: 'proxy',
+        format: 'maven2',
+        url: 'http://localhost:8081/repository/maven-central/',
+        online: false,
+      });
+
+      renderWithTheme(<RepositoriesPage />);
+
+      await waitFor(() => {
+        expect(mockApiHook.fetchRepository).toHaveBeenCalledWith('maven-central');
+      });
+
+      expect(await screen.findByText(/maven2 • proxy • Offline/i)).toBeInTheDocument();
+    });
+
+    // When `status` IS present it wins, including a genuine `false` — the fallback uses `??`
+    // (not `||`), so a real offline status is not masked by a stale top-level `online: true`.
+    it('prefers status.online over top-level online when status is present', async () => {
+      mockApiHook.fetchRepository.mockResolvedValueOnce({
+        name: 'maven-central',
+        type: 'proxy',
+        format: 'maven2',
+        url: 'http://localhost:8081/repository/maven-central/',
+        online: true,
+        status: { online: false },
+      });
+
+      renderWithTheme(<RepositoriesPage />);
+
+      await waitFor(() => {
+        expect(mockApiHook.fetchRepository).toHaveBeenCalledWith('maven-central');
+      });
+
+      expect(await screen.findByText(/maven2 • proxy • Offline/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('edit toggle confirm button color (NEXUS-55035)', () => {
+    beforeEach(() => {
+      window.location.hash = '#preview/admin/repository/repositories/maven-central';
+    });
+
+    it('shouldRenderTakeOfflineConfirmButtonRed', async () => {
+      mockApiHook.fetchRepository.mockResolvedValueOnce({
+        name: 'maven-central',
+        type: 'proxy',
+        format: 'maven2',
+        url: 'http://localhost:8081/repository/maven-central/',
+        online: true,
+        status: { online: true },
+      });
+
+      renderWithTheme(<RepositoriesPage />);
+
+      const toggleButton = await screen.findByTestId('form-toggle-online');
+      await userEvent.click(toggleButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      // Take Offline is disruptive: Radix renders the danger variant with color="red".
+      expect(screen.getByRole('button', { name: /take offline/i })).toHaveAttribute('data-accent-color', 'red');
+    });
+
+    it('shouldRenderBringOnlineConfirmButtonGreen', async () => {
+      mockApiHook.fetchRepository.mockResolvedValueOnce({
+        name: 'maven-central',
+        type: 'proxy',
+        format: 'maven2',
+        url: 'http://localhost:8081/repository/maven-central/',
+        online: false,
+        status: { online: false },
+      });
+
+      renderWithTheme(<RepositoriesPage />);
+
+      const toggleButton = await screen.findByTestId('form-toggle-online');
+      await userEvent.click(toggleButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      // Bring Online is positive: Radix renders the success variant with color="green".
+      expect(screen.getByRole('button', { name: /bring online/i })).toHaveAttribute('data-accent-color', 'green');
     });
   });
 

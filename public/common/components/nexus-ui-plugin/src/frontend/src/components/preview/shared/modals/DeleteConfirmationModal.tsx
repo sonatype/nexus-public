@@ -15,10 +15,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AlertDialog, Box, Flex, Text, Button, TextField, IconButton } from '@radix-ui/themes';
 import { X } from 'lucide-react';
 
-// Fixed acknowledgement word required to confirm any destructive deletion. Using a
-// single literal word — instead of per-entity names — keeps the friction predictable
+// Default acknowledgement word required to confirm any destructive deletion. Using a
+// single literal word - instead of per-entity names - keeps the friction predictable
 // and short to type while still forcing a deliberate action. Displayed as-is; the
-// match is case-insensitive so "delete", "Delete", "DELETE" all confirm.
+// match is case-insensitive so "delete", "Delete", "DELETE" all confirm. Callers that
+// need to verify against a specific identifier (e.g. a username) override this via the
+// requiredConfirmationText prop, in which case the match becomes case-sensitive.
 const CONFIRMATION_TEXT = 'Delete';
 
 export interface DeleteConfirmationModalProps {
@@ -29,16 +31,22 @@ export interface DeleteConfirmationModalProps {
   entityType: string;
   loading?: boolean;
   /** When true, the entity is moved to Trash (recoverable) instead of being permanently
-   *  deleted, so the copy reflects a recoverable soft-delete. Callers pass this only when a
-   *  soft-delete will actually occur (e.g. soft-delete enabled on a hosted repository). */
-  softDelete?: boolean;
-  /** Optional retention window (days) surfaced in the soft-delete copy ("recoverable for N days").
-   *  Only used when {@link softDelete} is true; omitted → a generic recoverable message is shown. */
+   *  deleted, so the copy reflects a recoverable trash. Callers pass this only when a
+   *  trash will actually occur (e.g. trash enabled on a hosted repository). */
+  trash?: boolean;
+  /** Optional retention window (days) surfaced in the trash copy ("recoverable for N days").
+   *  Only used when {@link trash} is true; omitted → a generic recoverable message is shown. */
   retentionDays?: number;
   /** Optional extra content (e.g. resource details) rendered above the
    *  acknowledgement input. Lets callers surface context like task type or
    *  schedule without forking the modal. */
   children?: React.ReactNode;
+  /** Optional override for the acknowledgement token the user must type to confirm.
+   *  Defaults to the shared {@link CONFIRMATION_TEXT} literal ("Delete"), keeping every
+   *  other entity's modal unchanged. When supplied (e.g. a username), the match becomes
+   *  case-sensitive so a lookalike-cased identifier does not confirm against the wrong
+   *  target. The value is also what the prompt/placeholder/highlighted word render. */
+  requiredConfirmationText?: string;
 }
 
 /**
@@ -46,7 +54,8 @@ export interface DeleteConfirmationModalProps {
  *
  * Follows nexusone design system standards:
  * - Modal width: 450px (destructive confirmation)
- * - Requires typing "Delete" (case-insensitive) for all deletions
+ * - Requires typing "Delete" (case-insensitive) by default for all deletions
+ * - Callers may override the token via requiredConfirmationText (matched case-sensitively)
  * - Entity name is displayed in the description but not required for verification
  *
  * @param open - Controls modal visibility
@@ -55,6 +64,7 @@ export interface DeleteConfirmationModalProps {
  * @param entityName - If provided, displayed in description for context
  * @param entityType - Display name for the entity type (e.g., "repository", "user", "blob store")
  * @param loading - Shows loading state during delete operation
+ * @param requiredConfirmationText - Optional token to type instead of "Delete"; case-sensitive when set
  */
 export function DeleteConfirmationModal({
   open,
@@ -63,19 +73,21 @@ export function DeleteConfirmationModal({
   entityName,
   entityType,
   loading = false,
-  softDelete = false,
+  trash = false,
   retentionDays,
   children,
+  requiredConfirmationText,
 }: DeleteConfirmationModalProps) {
   const [confirmationText, setConfirmationText] = useState('');
   const [showError, setShowError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Acknowledgement is a case-insensitive match against the literal CONFIRMATION_TEXT
-  // in every case. The entity name still flows through to the description so the user
-  // can see what they're about to delete, but they no longer have to type it.
-  const expectedLower = CONFIRMATION_TEXT.toLowerCase();
-  const isValid = confirmationText.toLowerCase() === expectedLower;
+  // Token to type: defaults to CONFIRMATION_TEXT (case-insensitive). A non-blank caller override (e.g. a username) is matched case-sensitively; a blank override is ignored so an empty token can never auto-satisfy the gate.
+  const override = requiredConfirmationText?.trim() ? requiredConfirmationText : undefined;
+  const expected = override ?? CONFIRMATION_TEXT;
+  const caseSensitive = override !== undefined;
+  const normalize = (value: string) => (caseSensitive ? value : value.toLowerCase());
+  const isValid = normalize(confirmationText) === normalize(expected);
 
   // Focus input when modal opens
   useEffect(() => {
@@ -97,12 +109,8 @@ export function DeleteConfirmationModal({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setConfirmationText(value);
-    // Show the inline error only when the user has typed something and it doesn't
-    // match (or is not on track to match) the expected literal CONFIRMATION_TEXT.
-    // A correct-so-far prefix (e.g. "del", "Del") is not an error — we just leave
-    // the submit button disabled until the full word lands. Comparison is
-    // case-insensitive so any casing of the word confirms.
-    const matchesPrefixSoFar = expectedLower.startsWith(value.toLowerCase());
+    // Error only once typed text stops being a correct-so-far prefix of the expected token; casing rule follows the match above.
+    const matchesPrefixSoFar = normalize(expected).startsWith(normalize(value));
     setShowError(value.length > 0 && !matchesPrefixSoFar);
   };
 
@@ -138,10 +146,10 @@ export function DeleteConfirmationModal({
 
         {/* Warning Message — surface the entity name here so the user sees what they're
             deleting now that the acknowledgement is a fixed literal word. When the deletion is a
-            recoverable soft-delete (softDelete), the copy reflects a move to Trash instead of a
+            recoverable trash (trash), the copy reflects a move to Trash instead of a
             permanent, irreversible removal. */}
         <AlertDialog.Description size="2" mb="4">
-          {softDelete ? (
+          {trash ? (
             <>
               {entityName ? (
                 <>
@@ -180,7 +188,7 @@ export function DeleteConfirmationModal({
           }}
         >
           <Text size="2" weight="medium" style={{ display: 'block' }}>
-            {CONFIRMATION_TEXT}
+            {expected}
           </Text>
           <Text size="1" color="gray">
             Type this to confirm deletion
@@ -203,7 +211,7 @@ export function DeleteConfirmationModal({
             value={confirmationText}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder={`Type "${CONFIRMATION_TEXT}" to confirm`}
+            placeholder={`Type "${expected}" to confirm`}
             disabled={loading}
             color={showError ? 'red' : undefined}
             style={

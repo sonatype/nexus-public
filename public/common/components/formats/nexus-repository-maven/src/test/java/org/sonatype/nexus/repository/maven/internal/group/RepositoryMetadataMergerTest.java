@@ -13,19 +13,17 @@
 package org.sonatype.nexus.repository.maven.internal.group;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.group.RepositoryMetadataMerger.Envelope;
 import org.sonatype.nexus.repository.view.Content;
 
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Plugin;
 import org.apache.maven.artifact.repository.metadata.Snapshot;
@@ -177,17 +175,14 @@ public class RepositoryMetadataMergerTest
     final Metadata m3 = g("baz");
 
     final Metadata m = merger.merge(
-        ImmutableList.of(new Envelope("1", m1), new Envelope("2", m2), new Envelope("3", m3)));
+        List.of(new Envelope("1", m1), new Envelope("2", m2), new Envelope("3", m3)));
     assertThat(m, notNullValue());
     assertThat(m.getModelVersion(), equalTo("1.1.0"));
     assertThat(m.getPlugins(), hasSize(3));
-    final List<String> prefixes = Lists.newArrayList(Iterables.transform(m.getPlugins(), new Function<Plugin, String>()
-    {
-      @Override
-      public String apply(final Plugin input) {
-        return input.getArtifactId();
-      }
-    }));
+    final List<String> prefixes = m.getPlugins()
+        .stream()
+        .map(Plugin::getArtifactId)
+        .collect(Collectors.toCollection(ArrayList::new));
     assertThat(prefixes, containsInAnyOrder("foo-maven-plugin", "bar-maven-plugin", "baz-maven-plugin"));
   }
 
@@ -198,7 +193,7 @@ public class RepositoryMetadataMergerTest
     final Metadata m3 = a("org.foo", "some-project", "20150324121600", "1.1.0-SNAPSHOT", null, "1.1.0-SNAPSHOT");
 
     final Metadata m = merger.merge(
-        ImmutableList.of(new Envelope("1", m1), new Envelope("2", m2), new Envelope("3", m3)));
+        List.of(new Envelope("1", m1), new Envelope("2", m2), new Envelope("3", m3)));
     assertThat(m, notNullValue());
     assertThat(m.getModelVersion(), equalTo("1.1.0"));
     assertThat(m.getGroupId(), equalTo("org.foo"));
@@ -217,7 +212,7 @@ public class RepositoryMetadataMergerTest
     final Metadata m3 = v("org.foo", "some-project", "1.0.0", "20150322.121500", 1);
 
     final Metadata m = merger.merge(
-        ImmutableList.of(new Envelope("1", m1), new Envelope("2", m2), new Envelope("3", m3)));
+        List.of(new Envelope("1", m1), new Envelope("2", m2), new Envelope("3", m3)));
     assertThat(m, notNullValue());
     assertThat(m.getModelVersion(), equalTo("1.1.0"));
     assertThat(m.getGroupId(), equalTo("org.foo"));
@@ -235,7 +230,7 @@ public class RepositoryMetadataMergerTest
     final Metadata m3 = v("org.foo", "some-project", "1.1.0", "20150322.121500", 3);
 
     final Metadata m = merger.merge(
-        ImmutableList.of(new Envelope("1", m1), new Envelope("2", m2), new Envelope("3", m3)));
+        List.of(new Envelope("1", m1), new Envelope("2", m2), new Envelope("3", m3)));
     assertThat(m, notNullValue());
     assertThat(m.getModelVersion(), equalTo("1.1.0"));
     assertThat(m.getGroupId(), equalTo("org.foo"));
@@ -249,13 +244,10 @@ public class RepositoryMetadataMergerTest
     assertThat(m.getVersioning().getLatest(), equalTo("1.0.1"));
     assertThat(m.getVersioning().getVersions(), contains("1.0.0", "1.0.1"));
     assertThat(m.getPlugins(), hasSize(2));
-    final List<String> prefixes = Lists.newArrayList(Iterables.transform(m.getPlugins(), new Function<Plugin, String>()
-    {
-      @Override
-      public String apply(final Plugin input) {
-        return input.getArtifactId();
-      }
-    }));
+    final List<String> prefixes = m.getPlugins()
+        .stream()
+        .map(Plugin::getArtifactId)
+        .collect(Collectors.toCollection(ArrayList::new));
     assertThat(prefixes, containsInAnyOrder("foo-maven-plugin", "bar-maven-plugin"));
   }
 
@@ -273,7 +265,7 @@ public class RepositoryMetadataMergerTest
     m2.setVersion("1.0.1");
 
     final Metadata m = merger.merge(
-        ImmutableList.of(new Envelope("1", m1), new Envelope("2", m2)));
+        List.of(new Envelope("1", m1), new Envelope("2", m2)));
     assertThat(m.getVersion(), is(m1.getVersion())); // target version is left intact, no attempt to merge
     assertThat(m.getVersioning().getRelease(), is(m2.getVersion()));
     assertThat(m.getVersioning().getLastUpdated(), is(m2.getVersioning().getLastUpdated()));
@@ -287,7 +279,7 @@ public class RepositoryMetadataMergerTest
     Metadata m2 = v("org.foo", "some-project", "1.0.0", "20150323.121500", 2);
 
     final Metadata m = merger.merge(
-        ImmutableList.of(new Envelope("1", m1), new Envelope("2", m2)));
+        List.of(new Envelope("1", m1), new Envelope("2", m2)));
     assertThat(m, notNullValue());
     assertThat(m.getModelVersion(), equalTo("1.1.0"));
     assertThat(m.getGroupId(), equalTo("org.foo"));

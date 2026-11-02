@@ -124,7 +124,7 @@ export function SettingsCheckboxGroup({
           );
         })}
       </Box>
-      {helpText && !error && (
+      {helpText && (
         <Text as="p" size="1" id={helpId} className="settings-checkbox-group__help">
           {helpText}
         </Text>

@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetKindEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetRestoredEvent;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.ContentStoreEventSetter;
 import org.sonatype.nexus.repository.content.webhooks.RepositoryAssetWebhook.RepositoryAssetWebhookPayload;
@@ -169,6 +170,22 @@ public class RepositoryAssetWebhookTest
     RepositoryAssetWebhookPayload payload = capturePayload();
     assertThat(payload.getRepositoryName(), is("maven-releases"));
     assertThat(String.valueOf(payload.getAction()), is("DELETED"));
+    assertThat(payload.getAsset(), is(notNullValue()));
+  }
+
+  @Test
+  public void testOnAssetRestoredEvent_withSubscription_queuesPayload() {
+    subscribeToRepository("maven-releases");
+
+    AssetData asset = createAssetData(3);
+    AssetRestoredEvent event = new AssetRestoredEvent(asset);
+    ContentStoreEventSetter.setRepositorySupplier(event, () -> Optional.of(repository));
+
+    underTest.on(event);
+
+    RepositoryAssetWebhookPayload payload = capturePayload();
+    assertThat(payload.getRepositoryName(), is("maven-releases"));
+    assertThat(String.valueOf(payload.getAction()), is("RESTORED"));
     assertThat(payload.getAsset(), is(notNullValue()));
   }
 

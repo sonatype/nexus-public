@@ -45,7 +45,7 @@ import org.sonatype.nexus.testcommon.extensions.LoggingExtension.CaptureLogsFor;
 import org.sonatype.nexus.testcommon.extensions.LoggingExtension.TestLogAccessor;
 
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ForbiddenException;
+import org.apache.shiro.authz.UnauthorizedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -594,12 +594,12 @@ class SqlSearchServiceTest
   }
 
   /**
-   * Verifies that SqlSearchPermissionException is converted to ForbiddenException.
+   * Verifies that SqlSearchPermissionException is converted to UnauthorizedException.
    * This exception is thrown when a user lacks permissions to search specified repositories,
-   * and should result in a 403 Forbidden response.
+   * and is mapped to a 403 response by the Shiro exception mapper.
    */
   @Test
-  void testSearchThrowsForbiddenExceptionWhenPermissionDenied() {
+  void testSearchThrowsUnauthorizedExceptionWhenPermissionDenied() {
     SearchRequest searchRequest = SearchRequest.builder().limit(10).build();
 
     when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
@@ -612,8 +612,8 @@ class SqlSearchServiceTest
     when(queryFactory.build(expressionGroup))
         .thenThrow(new SqlSearchPermissionException("User does not have permissions to required repositories."));
 
-    // The search should throw ForbiddenException
-    ForbiddenException exception = assertThrows(ForbiddenException.class, () -> underTest.search(searchRequest));
+    // The search should throw UnauthorizedException
+    UnauthorizedException exception = assertThrows(UnauthorizedException.class, () -> underTest.search(searchRequest));
 
     assertThat(exception.getMessage(), equalTo("User lacks permission to specified repository"));
 
@@ -652,10 +652,10 @@ class SqlSearchServiceTest
   }
 
   /**
-   * Verifies that count throws ForbiddenException when SqlSearchPermissionException occurs.
+   * Verifies that count throws UnauthorizedException when SqlSearchPermissionException occurs.
    */
   @Test
-  void testCountThrowsForbiddenExceptionWhenPermissionDenied() {
+  void testCountThrowsUnauthorizedExceptionWhenPermissionDenied() {
     SearchRequest searchRequest = SearchRequest.builder().limit(10).build();
 
     when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
@@ -668,8 +668,8 @@ class SqlSearchServiceTest
     when(queryFactory.build(expressionGroup))
         .thenThrow(new SqlSearchPermissionException("User does not have permissions to required repositories."));
 
-    // The count should throw ForbiddenException
-    ForbiddenException exception = assertThrows(ForbiddenException.class, () -> underTest.count(searchRequest));
+    // The count should throw UnauthorizedException
+    UnauthorizedException exception = assertThrows(UnauthorizedException.class, () -> underTest.count(searchRequest));
 
     assertThat(exception.getMessage(), equalTo("User lacks permission to specified repository"));
 

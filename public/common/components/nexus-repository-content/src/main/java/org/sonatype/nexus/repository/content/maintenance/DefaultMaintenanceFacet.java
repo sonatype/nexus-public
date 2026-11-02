@@ -23,7 +23,9 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
+import org.sonatype.nexus.repository.content.store.WrappedContent;
 
 import com.google.common.collect.ImmutableSet;
 import org.springframework.context.annotation.Primary;
@@ -55,6 +57,22 @@ public class DefaultMaintenanceFacet
       }
     });
 
+    // Purge any remaining asset rows, including Trashed ones, before removing the component. The read-filtered
+    // assets() view above hides individually-Trashed assets whenever the Trash schema is present (even with the
+    // feature flag off), and the asset->component foreign key would otherwise reject the component delete, leaving
+    // an orphaned, file-less component behind (NEXUS-55410). browseAllComponentAssets is used (not the WithTrash
+    // variant) so it never references the deleted_on/deleted_by columns: it still returns Trashed rows (no filter)
+    // but stays safe on a pre-migration ZDU node where those columns do not yet exist. Every production ContentFacet
+    // is a ContentFacetSupport (the stores() accessor lives there); the instanceof keeps the purge from forcing that
+    // on unit tests that mock the ContentFacet interface.
+    if (contentFacet() instanceof ContentFacetSupport support) {
+      AssetStore<?> assetStore = support.stores().assetStore;
+      // The REST component-delete route (ComponentsResource) passes a FluentComponent wrapper, but the AssetStore
+      // mapper reads #{componentId} off the backing ComponentData -- a wrapper has no such getter and the query
+      // throws. Unwrap first (the asset-cascade route already passes an unwrapped Component). NEXUS-55410.
+      assetStore.browseAllComponentAssets(unwrap(component)).forEach(assetStore::deleteAsset);
+    }
+
     componentToDelete.delete(); // the component itself has no path
 
     return deletedPaths.build();
@@ -75,6 +93,14 @@ public class DefaultMaintenanceFacet
 
   protected ContentFacet contentFacet() {
     return facet(ContentFacet.class);
+  }
+
+  /**
+   * Unwrap a fluent component wrapper to its backing {@code ComponentData} so AssetStore mappers that read
+   * {@code #{componentId}} work. A plain (already-unwrapped) Component passes through unchanged (NEXUS-55410).
+   */
+  protected static Component unwrap(final Component component) {
+    return component instanceof WrappedContent<?> ? (Component) ((WrappedContent<?>) component).unwrap() : component;
   }
 
   @Override

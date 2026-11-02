@@ -16,13 +16,17 @@ import {useCurrentStateAndParams, useRouter} from '@uirouter/react';
 import {TextField} from '@radix-ui/themes';
 import {Search as SearchIcon} from 'lucide-react';
 import {FormatBadge} from '../Badges';
+import {debouncedValueOf, useDebouncedWithDiscard} from '../hooks';
 import ExtJS from '../../../../interface/ExtJS';
 import useIsVisible from '../../../../router/useIsVisible';
 import {handleExtJsUnsavedChanges} from '../../../../router/extJsUnsavedChanges';
+import {useIsCloud} from '../hooks';
 import Axios from 'axios';
 
 import './SearchRadix.scss';
 
+// 200 ms rather than `APIConstants.DEBOUNCE_DELAY`: this is a typeahead dropdown in the global
+// header, where the suggestion list has to feel like it tracks the keystrokes.
 const DEBOUNCE_MS = 200;
 const MIN_QUERY_LENGTH = 2;
 const MAX_SUGGESTIONS = 8;
@@ -83,25 +87,42 @@ export default function SearchRadix({ isPreviewUI = false, routes }) {
 
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
-  const debounceRef = useRef(null);
+
+  // Identifies the most recently issued suggest request. Only that request may publish its results.
+  // Clearing the field and picking a suggestion both abandon whatever is in flight, and without
+  // this guard its response would reopen the dropdown over an empty header input.
+  const latestRequestRef = useRef(0);
+
+  const [searchToken, discardSuggestions] = useDebouncedWithDiscard(searchValue, DEBOUNCE_MS);
 
   const router = useRouter();
   const {state} = useCurrentStateAndParams();
+  const isCloud = useIsCloud();
 
   // Check visibility for Default UI search route
   const searchRoute = router.stateRegistry.get(routes?.searchGeneric);
   const defaultUIVisible = useIsVisible(searchRoute?.data?.visibilityRequirements);
 
-  // Fetch suggestions with debounce
+  // Collapse the dropdown as soon as the query is too short to suggest against. This keys off the
+  // raw value, not the debounced one: deleting back down to one character has to close the list
+  // immediately rather than leaving stale suggestions up for another debounce interval.
   // NOTE: All hooks must be called before any conditional returns!
+  //
+  // Picking a suggestion also empties the field, so this is the one place suggestions are
+  // discarded, and therefore the one place the discard has to be counted.
   useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
     if (searchValue.trim().length < MIN_QUERY_LENGTH) {
       setSuggestions([]);
       setShowSuggestions(false);
+      latestRequestRef.current += 1;
+      discardSuggestions();
+    }
+  }, [searchValue, discardSuggestions]);
+
+  // Fetch suggestions once typing settles.
+  useEffect(() => {
+    const debouncedSearchValue = debouncedValueOf(searchToken);
+    if (debouncedSearchValue.trim().length < MIN_QUERY_LENGTH) {
       return;
     }
 
@@ -111,20 +132,18 @@ export default function SearchRadix({ isPreviewUI = false, routes }) {
       return;
     }
 
-    debounceRef.current = setTimeout(async () => {
-      const results = await fetchSuggestions(searchValue);
+    const requestId = ++latestRequestRef.current;
+
+    fetchSuggestions(debouncedSearchValue).then((results) => {
+      if (requestId !== latestRequestRef.current) {
+        return;
+      }
       setSuggestions(results);
       const shouldShow = results.length > 0;
       setShowSuggestions(shouldShow);
       setSelectedIndex(-1);
-    }, DEBOUNCE_MS);
-
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, [searchValue]);
+    });
+  }, [searchToken, isPreviewUI]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -148,12 +167,12 @@ export default function SearchRadix({ isPreviewUI = false, routes }) {
     setShowSuggestions(false);
 
     if (isPreviewUI) {
-      // inherit: false / reload — see the note in the nexus-coreui-plugin copy
-      // of this component. `go` would otherwise inherit the router's cached
-      // params, which go stale because the search page writes its URL with raw
-      // pushState; and without the scoped reload, re-submitting an already-cached
-      // term is rejected by UI-Router as a same-state/same-params transition, so
-      // the search page never re-syncs.
+      // inherit: false - the search page updates the URL via pushState, which never
+      // informs the router, so cached params would go stale and could resurrect an
+      // old format/sort.
+      // reload: named state - re-submitting the same query is otherwise a no-op
+      // transition UI-Router ignores; naming the state (vs `true`) avoids remounting
+      // the whole preview shell.
       router.stateService.go(
         routes.previewSearchUnified,
         query ? { q: query } : {},
@@ -275,14 +294,14 @@ export default function SearchRadix({ isPreviewUI = false, routes }) {
   return (
     <div className="search-radix-container" ref={inputRef}>
       <TextField.Root
-        placeholder="Search components or CVEs..."
+        placeholder="Search by name, group, or version"
         value={searchValue}
         onChange={(e) => setSearchValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         size="2"
         className="search-radix-input"
-        data-analytics-id="nxrm-global-header-search-input"
+        data-analytics-id={isCloud ? 'nxrm-global-header-search-input' : 'nxrm-header-search'}
       >
         <TextField.Slot>
           <SearchIcon size={16} />

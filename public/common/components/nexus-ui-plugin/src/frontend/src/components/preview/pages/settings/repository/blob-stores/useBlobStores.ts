@@ -68,6 +68,12 @@ const _trimStrings = (obj: Record<string, unknown>): Record<string, unknown> => 
  * - Trims string values
  * - Converts softQuota.limit from MB to bytes
  */
+/**
+ * Placeholder string for sensitive CloudFront fields.
+ * Imported from S3BlobStoreSettings to ensure consistency.
+ */
+const PLACEHOLDER_PASSWORD = '#~NXRM~PLACEHOLDER~PASSWORD~#';
+
 const formatBlobStoreData = (data: BlobStoreFormData): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
 
@@ -95,6 +101,27 @@ const formatBlobStoreData = (data: BlobStoreFormData): Record<string, unknown> =
       type: data.softQuota.type,
       limit,
     };
+  }
+
+  // Global distribution: only include for S3 blob stores when configured
+  if (blobType === 's3' && data.globalDistribution) {
+    // For CloudFront configuration in edit mode (when name exists):
+    // Inject placeholder for empty sensitive fields to preserve existing values
+    const isEditMode = Boolean(data.name);
+    if (isEditMode && data.globalDistribution.type === 'CLOUDFRONT') {
+      const cloudFront = { ...data.globalDistribution };
+      // If privateKey is empty, use placeholder to preserve existing value
+      if (!cloudFront.privateKey) {
+        cloudFront.privateKey = PLACEHOLDER_PASSWORD;
+      }
+      // If privateKeyPassword is empty, use placeholder to preserve existing value
+      if (!cloudFront.privateKeyPassword) {
+        cloudFront.privateKeyPassword = PLACEHOLDER_PASSWORD;
+      }
+      result.globalDistribution = cloudFront;
+    } else {
+      result.globalDistribution = data.globalDistribution;
+    }
   }
 
   return result;

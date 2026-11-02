@@ -137,9 +137,11 @@ public class HttpConditions
   {
     // Request headers
     Headers headers = getConditionalHeaders(context.getRequest());
-    Optional<String> ifMatchHeader = Optional.ofNullable(headers.get(HttpHeaders.IF_MATCH));
+    Optional<String> ifMatchHeader = Optional.ofNullable(headers.get(HttpHeaders.IF_MATCH))
+        .map(HttpConditions::stripCompression);
     Optional<String> ifUnmodifiedHeader = Optional.ofNullable(headers.get(HttpHeaders.IF_UNMODIFIED_SINCE));
-    Optional<String> ifNoneMatchHeader = Optional.ofNullable(headers.get(HttpHeaders.IF_NONE_MATCH));
+    Optional<String> ifNoneMatchHeader = Optional.ofNullable(headers.get(HttpHeaders.IF_NONE_MATCH))
+        .map(HttpConditions::stripCompression);
     Optional<String> ifModifiedHeader = Optional.ofNullable(headers.get(HttpHeaders.IF_MODIFIED_SINCE));
 
     Optional<DateTime> lastModified = parseDateHeader(getResponse.getHeaders().get(HttpHeaders.LAST_MODIFIED));
@@ -232,5 +234,18 @@ public class HttpConditions
         .map(DateUtils::parseDate)
         .map(Date::getTime)
         .map(DateTime::new);
+  }
+
+  private static String stripCompression(final String etag) {
+    if (etag.endsWith("--gzip\"")) {
+      return etag.substring(0, etag.length() - 7) + '"';
+    }
+    else if (etag.endsWith("--zstd\"")) {
+      return etag.substring(0, etag.length() - 7) + '"';
+    }
+    else if (etag.endsWith("--br\"")) {
+      return etag.substring(0, etag.length() - 5) + '"';
+    }
+    return etag;
   }
 }

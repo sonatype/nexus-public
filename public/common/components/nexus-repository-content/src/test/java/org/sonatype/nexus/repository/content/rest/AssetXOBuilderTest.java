@@ -13,7 +13,9 @@
 package org.sonatype.nexus.repository.content.rest;
 
 import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -33,10 +35,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -115,6 +120,7 @@ public class AssetXOBuilderTest
     asset.setAssetId(AN_ASSET_ID);
     asset.setPath(ASSET_PATH);
     asset.setCreated(assetCreated);
+    asset.setLastUpdated(assetCreated);
     // No blob set
 
     AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null, false);
@@ -122,6 +128,27 @@ public class AssetXOBuilderTest
     // Should fall back to asset.created() when blob is missing
     assertThat(assetXO.getBlobCreated().toInstant().toEpochMilli(),
         is(assetCreated.toInstant().toEpochMilli()));
+  }
+
+  @Test
+  public void fromEagerAsset_blobUpdatedIsNullWhenBlobMissing() {
+    // When no blob is present (e.g. a proxy asset whose content has not been fetched
+    // yet, or a metadata-only asset) blobUpdated is null, matching AssetSearchResultImpl.getBinaryUpdated.
+    // asset.lastUpdated() must not be used as a fallback: it is bumped by metadata writes such as
+    // proxy cache re-verification and would make "Updated" drift when the binary is unchanged.
+    OffsetDateTime assetCreated = OffsetDateTime.now().minusHours(2);
+    OffsetDateTime lastUpdated = OffsetDateTime.now().minusHours(1);
+
+    AssetData asset = new AssetData();
+    asset.setAssetId(AN_ASSET_ID);
+    asset.setPath(ASSET_PATH);
+    asset.setCreated(assetCreated);
+    asset.setLastUpdated(lastUpdated);
+    // No blob set
+
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null, false);
+
+    assertThat(assetXO.getBlobUpdated(), nullValue());
   }
 
   @Test
@@ -170,11 +197,23 @@ public class AssetXOBuilderTest
   }
 
   @Test
-  public void fromAsset_blobUpdatedPopulated() {
-    OffsetDateTime assetCreated = OffsetDateTime.now().minusHours(2);
-    OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(1);
+  public void fromAsset_blobUpdatedReflectsBlobCreatedWhenBlobPresent() {
+    // blobUpdated must track when the binary last changed (blobCreated), not asset.lastUpdated(),
+    // which is bumped by metadata writes such as proxy cache re-verification.
+    OffsetDateTime assetCreated = OffsetDateTime.now().minusHours(3);
+    OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(2);
+    OffsetDateTime lastUpdated = OffsetDateTime.now().minusHours(1);
 
-    Asset asset = anAssetWithTimestamps(assetCreated, blobCreated);
+    AssetData asset = new AssetData();
+    asset.setAssetId(AN_ASSET_ID);
+    asset.setPath(ASSET_PATH);
+    asset.setCreated(assetCreated);
+    asset.setLastUpdated(lastUpdated);
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setAssetBlobId(1);
+    assetBlob.setBlobCreated(blobCreated);
+    asset.setAssetBlob(assetBlob);
+
     AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null, false);
 
     assertThat(assetXO.getBlobUpdated(), notNullValue());
@@ -183,16 +222,56 @@ public class AssetXOBuilderTest
   }
 
   @Test
-  public void fromEagerAsset_blobUpdatedPopulated() {
-    OffsetDateTime assetCreated = OffsetDateTime.now().minusHours(2);
-    OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(1);
+  public void fromEagerAsset_blobUpdatedReflectsBlobCreatedWhenBlobPresent() {
+    // blobUpdated must track when the binary last changed (blobCreated), not asset.lastUpdated(),
+    // which is bumped by metadata writes such as proxy cache re-verification.
+    OffsetDateTime assetCreated = OffsetDateTime.now().minusHours(3);
+    OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(2);
+    OffsetDateTime lastUpdated = OffsetDateTime.now().minusHours(1);
 
-    Asset asset = anAssetWithTimestamps(assetCreated, blobCreated);
+    AssetData asset = new AssetData();
+    asset.setAssetId(AN_ASSET_ID);
+    asset.setPath(ASSET_PATH);
+    asset.setCreated(assetCreated);
+    asset.setLastUpdated(lastUpdated);
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setAssetBlobId(1);
+    assetBlob.setBlobCreated(blobCreated);
+    asset.setAssetBlob(assetBlob);
+
     AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null, false);
 
     assertThat(assetXO.getBlobUpdated(), notNullValue());
     assertThat(assetXO.getBlobUpdated().toInstant().toEpochMilli(),
         is(blobCreated.toInstant().toEpochMilli()));
+  }
+
+  @Test
+  public void fromAsset_blobUpdatedUnchangedWhenOnlyMetadataUpdatedByCacheReverification() {
+    // Regression: proxy cache re-verification bumps asset.lastUpdated() but leaves the (immutable)
+    // blob unchanged. blobUpdated must stay pinned to blobCreated across such re-checks.
+    OffsetDateTime assetCreated = OffsetDateTime.now().minusHours(3);
+    OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(2);
+
+    AssetData asset = new AssetData();
+    asset.setAssetId(AN_ASSET_ID);
+    asset.setPath(ASSET_PATH);
+    asset.setCreated(assetCreated);
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setAssetBlobId(1);
+    assetBlob.setBlobCreated(blobCreated);
+    asset.setAssetBlob(assetBlob);
+
+    // Before re-verification.
+    asset.setLastUpdated(blobCreated);
+    Date before = AssetXOBuilder.fromAsset(asset, repository, null, false).getBlobUpdated();
+
+    // Simulate a cache re-verification that only rewrites attributes (bumps last_updated).
+    asset.setLastUpdated(OffsetDateTime.now());
+    Date after = AssetXOBuilder.fromAsset(asset, repository, null, false).getBlobUpdated();
+
+    assertThat(after, is(before));
+    assertThat(after.toInstant().toEpochMilli(), is(blobCreated.toInstant().toEpochMilli()));
   }
 
   @Test
@@ -229,6 +308,7 @@ public class AssetXOBuilderTest
     asset.setAssetId(AN_ASSET_ID);
     asset.setPath(ASSET_PATH);
     asset.setCreated(assetCreated);
+    asset.setLastUpdated(assetCreated);
 
     AssetBlobData assetBlob = new AssetBlobData();
     assetBlob.setAssetBlobId(1);
@@ -261,6 +341,7 @@ public class AssetXOBuilderTest
     asset.setAssetId(AN_ASSET_ID);
     asset.setPath(ASSET_PATH);
     asset.setCreated(now);
+    asset.setLastUpdated(now);
 
     AssetBlobData blob = new AssetBlobData();
     blob.setAssetBlobId(1);
@@ -282,6 +363,7 @@ public class AssetXOBuilderTest
     asset.setAssetId(AN_ASSET_ID);
     asset.setPath(ASSET_PATH);
     asset.setCreated(now);
+    asset.setLastUpdated(now);
 
     AssetBlobData blob = new AssetBlobData();
     blob.setAssetBlobId(1);
@@ -327,11 +409,41 @@ public class AssetXOBuilderTest
     assertThat(assetXO.getRegistryUrl(), is(nullValue()));
   }
 
+  /**
+   * REST no-regression pin for NEXUS-55062. The UI stopped filtering format attributes, but the REST payload must keep
+   * honouring listExposedAttributeKeys() regardless of filterUiAttributes(). If someone wires the UI flag into this
+   * path, the documented /service/rest/v1/assets response silently widens and this test fails.
+   */
+  @Test
+  public void fromAsset_filtersToExposedKeys_ignoringUiFlag() {
+    AssetXODescriptor descriptor = mock(AssetXODescriptor.class);
+    when(descriptor.listExposedAttributeKeys()).thenReturn(Set.of("name", "version"));
+    when(descriptor.filterUiAttributes()).thenReturn(false);
+    when(descriptor.transformAttributeValue(anyString(), any())).thenAnswer(inv -> inv.getArgument(1));
+
+    AssetData asset = (AssetData) anAsset();
+    Map<String, Object> npmAttributes = new HashMap<>();
+    npmAttributes.put("name", "config-loader");
+    npmAttributes.put("version", "1.5.0");
+    npmAttributes.put("description", "Configuration file loader");
+    npmAttributes.put("author", "Test User");
+    npmAttributes.put("license", "MIT");
+    npmAttributes.put("keywords", "config json env");
+    asset.attributes().set("maven2", npmAttributes);
+
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, Map.of("maven2", descriptor), false);
+
+    Map<String, Object> exposed = (Map<String, Object>) assetXO.getAttributes().get("maven2");
+    assertThat(exposed.keySet(), containsInAnyOrder("name", "version"));
+  }
+
   private Asset anAsset() {
     AssetData asset = new AssetData();
     asset.setAssetId(AN_ASSET_ID);
     asset.setPath(ASSET_PATH);
-    asset.setCreated(OffsetDateTime.now());
+    OffsetDateTime now = OffsetDateTime.now();
+    asset.setCreated(now);
+    asset.setLastUpdated(now);
     AssetBlobData assetBlob = new AssetBlobData();
     assetBlob.setAssetBlobId(1);
     asset.setAssetBlob(assetBlob);
@@ -347,6 +459,7 @@ public class AssetXOBuilderTest
     asset.setAssetId(AN_ASSET_ID);
     asset.setPath(ASSET_PATH);
     asset.setCreated(assetCreated);
+    asset.setLastUpdated(assetCreated);
 
     AssetBlobData assetBlob = new AssetBlobData();
     assetBlob.setAssetBlobId(1);

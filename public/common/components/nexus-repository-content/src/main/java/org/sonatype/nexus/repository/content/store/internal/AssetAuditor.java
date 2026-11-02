@@ -14,10 +14,13 @@ package org.sonatype.nexus.repository.content.store.internal;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
@@ -33,15 +36,16 @@ import org.sonatype.nexus.repository.content.event.asset.AssetDownloadedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetKindEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetRestoredEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import org.springframework.beans.factory.annotation.Value;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_VALUE;
-import org.springframework.stereotype.Component;
 
 /**
  * Repository asset auditor.
@@ -68,6 +72,8 @@ public class AssetAuditor
 
     registerType(AssetDeletedEvent.class, DELETED_TYPE);
 
+    registerType(AssetRestoredEvent.class, RESTORED_TYPE);
+
     registerType(AssetPurgedEvent.class, PURGE_TYPE);
 
     registerType(AssetUpdatedEvent.class, UPDATED_TYPE);
@@ -86,17 +92,75 @@ public class AssetAuditor
   public void on(final AssetPurgedEvent event) {
     if (isRecording()) {
       String repositoryName = event.getRepository().map(Repository::getName).orElse("Unknown");
-      AuditData data = new AuditData();
-      data.setDomain(DOMAIN);
-      data.setType(type(event.getClass()));
-      data.setContext(repositoryName);
-
-      Map<String, Object> attributes = data.getAttributes();
-      attributes.put("repository.name", repositoryName);
-      attributes.put("assetIds", Arrays.toString(event.getAssetIds()));
-
-      record(data);
+      List<Asset> assets = event.getAssets();
+      if (assets != null && !assets.isEmpty()) {
+        for (Asset asset : assets) {
+          record(buildAssetAuditData(asset, type(event.getClass()), repositoryName));
+        }
+      }
+      else {
+        AuditData data = new AuditData();
+        data.setDomain(DOMAIN);
+        data.setType(type(event.getClass()));
+        data.setContext(repositoryName);
+        Map<String, Object> attributes = data.getAttributes();
+        attributes.put("repository.name", repositoryName);
+        attributes.put("assetIds", Arrays.toString(event.getAssetIds()));
+        record(data);
+      }
     }
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void on(final ComponentPurgedEvent event) {
+    if (isRecording()) {
+      String repositoryName = event.getRepository().map(Repository::getName).orElse("Unknown");
+      List<FluentAsset> assets = event.getAssets();
+      if (assets != null && !assets.isEmpty()) {
+        for (Asset asset : assets) {
+          record(buildAssetAuditData(asset, PURGE_TYPE, repositoryName));
+        }
+      }
+      else {
+        AuditData data = new AuditData();
+        data.setDomain(DOMAIN);
+        data.setType(PURGE_TYPE);
+        data.setContext(repositoryName);
+        Map<String, Object> attributes = data.getAttributes();
+        attributes.put("repository.name", repositoryName);
+        attributes.put("componentIds", Arrays.toString(event.getComponentIds()));
+        record(data);
+      }
+    }
+  }
+
+  private AuditData buildAssetAuditData(final Asset asset, final String eventType, final String repositoryName) {
+    AuditData data = new AuditData();
+    data.setDomain(DOMAIN);
+    data.setType(eventType);
+    data.setContext(asset.path());
+
+    String blobStorePath = "unknown";
+    String blobStoreName = "unknown";
+
+    if (asset.blob().isPresent()) {
+      AssetBlob blob = asset.blob().get();
+      BlobId blobId = blob.blobRef().getBlobId();
+      blobStoreName = blob.blobRef().getStore();
+      blobStorePath = defaultBlobIdLocationResolver.getLocation(blobId);
+    }
+    else {
+      log.debug("Asset {} has no blob; using placeholder blob path in audit record", asset.path());
+    }
+
+    Map<String, Object> attributes = data.getAttributes();
+    attributes.put("repository.name", repositoryName);
+    attributes.put("path", asset.path());
+    attributes.put("kind", asset.kind());
+    attributes.put("blob.path", blobStoreName + "/content/" + blobStorePath);
+
+    return data;
   }
 
   @Subscribe
@@ -104,43 +168,23 @@ public class AssetAuditor
   public void on(final AssetEvent event) {
     if (isRecording()) {
       Asset asset = event.getAsset();
-
-      AuditData data = new AuditData();
-      data.setDomain(DOMAIN);
-      data.setType(type(event.getClass()));
-      data.setContext(asset.path());
-
-      String blobStorePath = "unknown";
-      String blobStoreName = "unknown";
-
-      if (asset.blob().isPresent()) {
-        AssetBlob blob = asset.blob().get();
-
-        BlobId blobId = blob.blobRef().getBlobId();
-        blobStoreName = blob.blobRef().getStore();
-
-        blobStorePath = defaultBlobIdLocationResolver.getLocation(blobId);
-      }
-
-      Map<String, Object> attributes = data.getAttributes();
-      attributes.put("repository.name", event.getRepository().map(Repository::getName).orElse("Unknown"));
-      attributes.put("path", asset.path());
-      attributes.put("kind", asset.kind());
-      attributes.put("blob.path", blobStoreName + "/content/" + blobStorePath);
+      String repositoryName = event.getRepository().map(Repository::getName).orElse("Unknown");
+      AuditData data = buildAssetAuditData(asset, type(event.getClass()), repositoryName);
 
       if (event instanceof AssetAttributesEvent && attributeChangesDetailEnabled) {
         AssetAttributesEvent attributesEvent = (AssetAttributesEvent) event;
 
-        attributes.put("attribute.changes", attributesEvent.getChanges()
-            .stream()
-            .map(change -> {
-              Map<String, Object> entry = new HashMap<>();
-              entry.put("operation", change.getOperation());
-              entry.put("key", change.getKey());
-              entry.put("value", change.getValue());
-              return entry;
-            })
-            .collect(Collectors.toList()));
+        data.getAttributes()
+            .put("attribute.changes", attributesEvent.getChanges()
+                .stream()
+                .map(change -> {
+                  Map<String, Object> entry = new HashMap<>();
+                  entry.put("operation", change.getOperation());
+                  entry.put("key", change.getKey());
+                  entry.put("value", change.getValue());
+                  return entry;
+                })
+                .collect(Collectors.toList()));
       }
 
       record(data);

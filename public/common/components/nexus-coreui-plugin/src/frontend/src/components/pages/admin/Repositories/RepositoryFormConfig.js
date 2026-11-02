@@ -391,6 +391,23 @@ const repositoryFormats = {
       ...genericValidators.hosted(data)
     })
   },
+  openvsx_proxy: {
+    facets: [
+      GenericStorageConfiguration,
+      GenericProxyConfiguration,
+      GenericOptionsConfiguration,
+      GenericCleanupConfiguration,
+      GenericHttpAuthConfiguration,
+      PreEmptiveAuthConfiguration,
+      GenericHttpReqConfiguration
+    ],
+    defaultValues: {
+      ...genericDefaultValues.proxy
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
+  },
   nuget_proxy: {
     facets: [
       NugetProxyConfiguration,
@@ -536,6 +553,7 @@ const repositoryFormats = {
     facets: [
       GenericStorageConfiguration,
       HuggingFaceXetConfiguration,
+      FirewallConfiguration,
       GenericProxyConfiguration,
       GenericOptionsConfiguration,
       GenericCleanupConfiguration,
@@ -546,6 +564,9 @@ const repositoryFormats = {
       ...genericDefaultValues.proxy,
       xet: {
         enabled: false
+      },
+      firewall: {
+        mode: 'DISABLED'
       }
     },
     validators: (data) => ({

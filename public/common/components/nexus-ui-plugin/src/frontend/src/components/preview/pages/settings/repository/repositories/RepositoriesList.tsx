@@ -36,9 +36,11 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import { DeleteConfirmationModal, TablePagination } from '../../../../shared';
-import { ConfirmDialog } from '../../../../shared/ConfirmDialog';
+import { ConfirmDialog } from '../../../../shared/form/ConfirmDialog';
+import { useIsRepositorySizeSupported } from '../../../../shared/hooks';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { restClient, ENDPOINTS } from '../../../../../../interface/api';
+import { formatFileSize } from '../../../browse/detail/detail.utils';
 
 import {
   EmptyState,
@@ -59,11 +61,19 @@ import {
   FORMAT_LABELS,
   TYPE_LABELS,
   HealthCheckStatus,
+  isRepositoryOnline,
+  onlineToggleVariant,
 } from './types';
 import { HealthCheckCell } from '../../../../shared/security/HealthCheckCell';
 import { FirewallCell } from '../../../../shared/security/FirewallCell';
+import { useFirewallCounts } from '../../../../shared/security/useFirewallCounts';
+import { isFirewallActiveMessage } from '../../../../shared/security/firewallStatusKind';
+import UIStrings from '../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 import './RepositoriesList.scss';
+
+const LIST_STRINGS = UIStrings.REPOSITORIES_LIST;
+const ACTION_DIALOGS = UIStrings.REPOSITORY_ACTION_DIALOGS;
 
 interface FirewallStatusData {
   repositoryName: string;
@@ -106,20 +116,6 @@ function canReadFirewallStatus(): boolean {
  */
 function shouldShowHealthCheckColumn(): boolean {
   return canUpdateHealthCheck() && !(isIqServerEnabled() && hasFirewall());
-}
-
-/**
- * Format file size in bytes to human-readable format
- */
-function formatFileSize(bytes?: number): string {
-  if (bytes == null || bytes === 0) {
-    return '0 B';
-  }
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const k = 1024;
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const size = bytes / Math.pow(k, i);
-  return `${size.toFixed(2)} ${units[i]}`;
 }
 
 const DEFAULT_PAGE_SIZE = 40;
@@ -170,6 +166,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
 
   const [showHealthCheckColumn, setShowHealthCheckColumn] = useState(() => shouldShowHealthCheckColumn());
   const [showFirewallColumn, setShowFirewallColumn] = useState(() => isIqServerEnabled() && canReadFirewallStatus());
+  const showSizeColumn = useIsRepositorySizeSupported();
 
   // Toast notifications
   const toast = useToast();
@@ -210,7 +207,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
         const repos = await fetchRepositories();
         setRepositories(repos);
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Failed to load repositories';
+        const message = err instanceof Error ? err.message : LIST_STRINGS.TOASTS.loadFailed;
         setError(message);
       } finally {
         setLoadingRepos(false);
@@ -319,8 +316,8 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
           bVal = b.format || '';
           break;
         case 'status':
-          aVal = a.status?.online ?? a.online ?? true;
-          bVal = b.status?.online ?? b.online ?? true;
+          aVal = isRepositoryOnline(a);
+          bVal = isRepositoryOnline(b);
           if (aVal !== bVal) {
             return sortDirection === 'asc'
               ? (aVal ? -1 : 1)
@@ -374,7 +371,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
       const repos = await fetchRepositories();
       setRepositories(repos);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to load repositories';
+      const message = err instanceof Error ? err.message : LIST_STRINGS.TOASTS.loadFailed;
       setError(message);
     } finally {
       setLoadingRepos(false);
@@ -404,10 +401,10 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
       await restClient.post(ENDPOINTS.HEALTH_CHECK_ANALYZE(repositoryName));
       const health = await fetchHealthCheck();
       setHealthStatus(health);
-      toast.success(`Health check enabled for ${repositoryName}`);
+      toast.success(LIST_STRINGS.TOASTS.healthCheckEnabled(repositoryName));
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to enable health check';
-      toast.error(`Failed to start analysis for ${repositoryName}: ${message}`);
+      const message = err instanceof Error ? err.message : LIST_STRINGS.TOASTS.healthCheckFailed;
+      toast.error(LIST_STRINGS.TOASTS.analysisFailed(repositoryName, message));
     } finally {
       setAnalyzingRepos((prev) => {
         const next = new Set(prev);
@@ -430,11 +427,11 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
       }
       // Remove from local state
       setRepositories((prev) => prev.filter((r) => r.name !== repoToDelete.name));
-      toast.success(`Repository "${repoToDelete.name}" deleted successfully`);
+      toast.success(LIST_STRINGS.TOASTS.deleteSuccess(repoToDelete.name));
       setDeleteModalOpen(false);
       setRepoToDelete(null);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to delete repository';
+      const message = err instanceof Error ? err.message : LIST_STRINGS.TOASTS.deleteFailed;
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -452,7 +449,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
   }, []);
 
   const stageToggleOnline = useCallback((repo: Repository) => {
-    const currentOnline = repo.status?.online ?? repo.online ?? true;
+    const currentOnline = isRepositoryOnline(repo);
     setPendingRowAction({ kind: 'toggle-online', repository: repo, nextOnline: !currentOnline });
   }, []);
 
@@ -469,30 +466,39 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     try {
       if (pendingRowAction.kind === 'rebuild-index') {
         await rebuildIndex(repoName);
-        toast.success(`Repository index rebuild started for "${repoName}"`);
+        toast.success(LIST_STRINGS.TOASTS.rebuildStarted(repoName));
       } else if (pendingRowAction.kind === 'invalidate-cache') {
         await invalidateCache(repoName);
-        toast.success(`Repository caches invalidated for "${repoName}"`);
+        toast.success(LIST_STRINGS.TOASTS.cacheInvalidated(repoName));
       } else {
         const nextOnline = pendingRowAction.nextOnline;
         await setRepositoryOnline(repoName, repo.format, repo.type, nextOnline);
         toast.success(
           nextOnline
-            ? `Repository "${repoName}" is now online`
-            : `Repository "${repoName}" is now offline`
+            ? LIST_STRINGS.TOASTS.nowOnline(repoName)
+            : LIST_STRINGS.TOASTS.nowOffline(repoName)
         );
         // Refetch just this repository so the Status column reflects the
         // saved state. Failure to refetch would leave the row labelled with
-        // the previous state until the list is reloaded.
+        // the previous state until the list is reloaded. The refetch returns a
+        // fresh top-level `online` but no `status`, so propagate it into
+        // `status.online` too — otherwise the stale `status` from the old row
+        // survives the merge and the readers that prefer `status.online` go stale.
         const refreshed = await fetchRepository(repoName);
         if (refreshed) {
-          setRepositories((prev) => prev.map((r) => (r.name === repoName ? { ...r, ...refreshed } : r)));
+          setRepositories((prev) =>
+            prev.map((r) =>
+              r.name === repoName
+                ? { ...r, ...refreshed, status: { ...r.status, online: isRepositoryOnline(refreshed) } }
+                : r
+            )
+          );
         }
       }
       setPendingRowAction(null);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      toast.error('Action failed', message);
+      const message = err instanceof Error ? err.message : LIST_STRINGS.TOASTS.unknownError;
+      toast.error(LIST_STRINGS.TOASTS.actionFailed, message);
     } finally {
       setIsExecutingRowAction(false);
     }
@@ -500,33 +506,31 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
 
   const rowActionDialogProps = useMemo(() => {
     if (!pendingRowAction) {
-      return { title: '', message: '', confirmLabel: 'Confirm', variant: 'warning' as const };
+      return { title: '', message: '', confirmLabel: ACTION_DIALOGS.defaultConfirmLabel, variant: 'warning' as const };
     }
     const name = pendingRowAction.repository.name;
     if (pendingRowAction.kind === 'rebuild-index') {
       return {
-        title: 'Rebuild Repository Index',
-        message: `Rebuild the search index for repository "${name}"? This may take some time depending on repository size.`,
-        confirmLabel: 'Rebuild Index',
+        title: ACTION_DIALOGS.REBUILD_INDEX.title,
+        message: ACTION_DIALOGS.REBUILD_INDEX.message(name),
+        confirmLabel: ACTION_DIALOGS.REBUILD_INDEX.confirmLabel,
         variant: 'warning' as const,
       };
     }
     if (pendingRowAction.kind === 'invalidate-cache') {
       return {
-        title: 'Invalidate Repository Cache',
-        message: `Invalidate cached metadata and content for repository "${name}"? Subsequent requests will refetch from the upstream source.`,
-        confirmLabel: 'Invalidate Cache',
+        title: ACTION_DIALOGS.INVALIDATE_CACHE.title,
+        message: ACTION_DIALOGS.INVALIDATE_CACHE.message(name),
+        confirmLabel: ACTION_DIALOGS.INVALIDATE_CACHE.confirmLabel,
         variant: 'warning' as const,
       };
     }
-    const isGoingOffline = !pendingRowAction.nextOnline;
+    const dialog = pendingRowAction.nextOnline ? ACTION_DIALOGS.BRING_ONLINE : ACTION_DIALOGS.TAKE_OFFLINE;
     return {
-      title: isGoingOffline ? 'Disable System Status' : 'Enable System Status',
-      message: isGoingOffline
-        ? `Take repository "${name}" offline? Clients will no longer be able to read from or write to this repository until it is brought back online.`
-        : `Bring repository "${name}" online? Clients will be able to access it again.`,
-      confirmLabel: isGoingOffline ? 'Take Offline' : 'Bring Online',
-      variant: 'warning' as const,
+      title: dialog.title,
+      message: dialog.message(name),
+      confirmLabel: dialog.confirmLabel,
+      variant: onlineToggleVariant(pendingRowAction.nextOnline),
     };
   }, [pendingRowAction]);
 
@@ -537,6 +541,24 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     const end = start + pageSize;
     return sortedRepositories.slice(start, end);
   }, [sortedRepositories, currentPage, pageSize]);
+
+  // Counts are fetched only for firewall-enabled repositories on the current page.
+  const enabledFirewallRepoNames = useMemo(
+    () => (showFirewallColumn
+      ? paginatedRepositories
+          .filter((repo) => isFirewallActiveMessage(firewallStatus[repo.name]?.message))
+          .map((repo) => repo.name)
+      : []),
+    [showFirewallColumn, paginatedRepositories, firewallStatus],
+  );
+  const firewallCounts = useFirewallCounts(enabledFirewallRepoNames);
+
+  // After a firewall mode change only the summary and counts are stale, so skip the full list reload.
+  const { refresh: refreshFirewallCounts } = firewallCounts;
+  const handleFirewallEnableSuccess = useCallback(async () => {
+    setFirewallStatus(await fetchFirewallStatus());
+    refreshFirewallCounts();
+  }, [fetchFirewallStatus, refreshFirewallCounts]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -567,15 +589,16 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     const urlWithSlash = url.endsWith('/') ? url : `${url}/`;
     navigator.clipboard.writeText(urlWithSlash)
       .then(() => {
-        toast.success('URL copied to clipboard');
+        toast.success(LIST_STRINGS.TOASTS.urlCopied);
       })
       .catch(() => {
-        toast.error('Failed to copy URL to clipboard');
+        toast.error(LIST_STRINGS.TOASTS.urlCopyFailed);
       });
   };
 
-  // Calculate column count for empty state (Name, Size, Type, Format, BlobStore, Status, URL, Actions)
-  const colCount = 8 + (showHealthCheckColumn ? 1 : 0) + (showFirewallColumn ? 1 : 0);
+  // Calculate column count for empty state (Name, Type, Format, BlobStore, Status, URL, Actions
+  // are always present; Size, Health Check and Firewall Report are gated).
+  const colCount = 7 + (showSizeColumn ? 1 : 0) + (showHealthCheckColumn ? 1 : 0) + (showFirewallColumn ? 1 : 0);
 
   // Empty state for when no repositories exist
   const emptyState = useMemo(() => {
@@ -585,10 +608,10 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
       return (
         <EmptyState
           icon={Database}
-          title="No Matching Repositories"
-          description="No repositories match your current filters. Try adjusting your filter criteria."
+          title={LIST_STRINGS.EMPTY_STATE.NO_MATCH.title}
+          description={LIST_STRINGS.EMPTY_STATE.NO_MATCH.description}
           action={{
-            label: 'Clear Filters',
+            label: LIST_STRINGS.EMPTY_STATE.NO_MATCH.action,
             onClick: handleClearFilters,
           }}
         />
@@ -598,18 +621,18 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     return (
       <EmptyState
         icon={Database}
-        title="No Repositories"
-        description="Create your first repository to start storing and managing your software components."
+        title={LIST_STRINGS.EMPTY_STATE.NO_REPOSITORIES.title}
+        description={LIST_STRINGS.EMPTY_STATE.NO_REPOSITORIES.description}
         action={onCreate ? {
-          label: 'Create Repository',
+          label: LIST_STRINGS.EMPTY_STATE.NO_REPOSITORIES.action,
           onClick: onCreate,
           icon: Plus,
         } : undefined}
         secondaryAction={{
-          label: 'Learn more about repositories',
+          label: LIST_STRINGS.EMPTY_STATE.NO_REPOSITORIES.secondaryAction,
           href: 'https://help.sonatype.com/en/repository-administration.html',
         }}
-        tip="Start with a proxy repository to cache artifacts from Maven Central or npm registry."
+        tip={LIST_STRINGS.EMPTY_STATE.NO_REPOSITORIES.tip}
       />
     );
   }, [filter, typeFilter, formatFilter, handleClearFilters, onCreate]);
@@ -646,17 +669,23 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
       <Select.Trigger style={{ width: 180, flexShrink: 0 }}>
         <Flex align="center" gap="2">
           <ArrowUpDown size={14} aria-hidden />
-          <Text size="2">sort:</Text>
+          <Text size="2">{LIST_STRINGS.SORT.prefix}</Text>
           <Text size="2">
-            {sortField === 'name' ? 'Name' : sortField === 'format' ? 'Format' : sortField === 'type' ? 'Type' : 'Status'}
+            {sortField === 'name'
+              ? LIST_STRINGS.SORT.name
+              : sortField === 'format'
+                ? LIST_STRINGS.SORT.format
+                : sortField === 'type'
+                  ? LIST_STRINGS.SORT.type
+                  : LIST_STRINGS.SORT.status}
           </Text>
         </Flex>
       </Select.Trigger>
       <Select.Content position="popper" side="bottom" avoidCollisions={false} sideOffset={4}>
-        <Select.Item value="name">Name</Select.Item>
-        <Select.Item value="format">Format</Select.Item>
-        <Select.Item value="type">Type</Select.Item>
-        <Select.Item value="status">Status</Select.Item>
+        <Select.Item value="name">{LIST_STRINGS.SORT.name}</Select.Item>
+        <Select.Item value="format">{LIST_STRINGS.SORT.format}</Select.Item>
+        <Select.Item value="type">{LIST_STRINGS.SORT.type}</Select.Item>
+        <Select.Item value="status">{LIST_STRINGS.SORT.status}</Select.Item>
       </Select.Content>
     </Select.Root>
   );
@@ -679,7 +708,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
             <Box
               display={{ initial: 'none', sm: 'block' }}
               role="complementary"
-              aria-label="Filter bar"
+              aria-label={LIST_STRINGS.ARIA.filterBar}
             >
               <aside className="search-sidebar" data-testid="filter-sidebar">
                 {filterBarContent}
@@ -690,7 +719,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
             <Box className="repositories-list__main" minWidth="0" width="100%" role="main">
               <Box className="repositories-list__content">
                 <Flex align="baseline" gap="2" mb="4">
-                  <Heading as="h1" size="6" weight="bold">Repositories</Heading>
+                  <Heading as="h1" size="6" weight="bold">{LIST_STRINGS.heading}</Heading>
                   <Text size="2" color="gray">{displayTotal}</Text>
                 </Flex>
 
@@ -705,7 +734,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                   >
                     <Box style={{ flex: 1, minWidth: 200 }}>
                       <TextField.Root
-                        placeholder="Search repositories by name..."
+                        placeholder={LIST_STRINGS.searchPlaceholder}
                         value={filter}
                         onChange={(e) => { setFilter(e.target.value); setCurrentPage(1); }}
                         size="2"
@@ -721,7 +750,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                               color="gray"
                               size="1"
                               onClick={() => setFilter('')}
-                              aria-label="Clear filter"
+                              aria-label={LIST_STRINGS.ARIA.clearFilter}
                             >
                               <X size={14} />
                             </IconButton>
@@ -736,7 +765,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                 {/* Results summary */}
                 {!loadingRepos && !error && (
                   <Text size="2" color="gray" mb="2" as="p">
-                    Showing {filteredRepositories.length} of {repositories.length} repositories
+                    {LIST_STRINGS.resultsSummary(filteredRepositories.length, repositories.length)}
                   </Text>
                 )}
 
@@ -744,7 +773,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                 {loadingRepos ? (
                   <Flex direction="column" align="center" justify="center" gap="3" p="9">
                     <Spinner size="3" />
-                    <Text color="gray">Loading repositories...</Text>
+                    <Text color="gray">{LIST_STRINGS.loading}</Text>
                   </Flex>
                 ) : error ? (
                   <Box p="4">
@@ -766,9 +795,11 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                           onSort={handleSort}
                           align="left"
                         >
-                          Name
+                          {LIST_STRINGS.COLUMNS.name}
                         </SortableTableHeader>
-                        <Table.ColumnHeaderCell>Size</Table.ColumnHeaderCell>
+                        {showSizeColumn && (
+                          <Table.ColumnHeaderCell>{LIST_STRINGS.COLUMNS.size}</Table.ColumnHeaderCell>
+                        )}
                         <SortableTableHeader
                           sortKey="type"
                           currentSortKey={sortField}
@@ -776,7 +807,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                           onSort={handleSort}
                           align="left"
                         >
-                          Type
+                          {LIST_STRINGS.COLUMNS.type}
                         </SortableTableHeader>
                         <SortableTableHeader
                           sortKey="format"
@@ -785,9 +816,9 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                           onSort={handleSort}
                           align="left"
                         >
-                          Ecosystem
+                          {LIST_STRINGS.COLUMNS.ecosystem}
                         </SortableTableHeader>
-                        <Table.ColumnHeaderCell>Blob Store</Table.ColumnHeaderCell>
+                        <Table.ColumnHeaderCell>{LIST_STRINGS.COLUMNS.blobStore}</Table.ColumnHeaderCell>
                         <SortableTableHeader
                           sortKey="status"
                           currentSortKey={sortField}
@@ -795,24 +826,24 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                           onSort={handleSort}
                           align="left"
                         >
-                          Status
+                          {LIST_STRINGS.COLUMNS.status}
                         </SortableTableHeader>
-                        <Table.ColumnHeaderCell>URL</Table.ColumnHeaderCell>
+                        <Table.ColumnHeaderCell>{LIST_STRINGS.COLUMNS.url}</Table.ColumnHeaderCell>
                         {showHealthCheckColumn && (
                           <Table.ColumnHeaderCell className="table-cell-centered">
-                            Health Check
+                            {LIST_STRINGS.COLUMNS.healthCheck}
                           </Table.ColumnHeaderCell>
                         )}
                         {showFirewallColumn && (
                           <Table.ColumnHeaderCell className="table-cell-centered">
-                            Firewall Report
+                            {LIST_STRINGS.COLUMNS.firewallReport}
                           </Table.ColumnHeaderCell>
                         )}
                         {/* paddingRight: 32 matches the Rapture-safe right gutter used across list tables (see EntityTable.scss). */}
                         <Table.ColumnHeaderCell
                           width="80px"
                           justify="end"
-                          aria-label="Row actions"
+                          aria-label={LIST_STRINGS.ARIA.rowActions}
                           style={{ paddingRight: 32 }}
                         />
                       </Table.Row>
@@ -824,8 +855,8 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                             <Flex justify="center" p="6">
                               <Text color="gray">
                                 {filter || typeFilter.length > 0 || formatFilter.length > 0
-                                  ? 'No repositories match the current filters'
-                                  : 'No repositories available'}
+                                  ? LIST_STRINGS.EMPTY_BODY.withFilters
+                                  : LIST_STRINGS.EMPTY_BODY.noRepositories}
                               </Text>
                             </Flex>
                           </Table.Cell>
@@ -839,18 +870,20 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                             onKeyDown={handleRowKeyDown(repo.name)}
                             tabIndex={0}
                             role="button"
-                            aria-label={`View ${repo.name}`}
+                            aria-label={LIST_STRINGS.ARIA.viewRepository(repo.name)}
                           >
                             <Table.Cell>
                               <Text size="2" weight="medium" color="blue">
                                 {repo.name}
                               </Text>
                             </Table.Cell>
-                            <Table.Cell>
-                              <Text size="2" color="gray">
-                                {formatFileSize(repo.size)}
-                              </Text>
-                            </Table.Cell>
+                            {showSizeColumn && (
+                              <Table.Cell>
+                                <Text size="2" color="gray">
+                                  {formatFileSize(repo.size)}
+                                </Text>
+                              </Table.Cell>
+                            )}
                             <Table.Cell>
                               <Text size="2">{repo.type}</Text>
                             </Table.Cell>
@@ -863,16 +896,16 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                               </Text>
                             </Table.Cell>
                             <Table.Cell>
-                              <Text size="2">{repo.status?.online ? 'Online' : 'Offline'}</Text>
+                              <Text size="2">{isRepositoryOnline(repo) ? LIST_STRINGS.online : LIST_STRINGS.offline}</Text>
                             </Table.Cell>
                             <Table.Cell>
-                              <Tooltip content="Copy URL to Clipboard">
+                              <Tooltip content={LIST_STRINGS.ARIA.copyUrl}>
                                 <IconButton
                                   variant="ghost"
                                   color="gray"
                                   size="1"
                                   onClick={handleCopyUrlButton(repo.url)}
-                                  aria-label="Copy URL to Clipboard"
+                                  aria-label={LIST_STRINGS.ARIA.copyUrl}
                                 >
                                   <Copy size={16} />
                                 </IconButton>
@@ -895,7 +928,10 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                                   repository={repo}
                                   firewallStatus={firewallStatus[repo.name]}
                                   firewallLoaded={firewallLoaded}
+                                  firewallCounts={firewallCounts.counts[repo.name]}
+                                  firewallCountsLoading={firewallCounts.loadingNames.has(repo.name)}
                                   hasFirewallLicense={true}
+                                  onEnableSuccess={handleFirewallEnableSuccess}
                                 />
                               </Table.Cell>
                             )}
@@ -907,7 +943,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                                     color="gray"
                                     size="1"
                                     onClick={(e) => e.stopPropagation()}
-                                    aria-label={`Actions for ${repo.name}`}
+                                    aria-label={LIST_STRINGS.ARIA.actionsFor(repo.name)}
                                   >
                                     <MoreHorizontal size={16} />
                                   </IconButton>
@@ -921,7 +957,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                                       }}
                                       data-testid={`repo-action-edit-${repo.name}`}
                                     >
-                                      Edit
+                                      {LIST_STRINGS.ROW_ACTIONS.edit}
                                     </DropdownMenu.Item>
                                   )}
                                   {canEdit && (repo.type === 'hosted' || repo.type === 'proxy') && (
@@ -932,7 +968,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                                       }}
                                       data-testid={`repo-action-rebuild-index-${repo.name}`}
                                     >
-                                      Rebuild Index
+                                      {LIST_STRINGS.ROW_ACTIONS.rebuildIndex}
                                     </DropdownMenu.Item>
                                   )}
                                   {canEdit && (repo.type === 'proxy' || repo.type === 'group') && (
@@ -943,7 +979,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                                       }}
                                       data-testid={`repo-action-invalidate-cache-${repo.name}`}
                                     >
-                                      Invalidate Cache
+                                      {LIST_STRINGS.ROW_ACTIONS.invalidateCache}
                                     </DropdownMenu.Item>
                                   )}
                                   {canEdit && (
@@ -954,16 +990,16 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                                       }}
                                       data-testid={`repo-action-toggle-online-${repo.name}`}
                                     >
-                                      {(repo.status?.online ?? repo.online ?? true)
-                                        ? 'Disable System Status'
-                                        : 'Enable System Status'}
+                                      {isRepositoryOnline(repo)
+                                        ? LIST_STRINGS.ROW_ACTIONS.takeOffline
+                                        : LIST_STRINGS.ROW_ACTIONS.bringOnline}
                                     </DropdownMenu.Item>
                                   )}
                                   <DropdownMenu.Item
                                     onClick={handleCopyUrlButton(repo.url)}
                                     data-testid={`repo-action-copy-url-${repo.name}`}
                                   >
-                                    Copy URL
+                                    {LIST_STRINGS.ROW_ACTIONS.copyUrl}
                                   </DropdownMenu.Item>
                                   {canDelete && (
                                     <DropdownMenu.Item
@@ -975,7 +1011,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                                       color="red"
                                       data-testid={`repo-action-delete-${repo.name}`}
                                     >
-                                      Delete
+                                      {LIST_STRINGS.ROW_ACTIONS.delete}
                                     </DropdownMenu.Item>
                                   )}
                                 </DropdownMenu.Content>
@@ -1005,10 +1041,10 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
 
                 {/* Help Section */}
                 <HelpSection
-                  title="About Repositories"
-                  content="Repositories are storage locations where software components are stored, organized, and retrieved. Nexus supports hosted repositories for internal artifacts, proxy repositories for caching remote content, and group repositories for combining multiple repositories into a single URL."
+                  title={LIST_STRINGS.HELP.title}
+                  content={LIST_STRINGS.HELP.content}
                   docLink={{
-                    label: 'View Documentation',
+                    label: LIST_STRINGS.HELP.docLink,
                     href: 'https://help.sonatype.com/en/repository-administration.html',
                   }}
                 />
@@ -1026,7 +1062,6 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
         entityName={repoToDelete?.name || ''}
         entityType="repository"
         loading={isDeleting}
-        storageSize={repoToDelete?.size != null ? formatFileSize(repoToDelete.size) : undefined}
       />
       <ConfirmDialog
         open={pendingRowAction !== null}

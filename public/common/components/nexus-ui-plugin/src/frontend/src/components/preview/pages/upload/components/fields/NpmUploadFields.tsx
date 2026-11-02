@@ -71,7 +71,7 @@ export function NpmUploadFields({
               onChange={(val) => onChange(NPM_FIELD_NAMES.PACKAGE_NAME, val)}
               disabled={disabledFields.has(NPM_FIELD_NAMES.PACKAGE_NAME)}
               placeholder="@scope/package-name"
-              helpText={npm.packageNameHelp}
+              helpText={packageNameField.helpText || npm.packageNameHelp}
               error={errors[NPM_FIELD_NAMES.PACKAGE_NAME] || ''}
               required={!packageNameField.optional}
             />
@@ -85,7 +85,7 @@ export function NpmUploadFields({
               onChange={(val) => onChange(NPM_FIELD_NAMES.VERSION, val)}
               disabled={disabledFields.has(NPM_FIELD_NAMES.VERSION)}
               placeholder="1.0.0"
-              helpText={npm.versionHelp}
+              helpText={versionField.helpText || npm.versionHelp}
               error={errors[NPM_FIELD_NAMES.VERSION] || ''}
               required={!versionField.optional}
             />

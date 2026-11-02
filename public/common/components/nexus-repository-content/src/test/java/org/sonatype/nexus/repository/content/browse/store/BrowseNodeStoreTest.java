@@ -240,7 +240,7 @@ class BrowseNodeStoreTest
     }
   }
 
-  // --- NEXUS-51733: H2 parity for soft-delete browse-node cleanup ---
+  // --- NEXUS-51733: H2 parity for trash browse-node cleanup ---
 
   @DatabaseTest
   void deleteByAssetIdAndPath_returnsParentAndRemovesRow() {

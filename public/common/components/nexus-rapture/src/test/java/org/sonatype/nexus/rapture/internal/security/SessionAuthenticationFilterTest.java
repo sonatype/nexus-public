@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.rapture.internal.security;
 
-import java.lang.reflect.Field;
 import java.util.Base64;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,22 +52,13 @@ public class SessionAuthenticationFilterTest
 
   @Before
   public void setUp() throws Exception {
-    filter = new SessionAuthenticationFilter();
     request = mock(HttpServletRequest.class);
     response = mock(HttpServletResponse.class);
     rateLimiterService = mock(AuthRateLimiterService.class);
     ssoDetector = mock(SsoDetector.class);
     eventManager = mock(EventManager.class);
 
-    setField("rateLimiterService", rateLimiterService);
-    setField("ssoDetector", ssoDetector);
-    setField("eventManager", eventManager);
-  }
-
-  private void setField(final String name, final Object value) throws Exception {
-    Field field = SessionAuthenticationFilter.class.getDeclaredField(name);
-    field.setAccessible(true);
-    field.set(filter, value);
+    filter = new SessionAuthenticationFilter(rateLimiterService, ssoDetector, eventManager);
   }
 
   private static String base64(final String value) {

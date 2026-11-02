@@ -10,6 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+
 import React, {useEffect} from 'react';
 import {useMachine} from '@xstate/react';
 
@@ -36,6 +37,10 @@ import UIStrings from '../../../constants/UIStrings';
 import CleanupPoliciesPreviewFormMachine from './CleanupPoliciesPreviewFormMachine';
 import CleanupPoliciesPreviewListMachine from './CleanupPoliciesPreviewListMachine';
 
+/**
+ * @deprecated Classic UI only; unreachable from the Preview UI. Left on XState v4 semantics
+ * pending Classic UI deletion (NEXUS-55299) ahead of the XState v5 upgrade (NEXUS-51654).
+ */
 export default function CleanupPoliciesPreview({policyData}) {
   const [formState, sendToForm] = useMachine(CleanupPoliciesPreviewFormMachine, {devTools: true});
   const [listState, sendToList] = useMachine(CleanupPoliciesPreviewListMachine, {devTools: true});

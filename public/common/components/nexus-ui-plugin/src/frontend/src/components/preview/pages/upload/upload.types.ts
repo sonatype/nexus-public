@@ -381,9 +381,18 @@ export const FORMAT_FIELD_STRINGS = {
   },
   raw: {
     directoryLabel: 'Directory',
-    directoryHelp: 'Target directory path (e.g., /path/to/file)',
-    filenameLabel: 'Filename',
-    filenameHelp: 'The filename (optional, uses uploaded filename by default)',
+    // Reconciled to backend DIRECTORY_HELP_TEXT so fallback matches the API value.
+    directoryHelp: 'Destination for uploaded files (e.g. /path/to/files/)',
+    directoryPlaceholder: '/path/to/files/',
+  },
+  // Fallback copy for per-file asset fields, keyed by field name, used when the backend supplies none.
+  asset: {
+    help: {
+      filename: "Defaults to the uploaded file's name. Edit to override.",
+    } as Record<string, string>,
+    placeholders: {
+      filename: 'my-file.txt',
+    } as Record<string, string>,
   },
   generic: {
     optionalSuffix: '(optional)',

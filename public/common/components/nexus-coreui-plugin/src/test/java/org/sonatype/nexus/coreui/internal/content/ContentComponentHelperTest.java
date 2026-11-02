@@ -14,12 +14,18 @@ package org.sonatype.nexus.coreui.internal.content;
 
 import java.time.OffsetDateTime;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.coreui.AssetXO;
@@ -35,9 +41,11 @@ import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.search.ComponentFinder;
 import org.sonatype.nexus.repository.content.security.AssetPermissionChecker;
 import org.sonatype.nexus.repository.content.store.AssetData;
+import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.QueryOptions;
+import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -45,7 +53,6 @@ import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.selector.SelectorFactory;
 
-import com.google.common.collect.Lists;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.junit.After;
@@ -60,6 +67,8 @@ import org.mockito.Mockito;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -125,9 +134,10 @@ public class ContentComponentHelperTest
 
     // Default pass-through: every collected repository is permitted. Use doAnswer so stub overrides in
     // individual tests don't re-invoke this lambda with a null argument during Mockito's `when()` recording.
-    doAnswer(inv -> Lists.newArrayList(inv.<Iterable<Repository>>getArgument(0)))
-        .when(repositoryPermissionChecker)
-        .userCanBrowseRepositories(ArgumentMatchers.<Iterable<Repository>>any());
+    doAnswer(inv -> StreamSupport.stream(inv.<Iterable<Repository>>getArgument(0).spliterator(), false)
+        .collect(Collectors.toCollection(ArrayList::new)))
+            .when(repositoryPermissionChecker)
+            .userCanBrowseRepositories(ArgumentMatchers.<Iterable<Repository>>any());
   }
 
   @After
@@ -394,7 +404,7 @@ public class ContentComponentHelperTest
     @SuppressWarnings("unchecked")
     ArgumentCaptor<Iterable<Repository>> checkerInput = ArgumentCaptor.forClass(Iterable.class);
     verify(repositoryPermissionChecker).userCanBrowseRepositories(checkerInput.capture());
-    assertThat(Lists.newArrayList(checkerInput.getValue()), containsInAnyOrder(permittedHosted, forbiddenGroup));
+    assertThat(checkerInput.getValue(), containsInAnyOrder(permittedHosted, forbiddenGroup));
     // The forbidden group's facet was never touched — the security property under test. If the
     // filter ever regressed to post-expansion, we'd have called forbiddenGroup.getType() first.
     verify(forbiddenGroup, never()).getType();
@@ -459,13 +469,246 @@ public class ContentComponentHelperTest
     @SuppressWarnings("unchecked")
     ArgumentCaptor<Iterable<Repository>> checkerInput = ArgumentCaptor.forClass(Iterable.class);
     verify(repositoryPermissionChecker).userCanBrowseRepositories(checkerInput.capture());
-    assertThat(Lists.newArrayList(checkerInput.getValue()), containsInAnyOrder(group));
+    assertThat(checkerInput.getValue(), containsInAnyOrder(group));
     // Expansion happened after the Layer-B pass — leaves came out of the group.
     verify(groupFacet).leafMembers();
     // The first leaf reached the preview body: proves the loop iterated the expanded set.
     // With the pre-fix (post-expansion filter), the realistic checker above would have dropped
     // both leaves and the loop would never have run — no getFormat() call at all.
     verify(leaf1).getFormat();
+  }
+
+  /**
+   * NEXUS-55062 regression test. The npm Attributes panel lost description/author/license/keywords in 3.93.0 when the
+   * REST allow-list from {@link AssetXODescriptor#listExposedAttributeKeys()} started gating the UI response. The UI
+   * must show every stored format attribute unless the descriptor explicitly opts into filtering.
+   */
+  @Test
+  public void toAssetXO_withDescriptor_retainsAllStoredFormatAttributes() {
+    AssetXODescriptor npmDescriptor = descriptorFor(Set.of("name", "version"), false);
+    ContentComponentHelper underTest = helperWithDescriptor("npm", npmDescriptor);
+
+    AssetXO assetXO = underTest.toAssetXO("npm-hosted", "npm-hosted", "npm-hosted", "npm", createNpmAsset(), true);
+
+    Map<String, Object> npmAttributes = (Map<String, Object>) assetXO.getAttributes().get("npm");
+    assertThat(npmAttributes.keySet(),
+        containsInAnyOrder("name", "version", "description", "author", "license", "keywords", "asset_kind"));
+    assertThat(npmAttributes.get("description"), is("Configuration file loader"));
+  }
+
+  @Test
+  public void toAssetXO_withDescriptorOptingIntoFiltering_restrictsToExposedKeys() {
+    AssetXODescriptor filtering = descriptorFor(Set.of("name", "version"), true);
+    ContentComponentHelper underTest = helperWithDescriptor("npm", filtering);
+
+    AssetXO assetXO = underTest.toAssetXO("npm-hosted", "npm-hosted", "npm-hosted", "npm", createNpmAsset(), true);
+
+    Map<String, Object> npmAttributes = (Map<String, Object>) assetXO.getAttributes().get("npm");
+    assertThat(npmAttributes.keySet(), containsInAnyOrder("name", "version", "asset_kind"));
+  }
+
+  /**
+   * Docker relies on transformAttributeValue to render totalSize human-readably. It must run on every retained key,
+   * not only allow-listed ones, now that the UI is unfiltered.
+   */
+  @Test
+  public void toAssetXO_appliesTransformAttributeValueToNonExposedKeys() {
+    AssetXODescriptor descriptor = descriptorFor(Set.of("name"), false);
+    when(descriptor.transformAttributeValue(anyString(), any()))
+        .thenAnswer(inv -> "transformed:" + inv.getArgument(1));
+    ContentComponentHelper underTest = helperWithDescriptor("npm", descriptor);
+
+    AssetXO assetXO = underTest.toAssetXO("npm-hosted", "npm-hosted", "npm-hosted", "npm", createNpmAsset(), true);
+
+    Map<String, Object> npmAttributes = (Map<String, Object>) assetXO.getAttributes().get("npm");
+    // "description" is outside the allow-list, so this only passes if the transform runs on non-exposed keys too
+    assertThat(npmAttributes.get("description"), is("transformed:Configuration file loader"));
+  }
+
+  @Test
+  public void toAssetXO_asset_kind_isPresentAndNotTransformed() {
+    AssetXODescriptor descriptor = descriptorFor(Set.of("name", "version"), false);
+    when(descriptor.transformAttributeValue(anyString(), any())).thenAnswer(inv -> {
+      if ("asset_kind".equals(inv.getArgument(0))) {
+        throw new IllegalStateException("asset_kind must not be passed to transformAttributeValue");
+      }
+      return inv.getArgument(1);
+    });
+    ContentComponentHelper underTest = helperWithDescriptor("npm", descriptor);
+
+    AssetXO assetXO = underTest.toAssetXO("npm-hosted", "npm-hosted", "npm-hosted", "npm", createNpmAsset(), true);
+
+    Map<String, Object> npmAttributes = (Map<String, Object>) assetXO.getAttributes().get("npm");
+    assertThat(npmAttributes.get("asset_kind"), is("TARBALL"));
+  }
+
+  /**
+   * Guards the immutable-map path: when an asset has no stored format attributes the helper builds a
+   * {@link Collections#singletonMap}. The filter block must skip it rather than try to iterate or mutate it.
+   */
+  @Test
+  public void toAssetXO_withoutStoredFormatAttributes_producesSingletonAssetKindMap() {
+    AssetXODescriptor descriptor = descriptorFor(Set.of("name", "version"), false);
+    ContentComponentHelper underTest = helperWithDescriptor("npm", descriptor);
+
+    AssetXO assetXO =
+        underTest.toAssetXO("npm-hosted", "npm-hosted", "npm-hosted", "npm", createAssetWithoutFormatAttributes(),
+            true);
+
+    Map<String, Object> npmAttributes = (Map<String, Object>) assetXO.getAttributes().get("npm");
+    assertThat(npmAttributes.keySet(), containsInAnyOrder("asset_kind"));
+  }
+
+  /**
+   * AttributesMap.backing() hands back the live entity map and the helper only shallow-copies it, so filtering must
+   * never write through to the stored attributes.
+   */
+  @Test
+  public void toAssetXO_withDescriptor_doesNotMutateStoredFormatAttributesBeyondAssetKind() {
+    AssetXODescriptor descriptor = descriptorFor(Set.of("name", "version"), true);
+    ContentComponentHelper underTest = helperWithDescriptor("npm", descriptor);
+    Asset asset = createNpmAsset();
+    Map<String, Object> storedNpm = (Map<String, Object>) asset.attributes().backing().get("npm");
+
+    underTest.toAssetXO("npm-hosted", "npm-hosted", "npm-hosted", "npm", asset, true);
+
+    // asset_kind is injected into the live map by the helper (pre-existing behaviour); nothing may be dropped
+    assertThat(storedNpm.keySet(),
+        containsInAnyOrder("name", "version", "description", "author", "license", "keywords", "asset_kind"));
+  }
+
+  @Test
+  public void toComponentXO_withDescriptor_retainsAllStoredFormatAttributes() {
+    AssetXODescriptor descriptor = descriptorFor(Set.of("name", "version"), false);
+    ContentComponentHelper underTest = helperWithDescriptor("npm", descriptor);
+
+    ComponentXO componentXO = underTest.toComponentXO("npm-hosted", "npm", createNpmComponent());
+
+    Map<String, Object> npmAttributes = (Map<String, Object>) componentXO.getAttributes().get("npm");
+    assertThat(npmAttributes.keySet(),
+        containsInAnyOrder("name", "version", "description", "license", "component_kind"));
+  }
+
+  @Test
+  public void toComponentXO_appliesTransformAttributeValue() {
+    AssetXODescriptor descriptor = descriptorFor(Set.of("name"), false);
+    when(descriptor.transformAttributeValue(anyString(), any()))
+        .thenAnswer(inv -> "transformed:" + inv.getArgument(1));
+    ContentComponentHelper underTest = helperWithDescriptor("npm", descriptor);
+
+    ComponentXO componentXO = underTest.toComponentXO("npm-hosted", "npm", createNpmComponent());
+
+    Map<String, Object> npmAttributes = (Map<String, Object>) componentXO.getAttributes().get("npm");
+    assertThat(npmAttributes.get("description"), is("transformed:Configuration file loader"));
+  }
+
+  /**
+   * Completes the component-path matrix: the opt-in filtering branch must restrict to the allow-list, mirroring the
+   * asset path.
+   */
+  @Test
+  public void toComponentXO_withDescriptorOptingIntoFiltering_restrictsToExposedKeys() {
+    AssetXODescriptor descriptor = descriptorFor(Set.of("name", "version"), true);
+    ContentComponentHelper underTest = helperWithDescriptor("npm", descriptor);
+
+    ComponentXO componentXO = underTest.toComponentXO("npm-hosted", "npm", createNpmComponent());
+
+    Map<String, Object> npmAttributes = (Map<String, Object>) componentXO.getAttributes().get("npm");
+    assertThat(npmAttributes.keySet(), containsInAnyOrder("name", "version", "component_kind"));
+  }
+
+  private AssetXODescriptor descriptorFor(final Set<String> exposedKeys, final boolean filterUi) {
+    AssetXODescriptor descriptor = mock(AssetXODescriptor.class);
+    when(descriptor.listExposedAttributeKeys()).thenReturn(exposedKeys);
+    when(descriptor.filterUiAttributes()).thenReturn(filterUi);
+    when(descriptor.transformAttributeValue(anyString(), any())).thenAnswer(inv -> inv.getArgument(1));
+    return descriptor;
+  }
+
+  private ContentComponentHelper helperWithDescriptor(final String format, final AssetXODescriptor descriptor) {
+    when(repositoryManager.get(ArgumentMatchers.anyString())).thenReturn(repository);
+    when(repository.getType()).thenReturn(new ProxyType());
+    // buildQualifierBeanMap is statically mocked in setUp; route the descriptor list to the format key
+    when(QualifierUtil.buildQualifierBeanMap(anyList()))
+        .thenReturn(Map.of("default", componentFinder))
+        .thenReturn(Map.of(format, descriptor));
+
+    return new ContentComponentHelper(
+        maintenanceService,
+        contentDeletionService,
+        List.of(componentFinder),
+        assetPermissionChecker,
+        selectorFactory,
+        repositoryManager,
+        repositoryPermissionChecker,
+        List.of(descriptor));
+  }
+
+  private Asset createNpmAsset() {
+    FluentAssetImpl asset = mock(FluentAssetImpl.class);
+    when(asset.path()).thenReturn("/config-loader/-/config-loader-1.5.0.tgz");
+    Map<String, Object> npmMap = new HashMap<>();
+    npmMap.put("name", "config-loader");
+    npmMap.put("version", "1.5.0");
+    npmMap.put("description", "Configuration file loader");
+    npmMap.put("author", "Test User");
+    npmMap.put("license", "MIT");
+    npmMap.put("keywords", "config json env");
+    Map<String, Object> backingMap = new HashMap<>();
+    backingMap.put("npm", npmMap);
+    NestedAttributesMap attrs = mock(NestedAttributesMap.class);
+    when(attrs.backing()).thenReturn(backingMap);
+    when(asset.attributes()).thenReturn(attrs);
+    when(asset.kind()).thenReturn("TARBALL");
+    when(asset.created()).thenReturn(OffsetDateTime.now());
+    when(asset.lastUpdated()).thenReturn(OffsetDateTime.now());
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(1);
+    when(asset.unwrap()).thenReturn(assetData);
+    Repository assetRepository = mock(Repository.class);
+    when(assetRepository.getName()).thenReturn("npm-hosted");
+    when(asset.repository()).thenReturn(assetRepository);
+    return asset;
+  }
+
+  private Asset createAssetWithoutFormatAttributes() {
+    FluentAssetImpl asset = mock(FluentAssetImpl.class);
+    when(asset.path()).thenReturn("/config-loader");
+    NestedAttributesMap attrs = mock(NestedAttributesMap.class);
+    when(attrs.backing()).thenReturn(new HashMap<>());
+    when(asset.attributes()).thenReturn(attrs);
+    when(asset.kind()).thenReturn("PACKAGE_ROOT");
+    when(asset.created()).thenReturn(OffsetDateTime.now());
+    when(asset.lastUpdated()).thenReturn(OffsetDateTime.now());
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(2);
+    when(asset.unwrap()).thenReturn(assetData);
+    Repository assetRepository = mock(Repository.class);
+    when(assetRepository.getName()).thenReturn("npm-hosted");
+    when(asset.repository()).thenReturn(assetRepository);
+    return asset;
+  }
+
+  private FluentComponentImpl createNpmComponent() {
+    FluentComponentImpl component = mock(FluentComponentImpl.class);
+    when(component.name()).thenReturn("config-loader");
+    when(component.version()).thenReturn("1.5.0");
+    when(component.namespace()).thenReturn("");
+    when(component.kind()).thenReturn("NPM_PACKAGE");
+    Map<String, Object> npmMap = new HashMap<>();
+    npmMap.put("name", "config-loader");
+    npmMap.put("version", "1.5.0");
+    npmMap.put("description", "Configuration file loader");
+    npmMap.put("license", "MIT");
+    Map<String, Object> backingMap = new HashMap<>();
+    backingMap.put("npm", npmMap);
+    NestedAttributesMap attrs = mock(NestedAttributesMap.class);
+    when(attrs.backing()).thenReturn(backingMap);
+    when(component.attributes()).thenReturn(attrs);
+    ComponentData componentData = new ComponentData();
+    componentData.setComponentId(1);
+    when(component.unwrap()).thenReturn(componentData);
+    return component;
   }
 
   private Asset createAsset() {
@@ -487,6 +730,7 @@ public class ContentComponentHelperTest
     when(blob.blobCreated()).thenReturn(blobCreated);
     OffsetDateTime assetCreated = OffsetDateTime.now();
     when(asset.created()).thenReturn(assetCreated);
+    when(asset.lastUpdated()).thenReturn(assetCreated);
     AssetData assetData = new AssetData();
     assetData.setAssetId(1);
     when(asset.unwrap()).thenReturn(assetData);
@@ -497,5 +741,95 @@ public class ContentComponentHelperTest
     when(asset.repository()).thenReturn(assetRepository);
 
     return asset;
+  }
+
+  @Test
+  public void toAssetXO_blobUpdatedIsNullWhenBlobMissing() {
+    // When the asset has no blob (e.g. a proxy asset whose content has not been fetched, or a
+    // metadata-only asset), blobUpdated is null and the UI renders the dash placeholder. This
+    // mirrors AssetSearchResultImpl.getBinaryUpdated, which returns null with no fallback. When a
+    // blob IS present, blobUpdated tracks blobCreated — see
+    // toAssetXO_blobUpdatedReflectsBlobCreatedWhenBlobPresent.
+    when(repositoryManager.get("raw-hosted")).thenReturn(repository);
+    when(repository.getType()).thenReturn(new HostedType());
+
+    ContentComponentHelper underTest = new ContentComponentHelper(
+        maintenanceService,
+        contentDeletionService,
+        List.of(componentFinder),
+        assetPermissionChecker,
+        selectorFactory,
+        repositoryManager,
+        repositoryPermissionChecker,
+        Collections.emptyList());
+
+    FluentAssetImpl asset = mock(FluentAssetImpl.class);
+    when(asset.path()).thenReturn("/file.txt");
+    NestedAttributesMap attrs = mock(NestedAttributesMap.class);
+    when(attrs.backing()).thenReturn(new HashMap<>());
+    when(asset.attributes()).thenReturn(attrs);
+    when(asset.kind()).thenReturn("");
+    when(asset.created()).thenReturn(OffsetDateTime.now());
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(99);
+    when(asset.unwrap()).thenReturn(assetData);
+    Repository assetRepository = mock(Repository.class);
+    when(assetRepository.getName()).thenReturn("raw-hosted");
+    when(asset.repository()).thenReturn(assetRepository);
+
+    AssetXO assetXO = underTest.toAssetXO(
+        "raw-hosted", "raw-hosted", "raw-hosted", "raw", asset, true);
+
+    assertThat(assetXO.getBlobUpdated(), is(nullValue()));
+  }
+
+  @Test
+  public void toAssetXO_blobUpdatedReflectsBlobCreatedWhenBlobPresent() {
+    // With a blob present, blobUpdated must come from the (immutable) blob's creation time, not
+    // asset.lastUpdated(). asset.lastUpdated() is bumped by metadata writes such as proxy cache
+    // re-verification, which must not move the "Updated" value when the binary is unchanged.
+    when(repositoryManager.get("raw-hosted")).thenReturn(repository);
+    when(repository.getType()).thenReturn(new HostedType());
+
+    ContentComponentHelper underTest = new ContentComponentHelper(
+        maintenanceService,
+        contentDeletionService,
+        List.of(componentFinder),
+        assetPermissionChecker,
+        selectorFactory,
+        repositoryManager,
+        repositoryPermissionChecker,
+        Collections.emptyList());
+
+    OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(2);
+    // lastUpdated is much later than blobCreated, as it would be after a cache re-verification.
+    OffsetDateTime lastUpdated = OffsetDateTime.now();
+    FluentAssetImpl asset = mock(FluentAssetImpl.class);
+    when(asset.path()).thenReturn("/file.txt");
+    NestedAttributesMap attrs = mock(NestedAttributesMap.class);
+    when(attrs.backing()).thenReturn(new HashMap<>());
+    when(asset.attributes()).thenReturn(attrs);
+    when(asset.kind()).thenReturn("");
+    when(asset.created()).thenReturn(blobCreated);
+    when(asset.lastUpdated()).thenReturn(lastUpdated);
+    when(asset.blob()).thenReturn(Optional.of(blob));
+    when(blob.blobCreated()).thenReturn(blobCreated);
+    when(blob.blobRef()).thenReturn(mock(BlobRef.class));
+    when(blob.blobSize()).thenReturn(1024L);
+    when(blob.contentType()).thenReturn("text/plain");
+    when(blob.checksums()).thenReturn(Collections.emptyMap());
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(100);
+    when(asset.unwrap()).thenReturn(assetData);
+    Repository assetRepository = mock(Repository.class);
+    when(assetRepository.getName()).thenReturn("raw-hosted");
+    when(asset.repository()).thenReturn(assetRepository);
+
+    AssetXO assetXO = underTest.toAssetXO(
+        "raw-hosted", "raw-hosted", "raw-hosted", "raw", asset, false);
+
+    assertThat(assetXO.getBlobUpdated(), is(notNullValue()));
+    assertThat(assetXO.getBlobUpdated().toInstant().toEpochMilli(),
+        is(blobCreated.toInstant().toEpochMilli()));
   }
 }

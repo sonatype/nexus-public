@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.cdn.CdnDefaultsService;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
 import org.sonatype.nexus.rest.Resource;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.validation.group.Create;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -91,6 +93,9 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   private boolean blobStoreValidation = true;
 
+  @Nullable
+  protected CdnDefaultsService cdnDefaultsService;
+
   @Autowired
   public void setHighAvailabilitySupportChecker(final HighAvailabilitySupportChecker highAvailabilitySupportChecker) {
     this.highAvailabilitySupportChecker = highAvailabilitySupportChecker;
@@ -133,6 +138,11 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     this.blobStoreValidation = blobStoreValidation;
   }
 
+  @Autowired(required = false)
+  public void setCdnDefaultsService(@Nullable final CdnDefaultsService cdnDefaultsService) {
+    this.cdnDefaultsService = cdnDefaultsService;
+  }
+
   /**
    * Adapts the request to a configuration object.
    *
@@ -149,6 +159,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     validateRequest(request);
     try {
       Configuration configuration = adapt(request);
+      applyGlobalDistributionDefault(configuration);
       validateRequest(configuration, configuration.getRepositoryName());
       authorizingRepositoryManager.create(configuration);
       return Response.status(Status.CREATED).build();
@@ -280,6 +291,13 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     if (recipe != null && !recipe.isFeatureEnabled()) {
       throw new ValidationErrorsException("This format is not currently enabled");
     }
+  }
+
+  void applyGlobalDistributionDefault(final Configuration configuration) {
+    if (cdnDefaultsService == null) {
+      return;
+    }
+    cdnDefaultsService.applyDefaultIfAbsent(configuration);
   }
 
 }

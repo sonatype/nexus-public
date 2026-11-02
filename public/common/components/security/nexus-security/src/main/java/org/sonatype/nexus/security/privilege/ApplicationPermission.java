@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.security.privilege;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 
 import static java.util.Objects.requireNonNull;
 
@@ -45,14 +45,14 @@ public class ApplicationPermission
     this.actions = requireNonNull(actions);
 
     if (domain.indexOf(PART_SEPARATOR) < 0) {
-      setParts(ImmutableList.of(SYSTEM, domain), actions);
+      setParts(List.of(SYSTEM, domain), actions);
     }
     else {
       // complex domain we need to split into parts
-      setParts(ImmutableList.<String>builder()
-          .add(SYSTEM)
-          .addAll(PART_SPLITTER.split(domain))
-          .build(), actions);
+      List<String> parts = new ArrayList<>();
+      parts.add(SYSTEM);
+      parts.addAll(PART_SPLITTER.splitToList(domain));
+      setParts(List.copyOf(parts), actions);
     }
   }
 

@@ -185,8 +185,10 @@ public class BearerTokenRealmTest
   }
 
   @Test
-  public void cachingEnabled() {
-    assertThat(underTest.isAuthenticationCachingEnabled(), is(true));
+  public void cachingDisabled() {
+    // Shiro's realm cache is keyed on primary principal alone, so a bearer that is deleted and
+    // reissued would fail with IncorrectCredentialsException until restart.
+    assertThat(underTest.isAuthenticationCachingEnabled(), is(false));
   }
 
   @Test

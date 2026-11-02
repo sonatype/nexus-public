@@ -28,6 +28,7 @@ import jakarta.validation.groups.Default;
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
+import org.sonatype.nexus.capability.CapabilitySecurityPermissionHelper;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
 import org.sonatype.nexus.capability.CapabilityRegistry;
@@ -81,6 +82,8 @@ public class CapabilityComponent
 
   private final CapabilityRegistry capabilityRegistry;
 
+  private final CapabilitySecurityPermissionHelper capabilitySecurityPermissionHelper;
+
   private static final Set<String> SYSTEM_CAPABILITY_TYPES = Set.of(
       SchedulerCapabilityDescriptor.TYPE_ID,
       StorageSettingsCapabilityDescriptor.TYPE_ID);
@@ -88,10 +91,12 @@ public class CapabilityComponent
   @Autowired
   public CapabilityComponent(
       final CapabilityDescriptorRegistry capabilityDescriptorRegistry,
-      final CapabilityRegistry capabilityRegistry)
+      final CapabilityRegistry capabilityRegistry,
+      final CapabilitySecurityPermissionHelper capabilitySecurityPermissionHelper)
   {
     this.capabilityDescriptorRegistry = requireNonNull(capabilityDescriptorRegistry);
     this.capabilityRegistry = requireNonNull(capabilityRegistry);
+    this.capabilitySecurityPermissionHelper = requireNonNull(capabilitySecurityPermissionHelper);
   }
 
   /**
@@ -137,7 +142,12 @@ public class CapabilityComponent
   @RequiresPermissions("nexus:capabilities:create")
   @Validate(groups = {Create.class, Default.class})
   public CapabilityXO create(final @NotNull @Valid CapabilityXO capabilityXO) {
-    return asCapability(capabilityRegistry.add(capabilityType(capabilityXO.getTypeId()), capabilityXO.getEnabled(),
+    CapabilityType type = capabilityType(capabilityXO.getTypeId());
+    // Security-sensitive capability types (those that activate/configure a realm) additionally require
+    // nexus:settings:update, so the weaker capabilities:create permission alone cannot escalate privileges
+    // (CVE-2026-14645 / NEXUS-54726).
+    capabilitySecurityPermissionHelper.ensurePermittedForType(type);
+    return asCapability(capabilityRegistry.add(type, capabilityXO.getEnabled(),
         capabilityXO.getNotes(), capabilityXO.getProperties()));
   }
 
@@ -155,6 +165,14 @@ public class CapabilityComponent
   @Validate(groups = {Update.class, Default.class})
   public CapabilityXO update(final @NotNull @Valid CapabilityXO capabilityXO) {
     CapabilityReference capabilityReference = capabilityRegistry.get(capabilityIdentity(capabilityXO.getId()));
+    if (capabilityReference == null) {
+      // Unknown id: delegate to the registry so it produces the not-found error, rather than dereferencing null.
+      return asCapability(capabilityRegistry.update(capabilityIdentity(capabilityXO.getId()), capabilityXO.getEnabled(),
+          capabilityXO.getNotes(), capabilityXO.getProperties()));
+    }
+    // See create(): updating a security-sensitive capability also requires nexus:settings:update
+    // (CVE-2026-14645 / NEXUS-54726).
+    capabilitySecurityPermissionHelper.ensurePermittedForDescriptor(capabilityReference.context().descriptor());
     return asCapability(capabilityRegistry.update(capabilityIdentity(capabilityXO.getId()), capabilityXO.getEnabled(),
         capabilityXO.getNotes(),
         unfilterProperties(capabilityXO.getProperties(), capabilityReference.context().properties())));
@@ -209,6 +227,16 @@ public class CapabilityComponent
   @RequiresPermissions("nexus:capabilities:update")
   @Validate
   public void enable(final @NotEmpty String id) {
+    CapabilityReference capabilityReference = capabilityRegistry.get(capabilityIdentity(id));
+    if (capabilityReference == null) {
+      // Unknown id: delegate to the registry so it produces the not-found error, rather than skipping
+      // the security gate silently.
+      capabilityRegistry.enable(capabilityIdentity(id));
+      return;
+    }
+    // Enabling a security-sensitive capability activates its realm, so it also requires nexus:settings:update
+    // (CVE-2026-14645 / NEXUS-54726). Disable is de-escalation and is not gated.
+    capabilitySecurityPermissionHelper.ensurePermittedForDescriptor(capabilityReference.context().descriptor());
     capabilityRegistry.enable(capabilityIdentity(id));
   }
 
@@ -293,6 +321,7 @@ public class CapabilityComponent
     capabilityTypeXO.setId(capabilityDescriptor.type().toString());
     capabilityTypeXO.setName(capabilityDescriptor.name());
     capabilityTypeXO.setAbout(capabilityDescriptor.about());
+    capabilityTypeXO.setRequiresSettingsUpdate(capabilityDescriptor.requiresSettingsUpdatePermission());
     if (capabilityDescriptor.formFields() != null) {
       capabilityTypeXO.setFormFields(
           capabilityDescriptor.formFields().stream().map(FormFieldXO::create).collect(toList()));

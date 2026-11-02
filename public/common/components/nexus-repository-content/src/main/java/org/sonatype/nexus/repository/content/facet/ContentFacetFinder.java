@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.facet;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +25,6 @@ import org.sonatype.nexus.repository.RepositoryStoppedEvent;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.group.GroupFacet;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import org.slf4j.Logger;
@@ -89,7 +89,7 @@ public class ContentFacetFinder
     // otherwise repeat this search for any next-level repositories and merge the results
     return repository.optionalFacet(GroupFacet.class)
         .map(GroupFacet::members)
-        .orElse(ImmutableList.of())
+        .orElse(List.of())
         .stream()
         .flatMap(ContentFacetFinder::findContentFacets);
   }

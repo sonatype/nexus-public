@@ -70,7 +70,14 @@ public abstract class BearerTokenRealm
     this.principalsHelper = requireNonNull(principalsHelper);
     this.format = requireNonNull(format);
     setName(format);
-    setAuthenticationCachingEnabled(true);
+    // Bearer tokens are looked up in the ApiKey store on every request (getAuthenticationCacheKey
+    // itself queries the store), so Shiro's realm cache does not save the DB round-trip. It does,
+    // however, retain a SimpleAuthenticationInfo keyed by primary principal — including the
+    // credentials from whichever bearer authenticated first. If that bearer is later deleted and
+    // reissued (for example when the Purge orphaned API keys task runs against the anonymous
+    // Docker token), Shiro would serve the cached info and reject the fresh bearer with
+    // IncorrectCredentialsException until the process restarts.
+    setAuthenticationCachingEnabled(false);
   }
 
   @Autowired

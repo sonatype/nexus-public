@@ -146,7 +146,7 @@ interface ChildAssetRowsProps {
 }
 
 /**
- * Renders the expanded child asset rows of a soft-deleted component (indented, display-only). Shows a
+ * Renders the expanded child asset rows of a trashed component (indented, display-only). Shows a
  * loading spinner, an error, or an empty-state row as appropriate. Children are never checkbox-selectable
  * and carry no per-row actions — Restore/Purge is driven from the parent component row.
  */
@@ -173,7 +173,7 @@ function ChildAssetRows({ childState }: ChildAssetRowsProps) {
   }
   const children = childState.children ?? [];
   if (children.length === 0) {
-    return statusRow(<Text size="1" color="gray">No soft-deleted assets under this component.</Text>);
+    return statusRow(<Text size="1" color="gray">No assets in the Trash under this component.</Text>);
   }
 
   return (
@@ -301,7 +301,7 @@ export function TrashTable({
     [selectedIds, onSelectionChange]
   );
 
-  // Expandable component rows: a soft-deleted component can reveal its soft-deleted child assets.
+  // Expandable component rows: a trashed component can reveal its trashed child assets.
   // Children are display-only -- neither checkbox-selectable nor individually actionable (Restore/Purge
   // is driven from the parent component row) -- so top-level selection and pagination are unaffected.
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -454,7 +454,7 @@ export function TrashTable({
                   />
                 </Table.Cell>
 
-                {/* Name — a leading chevron expands components to reveal their soft-deleted child assets.
+                {/* Name — a leading chevron expands components to reveal their trashed child assets.
                     Cap width so a long path/coordinates truncates with ellipsis instead of stretching the
                     column and shoving other columns right. */}
                 <Table.Cell style={{ maxWidth: 420 }}>

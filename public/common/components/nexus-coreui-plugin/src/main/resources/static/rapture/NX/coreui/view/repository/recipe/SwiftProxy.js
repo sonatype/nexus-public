@@ -40,9 +40,7 @@ Ext.define('NX.coreui.view.repository.recipe.SwiftProxy', {
         var me = this;
         var swiftFirewallEnabled = NX.State.getValue('swiftFirewallEnabled');
 
-        me.items = [
-            {xtype: 'nx-coreui-repository-swift-proxy-facet'}
-        ];
+        me.items = [];
 
         if (swiftFirewallEnabled) {
             me.items.push({xtype: 'nx-coreui-repository-firewall-facet'});
@@ -58,6 +56,44 @@ Ext.define('NX.coreui.view.repository.recipe.SwiftProxy', {
         ]);
 
         me.callParent();
-        me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_SwiftFacet_Remote_HelpText'));
+        var remoteUrlField = me.down('#remoteUrl');
+        remoteUrlField.setHelpText(NX.I18n.get('Repository_Facet_SwiftFacet_Remote_HelpText'));
+
+        // Swift proxies may only proxy the GitHub root URL. The Swift format's fetch
+        // path is hardcoded to github.com, so any other remote yields a repository that cannot serve
+        // packages. Exact string comparison against the two accepted values -- NOT a prefix match,
+        // which would admit 'https://github.com.evil.example/', and not URL parsing.
+        //
+        // Case-sensitive by design: Swift's provider lookup matches the host case-sensitively, and a
+        // mixed-case remote makes '.swift'-suffixed packages (URITemplate.swift) fail intermittently.
+        // The shared URL validation applied to this field is case-insensitive, so this rule is added
+        // on top of it rather than replacing it.
+        //
+        // Ext.form.field.Text defaults allowOnlyWhitespace to true, which would let a
+        // whitespace-only value satisfy allowBlank:false. Turning it off makes the field's own
+        // "required" message cover blank AND whitespace-only input, matching the React UI's
+        // not-blank rule so the two surfaces surface the same message for the same input.
+        remoteUrlField.allowOnlyWhitespace = false;
+
+        remoteUrlField.validator = function(value) {
+            // Defer to the field's allowBlank/allowOnlyWhitespace handling so the "required"
+            // message is unchanged for blank input.
+            if (!value || !value.trim()) {
+                return true;
+            }
+            if (value === 'https://github.com/' || value === 'https://github.com') {
+                return true;
+            }
+            return NX.I18n.get('Repository_Facet_SwiftFacet_Remote_ValidationError');
+        };
+
+        // Place the Swift-only auto-block HTTP status codes field directly below the
+        // auto-block checkbox in the shared proxy fieldset, rather than in its own section.
+        var proxyFieldSet = me.down('#proxyFieldSet');
+        var autoBlockField = me.down('checkbox[name=attributes.httpclient.autoBlock]');
+        if (proxyFieldSet && autoBlockField) {
+            proxyFieldSet.insert(proxyFieldSet.items.indexOf(autoBlockField) + 1,
+                {xtype: 'nx-coreui-repository-swift-proxy-facet'});
+        }
     }
 });

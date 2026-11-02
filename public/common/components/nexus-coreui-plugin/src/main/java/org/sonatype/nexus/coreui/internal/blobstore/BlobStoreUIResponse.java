@@ -39,11 +39,14 @@ public class BlobStoreUIResponse
 
   private final boolean unlimited;
 
+  private final GlobalDistributionStatus globalDistributionStatus;
+
   public BlobStoreUIResponse(
       final String typeId,
       final BlobStoreConfiguration configuration,
       @Nullable final BlobStoreMetrics metrics,
-      final String path)
+      final String path,
+      final GlobalDistributionStatus globalDistributionStatus)
   {
     if (metrics != null) {
       unavailable = metrics.isUnavailable();
@@ -65,6 +68,7 @@ public class BlobStoreUIResponse
     this.typeId = requireNonNull(typeId);
     typeName = configuration.getType();
     this.path = requireNonNull(path);
+    this.globalDistributionStatus = requireNonNull(globalDistributionStatus);
   }
 
   public String getName() {
@@ -101,5 +105,9 @@ public class BlobStoreUIResponse
 
   public boolean isUnlimited() {
     return unlimited;
+  }
+
+  public GlobalDistributionStatus getGlobalDistributionStatus() {
+    return globalDistributionStatus;
   }
 }

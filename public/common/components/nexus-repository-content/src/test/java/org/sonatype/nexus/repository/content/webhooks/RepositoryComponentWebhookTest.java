@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEve
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentRestoredEvent;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ContentStoreEventSetter;
 import org.sonatype.nexus.repository.content.webhooks.RepositoryComponentWebhook.RepositoryComponentWebhookPayload;
@@ -192,6 +193,22 @@ public class RepositoryComponentWebhookTest
     RepositoryComponentWebhookPayload payload = capturePayload();
     assertThat(payload.getRepositoryName(), is("maven-releases"));
     assertThat(String.valueOf(payload.getAction()), is("DELETED"));
+    assertThat(payload.getComponent(), is(notNullValue()));
+  }
+
+  @Test
+  public void testOnComponentRestoredEvent_withSubscription_queuesPayload() {
+    subscribeToRepository("maven-releases");
+
+    ComponentData component = createComponentData(5);
+    ComponentRestoredEvent event = new ComponentRestoredEvent(component);
+    ContentStoreEventSetter.setRepositorySupplier(event, () -> Optional.of(repository));
+
+    underTest.on(event);
+
+    RepositoryComponentWebhookPayload payload = capturePayload();
+    assertThat(payload.getRepositoryName(), is("maven-releases"));
+    assertThat(String.valueOf(payload.getAction()), is("RESTORED"));
     assertThat(payload.getComponent(), is(notNullValue()));
   }
 

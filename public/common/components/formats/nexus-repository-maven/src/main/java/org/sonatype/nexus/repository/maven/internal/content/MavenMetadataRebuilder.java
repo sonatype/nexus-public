@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.maven.internal.content;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -31,8 +33,6 @@ import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebu
 import org.sonatype.nexus.thread.ExceptionAwareThreadFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
@@ -146,14 +146,14 @@ public class MavenMetadataRebuilder
     requireNonNull(gavs);
 
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
-    Set<String> deletedPaths = Sets.newHashSet();
+    Set<String> deletedPaths = new HashSet<>();
 
     for (String[] gav : gavs) {
       MavenPath mavenPath = metadataPath(gav[0], gav[1], gav[2]);
 
       // Check if we should delete this metadata (NEXUS-47092)
       if (!isPathUsedForGAMetadata(mavenContentFacet, mavenPath, gav)) {
-        List<String> paths = Lists.newArrayList();
+        List<String> paths = new ArrayList<>();
         paths.add(prependIfMissing(mavenPath.main().getPath(), PATH_PREFIX));
         for (HashType hashType : HashType.values()) {
           paths.add(prependIfMissing(mavenPath.main().hash(hashType).getPath(), PATH_PREFIX));
@@ -209,7 +209,7 @@ public class MavenMetadataRebuilder
       String[] segments = basePath.split("/");
 
       // Filter empty segments (in case of leading slash)
-      List<String> nonEmptySegments = Lists.newArrayList();
+      List<String> nonEmptySegments = new ArrayList<>();
       for (String segment : segments) {
         if (!segment.isEmpty()) {
           nonEmptySegments.add(segment);

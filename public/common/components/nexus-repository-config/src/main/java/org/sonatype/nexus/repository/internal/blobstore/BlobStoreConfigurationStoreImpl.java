@@ -22,9 +22,8 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.common.collect.ImmutableList;
-
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroupConfigurationHelper.memberNames;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -52,7 +51,7 @@ public class BlobStoreConfigurationStoreImpl
   @Transactional
   @Override
   public List<BlobStoreConfiguration> list() {
-    return ImmutableList.copyOf(dao().browse());
+    return toImmutableList(dao().browse());
   }
 
   @Transactional

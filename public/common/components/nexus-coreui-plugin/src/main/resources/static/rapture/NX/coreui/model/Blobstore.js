@@ -41,6 +41,7 @@ Ext.define('NX.coreui.model.Blobstore', {
     {name: 'promotable', type: 'boolean'},
     {name: 'groupName', type: 'string'},
     {name: 'unavailable', type: 'boolean'},
+    {name: 'globalDistributionEnabled', type: 'boolean'},
     {
       name: 'state',
       type: 'string',

@@ -56,6 +56,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
       }),
     }),
     isProEdition: jest.fn().mockReturnValue(true),
+    isEnterpriseEdition: jest.fn().mockReturnValue(false),
     showSuccessMessage: jest.fn(),
     showErrorMessage: jest.fn(),
   };

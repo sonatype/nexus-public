@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.search.sql.store.upgrade.task;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
@@ -26,6 +27,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.sql.index.SqlSearchIndexService;
+import org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.Filter;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.testcommon.extensions.LoggingExtension;
 import org.sonatype.nexus.testcommon.extensions.LoggingExtension.CaptureLogsFor;
@@ -57,7 +59,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.FILTER_CONDITION_FIELD_ID;
+import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.NAMESPACE_LIKE_FIELD_ID;
+import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.NAME_LIKE_FIELD_ID;
+import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.VERSION_LIKE_FIELD_ID;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.formattedMessage;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.logLevel;
 
@@ -73,6 +77,9 @@ class ReIndexSearchFilterByPatternTaskTest
   @Mock
   private SqlSearchIndexService sqlSearchIndexService;
 
+  @Mock
+  Format format;
+
   @CaptureLogsFor(value = ReIndexSearchFilterByPatternTask.class, level = Level.INFO)
   TestLogAccessor logs;
 
@@ -81,22 +88,13 @@ class ReIndexSearchFilterByPatternTaskTest
   @BeforeEach
   void setUp() {
     underTest = new ReIndexSearchFilterByPatternTask(repositoryManager, sqlSearchIndexService, BATCH_SIZE);
-  }
 
-  private void configureTask(String filterCondition) {
-    TaskConfiguration taskConfiguration = new TaskConfiguration();
-    taskConfiguration.setId("test-task-id");
-    taskConfiguration.setTypeId(ReIndexSearchFilterByPatternTask.TYPE_ID);
-    taskConfiguration.setName("Test Reindex Task");
-    if (filterCondition != null) {
-      taskConfiguration.setString(FILTER_CONDITION_FIELD_ID, filterCondition);
-    }
-    underTest.configure(taskConfiguration);
+    lenient().when(format.getValue()).thenReturn("maven2");
   }
 
   @Test
   void shouldSkipWhenFilterConditionIsNull() throws Exception {
-    configureTask(null);
+    configureTask(Map.of());
 
     Object result = underTest.execute();
 
@@ -110,9 +108,11 @@ class ReIndexSearchFilterByPatternTaskTest
   }
 
   @Test
-  void shouldProcessRepositoriesWithMatchingComponents() throws Exception {
-    String filterCondition = "namespace LIKE '%\\_%' OR version LIKE '%\\_%'";
-    configureTask(filterCondition);
+  void shouldProcessRepositoriesWithMatchingComponents_legacyFilter() throws Exception {
+    Filter expectedFilter =
+        new Filter("namespace LIKE #{filterParams.namespace} OR version LIKE #{filterParams.version}",
+            Map.of("namespace", "%\\_%", "version", "%\\_%"));
+    configureTask(Map.of("filterCondition", "namespace LIKE '%\\_%' OR version LIKE '%\\_%'"));
 
     Repository repo1 = createRepositoryWithComponents("maven-central", 2);
     Repository repo2 = createRepositoryWithComponents("npm-proxy", 1);
@@ -124,27 +124,34 @@ class ReIndexSearchFilterByPatternTaskTest
     assertThat(result, is(equalTo(3L)));
     verify(sqlSearchIndexService, times(3)).indexBatch(any(), any());
 
-    assertThat(logs.logs(), hasItem(allOf(
-        logLevel(Level.INFO),
-        formattedMessage(containsString("Starting re-index task with filter condition: " + filterCondition)))));
+    assertByFilter(repo1, expectedFilter);
+    assertByFilter(repo2, expectedFilter);
+  }
 
-    assertThat(logs.logs(), hasItem(allOf(
-        logLevel(Level.INFO),
-        formattedMessage(containsString("Completed re-indexing 2 components for repository maven-central")))));
+  @Test
+  void shouldProcessRepositoriesWithMatchingComponents() throws Exception {
+    configureTask(Map.of(NAMESPACE_LIKE_FIELD_ID, "nmspc", NAME_LIKE_FIELD_ID, "nme", VERSION_LIKE_FIELD_ID, "vrn"));
 
-    assertThat(logs.logs(), hasItem(allOf(
-        logLevel(Level.INFO),
-        formattedMessage(containsString("Completed re-indexing 1 components for repository npm-proxy")))));
+    Repository repo1 = createRepositoryWithComponents("maven-central", 2);
+    Repository repo2 = createRepositoryWithComponents("npm-proxy", 1);
 
-    assertThat(logs.logs(), hasItem(allOf(
-        logLevel(Level.INFO),
-        formattedMessage(containsString("Completed re-index task. Total components processed: 3")))));
+    when(repositoryManager.browse()).thenReturn(List.of(repo1, repo2));
+
+    Object result = underTest.execute();
+
+    assertThat(result, is(equalTo(3L)));
+    verify(sqlSearchIndexService, times(3)).indexBatch(any(), any());
+
+    Filter expectedFilter = new Filter(
+        "namespace LIKE #{filterParams.namespace} OR name LIKE #{filterParams.name} OR version LIKE #{filterParams.version}",
+        Map.of("namespace", "%nmspc%", "name", "%nme%", "version", "%vrn%"));
+    assertByFilter(repo1, expectedFilter);
+    assertByFilter(repo2, expectedFilter);
   }
 
   @Test
   void shouldSkipRepositoriesWithNoMatchingComponents() throws Exception {
-    String filterCondition = "namespace LIKE '%\\_%'";
-    configureTask(filterCondition);
+    configureTask(Map.of(NAMESPACE_LIKE_FIELD_ID, "_"));
 
     Repository repo = createRepositoryWithComponents("maven-central", 0);
     when(repositoryManager.browse()).thenReturn(List.of(repo));
@@ -161,8 +168,7 @@ class ReIndexSearchFilterByPatternTaskTest
 
   @Test
   void shouldLogErrorAndSkipWhenRepositoryThrowsUnexpectedException() throws Exception {
-    String filterCondition = "namespace LIKE '%\\_%'";
-    configureTask(filterCondition);
+    configureTask(Map.of(NAMESPACE_LIKE_FIELD_ID, "_"));
 
     // An unexpected RuntimeException (NOT a concurrent-deletion signal) must land in the generic
     // catch and be logged at ERROR — distinct from the MissingFacet/InvalidState WARN-and-skip path.
@@ -192,8 +198,7 @@ class ReIndexSearchFilterByPatternTaskTest
 
   @Test
   void shouldWarnAndSkipWhenRepositoryThrowsMissingFacetException() throws Exception {
-    String filterCondition = "namespace LIKE '%\\_%'";
-    configureTask(filterCondition);
+    configureTask(Map.of(NAMESPACE_LIKE_FIELD_ID, "_"));
 
     Repository deletedRepo = mock(Repository.class);
     when(deletedRepo.getName()).thenReturn("deleted-repo");
@@ -224,8 +229,7 @@ class ReIndexSearchFilterByPatternTaskTest
 
   @Test
   void shouldWarnAndSkipWhenRepositoryThrowsInvalidStateException() throws Exception {
-    String filterCondition = "namespace LIKE '%\\_%'";
-    configureTask(filterCondition);
+    configureTask(Map.of(NAMESPACE_LIKE_FIELD_ID, "_"));
 
     Repository deletedRepo = mock(Repository.class);
     when(deletedRepo.getName()).thenReturn("deleted-repo");
@@ -253,8 +257,7 @@ class ReIndexSearchFilterByPatternTaskTest
 
   @Test
   void shouldProcessMultipleBatches() throws Exception {
-    String filterCondition = "namespace LIKE '%\\_%'";
-    configureTask(filterCondition);
+    configureTask(Map.of(NAMESPACE_LIKE_FIELD_ID, "_"));
 
     Repository repo = createRepositoryWithComponents("maven-central", 3);
     when(repositoryManager.browse()).thenReturn(List.of(repo));
@@ -265,6 +268,19 @@ class ReIndexSearchFilterByPatternTaskTest
     verify(sqlSearchIndexService, times(3)).indexBatch(any(), eq(repo));
   }
 
+  private void configureTask(final Map<String, String> filterConditions) {
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setId("test-task-id");
+    taskConfiguration.setTypeId(ReIndexSearchFilterByPatternTask.TYPE_ID);
+    taskConfiguration.setName("Test Reindex Task");
+    filterConditions.forEach(taskConfiguration::setString);
+    underTest.configure(taskConfiguration);
+  }
+
+  private static void assertByFilter(final Repository repository, final Filter filter) {
+    verify(repository.facet(ContentFacet.class).components()).byFilter(filter.condition(), filter.params());
+  }
+
   /**
    * Helper method to create a Repository mock with FluentComponents that return matching components.
    */
@@ -272,16 +288,13 @@ class ReIndexSearchFilterByPatternTaskTest
       final String name,
       final int componentCount)
   {
-    Repository repository = mock(Repository.class);
+    Repository repository = mock();
     lenient().when(repository.getName()).thenReturn(name);
-
-    Format format = mock(Format.class);
-    lenient().when(format.getValue()).thenReturn("maven2");
     lenient().when(repository.getFormat()).thenReturn(format);
 
-    ContentFacet contentFacet = mock(ContentFacet.class);
-    FluentComponents fluentComponents = mock(FluentComponents.class);
-    FluentQuery<FluentComponent> fluentQuery = mock(FluentQuery.class);
+    ContentFacet contentFacet = mock();
+    FluentComponents fluentComponents = mock();
+    FluentQuery<FluentComponent> fluentQuery = mock();
 
     lenient().when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     lenient().when(contentFacet.components()).thenReturn(fluentComponents);
@@ -328,8 +341,8 @@ class ReIndexSearchFilterByPatternTaskTest
   /**
    * Helper method to create a Continuation mock.
    */
-  private Continuation<FluentComponent> createContinuation(final int size, final String nextToken) {
-    Continuation<FluentComponent> continuation = mock(Continuation.class);
+  private static Continuation<FluentComponent> createContinuation(final int size, final String nextToken) {
+    Continuation<FluentComponent> continuation = mock();
     List<FluentComponent> components = size > 0
         ? List.of(mock(FluentComponent.class))
         : Collections.emptyList();

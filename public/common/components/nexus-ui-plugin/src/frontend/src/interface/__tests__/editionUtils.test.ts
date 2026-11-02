@@ -20,8 +20,12 @@ import {
   EDITION_PRO,
   EDITION_PRO_PLUS,
   getEditionDisplayName,
+  getEditionShortDisplayName,
   getEditionLogo,
+  getHeaderMarkLogo,
   getHeaderWordmarkLogo,
+  PRO_AND_COMMUNITY_EDITIONS,
+  PRO_FAMILY_EDITIONS,
 } from '../editionUtils';
 
 // SVGs are resolved to a mock path string by jest's imgMock.js, so identity comparisons
@@ -36,7 +40,6 @@ describe('getEditionDisplayName', () => {
     [EDITION_PRO, 'Pro'],
     [EDITION_PRO_PLUS, 'Pro+'],
     [EDITION_ENTERPRISE, 'Enterprise'],
-    [EDITION_CLOUD, 'Pro'],
   ])('maps %s to display name "%s"', (editionId, expected) => {
     expect(getEditionDisplayName(editionId)).toBe(expected);
   });
@@ -54,16 +57,63 @@ describe('getEditionDisplayName', () => {
   });
 });
 
+describe('getEditionShortDisplayName', () => {
+  it('shouldShortenCommunityToDropTheEditionSuffix', () => {
+    expect(getEditionShortDisplayName(EDITION_COMMUNITY)).toBe('Community');
+  });
+
+  it.each([
+    [EDITION_CORE, 'Core'],
+    [EDITION_PRO, 'Pro'],
+    [EDITION_PRO_PLUS, 'Pro+'],
+    [EDITION_ENTERPRISE, 'Enterprise'],
+  ])('shouldFallBackToDisplayNameForEditionsWithNoShortForm: %s -> "%s"', (editionId, expected) => {
+    expect(getEditionShortDisplayName(editionId)).toBe(expected);
+  });
+
+  it('shouldReturnDefaultDisplayNameForUndefined', () => {
+    expect(getEditionShortDisplayName(undefined)).toBe(DEFAULT_EDITION_DISPLAY_NAME);
+  });
+
+  it('shouldReturnDefaultDisplayNameForNull', () => {
+    expect(getEditionShortDisplayName(null)).toBe(DEFAULT_EDITION_DISPLAY_NAME);
+  });
+
+  it('shouldFallBackToRawIdentifierForUnknownEditions', () => {
+    expect(getEditionShortDisplayName('nexus-unknown-edition')).toBe('nexus-unknown-edition');
+  });
+});
+
+describe('EDITION_CLOUD (deprecated, compatibility-only export)', () => {
+  it('keeps its published value for existing importers', () => {
+    expect(EDITION_CLOUD).toBe('nexus-cloud-edition');
+  });
+
+  it('carries no display mapping: it is treated like any unknown identifier', () => {
+    expect(getEditionDisplayName(EDITION_CLOUD)).toBe(EDITION_CLOUD);
+  });
+
+  it('belongs to no edition group, so no edition gate accepts it', () => {
+    expect(PRO_FAMILY_EDITIONS).not.toContain(EDITION_CLOUD);
+    expect(PRO_AND_COMMUNITY_EDITIONS).not.toContain(EDITION_CLOUD);
+  });
+
+  it('carries no logo mapping: it falls back to the Core logo like any unknown identifier', () => {
+    expect(getEditionLogo(EDITION_CLOUD, false)).toBe(getEditionLogo('nexus-unknown-edition', false));
+    expect(getEditionLogo(EDITION_CLOUD, true)).toBe(getEditionLogo('nexus-unknown-edition', true));
+  });
+});
+
 describe('getEditionLogo', () => {
   it('returns a truthy value for every known edition in light theme', () => {
-    const editions = [EDITION_CORE, EDITION_COMMUNITY, EDITION_PRO, EDITION_PRO_PLUS, EDITION_ENTERPRISE, EDITION_CLOUD];
+    const editions = [EDITION_CORE, EDITION_COMMUNITY, EDITION_PRO, EDITION_PRO_PLUS, EDITION_ENTERPRISE];
     editions.forEach(editionId => {
       expect(getEditionLogo(editionId, false)).toBeTruthy();
     });
   });
 
   it('returns a truthy value for every known edition in dark theme', () => {
-    const editions = [EDITION_CORE, EDITION_COMMUNITY, EDITION_PRO, EDITION_PRO_PLUS, EDITION_ENTERPRISE, EDITION_CLOUD];
+    const editions = [EDITION_CORE, EDITION_COMMUNITY, EDITION_PRO, EDITION_PRO_PLUS, EDITION_ENTERPRISE];
     editions.forEach(editionId => {
       expect(getEditionLogo(editionId, true)).toBeTruthy();
     });
@@ -82,13 +132,6 @@ describe('getEditionLogo', () => {
     // mocking makes identity comparisons meaningless, so only assert presence.
     expect(getEditionLogo(EDITION_ENTERPRISE, false)).toBeTruthy();
     expect(getEditionLogo(EDITION_ENTERPRISE, true)).toBeTruthy();
-  });
-
-  it('cloud edition intentionally shares the Pro logo import (same reference by design)', () => {
-    // Both EDITION_CLOUD and EDITION_PRO return the exact same imported binding
-    // from the switch, which is a real identity match rather than a mock artifact.
-    expect(getEditionLogo(EDITION_CLOUD, false)).toBe(getEditionLogo(EDITION_PRO, false));
-    expect(getEditionLogo(EDITION_CLOUD, true)).toBe(getEditionLogo(EDITION_PRO, true));
   });
 
   it('falls back to Core logo for undefined edition', () => {
@@ -116,5 +159,20 @@ describe('getHeaderWordmarkLogo', () => {
   it('accepts both light and dark flag values without throwing', () => {
     expect(() => getHeaderWordmarkLogo(false)).not.toThrow();
     expect(() => getHeaderWordmarkLogo(true)).not.toThrow();
+  });
+});
+
+describe('getHeaderMarkLogo', () => {
+  it('shouldReturnTruthyValueInLightMode', () => {
+    expect(getHeaderMarkLogo(false)).toBeTruthy();
+  });
+
+  it('shouldReturnTruthyValueInDarkMode', () => {
+    expect(getHeaderMarkLogo(true)).toBeTruthy();
+  });
+
+  it('shouldAcceptBothFlagValuesWithoutThrowing', () => {
+    expect(() => getHeaderMarkLogo(false)).not.toThrow();
+    expect(() => getHeaderMarkLogo(true)).not.toThrow();
   });
 });

@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.MissingRepositoryException;
 import org.sonatype.nexus.repository.config.ConfigurationCreatedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationEvent;
-import org.sonatype.nexus.repository.config.ConfigurationSoftDeletedEvent;
+import org.sonatype.nexus.repository.config.ConfigurationTrashedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationUpdatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
@@ -82,8 +82,8 @@ public class ConfigurationSubscriber
   }
 
   @Subscribe
-  public void on(final ConfigurationSoftDeletedEvent event) {
-    handleReplication(event, e -> repositoryManager.softDelete(e.getRepositoryName(), "system:replication"));
+  public void on(final ConfigurationTrashedEvent event) {
+    handleReplication(event, e -> repositoryManager.trash(e.getRepositoryName(), "system:replication"));
   }
 
   private void handleReplication(final ConfigurationEvent event, final EventConsumer<ConfigurationEvent> consumer) {

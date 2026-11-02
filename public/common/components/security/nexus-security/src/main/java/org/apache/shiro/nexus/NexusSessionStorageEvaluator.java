@@ -12,14 +12,11 @@
  */
 package org.apache.shiro.nexus;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.sonatype.nexus.security.anonymous.AnonymousHelper;
 
 import org.apache.shiro.mgt.SessionStorageEvaluator;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.mgt.DefaultWebSessionStorageEvaluator;
-import org.springframework.beans.factory.annotation.Value;
 
 /**
  * Custom {@link SessionStorageEvaluator}.
@@ -29,9 +26,11 @@ import org.springframework.beans.factory.annotation.Value;
 public class NexusSessionStorageEvaluator
     extends DefaultWebSessionStorageEvaluator
 {
-  @Autowired
-  @Value("${nexus.session.enabled:true}")
-  private boolean sessionsEnabled;
+  private final boolean sessionsEnabled;
+
+  public NexusSessionStorageEvaluator(final boolean sessionsEnabled) {
+    this.sessionsEnabled = sessionsEnabled;
+  }
 
   /**
    * Disable storage for anonymous subject.

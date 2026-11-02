@@ -38,15 +38,15 @@ import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.common.QualifierUtil;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 import org.sonatype.nexus.distributed.event.service.api.common.BlobStoreDistributedConfigurationEvent;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManager;
 import org.sonatype.nexus.security.UserIdHelper;
 
@@ -54,13 +54,15 @@ import jakarta.inject.Provider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -70,17 +72,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 
 @ExtendWith(MockitoExtension.class)
@@ -818,6 +810,100 @@ class BaseBlobStoreManagerTest
 
     // The secret should NOT be removed since the value is unchanged
     verify(secretsService, never()).remove(any());
+    verify(store).update(newBlobStoreConfig);
+  }
+
+  @Test
+  public void canEncryptNestedSensitiveFields() throws Exception {
+    // Test that nested sensitive fields (e.g., cloudFront.privateKey) are encrypted correctly
+    String nestedFieldKey = "cloudFront.privateKey";
+    String privateKeyValue = "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----";
+
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(nestedFieldKey));
+    when(provider.get()).thenReturn(blobStore);
+
+    Secret secret = mock();
+    when(secret.getId()).thenReturn(SECRET_ID);
+    when(secretsService.encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, privateKeyValue.toCharArray(), TEST_USER))
+        .thenReturn(secret);
+
+    Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+    Map<String, Object> cloudFrontMap = new HashMap<>();
+    cloudFrontMap.put("privateKey", privateKeyValue);
+    cloudFrontMap.put("distributionUrl", "https://d123.cloudfront.net");
+    cloudFrontMap.put("keyPairId", "APKAI123456");
+
+    Map<String, Object> blobConfigMap = new HashMap<>();
+    blobConfigMap.put("cloudFront", cloudFrontMap);
+    blobStoreAttributes.put("test", blobConfigMap);
+    blobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration configuration = createConfig("test", blobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore createdBlobStore = underTest.create(configuration);
+
+    // Verify the nested privateKey was encrypted and replaced with secret ID
+    Map<?, ?> cfMap = configuration.attributes("test").get("cloudFront", Map.class);
+    assertThat(cfMap, allOf(hasEntry("privateKey", SECRET_ID),
+        hasEntry("distributionUrl", "https://d123.cloudfront.net"), hasEntry("keyPairId", "APKAI123456")));
+
+    assertThat(createdBlobStore, is(blobStore));
+    verify(secretsService).encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, privateKeyValue.toCharArray(),
+        TEST_USER);
+    verify(store).create(configuration);
+    verify(blobStore).start();
+  }
+
+  @Test
+  public void canUpdateNestedSensitiveFields() throws Exception {
+    // Test that updating nested sensitive fields properly removes old secrets
+    String nestedFieldKey = "cloudFront.privateKey";
+    String newPrivateKey = "new-private-key";
+
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(nestedFieldKey));
+
+    // Setup old configuration with encrypted private key
+    Map<String, Map<String, Object>> oldBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> oldCloudFrontMap = new HashMap<>();
+    oldCloudFrontMap.put("privateKey", SECRET_ID);
+    oldCloudFrontMap.put("distributionUrl", "https://d123.cloudfront.net");
+
+    Map<String, Object> oldBlobConfigMap = new HashMap<>();
+    oldBlobConfigMap.put("cloudFront", oldCloudFrontMap);
+    oldBlobStoreAttributes.put("test", oldBlobConfigMap);
+    oldBlobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration oldBlobStoreConfig = createConfig("test", oldBlobStoreAttributes);
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(oldBlobStoreConfig);
+
+    Secret oldSecret = mock();
+    when(secretsService.from(SECRET_ID)).thenReturn(oldSecret);
+
+    // Setup new configuration with new private key
+    Secret newSecret = mock();
+    when(newSecret.getId()).thenReturn("_2");
+    when(secretsService.encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, newPrivateKey.toCharArray(), TEST_USER))
+        .thenReturn(newSecret);
+
+    Map<String, Map<String, Object>> newBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> newCloudFrontMap = new HashMap<>();
+    newCloudFrontMap.put("privateKey", newPrivateKey);
+    newCloudFrontMap.put("distributionUrl", "https://d456.cloudfront.net");
+
+    Map<String, Object> newBlobConfigMap = new HashMap<>();
+    newBlobConfigMap.put("cloudFront", newCloudFrontMap);
+    newBlobStoreAttributes.put("test", newBlobConfigMap);
+    newBlobStoreAttributes.put("file", Map.of("path", "bar"));
+    BlobStoreConfiguration newBlobStoreConfig = createConfig("test", newBlobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    underTest.track("test", blobStore);
+
+    underTest.update(newBlobStoreConfig);
+
+    // Verify old secret was removed
+    verify(secretsService).remove(oldSecret);
+    // Verify new private key was encrypted
+    verify(secretsService).encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, newPrivateKey.toCharArray(), TEST_USER);
     verify(store).update(newBlobStoreConfig);
   }
 

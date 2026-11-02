@@ -169,6 +169,7 @@ const toggleSort = assign<TagsListMachineContext, { field: TagSortField }>((cont
 export const tagsListMachine = createMachine<TagsListMachineContext, TagsListMachineEvent>(
   {
     id: 'tagsList',
+    predictableActionArguments: true,
     initial: 'loading',
     context: initialContext,
     states: {

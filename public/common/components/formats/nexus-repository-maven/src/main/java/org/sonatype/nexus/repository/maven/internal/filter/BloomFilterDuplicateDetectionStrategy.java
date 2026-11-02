@@ -46,7 +46,7 @@ public class BloomFilterDuplicateDetectionStrategy
       new ScalableBloomFilter<>(stringFunnel(UTF_8), BLOOM_FILTER_SIZE, MAX_PROBABILITY);
 
   @Override
-  public boolean apply(final Record record) {
+  public boolean test(final Record record) {
     return bloomFilter.put(gavceForRecord(record));
   }
 }

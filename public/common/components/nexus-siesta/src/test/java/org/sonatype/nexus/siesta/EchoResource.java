@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.siesta;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.ws.rs.GET;
@@ -39,7 +40,7 @@ public class EchoResource
       @QueryParam("foo") String foo,
       @QueryParam("bar") Integer bar)
   {
-    final List<String> result = Lists.newArrayList();
+    final List<String> result = new ArrayList<>();
     if (foo != null) {
       result.add("foo=" + foo);
     }

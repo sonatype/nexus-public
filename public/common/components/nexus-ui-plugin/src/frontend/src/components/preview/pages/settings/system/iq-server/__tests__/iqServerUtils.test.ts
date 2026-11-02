@@ -18,6 +18,7 @@ import {
   parseVersion,
   formatErrorMessage,
   humanizeStage,
+  isUntrustedCertificateError,
 } from '../iqServerUtils';
 import { DEFAULT_IQ_CONFIGURATION, PASSWORD_PLACEHOLDER } from '../types';
 
@@ -134,6 +135,32 @@ describe('formatErrorMessage', () => {
     });
     it('passes through unrelated messages unchanged', () => {
       expect(formatErrorMessage('some other backend error', 'x')).toBe('some other backend error');
+    });
+    it('strips a leaked Java exception FQCN from an unmatched fallthrough message', () => {
+      const raw =
+        '(internal_error) Unexpected error: java.security.InvalidAlgorithmParameterException: the trustAnchors parameter must be non-empty';
+      expect(formatErrorMessage(raw, 'x')).toBe(
+        '(internal_error) Unexpected error: the trustAnchors parameter must be non-empty',
+      );
+    });
+  });
+
+  describe('isUntrustedCertificateError', () => {
+    it('returns true for PKIX/SSLHandshake reasons', () => {
+      expect(isUntrustedCertificateError('PKIX path building failed')).toBe(true);
+      expect(isUntrustedCertificateError('SSLHandshakeException while connecting')).toBe(true);
+      expect(
+        isUntrustedCertificateError('unable to find valid certification path to requested target'),
+      ).toBe(true);
+      expect(isUntrustedCertificateError('The server presented an unknown certificate')).toBe(true);
+    });
+
+    it('returns false for missing or unrelated reasons', () => {
+      expect(isUntrustedCertificateError(undefined)).toBe(false);
+      expect(isUntrustedCertificateError(null)).toBe(false);
+      expect(isUntrustedCertificateError('')).toBe(false);
+      expect(isUntrustedCertificateError('401 Unauthorized')).toBe(false);
+      expect(isUntrustedCertificateError('Connection refused')).toBe(false);
     });
   });
 });

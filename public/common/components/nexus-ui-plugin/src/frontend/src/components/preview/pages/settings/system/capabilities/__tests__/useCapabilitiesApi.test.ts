@@ -156,6 +156,36 @@ describe('useCapabilitiesApi', () => {
       });
       errorSpy.mockRestore();
     });
+
+    // CVE-2026-14645 / NEXUS-54726: the server marks security-sensitive types with
+    // requiresSettingsUpdate so the UI can gate their create/enable controls.
+    it('maps requiresSettingsUpdate from the REST response when present', async () => {
+      mockRestClient.get.mockResolvedValue([
+        { ...mockRestCapabilityType, id: 'rutauth', requiresSettingsUpdate: true },
+      ]);
+
+      const { result } = renderHook(() => useCapabilitiesApi());
+
+      let types: any;
+      await act(async () => {
+        types = await result.current.fetchCapabilityTypes();
+      });
+
+      expect(types[0].requiresSettingsUpdate).toBe(true);
+    });
+
+    it('defaults requiresSettingsUpdate to false when the REST response omits it', async () => {
+      mockRestClient.get.mockResolvedValue([mockRestCapabilityType]);
+
+      const { result } = renderHook(() => useCapabilitiesApi());
+
+      let types: any;
+      await act(async () => {
+        types = await result.current.fetchCapabilityTypes();
+      });
+
+      expect(types[0].requiresSettingsUpdate).toBe(false);
+    });
   });
 
   describe('createCapability', () => {

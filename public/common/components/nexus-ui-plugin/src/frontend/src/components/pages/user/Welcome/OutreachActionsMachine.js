@@ -14,13 +14,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign, Machine} from 'xstate';
+import {assign, createMachine} from 'xstate';
 
 const SHOW_CONNECT_ACTION_KEY = 'nx-welcome-show-connect-action';
 const SHOW_CONNECT_ACTION_DEFAULT = true;
 
-export default Machine({
+export default createMachine({
   id: 'OutreachActionsMachine',
+  predictableActionArguments: true,
   initial: 'readingShowConnectAction',
   context: {
     showConnectAction: SHOW_CONNECT_ACTION_DEFAULT,

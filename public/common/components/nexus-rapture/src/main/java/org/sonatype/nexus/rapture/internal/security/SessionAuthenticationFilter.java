@@ -68,17 +68,25 @@ public class SessionAuthenticationFilter
 
   public static final String DELETE_METHOD = "DELETE";
 
-  @Autowired(required = false)
   @Nullable
-  private AuthRateLimiterService rateLimiterService;
+  private final AuthRateLimiterService rateLimiterService;
 
-  @Autowired(required = false)
   @Nullable
-  private SsoDetector ssoDetector;
+  private final SsoDetector ssoDetector;
 
-  @Autowired(required = false)
   @Nullable
-  private EventManager eventManager;
+  private final EventManager eventManager;
+
+  @Autowired
+  public SessionAuthenticationFilter(
+      @Nullable final AuthRateLimiterService rateLimiterService,
+      @Nullable final SsoDetector ssoDetector,
+      @Nullable final EventManager eventManager)
+  {
+    this.rateLimiterService = rateLimiterService;
+    this.ssoDetector = ssoDetector;
+    this.eventManager = eventManager;
+  }
 
   /**
    * Allow if authenticated or if logout request.

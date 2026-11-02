@@ -185,7 +185,7 @@ class RepositoryComponentTest
 
   @Test
   void remove_delegatesToDeletionService() throws Exception {
-    // The soft-delete-vs-hard-delete decision now lives in RepositoryDeletionService
+    // The trash-vs-hard-delete decision now lives in RepositoryDeletionService
     // (covered by RepositoryDeletionServiceTest); the component just delegates.
     underTest.remove("my-repo");
 

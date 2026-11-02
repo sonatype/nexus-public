@@ -14,12 +14,11 @@ package org.sonatype.nexus.capability;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.crypto.secrets.Secret;
-
-import com.google.common.base.Predicate;
 
 /**
  * Registry of current configured capabilities.

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.raw;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.function.Consumer;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -38,7 +39,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -105,7 +105,7 @@ class RawRepositoryAdapterTest
   @Test
   void testAdapt_proxyRepository_withQueryParamsForwardingEnabled() throws Exception {
     Repository repository = createRepository(new ProxyType(), configuration -> {
-      NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
+      NestedAttributesMap raw = new NestedAttributesMap("raw", new HashMap<>());
       raw.set("contentDisposition", ContentDisposition.INLINE.toString());
       raw.set("forwardQueryParameters", true);
       raw.set("excludedQueryParameters", Arrays.asList("api_key", "token"));
@@ -121,7 +121,7 @@ class RawRepositoryAdapterTest
   @Test
   void testAdapt_proxyRepository_withQueryParamsForwardingDisabled() throws Exception {
     Repository repository = createRepository(new ProxyType(), configuration -> {
-      NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
+      NestedAttributesMap raw = new NestedAttributesMap("raw", new HashMap<>());
       raw.set("contentDisposition", ContentDisposition.INLINE.toString());
       raw.set("forwardQueryParameters", false);
       raw.set("excludedQueryParameters", Arrays.asList());
@@ -138,7 +138,7 @@ class RawRepositoryAdapterTest
   void testAdapt_proxyRepository_withoutQueryParamsFields() throws Exception {
     // Test backward compatibility - fields not present in config should default gracefully
     Repository repository = createRepository(new ProxyType(), configuration -> {
-      NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
+      NestedAttributesMap raw = new NestedAttributesMap("raw", new HashMap<>());
       raw.set("contentDisposition", ContentDisposition.INLINE.toString());
       // forwardQueryParameters and excludedQueryParameters not set
       when(configuration.attributes("raw")).thenReturn(raw);
@@ -166,7 +166,7 @@ class RawRepositoryAdapterTest
     Configuration configuration = mock(Configuration.class);
     when(configuration.isOnline()).thenReturn(true);
     when(configuration.getRepositoryName()).thenReturn(repositoryName);
-    when(configuration.attributes(any())).thenReturn(new NestedAttributesMap("dummy", newHashMap()));
+    when(configuration.attributes(any())).thenReturn(new NestedAttributesMap("dummy", new HashMap<>()));
     return configuration;
   }
 
@@ -185,7 +185,7 @@ class RawRepositoryAdapterTest
     Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new RawFormat());
 
     Configuration configuration = config("my-repo");
-    NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
+    NestedAttributesMap raw = new NestedAttributesMap("raw", new HashMap<>());
     raw.set("contentDisposition", contentDisposition.toString());
     when(configuration.attributes("raw")).thenReturn(raw);
     repository.init(configuration);
@@ -220,7 +220,7 @@ class RawRepositoryAdapterTest
     Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new RawFormat());
 
     Configuration configuration = config("my-repo");
-    NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
+    NestedAttributesMap raw = new NestedAttributesMap("raw", new HashMap<>());
     // Intentionally NOT setting contentDisposition - it will be null
     when(configuration.attributes("raw")).thenReturn(raw);
     repository.init(configuration);

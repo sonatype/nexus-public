@@ -49,7 +49,6 @@ import org.sonatype.nexus.testdb.DataSessionConfiguration;
 import org.sonatype.nexus.testdb.DatabaseExtension;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -144,7 +143,7 @@ public abstract class ExampleContentTestSupport
       String buf = "com.abcdef" + "-" + i;
       uniqueNamespaces.add(buf);
     }
-    namespaces = ImmutableList.copyOf(uniqueNamespaces);
+    namespaces = List.copyOf(uniqueNamespaces);
   }
 
   protected void generateNames(final int maxNames) {
@@ -153,7 +152,7 @@ public abstract class ExampleContentTestSupport
       // example will be "abcdefgh-0", "abcdefgh-1", "abcdefgh-2", ...
       uniqueNames.add("abcdef" + "-" + i);
     }
-    names = ImmutableList.copyOf(uniqueNames);
+    names = List.copyOf(uniqueNames);
   }
 
   protected void generateVersions(final int maxVersions) {
@@ -162,7 +161,7 @@ public abstract class ExampleContentTestSupport
       // example will be "12.34.0", "12.34.1", "12.34.2", ...
       uniqueVersions.add("1.0." + i);
     }
-    versions = ImmutableList.copyOf(uniqueVersions);
+    versions = List.copyOf(uniqueVersions);
   }
 
   protected void generatePaths(final int maxPaths) {
@@ -170,7 +169,7 @@ public abstract class ExampleContentTestSupport
     for (int i = 0; i < maxPaths; i++) {
       uniquePaths.add("/folder/subfolder-" + i);
     }
-    paths = ImmutableList.copyOf(uniquePaths);
+    paths = List.copyOf(uniquePaths);
   }
 
   protected void generateConfiguration() {

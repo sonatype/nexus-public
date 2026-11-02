@@ -144,7 +144,9 @@ function normaliseMode(value: unknown): FirewallMode {
 /**
  * Set the firewall mode on a proxy repository.
  *
- * Uses a read-modify-write through the standard typed repository REST endpoint
+ * Reads the repository from the internal UI endpoint, which returns the stored-secret placeholder
+ * for authenticated proxies (the public typed GET omits secrets, so PUTting it back would fail or
+ * wipe them), and PUTs the modified body to the standard typed repository REST endpoint
  * (`PUT /v1/repositories/<format>/<type>/<name>`) so all four modes — including PCCS — go
  * through one uniform code path. The legacy boolean `iq/audit` endpoint cannot represent PCCS
  * (it collapses QUARANTINE and PCCS into the same `enabledQuarantine: true` state), so any UI
@@ -155,23 +157,32 @@ function normaliseMode(value: unknown): FirewallMode {
  * server-side `iq/audit` endpoint had the same characteristic — see
  * {@code RepositoryAttributeStorageSupport.setFirewallConfiguration}). Firewall mode changes
  * are infrequent admin operations, so the race window is narrow in practice.
+ *
+ * @param xetEnabled - When provided, overrides the `xet.enabled` field in the PUT body. Pass
+ * the current form value (not the server value) when the caller has a pending XET change that
+ * has not been saved yet — otherwise the GET-then-PUT reads stale XET state from the server and
+ * the backend validator rejects the combination before the user saves the XET change.
  */
 export async function setFirewallMode(
   repositoryName: string,
   mode: FirewallMode,
+  xetEnabled?: boolean,
 ): Promise<void> {
-  const basic = await restClient.get<{ format?: string; type?: string }>(
-    `/service/rest/v1/repositories/${encodeURIComponent(repositoryName)}`,
+  const repo = await restClient.get<Record<string, unknown> & { format?: string; type?: string }>(
+    `/service/rest/internal/ui/repositories/repository/${encodeURIComponent(repositoryName)}`,
   );
-  if (!basic?.format || !basic?.type) {
+  if (!repo?.format || !repo?.type) {
     throw new Error(`Repository '${repositoryName}' not found`);
   }
-  const typedUrl = `/service/rest/v1/repositories/${toApiFormat(basic.format)}/${encodeURIComponent(basic.type)}/${encodeURIComponent(repositoryName)}`;
-  const typed = await restClient.get<Record<string, unknown>>(typedUrl);
+  const typedUrl = `/service/rest/v1/repositories/${toApiFormat(repo.format)}/${encodeURIComponent(repo.type)}/${encodeURIComponent(repositoryName)}`;
   // Strip server-only fields the PUT contract does not accept.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { format: _f, type: _t, url: _u, ...writable } = typed ?? {};
+  const { format: _f, type: _t, url: _u, ...writable } = repo;
   writable.firewall = { mode };
+  if (xetEnabled !== undefined) {
+    const existingXet = (writable.xet as Record<string, unknown>) ?? {};
+    writable.xet = { ...existingXet, enabled: xetEnabled };
+  }
   await restClient.put(typedUrl, writable);
 }
 
@@ -211,8 +222,14 @@ export async function disableFirewall(repositoryName: string): Promise<void> {
  * The `enableAudit`, `enableQuarantine`, and `disable` methods are kept for backward
  * compatibility with pre-PCCS callers. New code should prefer {@link useFirewallEnable.setMode}
  * which accepts the full {@link FirewallMode} union (including PCCS).
+ *
+ * @param xetEnabled - When provided, overrides the `xet.enabled` field in every PUT issued by
+ * this hook. Pass the current form value so the read-modify-write in {@link setFirewallMode}
+ * uses the user's intended XET state rather than the server's stale value. Omit (leave
+ * `undefined`) for non-XET-capable formats so no spurious `xet` field is added to their PUT
+ * bodies.
  */
-export function useFirewallEnable(repositoryName: string) {
+export function useFirewallEnable(repositoryName: string, xetEnabled?: boolean) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -238,8 +255,8 @@ export function useFirewallEnable(repositoryName: string) {
 
   const setMode = useCallback(
     (mode: FirewallMode, onSuccess?: () => void) =>
-      run(() => setFirewallMode(repositoryName, mode), onSuccess),
-    [repositoryName, run],
+      run(() => setFirewallMode(repositoryName, mode, xetEnabled), onSuccess),
+    [repositoryName, run, xetEnabled],
   );
 
   const enableAudit = useCallback(

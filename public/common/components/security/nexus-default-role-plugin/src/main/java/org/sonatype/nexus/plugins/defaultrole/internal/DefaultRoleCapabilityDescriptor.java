@@ -81,6 +81,16 @@ public class DefaultRoleCapabilityDescriptor
     return messages.name();
   }
 
+  /**
+   * Activating this capability grants a role to every authenticated user, so creating/updating/enabling it must
+   * require realm-administration authority ({@code nexus:settings:update}) in addition to the capabilities
+   * permission (CVE-2026-14645 / NEXUS-54726).
+   */
+  @Override
+  public boolean requiresSettingsUpdatePermission() {
+    return true;
+  }
+
   @Override
   public List<FormField> formFields() {
     return singletonList(role);

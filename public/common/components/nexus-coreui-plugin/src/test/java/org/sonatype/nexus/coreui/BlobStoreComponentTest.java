@@ -381,13 +381,20 @@ class BlobStoreComponentTest
     MockBlobStoreConfiguration config2 = new MockBlobStoreConfiguration().withName("store2")
         .withType("S3")
         .withAttributes(Map.of("s3", Map.of("bucket", "bucket1")));
+    MockBlobStoreConfiguration config3 = new MockBlobStoreConfiguration().withName("store3")
+        .withType("S3")
+        .withAttributes(Map.of("s3", Map.of("bucket", "bucket2", "transferAccelerationEnabled", true)));
 
-    when(store.list()).thenReturn(List.of(config1, config2));
+    when(store.list()).thenReturn(List.of(config1, config2, config3));
 
     List<BlobStoreXO> result = underTest.readNames();
-    assertThat(result, hasSize(2));
+    assertThat(result, hasSize(3));
     assertThat(result.get(0).getName(), is("store1"));
     assertThat(result.get(1).getName(), is("store2"));
+    assertThat(result.get(2).getName(), is("store3"));
+    assertThat(result.get(0).isGlobalDistributionEnabled(), is(false));
+    assertThat(result.get(1).isGlobalDistributionEnabled(), is(false));
+    assertThat(result.get(2).isGlobalDistributionEnabled(), is(true));
   }
 
   @Test

@@ -17,6 +17,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 
 import static java.util.Objects.requireNonNull;
 
@@ -37,6 +38,8 @@ public class GenericBlobStoreApiResponse
   private long totalSizeInBytes;
 
   private long availableSpaceInBytes;
+
+  private boolean globalDistributionEnabled;
 
   @SuppressWarnings("unused") // Required for ITs
   public GenericBlobStoreApiResponse() {
@@ -60,6 +63,7 @@ public class GenericBlobStoreApiResponse
 
     name = requireNonNull(configuration.getName());
     setType(requireNonNull(configuration.getType()));
+    globalDistributionEnabled = S3BlobStoreConfigurationHelper.isGlobalDistributionEnabled(configuration);
   }
 
   public String getName() {
@@ -108,5 +112,16 @@ public class GenericBlobStoreApiResponse
 
   public void setAvailableSpaceInBytes(final long availableSpaceInBytes) {
     this.availableSpaceInBytes = availableSpaceInBytes;
+  }
+
+  /**
+   * True when the blob store has CloudFront or S3 Transfer Acceleration configured.
+   */
+  public boolean isGlobalDistributionEnabled() {
+    return globalDistributionEnabled;
+  }
+
+  public void setGlobalDistributionEnabled(final boolean globalDistributionEnabled) {
+    this.globalDistributionEnabled = globalDistributionEnabled;
   }
 }

@@ -25,8 +25,6 @@ import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.UrlFormField;
 
-import com.google.common.collect.ImmutableList;
-
 import static org.sonatype.nexus.capability.Tag.categoryTag;
 import static org.sonatype.nexus.capability.Tag.tags;
 import org.springframework.stereotype.Component;
@@ -66,7 +64,7 @@ public class BaseUrlCapabilityDescriptor
   private final List<FormField> formFields;
 
   public BaseUrlCapabilityDescriptor() {
-    this.formFields = ImmutableList.of(
+    this.formFields = List.of(
         (FormField) new UrlFormField(
             BaseUrlCapabilityConfiguration.URL,
             messages.urlLabel(),

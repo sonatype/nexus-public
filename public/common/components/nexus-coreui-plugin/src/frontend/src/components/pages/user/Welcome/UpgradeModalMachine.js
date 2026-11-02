@@ -14,14 +14,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {Machine} from 'xstate';
+import {createMachine} from 'xstate';
 import Axios from 'axios';
 import {ExtJS} from "@sonatype/nexus-ui-plugin";
 
-export default Machine(
+export default createMachine(
   {
     id: 'UpgradeModalMachine',
     initial: 'closed',
+    predictableActionArguments: true,
     states: {
       closed: {
         on: {

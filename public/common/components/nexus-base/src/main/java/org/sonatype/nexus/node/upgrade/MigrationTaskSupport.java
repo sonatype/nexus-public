@@ -12,11 +12,8 @@
  */
 package org.sonatype.nexus.node.upgrade;
 
-import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.node.datastore.NodeHeartbeat;
 import org.sonatype.nexus.node.datastore.NodeHeartbeatManager;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
@@ -26,14 +23,13 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 public abstract class MigrationTaskSupport
     extends TaskSupport
 {
-  private static final String NEXUS_STATUS_KEY = "nexus-status";
-
-  private static final String VERSION_KEY = "version";
-
-  private static final String BUILD_REVISION_KEY = "buildRevision";
-
   protected final NodeHeartbeatManager heartbeatManager;
 
+  /**
+   * @param heartbeatManager {@code @Nullable} because the sole implementation lives in a Pro-only plugin and is
+   *          absent from OSS/single-node Spring contexts; {@link #oldNodesRunning()} treats a missing manager as
+   *          "no skew".
+   */
   public MigrationTaskSupport(
       @Nullable final NodeHeartbeatManager heartbeatManager)
   {
@@ -47,24 +43,6 @@ public abstract class MigrationTaskSupport
    * @return true if any nodes have different version/buildRevision, false otherwise
    */
   protected boolean oldNodesRunning() {
-    if (heartbeatManager == null) {
-      return false;
-    }
-
-    return heartbeatManager.getActiveNodeHeartbeatData()
-        .stream()
-        .map(NodeHeartbeat::systemInfo)
-        .filter(Objects::nonNull)
-        .map(systemInfo -> systemInfo.get(NEXUS_STATUS_KEY))
-        .filter(Objects::nonNull)
-        .filter(nexusStatus -> nexusStatus instanceof Map)
-        .map(nexusStatus -> (Map<String, String>) nexusStatus)
-        .map(nexusStatus -> {
-          String version = nexusStatus.get(VERSION_KEY);
-          String buildRevision = nexusStatus.get(BUILD_REVISION_KEY);
-          return version + "|" + buildRevision;
-        })
-        .distinct()
-        .count() > 1L;
+    return heartbeatManager != null && heartbeatManager.hasVersionSkew();
   }
 }

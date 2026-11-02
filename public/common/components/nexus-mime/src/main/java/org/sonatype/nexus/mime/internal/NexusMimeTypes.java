@@ -14,7 +14,9 @@ package org.sonatype.nexus.mime.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -26,8 +28,6 @@ import org.sonatype.nexus.mime.MimeRule;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +62,7 @@ public class NexusMimeTypes
 
   public static final String MIMETYPES_FILENAME = "nexus.mimetypes";
 
-  private Map<String, MimeRule> extensions = Maps.newHashMap();
+  private Map<String, MimeRule> extensions = new HashMap<>();
 
   public NexusMimeTypes() {
     load(BUILTIN_MIMETYPES_FILENAME);
@@ -91,8 +91,8 @@ public class NexusMimeTypes
   @VisibleForTesting
   void initMimeTypes(final Properties properties) {
     final Set<String> keys = properties.stringPropertyNames();
-    final Map<String, List<String>> overrides = Maps.newHashMap();
-    final Map<String, List<String>> additional = Maps.newHashMap();
+    final Map<String, List<String>> overrides = new HashMap<>();
+    final Map<String, List<String>> additional = new HashMap<>();
 
     for (String key : keys) {
       if (key.startsWith("override.")) {
@@ -124,7 +124,7 @@ public class NexusMimeTypes
       return Collections.emptyList();
     }
     else {
-      return Lists.newArrayList(Splitter.on(",").split(value));
+      return new ArrayList<>(Splitter.on(",").splitToList(value));
     }
   }
 

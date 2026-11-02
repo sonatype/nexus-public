@@ -26,7 +26,8 @@ import org.springframework.stereotype.Component;
 import jakarta.ws.rs.NotFoundException;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
-import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
+import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistribution;
+import org.sonatype.nexus.bootstrap.entrypoint.distribution.NexusDistributionType;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
@@ -58,13 +59,13 @@ public class LogCustomizer
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  private static final String CLOUD_EDITION_ID = "nexus-cloud-edition";
-
   private final LogManager logManager;
 
   private final ApplicationDirectories applicationDirectories;
 
-  private final NexusEditionSelector nexusEditionSelector;
+  // The distribution is fixed for the JVM's lifetime (it is a classpath property), so resolve it once at
+  // construction rather than on each customize() call (matches DockerConnectorFacetImpl).
+  private final boolean isCloud;
 
   // Pattern to match sensitive authentication headers
   // Captures: header name, optional scheme (Bearer, Basic, Token, etc.), and the credential value
@@ -86,17 +87,18 @@ public class LogCustomizer
   @Autowired
   public LogCustomizer(
       final LogManager logManager,
-      final ApplicationDirectories applicationDirectories,
-      final NexusEditionSelector nexusEditionSelector)
+      final ApplicationDirectories applicationDirectories)
   {
     this.logManager = requireNonNull(logManager);
     this.applicationDirectories = requireNonNull(applicationDirectories);
-    this.nexusEditionSelector = requireNonNull(nexusEditionSelector);
+    this.isCloud = NexusDistributionType.CLOUD == NexusDistribution.detect(getClass().getClassLoader());
   }
 
   @Override
   public void customize(final SupportBundle supportBundle) {
-    if (CLOUD_EDITION_ID.equals(nexusEditionSelector.getCurrent().getId())) {
+    // Cloud is a distribution, not an edition/tier, so detect it from packaging rather than the edition id
+    // (which now resolves to the tenant's licensed tier: Pro, Pro+ or Enterprise) — NEXUS-54766 / NEXUS-54772.
+    if (isCloud) {
       return;
     }
 

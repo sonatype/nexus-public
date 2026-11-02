@@ -13,12 +13,30 @@
 
 import React, { useMemo, useState } from 'react';
 import { Badge, Box, Checkbox, Flex, ScrollArea, Select, Text, TextField } from '@radix-ui/themes';
+import type { BadgeProps } from '@radix-ui/themes';
+import { CircleCheck, CircleMinus, CircleQuestionMark, CircleX } from 'lucide-react';
 
+import ApiStrings from '../../../../constants/pages/settings/system/api/ApiStrings';
 import type { EndpointAccessDot } from './utils/endpointAccess';
 import type { MergedApiEndpoint } from './utils/mergeSwaggerPermissions';
 
+const STRINGS = ApiStrings.API_ENDPOINT_LIST;
+
 export function endpointRowId(row: MergedApiEndpoint): string {
   return `${row.httpMethod}|${row.fullPath}`;
+}
+
+/** Per-method badge color (design mockup): GET blue, POST green, PUT amber, DELETE red. */
+const METHOD_BADGE_COLOR: Record<string, BadgeProps['color']> = {
+  GET: 'blue',
+  POST: 'green',
+  PUT: 'amber',
+  DELETE: 'red',
+  PATCH: 'orange',
+};
+
+function methodBadgeColor(method: string): BadgeProps['color'] {
+  return METHOD_BADGE_COLOR[method] ?? 'gray';
 }
 
 export interface EndpointListProps {
@@ -31,37 +49,57 @@ export interface EndpointListProps {
   accessDotPalette?: 'session' | 'roleLens';
 }
 
-const METHODS = ['ALL', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const;
+/**
+ * HTTP methods the search box matches exactly rather than as a substring, so
+ * typing "PUT" doesn't match a summary containing "output" (NEXUS-54907).
+ */
+const HTTP_METHOD_TOKENS = new Set([
+  'get',
+  'post',
+  'put',
+  'delete',
+  'patch',
+  'head',
+  'options',
+  'trace',
+]);
 
-function AccessDot({
-  state,
-  palette,
-}: {
+const ACCESS_ICON_SIZE = 16;
+
+interface AccessProps {
   state: EndpointAccessDot;
   palette: 'session' | 'roleLens';
-}) {
-  const color =
-    palette === 'roleLens'
-      ? state === 'granted'
-        ? 'var(--blue-9)'
-        : 'var(--gray-8)'
-      : state === 'granted'
-        ? 'var(--green-9)'
-        : state === 'denied'
-          ? 'var(--red-9)'
-          : 'var(--gray-8)';
+}
+
+/**
+ * Access indicator icon (design mockup): check (full), cross (none),
+ * half/minus (partial), question (unknown). In the roleLens palette, a granted
+ * state reads as the role satisfying the required permissions.
+ */
+function AccessIcon({ state, palette }: AccessProps) {
+  const common = { size: ACCESS_ICON_SIZE, 'aria-hidden': true as const };
+  if (state === 'granted') {
+    const color = palette === 'roleLens' ? 'var(--blue-9)' : 'var(--green-9)';
+    return <CircleCheck {...common} color={color} />;
+  }
+  if (state === 'denied') {
+    return <CircleX {...common} color="var(--red-9)" />;
+  }
+  if (state === 'partial') {
+    return <CircleMinus {...common} color="var(--amber-9)" />;
+  }
+  return <CircleQuestionMark {...common} color="var(--gray-8)" />;
+}
+
+function AccessIndicator(props: AccessProps) {
   return (
     <Box
-      aria-hidden
-      className="api-endpoint-list__dot"
-      style={{
-        width: 8,
-        height: 8,
-        borderRadius: '50%',
-        background: color,
-        flexShrink: 0,
-      }}
-    />
+      className="api-endpoint-list__access"
+      role="img"
+      aria-label={STRINGS.access[props.state]}
+    >
+      <AccessIcon {...props} />
+    </Box>
   );
 }
 
@@ -74,7 +112,6 @@ export function EndpointList({
   accessDotPalette = 'session',
 }: EndpointListProps) {
   const [search, setSearch] = useState('');
-  const [methodFilter, setMethodFilter] = useState<string>('ALL');
   const [tagFilter, setTagFilter] = useState<string>('ALL');
   const [onlyDenied, setOnlyDenied] = useState(false);
 
@@ -86,12 +123,16 @@ export function EndpointList({
     return ['ALL', ...[...s].sort((a, b) => a.localeCompare(b))];
   }, [endpoints]);
 
+  // Whitespace-separated tokens, all of which must match (NEXUS-54907). A single
+  // substring match would reject "GET /v1/assets", because the full path puts
+  // "/service/rest" between the method and "/v1/assets".
+  const searchTokens = useMemo(
+    () => search.trim().toLowerCase().split(/\s+/).filter(Boolean),
+    [search]
+  );
+
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
     return endpoints.filter((e) => {
-      if (methodFilter !== 'ALL' && e.httpMethod !== methodFilter) {
-        return false;
-      }
       if (tagFilter !== 'ALL' && e.tag !== tagFilter) {
         return false;
       }
@@ -101,13 +142,18 @@ export function EndpointList({
           return false;
         }
       }
-      if (!q) {
+      if (searchTokens.length === 0) {
         return true;
       }
-      const hay = `${e.httpMethod} ${e.fullPath} ${e.summary || ''} ${e.operationId || ''}`.toLowerCase();
-      return hay.includes(q);
+      const method = e.httpMethod.toLowerCase();
+      // The method is matched exactly from its own field, so it is deliberately
+      // absent from the haystack; a method token must not match path text.
+      const hay = `${e.fullPath} ${e.summary || ''} ${e.operationId || ''}`.toLowerCase();
+      return searchTokens.every((token) =>
+        HTTP_METHOD_TOKENS.has(token) ? method === token : hay.includes(token)
+      );
     });
-  }, [endpoints, search, methodFilter, tagFilter, onlyDenied, accessById]);
+  }, [endpoints, searchTokens, tagFilter, onlyDenied, accessById]);
 
   const grouped = useMemo(() => {
     const m = new Map<string, MergedApiEndpoint[]>();
@@ -123,27 +169,12 @@ export function EndpointList({
     <Box className="api-endpoint-list">
       <Flex direction="column" gap="3" className="api-endpoint-list__filters">
         <TextField.Root
-          placeholder="Search path or summary…"
+          placeholder={STRINGS.searchPlaceholder}
           value={search}
           onChange={(ev) => setSearch(ev.target.value)}
-          aria-label="Search endpoints"
+          aria-label={STRINGS.searchLabel}
         />
         <Flex gap="2" wrap="wrap">
-          <Box style={{ minWidth: 120 }}>
-            <Text size="1" weight="medium" mb="1" as="div">
-              Method
-            </Text>
-            <Select.Root value={methodFilter} onValueChange={setMethodFilter}>
-              <Select.Trigger placeholder="Method" />
-              <Select.Content>
-                {METHODS.map((m) => (
-                  <Select.Item key={m} value={m}>
-                    {m}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select.Root>
-          </Box>
           <Box style={{ minWidth: 140 }}>
             <Text size="1" weight="medium" mb="1" as="div">
               Tag
@@ -167,6 +198,15 @@ export function EndpointList({
               ? 'Only endpoints this role cannot access'
               : "Only endpoints I can't access"}
           </Flex>
+        </Text>
+        <Text
+          size="1"
+          color="gray"
+          as="div"
+          className="api-endpoint-list__count"
+          aria-live="polite"
+        >
+          {STRINGS.resultCount(filtered.length, endpoints.length)}
         </Text>
       </Flex>
 
@@ -198,7 +238,14 @@ export function EndpointList({
           >
             {grouped.map(([tag, rows]) => (
               <Box key={tag} mb="3">
-                <Text size="1" weight="bold" color="gray" mb="2" as="div">
+                <Text
+                  size="1"
+                  weight="bold"
+                  color="gray"
+                  mb="2"
+                  as="div"
+                  className="api-endpoint-list__group-title"
+                >
                   {tag}
                 </Text>
                 <Flex direction="column" gap="1">
@@ -215,9 +262,15 @@ export function EndpointList({
                         className={`api-endpoint-list__row${selected ? ' api-endpoint-list__row--selected' : ''}`}
                         onClick={() => onSelect(row)}
                       >
-                        <Flex align="center" gap="2" width="100%">
-                          <AccessDot state={access} palette={accessDotPalette} />
-                          <Badge size="1" variant="soft" color="blue">
+                        <Flex align="start" gap="2" width="100%">
+                          <AccessIndicator state={access} palette={accessDotPalette} />
+                          <Badge
+                            size="1"
+                            variant="soft"
+                            radius="full"
+                            color={methodBadgeColor(row.httpMethod)}
+                            className="api-endpoint-list__method"
+                          >
                             {row.httpMethod}
                           </Badge>
                           <Text size="2" className="api-endpoint-list__path" style={{ textAlign: 'left' }}>

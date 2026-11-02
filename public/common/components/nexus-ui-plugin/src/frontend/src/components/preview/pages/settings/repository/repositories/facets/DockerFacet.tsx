@@ -170,7 +170,6 @@ export function DockerFacet({
                   placeholder={UIStrings.DOCKER.HTTP_CONNECTOR.placeholder}
                   type="number"
                   error={errors?.['docker.httpPort'] || ''}
-                  alwaysShowHelpText
                 />
                 <Text as="p" size="1" className="settings-text-input__help">
                   <button
@@ -193,7 +192,6 @@ export function DockerFacet({
                   placeholder={UIStrings.DOCKER.HTTPS_CONNECTOR.placeholder}
                   type="number"
                   error={errors?.['docker.httpsPort'] || ''}
-                  alwaysShowHelpText
                 />
                 <Text as="p" size="1" className="settings-text-input__help">
                   <button

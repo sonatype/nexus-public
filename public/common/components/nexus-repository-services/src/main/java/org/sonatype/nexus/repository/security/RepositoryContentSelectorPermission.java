@@ -18,8 +18,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
-import com.google.common.collect.ImmutableList;
-
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -53,7 +51,7 @@ public class RepositoryContentSelectorPermission
     this.name = requireNonNull(name);
     this.actions = requireNonNull(actions);
 
-    setParts(ImmutableList.of(SYSTEM, DOMAIN, selector, format, name), actions);
+    setParts(List.of(SYSTEM, DOMAIN, selector, format, name), actions);
   }
 
   public RepositoryContentSelectorPermission(

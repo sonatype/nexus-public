@@ -37,6 +37,11 @@ import {
   UploadPage,
   UploadFormPage,
   ApiPage,
+  FirewallSecurityEvaluationsPage,
+  FirewallSecurityMalwarePage,
+  FirewallSecurityPoliciesPage,
+  FirewallSecurityQuarantinePage,
+  FirewallSecurityWaiversPage,
   RemediatePage,
   GADetailPage,
   CustomSearchPage,
@@ -134,6 +139,79 @@ export const previewBrowseRoutes = [
       visibilityRequirements: {
         requiresUser: true,
         permissions: [Permissions.SETTINGS.READ],
+      },
+    },
+  },
+
+  // =============================================================================
+  // SECURITY - Firewall Security section (one route per page, one nav item per route)
+  // Each page renders MissingRoutePage when the Security pages are not visible or the user may not see
+  // that section.
+  // =============================================================================
+  {
+    name: 'preview.security',
+    url: '/security',
+    abstract: true,
+    component: UIView,
+    data: {
+      title: 'Security',
+      visibilityRequirements: {
+        requiresUser: true,
+      },
+    },
+  },
+  {
+    name: 'preview.security.quarantine',
+    url: '/quarantine',
+    component: FirewallSecurityQuarantinePage,
+    data: {
+      title: 'Quarantine',
+      visibilityRequirements: {
+        requiresUser: true,
+      },
+    },
+  },
+  {
+    name: 'preview.security.waivers',
+    url: '/waivers',
+    component: FirewallSecurityWaiversPage,
+    data: {
+      title: 'Waivers',
+      visibilityRequirements: {
+        requiresUser: true,
+      },
+    },
+  },
+  {
+    name: 'preview.security.malware',
+    url: '/malware',
+    component: FirewallSecurityMalwarePage,
+    data: {
+      title: 'Malware',
+      visibilityRequirements: {
+        requiresUser: true,
+      },
+    },
+  },
+  {
+    name: 'preview.security.evaluations',
+    url: '/evaluations',
+    component: FirewallSecurityEvaluationsPage,
+    data: {
+      title: 'Evaluations',
+      visibilityRequirements: {
+        requiresUser: true,
+      },
+    },
+  },
+  {
+    name: 'preview.security.policies',
+    url: '/policies',
+    component: FirewallSecurityPoliciesPage,
+    data: {
+      title: 'Policies',
+      visibilityRequirements: {
+        requiresUser: true,
       },
     },
   },
@@ -386,7 +464,7 @@ export const previewBrowseRoutes = [
     data: {
       title: 'Trash',
       visibilityRequirements: {
-        statesEnabled: [{ key: 'nexus.softDelete.enabled', defaultValue: false }],
+        statesEnabled: [{ key: 'nexus.trash.enabled', defaultValue: false }],
         permissions: [Permissions.ADMIN],
         editions: PRO_FAMILY_EDITIONS,
       },

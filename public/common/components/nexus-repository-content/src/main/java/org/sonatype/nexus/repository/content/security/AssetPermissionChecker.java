@@ -32,8 +32,6 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.selector.VariableSource;
 
-import com.google.common.collect.ImmutableList;
-
 import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
@@ -133,7 +131,7 @@ public class AssetPermissionChecker
   private List<String> containingRepositoryNames(final String format, final RepositoryContent repositoryContent) {
     Optional<Repository> repository = contentFacetFinder.findRepository(format, repositoryContent);
     if (!repository.isPresent()) {
-      return ImmutableList.of();
+      return List.of();
     }
 
     String repositoryName = repository.get().getName();

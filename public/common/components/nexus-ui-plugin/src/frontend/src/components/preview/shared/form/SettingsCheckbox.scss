@@ -75,6 +75,12 @@
     gap: var(--space-1);
   }
 
+  &__label-row {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
   &__label {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);

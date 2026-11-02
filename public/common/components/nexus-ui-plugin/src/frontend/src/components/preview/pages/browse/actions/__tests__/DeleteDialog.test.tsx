@@ -335,15 +335,15 @@ describe('DeleteDialog', () => {
     });
   });
 
-  describe('soft-delete (Trash) messaging', () => {
-    it('shows "moved to Trash" copy for a component when softDelete is set', () => {
+  describe('trash (Trash) messaging', () => {
+    it('shows "moved to Trash" copy for a component when trash is set', () => {
       renderWithTheme(
         <DeleteDialog
           open={true}
           onOpenChange={mockOnOpenChange}
           item={mockComponentItem}
           onConfirm={mockOnConfirm}
-          softDelete
+          trash
           retentionDays={30}
         />
       );
@@ -352,21 +352,21 @@ describe('DeleteDialog', () => {
       expect(screen.queryByText(/This action cannot be undone/)).not.toBeInTheDocument();
     });
 
-    it('shows "moved to Trash" copy for an asset when softDelete is set', () => {
+    it('shows "moved to Trash" copy for an asset when trash is set', () => {
       renderWithTheme(
         <DeleteDialog
           open={true}
           onOpenChange={mockOnOpenChange}
           item={mockAssetItem}
           onConfirm={mockOnConfirm}
-          softDelete
+          trash
         />
       );
       expect(screen.getByText(/Asset "artifact\.jar" will be moved to Trash/)).toBeInTheDocument();
       expect(screen.queryByText(/This action cannot be undone/)).not.toBeInTheDocument();
     });
 
-    it('shows permanent-delete copy by default (softDelete off)', () => {
+    it('shows permanent-delete copy by default (trash off)', () => {
       renderWithTheme(
         <DeleteDialog
           open={true}

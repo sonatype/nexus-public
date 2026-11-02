@@ -21,16 +21,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.FILTER_CONDITION_FIELD_ID;
+import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.NAMESPACE_LIKE_FIELD_ID;
+import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.NAME_LIKE_FIELD_ID;
+import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.VERSION_LIKE_FIELD_ID;
 
 /**
  * Task descriptor for {@link ReIndexSearchFilterByPatternTask}.
  *
- * This task re-indexes search records for components matching a SQL filter condition.
- * The filter condition is a SQL WHERE clause fragment that is applied to the component table.
- *
- * Example filter conditions:
- * - "namespace LIKE '%_%' OR version LIKE '%_%'" for components with underscores
+ * This task re-indexes search records for components matching any of the provided namespace, name or version fields.
  */
 @AvailabilityVersion(from = "1.0")
 @Component
@@ -46,9 +44,19 @@ public class ReIndexSearchFilterByPatternTaskDescriptor
     super(ReIndexSearchFilterByPatternTask.TYPE_ID, ReIndexSearchFilterByPatternTask.class,
         "Admin - Reindex Search Tables By Pattern", visible, visible,
         new StringTextFormField(
-            FILTER_CONDITION_FIELD_ID,
-            "Filter Condition",
-            "SQL filter condition to match components (e.g., \"namespace LIKE '%_%' OR version LIKE '%_%'\")",
-            FormField.MANDATORY));
+            NAMESPACE_LIKE_FIELD_ID,
+            "Namespace Contains",
+            "A substring to find in namespace",
+            FormField.OPTIONAL),
+        new StringTextFormField(
+            NAME_LIKE_FIELD_ID,
+            "Name Contains",
+            "A substring to find in name",
+            FormField.OPTIONAL),
+        new StringTextFormField(
+            VERSION_LIKE_FIELD_ID,
+            "Version contains",
+            "A substring to find in version",
+            FormField.OPTIONAL));
   }
 }

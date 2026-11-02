@@ -13,9 +13,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Badge,
   Box,
-  Callout,
   Container,
   Flex,
   Text,
@@ -23,7 +21,7 @@ import {
   IconButton,
   ScrollArea,
 } from '@radix-ui/themes';
-import { Search, X, Info } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 import { ExtJS } from '../../../../interface/ExtJS';
 import { isVisible } from '../../../../interface/NavigationUtils';
@@ -194,19 +192,6 @@ export function SettingsHubPage() {
             </TextField.Root>
           </Box>
         </PageHeader>
-
-        {/* Preview mode callout */}
-        <Callout.Root color="blue" mb="4" mt="4">
-          <Callout.Icon>
-            <Info size={16} />
-          </Callout.Icon>
-          <Callout.Text>
-            Some settings pages are available in this preview. Pages marked{' '}
-            <Badge color="blue" size="1" variant="soft">Coming Soon</Badge>
-            {' '}are still being prepared for the Nexus One UI. Access them through
-            the classic UI administration panel.
-          </Callout.Text>
-        </Callout.Root>
 
         {/* Settings sections */}
         <Box mt="6">

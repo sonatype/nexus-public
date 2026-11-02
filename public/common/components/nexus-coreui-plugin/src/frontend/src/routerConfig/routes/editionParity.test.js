@@ -39,6 +39,7 @@ import { adminRoutes } from './adminRoutes';
 import { browseRoutes } from './browseRoutes';
 import { previewAdminRoutes } from './previewAdminRoutes';
 import { previewBrowseRoutes } from './previewBrowseRoutes';
+import { previewUserRoutes } from './previewUserRoutes';
 import { userRoutes } from './userRoutes';
 
 // Explicit set of routes/cards declared on Community. Kept as a literal so the migration
@@ -71,6 +72,7 @@ function collectEditionGatedItems() {
     ...browseRoutes,
     ...previewAdminRoutes,
     ...previewBrowseRoutes,
+    ...previewUserRoutes,
     ...userRoutes,
   ].forEach(walkRoute);
 
@@ -129,12 +131,9 @@ describe('AT-015: Route availability parity across licensed editions', () => {
     expect([...communityVisible].sort()).toEqual([...EXPECTED_COMMUNITY_VISIBLE].sort());
   });
 
-  it('preserves Cloud visibility for all pre-migration Pro-gated routes and cards', () => {
-    // Cloud reports editionId 'nexus-cloud-edition' but formerly matched 'PRO' by short name,
-    // so every declaration that carried 'PRO' before must include EDITION_CLOUD after migration.
-    const cloudVisible = itemsVisibleFor(EDITION_CLOUD, items);
-    const proVisible = itemsVisibleFor(EDITION_PRO, items);
-    const missing = [...proVisible].filter((label) => !cloudVisible.has(label)).sort();
-    expect(missing).toEqual([]);
+  it('the retired cloud edition id opens no edition-gated route or card', () => {
+    // A cloud deployment reports its licensed tier's editionId, so the retired identifier must
+    // not be accepted by any gate — otherwise it would still act as a Pro-family edition.
+    expect([...itemsVisibleFor(EDITION_CLOUD, items)]).toEqual([]);
   });
 });

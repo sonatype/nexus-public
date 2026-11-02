@@ -35,6 +35,7 @@ import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.KeyValueEvent;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
+import org.sonatype.nexus.security.anonymous.AnonymousHelper;
 import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
 import org.sonatype.nexus.security.user.UserNotFoundException;
@@ -142,6 +143,14 @@ public class ApiKeyServiceImpl
       final int limit)
   {
     return callBrowse(store -> store.browseFiltered(domain, realm, username, skip, limit)
+        .stream()
+        .map(ApiKey.class::cast)
+        .collect(Collectors.toList()));
+  }
+
+  @Override
+  public Collection<ApiKey> browseByUserAndDomains(final Collection<String> domains, final String username) {
+    return callBrowse(store -> store.browseByUserAndDomains(domains, username)
         .stream()
         .map(ApiKey.class::cast)
         .collect(Collectors.toList()));
@@ -311,6 +320,15 @@ public class ApiKeyServiceImpl
   }
 
   private boolean userExists(final PrincipalCollection principals) {
+    if (AnonymousHelper.isAnonymous(principals)) {
+      // AnonymousPrincipalCollection principals are built in-memory by AnonymousManagerImpl and
+      // stored via the MyBatis PrincipalCollectionTypeHandler, whose allow-list preserves the
+      // subtype across the DB roundtrip. No UserManager exposes the anonymous realm as its
+      // authentication realm, so UserPrincipalsHelper.getUserStatus throws UserNotFoundException
+      // and userExists would otherwise report the anonymous user as stale. Purging its key breaks
+      // anonymous bearer auth (e.g. Docker anonymous pulls) until Nexus is restarted.
+      return true;
+    }
     try {
       principalsHelper.getUserStatus(principals);
     }

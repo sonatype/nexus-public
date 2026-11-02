@@ -290,24 +290,39 @@ public abstract class ProxyFacetSupport
     }
   }
 
-  @Autowired
-  @Nullable
-  @Qualifier("contentUsage")
   private ThrottlerInterceptor contentUsageThrottlerInterceptor;
 
-  @Autowired
-  @Nullable
-  @Qualifier("telemetryThrottler")
   private ThrottlerInterceptor telemetryThrottlerInterceptor;
 
-  @Autowired
-  @Nullable
-  @Qualifier("gracePeriod")
   private GracePeriodInterceptor gracePeriodInterceptor;
 
-  @Autowired
-  @Nullable
   private FirewallHeaderProvider firewallHeaderProvider;
+
+  @Autowired(required = false)
+  protected void configureContentUsageThrottlerInterceptor(
+      @Nullable @Qualifier("contentUsage") final ThrottlerInterceptor contentUsageThrottlerInterceptor)
+  {
+    this.contentUsageThrottlerInterceptor = contentUsageThrottlerInterceptor;
+  }
+
+  @Autowired(required = false)
+  protected void configureTelemetryThrottlerInterceptor(
+      @Nullable @Qualifier("telemetryThrottler") final ThrottlerInterceptor telemetryThrottlerInterceptor)
+  {
+    this.telemetryThrottlerInterceptor = telemetryThrottlerInterceptor;
+  }
+
+  @Autowired(required = false)
+  protected void configureGracePeriodInterceptor(
+      @Nullable @Qualifier("gracePeriod") final GracePeriodInterceptor gracePeriodInterceptor)
+  {
+    this.gracePeriodInterceptor = gracePeriodInterceptor;
+  }
+
+  @Autowired(required = false)
+  protected void configureFirewallHeaderProvider(@Nullable final FirewallHeaderProvider firewallHeaderProvider) {
+    this.firewallHeaderProvider = firewallHeaderProvider;
+  }
 
   private AntiSsrfService antiSsrfService;
 

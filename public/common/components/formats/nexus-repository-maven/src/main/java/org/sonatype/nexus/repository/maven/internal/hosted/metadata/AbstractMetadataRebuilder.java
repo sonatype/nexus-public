@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,7 +36,6 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
-import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
@@ -114,7 +114,7 @@ public abstract class AbstractMetadataRebuilder
       final String artifactId,
       final String baseVersion)
   {
-    Set<String> deletedPaths = Sets.newHashSet();
+    Set<String> deletedPaths = new HashSet<>();
     deletedPaths.addAll(deleteGavMetadata(repository, groupId, artifactId, baseVersion));
     deletedPaths.addAll(deleteGavMetadata(repository, groupId, artifactId, null));
     deletedPaths.addAll(deleteGavMetadata(repository, groupId, null, null));

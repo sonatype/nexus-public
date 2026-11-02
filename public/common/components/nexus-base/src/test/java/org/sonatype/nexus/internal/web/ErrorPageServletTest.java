@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.web;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -164,6 +165,62 @@ class ErrorPageServletTest
     assertThat(log.logs(), not(hasItem(logLevel(Level.ERROR))));
     // Should log at trace level to avoid stack traces in cloud environments where debug is enabled
     assertThat(log.logs(), hasItem(logLevel(Level.TRACE)));
+  }
+
+  @Test
+  void attachCauseLogsIdleTimeoutAtTraceNotDebug() {
+    ErrorPageServlet.attachCause(mock(), idleTimeoutWriteFailure());
+
+    // trace sits below the debug level cloud enables by default for this class
+    assertThat(log.logs(), hasItem(logLevel(Level.TRACE)));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.DEBUG))));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.ERROR))));
+  }
+
+  @Test
+  void attachCauseLogsSuppressedIdleTimeoutAtTraceNotDebug() {
+    IOException outer = new IOException("write failed");
+    outer.addSuppressed(idleTimeoutWriteFailure());
+
+    ErrorPageServlet.attachCause(mock(), outer);
+
+    assertThat(log.logs(), hasItem(logLevel(Level.TRACE)));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.DEBUG))));
+  }
+
+  /**
+   * A timeout waiting on a server-side dependency is a real failure operators need to see, so it must keep its debug
+   * visibility.
+   */
+  @Test
+  void attachCauseKeepsGenuineTimeoutAtDebug() {
+    ErrorPageServlet.attachCause(mock(), new RuntimeException(new TimeoutException("IQ server unavailable")));
+
+    assertThat(log.logs(), hasItem(logLevel(Level.DEBUG)));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.TRACE))));
+  }
+
+  /**
+   * The Azure blob store rethrows Reactor read timeouts in the same IOException-wrapping-TimeoutException shape a
+   * client
+   * write timeout produces, so the shape alone must not silence it.
+   */
+  @Test
+  void attachCauseKeepsServerSideReadTimeoutAtDebug() {
+    ErrorPageServlet.attachCause(mock(),
+        new IOException(new TimeoutException("Did not observe any item or terminal signal within 30000ms")));
+
+    assertThat(log.logs(), hasItem(logLevel(Level.DEBUG)));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.TRACE))));
+  }
+
+  /**
+   * The shape Jetty produces when a blocking write exceeds the connection idle timeout: IdleTimeout raises a plain
+   * TimeoutException which IO.rethrow wraps in an IOException.
+   */
+  private static IOException idleTimeoutWriteFailure() {
+    return new IOException(new TimeoutException("Idle timeout expired: 30000/30000 ms"));
   }
 
   private String resolve(final String path) {

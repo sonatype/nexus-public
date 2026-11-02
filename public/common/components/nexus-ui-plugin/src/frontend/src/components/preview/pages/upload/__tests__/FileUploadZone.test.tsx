@@ -219,4 +219,73 @@ describe('FileUploadZone', () => {
       expect(screen.getByText(/No Go module path found in the zip/)).toBeInTheDocument();
     });
   });
+
+  describe('asset field fallbacks', () => {
+    const FILENAME_ASSET_FIELD = { name: 'filename', type: 'STRING', displayName: 'Filename', optional: true };
+    const FILENAME_FALLBACK_HELP = "Defaults to the uploaded file's name. Edit to override.";
+    const FILENAME_FALLBACK_PLACEHOLDER = 'my-file.txt';
+
+    it('shows fallback help text for the filename asset field when the API omits it', () => {
+      render(
+        <Theme>
+          <FileUploadZone
+            assets={[{ file: null }]}
+            assetFields={[FILENAME_ASSET_FIELD]}
+            validationErrors={mockValidationErrors}
+            multipleUpload={false}
+            onFileChange={jest.fn()}
+            onAssetFieldChange={jest.fn()}
+            onAddAsset={jest.fn()}
+            onRemoveAsset={jest.fn()}
+          />
+        </Theme>
+      );
+
+      expect(screen.getByText(FILENAME_FALLBACK_HELP)).toBeInTheDocument();
+    });
+
+    it('shows fallback placeholder for the filename asset field', () => {
+      render(
+        <Theme>
+          <FileUploadZone
+            assets={[{ file: null }]}
+            assetFields={[FILENAME_ASSET_FIELD]}
+            validationErrors={mockValidationErrors}
+            multipleUpload={false}
+            onFileChange={jest.fn()}
+            onAssetFieldChange={jest.fn()}
+            onAddAsset={jest.fn()}
+            onRemoveAsset={jest.fn()}
+          />
+        </Theme>
+      );
+
+      expect(screen.getByTestId('input-filename')).toHaveAttribute(
+        'placeholder',
+        FILENAME_FALLBACK_PLACEHOLDER
+      );
+    });
+
+    it('prefers backend-supplied help text over the filename fallback', () => {
+      const backendHelp = 'Backend filename guidance';
+
+      render(
+        <Theme>
+          <FileUploadZone
+            assets={[{ file: null }]}
+            assetFields={[{ ...FILENAME_ASSET_FIELD, helpText: backendHelp }]}
+            validationErrors={mockValidationErrors}
+            multipleUpload={false}
+            onFileChange={jest.fn()}
+            onAssetFieldChange={jest.fn()}
+            onAddAsset={jest.fn()}
+            onRemoveAsset={jest.fn()}
+          />
+        </Theme>
+      );
+
+      expect(screen.getByText(backendHelp)).toBeInTheDocument();
+      expect(screen.queryByText(FILENAME_FALLBACK_HELP)).not.toBeInTheDocument();
+    });
+  });
 });

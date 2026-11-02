@@ -19,7 +19,7 @@ import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
+import org.hibernate.validator.constraintvalidation.spi.DefaultConstraintValidatorFactory;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,7 +32,7 @@ import static org.hamcrest.Matchers.is;
 class FileBlobStoreResourceValidationTest
 {
   private final Validator validator =
-      new ValidationConfiguration().validatorFactory(new ConstraintValidatorFactoryImpl()).getValidator();
+      new ValidationConfiguration().validatorFactory(new DefaultConstraintValidatorFactory()).getValidator();
 
   @Test
   void testCreateRequestRejectsNamesStartingWithUnderscore() {

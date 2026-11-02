@@ -20,6 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -57,7 +59,6 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import org.apache.http.HttpResponse;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -72,7 +73,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -268,17 +268,18 @@ public class MavenContentGroupFacetImplTest
    * repository-update thread), and only once the repository is STARTED again. This asserts the worker is invoked
    * asynchronously and off the calling thread.
    */
-  @Ignore("NEXUS-54983: flaky - races Mockito timeout-verify against doAnswer side-effect; re-enable when fixed")
   @Test
   public void testCleanupOrphanedGroupAssets_runsAsynchronouslyWhenStarted() throws Exception {
     Thread callingThread = Thread.currentThread();
     AtomicReference<Thread> workerThread = new AtomicReference<>();
+    CountDownLatch workerRan = new CountDownLatch(1); // signals async worker completion
 
     // STARTED so the guard passes
     doReturn(true).when(underTest).isStarted();
     // capture the thread the worker runs on; do not touch a real repository/facet
     doAnswer(invocation -> {
       workerThread.set(Thread.currentThread());
+      workerRan.countDown(); // signal that the side effect is complete
       return null;
     }).when(underTest).doCleanupOrphanedGroupAssets(any());
 
@@ -287,8 +288,10 @@ public class MavenContentGroupFacetImplTest
 
     underTest.cleanupOrphanedGroupAssets(removedMembers);
 
-    // worker is invoked (asynchronously - allow time for the background task to run)
-    verify(underTest, timeout(5000)).doCleanupOrphanedGroupAssets(removedMembers);
+    // Wait for the side effect to complete with explicit happens-before edge
+    assertThat("worker did not run within 5s", workerRan.await(5, TimeUnit.SECONDS), equalTo(true));
+
+    verify(underTest).doCleanupOrphanedGroupAssets(removedMembers);
     assertThat(workerThread.get(), notNullValue());
     assertThat("cleanup must not run on the calling (update) thread",
         workerThread.get().equals(callingThread), equalTo(false));

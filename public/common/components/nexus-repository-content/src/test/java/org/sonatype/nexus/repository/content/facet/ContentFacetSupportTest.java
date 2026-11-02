@@ -21,8 +21,8 @@ import java.util.Optional;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.common.app.softdelete.SoftDeletedAssetRef;
-import org.sonatype.nexus.common.app.softdelete.TrashIndexRecorder;
+import org.sonatype.nexus.common.app.trash.TrashedAssetRef;
+import org.sonatype.nexus.common.app.trash.TrashIndexRecorder;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -124,6 +124,9 @@ class ContentFacetSupportTest
   void setup() throws Exception {
     lenient().when(dependencies.getBlobStoreManager()).thenReturn(blobStoreManager);
     lenient().when(dependencies.getDataSessionSupplier()).thenReturn(dataSessionSupplier);
+    // Default: no trash recorder wired (trash plugin absent). Tests that need one call
+    // setTrashIndexRecorder(...) to override this with a present Optional.
+    lenient().when(dependencies.getTrashIndexRecorder()).thenReturn(Optional.empty());
 
     DataSession<?> mockSession = mock(DataSession.class);
     Transaction mockTransaction = mock(Transaction.class);
@@ -724,11 +727,11 @@ class ContentFacetSupportTest
 
   /**
    * When a component is revived by re-upload, its stale "umbrella" trash entry is removed and each sibling
-   * asset that is still soft-deleted (not part of the re-upload) is re-surfaced as its own entry; live assets
+   * asset that is still trashed (not part of the re-upload) is re-surfaced as its own entry; live assets
    * are left alone.
    */
   @Test
-  void cleanupComponentTrashIndex_removesComponentEntry_andResurfacesSoftDeletedSiblingsOnly() throws Exception {
+  void cleanupComponentTrashIndex_removesComponentEntry_andResurfacesTrashedSiblingsOnly() throws Exception {
     configureFacet(WritePolicy.ALLOW);
     startFacet(77);
     setTrashIndexRecorder(trashIndexRecorder);
@@ -755,17 +758,17 @@ class ContentFacetSupportTest
     liveAsset.setAssetId(8);
     liveAsset.setPath("/com/example/demo/1.0/demo-1.0.jar");
 
-    when(assetStore.browseAllComponentAssetsWithSoftDelete(component)).thenReturn(List.of(deletedSibling, liveAsset));
+    when(assetStore.browseAllComponentAssetsWithTrash(component)).thenReturn(List.of(deletedSibling, liveAsset));
 
     underTest.cleanupComponentTrashIndex(component);
 
     String compExternalId = InternalIds.toExternalId(InternalIds.internalComponentId(component)).getValue();
     verify(trashIndexRecorder).removeComponentByExternalId("repo1", compExternalId);
 
-    // Exactly one re-surface call (the still-soft-deleted sibling); the live asset is not re-surfaced.
-    ArgumentCaptor<SoftDeletedAssetRef> captor = ArgumentCaptor.forClass(SoftDeletedAssetRef.class);
-    verify(trashIndexRecorder).resurfaceSoftDeletedChildAsset(captor.capture());
-    SoftDeletedAssetRef ref = captor.getValue();
+    // Exactly one re-surface call (the still-trashed sibling); the live asset is not re-surfaced.
+    ArgumentCaptor<TrashedAssetRef> captor = ArgumentCaptor.forClass(TrashedAssetRef.class);
+    verify(trashIndexRecorder).resurfaceTrashedChildAsset(captor.capture());
+    TrashedAssetRef ref = captor.getValue();
     assertThat(ref.repositoryName(), is("repo1"));
     assertThat(ref.repositoryId(), is(77));
     assertThat(ref.format(), is("raw"));
@@ -802,16 +805,16 @@ class ContentFacetSupportTest
     liveAsset.setAssetId(8);
     liveAsset.setPath("/live");
 
-    when(assetStore.browseAllComponentAssetsWithSoftDelete(component)).thenReturn(List.of(liveAsset));
+    when(assetStore.browseAllComponentAssetsWithTrash(component)).thenReturn(List.of(liveAsset));
 
     underTest.cleanupComponentTrashIndex(component);
 
     verify(trashIndexRecorder).removeComponentByExternalId(eq("repo1"), any());
-    verify(trashIndexRecorder, never()).resurfaceSoftDeletedChildAsset(any());
+    verify(trashIndexRecorder, never()).resurfaceTrashedChildAsset(any());
   }
 
   /**
-   * With no trash recorder wired (soft-delete plugin absent / OSS build), the hook is a safe no-op.
+   * With no trash recorder wired (trash plugin absent / OSS build), the hook is a safe no-op.
    */
   @Test
   void cleanupComponentTrashIndex_nullRecorder_isNoOp() throws Exception {
@@ -823,7 +826,7 @@ class ContentFacetSupportTest
 
   /**
    * Regression: the reconciliation must run whenever the recorder is present, regardless of the current
-   * {@code nexus.softDelete.enabled} state. A stale trash index row can be left by a period when the flag
+   * {@code nexus.trash.enabled} state. A stale trash index row can be left by a period when the flag
    * was ON and then be silently revived by a re-upload while the flag is OFF; if this hook were gated on
    * the flag, that row would survive as an un-restorable ghost (component in Trash while live in the repo).
    */
@@ -848,13 +851,13 @@ class ContentFacetSupportTest
     liveAsset.setAssetId(8);
     liveAsset.setPath("/live");
 
-    when(assetStore.browseAllComponentAssetsWithSoftDelete(component)).thenReturn(List.of(liveAsset));
+    when(assetStore.browseAllComponentAssetsWithTrash(component)).thenReturn(List.of(liveAsset));
 
     underTest.cleanupComponentTrashIndex(component);
 
     // The stale umbrella entry is removed; no re-surface since the only sibling is live.
     verify(trashIndexRecorder).removeComponentByExternalId(eq("repo1"), any());
-    verify(trashIndexRecorder, never()).resurfaceSoftDeletedChildAsset(any());
+    verify(trashIndexRecorder, never()).resurfaceTrashedChildAsset(any());
   }
 
   /**
@@ -879,16 +882,14 @@ class ContentFacetSupportTest
     // The delete is always attempted (this is what fixes the toggle-ghost bug), but the sibling scan and any
     // re-surface are skipped because nothing was removed.
     verify(trashIndexRecorder).removeComponentByExternalId(eq("repo1"), any());
-    verify(assetStore, never()).browseAllComponentAssetsWithSoftDelete(any());
-    verify(trashIndexRecorder, never()).resurfaceSoftDeletedChildAsset(any());
+    verify(assetStore, never()).browseAllComponentAssetsWithTrash(any());
+    verify(trashIndexRecorder, never()).resurfaceTrashedChildAsset(any());
   }
 
   // --- Helper methods ---
 
-  private void setTrashIndexRecorder(final TrashIndexRecorder recorder) throws Exception {
-    java.lang.reflect.Field field = ContentFacetSupport.class.getDeclaredField("trashIndexRecorder");
-    field.setAccessible(true);
-    field.set(underTest, recorder);
+  private void setTrashIndexRecorder(final TrashIndexRecorder recorder) {
+    when(dependencies.getTrashIndexRecorder()).thenReturn(Optional.ofNullable(recorder));
   }
 
   /**
@@ -905,7 +906,7 @@ class ContentFacetSupportTest
   void isGlobalDistributionEnabled_readsBooleanTrueFromStorageGlobalDistribution() throws Exception {
     when(configuration.getAttributes())
         .thenReturn(Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE,
-            Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION_ENABLED,
+            Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION,
                 Boolean.TRUE)));
     configureFacet(WritePolicy.ALLOW);
     assertThat(underTest.isGlobalDistributionEnabled(), is(true));
@@ -915,7 +916,7 @@ class ContentFacetSupportTest
   void isGlobalDistributionEnabled_readsStringTrueFromStorageGlobalDistribution() throws Exception {
     when(configuration.getAttributes())
         .thenReturn(Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE,
-            Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION_ENABLED, "true")));
+            Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION, "true")));
     configureFacet(WritePolicy.ALLOW);
     assertThat(underTest.isGlobalDistributionEnabled(), is(true));
   }
@@ -924,7 +925,7 @@ class ContentFacetSupportTest
   void isGlobalDistributionEnabled_readsBooleanFalseFromStorageGlobalDistribution() throws Exception {
     when(configuration.getAttributes())
         .thenReturn(Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE,
-            Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION_ENABLED,
+            Map.of(org.sonatype.nexus.repository.config.ConfigurationConstants.GLOBAL_DISTRIBUTION,
                 Boolean.FALSE)));
     configureFacet(WritePolicy.ALLOW);
     assertThat(underTest.isGlobalDistributionEnabled(), is(false));

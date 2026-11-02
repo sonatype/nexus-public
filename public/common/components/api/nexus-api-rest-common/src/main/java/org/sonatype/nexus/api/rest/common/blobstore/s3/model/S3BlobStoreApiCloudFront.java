@@ -26,7 +26,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.util.Objects.requireNonNull;
 import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiGlobalDistributionType.CLOUDFRONT;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiGlobalDistributionType.STR_CLOUDFRONT;
@@ -41,9 +40,10 @@ public record S3BlobStoreApiCloudFront(
 
     @Schema(description = "The identifier in CloudFront of the provided private-key.") @NotBlank @NotNull String keyId,
 
+    // For updates, null also considered as keep the current value, if not persisted fail
     @Schema(description = "The private key used to create pre-signed URLs in a PEM PKCS#8 string.",
         example = "-----BEGIN PRIVATE KEY-----\\nkeycontent\\n-----END PRIVATE KEY-----") @JsonProperty(
-            access = JsonProperty.Access.WRITE_ONLY) @PemPrivateKey @NotBlank @NotNull String privateKey,
+            access = JsonProperty.Access.WRITE_ONLY) @PemPrivateKey String privateKey,
     @Schema(description = "The private key password", example = "password") @JsonProperty(
         access = JsonProperty.Access.WRITE_ONLY) @Nullable String privateKeyPassword)
     implements S3BlobStoreApiGlobalDistribution
@@ -51,9 +51,6 @@ public record S3BlobStoreApiCloudFront(
 
   public S3BlobStoreApiCloudFront {
     checkArgument(CLOUDFRONT.name().equals(type));
-    requireNonNull(distributionUrl);
-    requireNonNull(keyId);
-    requireNonNull(privateKey);
   }
 
   @JsonIgnore

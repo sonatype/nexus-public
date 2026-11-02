@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 
@@ -30,7 +32,8 @@ import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.logging.task.ProgressTaskLogger.PROGRESS_LINE;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ProgressTaskLoggerTest
 
 {
@@ -39,13 +42,13 @@ public class ProgressTaskLoggerTest
 
   private ProgressTaskLogger underTest;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     underTest = new ProgressTaskLogger(mockLogger);
     underTest.start();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     underTest.finish();
   }

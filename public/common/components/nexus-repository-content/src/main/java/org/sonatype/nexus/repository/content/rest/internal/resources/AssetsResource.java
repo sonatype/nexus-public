@@ -126,8 +126,8 @@ public class AssetsResource
     DetachedEntityId entityId = new DetachedEntityId(repositoryItemIDXO.getId());
     Asset asset = getAsset(id, repository, entityId);
 
-    // The soft-delete-vs-hard-delete decision and the content DELETE authorization are owned by
-    // ContentDeletionService (NEXUS-49147); soft-delete identifier/not-found errors map to 404.
+    // The trash-vs-hard-delete decision and the content DELETE authorization are owned by
+    // ContentDeletionService (NEXUS-49147); trash identifier/not-found errors map to 404.
     try {
       contentDeletionService.deleteAsset(repository, asset);
     }

@@ -18,6 +18,14 @@ import '@testing-library/jest-dom';
 
 import { RawUploadFields } from '../components/fields/RawUploadFields';
 
+const DIRECTORY_TESTID = 'input-raw-directory';
+const DIRECTORY_FIELD = 'directory';
+const DIRECTORY_LABEL = 'Directory';
+const DIRECTORY_PLACEHOLDER = '/path/to/files/';
+// Fallback copy reconciled to the backend DIRECTORY_HELP_TEXT constant.
+const FALLBACK_DIRECTORY_HELP = 'Destination for uploaded files (e.g. /path/to/files/)';
+const BACKEND_DIRECTORY_HELP = 'Backend-supplied directory guidance';
+
 // Wrap components with Theme provider
 const renderWithTheme = (ui) => {
   return render(<Theme>{ui}</Theme>);
@@ -26,22 +34,15 @@ const renderWithTheme = (ui) => {
 describe('RawUploadFields', () => {
   const mockOnChange = jest.fn();
 
+  // directory is the only raw componentField; filename is a per-file assetField, never present here.
   const rawFieldsByGroup = {
     'File Details': [
       {
-        name: 'directory',
+        name: DIRECTORY_FIELD,
         type: 'STRING',
-        displayName: 'Directory',
-        helpText: 'Target directory path',
+        displayName: DIRECTORY_LABEL,
+        helpText: BACKEND_DIRECTORY_HELP,
         optional: false,
-        group: 'File Details',
-      },
-      {
-        name: 'filename',
-        type: 'STRING',
-        displayName: 'Filename',
-        helpText: 'Optional filename override',
-        optional: true,
         group: 'File Details',
       },
       {
@@ -49,6 +50,18 @@ describe('RawUploadFields', () => {
         type: 'STRING',
         displayName: 'Custom Field',
         optional: true,
+        group: 'File Details',
+      },
+    ],
+  };
+
+  // Directory metadata without displayName/helpText, so the form falls back to its own strings.
+  const rawFieldsNoMetadata = {
+    'File Details': [
+      {
+        name: DIRECTORY_FIELD,
+        type: 'STRING',
+        optional: false,
         group: 'File Details',
       },
     ],
@@ -97,11 +110,11 @@ describe('RawUploadFields', () => {
         />
       );
 
-      expect(screen.getByTestId('input-raw-directory')).toBeInTheDocument();
-      expect(screen.getByText('Directory')).toBeInTheDocument();
+      expect(screen.getByTestId(DIRECTORY_TESTID)).toBeInTheDocument();
+      expect(screen.getByText(DIRECTORY_LABEL)).toBeInTheDocument();
     });
 
-    it('renders filename field', () => {
+    it('does not render a top-level filename field', () => {
       renderWithTheme(
         <RawUploadFields
           fieldsByGroup={rawFieldsByGroup}
@@ -111,8 +124,8 @@ describe('RawUploadFields', () => {
         />
       );
 
-      expect(screen.getByTestId('input-raw-filename')).toBeInTheDocument();
-      expect(screen.getByText('Filename')).toBeInTheDocument();
+      expect(screen.queryByTestId('input-raw-filename')).not.toBeInTheDocument();
+      expect(screen.queryByText('Filename')).not.toBeInTheDocument();
     });
 
     it('renders other fields in separate section', () => {
@@ -130,7 +143,7 @@ describe('RawUploadFields', () => {
   });
 
   describe('Default Fields', () => {
-    it('renders default directory field when not in definition', () => {
+    it('renders directory field when definition is empty', () => {
       renderWithTheme(
         <RawUploadFields
           fieldsByGroup={emptyFieldsByGroup}
@@ -140,27 +153,35 @@ describe('RawUploadFields', () => {
         />
       );
 
-      expect(screen.getByTestId('input-raw-directory')).toBeInTheDocument();
-      expect(screen.getByTestId('input-raw-filename')).toBeInTheDocument();
+      expect(screen.getByTestId(DIRECTORY_TESTID)).toBeInTheDocument();
     });
-  });
 
-  describe('Values', () => {
-    it('displays current values in fields', () => {
+    it('does not render a filename field when definition is empty', () => {
       renderWithTheme(
         <RawUploadFields
-          fieldsByGroup={rawFieldsByGroup}
-          values={{
-            directory: '/path/to/files',
-            filename: 'custom-name.txt',
-          }}
+          fieldsByGroup={emptyFieldsByGroup}
+          values={{}}
           onChange={mockOnChange}
           errors={{}}
         />
       );
 
-      expect(screen.getByTestId('input-raw-directory')).toHaveValue('/path/to/files');
-      expect(screen.getByTestId('input-raw-filename')).toHaveValue('custom-name.txt');
+      expect(screen.queryByTestId('input-raw-filename')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Values', () => {
+    it('displays current directory value', () => {
+      renderWithTheme(
+        <RawUploadFields
+          fieldsByGroup={rawFieldsByGroup}
+          values={{ directory: '/path/to/files' }}
+          onChange={mockOnChange}
+          errors={{}}
+        />
+      );
+
+      expect(screen.getByTestId(DIRECTORY_TESTID)).toHaveValue('/path/to/files');
     });
 
     it('calls onChange when directory changes', () => {
@@ -173,26 +194,10 @@ describe('RawUploadFields', () => {
         />
       );
 
-      const input = screen.getByTestId('input-raw-directory');
+      const input = screen.getByTestId(DIRECTORY_TESTID);
       fireEvent.change(input, { target: { value: '/new/path' } });
 
-      expect(mockOnChange).toHaveBeenCalledWith('directory', '/new/path');
-    });
-
-    it('calls onChange when filename changes', () => {
-      renderWithTheme(
-        <RawUploadFields
-          fieldsByGroup={rawFieldsByGroup}
-          values={{}}
-          onChange={mockOnChange}
-          errors={{}}
-        />
-      );
-
-      const input = screen.getByTestId('input-raw-filename');
-      fireEvent.change(input, { target: { value: 'new-file.txt' } });
-
-      expect(mockOnChange).toHaveBeenCalledWith('filename', 'new-file.txt');
+      expect(mockOnChange).toHaveBeenCalledWith(DIRECTORY_FIELD, '/new/path');
     });
   });
 
@@ -209,19 +214,6 @@ describe('RawUploadFields', () => {
 
       expect(screen.getByText('Directory is required')).toBeInTheDocument();
     });
-
-    it('displays error for filename', () => {
-      renderWithTheme(
-        <RawUploadFields
-          fieldsByGroup={rawFieldsByGroup}
-          values={{}}
-          onChange={mockOnChange}
-          errors={{ filename: 'Invalid filename' }}
-        />
-      );
-
-      expect(screen.getByText('Invalid filename')).toBeInTheDocument();
-    });
   });
 
   describe('Disabled Fields', () => {
@@ -232,30 +224,16 @@ describe('RawUploadFields', () => {
           values={{}}
           onChange={mockOnChange}
           errors={{}}
-          disabledFields={new Set(['directory'])}
+          disabledFields={new Set([DIRECTORY_FIELD])}
         />
       );
 
-      expect(screen.getByTestId('input-raw-directory')).toBeDisabled();
-    });
-
-    it('disables filename when in disabledFields', () => {
-      renderWithTheme(
-        <RawUploadFields
-          fieldsByGroup={rawFieldsByGroup}
-          values={{}}
-          onChange={mockOnChange}
-          errors={{}}
-          disabledFields={new Set(['filename'])}
-        />
-      );
-
-      expect(screen.getByTestId('input-raw-filename')).toBeDisabled();
+      expect(screen.getByTestId(DIRECTORY_TESTID)).toBeDisabled();
     });
   });
 
   describe('Help Text', () => {
-    it('displays help text for fields', () => {
+    it('displays backend-supplied directory help text when available', () => {
       renderWithTheme(
         <RawUploadFields
           fieldsByGroup={rawFieldsByGroup}
@@ -265,9 +243,35 @@ describe('RawUploadFields', () => {
         />
       );
 
-      expect(
-        screen.getByText(/Target directory path/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(BACKEND_DIRECTORY_HELP)).toBeInTheDocument();
+    });
+
+    it('falls back to reconciled directory help text when metadata omits it', () => {
+      renderWithTheme(
+        <RawUploadFields
+          fieldsByGroup={rawFieldsNoMetadata}
+          values={{}}
+          onChange={mockOnChange}
+          errors={{}}
+        />
+      );
+
+      expect(screen.getByText(FALLBACK_DIRECTORY_HELP)).toBeInTheDocument();
+    });
+  });
+
+  describe('Labels', () => {
+    it('falls back to default directory label when metadata omits displayName', () => {
+      renderWithTheme(
+        <RawUploadFields
+          fieldsByGroup={rawFieldsNoMetadata}
+          values={{}}
+          onChange={mockOnChange}
+          errors={{}}
+        />
+      );
+
+      expect(screen.getByText(DIRECTORY_LABEL)).toBeInTheDocument();
     });
   });
 
@@ -282,27 +286,10 @@ describe('RawUploadFields', () => {
         />
       );
 
-      expect(screen.getByTestId('input-raw-directory')).toHaveAttribute(
+      expect(screen.getByTestId(DIRECTORY_TESTID)).toHaveAttribute(
         'placeholder',
-        '/path/to/directory'
-      );
-    });
-
-    it('shows filename placeholder', () => {
-      renderWithTheme(
-        <RawUploadFields
-          fieldsByGroup={rawFieldsByGroup}
-          values={{}}
-          onChange={mockOnChange}
-          errors={{}}
-        />
-      );
-
-      expect(screen.getByTestId('input-raw-filename')).toHaveAttribute(
-        'placeholder',
-        'filename.ext'
+        DIRECTORY_PLACEHOLDER
       );
     });
   });
 });
-

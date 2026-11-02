@@ -13,11 +13,11 @@
 package org.sonatype.nexus.coreui.internal;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import org.sonatype.nexus.coreui.RepositoryXO;
 
-import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
@@ -57,7 +57,7 @@ public class RepositoryCleanupAttributesUtil
         attributes.remove(CLEANUP_ATTRIBUTES_KEY);
       }
       else {
-        cleanup.put(CLEANUP_NAME_KEY, newLinkedHashSet(policyNames));
+        cleanup.put(CLEANUP_NAME_KEY, new LinkedHashSet<>(policyNames));
       }
     }
   }

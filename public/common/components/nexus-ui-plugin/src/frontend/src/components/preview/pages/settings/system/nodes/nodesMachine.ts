@@ -37,6 +37,7 @@ export function createNodesMachine() {
   return createMachine<NodesContext, NodesEvent>(
     {
       id: 'nodes',
+      predictableActionArguments: true,
       initial: 'loading',
       context: { nodes: [], loadError: null },
       states: {

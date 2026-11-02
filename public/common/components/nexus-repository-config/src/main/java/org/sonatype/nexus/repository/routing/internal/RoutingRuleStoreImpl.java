@@ -34,10 +34,10 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.UUID.fromString;
+import static org.sonatype.nexus.common.collect.MoreCollections.toImmutableList;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -78,7 +78,7 @@ public class RoutingRuleStoreImpl
   @Transactional
   @Override
   public List<RoutingRule> list() {
-    return ImmutableList.copyOf(dao().browse());
+    return toImmutableList(dao().browse());
   }
 
   @Transactional

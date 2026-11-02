@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.rapture.internal.security;
 
+import javax.annotation.Nullable;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebFilter;
@@ -19,7 +20,10 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.WebFilterPriority;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.JwtHelper;
+import org.sonatype.nexus.security.authc.AuthRateLimiterService;
+import org.sonatype.nexus.security.authc.SsoDetector;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -52,7 +56,13 @@ public class JwtAuthenticationFilter
   private final JwtHelper jwtHelper;
 
   @Autowired
-  public JwtAuthenticationFilter(final JwtHelper jwtHelper) {
+  public JwtAuthenticationFilter(
+      @Nullable final AuthRateLimiterService rateLimiterService,
+      @Nullable final SsoDetector ssoDetector,
+      @Nullable final EventManager eventManager,
+      final JwtHelper jwtHelper)
+  {
+    super(rateLimiterService, ssoDetector, eventManager);
     this.jwtHelper = requireNonNull(jwtHelper);
   }
 

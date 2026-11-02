@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.content.tasks.normalize.ReNormalizeComponentVersionTask.GATE_KEY_FORMAT;
 import static org.sonatype.nexus.repository.content.tasks.normalize.ReNormalizeComponentVersionTask.RENORMALIZE_FORMATS;
 
@@ -71,7 +71,7 @@ public class ScheduleReNormalizationMigrationStep
 
   @Autowired
   public ScheduleReNormalizationMigrationStep(final UpgradeNexusKeyValueStore keyValueStore) {
-    this.keyValueStore = checkNotNull(keyValueStore);
+    this.keyValueStore = requireNonNull(keyValueStore);
   }
 
   @Override

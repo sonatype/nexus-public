@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +23,6 @@ import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.SearchMappingsService;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,12 +45,12 @@ public class SearchMappingsServiceImpl
   }
 
   private static Collection<SearchMapping> collectMappings(final Map<String, SearchMappings> searchMappings) {
-    final Builder<SearchMapping> builder = ImmutableList.builder();
+    final List<SearchMapping> mappings = new ArrayList<>();
 
     // put the default mappings in first
     final SearchMappings defaultMappings = searchMappings.get(DEFAULT);
     if (defaultMappings != null) {
-      builder.addAll(defaultMappings.get());
+      defaultMappings.get().forEach(mappings::add);
     }
 
     // add the rest of the mappings
@@ -59,9 +58,9 @@ public class SearchMappingsServiceImpl
         .stream()
         .filter(key -> !DEFAULT.equals(key))
         .sorted()
-        .forEach(key -> builder.addAll(searchMappings.get(key).get()));
+        .forEach(key -> searchMappings.get(key).get().forEach(mappings::add));
 
-    return builder.build();
+    return List.copyOf(mappings);
   }
 
   @Override
