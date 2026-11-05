@@ -14,9 +14,9 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.util.List;
 
+import org.sonatype.nexus.common.app.trash.TrashSchemaVersions;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
-import org.sonatype.nexus.repository.content.upgrades.SoftDeleteColumnsMigrationStep_2_172;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,7 +51,7 @@ public class TrashSchemaStateTest
     // NEXUS-55233: read filtering keys on schema presence, independent of the feature flag, so Trashed content
     // stays hidden even when the flag is off.
     TrashSchemaState state = new TrashSchemaState(false, databaseCheck);
-    when(databaseCheck.isAtLeast(SoftDeleteColumnsMigrationStep_2_172.VERSION)).thenReturn(true);
+    when(databaseCheck.isAtLeast(TrashSchemaVersions.CONTENT)).thenReturn(true);
 
     assertThat(state.isSchemaReached(), is(true));
     // ...while isTrashAvailable() (flag-gated) remains false with the flag off
@@ -61,7 +61,7 @@ public class TrashSchemaStateTest
   @Test
   public void isSchemaReached_belowAnchor_isFalse() {
     TrashSchemaState state = new TrashSchemaState(false, databaseCheck);
-    when(databaseCheck.isAtLeast(SoftDeleteColumnsMigrationStep_2_172.VERSION)).thenReturn(false);
+    when(databaseCheck.isAtLeast(TrashSchemaVersions.CONTENT)).thenReturn(false);
 
     assertThat(state.isSchemaReached(), is(false));
   }
@@ -70,10 +70,10 @@ public class TrashSchemaStateTest
   public void upgradeEvent_flipsSchemaReached_evenWhenFlagOff() {
     // A ZDU node with the flag off must start hiding Trashed content once the columns are migrated.
     TrashSchemaState state = new TrashSchemaState(false, databaseCheck);
-    when(databaseCheck.isAtLeast(SoftDeleteColumnsMigrationStep_2_172.VERSION)).thenReturn(false);
+    when(databaseCheck.isAtLeast(TrashSchemaVersions.CONTENT)).thenReturn(false);
     assertThat(state.isSchemaReached(), is(false));
 
-    state.on(upgradeTo(SoftDeleteColumnsMigrationStep_2_172.VERSION));
+    state.on(upgradeTo(TrashSchemaVersions.CONTENT));
 
     assertThat(state.isSchemaReached(), is(true));
   }
@@ -81,7 +81,7 @@ public class TrashSchemaStateTest
   @Test
   public void flagOn_schemaBelowAnchor_isFalse() {
     TrashSchemaState state = new TrashSchemaState(true, databaseCheck);
-    when(databaseCheck.isAtLeast(SoftDeleteColumnsMigrationStep_2_172.VERSION)).thenReturn(false);
+    when(databaseCheck.isAtLeast(TrashSchemaVersions.CONTENT)).thenReturn(false);
 
     assertThat(state.isTrashAvailable(), is(false));
   }
@@ -89,7 +89,7 @@ public class TrashSchemaStateTest
   @Test
   public void flagOn_schemaAtAnchor_isTrue() {
     TrashSchemaState state = new TrashSchemaState(true, databaseCheck);
-    when(databaseCheck.isAtLeast(SoftDeleteColumnsMigrationStep_2_172.VERSION)).thenReturn(true);
+    when(databaseCheck.isAtLeast(TrashSchemaVersions.CONTENT)).thenReturn(true);
 
     assertThat(state.isTrashAvailable(), is(true));
   }
@@ -97,17 +97,17 @@ public class TrashSchemaStateTest
   @Test
   public void upgradeEvent_flipsFromPayload_withoutRequeryingDatabaseCheck() {
     TrashSchemaState state = new TrashSchemaState(true, databaseCheck);
-    when(databaseCheck.isAtLeast(SoftDeleteColumnsMigrationStep_2_172.VERSION)).thenReturn(false);
+    when(databaseCheck.isAtLeast(TrashSchemaVersions.CONTENT)).thenReturn(false);
 
     // initial lazy read caches false (one DatabaseCheck call)
     assertThat(state.isTrashAvailable(), is(false));
 
     // completing an upgrade at/after the anchor flips it purely from the event's target version
-    state.on(upgradeTo(SoftDeleteColumnsMigrationStep_2_172.VERSION));
+    state.on(upgradeTo(TrashSchemaVersions.CONTENT));
 
     assertThat(state.isTrashAvailable(), is(true));
     // no re-query on the event path or subsequent reads -> only the single initial lazy read happened
-    verify(databaseCheck, times(1)).isAtLeast(SoftDeleteColumnsMigrationStep_2_172.VERSION);
+    verify(databaseCheck, times(1)).isAtLeast(TrashSchemaVersions.CONTENT);
   }
 
   @Test
@@ -125,7 +125,7 @@ public class TrashSchemaStateTest
     // anchor (e.g. a lagging/partial ZDU event) must NOT flip schemaReached back to false and momentarily resurface
     // Trashed content (NEXUS-55410).
     TrashSchemaState state = new TrashSchemaState(true, databaseCheck);
-    state.on(upgradeTo(SoftDeleteColumnsMigrationStep_2_172.VERSION));
+    state.on(upgradeTo(TrashSchemaVersions.CONTENT));
     assertThat(state.isTrashAvailable(), is(true));
 
     state.on(upgradeTo("2.171"));
@@ -137,7 +137,7 @@ public class TrashSchemaStateTest
   @Test
   public void upgradeEvent_withoutSchemaVersion_leavesStateUnchanged() {
     TrashSchemaState state = new TrashSchemaState(true, databaseCheck);
-    when(databaseCheck.isAtLeast(SoftDeleteColumnsMigrationStep_2_172.VERSION)).thenReturn(false);
+    when(databaseCheck.isAtLeast(TrashSchemaVersions.CONTENT)).thenReturn(false);
     assertThat(state.isTrashAvailable(), is(false));
 
     // an event carrying no target version (e.g. first system start) must not change the cached value

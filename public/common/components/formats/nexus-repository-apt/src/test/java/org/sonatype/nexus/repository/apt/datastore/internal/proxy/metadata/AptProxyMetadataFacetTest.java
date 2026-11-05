@@ -35,6 +35,9 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.time.Clock;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.MissingBlobException;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.data.AptKeyValueFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.metadata.AptMetadataFacetSupport;
@@ -66,6 +69,11 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
@@ -170,6 +178,56 @@ public class AptProxyMetadataFacetTest
     underTest.installDependencies(eventManager);
     underTest.attach(repository);
     underTest.init();
+  }
+
+  // ==========================================================================
+  // GET METADATA TESTS
+  // ==========================================================================
+
+  @Test
+  public void testGetMetadata_StoredMetadataBlobMissing_TriggersRebuildInsteadOfFailing() throws Exception {
+    String path = "/dists/" + DISTRIBUTION + "/InRelease";
+    MissingBlobException missingBlob = new MissingBlobException(mock(BlobRef.class));
+    when(contentFacet.get(path)).thenThrow(missingBlob);
+    AptProxyMetadataFacet facet = spy(underTest);
+    doReturn(null).when(facet).rebuildDistributionMetadata(any(), eq(DISTRIBUTION));
+
+    Optional<Content> result = facet.getMetadata(mock(Context.class), path, DISTRIBUTION);
+
+    assertTrue("a missing stored blob is treated as no metadata yet", result.isEmpty());
+    verify(facet).rebuildDistributionMetadata(any(), eq(DISTRIBUTION));
+  }
+
+  /**
+   * A rebuild reads the previous Release to carry its architectures forward. If that file's blob is gone
+   * there is nothing to carry forward, and the rebuild must still run: it is what replaces the lost file.
+   */
+  @Test
+  public void testRebuild_PreviousReleaseBlobMissing_ContinuesWithoutIt() throws Exception {
+    MissingBlobException missingBlob = new MissingBlobException(mock(BlobRef.class));
+    when(contentFacet.get("/dists/" + DISTRIBUTION + "/Release")).thenThrow(missingBlob);
+    Method load = AptProxyMetadataFacet.class.getDeclaredMethod("loadArchitecturesFromPreviousRelease", String.class);
+    load.setAccessible(true);
+
+    Object architectures = load.invoke(underTest, DISTRIBUTION);
+
+    assertEquals(java.util.Set.of(), architectures);
+  }
+
+  /** Same for the previous Packages file of a slice. */
+  @Test
+  public void testRebuild_PreviousPackagesBlobMissing_ContinuesWithoutIt() throws Exception {
+    MissingBlobException missingBlob = new MissingBlobException(mock(BlobRef.class));
+    when(contentFacet.get(anyString())).thenThrow(missingBlob);
+    Class<?> slice = Class.forName(AptProxyMetadataFacet.class.getName() + "$Slice");
+    java.lang.reflect.Constructor<?> sliceConstructor = slice.getDeclaredConstructor(String.class, String.class);
+    sliceConstructor.setAccessible(true);
+    Method load = AptProxyMetadataFacet.class.getDeclaredMethod("loadPreviousGeneratedPackages", String.class, slice);
+    load.setAccessible(true);
+
+    Object packages = load.invoke(underTest, DISTRIBUTION, sliceConstructor.newInstance("main", "amd64"));
+
+    assertEquals(java.util.Map.of(), packages);
   }
 
   // ==========================================================================

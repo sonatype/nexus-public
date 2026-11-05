@@ -486,7 +486,7 @@ public class S3BlobStore
       return false;
     }
     catch (Exception e) {
-      log.warn("Error checking blob existence for {} in S3", blobId, e);
+      warnExistenceCheckFailed(blobId, "S3", e);
       // Assume exists on error to avoid false negatives that could break normal operations
       return true;
     }

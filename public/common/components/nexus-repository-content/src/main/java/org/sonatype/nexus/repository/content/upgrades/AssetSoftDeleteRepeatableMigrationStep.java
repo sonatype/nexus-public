@@ -13,13 +13,9 @@
 package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
@@ -45,13 +41,11 @@ public class AssetSoftDeleteRepeatableMigrationStep
 {
   private static final Logger log = LoggerFactory.getLogger(AssetSoftDeleteRepeatableMigrationStep.class);
 
-  private static final Pattern SAFE_TABLE_NAME = Pattern.compile("^[a-zA-Z0-9_]+$");
-
   /**
    * Bump when the index logic changes in a way that must re-run on already-migrated databases (the format
    * set alone may be unchanged). 3 = split from column work (columns moved to the versioned step).
    */
-  private static final int LOGIC_VERSION = 3;
+  private static final int LOGIC_VERSION = 4;
 
   private final List<Format> formats;
 
@@ -76,7 +70,7 @@ public class AssetSoftDeleteRepeatableMigrationStep
 
   @Override
   public void migrate(final Connection connection) throws Exception {
-    List<String> assetTables = findAssetTables(connection);
+    List<String> assetTables = findTablesBySuffix(connection, "_asset");
     if (assetTables.isEmpty()) {
       log.info("No asset tables found, skipping trash index creation");
       return;
@@ -84,6 +78,10 @@ public class AssetSoftDeleteRepeatableMigrationStep
 
     log.info("Ensuring trash indexes on {} asset tables", assetTables.size());
     for (String tableName : assetTables) {
+      if (!isSafeIdentifier(tableName)) {
+        log.warn("Skipping table with unsafe name: {}", tableName);
+        continue;
+      }
       // The indexes reference deleted_on, which the versioned SoftDeleteColumnsMigrationStep_2_172 adds. Flyway
       // runs that versioned step before this repeatable one, so the column normally exists here; guard defensively
       // and skip (rather than fail the migration) if a table somehow predates the column.
@@ -95,35 +93,6 @@ public class AssetSoftDeleteRepeatableMigrationStep
       createActiveIndex(connection, tableName, "idx_" + tableName + "_active",
           "repository_id, asset_id", "repository_id, deleted_on, asset_id");
     }
-  }
-
-  private List<String> findAssetTables(final Connection connection) throws Exception {
-    List<String> tables = new ArrayList<>();
-    String sql;
-    if (isPostgresql(connection)) {
-      sql = "SELECT table_name FROM information_schema.tables "
-          + "WHERE table_schema = 'public' AND table_name LIKE '%\\_asset' ESCAPE '\\'"
-          + " AND table_name NOT LIKE '%\\_asset\\_blob' ESCAPE '\\'";
-    }
-    else {
-      sql = "SELECT table_name FROM information_schema.tables "
-          + "WHERE table_name LIKE '%\\_ASSET' ESCAPE '\\'"
-          + " AND table_name NOT LIKE '%\\_ASSET\\_BLOB' ESCAPE '\\'";
-    }
-
-    try (PreparedStatement stmt = connection.prepareStatement(sql);
-        ResultSet rs = stmt.executeQuery()) {
-      while (rs.next()) {
-        String name = rs.getString("table_name");
-        if (SAFE_TABLE_NAME.matcher(name).matches()) {
-          tables.add(name);
-        }
-        else {
-          log.warn("Skipping asset table with unexpected name: {}", name);
-        }
-      }
-    }
-    return tables;
   }
 
   private void createPartialIndex(final Connection connection, final String tableName) throws Exception {

@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
+import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -137,7 +138,7 @@ public abstract class MergingGroupHandlerSupport
       final Map<Repository, Response> successfulResponses) throws IOException
   {
     Optional<String> optEtag = computeEtag(successfulResponses);
-    Optional<Content> existing = getCached(context)
+    Optional<Content> existing = getCachedOrEmpty(context)
         .filter(unchanged(optEtag));
 
     if (existing.isPresent()) {
@@ -147,7 +148,7 @@ public abstract class MergingGroupHandlerSupport
     }
 
     return cooperation.on(() -> merge(context, successfulResponses, optEtag))
-        .checkFunction(() -> Optional.of(getCached(context)))
+        .checkFunction(() -> Optional.of(getCachedOrEmpty(context)))
         .cooperate(context.getRepository().getName(), cooperationKey(context));
   }
 
@@ -180,6 +181,20 @@ public abstract class MergingGroupHandlerSupport
    * @return an optional of the content if it exists, and is not stale
    */
   protected abstract Optional<Content> getCached(Context context);
+
+  /*
+   * A cached merged asset whose blob is gone is a cache miss: rebuild it from the members.
+   */
+  private Optional<Content> getCachedOrEmpty(final Context context) {
+    try {
+      return getCached(context);
+    }
+    catch (MissingBlobException e) {
+      log.debug("Cached content for {} is missing from the blob store, rebuilding from members",
+          context.getRequest().getPath(), e);
+      return Optional.empty();
+    }
+  }
 
   /*
    * Attempts to create a consistent hash derived from the responses of member repositories, we use this to identify

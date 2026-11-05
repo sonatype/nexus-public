@@ -32,7 +32,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-public class SoftDeleteColumnsMigrationStep_2_172Test
+public class SoftDeleteColumnsMigrationStep_2_177Test
 {
   // tables are created WITHOUT deleted_on/deleted_by so the migration has work to do
   private static final String CREATE_ASSET = "CREATE TABLE IF NOT EXISTS {format}_asset (" +
@@ -50,11 +50,11 @@ public class SoftDeleteColumnsMigrationStep_2_172Test
 
   private DataSession<?> session;
 
-  private SoftDeleteColumnsMigrationStep_2_172 migrationStep;
+  private SoftDeleteColumnsMigrationStep_2_177 migrationStep;
 
   @Before
   public void setUp() {
-    migrationStep = new SoftDeleteColumnsMigrationStep_2_172();
+    migrationStep = new SoftDeleteColumnsMigrationStep_2_177();
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
   }
 
@@ -65,7 +65,7 @@ public class SoftDeleteColumnsMigrationStep_2_172Test
 
   @Test
   public void version_isAnchor() {
-    assertThat(migrationStep.version(), is(Optional.of("2.172")));
+    assertThat(migrationStep.version(), is(Optional.of("2.177")));
   }
 
   @Test
@@ -122,7 +122,7 @@ public class SoftDeleteColumnsMigrationStep_2_172Test
     }
   }
 
-  private boolean columnExists(
+  private static boolean columnExists(
       final Connection conn,
       final String tableName,
       final String columnName) throws Exception

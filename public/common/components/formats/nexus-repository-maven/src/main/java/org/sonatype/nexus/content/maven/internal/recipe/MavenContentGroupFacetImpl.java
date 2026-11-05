@@ -54,6 +54,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.group.GroupFacetImpl;
 import org.sonatype.nexus.repository.http.HttpStatus;
+import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -267,7 +268,17 @@ public class MavenContentGroupFacetImpl
 
     // hashes are recalculated whenever metadata is merged, so they're always fresh
     FluentAsset asset = fluentAsset.get();
-    Content content = asset.download();
+    Content content;
+    try {
+      content = asset.download();
+    }
+    catch (MissingBlobException e) {
+      // A missing blob (e.g. the bucket was swapped) is a cache miss like the asset-not-found branch above:
+      // the caller rebuilds from members.
+      log.debug("Missing blob for cached group metadata {} in {}; treating as cache miss", path,
+          getRepository().getName(), e);
+      return null;
+    }
     if (content.getSize() == 0L) {
       log.debug("Corrupted repository metadata: {}, source: {}", path, getRepository().getName());
       // rebuilt metadata process will be triggered for a group repository

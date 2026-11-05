@@ -26,8 +26,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
+import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
@@ -678,6 +680,54 @@ public class MavenContentGroupFacetImplTest
     underTest.minProxyMetadataMaxAgeSeconds = -1; // bypass lazy init, set directly
 
     assertThat(underTest.getCached(mavenPath), notNullValue());
+  }
+
+  /**
+   * download() throws MissingBlobException for a cached group asset whose blob is gone. getCached() must treat
+   * that as a cache miss (null) so MergingGroupHandler rebuilds from members, rather than letting it escape before
+   * the staleness checks are reached.
+   */
+  @Test
+  public void getCached_returnsNull_whenBlobMissing() throws Exception {
+    assertGetCachedReturnsNullOnMissingBlob("org/apache/commons/commons-lang3/maven-metadata.xml");
+  }
+
+  /**
+   * Same as above for a hash path: MergingGroupHandler.doGetHash calls checkCache with no catch
+   * of its own, so this is the path where an escaping MissingBlobException would surface as a 500.
+   */
+  @Test
+  public void getCached_hashPath_returnsNull_whenBlobMissing() throws Exception {
+    assertGetCachedReturnsNullOnMissingBlob("org/apache/commons/commons-lang3/maven-metadata.xml.sha1");
+  }
+
+  private void assertGetCachedReturnsNullOnMissingBlob(final String requestPath) throws Exception {
+    Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
+    MavenPath mavenPath = pathParser.parsePath(requestPath);
+
+    MavenContentFacet mavenContentFacet = mock(MavenContentFacet.class);
+    when(mavenContentFacet.getMavenPathParser()).thenReturn(pathParser);
+
+    FluentAssetBuilder assetBuilder = mock(FluentAssetBuilder.class);
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    when(fluentAssets.path(any())).thenReturn(assetBuilder);
+    when(mavenContentFacet.assets()).thenReturn(fluentAssets);
+
+    BlobRef missingBlobRef = mock(BlobRef.class);
+    MissingBlobException missingBlobException = new MissingBlobException(missingBlobRef);
+    FluentAsset asset = mock(FluentAsset.class);
+    when(asset.download()).thenThrow(missingBlobException);
+    when(assetBuilder.find()).thenReturn(Optional.of(asset));
+
+    Repository repository = mock(Repository.class);
+    when(repository.getName()).thenReturn("test-group");
+    when(repository.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
+    when(repository.facet(ContentFacet.class)).thenReturn(mavenContentFacet);
+    underTest.attach(repository);
+    underTest.minProxyMetadataMaxAgeSeconds = -1;
+
+    assertThat(underTest.getCached(mavenPath), nullValue());
+    verify(asset, never()).isStale(any());
   }
 
   private static Repository proxyMemberWithMetadataMaxAge(final Duration metadataMaxAge) {

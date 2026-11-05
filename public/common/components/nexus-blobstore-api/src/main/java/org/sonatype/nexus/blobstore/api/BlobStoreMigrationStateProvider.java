@@ -15,8 +15,11 @@ package org.sonatype.nexus.blobstore.api;
 /**
  * Provides information about active blob store migrations.
  *
- * This interface allows blob stores to determine if a migration is currently in progress,
- * enabling optimizations like conditional existence checking only during migration windows.
+ * This interface allows blob stores and tasks to determine if a migration is currently in
+ * progress. Cloud blob stores consult {@link #isMigrationActive()} to keep their per-read
+ * existence check running during a move even when it is disabled by
+ * {@code nexus.blobstore.cloud.existenceCheck.enabled=false}. {@link #isBlobStoreMigrating(String)}
+ * currently has no production callers.
  *
  * @since 3.next
  */

@@ -15,7 +15,9 @@ package org.sonatype.nexus.upgrade.datastore;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * @since 3.29
@@ -23,6 +25,8 @@ import java.util.Optional;
 public interface DatabaseMigrationStep
 {
   String H2_REGEX_SUFFIX = "[_[0-9]*]?";
+
+  Pattern SAFE_IDENTIFIER = Pattern.compile("^[a-zA-Z0-9_]+$");
 
   /**
    * The version this step migrates the database to. Migrations returning an empty value will only run when the checksum
@@ -119,7 +123,19 @@ public interface DatabaseMigrationStep
     return DatabaseMigrationUtility.INSTANCE.indexExists(conn, tableName, indexName);
   }
 
-  default String currentSchema(final Connection conn) throws SQLException {
-    return DatabaseMigrationUtility.INSTANCE.currentSchema(conn);
+  /**
+   * Tables in the current schema whose name ends with {@code suffix}.
+   */
+  default List<String> findTablesBySuffix(final Connection conn, final String suffix) throws SQLException {
+    return DatabaseMigrationUtility.INSTANCE.findTablesBySuffix(conn, suffix);
+  }
+
+  /**
+   * Whether {@code identifier} is safe to concatenate into DDL as a table or index name (letters, digits and
+   * underscores only). Identifiers cannot be bound as statement parameters, so names that are interpolated into
+   * SQL must be checked first.
+   */
+  default boolean isSafeIdentifier(final String identifier) {
+    return identifier != null && SAFE_IDENTIFIER.matcher(identifier).matches();
   }
 }

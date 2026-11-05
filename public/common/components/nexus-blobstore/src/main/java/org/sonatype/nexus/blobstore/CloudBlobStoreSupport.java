@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
@@ -27,6 +28,9 @@ import org.sonatype.nexus.blobstore.api.HeavyBlobRef;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 
+import com.google.common.base.Ticker;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StopWatch;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -45,6 +49,18 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
 
   protected final BlobStoreMigrationStateProvider migrationStateProvider;
 
+  // nexus.blobstore.cloud.existenceCheck.enabled: lets support skip the per-read existence check
+  // without a patch release, independent of loadFromDb (which also disables the unrelated
+  // DB-metadata fast path). The check still runs while a repository move is active, because the
+  // move relies on get() returning null to fall back to the blob's old location. Defaults to true
+  // so a store built directly (e.g. in a test) keeps the check.
+  private volatile boolean existenceCheckEnabled = true;
+
+  // The existence check runs on every read, so a persistent backend error (throttling, expired
+  // credentials, timeouts) would otherwise log one WARN per download.
+  private final RateLimitedWarn existenceCheckWarnings =
+      new RateLimitedWarn(log, TimeUnit.MINUTES.toNanos(1), Ticker.systemTicker());
+
   protected CloudBlobStoreSupport(
       final BlobIdLocationResolver blobIdLocationResolver,
       final DryRunPrefix dryRunPrefix,
@@ -54,6 +70,13 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
     super(blobIdLocationResolver, dryRunPrefix);
     this.loadFromDb = loadFromDb;
     this.migrationStateProvider = migrationStateProvider;
+  }
+
+  @Autowired
+  public void setExistenceCheckEnabled(
+      @Value("${nexus.blobstore.cloud.existenceCheck.enabled:true}") final boolean enabled)
+  {
+    this.existenceCheckEnabled = enabled;
   }
 
   /**
@@ -74,16 +97,9 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
     StopWatch stopWatch = new StopWatch();
     stopWatch.start("Loading blob from DB " + blobRef.getBlobId());
     BlobSupport blob = initializeBlob(blobRef.getBlobId());
-
-    // Check if blob physically exists in cloud storage before returning
-    // This check is ONLY performed during active migrations to allow the fallback mechanism to work (NEXUS-50554)
-    // Outside of migrations, we skip this check to avoid the performance overhead of an extra cloud API call
-    if (migrationStateProvider != null && migrationStateProvider.isMigrationActive()) {
-      if (!blobExistsInStorage(blob.getId())) {
-        log.debug("Blob {} not found in cloud storage during migration, returning null to allow fallback",
-            blob.getId());
-        return null;
-      }
+    if (shouldCheckExistence() && !timedBlobExistsInStorage(blob.getId())) {
+      log.debug("Blob {} not found in cloud storage, returning null to allow fallback", blob.getId());
+      return null;
     }
 
     blob.refresh(Collections.emptyMap(), ((HeavyBlobRef) blobRef).getMetrics());
@@ -94,18 +110,61 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
   }
 
   /**
+   * The check runs on every read unless disabled by {@code nexus.blobstore.cloud.existenceCheck.enabled=false}, and
+   * even then while a repository move is active. With it off, a genuinely missing blob is only detected later, when
+   * the content is opened.
+   */
+  private boolean shouldCheckExistence() {
+    return existenceCheckEnabled || (migrationStateProvider != null && migrationStateProvider.isMigrationActive());
+  }
+
+  /**
+   * Times the existence check, so what it costs can be read from the {@code blobExistsInStorage} timer of each store
+   * type (for example {@code org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.blobExistsInStorage.timer}).
+   */
+  private boolean timedBlobExistsInStorage(final BlobId blobId) {
+    long start = System.nanoTime();
+    try {
+      return blobExistsInStorage(blobId);
+    }
+    finally {
+      updateTimer("blobExistsInStorage", System.nanoTime() - start);
+    }
+  }
+
+  /**
    * Used to create {@link Blob} instances for the BlobStore, it will be used when bypassing storage for serving assets.
    */
   protected abstract BlobSupport initializeBlob(BlobId blobId);
 
   /**
    * Checks if a blob physically exists in cloud storage.
-   * Used during blob store migration to determine if fallback to source blob store is needed.
+   * Called from {@link #get(BlobRef)} for every {@code HeavyBlobRef} read, not just during an active
+   * "Change repository blob store" task.
    *
    * @param blobId the blob ID to check
    * @return true if the blob exists in cloud storage, false otherwise
    */
   protected abstract boolean blobExistsInStorage(BlobId blobId);
+
+  /**
+   * Logs a failed existence check at WARN at most once a minute per blob store; the rest go to DEBUG with the
+   * full exception.
+   */
+  protected void warnExistenceCheckFailed(final BlobId blobId, final String backend, final Exception e) {
+    existenceCheckWarnings.warn(e, "Error checking blob existence for {} in {}: {}", blobId, backend,
+        describeWithCause(e));
+  }
+
+  /**
+   * Formats an exception for a log line without the full stack trace, but without losing a
+   * wrapped cause either (plain {@code Throwable#toString()} only shows the outer exception,
+   * which can hide the real error behind a backend SDK's own wrapper exception type).
+   */
+  private static String describeWithCause(final Throwable t) {
+    Throwable cause = t.getCause();
+    return cause == null || cause == t ? t.toString() : t + " (caused by: " + cause + ")";
+  }
 
   protected abstract Blob writeBlobProperties(BlobId blobId, Map<String, String> headers);
 

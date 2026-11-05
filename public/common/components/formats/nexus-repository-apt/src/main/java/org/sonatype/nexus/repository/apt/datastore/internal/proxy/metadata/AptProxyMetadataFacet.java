@@ -40,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.time.Clock;
 import org.sonatype.nexus.repository.Facet.Exposed;
+import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.proxy.AptProxyFacet;
@@ -155,7 +156,7 @@ public class AptProxyMetadataFacet
    */
   public Optional<Content> getMetadata(final Context context, final String path, final String distribution) {
     // Get existing metadata
-    Optional<Content> existing = content().get(path);
+    Optional<Content> existing = readExisting(path);
 
     if (existing.isEmpty()) {
       // No metadata yet - trigger rebuild and return empty (client will retry)
@@ -195,6 +196,34 @@ public class AptProxyMetadataFacet
     // Upstream changed - rebuild and WAIT for completion (up to 30s timeout)
     log.info("Upstream changed for distribution: {} - rebuilding and waiting", distribution);
     return tryRebuildAndWait(context, distribution, path);
+  }
+
+  /**
+   * The stored metadata, or empty when there is none or its blob is gone from the blob store, so that the caller
+   * rebuilds it.
+   */
+  private Optional<Content> readExisting(final String path) {
+    try {
+      return content().get(path);
+    }
+    catch (MissingBlobException e) {
+      log.debug("Stored metadata {} is missing its blob {}; rebuilding", path, e.getBlobRef(), e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * The metadata a previous rebuild generated at {@code path}, read so the rebuild can carry it forward. When its blob
+   * is gone there is nothing to carry forward, and the rebuild must still run: it is what replaces the lost file.
+   */
+  private Optional<Content> readPreviouslyGenerated(final String path) {
+    try {
+      return content().get(path);
+    }
+    catch (MissingBlobException e) {
+      log.debug("Previously generated {} is missing its blob {}; rebuilding without it", path, e.getBlobRef(), e);
+      return Optional.empty();
+    }
   }
 
   /**
@@ -988,7 +1017,7 @@ public class AptProxyMetadataFacet
 
     // Check if we have a generated version (distinguished by checking if signing is present)
     // For simplicity, we check if the file exists and has been modified recently
-    Optional<Content> content = content().get(packagesPath);
+    Optional<Content> content = readPreviouslyGenerated(packagesPath);
 
     if (content.isEmpty()) {
       return Map.of();
@@ -1153,7 +1182,7 @@ public class AptProxyMetadataFacet
   private Set<String> loadArchitecturesFromPreviousRelease(final String distribution) throws IOException {
     boolean isFlat = content().isFlat();
     String releasePath = isFlat ? "/Release" : "/dists/" + distribution + "/Release";
-    Optional<Content> content = content().get(releasePath);
+    Optional<Content> content = readPreviouslyGenerated(releasePath);
     if (content.isEmpty()) {
       return Set.of();
     }

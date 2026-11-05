@@ -507,7 +507,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     return attributeFilePath.getFullPath().replace(".bytes", "");
   }
 
-  private void updateTimer(final String name, final long value) {
+  protected void updateTimer(final String name, final long value) {
     if (metricRegistry != null) {
       Timer timer = timers.computeIfAbsent(name,
           key -> metricRegistry.timer(getClass().getName().replaceAll("\\$.*", "") + '.' + name + ".timer"));

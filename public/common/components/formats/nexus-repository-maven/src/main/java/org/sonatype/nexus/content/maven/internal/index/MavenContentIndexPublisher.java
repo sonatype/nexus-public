@@ -43,8 +43,10 @@ import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher;
 import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategy;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Content;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closer;
 import org.apache.maven.index.reader.IndexWriter;
 import org.apache.maven.index.reader.Record;
@@ -65,6 +67,7 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGIN
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_DESCRIPTION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT;
+import static org.sonatype.nexus.repository.view.Content.CONTENT;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
 /**
@@ -143,11 +146,12 @@ public class MavenContentIndexPublisher
 
     List<Record> records = new ArrayList<>();
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    boolean hosted = repository.getType() instanceof HostedType;
 
     FluentQuery<FluentAsset> artifactQuery = mavenContentFacet.assets().byKind(ARTIFACT.name());
     Continuation<FluentAsset> assets = artifactQuery.browse(browseAssetsPageSize, null);
     while (!assets.isEmpty()) {
-      records.addAll(assetsToRecords(assets, mavenContentFacet, duplicateDetectionStrategy));
+      records.addAll(assetsToRecords(assets, mavenContentFacet, hosted, duplicateDetectionStrategy));
       assets = artifactQuery.browse(browseAssetsPageSize, assets.nextContinuationToken());
     }
 
@@ -157,17 +161,19 @@ public class MavenContentIndexPublisher
   private List<Record> assetsToRecords(
       final Continuation<FluentAsset> assets,
       final MavenContentFacet mavenContentFacet,
+      final boolean hosted,
       final DuplicateDetectionStrategy<Record> duplicateDetectionStrategy)
   {
     return assets.stream()
         .filter(Asset::hasBlob)
         .filter(asset -> asset.component().isPresent())
-        .map(asset -> toRecord(asset, mavenContentFacet))
+        .map(asset -> toRecord(asset, mavenContentFacet, hosted))
         .filter(duplicateDetectionStrategy)
         .collect(toList());
   }
 
-  private Record toRecord(final FluentAsset asset, final MavenContentFacet mavenContentFacet) {
+  @VisibleForTesting
+  Record toRecord(final FluentAsset asset, final MavenContentFacet mavenContentFacet, final boolean hosted) {
     MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(asset.path());
     checkArgument(mavenPath.getCoordinates() != null && !mavenPath.isSubordinate());
     checkArgument(asset.component().isPresent());
@@ -193,12 +199,32 @@ public class MavenContentIndexPublisher
 
     assetRecord.put(FILE_EXTENSION, pathExtension(mavenPath.getFileName()));
 
-    ofNullable(asset.download().getAttributes().get(CONTENT_LAST_MODIFIED))
-        .ifPresent(contentLastModified -> assetRecord.put(FILE_MODIFIED,
-            DateTime.parse(contentLastModified.toString()).getMillis()));
+    // Same source as the Last-Modified FluentAsset#download() would report, read from metadata:
+    // download() would cost a storage request per artifact, and one missing blob would abort the
+    // whole publish. A proxy asset carries the upstream value (absent when upstream sent none); a
+    // hosted asset, or one without stored content headers, uses its blob creation time.
+    if (!hosted && asset.attributes().contains(CONTENT)) {
+      upstreamLastModifiedMillis(asset).ifPresent(millis -> assetRecord.put(FILE_MODIFIED, millis));
+    }
+    else {
+      assetRecord.put(FILE_MODIFIED, lastUpdated.toInstant().toEpochMilli());
+    }
 
     copyBlobAttributes(asset, assetRecord);
     return assetRecord;
+  }
+
+  private static Optional<Long> upstreamLastModifiedMillis(final FluentAsset asset) {
+    Object stored = asset.attributes(CONTENT).get(CONTENT_LAST_MODIFIED);
+    if (stored == null) {
+      return Optional.empty();
+    }
+    try {
+      return Optional.of(new DateTime(stored).getMillis());
+    }
+    catch (IllegalArgumentException e) {
+      return Optional.empty();
+    }
   }
 
   private void copyComponentAttributes(

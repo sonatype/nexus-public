@@ -42,5 +42,5 @@ public final class TrashSchemaVersions
    * Schema version at which every {@code {format}_asset}/{@code {format}_component} table has its
    * {@code deleted_on}/{@code deleted_by} columns (added by {@code SoftDeleteColumnsMigrationStep_2_172}).
    */
-  public static final String CONTENT = "2.172";
+  public static final String CONTENT = "2.177";
 }

@@ -16,7 +16,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -145,19 +148,42 @@ public class DatabaseMigrationUtility
     }
   }
 
-  public String currentSchema(final Connection conn) throws SQLException {
-    String sql = "select current_schema()";
-    try (PreparedStatement statement = conn.prepareStatement(sql)) {
+  /**
+   * Finds the tables whose name ends with {@code suffix} in the connection's current schema.
+   */
+  public List<String> findTablesBySuffix(
+      final Connection conn,
+      final String suffix) throws SQLException
+  {
+    boolean postgresql = isPostgresql(conn);
+    StringBuilder sql = new StringBuilder("SELECT table_name FROM information_schema.tables WHERE ");
+    if (postgresql) {
+      sql.append("table_schema = current_schema() AND ");
+    }
+    sql.append("table_name LIKE ? ESCAPE '\\'");
+
+    List<String> tables = new ArrayList<>();
+    try (PreparedStatement statement = conn.prepareStatement(sql.toString())) {
+      statement.setString(1, suffixPattern(suffix, postgresql));
       try (ResultSet results = statement.executeQuery()) {
-        if (results.next()) {
-          return results.getString(1);
+        while (results.next()) {
+          String name = results.getString("table_name");
+          tables.add(name);
         }
       }
     }
-    throw new IllegalStateException("Unable to determine current database schema");
+    return tables;
   }
 
-  private boolean exists(final Connection conn, final String sql, final String... parameters) throws SQLException {
+  private static String suffixPattern(final String suffix, final boolean postgresql) {
+    return "%" + (postgresql ? suffix.toLowerCase(Locale.ENGLISH) : upper(suffix)).replace("_", "\\_");
+  }
+
+  private static boolean exists(
+      final Connection conn,
+      final String sql,
+      final String... parameters) throws SQLException
+  {
     try (PreparedStatement statement = conn.prepareStatement(sql)) {
       for (int i = 0; i < parameters.length; i++) {
         statement.setString(i + 1, parameters[i]);
